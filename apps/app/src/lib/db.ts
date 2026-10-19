@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import type { CycleStatus, OutboxItem } from '@agriconnect/shared';
+import type { CycleSummary } from './summaryReport';
 
 export interface AreaRow {
   id: string;
@@ -96,6 +97,13 @@ export interface HarvestRow {
   received_at?: string;
 }
 
+/** Bản tổng kết vụ đã tải về gần nhất, để xem lại khi mất mạng */
+export interface SummaryRow {
+  cycle_id: string;
+  fetched_at: string;
+  data: CycleSummary;
+}
+
 export interface ExpenseRow {
   id: string;
   organization_id: string;
@@ -153,6 +161,7 @@ export class LocalDb extends Dexie {
   harvests!: Table<HarvestRow, string>;
   expenses!: Table<ExpenseRow, string>;
   sales!: Table<SaleRow, string>;
+  summaries!: Table<SummaryRow, string>;
 
   constructor(name = 'agriconnect') {
     super(name);
@@ -206,6 +215,22 @@ export class LocalDb extends Dexie {
       harvests: 'id, cycle_id, organization_id, harvested_at',
       expenses: 'id, organization_id, cycle_id, expense_date',
       sales: 'id, organization_id, cycle_id, sold_date',
+    });
+    this.version(6).stores({
+      outbox: 'id, state, table, createdAt',
+      areas: 'id, organization_id',
+      cycles: 'id, owner_org_id, area_id',
+      logs: 'id, cycle_id, organization_id, performed_at',
+      workTypes: 'id',
+      cropTypes: 'id',
+      units: 'id',
+      materials: 'id, organization_id',
+      locations: 'id, organization_id',
+      balances: '[location_id+material_id], organization_id',
+      harvests: 'id, cycle_id, organization_id, harvested_at',
+      expenses: 'id, organization_id, cycle_id, expense_date',
+      sales: 'id, organization_id, cycle_id, sold_date',
+      summaries: 'cycle_id',
     });
   }
 }

@@ -4,6 +4,7 @@ import { CatalogSection } from '../components/CatalogSection';
 import { ExpenseSection } from '../components/ExpenseSection';
 import { HarvestSection } from '../components/HarvestSection';
 import { SalesSection } from '../components/SalesSection';
+import { SummarySection } from '../components/SummarySection';
 import { StockEntry } from '../components/StockEntry';
 import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
@@ -13,9 +14,9 @@ import {
 import { useOrgs } from '../lib/orgs';
 import { hasRole } from '../lib/roles';
 
-type View = 'stock' | 'harvest' | 'expense' | 'sales' | 'catalog' | 'receipt' | 'adjustment';
+type View = 'stock' | 'harvest' | 'expense' | 'sales' | 'summary' | 'catalog' | 'receipt' | 'adjustment';
 
-/** Tab "Vật tư & chi phí": Tồn kho (C1), Thu hoạch (C4), Chi phí và Doanh thu (C3), Danh mục. Tổng kết vụ sẽ thêm ở lát C5. */
+/** Tab "Vật tư & chi phí": Tồn kho (C1), Thu hoạch (C4), Chi phí và Doanh thu (C3), Danh mục. Tổng kết vụ (C5). */
 export function InventoryTab() {
   const { active } = useOrgs();
   const canViewStock = hasRole(active?.roles, 'manager', 'inventory_finance');
@@ -39,6 +40,7 @@ export function InventoryTab() {
         <button role="tab" aria-selected={view === 'harvest'} className={view === 'harvest' ? 'chip active' : 'chip'} onClick={() => setView('harvest')}>Thu hoạch</button>
         {canViewMoney && <button role="tab" aria-selected={view === 'expense'} className={view === 'expense' ? 'chip active' : 'chip'} onClick={() => setView('expense')}>Chi phí</button>}
         {canViewMoney && <button role="tab" aria-selected={view === 'sales'} className={view === 'sales' ? 'chip active' : 'chip'} onClick={() => setView('sales')}>Doanh thu</button>}
+        {canViewMoney && <button role="tab" aria-selected={view === 'summary'} className={view === 'summary' ? 'chip active' : 'chip'} onClick={() => setView('summary')}>Tổng kết</button>}
         <button role="tab" aria-selected={view === 'catalog'} className={view === 'catalog' ? 'chip active' : 'chip'} onClick={() => setView('catalog')}>Danh mục</button>
       </div>
 
@@ -48,6 +50,8 @@ export function InventoryTab() {
         <ExpenseSection />
       ) : view === 'sales' && canViewMoney ? (
         <SalesSection />
+      ) : view === 'summary' && canViewMoney ? (
+        <SummarySection />
       ) : view === 'catalog' ? (
         <CatalogSection orgId={active.id} canWrite={canWrite} />
       ) : canViewStock ? (
