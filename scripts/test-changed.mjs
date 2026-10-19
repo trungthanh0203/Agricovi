@@ -77,6 +77,8 @@ for (const f of changed) {
     if (hits === 0) runAll = `không tìm được test nào nhắc tới thay đổi trong ${norm}`;
   } else if (/^apps\/app\/src\/lib\/(outbox|db|inventory|production|hooks)\.ts$/.test(norm)) {
     add(`${testsDir}/sync.e2e.test.mjs`, `${norm} thay đổi (kiểm thử đồng bộ dùng file này)`);
+  } else if (/^apps\/app\/src\/lib\/summaryReport\.ts$/.test(norm)) {
+    add(`${testsDir}/summary_report.test.mjs`, `${norm} thay đổi`);
   } else if (/^supabase\/functions\//.test(norm)) {
     add(`${testsDir}/staff.test.mjs`, `${norm} thay đổi`);
   }
