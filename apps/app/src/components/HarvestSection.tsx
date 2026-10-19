@@ -9,7 +9,7 @@ import { friendlyError } from '../lib/errors';
 import {
   editHarvest, GRADE_SUGGESTIONS, recordHarvest, validateHarvest, voidHarvest,
 } from '../lib/harvest';
-import { toLocalInput, useRecordSync } from '../lib/hooks';
+import { isPendingUpload, toLocalInput, useOnline, useRecordSync } from '../lib/hooks';
 import { formatQty, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { canManageProduction, hasRole } from '../lib/roles';
@@ -22,6 +22,7 @@ export function HarvestSection() {
   const { session } = useAuth();
   const { active } = useOrgs();
   const sync = useRecordSync();
+  const online = useOnline();
   const harvests = useLiveQuery(() => db.harvests.toArray(), [], []);
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
@@ -63,7 +64,8 @@ export function HarvestSection() {
 
   function canEdit(h: HarvestRow): boolean {
     if (h.voided_at) return false;
-    if (sync.get(h.id)?.conflict) return false; // giải quyết xung đột trước
+    if (!online) return false; // sửa/hủy cần mạng (D24)
+    if (isPendingUpload(sync, h.id)) return false; // chưa lên máy chủ thì chưa sửa/hủy được
     if (manager) return true;
     if (!uid || h.created_by !== uid) return false;
     const base = h.received_at ? new Date(h.received_at).getTime() : Date.now();
@@ -72,10 +74,14 @@ export function HarvestSection() {
 
   async function confirmVoid(id: string) {
     if (reason.trim().length < 3) return setMsg('Hãy ghi lý do hủy (ít nhất 3 ký tự).');
-    await voidHarvest(id, reason);
-    setVoiding(null);
-    setReason('');
-    setMsg(null);
+    try {
+      await voidHarvest(id, reason);
+      setVoiding(null);
+      setReason('');
+      setMsg(null);
+    } catch (e) {
+      setMsg(friendlyError(e));
+    }
   }
 
   if (mode.kind === 'new' || mode.kind === 'edit') {
@@ -122,6 +128,7 @@ export function HarvestSection() {
         <p className="muted">{valid.length} phiếu{cycleFilter ? ' của vụ đã chọn' : ''}. Chỉ tính phiếu chưa hủy.</p>
       </div>
 
+      {!online && <p className="muted">Đang offline: vẫn ghi được phiếu mới (tự gửi khi có mạng); sửa và hủy cần có mạng.</p>}
       {msg && <p className="msg warn" role="status">{msg}</p>}
       {list.length === 0 && <p className="muted">Chưa có phiếu thu hoạch nào.</p>}
 
@@ -174,6 +181,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
   onClose: () => void;
 }) {
   const sync = useRecordSync();
+  const online = useOnline();
   const allCycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
   // vụ đang chạy lên đầu danh sách
@@ -273,12 +281,12 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
           <input value={note} onChange={(e) => setNote(e.target.value)} />
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
-        {!navigator.onLine && (
+        {!online && (
           <p className="msg warn">
-            Đang offline. {editing ? 'Thay đổi sẽ lưu trên điện thoại và gửi sau; nếu người khác đã sửa phiếu này, bạn sẽ được hỏi cách giải quyết.' : 'Phiếu sẽ được lưu trên điện thoại và gửi sau.'}
+            {editing ? 'Đang offline. Sửa phiếu cần có mạng; hãy kết nối mạng rồi bấm Lưu thay đổi.' : 'Đang offline. Phiếu sẽ được lưu trên điện thoại và tự gửi khi có mạng.'}
           </p>
         )}
-        <button type="submit" className="primary">{editing ? 'Lưu thay đổi' : 'Lưu'}</button>
+        <button type="submit" className="primary" disabled={Boolean(editing) && !online}>{editing ? 'Lưu thay đổi' : 'Lưu'}</button>
         <button type="button" className="link" onClick={onClose}>Hủy</button>
       </form>
     </section>

@@ -1,12 +1,12 @@
 import type { OutboxItem } from '@agriconnect/shared';
 import { db, type BalanceRow, type LocationRow, type MaterialRow, type UnitRow } from './db';
-import { enqueue, flushOutbox } from './outbox';
+import { insertRow, requireOnline } from './serverWrite';
 import { supabase } from './supabase';
 
 /**
  * Vật tư & kho (FR-INV-001…004, v1.1 mục 4.4).
- *  - Danh mục (vật tư, kho, đơn vị) tạo/sửa khi CÓ MẠNG (quyết định D22).
- *  - Giao dịch kho (nhập, điều chỉnh) ghi được offline: UUID tạo ở thiết bị, gửi bằng ON CONFLICT DO NOTHING.
+ *  - Danh mục (vật tư, kho, đơn vị), nhập kho và điều chỉnh đều cần MẠNG và ghi thẳng lên máy chủ (D22, D24).
+ *  - Riêng "xuất dùng" do nhân viên ghi khi ghi việc vẫn offline (xem production.logActivity).
  *  - Giao dịch chỉ thêm; tồn = tổng giao dịch; tồn âm được báo chứ không chặn.
  */
 
@@ -61,6 +61,7 @@ export function pendingDeltas(items: OutboxItem[]): Map<string, number> {
 }
 
 export interface NewTxn {
+  id?: string; // mã tạo sẵn cho lần nhập này (chống trùng khi bấm lặp)
   organizationId: string;
   locationId: string;
   materialId: string;
@@ -73,11 +74,12 @@ export interface NewTxn {
   reason: string;
 }
 
-/** Ghi giao dịch kho: lưu vào hàng đợi trên thiết bị rồi gửi. Dùng được khi offline. */
+/** Ghi giao dịch kho (nhập, điều chỉnh): cần mạng, ghi thẳng lên máy chủ và báo kết quả ngay. */
 export async function recordTransaction(t: NewTxn): Promise<string> {
-  const id = crypto.randomUUID();
+  requireOnline('ghi giao dịch kho');
+  const id = t.id ?? crypto.randomUUID();
   const sign = t.type === 'adjustment' && t.direction === 'decrease' ? -1 : 1;
-  await enqueue('inventory_transactions', {
+  await insertRow('inventory_transactions', {
     id,
     organization_id: t.organizationId,
     location_id: t.locationId,
@@ -87,10 +89,10 @@ export async function recordTransaction(t: NewTxn): Promise<string> {
     unit_cost: t.type === 'receipt' ? t.unitCost : null,
     txn_date: t.date,
     reason: t.reason.trim() || null,
-    source: navigator.onLine ? 'online' : 'offline',
+    source: 'online',
   });
-  // gửi xong thì lấy lại tồn mới từ máy chủ để số hiển thị không bị lệch
-  void flushOutbox().then(() => syncInventoryDown()).catch(() => undefined);
+  // lấy lại tồn mới từ máy chủ để số hiển thị khớp
+  await syncInventoryDown().catch(() => undefined);
   return id;
 }
 

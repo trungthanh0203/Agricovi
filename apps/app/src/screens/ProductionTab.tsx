@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
 import { Collapsible } from '../components/Collapsible';
-import { SyncBadge } from '../components/SyncBadge';
 import { db } from '../lib/db';
-import { useRecordSync } from '../lib/hooks';
+import { friendlyError } from '../lib/errors';
+import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { canManageProduction } from '../lib/roles';
 import { createArea, fetchQuotaContexts, setCycleStatus, type QuotaContext } from '../lib/production';
@@ -17,7 +17,8 @@ interface Props {
 
 export function ProductionTab({ onCreateCycle, onLog, onHistory }: Props) {
   const { active } = useOrgs();
-  const sync = useRecordSync();
+  const online = useOnline();
+  const [actionError, setActionError] = useState<string | null>(null);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const cropTypes = useLiveQuery(() => db.cropTypes.toArray(), [], []);
@@ -52,13 +53,22 @@ export function ProductionTab({ onCreateCycle, onLog, onHistory }: Props) {
     e.preventDefault();
     if (areaName.trim().length < 1) return setAreaError('Hãy nhập tên khu trồng.');
     setAreaError(null);
-    await createArea(active!.id, areaName);
-    setAreaName('');
+    try {
+      await createArea(active!.id, areaName);
+      setAreaName('');
+    } catch (err) {
+      setAreaError(friendlyError(err));
+    }
   }
 
-  function change(id: string, status: CycleStatus, confirmText?: string) {
+  async function change(id: string, status: CycleStatus, confirmText?: string) {
     if (confirmText && !window.confirm(confirmText)) return;
-    void setCycleStatus(id, status);
+    setActionError(null);
+    try {
+      await setCycleStatus(id, status);
+    } catch (err) {
+      setActionError(friendlyError(err));
+    }
   }
 
   return (
@@ -71,6 +81,8 @@ export function ProductionTab({ onCreateCycle, onLog, onHistory }: Props) {
       </div>
       {myCycles.length === 0 && <p className="muted">Tạo vụ trồng trước để bắt đầu ghi nhật ký.</p>}
 
+      {!online && canManage && <p className="msg warn" role="status">Đang offline: tạo vụ, đổi trạng thái và thêm khu trồng cần có mạng.</p>}
+      {actionError && <p className="msg error" role="alert">{actionError}</p>}
       <h2 className="sect">Vụ trồng ({myCycles.length})</h2>
       {myCycles.length === 0 && <p className="muted">Chưa có vụ trồng nào.</p>}
       {myCycles.map((c) => {
@@ -86,14 +98,13 @@ export function ProductionTab({ onCreateCycle, onLog, onHistory }: Props) {
               {c.start_date && ` · Bắt đầu ${new Date(c.start_date).toLocaleDateString('vi-VN')}`}
             </p>
             {owner && <p className="muted">Ghi theo: {owner}</p>}
-            <SyncBadge sync={sync.get(c.id)} />
             {canManage && (
               <div className="actions">
-                {c.status === 'preparing' && <button className="secondary" onClick={() => change(c.id, 'active')}>Bắt đầu sản xuất</button>}
-                {c.status === 'active' && <button className="secondary" onClick={() => change(c.id, 'paused')}>Tạm dừng</button>}
-                {c.status === 'paused' && <button className="secondary" onClick={() => change(c.id, 'active')}>Tiếp tục</button>}
+                {c.status === 'preparing' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'active')}>Bắt đầu sản xuất</button>}
+                {c.status === 'active' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'paused')}>Tạm dừng</button>}
+                {c.status === 'paused' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'active')}>Tiếp tục</button>}
                 {(c.status === 'active' || c.status === 'paused') && (
-                  <button className="secondary" onClick={() => change(c.id, 'ended', 'Kết thúc vụ này? Nhật ký và số liệu vẫn được giữ lại.')}>
+                  <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'ended', 'Kết thúc vụ này? Nhật ký và số liệu vẫn được giữ lại.')}>
                     Kết thúc vụ
                   </button>
                 )}
@@ -103,7 +114,7 @@ export function ProductionTab({ onCreateCycle, onLog, onHistory }: Props) {
         );
       })}
       {canManage && (
-        <button className="secondary" onClick={onCreateCycle}>+ Tạo vụ mới</button>
+        <button className="secondary" onClick={onCreateCycle} disabled={!online}>+ Tạo vụ mới</button>
       )}
 
       <Collapsible title="Khu trồng" warn={myAreas.length === 0 && canManage}
@@ -112,7 +123,6 @@ export function ProductionTab({ onCreateCycle, onLog, onHistory }: Props) {
         <div className="card slim" key={a.id}>
           <div className="row">
             <span>{a.name}</span>
-            <SyncBadge sync={sync.get(a.id)} />
           </div>
         </div>
       ))}
@@ -124,7 +134,7 @@ export function ProductionTab({ onCreateCycle, onLog, onHistory }: Props) {
               <input value={areaName} onChange={(e) => setAreaName(e.target.value)} placeholder="Ví dụ: Nhà màng số 1" />
             </label>
             {areaError && <p className="msg error" role="alert">{areaError}</p>}
-            <button type="submit" className="secondary">Thêm khu trồng</button>
+            <button type="submit" className="secondary" disabled={!online}>Thêm khu trồng</button>
           </form>
         </Collapsible>
       )}

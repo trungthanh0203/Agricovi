@@ -39,20 +39,12 @@ export const CYCLE_STATUS_LABEL_VI: Record<CycleStatus, string> = {
 export interface OutboxItem {
   id: string;
   table: string;
-  op: 'insert' | 'update';
-  /** Hàng đầy đủ (insert) hoặc chỉ { id } (update). Luôn có `id` của bản ghi. */
+  /** Chỉ có thêm mới: sửa/hủy cần mạng và ghi thẳng lên máy chủ (quyết định D24) */
+  op: 'insert';
+  /** Hàng đầy đủ. Luôn có `id` của bản ghi. */
   payload: Record<string, unknown>;
   createdAt: string;
   attempts: number;
   state: SyncState;
   lastError?: string;
-  // --- chỉ cho op = 'update' (phát hiện xung đột, FR-SYNC-004) ---
-  /** Các trường thay đổi người dùng muốn áp dụng */
-  changes?: Record<string, unknown>;
-  /** Phiên bản bản ghi mà người dùng đã thấy khi sửa */
-  expectedVersion?: number;
-  /** Mã của lần sửa này: gửi lặp không bị coi là xung đột */
-  opId?: string;
-  /** Có giá trị khi máy chủ báo xung đột: bản ghi hiện tại trên máy chủ, chờ người dùng chọn cách giải quyết */
-  conflict?: { server: Record<string, unknown> };
 }

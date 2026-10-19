@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type FieldDef } from '../lib/db';
-import { toLocalInput } from '../lib/hooks';
+import { friendlyError } from '../lib/errors';
+import { toLocalInput, useOnline } from '../lib/hooks';
 import { editLog } from '../lib/production';
 
 /** Sửa nhật ký đã ghi (FR-LOG-005). Không đổi được vụ hay loại việc: muốn đổi hãy hủy và ghi lại. */
@@ -12,6 +13,7 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
   const [values, setValues] = useState<Record<string, string> | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const online = useOnline();
 
   if (!log) return <p className="center muted">Đang tải…</p>;
   const workType = workTypes.find((w) => w.id === log.work_type_id);
@@ -33,8 +35,13 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
       if (raw === undefined || raw === '') delete data[f.key];
       else data[f.key] = f.type === 'number' ? Number(raw) : raw;
     }
-    await editLog(logId, { performedAt: new Date(whenV).toISOString(), data, note: noteV });
-    onClose();
+    setError(null);
+    try {
+      await editLog(logId, { performedAt: new Date(whenV).toISOString(), data, note: noteV });
+      onClose();
+    } catch (err) {
+      setError(friendlyError(err));
+    }
   }
 
   return (
@@ -65,8 +72,8 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
           <input value={noteV} onChange={(e) => setNote(e.target.value)} />
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
-        {!navigator.onLine && <p className="msg warn">Đang offline. Thay đổi sẽ lưu trên điện thoại và gửi sau; nếu người khác đã sửa bản ghi này, bạn sẽ được hỏi cách giải quyết.</p>}
-        <button type="submit" className="primary">Lưu thay đổi</button>
+        {!online && <p className="msg warn">Đang offline. Sửa nhật ký cần có mạng; hãy kết nối mạng rồi bấm Lưu thay đổi.</p>}
+        <button type="submit" className="primary" disabled={!online}>Lưu thay đổi</button>
         <button type="button" className="link" onClick={onClose}>Hủy</button>
       </form>
     </main>

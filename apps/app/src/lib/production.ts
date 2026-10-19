@@ -4,7 +4,8 @@ import { syncFinanceDown } from './finance';
 import { syncHarvestsDown } from './harvest';
 import { toLocalInput } from './hooks';
 import { syncInventoryDown } from './inventory';
-import { enqueue, enqueueUpdate, flushOutbox } from './outbox';
+import { enqueue, flushOutbox } from './outbox';
+import { insertAndCache, updateAndCache } from './serverWrite';
 import { supabase } from './supabase';
 
 const LOG_COLUMNS =
@@ -77,12 +78,11 @@ export async function fetchQuotaContexts(householdId: string): Promise<QuotaCont
   return (data ?? []) as QuotaContext[];
 }
 
+/** Thêm khu trồng (cần mạng, quyết định D24) */
 export async function createArea(organizationId: string, name: string): Promise<string> {
   const id = crypto.randomUUID();
   const row: AreaRow = { id, organization_id: organizationId, name: name.trim() };
-  await db.areas.put(row); // hiện ngay trên thiết bị
-  await enqueue('production_areas', { ...row });
-  void flushOutbox();
+  await insertAndCache('production_areas', { ...row }, { ...row }, 'thêm khu trồng');
   return id;
 }
 
@@ -94,6 +94,7 @@ export interface NewCycle {
   startDate: string | null;
 }
 
+/** Tạo vụ (cần mạng): máy chủ kiểm hạn mức và báo lỗi ngay nếu vượt */
 export async function createCycle(c: NewCycle): Promise<string> {
   const id = crypto.randomUUID();
   const row = {
@@ -104,19 +105,15 @@ export async function createCycle(c: NewCycle): Promise<string> {
     status: c.status,
     start_date: c.startDate,
   };
-  await db.cycles.put({ ...row, version: 1 });
-  await enqueue('production_cycles', row);
-  void flushOutbox();
+  await insertAndCache('production_cycles', row, { ...row, version: 1, created_at: new Date().toISOString() }, 'tạo vụ');
   return id;
 }
 
-/** Đổi trạng thái vụ: áp dụng ngay trên thiết bị, gửi lên kèm phiên bản đã thấy để phát hiện xung đột. */
+/** Đổi trạng thái vụ (cần mạng): kèm phiên bản đã thấy, người khác đổi trước thì báo và tải lại. */
 export async function setCycleStatus(cycleId: string, status: CycleStatus): Promise<void> {
   const cur = await db.cycles.get(cycleId);
   if (!cur) return;
-  await db.cycles.update(cycleId, { status });
-  await enqueueUpdate('production_cycles', cycleId, cur.version, { status });
-  void flushOutbox();
+  await updateAndCache('production_cycles', cycleId, cur.version, { status }, 'đổi trạng thái vụ');
 }
 
 /** Vật tư đã dùng khi làm việc: mỗi dòng thành một giao dịch xuất kho gắn với nhật ký (FR-INV-003) */
@@ -185,22 +182,17 @@ export interface LogEdit {
   note: string;
 }
 
-/** Sửa nhật ký (FR-LOG-005): hiện ngay trên thiết bị, gửi kèm phiên bản để phát hiện xung đột. */
+/** Sửa nhật ký (FR-LOG-005, cần mạng): kèm phiên bản để phát hiện xung đột. */
 export async function editLog(logId: string, e: LogEdit): Promise<void> {
   const cur = await db.logs.get(logId);
   if (!cur) return;
   const note = e.note.trim() || null;
-  await db.logs.update(logId, { performed_at: e.performedAt, data: e.data, note });
-  await enqueueUpdate('activity_logs', logId, cur.version, { performed_at: e.performedAt, data: e.data, note });
-  void flushOutbox();
+  await updateAndCache('activity_logs', logId, cur.version, { performed_at: e.performedAt, data: e.data, note }, 'sửa nhật ký');
 }
 
-/** Hủy nhật ký (không xóa): cần lý do; bản ghi đã hủy không khôi phục được. */
+/** Hủy nhật ký (không xóa, cần mạng): cần lý do; bản ghi đã hủy không khôi phục được. */
 export async function voidLog(logId: string, reason: string): Promise<void> {
   const cur = await db.logs.get(logId);
   if (!cur) return;
-  const voidedAt = new Date().toISOString();
-  await db.logs.update(logId, { voided_at: voidedAt, void_reason: reason.trim() });
-  await enqueueUpdate('activity_logs', logId, cur.version, { voided_at: voidedAt, void_reason: reason.trim() });
-  void flushOutbox();
+  await updateAndCache('activity_logs', logId, cur.version, { voided_at: new Date().toISOString(), void_reason: reason.trim() }, 'hủy nhật ký');
 }

@@ -5,7 +5,7 @@ import { SyncBadge } from '../components/SyncBadge';
 import { useAuth } from '../lib/auth';
 import { db, type LogRow, type WorkTypeRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
-import { useRecordSync } from '../lib/hooks';
+import { isPendingUpload, useOnline, useRecordSync } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { canManageProduction } from '../lib/roles';
 import { loadOlderLogs, voidLog } from '../lib/production';
@@ -27,6 +27,7 @@ export function LogsScreen({ onClose }: { onClose: () => void }) {
   const { session } = useAuth();
   const { active } = useOrgs();
   const sync = useRecordSync();
+  const online = useOnline();
   const logs = useLiveQuery(() => db.logs.toArray(), [], []);
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
@@ -79,7 +80,8 @@ export function LogsScreen({ onClose }: { onClose: () => void }) {
 
   function canEdit(l: LogRow): boolean {
     if (l.voided_at) return false;
-    if (sync.get(l.id)?.conflict) return false; // giải quyết xung đột trước
+    if (!online) return false; // sửa/hủy cần mạng (D24)
+    if (isPendingUpload(sync, l.id)) return false; // chưa lên máy chủ thì chưa sửa/hủy được
     if (manager) return true;
     if (!uid || l.created_by !== uid) return false;
     const base = l.received_at ? new Date(l.received_at).getTime() : Date.now();
@@ -105,10 +107,14 @@ export function LogsScreen({ onClose }: { onClose: () => void }) {
 
   async function confirmVoid(id: string) {
     if (reason.trim().length < 3) return setMsg('Hãy ghi lý do hủy (ít nhất 3 ký tự).');
-    await voidLog(id, reason);
-    setVoiding(null);
-    setReason('');
-    setMsg(null);
+    try {
+      await voidLog(id, reason);
+      setVoiding(null);
+      setReason('');
+      setMsg(null);
+    } catch (e) {
+      setMsg(friendlyError(e));
+    }
   }
 
   if (editing) return <EditLogScreen logId={editing} onClose={() => setEditing(null)} />;
@@ -147,6 +153,7 @@ export function LogsScreen({ onClose }: { onClose: () => void }) {
         </label>
       </div>
 
+      {!online && <p className="muted">Đang offline: vẫn ghi được việc mới (tự gửi khi có mạng); sửa và hủy cần có mạng.</p>}
       {msg && <p className="msg warn" role="status">{msg}</p>}
       <p className="muted">{filtered.length} bản ghi</p>
       {filtered.length === 0 && <p className="muted">Không có nhật ký nào khớp bộ lọc.</p>}

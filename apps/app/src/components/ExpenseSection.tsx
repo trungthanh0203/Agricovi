@@ -1,8 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
+import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { Collapsible } from './Collapsible';
-import { SyncBadge } from './SyncBadge';
 import { useAuth } from '../lib/auth';
 import { db, type ExpenseRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
@@ -10,7 +9,7 @@ import {
   editExpense, EXPENSE_CATEGORY_LABEL, EXPENSE_KIND_HINT, EXPENSE_KIND_LABEL, NEEDS_ASSUMPTION, recordExpense,
   validateExpense, voidExpense,
 } from '../lib/finance';
-import { todayLocal, useRecordSync } from '../lib/hooks';
+import { todayLocal, useOnline } from '../lib/hooks';
 import { formatMoney, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { hasRole } from '../lib/roles';
@@ -21,7 +20,7 @@ const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 export function ExpenseSection() {
   const { session } = useAuth();
   const { active } = useOrgs();
-  const sync = useRecordSync();
+  const online = useOnline();
   const expenses = useLiveQuery(() => db.expenses.toArray(), [], []);
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
@@ -58,10 +57,14 @@ export function ExpenseSection() {
 
   async function confirmVoid(id: string) {
     if (reason.trim().length < 3) return setMsg('Hãy ghi lý do hủy (ít nhất 3 ký tự).');
-    await voidExpense(id, reason);
-    setVoiding(null);
-    setReason('');
-    setMsg(null);
+    try {
+      await voidExpense(id, reason);
+      setVoiding(null);
+      setReason('');
+      setMsg(null);
+    } catch (e) {
+      setMsg(friendlyError(e));
+    }
   }
 
   if (!active) return null;
@@ -82,7 +85,7 @@ export function ExpenseSection() {
   return (
     <>
       {canWrite ? (
-        <button className="primary" onClick={() => setMode({ kind: 'new' })}>Ghi chi phí</button>
+        <button className="primary" onClick={() => setMode({ kind: 'new' })} disabled={!online}>Ghi chi phí</button>
       ) : (
         <p className="muted">Bạn chỉ xem được chi phí. Chủ cơ sở và người phụ trách Kho & chi phí mới ghi và sửa được.</p>
       )}
@@ -111,6 +114,7 @@ export function ExpenseSection() {
         <p className="muted">{valid.length} khoản chưa hủy. Ba dòng trên tách riêng, không cộng gộp vì bản chất khác nhau.</p>
       </div>
 
+      {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Ghi, sửa và hủy cần có mạng.</p>}
       {msg && <p className="msg warn" role="status">{msg}</p>}
       {list.length === 0 && <p className="muted">Chưa có khoản chi nào.</p>}
 
@@ -126,11 +130,10 @@ export function ExpenseSection() {
           <div className="badges">
             {e.version > 1 && !e.voided_at && <span className="pill">Đã chỉnh sửa</span>}
             {e.voided_at && <span className="pill err">Đã hủy</span>}
-            <SyncBadge sync={sync.get(e.id)} />
           </div>
           {e.voided_at && e.void_reason && <p className="muted">Lý do hủy: {e.void_reason}</p>}
 
-          {canWrite && !e.voided_at && !sync.get(e.id)?.conflict && voiding !== e.id && (
+          {canWrite && online && !e.voided_at && voiding !== e.id && (
             <div className="actions">
               <button className="secondary" onClick={() => setMode({ kind: 'edit', id: e.id })}>Sửa</button>
               <button className="secondary" onClick={() => { setVoiding(e.id); setReason(''); setMsg(null); }}>Hủy khoản chi</button>
@@ -163,7 +166,7 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
   userId: string;
   onClose: () => void;
 }) {
-  const sync = useRecordSync();
+  const online = useOnline();
   const allCycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
 
@@ -176,6 +179,8 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
   const [note, setNote] = useState(editing?.note ?? '');
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [draftId, setDraftId] = useState(() => crypto.randomUUID());
+  const [busy, setBusy] = useState(false);
 
   const effCycle = cycleId || (cycles.find((c) => c.id === remembered)?.id ?? 'none');
 
@@ -185,6 +190,7 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
     const bad = validateExpense(a, kind, note);
     if (bad) return setError(bad);
     setError(null);
+    setBusy(true);
     try {
       if (editing) {
         await editExpense(editing.id, { category, kind, amount: a!, date, note });
@@ -192,28 +198,28 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
         return;
       }
       const cycle = effCycle === 'none' ? null : allCycles.find((c) => c.id === effCycle) ?? null;
-      const id = await recordExpense({ organizationId: orgId, cycle, category, kind, amount: a!, date, note, userId });
+      const id = await recordExpense({ id: draftId, organizationId: orgId, cycle, category, kind, amount: a!, date, note, userId });
       setSavedId(id);
     } catch (err) {
       setError(friendlyError(err));
+    } finally {
+      setBusy(false);
     }
   }
 
   function again() {
     setSavedId(null);
+    setDraftId(crypto.randomUUID());
     setAmount('');
     setNote('');
     setError(null);
   }
 
   if (savedId) {
-    const s = sync.get(savedId);
     return (
       <section>
         <h1>Đã ghi chi phí</h1>
-        <p className="msg ok" role="status">{s && s.state !== 'synced' ? SYNC_STATE_LABEL_VI.local_only : SYNC_STATE_LABEL_VI.synced}</p>
-        <SyncBadge sync={s} />
-        {(!s || s.state !== 'synced') && !navigator.onLine && <p className="muted">Khoản chi đang nằm trên điện thoại và sẽ tự gửi khi có mạng.</p>}
+        <p className="msg ok" role="status">Đã lưu lên máy chủ.</p>
         <button className="primary" onClick={again}>Ghi thêm khoản chi</button>
         <button className="secondary" onClick={onClose}>Xong</button>
       </section>
@@ -263,12 +269,8 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
             placeholder={NEEDS_ASSUMPTION.has(kind) ? 'Ví dụ: nhà màng 50 triệu chia 10 vụ' : ''} />
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
-        {!navigator.onLine && (
-          <p className="msg warn">
-            Đang offline. {editing ? 'Thay đổi sẽ lưu trên điện thoại và gửi sau; nếu người khác đã sửa khoản này, bạn sẽ được hỏi cách giải quyết.' : 'Khoản chi sẽ được lưu trên điện thoại và gửi sau.'}
-          </p>
-        )}
-        <button type="submit" className="primary">{editing ? 'Lưu thay đổi' : 'Lưu'}</button>
+        {!online && <p className="msg warn">Đang offline. Cần có mạng để lưu; hãy kết nối mạng rồi bấm Lưu.</p>}
+        <button type="submit" className="primary" disabled={!online || busy}>{editing ? 'Lưu thay đổi' : 'Lưu'}</button>
         <button type="button" className="link" onClick={onClose}>Hủy</button>
       </form>
     </section>

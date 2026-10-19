@@ -1,10 +1,11 @@
 import { db, type CycleRow, type HarvestRow } from './db';
-import { enqueue, enqueueUpdate, flushOutbox } from './outbox';
+import { enqueue, flushOutbox } from './outbox';
+import { updateAndCache } from './serverWrite';
 import { supabase } from './supabase';
 
 /**
  * Thu hoạch (FR-INV-007, quyết định D20, D21).
- *  - Mọi người ghi được nhật ký đều ghi được thu hoạch; dùng được offline.
+ *  - Mọi người ghi được nhật ký đều ghi được thu hoạch; GHI MỚI dùng được offline. Sửa/hủy cần mạng (D24).
  *  - Đơn vị khóa kg. Hao hụt không vượt số lượng thu.
  *  - Sửa/hủy gửi kèm phiên bản để phát hiện xung đột; hủy cần lý do, không khôi phục.
  */
@@ -71,7 +72,7 @@ export interface HarvestEdit {
   note: string;
 }
 
-/** Sửa phiếu: hiện ngay trên thiết bị, gửi kèm phiên bản để phát hiện xung đột. */
+/** Sửa phiếu (cần mạng): kèm phiên bản đã thấy để phát hiện xung đột. */
 export async function editHarvest(id: string, e: HarvestEdit): Promise<void> {
   const cur = await db.harvests.get(id);
   if (!cur) return;
@@ -82,19 +83,14 @@ export async function editHarvest(id: string, e: HarvestEdit): Promise<void> {
     loss_quantity: e.lossQuantity,
     note: e.note.trim() || null,
   };
-  await db.harvests.update(id, changes);
-  await enqueueUpdate('harvest_records', id, cur.version, changes);
-  void flushOutbox();
+  await updateAndCache('harvest_records', id, cur.version, changes, 'sửa phiếu thu hoạch');
 }
 
-/** Hủy phiếu (không xóa): cần lý do; không khôi phục được. */
+/** Hủy phiếu (không xóa, cần mạng): cần lý do; không khôi phục được. */
 export async function voidHarvest(id: string, reason: string): Promise<void> {
   const cur = await db.harvests.get(id);
   if (!cur) return;
-  const voidedAt = new Date().toISOString();
-  await db.harvests.update(id, { voided_at: voidedAt, void_reason: reason.trim() });
-  await enqueueUpdate('harvest_records', id, cur.version, { voided_at: voidedAt, void_reason: reason.trim() });
-  void flushOutbox();
+  await updateAndCache('harvest_records', id, cur.version, { voided_at: new Date().toISOString(), void_reason: reason.trim() }, 'hủy phiếu thu hoạch');
 }
 
 /** Kiểm tra số liệu nhập: trả về thông báo lỗi tiếng Việt hoặc null nếu hợp lệ */

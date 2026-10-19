@@ -28,8 +28,9 @@ Mục **[GIẢ ĐỊNH]** là cách tôi (đội phát triển) hiểu khi tri�
 | D19 | **Giá vốn vật tư xuất dùng = bình quân gia quyền** các lần nhập có giá (tính đến ngày xuất); lần nhập không giá thì không tính và báo thiếu, không bịa số | Bước C | Chủ sản phẩm (đồng ý đề xuất Q1) | Migration 0016, `docs/PLAN_BUOC_C.md` |
 | D20 | **Thu hoạch**: mọi người ghi được nhật ký đều ghi được; sửa/hủy: chủ, quản lý mọi bản ghi, người ghi chỉ bản của mình trong 24 giờ (như A10) | Bước C | Chủ sản phẩm (Q2) | Migration 0016 |
 | D21 | Đơn vị thu hoạch và bán hàng **khóa là kg** ở giai đoạn thử | Bước C | Chủ sản phẩm (Q3) | Migration 0016 |
-| D22 | Tạo **danh mục** vật tư/kho cần có mạng; ghi nhập/xuất/chi phí/thu hoạch/bán vẫn dùng offline | Bước C | Chủ sản phẩm (Q4) | Màn hình C1 |
+| D22 | Tạo **danh mục** vật tư/kho cần có mạng; ~~ghi nhập/xuất/chi phí/thu hoạch/bán vẫn dùng offline~~ (phần này **đã được D24 thay thế**: chỉ ghi mới việc hằng ngày của nhân viên dùng offline) | Bước C | Chủ sản phẩm (Q4) | Màn hình C1 |
 | D23 | Hủy nhật ký đã có xuất kho thì **tự đảo kho** bằng giao dịch điều chỉnh (lý do "Hủy nhật ký"); giao dịch gốc giữ nguyên | Bước C | Chủ sản phẩm (Q5) | Migration 0016 |
+| D24 | **Phạm vi offline**: chỉ **ghi mới việc hằng ngày của nhân viên** (nhật ký kèm vật tư đã dùng, thu hoạch; sau này chấm công) dùng hàng đợi offline. **Mọi thứ khác cần mạng và ghi thẳng lên máy chủ**, báo kết quả ngay: khu trồng, vụ, đổi trạng thái vụ, danh mục, nhập kho, điều chỉnh, chi phí, doanh thu, tổng kết, **và cả sửa/hủy**. Bỏ khung "Xung đột": máy chủ vẫn kiểm phiên bản, người dùng thấy "Người khác vừa thay đổi… đã tải lại" rồi sửa lại. Xem được dữ liệu đã tải khi mất mạng | Sau bước C | Chủ sản phẩm | `serverWrite.ts`, `outbox.ts` chỉ thêm mới |
 
 ## Cách tôi triển khai D15 (đã làm, migration 0013)
 
@@ -37,6 +38,8 @@ Mục **[GIẢ ĐỊNH]** là cách tôi (đội phát triển) hiểu khi tri�
 - Mỗi lần sửa có mã riêng (`op_id`): mạng đứt sau khi máy chủ đã áp dụng thì gửi lại **không** bị coi là xung đột.
 - Hủy cần lý do, không xóa, không khôi phục; bản ghi đã hủy không sửa nội dung. Vụ, người ghi, nguồn của nhật ký không đổi được.
 - Áp dụng cho nhật ký và cho đổi trạng thái vụ (hạn mức vụ vẫn được ép khi sửa).
+
+> **Cập nhật theo D24:** phần "xung đột khi đồng bộ" ở trên nay chỉ còn là kiểm tra phiên bản ở máy chủ (hàm `update_*` giữ nguyên, có test). App không còn đưa thay đổi vào hàng đợi nên **không còn khung chọn "Giữ bản của tôi / Dùng bản máy chủ"**; gặp xung đột app tải lại bản mới và báo người dùng sửa lại.
 
 ### [GIẢ ĐỊNH] mới cần xác nhận
 

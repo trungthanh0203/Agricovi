@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { SyncState } from '@agriconnect/shared';
 import { db } from './db';
@@ -6,11 +6,6 @@ import { db } from './db';
 export interface RecordSync {
   state: SyncState;
   error?: string;
-  /** Có khi máy chủ báo xung đột: chờ người dùng chọn cách giải quyết */
-  conflict?: { server: Record<string, unknown> };
-  itemId?: string;
-  table?: string;
-  changes?: Record<string, unknown>;
 }
 
 const RANK: Record<SyncState, number> = { synced: 0, local_only: 1, syncing: 2, needs_attention: 3 };
@@ -23,20 +18,32 @@ export function useRecordSync(): Map<string, RecordSync> {
     for (const it of items) {
       const rid = it.payload.id as string;
       const cur = map.get(rid);
-      const beats = !cur || RANK[it.state] > RANK[cur.state] || (it.conflict && !cur.conflict);
-      if (beats) {
-        map.set(rid, {
-          state: it.state,
-          error: it.lastError,
-          conflict: it.conflict,
-          itemId: it.id,
-          table: it.table,
-          changes: it.changes,
-        });
-      }
+      if (!cur || RANK[it.state] > RANK[cur.state]) map.set(rid, { state: it.state, error: it.lastError });
     }
     return map;
   }, [items]);
+}
+
+/** Bản ghi còn nằm trên thiết bị (chưa lên máy chủ) thì chưa sửa/hủy được: cần đợi gửi xong */
+export function isPendingUpload(sync: Map<string, RecordSync>, id: string): boolean {
+  const s = sync.get(id);
+  return Boolean(s && s.state !== 'synced');
+}
+
+/** Có mạng hay không, tự cập nhật khi mạng đổi */
+export function useOnline(): boolean {
+  const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
+  }, []);
+  return online;
 }
 
 export function toLocalInput(d: Date): string {

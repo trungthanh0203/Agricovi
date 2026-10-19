@@ -1,17 +1,15 @@
 import { useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
-import { SyncBadge } from './SyncBadge';
 import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
-import { todayLocal, useRecordSync } from '../lib/hooks';
+import { todayLocal, useOnline } from '../lib/hooks';
 import { parseNumber, recordTransaction } from '../lib/inventory';
 
 const LAST_LOCATION_KEY = 'agriconnect.lastLocation';
 
 /** Nhập kho hoặc điều chỉnh tồn. Giao dịch chỉ thêm; điều chỉnh bắt buộc có lý do (v1.1 mục 4.4). Dùng được offline. */
 export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'receipt' | 'adjustment'; onClose: () => void }) {
-  const sync = useRecordSync();
+  const online = useOnline();
   const materials = useLiveQuery(() => db.materials.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const locations = useLiveQuery(() => db.locations.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const units = useLiveQuery(() => db.units.toArray(), [], []);
@@ -29,6 +27,8 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [draftId, setDraftId] = useState(() => crypto.randomUUID());
+  const [busy, setBusy] = useState(false);
 
   const effLocation = locationId || (locs.find((l) => l.id === remembered)?.id ?? locs[0]?.id ?? '');
   const effMaterial = materialId || mats[0]?.id || '';
@@ -45,20 +45,24 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
     const c = parseNumber(cost);
     if (c !== null && (Number.isNaN(c) || c < 0 || !Number.isInteger(c))) return setError('Giá nhập phải là số tiền (đồng), không có phần lẻ.');
     if (mode === 'adjustment' && reason.trim().length < 3) return setError('Điều chỉnh cần ghi lý do (ví dụ: kiểm kê, hao hụt, hỏng).');
+    setBusy(true);
     try {
       const id = await recordTransaction({
-        organizationId: orgId, locationId: effLocation, materialId: effMaterial, type: mode,
+        id: draftId, organizationId: orgId, locationId: effLocation, materialId: effMaterial, type: mode,
         quantity: q, direction, unitCost: c, date, reason,
       });
       try { localStorage.setItem(LAST_LOCATION_KEY, effLocation); } catch { /* bỏ qua */ }
       setSavedId(id);
     } catch (err) {
       setError(friendlyError(err));
+    } finally {
+      setBusy(false);
     }
   }
 
   function again() {
     setSavedId(null);
+    setDraftId(crypto.randomUUID());
     setQty('');
     setCost('');
     setReason('');
@@ -68,15 +72,10 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
   const title = mode === 'receipt' ? 'Nhập kho' : 'Điều chỉnh tồn kho';
 
   if (savedId) {
-    const s = sync.get(savedId);
     return (
       <section>
         <h1>Đã ghi</h1>
-        <p className="msg ok" role="status">
-          {s && s.state !== 'synced' ? SYNC_STATE_LABEL_VI.local_only : SYNC_STATE_LABEL_VI.synced}
-        </p>
-        <SyncBadge sync={s} />
-        {(!s || s.state !== 'synced') && !navigator.onLine && <p className="muted">Giao dịch đang nằm trên điện thoại và sẽ tự gửi khi có mạng.</p>}
+        <p className="msg ok" role="status">Đã lưu lên máy chủ.</p>
         <button className="primary" onClick={again}>Ghi tiếp</button>
         <button className="secondary" onClick={onClose}>Xong</button>
       </section>
@@ -145,8 +144,8 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
           <input value={reason} onChange={(e) => setReason(e.target.value)} />
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
-        {!navigator.onLine && <p className="msg warn">Đang offline. Giao dịch sẽ được lưu trên điện thoại và gửi sau.</p>}
-        <button type="submit" className="primary">Lưu</button>
+        {!online && <p className="msg warn">Đang offline. Nhập kho và điều chỉnh cần có mạng; hãy kết nối mạng rồi bấm Lưu.</p>}
+        <button type="submit" className="primary" disabled={!online || busy}>Lưu</button>
         <button type="button" className="link" onClick={onClose}>Hủy</button>
       </form>
     </section>

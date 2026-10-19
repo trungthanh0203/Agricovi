@@ -28,6 +28,8 @@ Người phụ trách kỹ thuật làm một lần trước khi mời người 
    - Nếu chưa biết giá, để trống. App sẽ ghi rõ là "chưa ghi giá" chứ không tự đoán.
 5. Kiểm tra: tồn kho hiện đúng số bạn vừa nhập.
 
+**Quy tắc offline của bản thử:** chỉ việc **ghi mới hằng ngày của nhân viên** (ghi việc kèm vật tư đã dùng, ghi thu hoạch) dùng được khi mất mạng. Mọi việc khác (khu trồng, vụ, kho, chi phí, bán hàng, sửa, hủy, tổng kết) **cần có mạng** và báo kết quả ngay.
+
 ## Bài thử 2: Ghi việc kèm vật tư (nhân viên)
 
 1. Ở **Trang chủ**, bấm **Ghi việc vừa làm** → chọn việc (ví dụ "Bón phân").
@@ -41,8 +43,8 @@ Người phụ trách kỹ thuật làm một lần trước khi mời người 
 
 1. Vào **Vật tư & chi phí → Thu hoạch → Ghi thu hoạch**.
 2. Nhập số kg thu, phân loại (không bắt buộc) và hao hụt (nếu có). Hao hụt nằm trong số kg đã thu.
-3. Thử **Sửa** và **Hủy phiếu** (hủy cần ghi lý do; phiếu đã hủy không khôi phục được).
-4. Thử khi mất mạng như bài 2.
+3. Thử **khi mất mạng** như bài 2: ghi mới phải lưu được trên điện thoại và tự gửi khi có mạng.
+4. Có mạng và phiếu đã gửi xong: thử **Sửa** và **Hủy phiếu** (hủy cần ghi lý do; phiếu đã hủy không khôi phục được). Khi mất mạng, hai nút này ẩn đi vì sửa và hủy cần có mạng.
 
 ## Bài thử 4: Chi phí và bán hàng (chủ hoặc Kho & chi phí)
 
@@ -64,15 +66,16 @@ Người phụ trách kỹ thuật làm một lần trước khi mời người 
 
 ## Bài thử 6: Hai người sửa cùng một thứ
 
-1. Hai người cùng mở một phiếu thu hoạch (hoặc khoản chi). Người A tắt mạng rồi sửa. Người B (có mạng) sửa và lưu.
-2. Bật mạng của A. App phải hiện khung **"Xung đột — cần bạn chọn"** với hai cột "Trên máy chủ hiện có" và "Bạn muốn đổi thành".
-3. Chọn **Giữ thay đổi của tôi** hoặc **Dùng bản trên máy chủ**. Không có gì được ghi đè khi bạn chưa chọn.
+1. Hai người (đều có mạng) cùng mở **Sửa** một phiếu thu hoạch (hoặc một khoản chi). Người A sửa và lưu trước.
+2. Người B sửa trên bản cũ rồi bấm Lưu. App phải báo **"Người khác vừa thay đổi bản ghi này…"** và tải lại bản mới nhất. Số của người A **không bị ghi đè**.
+3. Người B xem lại số mới rồi sửa lại nếu còn cần.
 
 ## Những điều cần biết
 
 - Số tiền luôn là **đồng**, số lượng thu hoạch và bán luôn là **kg** ở bản thử này.
 - Kho không bị chặn khi xuất quá số tồn: app **báo "Tồn âm"** để bạn kiểm kê, không âm thầm sửa số.
-- Danh mục vật tư và kho chỉ thêm hoặc sửa được **khi có mạng**. Nhập kho, xuất dùng, chi phí, thu hoạch, bán hàng thì ghi được cả khi mất mạng.
+- **Chỉ ghi mới việc hằng ngày của nhân viên** (ghi việc kèm vật tư, ghi thu hoạch) dùng được khi mất mạng. Danh mục, nhập kho, điều chỉnh, chi phí, bán hàng, tạo vụ, khu trồng, sửa và hủy đều **cần có mạng**: nếu mất mạng, app báo ngay và bạn ghi lại khi có mạng.
+- Bản ghi vừa tạo khi mất mạng và **chưa gửi xong** thì chưa sửa hoặc hủy được; hãy đợi nhãn chuyển sang "Đã đồng bộ".
 - Không có nút xóa. Ghi sai thì **Hủy** (kèm lý do) rồi ghi lại.
 - Tổng kết vụ cần mạng để tính; khi mất mạng bạn xem được bản tải lần gần nhất, có ghi giờ.
 

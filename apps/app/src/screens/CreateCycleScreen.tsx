@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
-import { todayLocal } from '../lib/hooks';
+import { friendlyError } from '../lib/errors';
+import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { createCycle, fetchQuotaContexts, type QuotaContext } from '../lib/production';
 
@@ -18,6 +19,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; on
   const [contexts, setContexts] = useState<QuotaContext[] | null>(null);
   const [ownerId, setOwnerId] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const online = useOnline();
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!areaId && myAreas[0]) setAreaId(myAreas[0].id);
@@ -54,14 +57,21 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; on
           : 'Gói đã hết hạn nên chưa tạo được vụ đang sản xuất. Hãy gia hạn, hoặc chọn "Chưa bắt đầu".',
       );
     }
-    await createCycle({
-      ownerOrgId: ownerId || active!.id,
-      areaId,
-      cropTypeId: cropId,
-      status: startNow ? 'active' : 'preparing',
-      startDate: startDate || null,
-    });
-    onDone();
+    setBusy(true);
+    try {
+      await createCycle({
+        ownerOrgId: ownerId || active!.id,
+        areaId,
+        cropTypeId: cropId,
+        status: startNow ? 'active' : 'preparing',
+        startDate: startDate || null,
+      });
+      onDone();
+    } catch (err) {
+      setError(friendlyError(err)); // gồm cả lỗi vượt hạn mức từ máy chủ
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -110,9 +120,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; on
               </small>
             </fieldset>
           )}
-          {!choices && active.type === 'household' && !navigator.onLine && (
-            <p className="msg warn">Đang offline: vụ sẽ ghi theo hộ riêng. Nếu vượt hạn mức, vụ sẽ chờ bạn xử lý khi có mạng.</p>
-          )}
+          {!online && <p className="msg warn">Đang offline. Tạo vụ cần có mạng để máy chủ kiểm hạn mức; hãy kết nối mạng rồi bấm Tạo vụ.</p>}
 
           <fieldset>
             <legend>Trạng thái</legend>
@@ -132,7 +140,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; on
           </label>
 
           {error && <p className="msg error" role="alert">{error}</p>}
-          <button type="submit" className="primary">Tạo vụ</button>
+          <button type="submit" className="primary" disabled={!online || busy}>{busy ? 'Đang tạo…' : 'Tạo vụ'}</button>
           <button type="button" className="link" onClick={onCancel}>Hủy</button>
         </form>
       )}

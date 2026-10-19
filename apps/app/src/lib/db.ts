@@ -232,6 +232,10 @@ export class LocalDb extends Dexie {
       sales: 'id, organization_id, cycle_id, sold_date',
       summaries: 'cycle_id',
     });
+    // v7 (D24): hàng đợi chỉ còn thêm mới; bỏ các mục "sửa" cũ còn sót (chưa có người dùng thật)
+    this.version(7).stores({
+      outbox: 'id, state, table, createdAt',
+    }).upgrade((tx) => tx.table('outbox').filter((i: { op?: string }) => i.op === 'update').delete());
   }
 }
 
