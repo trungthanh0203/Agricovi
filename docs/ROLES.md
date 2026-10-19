@@ -32,13 +32,20 @@ Các vai trò gán được: **Quản lý**, **Nhân viên sản xuất**, **Kho
 | Xem tiền công | ✔ | ✔ | chỉ của mình | chỉ của mình | ✔ | — |
 | Lập bảng lương, rà soát, đưa lên chờ duyệt | ✔ | ✔ | — | — | — | — |
 | **Duyệt, khóa, mở khóa kỳ lương** | ✔ | **—** | — | — | — | — |
-| Ghi nhập kho, danh mục vật tư/kho | ✔ | — | — | — | ✔ | — |
+| Ghi nhập kho, điều chỉnh tồn, danh mục vật tư/kho | ✔ | — | — | — | ✔ | — |
 | Ghi "xuất dùng" vật tư khi ghi việc | ✔ | ✔ | ✔ | ✔ | ✔ | — |
+| Xem tồn kho và lịch sử giao dịch kho | ✔ | ✔ | — | — | ✔ | — |
 | Ghi chi phí, doanh thu | ✔ | — (xem) | — | — | ✔ | — (xem) |
+| Sửa/hủy chi phí, doanh thu | ✔ | — | — | — | ✔ | — |
 | Xem chi phí, doanh thu, giá vốn | ✔ | ✔ | — | — | ✔ | ✔ |
+| **Xem tổng kết vụ** (chi phí, sản lượng, giá thành) | ✔ | ✔ | — | — | ✔ | ✔ (vụ của HTX) |
+| Ghi thu hoạch | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| Sửa/hủy thu hoạch | mọi phiếu | mọi phiếu | ✔* | ✔* | ✔* | mọi phiếu |
 | Gói dịch vụ của cơ sở (xem) | ✔ | ✔ | — | — | — | ✔ |
 
-\* Người ghi sửa/hủy bản ghi **của mình trong 24 giờ** kể từ khi máy chủ nhận (giả định A10).
+\* Người ghi sửa/hủy bản ghi (nhật ký, phiếu thu hoạch) **của mình trong 24 giờ** kể từ khi máy chủ nhận (giả định A10, quyết định D20).
+
+**Ghi chú về "xuất dùng":** nhân viên ghi được xuất dùng và **chỉ thấy các lần xuất do chính mình ghi** (cần cho ghi offline, xem migration 0017); họ không thấy nhập kho, điều chỉnh, tồn kho hay giá vốn. Hủy một nhật ký có xuất kho thì kho **tự được đảo** (D23). Quản lý HTX xem được tổng kết vụ của HTX nhưng không ghi xuất dùng.
 
 ## Quyết định đã chốt (chủ sản phẩm đồng ý đề xuất, mục 1–9)
 
@@ -60,5 +67,7 @@ Các vai trò gán được: **Quản lý**, **Nhân viên sản xuất**, **Kho
 ```bash
 npm run test:db     # roles.test.mjs, members.test.mjs, staff.test.mjs...
 ```
+
+Kiểm thử bước C nằm ở `inventory.test.mjs` (quyền kho/chi phí/thu hoạch, đảo kho, giá vốn, tổng kết), `sync.e2e.test.mjs` (đồng bộ offline nhiều máy) và `summary_report.test.mjs` (cảnh báo thiếu dữ liệu, CSV).
 
 Mỗi hàng trong ma trận có kiểm thử tương ứng (ví dụ: quản lý ghi chi phí bị từ chối, quản lý khóa kỳ lương bị từ chối, tổ trưởng tự xác nhận công của mình bị chặn, nhân viên kiêm Kho & chi phí ghi chi phí được).

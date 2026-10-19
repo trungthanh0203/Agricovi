@@ -1,6 +1,6 @@
 # Phương án bước C: vật tư, kho, chi phí, thu hoạch, tổng kết vụ
 
-Trạng thái: **đề xuất, chờ chủ sản phẩm xác nhận 5 điểm ở mục 3** rồi mới làm. Truy vết: FR-INV-001…008, backlog E2-S10…S17, v1.1 mục 4.4–4.5, quyết định D9 (xong bước C thì đưa người dùng thật thử).
+Trạng thái: **đã làm xong C0–C6 (code, test, tài liệu); chưa `db push` 0016–0017 và chưa thử tay trên máy thật.** Q1–Q5 đã chốt thành D19–D23. Phát sinh khi làm: migration 0017 (ON CONFLICT cần SELECT, xem CLAUDE.md bẫy 8), hàng đợi gửi theo thời điểm tạo tăng chặt, lệnh `npm run test:db:changed`. Truy vết: FR-INV-001…008, backlog E2-S10…S17, v1.1 mục 4.4–4.5, quyết định D9 (xong bước C thì đưa người dùng thật thử).
 
 ## 1. Hiện trạng (đã đọc migration 0003, 0006, 0013, 0015 và app)
 

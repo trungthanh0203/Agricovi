@@ -430,3 +430,73 @@ test('chi phí và doanh thu offline: ghi, ước tính thiếu giả định b�
   assert.equal(mr.failed, 2);
   assert.equal((await pg.query(`select amount::numeric a from expense_records where id=$1`, [E1])).rows[0].a, '150000');
 });
+
+test('TỔNG HỢP bước C: nhiều máy làm offline rồi đồng bộ -> tổng kết vụ khớp số đã ghi; hủy nhật ký thì chi phí vật tư tự giảm', async () => {
+  const { pg, org, owner } = await setup();
+  const worker = await addUser(pg, 8);
+  const fin = await addUser(pg, 9);
+  await pg.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['worker']::member_role[]),($1,$3,array['inventory_finance']::member_role[])`, [org, worker, fin]);
+  const loc = '50000000-0000-4000-8000-0000000000f9';
+  const mat = '60000000-0000-4000-8000-0000000000f9';
+  await pg.query(`insert into inventory_locations (id,organization_id,name) values ($1,$2,'Kho chính')`, [loc, org]);
+  await pg.query(`insert into materials (id,organization_id,name,base_unit_id) values ($1,$2,'Phân NPK',(select id from units_of_measure where code='kg'))`, [mat, org]);
+  const today = new Date().toISOString().slice(0, 10);
+  const wt = (await pg.query(`select id from work_types where code='fertilizing'`)).rows[0].id;
+  const summary = async (u) => (await asUser(pg, u, `select get_cycle_summary($1) s`, [CYC])).rows[0].s;
+
+  // máy của người phụ trách Kho & chi phí (offline): nhập kho có giá, chi phí, doanh thu
+  const finDev = device(pg, fin);
+  await finDev.box.enqueue('inventory_transactions', { id: 'dddddddd-0000-4000-8000-0000000000c1', organization_id: org, location_id: loc, material_id: mat, txn_type: 'receipt', quantity_delta: 20, unit_cost: 100, txn_date: today, reason: null, source: 'offline' });
+  await finDev.box.enqueue('expense_records', { id: 'ffffffff-0000-4000-8000-0000000000c2', organization_id: org, cycle_id: CYC, category: 'utility', kind: 'cash_paid', amount: 1000, expense_date: today, note: null, source: 'offline', created_by: fin });
+  await finDev.box.enqueue('sales_records', { id: 'ffffffff-0000-4000-8000-0000000000c3', organization_id: org, cycle_id: CYC, sold_date: today, quantity: 80, unit: 'kg', amount: 2400000, buyer_note: null, source: 'offline', created_by: fin });
+
+  // máy của nhân viên (offline): ghi việc bón phân kèm 4 kg vật tư, và một phiếu thu hoạch
+  const wDev = device(pg, worker);
+  const log = 'eeeeeeee-0000-4000-8000-0000000000c4';
+  await wDev.box.enqueue('activity_logs', { id: log, organization_id: org, cycle_id: CYC, area_id: AREA, work_type_id: wt, performed_at: new Date().toISOString(), data: {}, note: 'bón phân', source: 'offline', created_by: worker, performed_by: worker });
+  await wDev.box.enqueue('inventory_transactions', { id: 'dddddddd-0000-4000-8000-0000000000c5', organization_id: org, location_id: loc, material_id: mat, txn_type: 'issue', quantity_delta: -4, unit_cost: null, txn_date: today, cycle_id: CYC, activity_log_id: log, reason: null, source: 'offline' });
+  await wDev.box.enqueue('harvest_records', { id: 'ffffffff-0000-4000-8000-0000000000c6', organization_id: org, cycle_id: CYC, harvested_at: new Date().toISOString(), grade: null, quantity: 100, unit: 'kg', loss_quantity: 10, note: null, source: 'offline', created_by: worker });
+
+  // chưa ai đồng bộ: tổng kết nói rõ thiếu dữ liệu
+  let s = await summary(owner);
+  assert.equal(s.missing_harvest, true);
+  assert.equal(s.missing_revenue, true);
+  assert.equal(s.cost_per_kg, null);
+
+  // bật mạng: máy nhân viên gửi trước (xuất kho khi chưa có nhập kho -> tồn âm tạm thời, KHÔNG bị chặn), rồi máy kho
+  assert.equal((await wDev.box.flush()).failed, 0);
+  assert.equal((await finDev.box.flush()).failed, 0);
+  for (const dev of [wDev, finDev]) assert.equal((await dev.local.outbox.toArray()).filter((o) => o.state !== 'synced').length, 0);
+
+  // gửi lặp cả hai máy (mất phản hồi): số liệu không đổi
+  for (const dev of [wDev, finDev]) await dev.local.outbox.toCollection().modify({ state: 'local_only' });
+  await wDev.box.flush();
+  await finDev.box.flush();
+
+  s = await summary(owner);
+  assert.equal(Number(s.cash_paid_other), 1000);
+  assert.equal(Number(s.material_used_cost), 400);   // 4 kg x 100 đ (giá nhập bình quân, tính khi dùng)
+  assert.equal(Number(s.total_cost), 1400);
+  assert.equal(Number(s.harvested_net_qty), 90);
+  assert.equal(Number(s.sold_qty), 80);
+  assert.equal(Number(s.revenue_recorded), 2400000);
+  assert.equal(s.issues_missing_cost, 0);
+  assert.equal(s.missing_harvest, false);
+  assert.equal(s.missing_revenue, false);
+  assert.equal(Number(s.cost_per_kg), Math.round(1400 / 90));
+  const bal = (await asUser(pg, fin, `select balance::numeric b from inventory_balances where material_id=$1`, [mat])).rows[0].b;
+  assert.equal(bal, '16');
+
+  // nhân viên không xem được tổng kết chi phí
+  await assert.rejects(summary(worker), /FORBIDDEN/);
+
+  // hủy nhật ký -> máy chủ đảo kho, chi phí vật tư về 0, tồn trở lại 20
+  await wDev.local.logs.put({ id: log, organization_id: org, cycle_id: CYC, area_id: AREA, work_type_id: wt, performed_at: '', data: {}, note: 'bón phân', version: 1 });
+  await wDev.box.enqueueUpdate('activity_logs', log, 1, { voided_at: new Date().toISOString(), void_reason: 'ghi nhầm vụ' });
+  assert.equal((await wDev.box.flush()).failed, 0);
+  s = await summary(owner);
+  assert.equal(Number(s.material_used_cost), 0);
+  assert.equal(Number(s.total_cost), 1000);
+  assert.equal(Number(s.cost_per_kg), Math.round(1000 / 90));
+  assert.equal((await asUser(pg, fin, `select balance::numeric b from inventory_balances where material_id=$1`, [mat])).rows[0].b, '20');
+});
