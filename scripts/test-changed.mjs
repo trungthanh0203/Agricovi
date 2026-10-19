@@ -58,12 +58,16 @@ function identifiers(sql) {
 
 const selected = new Map(); // file test -> lý do
 const add = (f, why) => { if (!selected.has(f)) selected.set(f, why); };
+// Ứng viên từ migration (theo tên bảng/hàm): xếp theo số tên khớp, chỉ lấy ít nhất để nhẹ máy (CI chạy đủ)
+const MAX_FROM_MIGRATION = 4;
+const migrationCandidates = new Map(); // file test -> { score, why }
+let changedTestFiles = 0;
 let runAll = flag('--all') ? 'theo yêu cầu --all' : null;
 
 for (const f of changed) {
   const norm = f.replace(/\\/g, '/');
   if (/^supabase\/tests\/.+\.test\.mjs$/.test(norm)) {
-    if (existsSync(norm)) add(norm, 'file test thay đổi');
+    if (existsSync(norm)) { add(norm, 'file test thay đổi'); changedTestFiles += 1; }
   } else if (/^supabase\/tests\/(harness\.mjs|shim\.sql)$/.test(norm)) {
     runAll = `${norm} thay đổi (dùng chung cho mọi test)`;
   } else if (/^supabase\/migrations\/.+\.sql$/.test(norm)) {
@@ -71,8 +75,11 @@ for (const f of changed) {
     const ids = identifiers(changedSql(norm));
     let hits = 0;
     for (const [t, text] of testText) {
-      const hit = [...ids].find((id) => new RegExp(`\\b${id}\\b`, 'i').test(text));
-      if (hit) { add(t, `${norm.split('/').pop()} nhắc "${hit}"`); hits += 1; }
+      const matched = [...ids].filter((id) => new RegExp(`\\b${id}\\b`, 'i').test(text));
+      if (matched.length === 0) continue;
+      hits += 1;
+      const score = (migrationCandidates.get(t)?.score ?? 0) + matched.length;
+      migrationCandidates.set(t, { score, why: `${norm.split('/').pop()} nhắc ${matched.slice(0, 2).map((m) => `"${m}"`).join(', ')}` });
     }
     if (hits === 0) runAll = `không tìm được test nào nhắc tới thay đổi trong ${norm}`;
   } else if (/^apps\/app\/src\/lib\/(outbox|db|inventory|production|hooks)\.ts$/.test(norm)) {
@@ -87,6 +94,12 @@ for (const f of changed) {
   }
 }
 
+// Migration: nếu bạn đã viết/sửa file test cho nó thì chỉ chạy các file test đó; nếu chưa thì lấy vài file khớp nhất
+if (!runAll && migrationCandidates.size > 0 && changedTestFiles === 0) {
+  const top = [...migrationCandidates.entries()].sort((a, b) => b[1].score - a[1].score).slice(0, MAX_FROM_MIGRATION);
+  for (const [t, c] of top) add(t, c.why);
+  console.log(`(Migration đổi mà chưa có file test đổi kèm: chỉ lấy ${top.length}/${migrationCandidates.size} file khớp nhất. CI sẽ chạy đủ.)`);
+}
 const files = runAll ? allTests : [...selected.keys()].sort();
 if (runAll) console.log(`Chạy TẤT CẢ ${allTests.length} file test: ${runAll}.`);
 else if (files.length === 0) {

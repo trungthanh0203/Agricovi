@@ -14,6 +14,7 @@ import { LogsScreen } from './screens/LogsScreen';
 import { InventoryTab } from './screens/InventoryTab';
 import { ProductionTab } from './screens/ProductionTab';
 import { syncDown } from './lib/production';
+import { UpdateBanner } from './components/UpdateBanner';
 import { SetupNotice } from './screens/SetupNotice';
 import { WelcomeScreen } from './screens/WelcomeScreen';
 import { ForcePasswordScreen } from './screens/ForcePasswordScreen';
@@ -105,6 +106,7 @@ function Shell() {
 
   return (
     <div className="shell">
+      <UpdateBanner />
       <header className="topbar">
         {orgs.length > 1 ? (
           <label className="switcher">

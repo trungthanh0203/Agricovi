@@ -89,6 +89,7 @@ export function OrgTab({ onAddOrg }: { onAddOrg: () => void }) {
 
       <div className="card">
         <p className="muted">Tài khoản: {session?.user.email}</p>
+        <p className="muted">Phiên bản app: {__APP_VERSION__}</p>
         <div className="actions">
           {!ownsOrg && !isStaff && <button className="secondary" onClick={onAddOrg}>Tạo cơ sở của riêng tôi</button>}
           <button className="secondary" onClick={() => void signOut()}>Đăng xuất</button>
