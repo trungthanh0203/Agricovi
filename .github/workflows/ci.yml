@@ -5,9 +5,16 @@ on:
     branches: [main]
   pull_request:
 
+# Hủy lượt chạy cũ khi có commit mới trên cùng nhánh để đỡ tốn phút chạy
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    name: Typecheck và build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,3 +24,17 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
+
+  db-tests:
+    name: Test CSDL và đồng bộ (PGlite)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Áp toàn bộ migration vào PostgreSQL giả lập và chạy kiểm thử quyền, hạn mức, đồng bộ offline, xung đột
+      - run: npm run test:db

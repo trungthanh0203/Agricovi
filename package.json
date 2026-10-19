@@ -13,7 +13,8 @@
     "dev:web": "npm run dev -w @agriconnect/web",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test:db": "node --import tsx --test \"supabase/tests/*.test.mjs\""
+    "test:db": "node --import tsx --test --test-force-exit \"supabase/tests/*.test.mjs\"",
+    "test:db:file": "node --import tsx --test --test-force-exit"
   },
   "engines": {
     "node": ">=20"

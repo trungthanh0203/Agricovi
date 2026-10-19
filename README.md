@@ -35,10 +35,22 @@ npx supabase db reset      # áp dụng migration
 Kiểm thử CSDL không cần Docker (chạy migration trên PGlite, có mô phỏng `auth`/vai trò Supabase):
 
 ```bash
-npm run test:db      # 28 test: hạn mức, RLS, kho, chấm công, khóa kỳ, xuất bản, riêng tư
+npm run typecheck                                        # vài giây, chạy sau mỗi thay đổi
+npm run test:db:file -- supabase/tests/roles.test.mjs    # chỉ một file test (nhanh)
+npm run test:db                                          # toàn bộ test CSDL và đồng bộ (CI cũng chạy)
 ```
 
-Sơ đồ quan hệ: `docs/ERD.md`.
+## Tài liệu
+
+| File | Nội dung |
+|---|---|
+| `CLAUDE.md` | Tóm tắt cho phiên làm việc mới: quy tắc, bẫy đã gặp, trạng thái, việc kế tiếp |
+| `docs/DECISIONS.md` | Quyết định đã chốt và giả định chờ xác nhận |
+| `docs/ROLES.md` | Ma trận vai trò và quyền |
+| `docs/ERD.md` | Sơ đồ quan hệ CSDL |
+| `docs/SETUP_SUPABASE.md` | Nối Supabase thật, migration, Edge Function |
+| `docs/DEPLOY_CLOUDFLARE.md` | Triển khai từ GitHub lên Cloudflare Pages |
+| `AgriConnect_*.md` | Đặc tả v1.1, bổ sung v1.2, backlog |
 
 ## Nguyên tắc bắt buộc
 
@@ -50,9 +62,17 @@ Sơ đồ quan hệ: `docs/ERD.md`.
 
 ## Triển khai (giai đoạn đầu)
 
-GitHub (mã nguồn, Actions) → Cloudflare Pages (3 dự án: app, admin, web) → Supabase.
-Trước khi có người dùng thật: mua domain và nâng Supabase lên gói có backup (v1.2 mục 2.1).
+GitHub (mã nguồn, Actions chạy test) → Cloudflare Pages (app; admin và web khi có nội dung) → Supabase.
+Hướng dẫn: `docs/DEPLOY_CLOUDFLARE.md`. Trước khi có người dùng thật: mua domain và nâng Supabase lên gói có backup (v1.2 mục 2.1).
+
+Đẩy code lên GitHub lần đầu (kho riêng tư, để trống):
+
+```bash
+git branch -M main
+git remote add origin https://github.com/<tài-khoản>/<tên-kho>.git
+git push -u origin main
+```
 
 ## Tình trạng
 
-Đây là **khung dự án**. Đã có: cấu trúc, shell 4 mục điều hướng, khung hàng đợi đồng bộ, migration lõi (tổ chức, HTX-hộ, gói, vụ, hạn mức, RLS cơ bản). Chưa có: đăng nhập, các màn hình nghiệp vụ, `public_*`, nhật ký/kho/chấm công. Xem backlog.
+Đã có: đăng nhập (email; nhân viên bằng số điện thoại), cơ sở, HTX-hộ, gói và hạn mức, khu trồng, vụ, nhật ký offline-first có sửa/hủy/xung đột, nhiều vai trò, tổ lao động. Việc kế tiếp: vật tư, kho, chi phí, thu hoạch (bước C). Xem `CLAUDE.md` và backlog.

@@ -1,0 +1,68 @@
+# AgriConnect — hướng dẫn cho phiên làm việc mới
+
+Nền tảng quản lý nuôi trồng (app PWA) + website xúc tiến thương mại. Người dùng cuối nói **tiếng Việt**: mọi chữ trên giao diện, thông báo lỗi, tài liệu và commit đều viết **tiếng Việt**, dễ hiểu cho người ít quen công nghệ. Trả lời ngắn gọn; hướng dẫn thử dài đưa vào `docs/`, không dán cả vào chat.
+
+## Đọc trước khi làm (theo thứ tự)
+
+1. `docs/DECISIONS.md` — mọi quyết định đã chốt (D1…D18) và các **[GIẢ ĐỊNH]** còn chờ xác nhận. **Không tự đổi quyết định đã chốt.**
+2. `docs/ROLES.md` — ma trận vai trò/quyền (nguồn sự thật là CSDL).
+3. `AgriConnect_Dac_ta_thiet_ke_nghiep_vu_v1.1.md` + `AgriConnect_Dac_ta_bo_sung_v1.2.md` + `AgriConnect_Backlog_v1.2.md` — đặc tả và backlog (mã FR-…).
+4. `docs/ERD.md`, `docs/SETUP_SUPABASE.md`.
+
+## Cấu trúc
+
+| Thư mục | Nội dung |
+|---|---|
+| `apps/app` | App PWA (Vite + React + TS, Dexie/IndexedDB, hàng đợi đồng bộ `src/lib/outbox.ts`) |
+| `apps/admin` | Trang quản trị nền tảng (mới là khung) |
+| `apps/web` | Website công khai (Astro; chỉ đọc `public_*`) — mới là khung |
+| `packages/shared` | Kiểu dùng chung |
+| `supabase/migrations` | **Nguồn sự thật của CSDL** (schema, ràng buộc, RLS, hàm). Đánh số `2026101800NNNN_*.sql` |
+| `supabase/functions/staff-accounts` | Edge Function tạo/đặt lại mật khẩu tài khoản nhân viên (dùng khóa quản trị, chỉ chạy ở máy chủ) |
+| `supabase/tests` | Test CSDL + đồng bộ đầu-cuối trên PGlite |
+
+## Lệnh hay dùng
+
+```bash
+npm run typecheck                         # vài giây; chạy sau mỗi thay đổi
+npm run build                             # ~30 giây
+npm run test:db:file -- supabase/tests/roles.test.mjs   # chỉ test liên quan (nhanh, ưu tiên)
+npm run test:db                           # toàn bộ test CSDL (chậm hơn; CI cũng chạy)
+npm run dev:app                           # http://localhost:5180
+npx supabase db push                      # đẩy migration (người dùng tự chạy)
+npx supabase functions deploy staff-accounts
+```
+
+## Quy tắc bất biến (đã trả giá bằng lỗi thật)
+
+- **Phân quyền và hạn mức được ép trong CSDL** (RLS, hàm, trigger), không chỉ ở giao diện. Khóa `service_role` không bao giờ vào frontend.
+- **Mọi thay đổi schema = migration mới** (không sửa migration đã đẩy; chỉ sửa file chưa từng được áp dụng). Không dán SQL tay vào Supabase; không bao giờ `supabase db reset` trên dự án thật.
+- Bản ghi tạo offline có **UUID tạo ở thiết bị**; gửi lên bằng `ON CONFLICT DO NOTHING`; sửa phải qua hàm có **phiên bản + op_id** (xem `update_activity_log`, `update_cycle`). Không ghi đè âm thầm; xung đột thì cho người dùng chọn.
+- Dữ liệu vận hành mặc định riêng tư; website chỉ đọc `public_*` (bản chụp bất biến đã duyệt).
+- Giao dịch kho và nhật ký **chỉ thêm**; sửa = sự kiện điều chỉnh + audit; hủy = đánh dấu, không xóa.
+- Một người có **nhiều vai trò** (`organization_memberships.roles`); **chủ bao gồm mọi vai trò**. Tổ trưởng là chỉ định theo tổ, không phải vai trò. Dùng `hasRole()` (`apps/app/src/lib/roles.ts`) phía giao diện và `has_org_role()` phía CSDL.
+
+## Bẫy đã gặp (đừng lặp lại)
+
+1. **Chính sách SELECT phải dựa vào CỘT của chính hàng** (hoặc hàng đã tồn tại từ trước). Tra cứu lại hàng vừa thêm theo `id` làm `INSERT … RETURNING` (supabase-js dùng) thất bại với lỗi RLS. Test: `supabase/tests/returning.test.mjs`.
+2. Hàm SQL có tham số trùng tên cột (ví dụ `roles`) → chọn nhầm cột; dùng `$2` hoặc đặt tên khác. `RETURNS TABLE (cột…)` cũng gây "ambiguous" nếu trùng tên cột đang truy vấn.
+3. Quyền `EXECUTE` mặc định cấp cho `PUBLIC`; phải `revoke … from public, anon`. Trong **view**, quyền EXECUTE của hàm được kiểm theo người gọi (anon), không theo chủ view.
+4. Thứ tự giá trị enum quyết định `ORDER BY` và `array(select distinct …)` (không phải thứ tự chữ cái).
+5. Truy vấn danh sách "cơ sở của tôi" phải **lọc `user_id = chính mình`**, nếu không sẽ lấy nhầm vai trò của người khác.
+6. PowerShell nuốt dấu backtick/`$` trong chuỗi mẫu: **sửa file bằng công cụ Edit/Write**, không dùng `Replace` trong PowerShell cho mã có template string.
+7. `node --test` với PGlite nhân bản cần `--test-force-exit` (đã có trong script) để tiến trình tự thoát.
+8. Phiên làm việc có thể bị ngắt và mất file chưa lưu: **commit sau mỗi mốc**.
+
+## Trạng thái (cập nhật khi xong mốc)
+
+- Xong: nền tảng, tài khoản/cơ sở/HTX-hộ, gói và hạn mức, khu trồng, vụ, nhật ký offline-first, lịch sử/sửa/hủy/xung đột, tài khoản nhân viên bằng số điện thoại, nhiều vai trò, tổ lao động, ma trận quyền.
+- **Việc kế tiếp (bước C):** vật tư, kho, chi phí, thu hoạch, tổng kết vụ (schema đã có trong migration 0003; chưa có màn hình). Sau bước C đưa app cho người dùng thật thử (D9).
+- Sau đó: chấm công + tiền công (bước E; schema 0004, quyền 0015), trang admin (gói/thanh toán/xếp hạng), website, pilot.
+- Chưa làm: bộ mẫu dưa lưới (cần số liệu khảo sát), màn xem/sửa khu trồng, giao diện chấm công.
+- Hạ tầng: GitHub + Supabase + Cloudflare Pages; domain chưa mua (`login_email_domain` đang là `agricovi.com` tạm — phải là tên miền của chủ sản phẩm, xem cảnh báo trong `docs/DECISIONS.md`).
+
+## Cách làm việc hiệu quả
+
+- Sửa nhỏ bằng Edit, không viết lại cả file. Chạy typecheck + **chỉ test liên quan**; test đầy đủ để CI chạy.
+- Khi cần chủ sản phẩm quyết định: nêu **đề xuất + lý do** và hỏi tối đa vài câu; ghi quyết định vào `docs/DECISIONS.md`.
+- Mỗi tính năng mới đi kèm test CSDL cho quyền và ràng buộc; logic đồng bộ có test đầu-cuối ở `supabase/tests/sync.e2e.test.mjs`.

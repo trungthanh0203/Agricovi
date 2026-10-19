@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const migrationsDir = join(here, '..', 'migrations');
 
-/** Tạo DB mới, áp shim Supabase rồi toàn bộ migration theo thứ tự tên file. */
-export async function createDb() {
+/** Dựng CSDL mẫu: áp shim Supabase rồi toàn bộ migration theo thứ tự tên file. */
+async function buildTemplate() {
   const db = new PGlite();
   await db.exec(readFileSync(join(here, 'shim.sql'), 'utf8'));
   const files = readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
@@ -19,6 +19,17 @@ export async function createDb() {
     }
   }
   return db;
+}
+
+// Mỗi tiến trình test (mỗi file) chỉ áp migration MỘT lần; mỗi test nhận một bản NHÂN BẢN sạch của CSDL mẫu.
+// Nhanh hơn nhiều so với áp lại toàn bộ migration cho từng test. Không bao giờ dùng trực tiếp bản mẫu.
+let templatePromise;
+
+/** Trả về một CSDL mới, độc lập, đã có toàn bộ schema. */
+export async function createDb() {
+  templatePromise ??= buildTemplate();
+  const template = await templatePromise;
+  return template.clone();
 }
 
 export const uid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
