@@ -48,6 +48,16 @@ Lưu ý với Workers Builds:
 - Tên dự án Workers phải trùng `name` trong `wrangler.jsonc` (`agriconnect-app`); nếu bạn đặt tên khác, sửa `name` cho khớp.
 - Địa chỉ có dạng `https://agriconnect-app.<tài-khoản>.workers.dev`. Mục 2 và 6 bên dưới áp dụng y hệt, chỉ thay địa chỉ.
 
+### Nếu app vẫn báo "chưa được nối với máy chủ Supabase" sau khi build
+
+Hai biến `VITE_SUPABASE_URL` và `VITE_SUPABASE_ANON_KEY` được **nhúng vào file JavaScript lúc build**; `.env.local` trên máy không lên GitHub nên Cloudflare không thấy. Màn hình báo lỗi giờ cho biết **biến nào đang thiếu**. Cách chắc chắn nhất, không phụ thuộc cài đặt trên bảng điều khiển:
+
+1. Trên máy bạn, sao chép `apps/app/.env.local` thành `apps/app/.env.production` (cùng nội dung: URL Supabase và khóa **anon**).
+2. Chạy `git add apps/app/.env.production`, `git commit -m "Cấu hình Supabase cho bản build"`, rồi `git push`. Khóa anon vốn công khai (nằm trong file JavaScript gửi cho trình duyệt) nên đưa vào kho được. **Tuyệt đối không** đưa `service_role`.
+3. Cloudflare tự build lại; mở trang bằng Ctrl+F5.
+
+Biến khai ở bảng điều khiển (Build variables) vẫn **ưu tiên hơn** file này, nên sau này tách môi trường thật/thử chỉ cần khai biến ở bảng điều khiển.
+
 ## 2. Cho phép địa chỉ mới đăng nhập (bắt buộc)
 
 Supabase → **Authentication → URL Configuration**:

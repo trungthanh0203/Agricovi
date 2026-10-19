@@ -5,6 +5,8 @@ dist/
 .env
 .env.*
 !.env.example
+# Cấu hình công khai (URL + khóa anon) để Cloudflare build không phụ thuộc cài đặt trên bảng điều khiển
+!apps/app/.env.production
 supabase/.temp/
 supabase/.branches/
 *.log

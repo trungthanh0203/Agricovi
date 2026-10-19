@@ -1,6 +1,6 @@
 {
   // Cấu hình triển khai app lên Cloudflare (Workers với tệp tĩnh). Xem docs/DEPLOY_CLOUDFLARE.md, "Cách B".
-  "name": "agriconnect-app",
+  "name": "agricovi",
   "compatibility_date": "2025-09-01",
   "assets": {
     "directory": "./dist",
