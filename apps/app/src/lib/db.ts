@@ -79,6 +79,23 @@ export interface LocationRow {
   is_active: boolean;
 }
 
+export interface HarvestRow {
+  id: string;
+  organization_id: string;
+  cycle_id: string;
+  harvested_at: string;
+  grade: string | null;
+  quantity: number;
+  unit: string;
+  loss_quantity: number | null;
+  note: string | null;
+  voided_at?: string | null;
+  void_reason?: string | null;
+  version: number;
+  created_by?: string | null;
+  received_at?: string;
+}
+
 /** Tồn theo kho và vật tư (bản chụp từ view inventory_balances; chỉ vai trò được đọc kho mới có) */
 export interface BalanceRow {
   organization_id: string;
@@ -101,6 +118,7 @@ export class LocalDb extends Dexie {
   materials!: Table<MaterialRow, string>;
   locations!: Table<LocationRow, string>;
   balances!: Table<BalanceRow, [string, string]>;
+  harvests!: Table<HarvestRow, string>;
 
   constructor(name = 'agriconnect') {
     super(name);
@@ -126,6 +144,19 @@ export class LocalDb extends Dexie {
       materials: 'id, organization_id',
       locations: 'id, organization_id',
       balances: '[location_id+material_id], organization_id',
+    });
+    this.version(4).stores({
+      outbox: 'id, state, table, createdAt',
+      areas: 'id, organization_id',
+      cycles: 'id, owner_org_id, area_id',
+      logs: 'id, cycle_id, organization_id, performed_at',
+      workTypes: 'id',
+      cropTypes: 'id',
+      units: 'id',
+      materials: 'id, organization_id',
+      locations: 'id, organization_id',
+      balances: '[location_id+material_id], organization_id',
+      harvests: 'id, cycle_id, organization_id, harvested_at',
     });
   }
 }

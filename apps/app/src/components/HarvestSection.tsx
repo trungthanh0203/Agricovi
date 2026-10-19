@@ -1,0 +1,283 @@
+import { useMemo, useState, type FormEvent } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
+import { SyncBadge } from './SyncBadge';
+import { useAuth } from '../lib/auth';
+import { db, type HarvestRow } from '../lib/db';
+import { friendlyError } from '../lib/errors';
+import {
+  editHarvest, GRADE_SUGGESTIONS, recordHarvest, validateHarvest, voidHarvest,
+} from '../lib/harvest';
+import { toLocalInput, useRecordSync } from '../lib/hooks';
+import { formatQty, parseNumber } from '../lib/inventory';
+import { useOrgs } from '../lib/orgs';
+import { canManageProduction, hasRole } from '../lib/roles';
+
+const OWN_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // khớp chính sách harvest_update_own ở máy chủ
+const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
+
+/** Thu hoạch: ghi, xem, sửa, hủy. Dùng được offline; sửa/hủy có phát hiện xung đột. */
+export function HarvestSection() {
+  const { session } = useAuth();
+  const { active } = useOrgs();
+  const sync = useRecordSync();
+  const harvests = useLiveQuery(() => db.harvests.toArray(), [], []);
+  const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
+  const areas = useLiveQuery(() => db.areas.toArray(), [], []);
+  const cropTypes = useLiveQuery(() => db.cropTypes.toArray(), [], []);
+
+  const [mode, setMode] = useState<{ kind: 'list' } | { kind: 'new' } | { kind: 'edit'; id: string }>({ kind: 'list' });
+  const [cycleFilter, setCycleFilter] = useState('');
+  const [showVoided, setShowVoided] = useState(false);
+  const [voiding, setVoiding] = useState<string | null>(null);
+  const [reason, setReason] = useState('');
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const uid = session?.user.id;
+  const canRecord = hasRole(active?.roles, 'manager', 'worker', 'inventory_finance', 'cooperative_manager');
+  const manager = canManageProduction(active?.roles);
+
+  const myCycles = useMemo(
+    () => cycles.filter((c) => c.owner_org_id === active?.id || areas.find((a) => a.id === c.area_id)?.organization_id === active?.id),
+    [cycles, areas, active],
+  );
+  const myCycleIds = useMemo(() => new Set(myCycles.map((c) => c.id)), [myCycles]);
+  const cycleLabel = (id: string | null) => {
+    const c = cycles.find((x) => x.id === id);
+    if (!c) return '';
+    return `${cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? ''} · ${areas.find((a) => a.id === c.area_id)?.name ?? ''}`;
+  };
+
+  const list = useMemo(
+    () => harvests
+      .filter((h) => myCycleIds.has(h.cycle_id))
+      .filter((h) => !cycleFilter || h.cycle_id === cycleFilter)
+      .filter((h) => (showVoided ? true : !h.voided_at))
+      .sort((a, b) => b.harvested_at.localeCompare(a.harvested_at)),
+    [harvests, myCycleIds, cycleFilter, showVoided],
+  );
+  const valid = list.filter((h) => !h.voided_at);
+  const gross = valid.reduce((s, h) => s + h.quantity, 0);
+  const loss = valid.reduce((s, h) => s + (h.loss_quantity ?? 0), 0);
+
+  function canEdit(h: HarvestRow): boolean {
+    if (h.voided_at) return false;
+    if (sync.get(h.id)?.conflict) return false; // giải quyết xung đột trước
+    if (manager) return true;
+    if (!uid || h.created_by !== uid) return false;
+    const base = h.received_at ? new Date(h.received_at).getTime() : Date.now();
+    return Date.now() - base < OWN_EDIT_WINDOW_MS;
+  }
+
+  async function confirmVoid(id: string) {
+    if (reason.trim().length < 3) return setMsg('Hãy ghi lý do hủy (ít nhất 3 ký tự).');
+    await voidHarvest(id, reason);
+    setVoiding(null);
+    setReason('');
+    setMsg(null);
+  }
+
+  if (mode.kind === 'new' || mode.kind === 'edit') {
+    return (
+      <HarvestForm
+        cycles={myCycles.filter((c) => c.status !== 'cancelled')}
+        cycleLabel={cycleLabel}
+        editing={mode.kind === 'edit' ? harvests.find((h) => h.id === mode.id) ?? null : null}
+        userId={uid ?? ''}
+        onClose={() => setMode({ kind: 'list' })}
+      />
+    );
+  }
+
+  return (
+    <>
+      {canRecord ? (
+        <button className="primary big" onClick={() => setMode({ kind: 'new' })} disabled={myCycles.length === 0}>Ghi thu hoạch</button>
+      ) : (
+        <p className="muted">Vai trò của bạn chỉ xem được thu hoạch.</p>
+      )}
+      {myCycles.length === 0 && <p className="msg warn">Chưa có vụ trồng nào. Hãy tạo vụ ở màn hình Sản xuất trước.</p>}
+
+      <div className="filters">
+        <label>
+          Vụ trồng
+          <select value={cycleFilter} onChange={(e) => setCycleFilter(e.target.value)}>
+            <option value="">Tất cả vụ</option>
+            {myCycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
+          </select>
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
+          Hiện cả phiếu đã hủy
+        </label>
+      </div>
+
+      <div className="card slim">
+        <div className="row"><span>Tổng thu</span><strong>{formatQty(gross)} kg</strong></div>
+        <div className="row"><span>Hao hụt</span><strong>{formatQty(loss)} kg</strong></div>
+        <div className="row"><span>Còn lại sau hao hụt</span><strong>{formatQty(gross - loss)} kg</strong></div>
+        <p className="muted">{valid.length} phiếu{cycleFilter ? ' của vụ đã chọn' : ''}. Chỉ tính phiếu chưa hủy.</p>
+      </div>
+
+      {msg && <p className="msg warn" role="status">{msg}</p>}
+      {list.length === 0 && <p className="muted">Chưa có phiếu thu hoạch nào.</p>}
+
+      {list.map((h) => (
+        <div className={h.voided_at ? 'card slim voided' : 'card slim'} key={h.id}>
+          <div className="row">
+            <strong>{formatQty(h.quantity)} kg{h.grade ? ` · ${h.grade}` : ''}</strong>
+            <span className="muted">{new Date(h.harvested_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}</span>
+          </div>
+          <p className="muted">{cycleLabel(h.cycle_id)}</p>
+          {h.loss_quantity ? <p>Hao hụt: {formatQty(h.loss_quantity)} kg</p> : null}
+          {h.note && <p>{h.note}</p>}
+          <div className="badges">
+            {h.version > 1 && !h.voided_at && <span className="pill">Đã chỉnh sửa</span>}
+            {h.voided_at && <span className="pill err">Đã hủy</span>}
+            <SyncBadge sync={sync.get(h.id)} />
+          </div>
+          {h.voided_at && h.void_reason && <p className="muted">Lý do hủy: {h.void_reason}</p>}
+
+          {canEdit(h) && voiding !== h.id && (
+            <div className="actions">
+              <button className="secondary" onClick={() => setMode({ kind: 'edit', id: h.id })}>Sửa</button>
+              <button className="secondary" onClick={() => { setVoiding(h.id); setReason(''); setMsg(null); }}>Hủy phiếu</button>
+            </div>
+          )}
+          {voiding === h.id && (
+            <div className="inline-form">
+              <label>
+                Lý do hủy
+                <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Ví dụ: nhập nhầm số lượng" />
+              </label>
+              <p className="muted">Phiếu không bị xóa, chỉ được đánh dấu đã hủy và không khôi phục được.</p>
+              <div className="actions">
+                <button className="secondary" onClick={() => void confirmVoid(h.id)}>Xác nhận hủy</button>
+                <button className="link" onClick={() => setVoiding(null)}>Không hủy</button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </>
+  );
+}
+
+function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
+  cycles: { id: string; status: keyof typeof CYCLE_STATUS_LABEL_VI; owner_org_id: string; area_id: string; crop_type_id: string }[];
+  cycleLabel: (id: string | null) => string;
+  editing: HarvestRow | null;
+  userId: string;
+  onClose: () => void;
+}) {
+  const sync = useRecordSync();
+  const allCycles = useLiveQuery(() => db.cycles.toArray(), [], []);
+  const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
+  // vụ đang chạy lên đầu danh sách
+  const ordered = [...cycles].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active'));
+
+  const [cycleId, setCycleId] = useState(editing?.cycle_id ?? '');
+  const [when, setWhen] = useState(toLocalInput(editing ? new Date(editing.harvested_at) : new Date()));
+  const [grade, setGrade] = useState(editing?.grade ?? '');
+  const [qty, setQty] = useState(editing ? String(editing.quantity) : '');
+  const [loss, setLoss] = useState(editing?.loss_quantity ? String(editing.loss_quantity) : '');
+  const [note, setNote] = useState(editing?.note ?? '');
+  const [error, setError] = useState<string | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
+
+  const effCycleId = editing ? editing.cycle_id : cycleId || (ordered.find((c) => c.id === remembered)?.id ?? ordered[0]?.id ?? '');
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    const q = parseNumber(qty);
+    const l = parseNumber(loss);
+    const bad = validateHarvest(q, l);
+    if (bad) return setError(bad);
+    const cycle = allCycles.find((c) => c.id === effCycleId);
+    if (!cycle) return setError('Hãy chọn vụ trồng.');
+    setError(null);
+    try {
+      if (editing) {
+        await editHarvest(editing.id, { harvestedAt: new Date(when).toISOString(), grade, quantity: q!, lossQuantity: l, note });
+        onClose();
+        return;
+      }
+      const id = await recordHarvest({ cycle, harvestedAt: new Date(when).toISOString(), grade, quantity: q!, lossQuantity: l, note, userId });
+      try { localStorage.setItem(LAST_CYCLE_KEY, cycle.id); } catch { /* bỏ qua */ }
+      setSavedId(id);
+    } catch (err) {
+      setError(friendlyError(err));
+    }
+  }
+
+  function again() {
+    setSavedId(null);
+    setQty('');
+    setLoss('');
+    setNote('');
+    setError(null);
+    setWhen(toLocalInput(new Date()));
+  }
+
+  if (savedId) {
+    const s = sync.get(savedId);
+    return (
+      <section>
+        <h1>Đã ghi thu hoạch</h1>
+        <p className="msg ok" role="status">{s && s.state !== 'synced' ? SYNC_STATE_LABEL_VI.local_only : SYNC_STATE_LABEL_VI.synced}</p>
+        <SyncBadge sync={s} />
+        {(!s || s.state !== 'synced') && !navigator.onLine && <p className="muted">Phiếu đang nằm trên điện thoại và sẽ tự gửi khi có mạng.</p>}
+        <button className="primary" onClick={again}>Ghi thêm phiếu</button>
+        <button className="secondary" onClick={onClose}>Xong</button>
+      </section>
+    );
+  }
+
+  return (
+    <section>
+      <h1>{editing ? 'Sửa phiếu thu hoạch' : 'Ghi thu hoạch'}</h1>
+      <form className="inline-form" onSubmit={onSubmit} noValidate>
+        {editing ? (
+          <p className="muted">{cycleLabel(editing.cycle_id)} — không đổi được vụ; muốn đổi hãy hủy phiếu và ghi lại. Mọi thay đổi được lưu lịch sử.</p>
+        ) : (
+          <label>
+            Vụ trồng
+            <select value={effCycleId} onChange={(e) => setCycleId(e.target.value)}>
+              {ordered.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
+            </select>
+          </label>
+        )}
+        <label>
+          Thời điểm thu
+          <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+        </label>
+        <label>
+          Số lượng thu (kg)
+          <input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} />
+        </label>
+        <label>
+          Phân loại (không bắt buộc)
+          <input value={grade} list="grade-list" onChange={(e) => setGrade(e.target.value)} placeholder="Loại 1, Loại 2…" />
+          <datalist id="grade-list">{GRADE_SUGGESTIONS.map((g) => <option key={g} value={g} />)}</datalist>
+        </label>
+        <label>
+          Hao hụt (kg, không bắt buộc)
+          <input value={loss} inputMode="decimal" onChange={(e) => setLoss(e.target.value)} />
+          <small>Quả hỏng, nứt, loại bỏ… tính trong số lượng thu ở trên.</small>
+        </label>
+        <label>
+          Ghi chú (không bắt buộc)
+          <input value={note} onChange={(e) => setNote(e.target.value)} />
+        </label>
+        {error && <p className="msg error" role="alert">{error}</p>}
+        {!navigator.onLine && (
+          <p className="msg warn">
+            Đang offline. {editing ? 'Thay đổi sẽ lưu trên điện thoại và gửi sau; nếu người khác đã sửa phiếu này, bạn sẽ được hỏi cách giải quyết.' : 'Phiếu sẽ được lưu trên điện thoại và gửi sau.'}
+          </p>
+        )}
+        <button type="submit" className="primary">{editing ? 'Lưu thay đổi' : 'Lưu'}</button>
+        <button type="button" className="link" onClick={onClose}>Hủy</button>
+      </form>
+    </section>
+  );
+}

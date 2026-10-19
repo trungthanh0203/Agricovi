@@ -315,3 +315,54 @@ test('nhật ký bị lỗi khi đồng bộ thì giao dịch xuất kho của n
   const left = await d.local.outbox.get('dddddddd-0000-4000-8000-0000000000b1');
   assert.ok(left && left.state !== 'synced');
 });
+
+test('thu hoạch offline: ghi, sửa có phiên bản, xung đột khi người khác sửa trước, hủy; gửi lặp không nhân đôi', async () => {
+  const { pg, org, owner, mgr } = await setup();
+  const worker = await addUser(pg, 8);
+  await pg.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['worker']::member_role[])`, [org, worker]);
+  const H = 'ffffffff-0000-4000-8000-000000000001';
+  const d = device(pg, worker);
+  const row = { id: H, organization_id: org, cycle_id: CYC, harvested_at: new Date().toISOString(), grade: 'Loại 1', quantity: 120, unit: 'kg', loss_quantity: 8, note: null, source: 'offline', created_by: worker };
+
+  await d.box.enqueue('harvest_records', row);
+  assert.equal((await d.box.flush()).synced, 1);
+  await d.local.outbox.toCollection().modify({ state: 'local_only' }); // gửi lặp (mất phản hồi)
+  await d.box.flush();
+  assert.equal((await pg.query(`select count(*)::int n from harvest_records where id=$1`, [H])).rows[0].n, 1);
+
+  // người ghi sửa bản của mình (trong 24 giờ) -> phiên bản 2
+  await d.local.harvests.put({ ...row, version: 1 });
+  await d.box.enqueueUpdate('harvest_records', H, 1, { quantity: 125, loss_quantity: 10 });
+  assert.equal((await d.box.flush()).failed, 0);
+  const cur = (await pg.query(`select quantity::numeric q, loss_quantity::numeric l, version from harvest_records where id=$1`, [H])).rows[0];
+  assert.deepEqual({ q: cur.q, l: cur.l, v: cur.version }, { q: '125', l: '10', v: 2 });
+  assert.equal((await d.local.harvests.get(H)).version, 2);
+
+  // quản lý đang offline sửa trên phiên bản 2; trong lúc đó chủ sửa và gửi trước -> quản lý nhận XUNG ĐỘT, dữ liệu của chủ còn nguyên
+  const mgrDev = device(pg, mgr);
+  const ownDev = device(pg, owner);
+  for (const dev of [mgrDev, ownDev]) await dev.local.harvests.put({ ...row, quantity: 125, loss_quantity: 10, version: 2 });
+  await mgrDev.box.enqueueUpdate('harvest_records', H, 2, { quantity: 130 });
+  await ownDev.box.enqueueUpdate('harvest_records', H, 2, { quantity: 126 });
+  assert.equal((await ownDev.box.flush()).failed, 0);
+  assert.equal((await mgrDev.box.flush()).failed, 1);
+  assert.equal((await pg.query(`select quantity::numeric q from harvest_records where id=$1`, [H])).rows[0].q, '126');
+  const item = (await mgrDev.local.outbox.toArray())[0];
+  assert.match(item.lastError, /CONFLICT/);
+  assert.equal(Number(item.conflict.server.quantity), 126);
+
+  // "Dùng bản máy chủ": bản trên máy lấy theo máy chủ, không gửi gì thêm
+  await mgrDev.box.resolveUseServer(item.id);
+  assert.equal(Number((await mgrDev.local.harvests.get(H)).quantity), 126);
+  assert.equal((await mgrDev.local.outbox.toArray()).length, 0);
+
+  // hủy phiếu (có lý do) một chiều; sau đó không sửa được nội dung
+  await ownDev.local.harvests.update(H, { version: 3 });
+  await ownDev.box.enqueueUpdate('harvest_records', H, 3, { voided_at: new Date().toISOString(), void_reason: 'nhập nhầm' });
+  assert.equal((await ownDev.box.flush()).failed, 0);
+  assert.ok((await pg.query(`select voided_at from harvest_records where id=$1`, [H])).rows[0].voided_at);
+  await ownDev.local.harvests.update(H, { version: 4 });
+  await ownDev.box.enqueueUpdate('harvest_records', H, 4, { quantity: 1 });
+  assert.equal((await ownDev.box.flush()).failed, 1);
+  assert.match((await ownDev.local.outbox.toArray()).find((o) => o.state === 'needs_attention').lastError, /VOIDED/);
+});

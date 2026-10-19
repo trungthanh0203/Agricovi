@@ -18,6 +18,7 @@ import { supabase } from './supabase';
 const UPDATE_RPC: Record<string, string> = {
   activity_logs: 'update_activity_log',
   production_cycles: 'update_cycle',
+  harvest_records: 'update_harvest',
 };
 
 interface ClientResult<T = unknown> {
@@ -39,16 +40,18 @@ export interface OutboxDeps {
   online: () => boolean;
 }
 
-type LocalTableName = 'areas' | 'cycles' | 'logs';
+type LocalTableName = 'areas' | 'cycles' | 'logs' | 'harvests';
 const LOCAL_TABLE: Record<string, LocalTableName> = {
   production_areas: 'areas',
   production_cycles: 'cycles',
   activity_logs: 'logs',
+  harvest_records: 'harvests',
 };
 /** Các cột của hàng máy chủ được ghi vào bản lưu trên thiết bị khi "dùng bản máy chủ" */
 const SERVER_FIELDS: Record<string, string[]> = {
   activity_logs: ['data', 'note', 'performed_at', 'work_type_id', 'voided_at', 'void_reason', 'version'],
   production_cycles: ['status', 'start_date', 'note', 'version'],
+  harvest_records: ['harvested_at', 'grade', 'quantity', 'loss_quantity', 'note', 'voided_at', 'void_reason', 'version'],
 };
 
 export function createOutbox(deps: OutboxDeps) {

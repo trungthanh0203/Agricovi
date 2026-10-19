@@ -13,11 +13,15 @@ const FIELD_LABEL: Record<string, string> = {
   status: 'Trạng thái',
   start_date: 'Ngày bắt đầu',
   work_type_id: 'Loại việc',
+  harvested_at: 'Thời điểm thu',
+  grade: 'Phân loại',
+  quantity: 'Số lượng (kg)',
+  loss_quantity: 'Hao hụt (kg)',
 };
 
 function show(key: string, v: unknown): string {
   if (v === null || v === undefined || v === '') return '(trống)';
-  if (key === 'performed_at' || key === 'voided_at') return new Date(String(v)).toLocaleString('vi-VN');
+  if (key === 'performed_at' || key === 'voided_at' || key === 'harvested_at') return new Date(String(v)).toLocaleString('vi-VN');
   if (key === 'status') return CYCLE_STATUS_LABEL_VI[v as CycleStatus] ?? String(v);
   if (typeof v === 'object') return JSON.stringify(v);
   return String(v);

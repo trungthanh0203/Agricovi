@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CatalogSection } from '../components/CatalogSection';
+import { HarvestSection } from '../components/HarvestSection';
 import { StockEntry } from '../components/StockEntry';
 import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
@@ -10,16 +11,17 @@ import {
 import { useOrgs } from '../lib/orgs';
 import { hasRole } from '../lib/roles';
 
-type View = 'stock' | 'catalog' | 'receipt' | 'adjustment';
+type View = 'stock' | 'harvest' | 'catalog' | 'receipt' | 'adjustment';
 
-/** Tab "Vật tư & chi phí": hiện làm phần Vật tư & kho (bước C, lát C1). Chi phí, thu hoạch, tổng kết sẽ thêm ở các lát sau. */
+/** Tab "Vật tư & chi phí": Tồn kho (C1), Thu hoạch (C4), Danh mục. Chi phí, doanh thu, tổng kết sẽ thêm ở các lát sau. */
 export function InventoryTab() {
   const { active } = useOrgs();
-  const [view, setView] = useState<View>('stock');
+  const canViewStock = hasRole(active?.roles, 'manager', 'inventory_finance');
+  // người không xem được tồn kho (nhân viên) mở thẳng mục Thu hoạch
+  const [view, setView] = useState<View>(canViewStock ? 'stock' : 'harvest');
   if (!active) return null;
 
   const canWrite = hasRole(active.roles, 'inventory_finance');
-  const canViewStock = hasRole(active.roles, 'manager', 'inventory_finance');
 
   if (view === 'receipt' || view === 'adjustment') {
     return <StockEntry orgId={active.id} mode={view} onClose={() => setView('stock')} />;
@@ -30,10 +32,13 @@ export function InventoryTab() {
       <h1>Vật tư & chi phí</h1>
       <div className="chips" role="tablist" aria-label="Mục vật tư">
         <button role="tab" aria-selected={view === 'stock'} className={view === 'stock' ? 'chip active' : 'chip'} onClick={() => setView('stock')}>Tồn kho</button>
+        <button role="tab" aria-selected={view === 'harvest'} className={view === 'harvest' ? 'chip active' : 'chip'} onClick={() => setView('harvest')}>Thu hoạch</button>
         <button role="tab" aria-selected={view === 'catalog'} className={view === 'catalog' ? 'chip active' : 'chip'} onClick={() => setView('catalog')}>Danh mục</button>
       </div>
 
-      {view === 'catalog' ? (
+      {view === 'harvest' ? (
+        <HarvestSection />
+      ) : view === 'catalog' ? (
         <CatalogSection orgId={active.id} canWrite={canWrite} />
       ) : canViewStock ? (
         <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setView('receipt')} onAdjust={() => setView('adjustment')} />
