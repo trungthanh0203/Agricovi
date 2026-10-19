@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
+import { Collapsible } from './Collapsible';
 import { SyncBadge } from './SyncBadge';
 import { useAuth } from '../lib/auth';
 import { db, type ExpenseRow } from '../lib/db';
@@ -81,25 +82,27 @@ export function ExpenseSection() {
   return (
     <>
       {canWrite ? (
-        <button className="primary big" onClick={() => setMode({ kind: 'new' })}>Ghi chi phí</button>
+        <button className="primary" onClick={() => setMode({ kind: 'new' })}>Ghi chi phí</button>
       ) : (
         <p className="muted">Bạn chỉ xem được chi phí. Chủ cơ sở và người phụ trách Kho & chi phí mới ghi và sửa được.</p>
       )}
 
+      <Collapsible inline title="Bộ lọc" summary={`${cycleFilter === 'none' ? 'Chi phí chung' : cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả'}${showVoided ? ' · cả khoản đã hủy' : ''}`}>
       <div className="filters">
-        <label>
-          Vụ trồng
-          <select value={cycleFilter} onChange={(e) => setCycleFilter(e.target.value)}>
-            <option value="">Tất cả</option>
-            <option value="none">Chi phí chung (không gắn vụ)</option>
-            {ownCycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
-          </select>
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
-          Hiện cả khoản đã hủy
-        </label>
-      </div>
+          <label>
+            Vụ trồng
+            <select value={cycleFilter} onChange={(e) => setCycleFilter(e.target.value)}>
+              <option value="">Tất cả</option>
+              <option value="none">Chi phí chung (không gắn vụ)</option>
+              {ownCycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
+            </select>
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
+            Hiện cả khoản đã hủy
+          </label>
+        </div>
+      </Collapsible>
 
       <div className="card slim">
         <div className="row"><span>Tiền thực chi</span><strong>{formatMoney(sumKind(['cash_paid']))}</strong></div>

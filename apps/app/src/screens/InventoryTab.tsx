@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { Collapsible } from '../components/Collapsible';
 import { CatalogSection } from '../components/CatalogSection';
 import { ExpenseSection } from '../components/ExpenseSection';
 import { HarvestSection } from '../components/HarvestSection';
@@ -143,8 +144,7 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust }: { orgId: string; ca
         );
       })}
 
-      <h2 className="sect">Giao dịch gần đây</h2>
-      {!navigator.onLine && <p className="muted">Cần có mạng để xem lịch sử giao dịch.</p>}
+      <Collapsible title="Giao dịch gần đây" summary={!navigator.onLine ? 'Cần có mạng' : history ? `${history.length} giao dịch` : 'Đang tải…'}>
       {navigator.onLine && history && history.length === 0 && <p className="muted">Chưa có giao dịch nào.</p>}
       {(history ?? []).map((h) => (
         <div className="card slim" key={h.id}>
@@ -160,6 +160,7 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust }: { orgId: string; ca
           </p>
         </div>
       ))}
+      </Collapsible>
     </>
   );
 }

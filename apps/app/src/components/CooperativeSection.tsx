@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { friendlyError } from '../lib/errors';
+import { Collapsible } from './Collapsible';
 import {
   createMemberHousehold, inviteHousehold, leaveCooperative, listCoopHouseholds, myCooperative,
   pendingCoopInvites, removeHousehold, revokeCoopInvitation,
@@ -69,8 +70,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
   }
 
   return (
-    <div className="card">
-      <h2>Hộ thành viên</h2>
+    <Collapsible title="Hộ thành viên" summary={households.length > 0 ? `${households.length} hộ${invites.length > 0 ? ` · ${invites.length} lời mời chờ` : ''}` : 'Chưa có hộ'}>
       <p className="muted">Số hộ không bị giới hạn; hạn mức chỉ tính theo số vụ đang chạy của HTX.</p>
       {r.error && <p className="msg error" role="alert">{r.error}</p>}
       {r.info && <p className="msg ok" role="status">{r.info}</p>}
@@ -105,17 +105,18 @@ function ForCooperative({ org }: { org: MyOrg }) {
 
       {canManage && (
         <>
+          <Collapsible inline title="＋ Mời hộ đã có tài khoản">
           <form onSubmit={onInvite} className="inline-form" noValidate>
-            <h3 className="sub">Mời hộ đã có tài khoản</h3>
             <label>
               Email chủ hộ
               <input type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </label>
             <button type="submit" className="secondary" disabled={r.busy}>Gửi lời mời</button>
           </form>
+          </Collapsible>
 
+          <Collapsible inline title="＋ Tạo hộ thành viên">
           <form onSubmit={onCreate} className="inline-form" noValidate>
-            <h3 className="sub">Tạo hộ thành viên</h3>
             <p className="muted">Dành cho hộ chưa có tài khoản hoặc điện thoại. HTX sẽ là bên quản lý dữ liệu của hộ này, và hộ chưa thể rời HTX cho tới khi chuyển quyền chủ hộ.</p>
             <label>
               Tên hộ
@@ -123,9 +124,10 @@ function ForCooperative({ org }: { org: MyOrg }) {
             </label>
             <button type="submit" className="secondary" disabled={r.busy}>Tạo hộ thành viên</button>
           </form>
+          </Collapsible>
         </>
       )}
-    </div>
+    </Collapsible>
   );
 }
 
@@ -140,8 +142,7 @@ function ForHousehold({ org }: { org: MyOrg }) {
   useEffect(() => { load().catch((e) => r.setError(friendlyError(e))); }, [load]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="card">
-      <h2>Hợp tác xã</h2>
+    <Collapsible title="Hợp tác xã" summary={coop === undefined ? 'Đang tải…' : coop ? coop.name : 'Chưa tham gia'}>
       {r.error && <p className="msg error" role="alert">{r.error}</p>}
       {coop === undefined && <p className="muted">Đang tải…</p>}
       {coop === null && <p className="muted">Hộ chưa tham gia HTX nào. Khi HTX mời bằng email của bạn, lời mời sẽ hiện ở đầu trang này.</p>}
@@ -157,6 +158,6 @@ function ForHousehold({ org }: { org: MyOrg }) {
           )}
         </>
       )}
-    </div>
+    </Collapsible>
   );
 }

@@ -65,6 +65,7 @@ npx supabase functions deploy staff-accounts
 
 ## Cách làm việc hiệu quả
 
+- Giao diện: **mỗi màn hình ngắn gọn** — khối dài dùng `components/Collapsible` (thu gọn mặc định, có dòng tóm tắt; biểu mẫu thêm mới dùng `inline`), thanh chuyển mục một hàng vuốt ngang, một nút chính mỗi màn. Đừng xếp nhiều thẻ dài liền nhau.
 - Sửa nhỏ bằng Edit, không viết lại cả file. Chạy typecheck + `npm run test:db:changed` (chỉ test liên quan); test đầy đủ để CI chạy.
 - Khi cần chủ sản phẩm quyết định: nêu **đề xuất + lý do** và hỏi tối đa vài câu; ghi quyết định vào `docs/DECISIONS.md`.
 - Mỗi tính năng mới đi kèm test CSDL cho quyền và ràng buộc; logic đồng bộ có test đầu-cuối ở `supabase/tests/sync.e2e.test.mjs`.

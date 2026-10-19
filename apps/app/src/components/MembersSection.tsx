@@ -9,6 +9,7 @@ import type { MyOrg } from '../lib/orgs';
 import { isOwner as ownerOf, roleSummary } from '../lib/roles';
 import { loadTeams, type TeamRow, type WorkerRow } from '../lib/teams';
 import type { StaffCredentials } from '../lib/staff';
+import { Collapsible } from './Collapsible';
 import { RolePicker } from './RolePicker';
 import { CredentialsCard, ResetPasswordButton, StaffCreateForm } from './StaffAccountsSection';
 
@@ -80,8 +81,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
   }
 
   return (
-    <div className="card">
-      <h2>Thành viên</h2>
+    <Collapsible title="Thành viên" summary={members.length > 0 ? `${members.length} người${invites.length > 0 ? ` · ${invites.length} lời mời chờ` : ''}` : undefined}>
       {!navigator.onLine && <p className="msg warn">Cần có mạng để xem và quản lý thành viên.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
       {info && <p className="msg ok" role="status">{info}</p>}
@@ -134,11 +134,15 @@ export function MembersSection({ org }: { org: MyOrg }) {
         </div>
       ))}
 
-      {isOwner && <StaffCreateForm org={org} teams={teams} workers={workers} onChanged={() => void load()} />}
+      {isOwner && (
+        <Collapsible inline title="＋ Tạo tài khoản nhân viên (đăng nhập bằng số điện thoại)">
+          <StaffCreateForm org={org} teams={teams} workers={workers} onChanged={() => void load()} />
+        </Collapsible>
+      )}
 
       {isOwner && (
+        <Collapsible inline title="＋ Mời người đã có tài khoản email">
         <form onSubmit={onInvite} className="inline-form" noValidate>
-          <h3 className="sub">Mời người đã có tài khoản email</h3>
           <label>
             Email người được mời
             <input type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -146,7 +150,8 @@ export function MembersSection({ org }: { org: MyOrg }) {
           <RolePicker orgType={org.type} value={inviteRoles} onChange={setInviteRoles} />
           <button type="submit" className="secondary" disabled={busy}>Gửi lời mời</button>
         </form>
+        </Collapsible>
       )}
-    </div>
+    </Collapsible>
   );
 }

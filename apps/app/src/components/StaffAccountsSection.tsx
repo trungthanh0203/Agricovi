@@ -63,7 +63,6 @@ export function StaffCreateForm({
     <>
       {creds && <CredentialsCard creds={creds} onClose={() => setCreds(null)} />}
       <form onSubmit={onSubmit} className="inline-form" noValidate>
-        <h3 className="sub">Tạo tài khoản nhân viên (đăng nhập bằng số điện thoại)</h3>
         <label>
           Họ tên
           <input value={name} onChange={(e) => setName(e.target.value)} />

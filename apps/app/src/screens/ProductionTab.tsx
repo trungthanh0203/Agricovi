@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
+import { Collapsible } from '../components/Collapsible';
 import { SyncBadge } from '../components/SyncBadge';
 import { db } from '../lib/db';
 import { useRecordSync } from '../lib/hooks';
@@ -64,18 +65,18 @@ export function ProductionTab({ onCreateCycle, onLog, onHistory }: Props) {
     <section>
       <h1>Sản xuất</h1>
 
-      <button className="primary big" onClick={onLog} disabled={myCycles.length === 0}>
-        Ghi việc vừa làm
-      </button>
+      <div className="pair">
+        <button className="primary" onClick={onLog} disabled={myCycles.length === 0}>Ghi việc vừa làm</button>
+        <button className="secondary" onClick={onHistory}>Lịch sử nhật ký</button>
+      </div>
       {myCycles.length === 0 && <p className="muted">Tạo vụ trồng trước để bắt đầu ghi nhật ký.</p>}
-      <button className="secondary" onClick={onHistory}>Xem lịch sử nhật ký</button>
 
-      <h2 className="sect">Vụ trồng</h2>
+      <h2 className="sect">Vụ trồng ({myCycles.length})</h2>
       {myCycles.length === 0 && <p className="muted">Chưa có vụ trồng nào.</p>}
       {myCycles.map((c) => {
         const owner = ownerLabel(c.owner_org_id);
         return (
-          <div className="card" key={c.id}>
+          <div className="card slim" key={c.id}>
             <div className="row">
               <strong>{cropName(c.crop_type_id)}</strong>
               <span className="pill">{CYCLE_STATUS_LABEL_VI[c.status]}</span>
@@ -105,8 +106,8 @@ export function ProductionTab({ onCreateCycle, onLog, onHistory }: Props) {
         <button className="secondary" onClick={onCreateCycle}>+ Tạo vụ mới</button>
       )}
 
-      <h2 className="sect">Khu trồng</h2>
-      {myAreas.length === 0 && <p className="muted">Chưa có khu trồng. {canManage && 'Hãy thêm khu trồng trước khi tạo vụ.'}</p>}
+      <Collapsible title="Khu trồng" warn={myAreas.length === 0 && canManage}
+        summary={myAreas.length > 0 ? `${myAreas.length} khu` : canManage ? 'Chưa có — hãy thêm trước khi tạo vụ' : 'Chưa có'}>
       {myAreas.map((a) => (
         <div className="card slim" key={a.id}>
           <div className="row">
@@ -116,15 +117,18 @@ export function ProductionTab({ onCreateCycle, onLog, onHistory }: Props) {
         </div>
       ))}
       {canManage && (
-        <form onSubmit={onAddArea} className="inline-form">
-          <label>
-            Thêm khu trồng
-            <input value={areaName} onChange={(e) => setAreaName(e.target.value)} placeholder="Ví dụ: Nhà màng số 1" />
-          </label>
-          {areaError && <p className="msg error" role="alert">{areaError}</p>}
-          <button type="submit" className="secondary">Thêm khu trồng</button>
-        </form>
+        <Collapsible inline title="＋ Thêm khu trồng">
+          <form onSubmit={onAddArea} className="inline-form">
+            <label>
+              Tên khu trồng
+              <input value={areaName} onChange={(e) => setAreaName(e.target.value)} placeholder="Ví dụ: Nhà màng số 1" />
+            </label>
+            {areaError && <p className="msg error" role="alert">{areaError}</p>}
+            <button type="submit" className="secondary">Thêm khu trồng</button>
+          </form>
+        </Collapsible>
       )}
+      </Collapsible>
     </section>
   );
 }

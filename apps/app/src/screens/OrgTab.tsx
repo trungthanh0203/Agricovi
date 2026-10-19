@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { friendlyError } from '../lib/errors';
 import { useOrgs, type PlanUsage } from '../lib/orgs';
+import { Collapsible } from '../components/Collapsible';
 import { CooperativeSection } from '../components/CooperativeSection';
 import { InvitationsPanel } from '../components/InvitationsPanel';
 import { MembersSection } from '../components/MembersSection';
@@ -53,13 +54,13 @@ export function OrgTab({ onAddOrg }: { onAddOrg: () => void }) {
       <InvitationsPanel />
 
       <div className="card">
-        <h2>{active.name}</h2>
-        <p className="muted">{TYPE_LABEL[active.type]} · Vai trò: {roleSummary(active.roles)}</p>
+        <strong>{active.name}</strong>
+        <p className="muted">{TYPE_LABEL[active.type]} · {roleSummary(active.roles)}</p>
         {stale && <p className="msg warn">Đang hiển thị dữ liệu đã lưu trên thiết bị (chưa cập nhật từ máy chủ).</p>}
       </div>
 
-      {canSeePlan && <div className="card">
-        <h2>Gói dịch vụ</h2>
+      {canSeePlan && <Collapsible title="Gói dịch vụ" warn={Boolean(usage && !isTrialOrActive)}
+        summary={usage ? (isTrialOrActive ? `${STATUS_LABEL[usage.status]} · ${usage.used_cycles}/${usage.max_cycles} vụ · đến ${date(usage.period_end)}` : 'Đã hết hạn') : error ? 'Không tải được' : 'Đang tải…'}>
         {error && <p className="msg error">{error}</p>}
         {!usage && !error && <p className="muted">Đang tải…</p>}
         {usage && (
@@ -80,7 +81,7 @@ export function OrgTab({ onAddOrg }: { onAddOrg: () => void }) {
             )}
           </>
         )}
-      </div>}
+      </Collapsible>}
 
       {canSeeCoop && <CooperativeSection org={active} />}
       {canSeeMembers && <MembersSection org={active} />}
@@ -88,8 +89,10 @@ export function OrgTab({ onAddOrg }: { onAddOrg: () => void }) {
 
       <div className="card">
         <p className="muted">Tài khoản: {session?.user.email}</p>
-        {!ownsOrg && !isStaff && <button className="secondary" onClick={onAddOrg}>Tạo cơ sở của riêng tôi</button>}
-        <button className="secondary" onClick={() => void signOut()}>Đăng xuất</button>
+        <div className="actions">
+          {!ownsOrg && !isStaff && <button className="secondary" onClick={onAddOrg}>Tạo cơ sở của riêng tôi</button>}
+          <button className="secondary" onClick={() => void signOut()}>Đăng xuất</button>
+        </div>
       </div>
     </section>
   );

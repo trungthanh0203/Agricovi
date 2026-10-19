@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { friendlyError } from '../lib/errors';
+import { Collapsible } from './Collapsible';
 import type { MyOrg } from '../lib/orgs';
 import { WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
 import {
@@ -80,8 +81,9 @@ export function TeamsSection({ org }: { org: MyOrg }) {
   }
 
   return (
-    <div className="card">
-      <h2>Tổ lao động</h2>
+    <Collapsible title="Tổ lao động"
+      warn={orphans.length > 0}
+      summary={orphans.length > 0 ? `${orphans.length} người cần xử lý` : teams.length > 0 ? `${teams.length} tổ` : 'Chưa có tổ'}>
       <p className="muted">Tổ trưởng chấm công và ghi sản lượng hộ người trong tổ. Công của chính tổ trưởng do quản lý hoặc chủ xác nhận.</p>
       {!navigator.onLine && <p className="msg warn">Cần có mạng để quản lý tổ.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
@@ -123,7 +125,7 @@ export function TeamsSection({ org }: { org: MyOrg }) {
 
       {workers.length > 0 && (
         <>
-          <h3 className="sub">Xếp người vào tổ</h3>
+          <Collapsible inline title="Xếp người vào tổ" summary={`${workers.length} người`}>
           {workers.map((w) => (
             <div className="row member" key={w.id}>
               <span className="grow">{w.full_name}{w.user_id ? '' : ' (không có tài khoản)'}</span>
@@ -134,11 +136,12 @@ export function TeamsSection({ org }: { org: MyOrg }) {
               </select>
             </div>
           ))}
+          </Collapsible>
         </>
       )}
 
+      <Collapsible inline title="＋ Tạo tổ mới">
       <form onSubmit={onCreateTeam} className="inline-form" noValidate>
-        <h3 className="sub">Tạo tổ mới</h3>
         <label>
           Tên tổ
           <input value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Ví dụ: Tổ thu hoạch 1" />
@@ -152,9 +155,10 @@ export function TeamsSection({ org }: { org: MyOrg }) {
         </label>
         <button type="submit" className="secondary" disabled={busy}>Tạo tổ</button>
       </form>
+      </Collapsible>
 
+      <Collapsible inline title="＋ Thêm người không có điện thoại">
       <form onSubmit={onCreateWorker} className="inline-form" noValidate>
-        <h3 className="sub">Thêm người không có điện thoại</h3>
         <p className="muted">Chỉ là hồ sơ để tổ trưởng chấm công và ghi sản lượng hộ; không có tài khoản đăng nhập.</p>
         <label>
           Họ tên
@@ -180,6 +184,7 @@ export function TeamsSection({ org }: { org: MyOrg }) {
         </label>
         <button type="submit" className="secondary" disabled={busy}>Thêm người</button>
       </form>
-    </div>
+      </Collapsible>
+    </Collapsible>
   );
 }

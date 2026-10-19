@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { Collapsible } from './Collapsible';
 import { db, type LocationRow, type MaterialRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import {
@@ -66,8 +67,7 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
       {!canWrite && <p className="muted">Chỉ chủ cơ sở và vai trò "Kho & chi phí" thay đổi được danh mục.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
-      <div className="card">
-        <h2>Vật tư</h2>
+      <Collapsible title="Vật tư" defaultOpen summary={materials.length > 0 ? `${materials.length} vật tư` : 'Chưa có'}>
         {materials.length === 0 && <p className="muted">Chưa có vật tư nào.</p>}
         {[...materials].sort((a, b) => a.name.localeCompare(b.name, 'vi')).map((m) => (
           <MaterialItem key={m.id} m={m} unitName={units.find((u) => u.id === m.base_unit_id)?.name ?? ''}
@@ -77,8 +77,8 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
             onThrError={setError} />
         ))}
         {canWrite && (
+          <Collapsible inline title="＋ Thêm vật tư">
           <form className="inline-form" onSubmit={onAddMaterial} noValidate>
-            <h3 className="sub">Thêm vật tư</h3>
             <label>
               Tên vật tư
               <input value={mName} onChange={(e) => setMName(e.target.value)} placeholder="Ví dụ: Phân NPK 20-20-15" />
@@ -99,11 +99,11 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
             </label>
             <button type="submit" className="secondary" disabled={busy || !navigator.onLine}>Thêm vật tư</button>
           </form>
+          </Collapsible>
         )}
-      </div>
+      </Collapsible>
 
-      <div className="card">
-        <h2>Kho</h2>
+      <Collapsible title="Kho" summary={locations.length > 0 ? `${locations.length} kho` : 'Chưa có — hãy thêm kho đầu tiên'} warn={locations.length === 0 && canWrite}>
         {locations.length === 0 && <p className="muted">Chưa có kho nào. Hãy tạo kho đầu tiên (ví dụ "Kho chính") để nhập vật tư.</p>}
         {[...locations].sort((a, b) => a.name.localeCompare(b.name, 'vi')).map((l) => (
           <LocationItem key={l.id} l={l} editing={editLoc === l.id} canWrite={canWrite && navigator.onLine} busy={busy}
@@ -111,24 +111,24 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
             onSave={(c) => run(async () => { await updateLocation(l.id, c); setEditLoc(null); })} />
         ))}
         {canWrite && (
+          <Collapsible inline title="＋ Thêm kho">
           <form className="inline-form" noValidate onSubmit={(e) => {
             e.preventDefault();
             if (lName.trim().length < 2) return setError('Hãy nhập tên kho.');
             void run(async () => { await createLocation(orgId, lName); setLName(''); });
           }}>
-            <h3 className="sub">Thêm kho</h3>
             <label>
               Tên kho
               <input value={lName} onChange={(e) => setLName(e.target.value)} placeholder="Kho chính" />
             </label>
             <button type="submit" className="secondary" disabled={busy || !navigator.onLine}>Thêm kho</button>
           </form>
+          </Collapsible>
         )}
-      </div>
+      </Collapsible>
 
       {canWrite && (
-        <div className="card">
-          <h2>Đơn vị riêng</h2>
+        <Collapsible title="Đơn vị riêng" summary={orgUnits.length > 0 ? `${orgUnits.length} đơn vị` : 'Đã có sẵn kg, lít, bao…'}>
           <p className="muted">Đã có sẵn: kg, g, lít, ml, bao, chai, gói, cái, cây. Chỉ thêm nếu bạn cần đơn vị khác.</p>
           {orgUnits.map((u) => <p key={u.id} className="member">{u.name}</p>)}
           <form className="inline-form" noValidate onSubmit={(e) => {
@@ -142,7 +142,7 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
             </label>
             <button type="submit" className="secondary" disabled={busy || !navigator.onLine}>Thêm đơn vị</button>
           </form>
-        </div>
+        </Collapsible>
       )}
     </div>
   );
