@@ -240,11 +240,78 @@ test('kho offline: nhập kho + điều chỉnh xếp hàng rồi đồng bộ; 
   assert.equal(r.failed, 1);
   const bad = await d.local.outbox.get(BAD);
   assert.equal(bad.state, 'needs_attention'); // giữ lại trên thiết bị, không mất
-  assert.equal((await pg.query(`select balance::numeric b from inventory_balances where material_id=$1`, [mat])).rows[0].b, '23');
+  assert.equal((await asUser(pg, fin, `select balance::numeric b from inventory_balances where material_id=$1`, [mat])).rows[0].b, '23');
 
   // gửi lại toàn bộ (mất phản hồi): không nhân đôi
   await d.local.outbox.toCollection().modify({ state: 'local_only' });
   await d.box.flush();
   assert.equal((await pg.query(`select count(*)::int n from inventory_transactions where material_id=$1`, [mat])).rows[0].n, 2);
-  assert.equal((await pg.query(`select balance::numeric b from inventory_balances where material_id=$1`, [mat])).rows[0].b, '23');
+  assert.equal((await asUser(pg, fin, `select balance::numeric b from inventory_balances where material_id=$1`, [mat])).rows[0].b, '23');
+});
+
+test('xuất dùng khi ghi việc offline: nhật ký + giao dịch xuất gửi đúng thứ tự; hủy nhật ký thì kho được đảo', async () => {
+  const { pg, org } = await setup();
+  const worker = await addUser(pg, 8);
+  const fin = await addUser(pg, 9);
+  await pg.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['worker']::member_role[]),($1,$3,array['inventory_finance']::member_role[])`, [org, worker, fin]);
+  const loc = '50000000-0000-4000-8000-0000000000f2';
+  const mat = '60000000-0000-4000-8000-0000000000f2';
+  await pg.query(`insert into inventory_locations (id,organization_id,name) values ($1,$2,'Kho chính')`, [loc, org]);
+  await pg.query(`insert into materials (id,organization_id,name,base_unit_id) values ($1,$2,'Phân NPK',(select id from units_of_measure where code='kg'))`, [mat, org]);
+  await asUser(pg, fin, `insert into inventory_transactions (id,organization_id,location_id,material_id,txn_type,quantity_delta,unit_cost,txn_date) values ('70000000-0000-4000-8000-0000000000f2',$1,$2,$3,'receipt',20,100,current_date)`, [org, loc, mat]);
+
+  const d = device(pg, worker);
+  const log = 'eeeeeeee-0000-4000-8000-000000000001';
+  const wt = (await pg.query(`select id from work_types where code='fertilizing' or code='irrigation' order by code limit 1`)).rows[0].id;
+  const issueRow = (id, qty, logId) => ({
+    id, organization_id: org, location_id: loc, material_id: mat, txn_type: 'issue', quantity_delta: -qty, unit_cost: null,
+    txn_date: '2026-10-19', cycle_id: CYC, activity_log_id: logId, reason: null, source: 'offline',
+  });
+  const logRow = (id, wtId) => ({ id, organization_id: org, cycle_id: CYC, area_id: AREA, work_type_id: wtId, performed_at: new Date().toISOString(), data: {}, note: 'bón', source: 'offline', created_by: worker, performed_by: worker });
+
+  // xếp hàng cùng một khoảnh khắc: nhật ký trước, rồi hai dòng vật tư
+  await d.box.enqueue('activity_logs', logRow(log, wt));
+  await d.box.enqueue('inventory_transactions', issueRow('dddddddd-0000-4000-8000-0000000000a1', 3, log));
+  await d.box.enqueue('inventory_transactions', issueRow('dddddddd-0000-4000-8000-0000000000a2', 2, log));
+  const queued = await d.local.outbox.orderBy('createdAt').toArray();
+  assert.deepEqual(queued.map((o) => o.id), [log, 'dddddddd-0000-4000-8000-0000000000a1', 'dddddddd-0000-4000-8000-0000000000a2'], 'đúng thứ tự tạo');
+  assert.equal(new Set(queued.map((o) => o.createdAt)).size, 3, 'thời điểm tạo phải khác nhau để thứ tự gửi không bị hòa');
+
+  const r = await d.box.flush();
+  const errs = (await d.local.outbox.toArray()).map((o) => o.lastError).filter(Boolean);
+  assert.deepEqual(errs, []);
+  assert.equal(r.synced, 3);
+  assert.equal(r.failed, 0);
+  const bal = async () => Number((await pg.query(`select sum(quantity_delta) b from inventory_transactions where material_id=$1`, [mat])).rows[0].b);
+  assert.equal(await bal(), 15);
+  assert.equal((await pg.query(`select cycle_id from inventory_transactions where id='dddddddd-0000-4000-8000-0000000000a1'`)).rows[0].cycle_id, CYC);
+
+  // hủy nhật ký (người ghi, trong 24 giờ) -> máy chủ tự đảo kho
+  await d.local.logs.put({ id: log, organization_id: org, cycle_id: CYC, area_id: AREA, work_type_id: wt, performed_at: '', data: {}, note: 'bón', version: 1 });
+  await d.box.enqueueUpdate('activity_logs', log, 1, { voided_at: new Date().toISOString(), void_reason: 'ghi nhầm' });
+  assert.equal((await d.box.flush()).failed, 0);
+  assert.equal(await bal(), 20);
+});
+
+test('nhật ký bị lỗi khi đồng bộ thì giao dịch xuất kho của nó chờ, không gửi lẻ và không mất', async () => {
+  const { pg, org } = await setup();
+  const worker = await addUser(pg, 8);
+  await pg.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['worker']::member_role[])`, [org, worker]);
+  const loc = '50000000-0000-4000-8000-0000000000f3';
+  const mat = '60000000-0000-4000-8000-0000000000f3';
+  await pg.query(`insert into inventory_locations (id,organization_id,name) values ($1,$2,'Kho')`, [loc, org]);
+  await pg.query(`insert into materials (id,organization_id,name,base_unit_id) values ($1,$2,'Thuốc',(select id from units_of_measure where code='ml'))`, [mat, org]);
+  const d = device(pg, worker);
+  const log = 'eeeeeeee-0000-4000-8000-000000000002';
+  // loại việc không tồn tại -> nhật ký bị từ chối
+  await d.box.enqueue('activity_logs', { id: log, organization_id: org, cycle_id: CYC, area_id: AREA, work_type_id: '99999999-0000-4000-8000-000000000999', performed_at: new Date().toISOString(), data: {}, note: null, source: 'offline', created_by: worker, performed_by: worker });
+  await d.box.enqueue('inventory_transactions', {
+    id: 'dddddddd-0000-4000-8000-0000000000b1', organization_id: org, location_id: loc, material_id: mat, txn_type: 'issue', quantity_delta: -1,
+    unit_cost: null, txn_date: '2026-10-19', cycle_id: CYC, activity_log_id: log, reason: null, source: 'offline',
+  });
+  const r = await d.box.flush();
+  assert.equal(r.failed, 1);
+  assert.equal((await pg.query(`select count(*)::int n from inventory_transactions`)).rows[0].n, 0, 'giao dịch xuất không được gửi lẻ khi nhật ký chưa lên');
+  const left = await d.local.outbox.get('dddddddd-0000-4000-8000-0000000000b1');
+  assert.ok(left && left.state !== 'synced');
 });

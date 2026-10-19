@@ -5,10 +5,13 @@ import { SyncBadge } from '../components/SyncBadge';
 import { db, type FieldDef } from '../lib/db';
 import { toLocalInput, useRecordSync } from '../lib/hooks';
 import { useAuth } from '../lib/auth';
+import { formatQty, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { logActivity } from '../lib/production';
+import { hasRole } from '../lib/roles';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
+const LAST_LOCATION_KEY = 'agriconnect.lastLocation'; // dùng chung với màn nhập kho
 
 /** Luồng "Ghi việc vừa làm" (v1.1 mục 3.4): chọn loại việc -> xác nhận vụ -> lưu. Dùng được offline. */
 export function LogActivityScreen({ onClose }: { onClose: () => void }) {
@@ -46,6 +49,26 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [savedItems, setSavedItems] = useState<{ materialId: string; quantity: number }[]>([]);
+
+  // Vật tư đã dùng (FR-INV-003): chỉ vai trò được ghi xuất dùng; chọn từ danh mục đã tải về nên dùng được offline
+  const canIssue = hasRole(active?.roles, 'manager', 'worker', 'inventory_finance');
+  const materials = useLiveQuery(
+    () => (active ? db.materials.where('organization_id').equals(active.id).toArray() : []), [active?.id], [],
+  ).filter((m) => m.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const locations = useLiveQuery(
+    () => (active ? db.locations.where('organization_id').equals(active.id).toArray() : []), [active?.id], [],
+  ).filter((l) => l.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const units = useLiveQuery(() => db.units.toArray(), [], []);
+  const [usedOpen, setUsedOpen] = useState(false);
+  const [used, setUsed] = useState<{ materialId: string; qty: string }[]>([]);
+  const [locationId, setLocationId] = useState('');
+  const rememberedLoc = (() => { try { return localStorage.getItem(LAST_LOCATION_KEY); } catch { return null; } })();
+  const effLocation = locationId || (locations.find((l) => l.id === rememberedLoc)?.id ?? locations[0]?.id ?? '');
+  const unitOf = (materialId: string) => {
+    const m = materials.find((x) => x.id === materialId);
+    return units.find((u) => u.id === m?.base_unit_id)?.name.toLowerCase() ?? '';
+  };
 
   const workType = workTypes.find((w) => w.id === workTypeId) ?? null;
 
@@ -61,6 +84,17 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
       const raw = values[f.key];
       if (raw !== undefined && raw !== '') data[f.key] = f.type === 'number' ? Number(raw) : raw;
     }
+    // dòng vật tư: bỏ dòng trống hoàn toàn; dòng đã nhập dở thì báo để người dùng sửa, không âm thầm bỏ
+    const items: { materialId: string; quantity: number }[] = [];
+    for (const row of used) {
+      if (!row.materialId && row.qty.trim() === '') continue;
+      const q = parseNumber(row.qty);
+      if (!row.materialId) return setError('Hãy chọn vật tư cho dòng "Vật tư đã dùng", hoặc xóa dòng đó.');
+      if (q === null || Number.isNaN(q) || q <= 0) return setError('Số lượng vật tư đã dùng phải là số lớn hơn 0.');
+      items.push({ materialId: row.materialId, quantity: q });
+    }
+    if (items.length > 0 && !effLocation) return setError('Chưa có kho để trừ vật tư. Hãy nhờ chủ cơ sở thêm kho ở mục "Vật tư & chi phí".');
+    setError(null);
     const id = await logActivity({
       cycle,
       workTypeId: workType.id,
@@ -68,13 +102,19 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
       data,
       note,
       userId: session.user.id,
+      used: items.length > 0 && active ? { organizationId: active.id, locationId: effLocation, items } : undefined,
     });
     try { localStorage.setItem(LAST_CYCLE_KEY, cycle.id); } catch { /* bỏ qua */ }
+    if (items.length > 0) { try { localStorage.setItem(LAST_LOCATION_KEY, effLocation); } catch { /* bỏ qua */ } }
+    setSavedItems(items);
     setSavedId(id);
   }
 
   function again() {
     setSavedId(null);
+    setSavedItems([]);
+    setUsed([]);
+    setUsedOpen(false);
     setWorkTypeId(null);
     setValues({});
     setNote('');
@@ -92,6 +132,12 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
           {s && s.state !== 'synced' ? SYNC_STATE_LABEL_VI.local_only : SYNC_STATE_LABEL_VI.synced}
         </p>
         <SyncBadge sync={s} />
+        {savedItems.length > 0 && (
+          <p>
+            Vật tư đã dùng:{' '}
+            {savedItems.map((it) => `${materials.find((m) => m.id === it.materialId)?.name ?? 'Vật tư'} ${formatQty(it.quantity)} ${unitOf(it.materialId)}`).join('; ')}
+          </p>
+        )}
         {(!s || s.state !== 'synced') && !navigator.onLine && (
           <p className="muted">Bản ghi đang nằm trên điện thoại và sẽ tự gửi khi có mạng.</p>
         )}
@@ -144,6 +190,46 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
           {workType.field_schema.map((f) => (
             <Field key={f.key} def={f} value={values[f.key] ?? ''} onChange={(v) => setValues((s) => ({ ...s, [f.key]: v }))} />
           ))}
+
+          {canIssue && (
+            <fieldset className="roles">
+              <legend>Vật tư đã dùng (không bắt buộc)</legend>
+              {!usedOpen ? (
+                <button type="button" className="secondary" onClick={() => { setUsedOpen(true); if (used.length === 0) setUsed([{ materialId: '', qty: '' }]); }}>
+                  + Thêm vật tư đã dùng
+                </button>
+              ) : materials.length === 0 ? (
+                <p className="muted">Chưa có vật tư trong danh mục. Hãy nhờ chủ cơ sở hoặc người phụ trách Kho & chi phí thêm ở mục "Vật tư & chi phí" (cần có mạng một lần để tải về máy).</p>
+              ) : (
+                <>
+                  {used.map((row, i) => (
+                    <div className="row member" key={i}>
+                      <select aria-label="Vật tư" value={row.materialId} className="grow"
+                        onChange={(e) => setUsed((s) => s.map((r, j) => (j === i ? { ...r, materialId: e.target.value } : r)))}>
+                        <option value="">— Chọn vật tư —</option>
+                        {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      </select>
+                      <input aria-label={`Số lượng${row.materialId ? ` (${unitOf(row.materialId)})` : ''}`} placeholder={unitOf(row.materialId) || 'Số lượng'}
+                        inputMode="decimal" size={6} value={row.qty}
+                        onChange={(e) => setUsed((s) => s.map((r, j) => (j === i ? { ...r, qty: e.target.value } : r)))} />
+                      <button type="button" className="link inline" aria-label="Xóa dòng vật tư"
+                        onClick={() => setUsed((s) => s.filter((_, j) => j !== i))}>Xóa</button>
+                    </div>
+                  ))}
+                  <button type="button" className="secondary" onClick={() => setUsed((s) => [...s, { materialId: '', qty: '' }])}>+ Thêm dòng</button>
+                  {locations.length > 1 && (
+                    <label>
+                      Lấy từ kho
+                      <select value={effLocation} onChange={(e) => setLocationId(e.target.value)}>
+                        {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                      </select>
+                    </label>
+                  )}
+                  {locations.length === 0 && <p className="msg warn">Chưa có kho nào nên chưa trừ được vật tư.</p>}
+                </>
+              )}
+            </fieldset>
+          )}
 
           <label>
             Ghi chú (không bắt buộc)

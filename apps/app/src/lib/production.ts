@@ -1,5 +1,6 @@
 import type { CycleStatus } from '@agriconnect/shared';
 import { db, type AreaRow, type CycleRow, type LogRow } from './db';
+import { toLocalInput } from './hooks';
 import { syncInventoryDown } from './inventory';
 import { enqueue, enqueueUpdate, flushOutbox } from './outbox';
 import { supabase } from './supabase';
@@ -114,6 +115,14 @@ export async function setCycleStatus(cycleId: string, status: CycleStatus): Prom
   void flushOutbox();
 }
 
+/** Vật tư đã dùng khi làm việc: mỗi dòng thành một giao dịch xuất kho gắn với nhật ký (FR-INV-003) */
+export interface UsedMaterials {
+  /** Cơ sở sở hữu kho và vật tư (cơ sở đang chọn) */
+  organizationId: string;
+  locationId: string;
+  items: { materialId: string; quantity: number }[];
+}
+
 export interface NewLog {
   cycle: CycleRow;
   workTypeId: string;
@@ -121,8 +130,13 @@ export interface NewLog {
   data: Record<string, unknown>;
   note: string;
   userId: string;
+  used?: UsedMaterials;
 }
 
+/**
+ * Ghi nhật ký. Nếu có vật tư đã dùng thì nhật ký và các giao dịch xuất kho được lưu trên thiết bị
+ * trong MỘT giao dịch cục bộ (cùng có hoặc cùng không) và gửi theo đúng thứ tự: nhật ký trước, kho sau.
+ */
 export async function logActivity(l: NewLog): Promise<string> {
   const id = crypto.randomUUID();
   const source = navigator.onLine ? 'online' : 'offline';
@@ -136,8 +150,27 @@ export async function logActivity(l: NewLog): Promise<string> {
     data: l.data,
     note: l.note.trim() || null,
   };
-  await db.logs.put({ ...row, version: 1, created_by: l.userId, received_at: new Date().toISOString() });
-  await enqueue('activity_logs', { ...row, source, created_by: l.userId, performed_by: l.userId });
+  const day = toLocalInput(new Date(l.performedAt)).slice(0, 10);
+  await db.transaction('rw', db.logs, db.outbox, async () => {
+    await db.logs.put({ ...row, version: 1, created_by: l.userId, received_at: new Date().toISOString() });
+    await enqueue('activity_logs', { ...row, source, created_by: l.userId, performed_by: l.userId });
+    for (const it of l.used?.items ?? []) {
+      await enqueue('inventory_transactions', {
+        id: crypto.randomUUID(),
+        organization_id: l.used!.organizationId,
+        location_id: l.used!.locationId,
+        material_id: it.materialId,
+        txn_type: 'issue',
+        quantity_delta: -it.quantity,
+        unit_cost: null, // giá vốn do máy chủ tính (bình quân gia quyền), người ghi việc không biết giá
+        txn_date: day,
+        cycle_id: l.cycle.id,
+        activity_log_id: id,
+        reason: null,
+        source,
+      });
+    }
+  });
   void flushOutbox();
   return id;
 }

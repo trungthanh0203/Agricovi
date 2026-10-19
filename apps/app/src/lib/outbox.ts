@@ -54,6 +54,13 @@ const SERVER_FIELDS: Record<string, string[]> = {
 export function createOutbox(deps: OutboxDeps) {
   const { db } = deps;
 
+  // Thời điểm tạo tăng chặt: các mục xếp cùng lúc (nhật ký rồi giao dịch xuất kho) luôn gửi đúng thứ tự tạo
+  let lastStamp = 0;
+  const stamp = () => {
+    lastStamp = Math.max(Date.now(), lastStamp + 1);
+    return new Date(lastStamp).toISOString();
+  };
+
   async function enqueue(table: string, payload: Record<string, unknown>): Promise<OutboxItem> {
     const id = (payload.id as string | undefined) ?? crypto.randomUUID();
     const item: OutboxItem = {
@@ -61,7 +68,7 @@ export function createOutbox(deps: OutboxDeps) {
       table,
       op: 'insert',
       payload: { ...payload, id },
-      createdAt: new Date().toISOString(),
+      createdAt: stamp(),
       attempts: 0,
       state: 'local_only',
     };
@@ -86,7 +93,7 @@ export function createOutbox(deps: OutboxDeps) {
       changes,
       expectedVersion,
       opId,
-      createdAt: new Date().toISOString(),
+      createdAt: stamp(),
       attempts: 0,
       state: 'local_only',
     };
@@ -121,8 +128,9 @@ export function createOutbox(deps: OutboxDeps) {
 
     for (const item of pending) {
       const rid = item.payload.id as string;
-      const parent = (item.payload.cycle_id ?? item.payload.area_id) as string | undefined;
-      if (blocked.has(rid) || (parent && blocked.has(parent))) {
+      // bản ghi cha: vụ, khu trồng, hoặc nhật ký mà giao dịch xuất kho gắn vào
+      const parents = [item.payload.cycle_id, item.payload.area_id, item.payload.activity_log_id] as (string | undefined)[];
+      if (blocked.has(rid) || parents.some((p) => p && blocked.has(p))) {
         blocked.add(rid);
         continue;
       }

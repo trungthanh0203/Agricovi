@@ -208,8 +208,10 @@ test('giá vốn bình quân gia quyền; thiếu giá thì báo thiếu, không
   assert.equal(rows[0].cost_from_average, true);
   assert.equal(rows[1].cost, null);
   assert.equal(rows[1].cost_known, false);
-  // nhân viên không đọc được giá vốn
-  assert.equal((await asUser(db, w1, `select count(*)::int n from inventory_issue_costs`)).rows[0].n, 0);
+  // nhân viên chỉ thấy lần xuất của chính mình và không có giá vốn nào
+  const mine = (await asUser(db, w1, `select cost, cost_known from inventory_issue_costs`)).rows;
+  assert.equal(mine.length, 2);
+  assert.ok(mine.every((r) => r.cost === null && r.cost_known === false));
 });
 
 test('tổng kết vụ: kiểm quyền, số liệu đúng, giá thành/kg chỉ khi đủ dữ liệu, giao dịch bị đảo không tính', async () => {
@@ -291,4 +293,23 @@ test('danh mục: chỉ chủ và Kho & chi phí thay đổi; mọi thành viên
      values ($1,$2,$3,$4,'receipt',1,current_date)`, [tid(80), org, LOC, M1])), /row-level security/);
   assert.match(await expectError(asUser(db, mgr, `insert into inventory_transactions (id,organization_id,location_id,material_id,txn_type,quantity_delta,txn_date,reason)
      values ($1,$2,$3,$4,'adjustment',-1,current_date,'thử')`, [tid(81), org, LOC, M1])), /row-level security/);
+});
+
+test('nhân viên ghi xuất dùng bằng ON CONFLICT DO NOTHING (hàng đợi offline) được; vẫn không đọc nhập kho/tồn của người khác', async () => {
+  const { db, org, fin, w1, w2 } = await setup();
+  await receipt(db, fin, org, 1, M1, 20, 100);
+  const up = (u, n) => asUser(db, u, `insert into inventory_transactions (id,organization_id,location_id,material_id,txn_type,quantity_delta,txn_date,activity_log_id)
+     values ($1,$2,$3,$4,'issue',-2,current_date,$5) on conflict (id) do nothing`, [tid(n), org, LOC, M1, LOG]);
+  await up(w1, 2);
+  await up(w1, 2); // gửi lặp
+  assert.equal((await db.query(`select count(*)::int n from inventory_transactions where txn_type='issue'`)).rows[0].n, 1);
+  // thấy lần xuất của chính mình, không thấy của người khác, không thấy nhập kho
+  assert.deepEqual((await asUser(db, w1, `select txn_type from inventory_transactions`)).rows.map((r) => r.txn_type), ['issue']);
+  assert.equal((await asUser(db, w2, `select count(*)::int n from inventory_transactions`)).rows[0].n, 0);
+  // tồn không hiện cho nhân viên
+  assert.equal((await asUser(db, w1, `select count(*)::int n from inventory_balances`)).rows[0].n, 0);
+  assert.equal((await asUser(db, fin, `select balance::numeric b from inventory_balances`)).rows[0].b, '18');
+  // nhập kho bằng ON CONFLICT vẫn bị từ chối với nhân viên
+  assert.match(await expectError(asUser(db, w1, `insert into inventory_transactions (id,organization_id,location_id,material_id,txn_type,quantity_delta,txn_date)
+     values ($1,$2,$3,$4,'receipt',5,current_date) on conflict (id) do nothing`, [tid(3), org, LOC, M1])), /row-level security/);
 });

@@ -67,7 +67,8 @@ test('nhân viên sản xuất ghi được xuất dùng nhưng không đọc ch
      values ('70000000-0000-4000-8000-000000000010',$1,$2,$3,'issue',-2,current_date)`, [ORG, loc, mat]);
   assert.match(await expectError(asUser(db, worker1, `insert into inventory_transactions (id,organization_id,location_id,material_id,txn_type,quantity_delta,txn_date)
      values ('70000000-0000-4000-8000-000000000011',$1,$2,$3,'receipt',5,current_date)`, [ORG, loc, mat])), /row-level security/);
-  assert.equal((await asUser(db, worker1, `select count(*)::int n from inventory_transactions`)).rows[0].n, 0);
+  // chỉ thấy lần xuất của chính mình (cần cho ghi offline bằng ON CONFLICT), không thấy nhập kho/điều chỉnh
+  assert.equal((await asUser(db, worker1, `select count(*)::int n from inventory_transactions where txn_type <> 'issue'`)).rows[0].n, 0);
   assert.equal((await asUser(db, fin, `select count(*)::int n from inventory_transactions`)).rows[0].n, 1);
   // chi phí ước tính phải ghi giả định
   assert.match(await expectError(db.query(`insert into expense_records (id,organization_id,category,kind,amount,expense_date)

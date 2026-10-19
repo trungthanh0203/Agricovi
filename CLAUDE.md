@@ -51,12 +51,13 @@ npx supabase functions deploy staff-accounts
 5. Truy vấn danh sách "cơ sở của tôi" phải **lọc `user_id = chính mình`**, nếu không sẽ lấy nhầm vai trò của người khác.
 6. PowerShell nuốt dấu backtick/`$` trong chuỗi mẫu: **sửa file bằng công cụ Edit/Write**, không dùng `Replace` trong PowerShell cho mã có template string.
 7. `node --test` với PGlite nhân bản cần `--test-force-exit` (đã có trong script) để tiến trình tự thoát.
-8. Phiên làm việc có thể bị ngắt và mất file chưa lưu: **commit sau mỗi mốc**.
+8. **`INSERT … ON CONFLICT DO NOTHING` (hàng đợi offline) cũng đòi chính sách SELECT cho hàng vừa thêm.** Vai trò chỉ được ghi mà không được đọc (ví dụ nhân viên ghi xuất kho) sẽ bị lỗi RLS; cần chính sách SELECT dựa vào cột của hàng (xem 0017). Test: `inventory.test.mjs`.
+9. Phiên làm việc có thể bị ngắt và mất file chưa lưu: **commit sau mỗi mốc**.
 
 ## Trạng thái (cập nhật khi xong mốc)
 
 - Xong: nền tảng, tài khoản/cơ sở/HTX-hộ, gói và hạn mức, khu trồng, vụ, nhật ký offline-first, lịch sử/sửa/hủy/xung đột, tài khoản nhân viên bằng số điện thoại, nhiều vai trò, tổ lao động, ma trận quyền.
-- **Việc kế tiếp (bước C):** vật tư, kho, chi phí, thu hoạch, tổng kết vụ. Kế hoạch: `docs/PLAN_BUOC_C.md` (D19–D23). **C0 xong** (migration 0016: phiên bản/guard cho thu hoạch-chi phí-doanh thu, đảo kho khi hủy nhật ký, giá vốn bình quân, `get_cycle_summary`; test `inventory.test.mjs`) — chưa `db push`. **C1 xong** (tab Vật tư & chi phí: danh mục, nhập kho, điều chỉnh, tồn + cảnh báo, lịch sử; Dexie v3; chưa thử tay trên máy thật). Tiếp theo C2 (xuất dùng gắn nhật ký). Sau bước C đưa app cho người dùng thật thử (D9).
+- **Việc kế tiếp (bước C):** vật tư, kho, chi phí, thu hoạch, tổng kết vụ. Kế hoạch: `docs/PLAN_BUOC_C.md` (D19–D23). **C0 xong** (migration 0016: phiên bản/guard cho thu hoạch-chi phí-doanh thu, đảo kho khi hủy nhật ký, giá vốn bình quân, `get_cycle_summary`; test `inventory.test.mjs`) — chưa `db push`. **C1 xong** (tab Vật tư & chi phí: danh mục, nhập kho, điều chỉnh, tồn + cảnh báo, lịch sử; Dexie v3; chưa thử tay trên máy thật). **C2 xong** (Ghi việc: "Vật tư đã dùng" → nhật ký + giao dịch xuất cùng lúc, offline; migration 0017). Tiếp theo C4 (thu hoạch), rồi C3 (chi phí/doanh thu), C5 (tổng kết), C6. **Chưa `db push` 0016, 0017.** Sau bước C đưa app cho người dùng thật thử (D9).
 - Sau đó: chấm công + tiền công (bước E; schema 0004, quyền 0015), trang admin (gói/thanh toán/xếp hạng), website, pilot.
 - Chưa làm: bộ mẫu dưa lưới (cần số liệu khảo sát), màn xem/sửa khu trồng, giao diện chấm công.
 - Hạ tầng: GitHub + Supabase + Cloudflare Pages; domain chưa mua (`login_email_domain` đang là `agricovi.com` tạm — phải là tên miền của chủ sản phẩm, xem cảnh báo trong `docs/DECISIONS.md`).
