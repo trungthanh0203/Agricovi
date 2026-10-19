@@ -1,0 +1,10 @@
+{
+  // Cấu hình triển khai app lên Cloudflare (Workers với tệp tĩnh). Xem docs/DEPLOY_CLOUDFLARE.md, "Cách B".
+  "name": "agriconnect-app",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./dist",
+    // App là trang đơn (SPA/PWA): địa chỉ không có file thật thì trả về index.html
+    "not_found_handling": "single-page-application"
+  }
+}

@@ -33,6 +33,21 @@ Cloudflare → **Workers & Pages → Create → Pages → Connect to Git** → c
 
 Bấm **Save and Deploy**. Lần đầu mất vài phút; xong sẽ có địa chỉ dạng `https://agriconnect-app.pages.dev`.
 
+### Cách B: nếu bạn tạo "Workers" (Workers Builds) thay vì "Pages", hoặc gặp lỗi "application detection logic ... root of a workspace"
+
+Lỗi này do lệnh `npx wrangler deploy` chạy ở gốc kho mà không có tệp cấu hình, nên Cloudflare không biết triển khai thư mục nào trong kho nhiều dự án. Kho đã có sẵn `apps/app/wrangler.jsonc` để chỉ rõ. Trong dự án Workers: **Settings → Build** đặt:
+
+| Ô | Giá trị |
+|---|---|
+| Root directory | để **trống** (gốc kho) |
+| Build command | `npm ci && npm run build -w @agriconnect/app` |
+| Deploy command | `npx wrangler deploy --config apps/app/wrangler.jsonc` |
+
+Lưu ý với Workers Builds:
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` và `NODE_VERSION=22` phải khai ở **Build variables and secrets** (biến dùng lúc build), không phải biến lúc chạy. Khai nhầm chỗ thì app build ra sẽ báo "chưa cấu hình Supabase".
+- Tên dự án Workers phải trùng `name` trong `wrangler.jsonc` (`agriconnect-app`); nếu bạn đặt tên khác, sửa `name` cho khớp.
+- Địa chỉ có dạng `https://agriconnect-app.<tài-khoản>.workers.dev`. Mục 2 và 6 bên dưới áp dụng y hệt, chỉ thay địa chỉ.
+
 ## 2. Cho phép địa chỉ mới đăng nhập (bắt buộc)
 
 Supabase → **Authentication → URL Configuration**:
