@@ -1,0 +1,98 @@
+:root {
+  --green: #2e7d32;
+  --bg: #ffffff;
+  --fg: #1b1b1b;
+  --muted: #5f6368;
+  --warn: #b26a00;
+  --err: #b3261e;
+  --line: #e0e0e0;
+  --card: #f7f9f7;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 18px; /* chữ lớn cho người ít quen công nghệ */
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #121512; --fg: #ececec; --muted: #a8aeb3; --line: #333a33; --card: #1b201b; --green: #66bb6a; --warn: #ffb74d; --err: #f2b8b5; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); }
+h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.1rem; margin: 0 0 .5rem; }
+.shell { min-height: 100dvh; display: flex; flex-direction: column; }
+.center { text-align: center; padding: 3rem 1rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.orgname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.switcher select { font: inherit; max-width: 60vw; min-height: 44px; padding: 0 8px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; }
+.pill { padding: 4px 10px; border-radius: 999px; font-size: 14px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.ok { color: var(--green); }
+.pill.warn { color: var(--warn); }
+.notice { padding: 10px 16px; background: #fff8e1; color: #3a2e00; border-bottom: 1px solid var(--line); font-size: 15px; }
+.content { flex: 1; padding: 16px; }
+.muted { color: var(--muted); }
+
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+.tab { min-height: 56px; border: 0; background: none; font: inherit; font-size: 14px; color: var(--muted); }
+.tab.active { color: var(--green); font-weight: 700; border-top: 3px solid var(--green); }
+
+/* Màn hình đăng nhập / tạo cơ sở */
+.auth { max-width: 460px; margin: 0 auto; padding: 24px 16px; }
+.auth form { display: grid; gap: 16px; margin-top: 16px; }
+label { display: grid; gap: 6px; font-weight: 600; }
+label small, .choice small { display: block; font-weight: 400; color: var(--muted); font-size: 14px; }
+input:not([type='radio']), select { font: inherit; min-height: 48px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+legend { font-weight: 600; margin-bottom: 6px; }
+.choice { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 2px solid var(--line); border-radius: 10px; font-weight: 400; }
+.choice.selected { border-color: var(--green); }
+.choice input { margin-top: 4px; width: 20px; height: 20px; }
+
+button.primary, button.secondary { min-height: 52px; font: inherit; font-weight: 700; border-radius: 10px; border: 2px solid var(--green); cursor: pointer; width: 100%; margin-top: 4px; }
+button.primary { background: var(--green); color: #fff; }
+button.primary:disabled { opacity: .6; }
+button.secondary { background: none; color: var(--green); margin-top: 8px; }
+button.link { background: none; border: 0; color: var(--green); font: inherit; text-decoration: underline; min-height: 44px; cursor: pointer; }
+.links { display: grid; gap: 4px; margin-top: 12px; justify-items: start; }
+
+/* Trạng thái luôn có chữ, không chỉ màu (NFR-UX-005) */
+.msg { padding: 10px 12px; border-radius: 8px; margin: 0; font-size: 16px; border: 1px solid currentColor; }
+.msg.error { color: var(--err); }
+.msg.ok { color: var(--green); }
+.msg.warn { color: var(--warn); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin: 12px 0; }
+pre { background: var(--card); padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 14px; }
+
+/* Sản xuất / nhật ký */
+.pill.err { color: var(--err); }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.sect { margin: 20px 0 8px; font-size: 1.05rem; }
+.card.slim { padding: 10px 14px; margin: 8px 0; }
+.card p { margin: 6px 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.actions .secondary { width: auto; flex: 1 1 140px; margin-top: 0; }
+button.big { min-height: 64px; font-size: 1.15rem; margin: 8px 0 4px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+button.bigchoice { min-height: 72px; font: inherit; font-weight: 700; border: 2px solid var(--green); border-radius: 12px; background: var(--card); color: var(--fg); cursor: pointer; padding: 8px; }
+button.link.inline { min-height: 0; margin-left: 8px; }
+.inline-form { display: grid; gap: 10px; margin-top: 12px; }
+details.tech { font-size: 14px; color: var(--muted); margin: 6px 0; }
+details.tech code { display: block; word-break: break-word; padding-top: 4px; }
+.grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.member { padding: 8px 0; border-top: 1px solid var(--line); }
+.member select { font: inherit; min-height: 44px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); max-width: 55%; }
+h3.sub { font-size: 1rem; margin: 16px 0 6px; }
+.invite { padding: 8px 0; border-top: 1px solid var(--line); }
+.mono { font-family: ui-monospace, Consolas, monospace; font-size: 1.25rem; letter-spacing: .08em; user-select: all; }
+.card.cred { border: 2px solid var(--green); }
+.auth.wide { max-width: 720px; }
+.filters { display: grid; gap: 12px; margin: 12px 0; }
+.filters .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+label.check { display: flex; align-items: center; gap: 10px; font-weight: 400; }
+label.check input { width: 22px; height: 22px; }
+.card.voided { opacity: .75; border-style: dashed; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
+.conflict { border: 2px solid var(--err); border-radius: 10px; padding: 10px; margin: 8px 0; }
+table.diff { width: 100%; border-collapse: collapse; font-size: 15px; margin: 8px 0; }
+table.diff th, table.diff td { text-align: left; padding: 6px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+fieldset.roles { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+fieldset.roles legend { padding: 0 6px; font-size: 15px; }

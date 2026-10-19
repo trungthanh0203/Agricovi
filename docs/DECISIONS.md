@@ -1,0 +1,82 @@
+# Nhật ký quyết định của chủ sản phẩm
+
+Ghi lại các quyết định đã chốt trong quá trình xây dựng, để truy vết và bổ sung vào đặc tả khi phát hành bản kế tiếp.
+Mục **[GIẢ ĐỊNH]** là cách tôi (đội phát triển) hiểu khi triển khai, cần chủ sản phẩm xác nhận.
+
+## Đã chốt
+
+| # | Quyết định | Ngày | Nguồn | Tác động |
+|---|---|---|---|---|
+| D1 | App là PWA; hạ tầng GitHub + Supabase + Cloudflare; mua domain trước khi pilot | 18/10/2026 | Chủ sản phẩm | v1.2 mục 2 |
+| D2 | Chấm công/lương là module trong app sản xuất; tính theo **giờ** cộng dồn theo tháng và theo **sản lượng**; bỏ quy đổi giờ-ngày công | 18/10/2026 | Chủ sản phẩm | v1.2 mục 7 |
+| D3 | Cây đầu tiên: dưa lưới | 18/10/2026 | Chủ sản phẩm | v1.2 mục 8 |
+| D4 | Gói theo **số vụ đang chạy cùng lúc**; Hộ 2 vụ 300k/quý, 5 vụ 500k/quý; HTX 5 vụ 1.500k/quý, 10 vụ 3.000k/quý; dùng thử 1 tháng; mọi giá trị cấu hình trong CSDL | 18/10/2026 | Chủ sản phẩm | v1.2 mục 3 |
+| D5 | Vụ *Tạm dừng* tính vào hạn mức; dùng thử giới hạn như gói cơ bản | 18/10/2026 | Chủ sản phẩm | v1.2 mục 3.1 |
+| D6 | HTX khai báo số hộ tùy ý, hạn mức chỉ theo tổng vụ; mỗi hộ tối đa 1 HTX; hộ có thể dùng cả gói HTX lẫn gói riêng | 18/10/2026 | Chủ sản phẩm | v1.2 mục 4 |
+| D7 | Vị trí top website: cách (a) — mọi cơ sở đã duyệt đều hiện, gói trả phí chỉ ưu tiên thứ tự | 18/10/2026 | Chủ sản phẩm | v1.2 mục 5 |
+| D8 | **Hộ chỉ có 1 cơ sở**; **HTX thêm được nhiều cơ sở** (hộ thành viên) | Sau pilot thử bước 6 | Chủ sản phẩm | Migration 0010 |
+| D9 | Đưa app cho người dùng thật thử **sau khi xong bước C** (kho, chi phí, thu hoạch, tổng kết vụ) | Sau pilot thử bước 6 | Chủ sản phẩm | Lộ trình |
+| D10 | Chấm công: **chủ cơ sở tạo tài khoản người lao động và chọn "kiểu phân hệ"** cho từng người (mỗi người có thể một kiểu khác nhau) | Sau pilot thử bước 6 | Chủ sản phẩm | Bước E |
+| D11 | Nhân viên đăng nhập bằng **số điện thoại**; chủ cơ sở tạo tài khoản; mật khẩu tạm do **hệ thống sinh ngẫu nhiên**, hiện một lần; nhân viên **bắt buộc đổi** ở lần đầu | Sau bước A | Chủ sản phẩm | Migration 0011, Edge Function `staff-accounts` |
+| D12 | Chủ Hộ/HTX tự đăng ký bằng **email** (chưa dùng số điện thoại/OTP) | Sau bước A | Chủ sản phẩm | — |
+| D13 | Tên miền ghép email ẩn là **cấu hình trong CSDL** (`platform_settings.login_email_domain`), tạm `agricovi.com`; đổi sau khi có tên miền thật | Sau bước A | Chủ sản phẩm | Tài khoản cũ giữ email đã lưu |
+| D14 | Lao động không có smartphone chỉ là **hồ sơ do tổ trưởng chấm hộ** (không có tài khoản) | Sau bước A | Chủ sản phẩm | Bước E |
+| D15 | **Bước B:** sửa/hủy nhật ký, phát hiện xung đột khi đồng bộ (không ghi đè âm thầm); bản ghi đã hủy không khôi phục | Sau bước A | Kế hoạch đã thống nhất | Migration 0013 |
+| D16 | **Nhiều vai trò/người**: nhân viên kiêm Kho & chi phí, tổ trưởng kiêm Quản lý HTX, chủ kiêm Quản lý (chủ bao gồm mọi vai trò) | Sau bước B | Chủ sản phẩm | Migration 0014 |
+| D17 | **Tổ trưởng là chỉ định theo tổ**; tổ trưởng cần có tài khoản; người không có tài khoản bắt buộc thuộc tổ có tổ trưởng; công của tổ trưởng do quản lý/chủ xác nhận | Sau bước B | Chủ sản phẩm (đồng ý đề xuất 1–9) | Migration 0015, màn Tổ lao động |
+| D18 | Ma trận quyền Quản lý/Tổ trưởng/Kho & chi phí/Chủ (xem `docs/ROLES.md`): chỉ chủ duyệt-khóa lương và đặt đơn giá; quản lý chỉ xem chi phí | Sau bước B | Chủ sản phẩm | Migration 0015 |
+
+## Cách tôi triển khai D15 (đã làm, migration 0013)
+
+- Mỗi lần sửa gửi kèm **phiên bản đã thấy**; máy chủ chỉ áp dụng khi khớp, nếu không báo `CONFLICT`. Người dùng thấy hai cột "Trên máy chủ hiện có" và "Bạn muốn đổi thành" rồi chọn **Giữ thay đổi của tôi** hoặc **Dùng bản trên máy chủ**.
+- Mỗi lần sửa có mã riêng (`op_id`): mạng đứt sau khi máy chủ đã áp dụng thì gửi lại **không** bị coi là xung đột.
+- Hủy cần lý do, không xóa, không khôi phục; bản ghi đã hủy không sửa nội dung. Vụ, người ghi, nguồn của nhật ký không đổi được.
+- Áp dụng cho nhật ký và cho đổi trạng thái vụ (hạn mức vụ vẫn được ép khi sửa).
+
+### [GIẢ ĐỊNH] mới cần xác nhận
+
+| # | Giả định | Cách đổi |
+|---|---|---|
+| A10 | Chủ và quản lý sửa/hủy **mọi** nhật ký; người ghi (nhân viên) chỉ sửa/hủy bản ghi **của mình trong 24 giờ** kể từ khi máy chủ nhận | Đổi chính sách `logs_update_own` và hằng `OWN_EDIT_WINDOW_MS` trong `LogsScreen.tsx` |
+| A11 | Xung đột chỉ xử lý cho **nhật ký và vụ**; khu trồng, thu hoạch, kho, chi phí sẽ có cơ chế tương tự khi làm bước C | Thêm hàm `update_*` tương ứng và đăng ký trong `UPDATE_RPC` |
+| A12 | Danh sách nhật ký trên máy chỉ giữ 200 bản ghi gần nhất; cũ hơn thì bấm "Tải nhật ký cũ hơn" (cần mạng) | Tăng giới hạn trong `syncDown` |
+
+## Cách tôi triển khai D11–D14 (đã làm, migration 0011 + Edge Function)
+
+- Số điện thoại được ghép thành email ẩn `<sdt>@sdt.<tên miền>`; người dùng chỉ thấy ô "Số điện thoại".
+- Hệ thống sinh mật khẩu tạm 8 ký tự ngẫu nhiên (bỏ ký tự dễ nhầm). Hết hạn sau 7 ngày (`staff_temp_password_days`).
+- **Máy chủ khóa dữ liệu** của tài khoản nhân viên cho tới khi mật khẩu được đổi thật sự (so sánh băm trong Auth), không chỉ ẩn ở giao diện. Mật khẩu tạm hết hạn thì chủ phải đặt lại.
+- Tài khoản nhân viên **không tự tạo cơ sở**; mỗi số điện thoại chỉ dùng cho một tài khoản nhân viên.
+- Quên mật khẩu của nhân viên: chủ cơ sở bấm "Đặt lại mật khẩu" (nhận mật khẩu tạm mới).
+- Kiểu phân hệ (D10) lưu ở `worker_profiles.work_mode`.
+
+## Cảnh báo bảo mật về tên miền email ẩn (D13)
+
+Hệ thống Auth có thể gửi thư (đặt lại mật khẩu) tới email ẩn. Vì vậy `sdt.<tên miền>` **phải do bạn kiểm soát và không có hộp thư nhận** (không bật catch-all). Nếu tên miền thuộc người khác hoặc hết hạn rồi người lạ mua lại, họ có thể nhận thư và chiếm tài khoản nhân viên. `agricovi.com` hiện chỉ là giá trị tạm; **bạn phải sở hữu tên miền này (hoặc đổi) trước khi dùng thật.**
+
+## Cách tôi triển khai D8 (đã làm, migration 0010)
+
+- `create_organization` chỉ cho tạo cơ sở **đầu tiên**. Tài khoản đã là chủ một cơ sở sẽ bị từ chối (`ORG_LIMIT`).
+- HTX thêm cơ sở bằng **hai cách**:
+  1. **Mời hộ đã có tài khoản** bằng email. Chủ hộ đăng nhập bằng đúng email đó sẽ thấy lời mời và chấp nhận. Không cần gửi thư.
+  2. **Tạo hộ thành viên** cho người chưa có tài khoản/điện thoại. HTX là bên quản lý (`managed_by_org`), người tạo là chủ của hộ đó.
+- Người được mời làm nhân viên/quản lý (vai trò trong một cơ sở) **không bị ép tạo cơ sở**; họ nhận lời mời ngay sau khi đăng ký.
+
+## [GIẢ ĐỊNH] cần xác nhận
+
+| # | Giả định | Lý do | Cách đổi nếu không đúng |
+|---|---|---|---|
+| A1 | Hộ do HTX tạo hộ **không gỡ/rời** được cho tới khi có chức năng chuyển quyền chủ hộ | Tránh HTX giữ dữ liệu của hộ khi hộ rời đi mà chưa có quy tắc | Làm chức năng chuyển quyền chủ hộ |
+| A2 | Hộ **không rời/gỡ** được HTX khi còn vụ ghi theo HTX đang chạy trên khu trồng của hộ; phải kết thúc vụ trước | Đơn giản và không mất dữ liệu; quy tắc xuất dữ liệu khi rời HTX chưa chốt (v1.2 mục 4.2) | Thay bằng quy tắc xuất dữ liệu / chuyển vụ sang gói riêng |
+| A3 | Tài khoản đã là chủ một cơ sở **không** tạo cơ sở HTX thứ hai | Khớp "Hộ chỉ 1 cơ sở"; HTX thêm cơ sở = thêm hộ thành viên | Nếu một người quản lý nhiều HTX, cần thêm cơ chế |
+| A4 | Chỉ **chủ cơ sở** mời/gỡ thành viên, đổi vai trò; quản lý chỉ xem danh sách | An toàn hơn; mở rộng sau nếu cần | Đổi quyền trong `invite_member`, `set_member_role` |
+| A5 | Lời mời xác nhận bằng **email đăng nhập** trùng email được mời; lời mời không có hạn | Không cần hạ tầng gửi thư ở giai đoạn đầu | Thêm hạn lời mời, gửi thư qua SMTP |
+| A6 | ~~Người lao động không có email~~ → **Đã giải quyết bằng D11** (tài khoản số điện thoại do chủ tạo) | — | — |
+| A7 | 4 kiểu phân hệ khởi đầu: tự chấm giờ / tổ trưởng chấm giờ / tổ trưởng ghi sản lượng / kết hợp. Danh sách có thể sai so với nhu cầu thật | D10 chưa nêu rõ các kiểu | Sửa `WORK_MODE_LABEL` và ràng buộc `worker_profiles.work_mode` |
+| A8 | Số điện thoại đã có tài khoản nhân viên ở cơ sở khác thì **không tạo trùng**; chưa có luồng "nhân viên làm cho nhiều cơ sở" | Đơn giản; số điện thoại là định danh duy nhất | Thêm lời mời theo số điện thoại cho tài khoản nhân viên có sẵn |
+| A9 | Nhân viên bị gỡ khỏi cơ sở vẫn còn tài khoản (không vào được dữ liệu nào, không tạo được cơ sở) | Chưa có chức năng khóa/xóa hẳn tài khoản | Thêm khóa tài khoản trong Edge Function |
+
+## Câu hỏi mở cho bước E (chấm công)
+
+- "Kiểu phân hệ" của người lao động gồm những kiểu nào? Đề xuất khởi đầu để bạn sửa: (1) tự chấm công bằng điện thoại, theo giờ; (2) do tổ trưởng chấm hộ, theo giờ; (3) theo sản lượng/công việc do tổ trưởng ghi; (4) kết hợp giờ và sản lượng.
+- Người lao động không có email/điện thoại thông minh đăng nhập thế nào, hay chỉ tồn tại dưới dạng hồ sơ do tổ trưởng chấm hộ?

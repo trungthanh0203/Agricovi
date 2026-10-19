@@ -1,0 +1,26 @@
+{
+  "name": "agriconnect",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AgriConnect - app quản lý sản xuất nông nghiệp (PWA) và website xúc tiến thương mại",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:app": "npm run dev -w @agriconnect/app",
+    "dev:admin": "npm run dev -w @agriconnect/admin",
+    "dev:web": "npm run dev -w @agriconnect/web",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test:db": "node --import tsx --test \"supabase/tests/*.test.mjs\""
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
+    "fake-indexeddb": "^6.2.6",
+    "tsx": "^4.23.15"
+  }
+}

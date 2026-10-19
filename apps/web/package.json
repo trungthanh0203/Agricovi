@@ -1,0 +1,16 @@
+{
+  "name": "@agriconnect/web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --port 4321",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@agriconnect/shared": "*",
+    "@supabase/supabase-js": "^2.45.4",
+    "astro": "^4.15.9"
+  }
+}

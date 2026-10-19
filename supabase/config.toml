@@ -1,0 +1,17 @@
+# Cấu hình Supabase CLI cho phát triển cục bộ. Chạy: npx supabase start
+project_id = "agriconnect"
+
+[api]
+port = 54321
+schemas = ["public"]
+
+[db]
+port = 54322
+major_version = 15
+
+[auth]
+site_url = "http://localhost:5180"
+enable_signup = true
+
+[functions.staff-accounts]
+verify_jwt = true
