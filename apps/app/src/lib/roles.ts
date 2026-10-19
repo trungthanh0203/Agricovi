@@ -36,3 +36,13 @@ export function assignableRoles(orgType: 'household' | 'cooperative'): MemberRol
   const base: MemberRole[] = ['manager', 'worker', 'inventory_finance', 'profile_editor'];
   return orgType === 'cooperative' ? ['cooperative_manager', ...base] : base;
 }
+
+/**
+ * "Công (Nhân viên sản xuất)": tên người làm và vai trò tại thời điểm ghi (bản chụp do máy chủ điền).
+ * Chủ cơ sở chỉ hiện "Chủ cơ sở". Trả chuỗi rỗng nếu bản ghi cũ chưa có thông tin này.
+ */
+export function authorLabel(name?: string | null, roles?: readonly string[] | null): string {
+  const r = roles && roles.length > 0 ? (roles.includes('owner') ? ROLE_LABEL.owner : roles.map((x) => ROLE_LABEL[x] ?? x).join(', ')) : '';
+  if (name && r) return `${name} (${r})`;
+  return name ?? (r ? `(${r})` : '');
+}

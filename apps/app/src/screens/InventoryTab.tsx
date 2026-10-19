@@ -13,7 +13,7 @@ import {
   fetchRecentTransactions, formatMoney, formatQty, pendingDeltas, syncInventoryDown, TXN_TYPE_LABEL, type TxnHistoryRow,
 } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
-import { hasRole } from '../lib/roles';
+import { authorLabel, hasRole } from '../lib/roles';
 
 type View = 'stock' | 'harvest' | 'expense' | 'sales' | 'summary' | 'catalog' | 'receipt' | 'adjustment';
 
@@ -149,8 +149,11 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust }: { orgId: string; ca
       {(history ?? []).map((h) => (
         <div className="card slim" key={h.id}>
           <div className="row">
-            <strong>{TXN_TYPE_LABEL[h.txn_type] ?? h.txn_type}: {matName(h.material_id)}</strong>
-            <strong>{h.quantity_delta > 0 ? '+' : ''}{formatQty(h.quantity_delta)} {matUnit(h.material_id)}</strong>
+            <strong className="grow">
+              {matName(h.material_id)} {formatQty(Math.abs(h.quantity_delta))} {matUnit(h.material_id)}
+              {authorLabel(h.author_name, h.author_roles) ? ` - ${authorLabel(h.author_name, h.author_roles)}` : ''}
+            </strong>
+            <span className="pill">{h.txn_type === 'adjustment' ? `Điều chỉnh ${h.quantity_delta > 0 ? '(tăng)' : '(giảm)'}` : TXN_TYPE_LABEL[h.txn_type] ?? h.txn_type}</span>
           </div>
           <p className="muted">
             {new Date(h.txn_date).toLocaleDateString('vi-VN')} · {locName(h.location_id)}

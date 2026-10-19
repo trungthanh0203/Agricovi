@@ -31,9 +31,14 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
       cycles.filter(
         (c) =>
           (c.owner_org_id === active?.id || areas.find((a) => a.id === c.area_id)?.organization_id === active?.id) &&
-          c.status !== 'ended' && c.status !== 'cancelled',
+          c.status === 'active', // chỉ vụ ĐANG SẢN XUẤT; chuẩn bị/tạm dừng thì chưa ghi việc được
       ),
     [cycles, areas, active],
+  );
+  const notStarted = cycles.filter(
+    (c) =>
+      (c.owner_org_id === active?.id || areas.find((a) => a.id === c.area_id)?.organization_id === active?.id) &&
+      (c.status === 'preparing' || c.status === 'paused'),
   );
 
   const remembered = (() => {
@@ -153,7 +158,12 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
 
       {options.length === 0 ? (
         <>
-          <p className="msg warn">Chưa có vụ trồng nào đang hoạt động. Hãy tạo vụ ở màn hình Sản xuất.</p>
+          <p className="msg warn">
+            Chưa có vụ nào đang sản xuất nên chưa ghi việc được.{' '}
+            {notStarted.length > 0
+              ? 'Vụ đang chuẩn bị hoặc tạm dừng chỉ ghi việc được sau khi bấm "Bắt đầu sản xuất" hoặc "Tiếp tục" ở màn Sản xuất.'
+              : 'Hãy tạo vụ ở màn hình Sản xuất.'}
+          </p>
           <button className="secondary" onClick={onClose}>Quay lại</button>
         </>
       ) : !workType ? (

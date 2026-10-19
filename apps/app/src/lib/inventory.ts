@@ -106,13 +106,15 @@ export interface TxnHistoryRow {
   txn_date: string;
   reason: string | null;
   activity_log_id: string | null;
+  author_name: string | null;
+  author_roles: string[] | null;
   created_at: string;
 }
 
 export async function fetchRecentTransactions(orgId: string, limit = 30): Promise<TxnHistoryRow[]> {
   const { data, error } = await client()
     .from('inventory_transactions')
-    .select('id, location_id, material_id, txn_type, quantity_delta, unit_cost, txn_date, reason, activity_log_id, created_at')
+    .select('id, location_id, material_id, txn_type, quantity_delta, unit_cost, txn_date, reason, activity_log_id, author_name, author_roles, created_at')
     .eq('organization_id', orgId)
     .order('created_at', { ascending: false })
     .limit(limit);

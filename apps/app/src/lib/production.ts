@@ -9,7 +9,7 @@ import { insertAndCache, updateAndCache } from './serverWrite';
 import { supabase } from './supabase';
 
 const LOG_COLUMNS =
-  'id, organization_id, cycle_id, area_id, work_type_id, performed_at, data, note, voided_at, void_reason, version, created_by, received_at';
+  'id, organization_id, cycle_id, area_id, work_type_id, performed_at, data, note, voided_at, void_reason, version, created_by, performed_by, author_name, author_roles, received_at';
 
 /** Tải dữ liệu về thiết bị để dùng offline. Không ghi đè bản ghi đang chờ gửi hoặc đang xung đột. */
 export async function syncDown(): Promise<void> {

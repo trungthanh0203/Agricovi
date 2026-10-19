@@ -53,6 +53,10 @@ export interface LogRow {
   void_reason?: string | null;
   version: number;
   created_by?: string | null;
+  performed_by?: string | null;
+  /** Bản chụp tên và vai trò người làm, máy chủ điền khi tạo (migration 0018) */
+  author_name?: string | null;
+  author_roles?: string[] | null;
   received_at?: string;
 }
 

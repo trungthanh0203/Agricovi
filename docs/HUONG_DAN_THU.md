@@ -6,7 +6,7 @@ Tài liệu này dành cho **chủ cơ sở, quản lý, người phụ trách k
 
 Người phụ trách kỹ thuật làm một lần trước khi mời người dùng thử:
 
-1. Đẩy cơ sở dữ liệu lên (cần cả hai bản cập nhật mới): `npx supabase db push` (có các bản `0016` và `0017`).
+1. Đẩy cơ sở dữ liệu lên (cần cả ba bản cập nhật mới): `npx supabase db push` (có các bản `0016`, `0017` và `0018`).
 2. Mở app, tạo cơ sở, mời hoặc tạo tài khoản cho từng người theo vai trò bên dưới.
 3. Cài app ra màn hình chính điện thoại (Chrome: menu → "Thêm vào màn hình chính"; iPhone: Safari → Chia sẻ → "Thêm vào MH chính").
 
@@ -32,12 +32,14 @@ Người phụ trách kỹ thuật làm một lần trước khi mời người 
 
 ## Bài thử 2: Ghi việc kèm vật tư (nhân viên)
 
+0. **Chỉ vụ "Đang sản xuất" mới ghi việc được.** Vụ đang chuẩn bị hoặc tạm dừng thì nút Ghi việc bị tắt; hãy bấm "Bắt đầu sản xuất" hoặc "Tiếp tục" ở màn Sản xuất trước.
 1. Ở **Trang chủ**, bấm **Ghi việc vừa làm** → chọn việc (ví dụ "Bón phân").
 2. Bấm **+ Thêm vật tư đã dùng**, chọn vật tư và nhập số lượng. Bấm **Lưu**.
 3. **Thử khi mất mạng:** tắt Wi-Fi và dữ liệu di động, rồi ghi thêm một việc kèm vật tư.
    - App phải báo "Đã lưu trên thiết bị — chưa đồng bộ" và không mất dữ liệu.
 4. Bật mạng lại. Sau ít phút, nhãn phải đổi thành "Đã đồng bộ".
 5. Người Kho & chi phí mở **Tồn kho**: số tồn phải giảm đúng bằng số đã dùng.
+6. Mở **Lịch sử nhật ký** và **Giao dịch gần đây** (mục Tồn kho): mỗi dòng phải hiện **người làm và vai trò**, ví dụ "Bón phân - Công (Nhân viên sản xuất)" và "Phân NPK 4 kg - Công (Nhân viên sản xuất)". Việc bạn vừa ghi khi mất mạng hiện "Bạn" cho tới khi gửi xong.
 
 ## Bài thử 3: Ghi thu hoạch (mọi người)
 

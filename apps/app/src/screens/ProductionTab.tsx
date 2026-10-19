@@ -76,10 +76,13 @@ export function ProductionTab({ onCreateCycle, onLog, onHistory }: Props) {
       <h1>Sản xuất</h1>
 
       <div className="pair">
-        <button className="primary" onClick={onLog} disabled={myCycles.length === 0}>Ghi việc vừa làm</button>
+        <button className="primary" onClick={onLog} disabled={!myCycles.some((c) => c.status === 'active')}>Ghi việc vừa làm</button>
         <button className="secondary" onClick={onHistory}>Lịch sử nhật ký</button>
       </div>
       {myCycles.length === 0 && <p className="muted">Tạo vụ trồng trước để bắt đầu ghi nhật ký.</p>}
+      {myCycles.length > 0 && !myCycles.some((c) => c.status === 'active') && (
+        <p className="muted">Chỉ vụ đang sản xuất mới ghi việc được. Hãy bấm "Bắt đầu sản xuất" hoặc "Tiếp tục" ở vụ bên dưới.</p>
+      )}
 
       {!online && canManage && <p className="msg warn" role="status">Đang offline: tạo vụ, đổi trạng thái và thêm khu trồng cần có mạng.</p>}
       {actionError && <p className="msg error" role="alert">{actionError}</p>}

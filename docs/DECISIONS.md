@@ -31,6 +31,8 @@ Mục **[GIẢ ĐỊNH]** là cách tôi (đội phát triển) hiểu khi tri�
 | D22 | Tạo **danh mục** vật tư/kho cần có mạng; ~~ghi nhập/xuất/chi phí/thu hoạch/bán vẫn dùng offline~~ (phần này **đã được D24 thay thế**: chỉ ghi mới việc hằng ngày của nhân viên dùng offline) | Bước C | Chủ sản phẩm (Q4) | Màn hình C1 |
 | D23 | Hủy nhật ký đã có xuất kho thì **tự đảo kho** bằng giao dịch điều chỉnh (lý do "Hủy nhật ký"); giao dịch gốc giữ nguyên | Bước C | Chủ sản phẩm (Q5) | Migration 0016 |
 | D24 | **Phạm vi offline**: chỉ **ghi mới việc hằng ngày của nhân viên** (nhật ký kèm vật tư đã dùng, thu hoạch; sau này chấm công) dùng hàng đợi offline. **Mọi thứ khác cần mạng và ghi thẳng lên máy chủ**, báo kết quả ngay: khu trồng, vụ, đổi trạng thái vụ, danh mục, nhập kho, điều chỉnh, chi phí, doanh thu, tổng kết, **và cả sửa/hủy**. Bỏ khung "Xung đột": máy chủ vẫn kiểm phiên bản, người dùng thấy "Người khác vừa thay đổi… đã tải lại" rồi sửa lại. Xem được dữ liệu đã tải khi mất mạng | Sau bước C | Chủ sản phẩm | `serverWrite.ts`, `outbox.ts` chỉ thêm mới |
+| D25 | **Ghi việc chỉ cho vụ "Đang sản xuất"**: vụ Chuẩn bị và Tạm dừng chưa ghi việc được (muốn ghi thì bấm "Bắt đầu sản xuất" / "Tiếp tục"). Là quy tắc ở giao diện (Ghi việc, Trang chủ, Sản xuất), **chưa ép ở CSDL** để nhật ký tạo offline khi vụ còn đang chạy không bị từ chối nếu vụ đổi trạng thái trước lúc đồng bộ | Sau bước C | Chủ sản phẩm | `LogActivityScreen`, `HomeTab`, `ProductionTab` |
+| D26 | Nhật ký và giao dịch kho hiện **"tên việc / vật tư - người làm (vai trò)"**, ví dụ "Thụ phấn - Công (Nhân viên sản xuất)". Tên và vai trò là **bản chụp tại thời điểm ghi, máy chủ tự điền** (không giả mạo, không đổi theo vai trò sau này) | Sau bước C | Chủ sản phẩm | Migration 0018, `authorLabel()` |
 
 ## Cách tôi triển khai D15 (đã làm, migration 0013)
 
@@ -57,6 +59,8 @@ Mục **[GIẢ ĐỊNH]** là cách tôi (đội phát triển) hiểu khi tri�
 
 | # | Giả định | Cách đổi |
 |---|---|---|
+| A16 | **Tên người làm**: nhân viên = họ tên trong hồ sơ lao động; chủ/quản lý đăng ký bằng email = phần trước dấu @ của email (ví dụ `an` từ `an@gmail.com`), vì chưa có "tên hiển thị" trong hồ sơ tài khoản. Bản ghi cũ trước 0018 được điền một lần khi chạy migration | Thêm ô "Tên hiển thị" cho chủ/quản lý rồi đổi hàm `author_display_name` |
+| A17 | Vụ **Tạm dừng** cũng chưa ghi việc được (chỉ "Đang sản xuất"). Thu hoạch, chi phí, doanh thu chưa bị giới hạn theo trạng thái vụ | Đổi điều kiện `c.status === 'active'` ở các màn tương ứng |
 | A13 | **Chi phí vụ** = thực chi *không phải vật tư* + giá vốn vật tư đã dùng + chi phí vật tư ghi tay + phân bổ/ước tính. Tiền *mua* vật tư (nhóm "vật tư", loại thực chi) chỉ hiển thị riêng, không cộng, vì đã tính khi xuất dùng. **Giá thành/kg** chỉ hiện khi có thu hoạch và không còn lần xuất thiếu giá vốn | Sửa hàm `get_cycle_summary` |
 | A14 | Giá vốn tính cho cả vật tư xuất từ kho của hộ cho vụ của HTX trên khu trồng của hộ (vụ HTX thấy chi phí này) | Lọc theo `organization_id` trong `get_cycle_summary` |
 | A15 | Người xem tổng kết vụ chỉ là vai trò thuộc **chủ vụ** (chủ, quản lý, Kho & chi phí, Quản lý HTX); thành viên hộ không thấy tổng kết vụ HTX | Mở rộng điều kiện trong `get_cycle_summary` |

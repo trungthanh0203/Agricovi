@@ -7,7 +7,7 @@ import { db, type LogRow, type WorkTypeRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import { isPendingUpload, useOnline, useRecordSync } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
-import { canManageProduction } from '../lib/roles';
+import { authorLabel, canManageProduction } from '../lib/roles';
 import { loadOlderLogs, voidLog } from '../lib/production';
 import { EditLogScreen } from './EditLogScreen';
 
@@ -77,6 +77,9 @@ export function LogsScreen({ onClose }: { onClose: () => void }) {
   }, [logs, myCycleIds, cycleId, typeId, from, to, showVoided]);
 
   const visible = filtered.slice(0, limit);
+
+  /** Người làm (vai trò); việc mình vừa ghi offline chưa có bản chụp từ máy chủ thì hiện "Bạn" */
+  const whoLabel = (l: LogRow) => authorLabel(l.author_name, l.author_roles) || (uid && l.created_by === uid ? 'Bạn' : '');
 
   function canEdit(l: LogRow): boolean {
     if (l.voided_at) return false;
@@ -164,7 +167,7 @@ export function LogsScreen({ onClose }: { onClose: () => void }) {
         return (
           <div className={l.voided_at ? 'card slim voided' : 'card slim'} key={l.id}>
             <div className="row">
-              <strong>{wt?.name ?? 'Việc'}</strong>
+              <strong>{wt?.name ?? 'Việc'}{whoLabel(l) ? ` - ${whoLabel(l)}` : ''}</strong>
               <span className="muted">{new Date(l.performed_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}</span>
             </div>
             <p className="muted">{cycleLabel(l.cycle_id)}</p>

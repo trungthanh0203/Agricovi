@@ -3,12 +3,15 @@ import { SyncBadge } from '../components/SyncBadge';
 import { db } from '../lib/db';
 import { useRecordSync } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
-import { canManageProduction } from '../lib/roles';
+import { useAuth } from '../lib/auth';
+import { authorLabel, canManageProduction } from '../lib/roles';
 import { retryFailed } from '../lib/outbox';
 
 export function HomeTab({ onLog, onHistory, goProduction }: { onLog: () => void; onHistory: () => void; goProduction: () => void }) {
   const { active } = useOrgs();
   const sync = useRecordSync();
+  const { session } = useAuth();
+  const uid = session?.user.id;
   const logs = useLiveQuery(() => db.logs.toArray(), [], []);
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
@@ -20,7 +23,9 @@ export function HomeTab({ onLog, onHistory, goProduction }: { onLog: () => void;
   const mine = cycles.filter(
     (c) => c.owner_org_id === active.id || areas.find((a) => a.id === c.area_id)?.organization_id === active.id,
   );
-  const running = mine.filter((c) => c.status === 'active' || c.status === 'paused');
+  // Chỉ vụ ĐANG SẢN XUẤT mới ghi việc được (vụ chuẩn bị hoặc tạm dừng thì chưa)
+  const running = mine.filter((c) => c.status === 'active');
+  const notStarted = mine.filter((c) => c.status === 'preparing' || c.status === 'paused');
   const mineIds = new Set(mine.map((c) => c.id));
   const today = new Date().toDateString();
   const todayLogs = logs
@@ -35,11 +40,14 @@ export function HomeTab({ onLog, onHistory, goProduction }: { onLog: () => void;
 
       {running.length === 0 ? (
         <div className="card">
-          <p>Chưa có vụ trồng nào đang hoạt động.</p>
+          <p>Chưa có vụ nào đang sản xuất nên chưa ghi việc được.</p>
+          {notStarted.length > 0 && (
+            <p className="muted">Vụ đang chuẩn bị hoặc tạm dừng chỉ ghi việc được sau khi bấm "Bắt đầu sản xuất" hoặc "Tiếp tục" ở màn Sản xuất.</p>
+          )}
           {canManage ? (
-            <button className="primary" onClick={goProduction}>Tạo khu trồng và vụ đầu tiên</button>
+            <button className="primary" onClick={goProduction}>{mine.length === 0 ? 'Tạo khu trồng và vụ đầu tiên' : 'Mở màn Sản xuất'}</button>
           ) : (
-            <p className="muted">Hãy nhờ chủ cơ sở hoặc quản lý tạo vụ trồng.</p>
+            <p className="muted">Hãy nhờ chủ cơ sở hoặc quản lý {mine.length === 0 ? 'tạo vụ trồng' : 'bắt đầu sản xuất'}.</p>
           )}
         </div>
       ) : (
@@ -54,7 +62,7 @@ export function HomeTab({ onLog, onHistory, goProduction }: { onLog: () => void;
       )}
 
       {running.length > 0 && (
-        <p className="muted">Đang có {running.length} vụ hoạt động.</p>
+        <p className="muted">Đang có {running.length} vụ đang sản xuất.</p>
       )}
 
       <h2 className="sect">Việc đã ghi hôm nay</h2>
@@ -65,7 +73,10 @@ export function HomeTab({ onLog, onHistory, goProduction }: { onLog: () => void;
         return (
           <div className="card slim" key={l.id}>
             <div className="row">
-              <strong>{workTypes.find((w) => w.id === l.work_type_id)?.name ?? 'Việc'}</strong>
+              <strong>
+                {workTypes.find((w) => w.id === l.work_type_id)?.name ?? 'Việc'}
+                {(authorLabel(l.author_name, l.author_roles) || (uid && l.created_by === uid ? 'Bạn' : '')) ? ` - ${authorLabel(l.author_name, l.author_roles) || 'Bạn'}` : ''}
+              </strong>
               <span className="muted">{new Date(l.performed_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
             <p className="muted">
