@@ -56,7 +56,7 @@ npx supabase functions deploy staff-accounts
 ## Trạng thái (cập nhật khi xong mốc)
 
 - Xong: nền tảng, tài khoản/cơ sở/HTX-hộ, gói và hạn mức, khu trồng, vụ, nhật ký offline-first, lịch sử/sửa/hủy/xung đột, tài khoản nhân viên bằng số điện thoại, nhiều vai trò, tổ lao động, ma trận quyền.
-- **Việc kế tiếp (bước C):** vật tư, kho, chi phí, thu hoạch, tổng kết vụ (schema đã có trong migration 0003; chưa có màn hình). Sau bước C đưa app cho người dùng thật thử (D9).
+- **Việc kế tiếp (bước C):** vật tư, kho, chi phí, thu hoạch, tổng kết vụ. Kế hoạch: `docs/PLAN_BUOC_C.md` (D19–D23). **C0 xong** (migration 0016: phiên bản/guard cho thu hoạch-chi phí-doanh thu, đảo kho khi hủy nhật ký, giá vốn bình quân, `get_cycle_summary`; test `inventory.test.mjs`) — chưa `db push`. Tiếp theo C1 (danh mục + nhập kho, màn hình). Sau bước C đưa app cho người dùng thật thử (D9).
 - Sau đó: chấm công + tiền công (bước E; schema 0004, quyền 0015), trang admin (gói/thanh toán/xếp hạng), website, pilot.
 - Chưa làm: bộ mẫu dưa lưới (cần số liệu khảo sát), màn xem/sửa khu trồng, giao diện chấm công.
 - Hạ tầng: GitHub + Supabase + Cloudflare Pages; domain chưa mua (`login_email_domain` đang là `agricovi.com` tạm — phải là tên miền của chủ sản phẩm, xem cảnh báo trong `docs/DECISIONS.md`).

@@ -25,6 +25,11 @@ Mục **[GIẢ ĐỊNH]** là cách tôi (đội phát triển) hiểu khi tri�
 | D16 | **Nhiều vai trò/người**: nhân viên kiêm Kho & chi phí, tổ trưởng kiêm Quản lý HTX, chủ kiêm Quản lý (chủ bao gồm mọi vai trò) | Sau bước B | Chủ sản phẩm | Migration 0014 |
 | D17 | **Tổ trưởng là chỉ định theo tổ**; tổ trưởng cần có tài khoản; người không có tài khoản bắt buộc thuộc tổ có tổ trưởng; công của tổ trưởng do quản lý/chủ xác nhận | Sau bước B | Chủ sản phẩm (đồng ý đề xuất 1–9) | Migration 0015, màn Tổ lao động |
 | D18 | Ma trận quyền Quản lý/Tổ trưởng/Kho & chi phí/Chủ (xem `docs/ROLES.md`): chỉ chủ duyệt-khóa lương và đặt đơn giá; quản lý chỉ xem chi phí | Sau bước B | Chủ sản phẩm | Migration 0015 |
+| D19 | **Giá vốn vật tư xuất dùng = bình quân gia quyền** các lần nhập có giá (tính đến ngày xuất); lần nhập không giá thì không tính và báo thiếu, không bịa số | Bước C | Chủ sản phẩm (đồng ý đề xuất Q1) | Migration 0016, `docs/PLAN_BUOC_C.md` |
+| D20 | **Thu hoạch**: mọi người ghi được nhật ký đều ghi được; sửa/hủy: chủ, quản lý mọi bản ghi, người ghi chỉ bản của mình trong 24 giờ (như A10) | Bước C | Chủ sản phẩm (Q2) | Migration 0016 |
+| D21 | Đơn vị thu hoạch và bán hàng **khóa là kg** ở giai đoạn thử | Bước C | Chủ sản phẩm (Q3) | Migration 0016 |
+| D22 | Tạo **danh mục** vật tư/kho cần có mạng; ghi nhập/xuất/chi phí/thu hoạch/bán vẫn dùng offline | Bước C | Chủ sản phẩm (Q4) | Màn hình C1 |
+| D23 | Hủy nhật ký đã có xuất kho thì **tự đảo kho** bằng giao dịch điều chỉnh (lý do "Hủy nhật ký"); giao dịch gốc giữ nguyên | Bước C | Chủ sản phẩm (Q5) | Migration 0016 |
 
 ## Cách tôi triển khai D15 (đã làm, migration 0013)
 
@@ -40,6 +45,18 @@ Mục **[GIẢ ĐỊNH]** là cách tôi (đội phát triển) hiểu khi tri�
 | A10 | Chủ và quản lý sửa/hủy **mọi** nhật ký; người ghi (nhân viên) chỉ sửa/hủy bản ghi **của mình trong 24 giờ** kể từ khi máy chủ nhận | Đổi chính sách `logs_update_own` và hằng `OWN_EDIT_WINDOW_MS` trong `LogsScreen.tsx` |
 | A11 | Xung đột chỉ xử lý cho **nhật ký và vụ**; khu trồng, thu hoạch, kho, chi phí sẽ có cơ chế tương tự khi làm bước C | Thêm hàm `update_*` tương ứng và đăng ký trong `UPDATE_RPC` |
 | A12 | Danh sách nhật ký trên máy chỉ giữ 200 bản ghi gần nhất; cũ hơn thì bấm "Tải nhật ký cũ hơn" (cần mạng) | Tăng giới hạn trong `syncDown` |
+
+## Cách tôi triển khai D19–D23 (migration 0016) và [GIẢ ĐỊNH] mới
+
+- Thu hoạch, chi phí, doanh thu: có `version` + `op_id`, hàm `update_harvest/update_expense/update_sale`, guard bất biến (vụ, người ghi, nguồn không đổi; đã hủy không khôi phục/sửa). Mở rộng A11 sang các bảng này.
+- Giá vốn: view `inventory_issue_costs`; giao dịch xuất đã bị đảo (do hủy nhật ký) không tính chi phí.
+- Tổng kết vụ: hàm `get_cycle_summary(cycle)` (thay view `cycle_summary`): chỉ vai trò được xem chi phí của chủ vụ mới gọi được, người khác nhận lỗi chứ không thấy số 0 giả.
+
+| # | Giả định | Cách đổi |
+|---|---|---|
+| A13 | **Chi phí vụ** = thực chi *không phải vật tư* + giá vốn vật tư đã dùng + chi phí vật tư ghi tay + phân bổ/ước tính. Tiền *mua* vật tư (nhóm "vật tư", loại thực chi) chỉ hiển thị riêng, không cộng, vì đã tính khi xuất dùng. **Giá thành/kg** chỉ hiện khi có thu hoạch và không còn lần xuất thiếu giá vốn | Sửa hàm `get_cycle_summary` |
+| A14 | Giá vốn tính cho cả vật tư xuất từ kho của hộ cho vụ của HTX trên khu trồng của hộ (vụ HTX thấy chi phí này) | Lọc theo `organization_id` trong `get_cycle_summary` |
+| A15 | Người xem tổng kết vụ chỉ là vai trò thuộc **chủ vụ** (chủ, quản lý, Kho & chi phí, Quản lý HTX); thành viên hộ không thấy tổng kết vụ HTX | Mở rộng điều kiện trong `get_cycle_summary` |
 
 ## Cách tôi triển khai D11–D14 (đã làm, migration 0011 + Edge Function)
 
