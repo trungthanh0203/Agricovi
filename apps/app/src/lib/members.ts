@@ -1,4 +1,5 @@
 import type { MemberRole } from '@agriconnect/shared';
+import type { PermOverrides } from './permissions';
 import { supabase } from './supabase';
 
 function client() {
@@ -105,3 +106,13 @@ export const removeHousehold = (coop: string, household: string) =>
   rpc<void>('remove_household', { p_coop: coop, p_household: household });
 export const leaveCooperative = (household: string) => rpc<void>('leave_cooperative', { p_household: household });
 export const myCooperative = (household: string) => rpc<MyCooperative[]>('my_cooperative', { p_household: household });
+
+/** Quyền theo mục đã cấp riêng cho từng thành viên (chỉ chủ xem được), khóa là mã người dùng */
+export async function fetchPermissionOverrides(orgId: string): Promise<Record<string, PermOverrides>> {
+  const rows = await rpc<Array<{ member_user_id: string; member_overrides: PermOverrides }>>('member_permission_overrides', { p_org: orgId });
+  return Object.fromEntries((rows ?? []).map((r) => [r.member_user_id, r.member_overrides ?? {}]));
+}
+
+/** Chủ cấp quyền theo mục cho một người; bảng rỗng = trở về mặc định theo vai trò */
+export const setMemberPermissions = (orgId: string, userId: string, perms: PermOverrides) =>
+  rpc<void>('set_member_permissions', { p_org: orgId, p_user: userId, p_permissions: perms });

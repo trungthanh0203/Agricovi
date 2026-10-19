@@ -9,7 +9,7 @@ import { editSale, recordSale, validateSale, voidSale } from '../lib/finance';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { formatMoney, formatQty, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
-import { hasRole } from '../lib/roles';
+import { canPerm } from '../lib/permissions';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 
@@ -30,7 +30,7 @@ export function SalesSection() {
   const [reason, setReason] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
 
-  const canWrite = hasRole(active?.roles, 'inventory_finance');
+  const canWrite = canPerm(active?.perms, 'sales', 'edit');
   const ownCycles = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id), [cycles, active]);
   const cycleLabel = (id: string | null) => {
     const c = cycles.find((x) => x.id === id);
@@ -81,7 +81,7 @@ export function SalesSection() {
       {canWrite ? (
         <button className="primary" onClick={() => setMode({ kind: 'new' })} disabled={ownCycles.length === 0 || !online}>Ghi bán hàng</button>
       ) : (
-        <p className="muted">Bạn chỉ xem được doanh thu. Chủ cơ sở và người phụ trách Kho & chi phí mới ghi và sửa được.</p>
+        <p className="muted">Bạn chỉ được xem doanh thu. Chủ cơ sở cấp quyền nhập liệu cho từng người.</p>
       )}
       {canWrite && ownCycles.length === 0 && <p className="msg warn">Chưa có vụ trồng nào. Hãy tạo vụ ở màn hình Sản xuất trước.</p>}
 

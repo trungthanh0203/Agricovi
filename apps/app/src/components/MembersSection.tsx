@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import type { MemberRole } from '@agriconnect/shared';
 import { friendlyError } from '../lib/errors';
 import {
-  inviteMember, listMembers, pendingOrgInvites, removeMember, revokeInvitation, setMemberRoles,
+  fetchPermissionOverrides, inviteMember, listMembers, pendingOrgInvites, removeMember, revokeInvitation, setMemberRoles,
   type Member, type PendingInvite,
 } from '../lib/members';
 import type { MyOrg } from '../lib/orgs';
@@ -10,6 +10,8 @@ import { isOwner as ownerOf, roleSummary } from '../lib/roles';
 import { loadTeams, type TeamRow, type WorkerRow } from '../lib/teams';
 import type { StaffCredentials } from '../lib/staff';
 import { Collapsible } from './Collapsible';
+import type { PermOverrides } from '../lib/permissions';
+import { MemberPermissions } from './MemberPermissions';
 import { RolePicker } from './RolePicker';
 import { CredentialsCard, ResetPasswordButton, StaffCreateForm } from './StaffAccountsSection';
 
@@ -31,11 +33,16 @@ export function MembersSection({ org }: { org: MyOrg }) {
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [creds, setCreds] = useState<StaffCredentials | null>(null);
+  const [overrides, setOverrides] = useState<Record<string, PermOverrides>>({});
 
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
     try {
-      const [m, i, t] = await Promise.all([listMembers(org.id), pendingOrgInvites(org.id), loadTeams(org.id)]);
+      const [m, i, t, ov] = await Promise.all([
+        listMembers(org.id), pendingOrgInvites(org.id), loadTeams(org.id),
+        ownerOf(org.roles) ? fetchPermissionOverrides(org.id) : Promise.resolve({} as Record<string, PermOverrides>),
+      ]);
+      setOverrides(ov);
       setMembers(m);
       setInvites(i);
       setTeams(t.teams);
@@ -112,6 +119,12 @@ export function MembersSection({ org }: { org: MyOrg }) {
                   Gỡ khỏi cơ sở
                 </button>
               </div>
+            )}
+            {isOwner && !owner && (
+              <Collapsible inline title="Quyền vật tư, chi phí, thu hoạch" summary={Object.keys(overrides[m.user_id] ?? {}).length > 0 ? 'Đã cấp riêng' : 'Theo vai trò'}>
+                <MemberPermissions key={JSON.stringify(overrides[m.user_id] ?? {})} orgId={org.id} userId={m.user_id} roles={m.roles}
+                  overrides={overrides[m.user_id] ?? {}} onSaved={() => void load()} />
+              </Collapsible>
             )}
             {isOwner && editing === m.user_id && (
               <div className="inline-form">

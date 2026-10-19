@@ -64,7 +64,7 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
   return (
     <div>
       {!navigator.onLine && <p className="msg warn">Đang offline: chỉ xem được danh mục. Cần có mạng để thêm hoặc sửa.</p>}
-      {!canWrite && <p className="muted">Chỉ chủ cơ sở và vai trò "Kho & chi phí" thay đổi được danh mục.</p>}
+      {!canWrite && <p className="muted">Bạn chỉ được xem danh mục. Chủ cơ sở cấp quyền nhập liệu kho cho từng người.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
       <Collapsible title="Vật tư" defaultOpen summary={materials.length > 0 ? `${materials.length} vật tư` : 'Chưa có'}>

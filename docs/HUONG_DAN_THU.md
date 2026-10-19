@@ -6,11 +6,13 @@ Tài liệu này dành cho **chủ cơ sở, quản lý, người phụ trách k
 
 Người phụ trách kỹ thuật làm một lần trước khi mời người dùng thử:
 
-1. Đẩy cơ sở dữ liệu lên (cần cả ba bản cập nhật mới): `npx supabase db push` (có các bản `0016`, `0017` và `0018`).
+1. Đẩy cơ sở dữ liệu lên (cần cả bốn bản cập nhật mới): `npx supabase db push` (có các bản `0016`, `0017`, `0018` và `0019`).
 2. Mở app, tạo cơ sở, mời hoặc tạo tài khoản cho từng người theo vai trò bên dưới.
 3. Cài app ra màn hình chính điện thoại (Chrome: menu → "Thêm vào màn hình chính"; iPhone: Safari → Chia sẻ → "Thêm vào MH chính").
 
 ## Ai làm được gì
+
+Bảng dưới là **mặc định theo vai trò**. Chủ cơ sở có thể **cấp riêng từng mục cho từng người** (bài thử 7): ai được cấp thì mới thấy và nhập liệu được mục đó.
 
 | Vai trò | Việc làm được |
 |---|---|
@@ -71,6 +73,14 @@ Người phụ trách kỹ thuật làm một lần trước khi mời người 
 1. Hai người (đều có mạng) cùng mở **Sửa** một phiếu thu hoạch (hoặc một khoản chi). Người A sửa và lưu trước.
 2. Người B sửa trên bản cũ rồi bấm Lưu. App phải báo **"Người khác vừa thay đổi bản ghi này…"** và tải lại bản mới nhất. Số của người A **không bị ghi đè**.
 3. Người B xem lại số mới rồi sửa lại nếu còn cần.
+
+## Bài thử 7: Chủ cấp quyền theo mục (chỉ chủ cơ sở)
+
+1. Vào **Cơ sở của tôi → Thành viên**, mở một nhân viên → **Quyền vật tư, chi phí, thu hoạch**.
+2. Với mỗi mục (Kho, Thu hoạch, Chi phí, Doanh thu, Tổng kết) chọn: **Theo vai trò**, **Không thấy**, **Chỉ xem** hoặc **Xem và nhập liệu**. Bấm **Lưu quyền**.
+3. Trên máy của nhân viên đó, đóng rồi mở lại app: tab **Vật tư & chi phí** chỉ còn đúng các mục được cấp. Mục "Chỉ xem" thì không có nút ghi. Không được cấp mục nào thì cả tab **biến mất**.
+4. Thử cấp "Chi phí: Xem và nhập liệu" cho một nhân viên: họ ghi được chi phí. Rút lại bằng "Không thấy": họ không còn thấy.
+5. Lưu ý: nhân viên vẫn **ghi việc kèm vật tư đã dùng** bình thường, không phụ thuộc quyền Kho.
 
 ## Những điều cần biết
 

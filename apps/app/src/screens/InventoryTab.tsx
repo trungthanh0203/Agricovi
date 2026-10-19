@@ -13,55 +13,77 @@ import {
   fetchRecentTransactions, formatMoney, formatQty, pendingDeltas, syncInventoryDown, TXN_TYPE_LABEL, type TxnHistoryRow,
 } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
-import { authorLabel, hasRole } from '../lib/roles';
+import { canPerm, type PermModule } from '../lib/permissions';
+import { authorLabel } from '../lib/roles';
 
 type View = 'stock' | 'harvest' | 'expense' | 'sales' | 'summary' | 'catalog' | 'receipt' | 'adjustment';
 
-/** Tab "Vật tư & chi phí": Tồn kho (C1), Thu hoạch (C4), Chi phí và Doanh thu (C3), Danh mục. Tổng kết vụ (C5). */
+/**
+ * Tab "Vật tư & chi phí". Mỗi mục chỉ hiện với người được cấp quyền (chủ cơ sở cấp cho từng người, D27):
+ * kho, thu hoạch, chi phí, doanh thu, tổng kết. Ẩn/hiện ở đây chỉ là giao diện; máy chủ luôn kiểm tra lại.
+ */
 export function InventoryTab() {
   const { active } = useOrgs();
-  const canViewStock = hasRole(active?.roles, 'manager', 'inventory_finance');
-  // chi phí và doanh thu: chủ, quản lý, Kho & chi phí, Quản lý HTX xem được (nhân viên, tổ trưởng thì không)
-  const canViewMoney = hasRole(active?.roles, 'manager', 'inventory_finance', 'cooperative_manager');
-  // người không xem được tồn kho (nhân viên) mở thẳng mục Thu hoạch
-  const [view, setView] = useState<View>(canViewStock ? 'stock' : 'harvest');
+  const [picked, setPicked] = useState<View | null>(null);
   if (!active) return null;
+  const can = (m: PermModule, need: 'view' | 'edit' = 'view') => canPerm(active.perms, m, need);
 
-  const canWrite = hasRole(active.roles, 'inventory_finance');
+  const sections: { id: View; label: string }[] = [
+    can('inventory') ? { id: 'stock' as View, label: 'Tồn kho' } : null,
+    can('harvest') ? { id: 'harvest' as View, label: 'Thu hoạch' } : null,
+    can('expenses') ? { id: 'expense' as View, label: 'Chi phí' } : null,
+    can('sales') ? { id: 'sales' as View, label: 'Doanh thu' } : null,
+    can('summary') ? { id: 'summary' as View, label: 'Tổng kết' } : null,
+    can('inventory') ? { id: 'catalog' as View, label: 'Danh mục' } : null,
+  ].filter((x): x is { id: View; label: string } => x !== null);
+
+  const isEntry = picked === 'receipt' || picked === 'adjustment';
+  const view: View | null = isEntry
+    ? (can('inventory', 'edit') ? picked : (sections[0]?.id ?? null))
+    : picked && sections.some((x) => x.id === picked) ? picked : (sections[0]?.id ?? null);
+  const canWrite = can('inventory', 'edit');
+
+  if (!view) {
+    return (
+      <section>
+        <h1>Vật tư & chi phí</h1>
+        <div className="card">
+          <p>Bạn chưa được cấp quyền xem mục nào ở đây.</p>
+          <p className="muted">Chủ cơ sở cấp quyền cho từng người. Khi dùng vật tư lúc ghi việc, hãy chọn vật tư trong màn hình "Ghi việc vừa làm".</p>
+        </div>
+      </section>
+    );
+  }
 
   if (view === 'receipt' || view === 'adjustment') {
-    return <StockEntry orgId={active.id} mode={view} onClose={() => setView('stock')} />;
+    return <StockEntry orgId={active.id} mode={view} onClose={() => setPicked('stock')} />;
   }
 
   return (
     <section>
       <h1>Vật tư & chi phí</h1>
-      <div className="chips" role="tablist" aria-label="Mục vật tư">
-        <button role="tab" aria-selected={view === 'stock'} className={view === 'stock' ? 'chip active' : 'chip'} onClick={() => setView('stock')}>Tồn kho</button>
-        <button role="tab" aria-selected={view === 'harvest'} className={view === 'harvest' ? 'chip active' : 'chip'} onClick={() => setView('harvest')}>Thu hoạch</button>
-        {canViewMoney && <button role="tab" aria-selected={view === 'expense'} className={view === 'expense' ? 'chip active' : 'chip'} onClick={() => setView('expense')}>Chi phí</button>}
-        {canViewMoney && <button role="tab" aria-selected={view === 'sales'} className={view === 'sales' ? 'chip active' : 'chip'} onClick={() => setView('sales')}>Doanh thu</button>}
-        {canViewMoney && <button role="tab" aria-selected={view === 'summary'} className={view === 'summary' ? 'chip active' : 'chip'} onClick={() => setView('summary')}>Tổng kết</button>}
-        <button role="tab" aria-selected={view === 'catalog'} className={view === 'catalog' ? 'chip active' : 'chip'} onClick={() => setView('catalog')}>Danh mục</button>
-      </div>
+      {sections.length > 1 && (
+        <div className="chips" role="tablist" aria-label="Mục vật tư">
+          {sections.map((x) => (
+            <button key={x.id} role="tab" aria-selected={view === x.id} className={view === x.id ? 'chip active' : 'chip'} onClick={() => setPicked(x.id)}>
+              {x.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {view === 'harvest' ? (
         <HarvestSection />
-      ) : view === 'expense' && canViewMoney ? (
+      ) : view === 'expense' ? (
         <ExpenseSection />
-      ) : view === 'sales' && canViewMoney ? (
+      ) : view === 'sales' ? (
         <SalesSection />
-      ) : view === 'summary' && canViewMoney ? (
+      ) : view === 'summary' ? (
         <SummarySection />
       ) : view === 'catalog' ? (
         <CatalogSection orgId={active.id} canWrite={canWrite} />
-      ) : canViewStock ? (
-        <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setView('receipt')} onAdjust={() => setView('adjustment')} />
       ) : (
-        <div className="card">
-          <p>Vai trò của bạn không xem được tồn kho và chi phí.</p>
-          <p className="muted">Khi dùng vật tư, hãy chọn vật tư trong màn hình "Ghi việc vừa làm".</p>
-        </div>
+        <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setPicked('receipt')} onAdjust={() => setPicked('adjustment')} />
       )}
     </section>
   );

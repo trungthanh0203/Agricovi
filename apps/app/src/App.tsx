@@ -14,10 +14,10 @@ import { LogsScreen } from './screens/LogsScreen';
 import { InventoryTab } from './screens/InventoryTab';
 import { ProductionTab } from './screens/ProductionTab';
 import { syncDown } from './lib/production';
-import { UpdateBanner } from './components/UpdateBanner';
 import { SetupNotice } from './screens/SetupNotice';
 import { WelcomeScreen } from './screens/WelcomeScreen';
 import { ForcePasswordScreen } from './screens/ForcePasswordScreen';
+import { canPerm, PERM_MODULES } from './lib/permissions';
 import { fetchStaffStatus, type StaffStatus } from './lib/staff';
 
 type Tab = 'home' | 'production' | 'inventory' | 'org';
@@ -68,13 +68,18 @@ function Gate() {
 }
 function Shell() {
   const { orgs, active, setActive } = useOrgs();
-  const [tab, setTab] = useState<Tab>('home');
+  const [tabState, setTab] = useState<Tab>('home');
   const [adding, setAdding] = useState(false);
   const [overlay, setOverlay] = useState<null | 'log' | 'cycle' | 'logs'>(null);
   const [online, setOnline] = useState(navigator.onLine);
   const [counts, setCounts] = useState<Record<SyncState, number> | null>(null);
 
   const refresh = useCallback(async () => setCounts(await countByState()), []);
+
+  // Tab "Vật tư & chi phí" chỉ hiện với người được cấp quyền xem ít nhất một mục trong đó (D27)
+  const showInventory = PERM_MODULES.some((m) => canPerm(active?.perms, m));
+  const visibleTabs = TABS.filter((t) => t.id !== 'inventory' || showInventory);
+  const tab: Tab = visibleTabs.some((t) => t.id === tabState) ? tabState : 'home';
 
   useEffect(() => {
     const sync = () => void syncDown().catch(() => undefined).finally(() => void refresh());
@@ -106,7 +111,6 @@ function Shell() {
 
   return (
     <div className="shell">
-      <UpdateBanner />
       <header className="topbar">
         {orgs.length > 1 ? (
           <label className="switcher">
@@ -142,8 +146,8 @@ function Shell() {
         )}
       </main>
 
-      <nav className="tabs" aria-label="Điều hướng chính">
-        {TABS.map((t) => (
+      <nav className="tabs" aria-label="Điều hướng chính" style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr)` }}>
+        {visibleTabs.map((t) => (
           <button
             key={t.id}
             className={t.id === tab ? 'tab active' : 'tab'}

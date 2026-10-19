@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { MemberRole, OrgType } from '@agriconnect/shared';
 import { useAuth } from './auth';
+import { effectivePerms, type EffectivePerms, type PermOverrides } from './permissions';
 import { supabase } from './supabase';
 
 export interface MyOrg {
@@ -8,6 +9,8 @@ export interface MyOrg {
   type: OrgType;
   name: string;
   roles: MemberRole[];
+  /** Quyền hiệu lực theo mục (vai trò + phần chủ cấp riêng), D27 */
+  perms: EffectivePerms;
 }
 
 export interface PlanUsage {
@@ -74,7 +77,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       if (!supabase || !navigator.onLine) throw new Error('offline');
       const { data, error } = await supabase
         .from('organization_memberships')
-        .select('roles, organizations ( id, type, name )')
+        .select('roles, permissions, organizations ( id, type, name )')
         .eq('status', 'active')
         // CHỈ dòng của chính mình: các dòng thành viên khác cùng cơ sở không phải "cơ sở của tôi"
         // và mang vai trò của người khác (lỗi cũ: nhân viên bị hiện giao diện của chủ).
@@ -82,7 +85,9 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       const list: MyOrg[] = (data ?? []).flatMap((row) => {
         const o = row.organizations as unknown as { id: string; type: OrgType; name: string } | null;
-        return o ? [{ id: o.id, type: o.type, name: o.name, roles: row.roles as MemberRole[] }] : [];
+        if (!o) return [];
+        const roles = row.roles as MemberRole[];
+        return [{ id: o.id, type: o.type, name: o.name, roles, perms: effectivePerms(roles, row.permissions as PermOverrides | null) }];
       });
       list.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
       setOrgs(list);
@@ -92,7 +97,10 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       setActiveId((cur) => pickActive(list, cur ?? saved));
     } catch {
       // Offline hoặc lỗi mạng: dùng danh sách đã lưu lần trước để vẫn làm việc được
-      const cached = (readJson<Array<MyOrg & { role?: MemberRole }>>(cacheKey(uid)) ?? []).map((o) => ({ ...o, roles: o.roles ?? (o.role ? [o.role] : []) }));
+      const cached = (readJson<Array<Omit<MyOrg, 'perms'> & { role?: MemberRole; perms?: EffectivePerms }>>(cacheKey(uid)) ?? []).map((o) => {
+        const roles = o.roles ?? (o.role ? [o.role] : []);
+        return { ...o, roles, perms: o.perms ?? effectivePerms(roles, null) };
+      });
       setOrgs(cached);
       setStale(true);
       setActiveId((cur) => pickActive(cached, cur ?? saved));
@@ -108,8 +116,14 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   // Tự tải lại khi có mạng trở lại
   useEffect(() => {
     const on = () => void load();
+    // và khi mở lại app, để quyền chủ vừa đổi có hiệu lực sớm
+    const visible = () => { if (document.visibilityState === 'visible') on(); };
     window.addEventListener('online', on);
-    return () => window.removeEventListener('online', on);
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      window.removeEventListener('online', on);
+      document.removeEventListener('visibilitychange', visible);
+    };
   }, [load]);
 
   const setActive = useCallback(

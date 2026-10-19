@@ -16,7 +16,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt', // không tự cập nhật giữa lúc người dùng đang nhập dữ liệu
+      registerType: 'autoUpdate', // bản mới tự thay âm thầm, có hiệu lực ở lần mở app kế tiếp (không hiện thông báo, không tự tải lại giữa lúc nhập)
       includeAssets: ['icon.svg'],
       manifest: {
         name: 'AgriConnect',

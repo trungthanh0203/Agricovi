@@ -47,6 +47,22 @@ Các vai trò gán được: **Quản lý**, **Nhân viên sản xuất**, **Kho
 
 **Ghi chú về "xuất dùng":** nhân viên ghi được xuất dùng và **chỉ thấy các lần xuất do chính mình ghi** (cần cho ghi offline, xem migration 0017); họ không thấy nhập kho, điều chỉnh, tồn kho hay giá vốn. Hủy một nhật ký có xuất kho thì kho **tự được đảo** (D23). Quản lý HTX xem được tổng kết vụ của HTX nhưng không ghi xuất dùng.
 
+## Quyền theo mục do chủ cấp (D27)
+
+Ở tab **Vật tư & chi phí**, chủ cơ sở cấp cho **từng người** quyền với từng mục. Ma trận phía trên là **mặc định theo vai trò** khi chủ chưa cấp riêng; cấp riêng sẽ **đè lên** mặc định (cả thêm lẫn bớt quyền). Chủ luôn đủ quyền.
+
+| Mục | Mức | Ý nghĩa |
+|---|---|---|
+| Kho | Xem / Xem và nhập liệu | Xem tồn kho, lịch sử giao dịch / nhập kho, điều chỉnh tồn, thêm sửa danh mục vật tư, kho |
+| Thu hoạch | Xem / Xem và nhập liệu | Xem phiếu thu hoạch / ghi phiếu (quản lý, chủ vẫn sửa-hủy được mọi phiếu; người ghi sửa-hủy bản của mình trong 24 giờ) |
+| Chi phí | Xem / Xem và nhập liệu | Xem / ghi, sửa, hủy khoản chi |
+| Doanh thu | Xem / Xem và nhập liệu | Xem / ghi, sửa, hủy khoản bán |
+| Tổng kết vụ | Xem | Xem tổng kết chi phí, sản lượng, giá thành của vụ |
+
+Mặc định theo vai trò: Chủ = đủ mọi mục. Kho & chi phí = nhập liệu Kho, Chi phí, Doanh thu; xem Tổng kết. Quản lý = xem Kho, Chi phí, Doanh thu, Tổng kết; nhập liệu Thu hoạch. Quản lý HTX = xem Chi phí, Doanh thu, Tổng kết; nhập liệu Thu hoạch. Nhân viên = nhập liệu Thu hoạch. "Xuất dùng" khi ghi việc không thuộc quyền Kho (xem `DECISIONS.md` A18).
+
+Cách cấp: **Cơ sở của tôi → Thành viên → (người đó) → Quyền vật tư, chi phí, thu hoạch** (chỉ chủ). Hàm máy chủ: `set_member_permissions`, kiểm tra ở `has_perm()` trong các chính sách RLS. Kiểm thử: `supabase/tests/perms.test.mjs` (có đối chiếu với `apps/app/src/lib/permissions.ts`).
+
 ## Quyết định đã chốt (chủ sản phẩm đồng ý đề xuất, mục 1–9)
 
 | Mục | Quyết định |

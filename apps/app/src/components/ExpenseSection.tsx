@@ -12,7 +12,7 @@ import {
 import { todayLocal, useOnline } from '../lib/hooks';
 import { formatMoney, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
-import { hasRole } from '../lib/roles';
+import { canPerm } from '../lib/permissions';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 
@@ -33,7 +33,7 @@ export function ExpenseSection() {
   const [reason, setReason] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
 
-  const canWrite = hasRole(active?.roles, 'inventory_finance');
+  const canWrite = canPerm(active?.perms, 'expenses', 'edit');
   // chỉ vụ do chính cơ sở này sở hữu mới ghi được chi phí (quyền ghi theo chủ vụ)
   const ownCycles = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id), [cycles, active]);
   const cycleLabel = (id: string | null) => {
@@ -87,7 +87,7 @@ export function ExpenseSection() {
       {canWrite ? (
         <button className="primary" onClick={() => setMode({ kind: 'new' })} disabled={!online}>Ghi chi phí</button>
       ) : (
-        <p className="muted">Bạn chỉ xem được chi phí. Chủ cơ sở và người phụ trách Kho & chi phí mới ghi và sửa được.</p>
+        <p className="muted">Bạn chỉ được xem chi phí. Chủ cơ sở cấp quyền nhập liệu cho từng người.</p>
       )}
 
       <Collapsible inline title="Bộ lọc" summary={`${cycleFilter === 'none' ? 'Chi phí chung' : cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả'}${showVoided ? ' · cả khoản đã hủy' : ''}`}>

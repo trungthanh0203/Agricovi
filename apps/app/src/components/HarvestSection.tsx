@@ -12,7 +12,8 @@ import {
 import { isPendingUpload, toLocalInput, useOnline, useRecordSync } from '../lib/hooks';
 import { formatQty, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
-import { canManageProduction, hasRole } from '../lib/roles';
+import { canPerm } from '../lib/permissions';
+import { canManageProduction } from '../lib/roles';
 
 const OWN_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // khớp chính sách harvest_update_own ở máy chủ
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
@@ -36,7 +37,7 @@ export function HarvestSection() {
   const [msg, setMsg] = useState<string | null>(null);
 
   const uid = session?.user.id;
-  const canRecord = hasRole(active?.roles, 'manager', 'worker', 'inventory_finance', 'cooperative_manager');
+  const canRecord = canPerm(active?.perms, 'harvest', 'edit'); // chủ cơ sở cấp quyền nhập liệu thu hoạch
   const manager = canManageProduction(active?.roles);
 
   const myCycles = useMemo(
@@ -63,7 +64,7 @@ export function HarvestSection() {
   const loss = valid.reduce((s, h) => s + (h.loss_quantity ?? 0), 0);
 
   function canEdit(h: HarvestRow): boolean {
-    if (h.voided_at) return false;
+    if (h.voided_at || !canRecord) return false;
     if (!online) return false; // sửa/hủy cần mạng (D24)
     if (isPendingUpload(sync, h.id)) return false; // chưa lên máy chủ thì chưa sửa/hủy được
     if (manager) return true;
@@ -101,7 +102,7 @@ export function HarvestSection() {
       {canRecord ? (
         <button className="primary" onClick={() => setMode({ kind: 'new' })} disabled={myCycles.length === 0}>Ghi thu hoạch</button>
       ) : (
-        <p className="muted">Vai trò của bạn chỉ xem được thu hoạch.</p>
+        <p className="muted">Bạn chỉ được xem thu hoạch (chủ cơ sở cấp quyền nhập liệu).</p>
       )}
       {myCycles.length === 0 && <p className="msg warn">Chưa có vụ trồng nào. Hãy tạo vụ ở màn hình Sản xuất trước.</p>}
 

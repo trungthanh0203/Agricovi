@@ -98,9 +98,9 @@ Hiện admin và web mới là khung; chưa cần tạo cho tới khi có nội 
 
 App là PWA nên trình duyệt giữ một bản app trong máy (service worker). Tải lại trang (F5, Ctrl+F5) **không đổi** được bản này; bản mới nằm chờ cho tới khi đóng hết các tab của app.
 
-- **Từ bản có thông báo cập nhật trở đi:** khi có bản mới, đầu màn hình hiện dòng **"Có phiên bản mới của ứng dụng. Cập nhật ngay"**. Bấm vào là xong. App tự kiểm tra bản mới mỗi lần mở lại và mỗi 30 phút.
+- **Từ bản tự cập nhật trở đi:** bản mới được thay **âm thầm**, không hiện thông báo. Trình duyệt tự kiểm tra bản mới mỗi lần mở app; bản mới có hiệu lực sau khi **đóng và mở lại app một đến hai lần** (lần đầu tải bản mới về, lần sau chạy bản mới). Không bao giờ tự tải lại giữa lúc bạn đang nhập.
 - **Kiểm tra đang chạy bản nào:** mở **Cơ sở của tôi**, cuối trang có dòng **"Phiên bản app: <mã commit> · <giờ build>"**. So mã commit với `git log -1` trên GitHub.
-- **Một lần duy nhất** để chuyển sang bản có thông báo (vì bản cũ trong máy chưa biết cách tự cập nhật):
+- **Một lần duy nhất** để chuyển sang bản tự cập nhật (vì bản cũ trong máy đang giữ chờ bản mới, không tự thay):
   - Máy tính (Chrome): F12 → **Application → Service workers** → bấm **Unregister**; rồi **Storage → Clear site data**; tải lại trang.
   - Điện thoại: đóng hẳn app (vuốt tắt, hoặc đóng mọi tab trình duyệt của trang), mở lại; nếu vẫn bản cũ thì gỡ app cài trên màn hình chính, xóa dữ liệu trang của trình duyệt, cài lại.
   - Trước khi xóa dữ liệu: nếu có việc ghi khi mất mạng mà chưa gửi, hãy bật mạng và mở app cho gửi xong.
