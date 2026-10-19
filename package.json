@@ -14,6 +14,7 @@
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test:db": "node --import tsx --test --test-force-exit \"supabase/tests/*.test.mjs\"",
+    "test:db:changed": "node scripts/test-changed.mjs",
     "test:db:file": "node --import tsx --test --test-force-exit"
   },
   "engines": {

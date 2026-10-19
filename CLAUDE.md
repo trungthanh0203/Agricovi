@@ -26,7 +26,8 @@ Nền tảng quản lý nuôi trồng (app PWA) + website xúc tiến thương m
 ```bash
 npm run typecheck                         # vài giây; chạy sau mỗi thay đổi
 npm run build                             # ~30 giây
-npm run test:db:file -- supabase/tests/roles.test.mjs   # chỉ test liên quan (nhanh, ưu tiên)
+npm run test:db:changed                   # tự chọn test theo phần vừa sửa (ưu tiên; thêm -- --list để chỉ xem, -- --since main để so với nhánh khác)
+npm run test:db:file -- supabase/tests/roles.test.mjs   # một file test cụ thể
 npm run test:db                           # toàn bộ test CSDL (chậm hơn; CI cũng chạy)
 npm run dev:app                           # http://localhost:5180
 npx supabase db push                      # đẩy migration (người dùng tự chạy)
@@ -64,6 +65,6 @@ npx supabase functions deploy staff-accounts
 
 ## Cách làm việc hiệu quả
 
-- Sửa nhỏ bằng Edit, không viết lại cả file. Chạy typecheck + **chỉ test liên quan**; test đầy đủ để CI chạy.
+- Sửa nhỏ bằng Edit, không viết lại cả file. Chạy typecheck + `npm run test:db:changed` (chỉ test liên quan); test đầy đủ để CI chạy.
 - Khi cần chủ sản phẩm quyết định: nêu **đề xuất + lý do** và hỏi tối đa vài câu; ghi quyết định vào `docs/DECISIONS.md`.
 - Mỗi tính năng mới đi kèm test CSDL cho quyền và ràng buộc; logic đồng bộ có test đầu-cuối ở `supabase/tests/sync.e2e.test.mjs`.
