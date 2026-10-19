@@ -96,6 +96,38 @@ export interface HarvestRow {
   received_at?: string;
 }
 
+export interface ExpenseRow {
+  id: string;
+  organization_id: string;
+  cycle_id: string | null;
+  category: string;
+  kind: string;
+  amount: number;
+  expense_date: string;
+  note: string | null;
+  voided_at?: string | null;
+  void_reason?: string | null;
+  version: number;
+  created_by?: string | null;
+  received_at?: string;
+}
+
+export interface SaleRow {
+  id: string;
+  organization_id: string;
+  cycle_id: string;
+  sold_date: string;
+  quantity: number;
+  unit: string;
+  amount: number;
+  buyer_note: string | null;
+  voided_at?: string | null;
+  void_reason?: string | null;
+  version: number;
+  created_by?: string | null;
+  received_at?: string;
+}
+
 /** Tồn theo kho và vật tư (bản chụp từ view inventory_balances; chỉ vai trò được đọc kho mới có) */
 export interface BalanceRow {
   organization_id: string;
@@ -119,6 +151,8 @@ export class LocalDb extends Dexie {
   locations!: Table<LocationRow, string>;
   balances!: Table<BalanceRow, [string, string]>;
   harvests!: Table<HarvestRow, string>;
+  expenses!: Table<ExpenseRow, string>;
+  sales!: Table<SaleRow, string>;
 
   constructor(name = 'agriconnect') {
     super(name);
@@ -157,6 +191,21 @@ export class LocalDb extends Dexie {
       locations: 'id, organization_id',
       balances: '[location_id+material_id], organization_id',
       harvests: 'id, cycle_id, organization_id, harvested_at',
+    });
+    this.version(5).stores({
+      outbox: 'id, state, table, createdAt',
+      areas: 'id, organization_id',
+      cycles: 'id, owner_org_id, area_id',
+      logs: 'id, cycle_id, organization_id, performed_at',
+      workTypes: 'id',
+      cropTypes: 'id',
+      units: 'id',
+      materials: 'id, organization_id',
+      locations: 'id, organization_id',
+      balances: '[location_id+material_id], organization_id',
+      harvests: 'id, cycle_id, organization_id, harvested_at',
+      expenses: 'id, organization_id, cycle_id, expense_date',
+      sales: 'id, organization_id, cycle_id, sold_date',
     });
   }
 }

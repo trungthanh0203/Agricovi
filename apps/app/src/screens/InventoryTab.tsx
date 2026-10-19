@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CatalogSection } from '../components/CatalogSection';
+import { ExpenseSection } from '../components/ExpenseSection';
 import { HarvestSection } from '../components/HarvestSection';
+import { SalesSection } from '../components/SalesSection';
 import { StockEntry } from '../components/StockEntry';
 import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
@@ -11,12 +13,14 @@ import {
 import { useOrgs } from '../lib/orgs';
 import { hasRole } from '../lib/roles';
 
-type View = 'stock' | 'harvest' | 'catalog' | 'receipt' | 'adjustment';
+type View = 'stock' | 'harvest' | 'expense' | 'sales' | 'catalog' | 'receipt' | 'adjustment';
 
-/** Tab "Vật tư & chi phí": Tồn kho (C1), Thu hoạch (C4), Danh mục. Chi phí, doanh thu, tổng kết sẽ thêm ở các lát sau. */
+/** Tab "Vật tư & chi phí": Tồn kho (C1), Thu hoạch (C4), Chi phí và Doanh thu (C3), Danh mục. Tổng kết vụ sẽ thêm ở lát C5. */
 export function InventoryTab() {
   const { active } = useOrgs();
   const canViewStock = hasRole(active?.roles, 'manager', 'inventory_finance');
+  // chi phí và doanh thu: chủ, quản lý, Kho & chi phí, Quản lý HTX xem được (nhân viên, tổ trưởng thì không)
+  const canViewMoney = hasRole(active?.roles, 'manager', 'inventory_finance', 'cooperative_manager');
   // người không xem được tồn kho (nhân viên) mở thẳng mục Thu hoạch
   const [view, setView] = useState<View>(canViewStock ? 'stock' : 'harvest');
   if (!active) return null;
@@ -33,11 +37,17 @@ export function InventoryTab() {
       <div className="chips" role="tablist" aria-label="Mục vật tư">
         <button role="tab" aria-selected={view === 'stock'} className={view === 'stock' ? 'chip active' : 'chip'} onClick={() => setView('stock')}>Tồn kho</button>
         <button role="tab" aria-selected={view === 'harvest'} className={view === 'harvest' ? 'chip active' : 'chip'} onClick={() => setView('harvest')}>Thu hoạch</button>
+        {canViewMoney && <button role="tab" aria-selected={view === 'expense'} className={view === 'expense' ? 'chip active' : 'chip'} onClick={() => setView('expense')}>Chi phí</button>}
+        {canViewMoney && <button role="tab" aria-selected={view === 'sales'} className={view === 'sales' ? 'chip active' : 'chip'} onClick={() => setView('sales')}>Doanh thu</button>}
         <button role="tab" aria-selected={view === 'catalog'} className={view === 'catalog' ? 'chip active' : 'chip'} onClick={() => setView('catalog')}>Danh mục</button>
       </div>
 
       {view === 'harvest' ? (
         <HarvestSection />
+      ) : view === 'expense' && canViewMoney ? (
+        <ExpenseSection />
+      ) : view === 'sales' && canViewMoney ? (
+        <SalesSection />
       ) : view === 'catalog' ? (
         <CatalogSection orgId={active.id} canWrite={canWrite} />
       ) : canViewStock ? (

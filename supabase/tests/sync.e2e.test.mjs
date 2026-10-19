@@ -366,3 +366,67 @@ test('thu hoạch offline: ghi, sửa có phiên bản, xung đột khi người
   assert.equal((await ownDev.box.flush()).failed, 1);
   assert.match((await ownDev.local.outbox.toArray()).find((o) => o.state === 'needs_attention').lastError, /VOIDED/);
 });
+
+test('chi phí và doanh thu offline: ghi, ước tính thiếu giả định bị từ chối nhưng không mất, sửa có xung đột, quản lý không ghi/sửa được', async () => {
+  const { pg, org, owner, mgr } = await setup();
+  const fin = await addUser(pg, 8);
+  await pg.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['inventory_finance']::member_role[])`, [org, fin]);
+  const d = device(pg, fin);
+  const E1 = 'ffffffff-0000-4000-8000-0000000000e1'; // chi phí chung, không gắn vụ
+  const E2 = 'ffffffff-0000-4000-8000-0000000000e2'; // gắn vụ
+  const E3 = 'ffffffff-0000-4000-8000-0000000000e3'; // ước tính nhưng thiếu giả định
+  const S1 = 'ffffffff-0000-4000-8000-0000000000a1';
+  const exp = (id, over = {}) => ({ id, organization_id: org, cycle_id: null, category: 'utility', kind: 'cash_paid', amount: 150000, expense_date: '2026-10-19', note: null, source: 'offline', created_by: fin, ...over });
+
+  await d.box.enqueue('expense_records', exp(E1));
+  await d.box.enqueue('expense_records', exp(E2, { cycle_id: CYC, category: 'labor', amount: 400000 }));
+  await d.box.enqueue('expense_records', exp(E3, { cycle_id: CYC, kind: 'estimated' }));
+  await d.box.enqueue('sales_records', { id: S1, organization_id: org, cycle_id: CYC, sold_date: '2026-10-19', quantity: 80, unit: 'kg', amount: 2400000, buyer_note: 'Thương lái A', source: 'offline', created_by: fin });
+  const r = await d.box.flush();
+  assert.equal(r.synced, 3);
+  assert.equal(r.failed, 1);
+  const bad = await d.local.outbox.get(E3);
+  assert.equal(bad.state, 'needs_attention'); // thiếu giả định: giữ lại trên thiết bị để người dùng bổ sung, không mất
+  assert.equal((await pg.query(`select count(*)::int n from expense_records`)).rows[0].n, 2);
+
+  // gửi lặp không nhân đôi (khoản thiếu giả định vẫn bị từ chối mỗi lần gửi lại)
+  await d.local.outbox.toCollection().modify({ state: 'local_only' });
+  assert.equal((await d.box.flush()).failed, 1);
+  assert.equal((await pg.query(`select count(*)::int n from expense_records where id in ($1,$2)`, [E1, E2])).rows[0].n, 2);
+  await d.local.outbox.delete(E3); // người dùng bỏ khoản chưa hợp lệ để các bước sau không bị lẫn
+  assert.equal((await pg.query(`select count(*)::int n from sales_records`)).rows[0].n, 1);
+
+  // sửa khoản chi có phiên bản
+  await d.local.expenses.put({ ...exp(E2, { cycle_id: CYC, category: 'labor', amount: 400000 }), version: 1 });
+  await d.box.enqueueUpdate('expense_records', E2, 1, { amount: 450000, note: 'thêm giờ' });
+  assert.equal((await d.box.flush()).failed, 0);
+  assert.equal((await pg.query(`select amount::numeric a, version from expense_records where id=$1`, [E2])).rows[0].a, '450000');
+
+  // chủ sửa trước, Kho & chi phí đang offline sửa tiếp trên phiên bản cũ -> XUNG ĐỘT, không ghi đè
+  const ownDev = device(pg, owner);
+  await ownDev.local.expenses.put({ ...exp(E2, { cycle_id: CYC }), amount: 450000, version: 2 });
+  await d.local.expenses.put({ ...exp(E2, { cycle_id: CYC }), amount: 450000, version: 2 });
+  await ownDev.box.enqueueUpdate('expense_records', E2, 2, { amount: 460000 });
+  await d.box.enqueueUpdate('expense_records', E2, 2, { amount: 470000 });
+  assert.equal((await ownDev.box.flush()).failed, 0);
+  assert.equal((await d.box.flush()).failed, 1);
+  assert.equal((await pg.query(`select amount::numeric a from expense_records where id=$1`, [E2])).rows[0].a, '460000');
+  const item = (await d.local.outbox.toArray()).find((o) => o.state === 'needs_attention' && o.id !== E3);
+  assert.match(item.lastError, /CONFLICT/);
+  assert.equal(Number(item.conflict.server.amount), 460000);
+
+  // doanh thu: sửa rồi hủy
+  await d.local.sales.put({ id: S1, organization_id: org, cycle_id: CYC, sold_date: '2026-10-19', quantity: 80, unit: 'kg', amount: 2400000, buyer_note: null, version: 1 });
+  await d.box.enqueueUpdate('sales_records', S1, 1, { amount: 2500000 });
+  await d.box.flush();
+  assert.equal((await pg.query(`select amount::numeric a from sales_records where id=$1`, [S1])).rows[0].a, '2500000');
+
+  // quản lý chỉ xem: ghi và sửa đều bị từ chối, vào "Cần xử lý" chứ không mất
+  const m = device(pg, mgr);
+  await m.box.enqueue('expense_records', exp('ffffffff-0000-4000-8000-0000000000e4', { created_by: mgr }));
+  await m.local.expenses.put({ ...exp(E1), version: 1 });
+  await m.box.enqueueUpdate('expense_records', E1, 1, { amount: 1 });
+  const mr = await m.box.flush();
+  assert.equal(mr.failed, 2);
+  assert.equal((await pg.query(`select amount::numeric a from expense_records where id=$1`, [E1])).rows[0].a, '150000');
+});

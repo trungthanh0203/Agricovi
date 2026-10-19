@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
 import { friendlyError } from '../lib/errors';
+import { EXPENSE_CATEGORY_LABEL, EXPENSE_KIND_LABEL } from '../lib/finance';
 import type { RecordSync } from '../lib/hooks';
 import { resolveKeepMine, resolveUseServer } from '../lib/outbox';
 
@@ -17,11 +18,20 @@ const FIELD_LABEL: Record<string, string> = {
   grade: 'Phân loại',
   quantity: 'Số lượng (kg)',
   loss_quantity: 'Hao hụt (kg)',
+  category: 'Nhóm chi phí',
+  kind: 'Loại chi phí',
+  amount: 'Số tiền',
+  expense_date: 'Ngày chi',
+  sold_date: 'Ngày bán',
+  buyer_note: 'Người mua / ghi chú',
 };
 
 function show(key: string, v: unknown): string {
   if (v === null || v === undefined || v === '') return '(trống)';
   if (key === 'performed_at' || key === 'voided_at' || key === 'harvested_at') return new Date(String(v)).toLocaleString('vi-VN');
+  if (key === 'category') return EXPENSE_CATEGORY_LABEL[String(v)] ?? String(v);
+  if (key === 'kind') return EXPENSE_KIND_LABEL[String(v)] ?? String(v);
+  if (key === 'amount') return `${Number(v).toLocaleString('vi-VN')} đ`;
   if (key === 'status') return CYCLE_STATUS_LABEL_VI[v as CycleStatus] ?? String(v);
   if (typeof v === 'object') return JSON.stringify(v);
   return String(v);

@@ -19,6 +19,8 @@ const UPDATE_RPC: Record<string, string> = {
   activity_logs: 'update_activity_log',
   production_cycles: 'update_cycle',
   harvest_records: 'update_harvest',
+  expense_records: 'update_expense',
+  sales_records: 'update_sale',
 };
 
 interface ClientResult<T = unknown> {
@@ -40,18 +42,22 @@ export interface OutboxDeps {
   online: () => boolean;
 }
 
-type LocalTableName = 'areas' | 'cycles' | 'logs' | 'harvests';
+type LocalTableName = 'areas' | 'cycles' | 'logs' | 'harvests' | 'expenses' | 'sales';
 const LOCAL_TABLE: Record<string, LocalTableName> = {
   production_areas: 'areas',
   production_cycles: 'cycles',
   activity_logs: 'logs',
   harvest_records: 'harvests',
+  expense_records: 'expenses',
+  sales_records: 'sales',
 };
 /** Các cột của hàng máy chủ được ghi vào bản lưu trên thiết bị khi "dùng bản máy chủ" */
 const SERVER_FIELDS: Record<string, string[]> = {
   activity_logs: ['data', 'note', 'performed_at', 'work_type_id', 'voided_at', 'void_reason', 'version'],
   production_cycles: ['status', 'start_date', 'note', 'version'],
   harvest_records: ['harvested_at', 'grade', 'quantity', 'loss_quantity', 'note', 'voided_at', 'void_reason', 'version'],
+  expense_records: ['category', 'kind', 'amount', 'expense_date', 'note', 'voided_at', 'void_reason', 'version'],
+  sales_records: ['sold_date', 'quantity', 'amount', 'buyer_note', 'voided_at', 'void_reason', 'version'],
 };
 
 export function createOutbox(deps: OutboxDeps) {

@@ -98,6 +98,6 @@ fieldset.roles { border: 1px solid var(--line); border-radius: 10px; padding: 10
 fieldset.roles legend { padding: 0 6px; font-size: 15px; }
 
 /* Chuyển mục trong tab (Vật tư & chi phí) */
-.chips { display: flex; gap: 8px; margin: 8px 0 12px; }
-.chip { flex: 1; min-height: 48px; font: inherit; font-weight: 600; border: 2px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--fg); cursor: pointer; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
+.chip { flex: 1 1 28%; padding: 0 10px; min-height: 48px; font: inherit; font-weight: 600; border: 2px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--fg); cursor: pointer; }
 .chip.active { border-color: var(--green); color: var(--green); }
