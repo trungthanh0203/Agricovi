@@ -11,6 +11,7 @@ export function friendlyError(err: unknown): string {
   if (/password should be at least|weak.?password/i.test(msg)) return 'Mật khẩu quá ngắn hoặc quá yếu. Hãy dùng ít nhất 8 ký tự.';
   if (/invalid email|unable to validate email/i.test(msg)) return 'Email chưa đúng định dạng.';
   if (/rate limit|too many requests|over_email_send_rate_limit/i.test(msg)) return 'Bạn thao tác quá nhanh. Hãy đợi một lát rồi thử lại.';
+  if (/duplicate key|already exists/i.test(msg)) return 'Tên này đã có trong danh sách. Hãy dùng tên khác.';
   if (/INVALID_NAME/.test(msg)) return 'Tên cơ sở cần ít nhất 2 ký tự.';
   if (/QUOTA_EXCEEDED/.test(msg)) return 'Đã dùng hết số vụ của gói. Hãy kết thúc một vụ hoặc nâng gói để tạo thêm.';
   if (/QUOTA_NO_SUBSCRIPTION/.test(msg)) return 'Gói dịch vụ đã hết hạn. Hãy gia hạn để tạo vụ mới. Dữ liệu của bạn vẫn được giữ nguyên.';

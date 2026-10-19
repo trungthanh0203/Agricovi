@@ -1,5 +1,6 @@
 import type { CycleStatus } from '@agriconnect/shared';
 import { db, type AreaRow, type CycleRow, type LogRow } from './db';
+import { syncInventoryDown } from './inventory';
 import { enqueue, enqueueUpdate, flushOutbox } from './outbox';
 import { supabase } from './supabase';
 
@@ -32,6 +33,8 @@ export async function syncDown(): Promise<void> {
     await db.cropTypes.bulkPut(cropTypes.data ?? []);
     await db.logs.bulkPut(fresh(logs.data as LogRow[]));
   });
+  // Vật tư & kho: lỗi ở đây không làm hỏng đồng bộ sản xuất ở trên
+  await syncInventoryDown().catch((e) => console.warn('Không tải được vật tư/kho', e));
 }
 
 /**

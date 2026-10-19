@@ -96,3 +96,8 @@ table.diff { width: 100%; border-collapse: collapse; font-size: 15px; margin: 8p
 table.diff th, table.diff td { text-align: left; padding: 6px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
 fieldset.roles { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
 fieldset.roles legend { padding: 0 6px; font-size: 15px; }
+
+/* Chuyển mục trong tab (Vật tư & chi phí) */
+.chips { display: flex; gap: 8px; margin: 8px 0 12px; }
+.chip { flex: 1; min-height: 48px; font: inherit; font-weight: 600; border: 2px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--fg); cursor: pointer; }
+.chip.active { border-color: var(--green); color: var(--green); }

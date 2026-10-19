@@ -11,6 +11,7 @@ import { CreateCycleScreen } from './screens/CreateCycleScreen';
 import { HomeTab } from './screens/HomeTab';
 import { LogActivityScreen } from './screens/LogActivityScreen';
 import { LogsScreen } from './screens/LogsScreen';
+import { InventoryTab } from './screens/InventoryTab';
 import { ProductionTab } from './screens/ProductionTab';
 import { syncDown } from './lib/production';
 import { SetupNotice } from './screens/SetupNotice';
@@ -101,7 +102,6 @@ function Shell() {
 
   const waiting = counts ? counts.local_only + counts.syncing : 0;
   const attention = counts?.needs_attention ?? 0;
-  const current = TABS.find((t) => t.id === tab)!;
 
   return (
     <div className="shell">
@@ -136,11 +136,7 @@ function Shell() {
         ) : tab === 'org' ? (
           <OrgTab onAddOrg={() => setAdding(true)} />
         ) : (
-          <>
-            <h1>{current.label}</h1>
-            <p className="muted">{current.title}</p>
-            <p>Màn hình này sẽ được xây theo backlog (kho, chi phí, thu hoạch).</p>
-          </>
+          <InventoryTab />
         )}
       </main>
 

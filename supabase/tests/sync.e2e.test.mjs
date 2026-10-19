@@ -213,3 +213,38 @@ test('vượt hạn mức khi đồng bộ: vụ vào "Cần xử lý", nhật k
   assert.equal((await pg.query(`select count(*)::int n from production_cycles where id=$1`, [cyc])).rows[0].n, 1);
   assert.equal((await pg.query(`select count(*)::int n from activity_logs where id=$1`, [log])).rows[0].n, 1);
 });
+
+test('kho offline: nhập kho + điều chỉnh xếp hàng rồi đồng bộ; gửi lặp không nhân đôi; điều chỉnh thiếu lý do báo "Cần xử lý" và không mất', async () => {
+  const { pg, org } = await setup();
+  const fin = await addUser(pg, 7);
+  await pg.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['inventory_finance']::member_role[])`, [org, fin]);
+  const loc = '50000000-0000-4000-8000-0000000000f1';
+  const mat = '60000000-0000-4000-8000-0000000000f1';
+  await pg.query(`insert into inventory_locations (id,organization_id,name) values ($1,$2,'Kho chính')`, [loc, org]);
+  await pg.query(`insert into materials (id,organization_id,name,base_unit_id) values ($1,$2,'Phân NPK',(select id from units_of_measure where code='kg'))`, [mat, org]);
+
+  const d = device(pg, fin);
+  const txn = (id, type, delta, extra = {}) => ({
+    id, organization_id: org, location_id: loc, material_id: mat, txn_type: type, quantity_delta: delta,
+    unit_cost: type === 'receipt' ? 12000 : null, txn_date: '2026-10-19', reason: null, source: 'offline', ...extra,
+  });
+  const R = 'dddddddd-0000-4000-8000-000000000001';
+  const A = 'dddddddd-0000-4000-8000-000000000002';
+  const BAD = 'dddddddd-0000-4000-8000-000000000003';
+  await d.box.enqueue('inventory_transactions', txn(R, 'receipt', 25));
+  await d.box.enqueue('inventory_transactions', txn(A, 'adjustment', -2, { reason: 'Kiểm kê thấy thiếu' }));
+  await d.box.enqueue('inventory_transactions', txn(BAD, 'adjustment', -1)); // thiếu lý do
+
+  const r = await d.box.flush();
+  assert.equal(r.synced, 2);
+  assert.equal(r.failed, 1);
+  const bad = await d.local.outbox.get(BAD);
+  assert.equal(bad.state, 'needs_attention'); // giữ lại trên thiết bị, không mất
+  assert.equal((await pg.query(`select balance::numeric b from inventory_balances where material_id=$1`, [mat])).rows[0].b, '23');
+
+  // gửi lại toàn bộ (mất phản hồi): không nhân đôi
+  await d.local.outbox.toCollection().modify({ state: 'local_only' });
+  await d.box.flush();
+  assert.equal((await pg.query(`select count(*)::int n from inventory_transactions where material_id=$1`, [mat])).rows[0].n, 2);
+  assert.equal((await pg.query(`select balance::numeric b from inventory_balances where material_id=$1`, [mat])).rows[0].b, '23');
+});

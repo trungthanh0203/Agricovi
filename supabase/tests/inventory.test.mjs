@@ -254,3 +254,41 @@ test('tổng kết vụ: kiểm quyền, số liệu đúng, giá thành/kg ch�
   assert.equal(Number(s.material_used_cost), 0);
   assert.equal(Number(s.total_cost), 1000);
 });
+
+// ------------------------------------------------------------------ Danh mục vật tư/kho (lát C1)
+test('danh mục: chỉ chủ và Kho & chi phí thay đổi; mọi thành viên đọc được; tên vật tư/kho không trùng; chỉ vai trò kho đọc được tồn', async () => {
+  const { db, org, fin, mgr, w1, owner, outsider } = await setup();
+  const unit = `(select id from units_of_measure where code='kg')`;
+  const addMat = (u, id, name) => asUser(db, u, `insert into materials (id,organization_id,name,base_unit_id) values ($1,$2,$3,${unit})`, [id, org, name]);
+  const addLoc = (u, id, name) => asUser(db, u, `insert into inventory_locations (id,organization_id,name) values ($1,$2,$3)`, [id, org, name]);
+
+  assert.match(await expectError(addMat(mgr, tid(70), 'Vôi')), /row-level security/);
+  assert.match(await expectError(addMat(w1, tid(71), 'Vôi')), /row-level security/);
+  assert.match(await expectError(addLoc(mgr, tid(72), 'Kho phụ')), /row-level security/);
+  await addMat(fin, tid(73), 'Vôi');
+  await addMat(owner, tid(74), 'Phân hữu cơ');
+  await addLoc(fin, tid(75), 'Kho phụ');
+  assert.match(await expectError(addMat(fin, tid(76), 'Vôi')), /duplicate|unique/);
+  assert.match(await expectError(addLoc(owner, tid(77), 'Kho phụ')), /duplicate|unique/);
+
+  // mọi thành viên đọc danh mục (nhân viên cần chọn vật tư khi ghi việc); người ngoài thì không
+  for (const u of [mgr, w1, fin]) {
+    assert.equal((await asUser(db, u, `select count(*)::int n from materials where id in ($1,$2)`, [M1, tid(73)])).rows[0].n, 2);
+  }
+  assert.equal((await asUser(db, outsider, `select count(*)::int n from materials`)).rows[0].n, 0);
+
+  // ngừng dùng thay cho xóa (không có quyền xóa vì còn lịch sử kho)
+  await asUser(db, fin, `update materials set is_active = false where id = $1`, [tid(73)]);
+  assert.equal((await asUser(db, fin, `select is_active from materials where id=$1`, [tid(73)])).rows[0].is_active, false);
+
+  // tồn: quản lý và Kho & chi phí xem được; nhân viên thì không
+  await receipt(db, fin, org, 1, M1, 5, 100);
+  for (const [u, n] of [[fin, 1], [mgr, 1], [owner, 1], [w1, 0], [outsider, 0]]) {
+    assert.equal((await asUser(db, u, `select count(*)::int n from inventory_balances`)).rows[0].n, n);
+  }
+  // nhập kho: quản lý không được; điều chỉnh: quản lý không được
+  assert.match(await expectError(asUser(db, mgr, `insert into inventory_transactions (id,organization_id,location_id,material_id,txn_type,quantity_delta,txn_date)
+     values ($1,$2,$3,$4,'receipt',1,current_date)`, [tid(80), org, LOC, M1])), /row-level security/);
+  assert.match(await expectError(asUser(db, mgr, `insert into inventory_transactions (id,organization_id,location_id,material_id,txn_type,quantity_delta,txn_date,reason)
+     values ($1,$2,$3,$4,'adjustment',-1,current_date,'thử')`, [tid(81), org, LOC, M1])), /row-level security/);
+});
