@@ -8,6 +8,7 @@ Nền tảng quản lý nuôi trồng (app PWA) + website xúc tiến thương m
 2. `docs/ROLES.md` — ma trận vai trò/quyền (nguồn sự thật là CSDL).
 3. `AgriConnect_Dac_ta_thiet_ke_nghiep_vu_v1.1.md` + `AgriConnect_Dac_ta_bo_sung_v1.2.md` + `AgriConnect_Backlog_v1.2.md` — đặc tả và backlog (mã FR-…).
 4. `docs/ERD.md`, `docs/SETUP_SUPABASE.md`.
+5a. `docs/PLAN_BO_CUC_MOI.md` — **bố cục 5 tab mới (D28)** và kế hoạch P0–P5 (khung tab, quy trình mẫu, tạo vụ theo mẫu, chức vụ, hồ sơ, trang chủ thống kê). Làm theo thứ tự trong tài liệu.
 5. `docs/DESIGN_DASHBOARD.md` — **nguyên tắc trình bày số liệu/dashboard** (thẻ số lớn, màu theo nghĩa, vòng cơ cấu, tiến độ, cảnh báo; kèm kế hoạch nâng cấp từng màn). Đọc trước khi làm hoặc nâng cấp màn có số liệu.
 
 ## Cấu trúc
