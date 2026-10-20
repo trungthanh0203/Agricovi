@@ -23,10 +23,10 @@ export interface Section<Id extends string = string> {
   label: string;
 }
 
-export type ProductionSection = 'cycles' | 'harvest' | 'stock';
-export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places';
+export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'attendance';
+export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'rates';
 export type OrgSection = 'info' | 'members' | 'teams' | 'coop';
-export type ReportSection = 'expense' | 'sales' | 'summary';
+export type ReportSection = 'expense' | 'sales' | 'summary' | 'payroll';
 
 export function productionSections(org: MyOrg | null): Section<ProductionSection>[] {
   if (!org) return [];
@@ -34,6 +34,7 @@ export function productionSections(org: MyOrg | null): Section<ProductionSection
     { id: 'cycles' as const, label: 'Mùa vụ' },
     canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'stock' as const, label: 'Kho' } : null,
+    hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,
   ].filter((x): x is Section<ProductionSection> => x !== null);
 }
 
@@ -46,6 +47,7 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
     canManageProduction(org.roles) ? { id: 'templates' as const, label: 'Quy trình mẫu' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'places' as const, label: 'Kho và đơn vị' } : null,
+    hasRole(org.roles, 'manager') ? { id: 'rates' as const, label: 'Đơn giá công' } : null,
   ].filter((x): x is Section<DeclareSection> => x !== null);
 }
 
@@ -66,6 +68,7 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
     canPerm(org.perms, 'expenses') ? { id: 'expense' as const, label: 'Chi phí' } : null,
     canPerm(org.perms, 'sales') ? { id: 'sales' as const, label: 'Doanh thu' } : null,
     canPerm(org.perms, 'summary') ? { id: 'summary' as const, label: 'Tổng kết vụ' } : null,
+    hasRole(org.roles, 'manager') ? { id: 'payroll' as const, label: 'Tiền công' } : null,
   ].filter((x): x is Section<ReportSection> => x !== null);
 }
 

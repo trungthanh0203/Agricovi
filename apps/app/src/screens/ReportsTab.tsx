@@ -1,4 +1,5 @@
 import { ExpenseSection } from '../components/ExpenseSection';
+import { PayrollSection } from '../components/PayrollSection';
 import { SalesSection } from '../components/SalesSection';
 import { pickSection, SubTabs } from '../components/SubTabs';
 import { SummarySection } from '../components/SummarySection';
@@ -19,7 +20,7 @@ export function ReportsTab({ section, onSection }: { section?: string; onSection
     <section>
       <h1>Báo cáo</h1>
       <SubTabs items={items} value={current ?? 'expense'} onChange={onSection} label="Mục báo cáo" />
-      {current === 'sales' ? <SalesSection /> : current === 'summary' ? <SummarySection /> : <ExpenseSection />}
+      {current === 'sales' ? <SalesSection /> : current === 'summary' ? <SummarySection /> : current === 'payroll' ? <PayrollSection /> : <ExpenseSection />}
       <div className="card slim">
         <p className="muted">Sắp có: <strong>báo cáo theo nhu cầu</strong> — chọn loại báo cáo, bộ lọc theo vụ, khoảng ngày, người; lưu lại và xuất CSV.</p>
       </div>

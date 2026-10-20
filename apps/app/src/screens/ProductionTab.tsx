@@ -3,6 +3,7 @@ import { useCatalog } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
 import { StockPanel } from './StockPanel';
+import { AttendanceSection } from '../components/AttendanceSection';
 import { HarvestSection } from '../components/HarvestSection';
 import { pickSection, SubTabs } from '../components/SubTabs';
 import { db } from '../lib/db';
@@ -40,6 +41,8 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
         <HarvestSection />
       ) : current === 'stock' ? (
         <StockPanel />
+      ) : current === 'attendance' ? (
+        <AttendanceSection />
       ) : (
         <CyclesPanel onCreateCycle={onCreateCycle} onOpenCycle={onOpenCycle} onLog={onLog} onHistory={onHistory} onGo={onGo} />
       )}

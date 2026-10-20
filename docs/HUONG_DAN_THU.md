@@ -141,6 +141,15 @@ Cần: đã có khu trồng và ít nhất một quy trình có giai đoạn (b�
 2. **Khai báo**: có mục **Vật tư** và mục **Kho và đơn vị** riêng.
 3. **Trang chủ**: hàng thẻ "Của tôi" và "Của cơ sở"; thẻ thu hoạch/chi phí/doanh thu chỉ hiện với người có quyền. Vụ đang chạy có thanh tiến độ; vật tư sắp hết hoặc tồn âm hiện ở khối "Cảnh báo kho". Bấm "Tải lại" để cập nhật.
 
+## Bài thử 14 — Chấm công và tiền công
+
+Cần: nhân viên có tài khoản (tab Tổ chức → Nhân sự), có tổ và tổ trưởng.
+1. **Nhân viên**: Sản xuất → **Chấm công** → "Vào ca"; cuối ngày nhập nghỉ giữa ca rồi "Ra ca". Công hiện "Chờ xác nhận".
+2. **Tổ trưởng/quản lý**: ở cùng màn, "＋ Chấm công hộ" (chọn người, ngày, giờ) và "＋ Ghi sản lượng". Bấm ✔ để xác nhận công hoặc sản lượng, ✕ để từ chối (cần lý do). Tổ trưởng không xác nhận công của chính mình.
+3. **Chủ**: Khai báo → **Đơn giá công**: thêm đơn giá theo giờ (và theo sản lượng, ví dụ kg) cho cả cơ sở, một tổ hoặc một người.
+4. **Chủ/quản lý**: Báo cáo → **Tiền công** → "＋ Tạo kỳ trả công" → mở kỳ → "Tính tiền công". Mở từng người để xem cách tính từng dòng. Thiếu đơn giá thì app báo. Thêm thưởng/khấu trừ/tạm ứng rồi tính lại.
+5. **Chủ** bấm "Khóa kỳ (chốt số)". Sau khóa không tính lại, không sửa công trong kỳ. "Mở khóa kỳ" cần lý do.
+
 ## Những điều cần biết
 
 - Số tiền luôn là **đồng**, số lượng thu hoạch và bán luôn là **kg** ở bản thử này.
