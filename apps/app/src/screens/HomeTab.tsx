@@ -4,6 +4,7 @@ import { addDays, diffDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { setNoteDone } from '../lib/production';
 import { useCatalog } from '../lib/catalog';
+import { HomeStats } from '../components/HomeStats';
 import { SyncBadge } from '../components/SyncBadge';
 import { db } from '../lib/db';
 import { todayLocal, useOnline, useRecordSync } from '../lib/hooks';
@@ -76,6 +77,8 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
           <button className="secondary" onClick={() => void retryFailed()}>Thử gửi lại</button>
         </div>
       )}
+
+      <HomeStats cycleIds={mineIds} onGo={onGo} />
 
       {reminders.length > 0 && (
         <div className="card">

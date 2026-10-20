@@ -135,6 +135,12 @@ Cần: đã có khu trồng và ít nhất một quy trình có giai đoạn (b�
 4. **Sản xuất → Kho**: mỗi vật tư có dòng **Nhập cuối: ngày…**. Sau khi **Điều chỉnh tồn**, dòng vật tư hiện luôn "Điều chỉnh gần nhất: ngày, số lượng +/-, lý do".
 5. **Nhập kho**: ô ngày không chọn được sau hôm nay; nhập tay ngày tương lai thì app báo lỗi.
 
+## Bài thử 13 — Hồ sơ và thống kê Trang chủ
+
+1. **Hồ sơ**: bấm "Đổi tên hiển thị", nhập tên rồi Lưu; ghi một việc mới và xem tên người làm. "Đổi mật khẩu": nhập hai lần (ít nhất 8 ký tự). Thẻ "Công việc của tôi" hiện tổ đang làm hoặc phụ trách (nếu có).
+2. **Khai báo**: có mục **Vật tư** và mục **Kho và đơn vị** riêng.
+3. **Trang chủ**: hàng thẻ "Của tôi" và "Của cơ sở"; thẻ thu hoạch/chi phí/doanh thu chỉ hiện với người có quyền. Vụ đang chạy có thanh tiến độ; vật tư sắp hết hoặc tồn âm hiện ở khối "Cảnh báo kho". Bấm "Tải lại" để cập nhật.
+
 ## Những điều cần biết
 
 - Số tiền luôn là **đồng**, số lượng thu hoạch và bán luôn là **kg** ở bản thử này.

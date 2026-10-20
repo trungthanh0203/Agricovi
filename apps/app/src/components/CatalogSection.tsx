@@ -13,7 +13,7 @@ import {
  * Danh mục vật tư, kho, đơn vị riêng: các bảng gọn, thêm nhanh một dòng, đổi tên, dừng/dùng lại.
  * Chỉ thay đổi khi có mạng (D22, D24). Đơn vị có sẵn (kg, lít, bao…) dùng chung, không sửa.
  */
-export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: boolean }) {
+export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWrite: boolean; part: 'materials' | 'places' }) {
   const online = useOnline();
   const materials = useLiveQuery(() => db.materials.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const locations = useLiveQuery(() => db.locations.where('organization_id').equals(orgId).toArray(), [orgId], []);
@@ -59,6 +59,7 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
       {!canWrite && <p className="muted">Bạn chỉ được xem danh mục. Chủ cơ sở cấp quyền nhập liệu kho cho từng người.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
+      {part === 'materials' && (<>
       <h2 className="sect">Vật tư ({mats.length})</h2>
       {canWrite && (
         <form className="quickadd" onSubmit={onAddMaterial} noValidate>
@@ -95,6 +96,17 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
           onSave={(c) => void run(async () => { await updateMaterial(editMat, c); setEditMat(null); })} onClose={() => setEditMat(null)} />
       )}
 
+      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả vật tư đã dừng</label>
+      {canWrite && (
+        <button className="secondary" disabled={busy || !online}
+          onClick={() => void run(async () => { const n = await addDefaultMaterials(orgId); setError(n > 0 ? null : 'Đã có đủ vật tư mẫu rồi.'); })}>
+          Thêm vật tư mẫu còn thiếu (phân bón thông dụng)
+        </button>
+      )}
+      <p className="muted">⏸ dừng (không chọn được cho giao dịch mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Vật tư đã có lịch sử thì không xóa được, chỉ dừng.</p>
+      </>)}
+
+      {part === 'places' && (<>
       <h2 className="sect">Kho ({locs.length})</h2>
       {canWrite && (
         <form className="quickadd" noValidate onSubmit={(e) => {
@@ -135,7 +147,7 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
           ))}
         </tbody>
       </table>
-      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả vật tư, kho đã dừng</label>
+      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả kho đã dừng</label>
 
       {canWrite && (
         <>
@@ -151,13 +163,8 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
           <p className="muted">Đã có sẵn: kg, g, lít, ml, bao, chai, gói, cái, cây (dùng chung, không sửa).{orgUnits.length > 0 ? ` Đơn vị riêng: ${orgUnits.map((u) => u.name).join(', ')}.` : ''}</p>
         </>
       )}
-      {canWrite && (
-        <button className="secondary" disabled={busy || !online}
-          onClick={() => void run(async () => { const n = await addDefaultMaterials(orgId); setError(n > 0 ? null : 'Đã có đủ vật tư mẫu rồi.'); })}>
-          Thêm vật tư mẫu còn thiếu (phân bón thông dụng)
-        </button>
-      )}
-      <p className="muted">⏸ dừng (không chọn được cho giao dịch mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Vật tư và kho đã có lịch sử thì không xóa được, chỉ dừng.</p>
+      <p className="muted">⏸ dừng (không chọn được cho giao dịch mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Kho đã có lịch sử thì không xóa được, chỉ dừng.</p>
+      </>)}
     </>
   );
 }

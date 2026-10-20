@@ -192,3 +192,15 @@ button.icon:disabled { opacity: .4; }
 .thumb.empty { display: inline-flex; align-items: center; justify-content: center; font-size: 26px; color: var(--muted); }
 .imgpick { margin: 8px 0; }
 .imgpick .lbl { display: block; font-weight: 600; margin-bottom: 4px; }
+
+/* Thẻ số trên Trang chủ (D41) */
+.kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 8px 0; }
+.kpi { display: flex; flex-direction: column; gap: 2px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); border-left-width: 5px; }
+.kpi-label { font-size: 0.85rem; color: var(--muted); }
+.kpi-value { font-size: 1.7rem; line-height: 1.15; }
+.kpi-note { font-size: 0.8rem; color: var(--muted); }
+.kpi.ok { border-left-color: var(--green); }
+.kpi.warn { border-left-color: var(--warn); }
+.kpi.bad { border-left-color: var(--err); }
+.kpi.info { border-left-color: #1976d2; }
+.card.alert-warn { border-left: 5px solid var(--warn); }
