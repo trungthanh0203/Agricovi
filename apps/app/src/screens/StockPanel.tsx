@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Collapsible } from '../components/Collapsible';
 import { StockEntry } from '../components/StockEntry';
+import { Thumb } from '../components/ImagePicker';
 import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import {
@@ -52,7 +53,10 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust }: { orgId: string; ca
       });
       const total = perLoc.reduce((s, p) => s + p.qty, 0);
       const missingCost = perLoc.reduce((s, p) => s + p.missingCost, 0);
-      return { m, perLoc, total, missingCost };
+      const mine = balances.filter((b) => b.material_id === m.id);
+      const lastReceipt = mine.reduce<string | null>((mx, b) => (b.last_receipt_date && (!mx || b.last_receipt_date > mx) ? b.last_receipt_date : mx), null);
+      const adj = mine.filter((b) => b.last_adjust_date).sort((a, b) => (b.last_adjust_date ?? '').localeCompare(a.last_adjust_date ?? ''))[0] ?? null;
+      return { m, perLoc, total, missingCost, lastReceipt, adj };
     });
 
   const locName = (id: string) => locations.find((l) => l.id === id)?.name ?? '—';
@@ -78,12 +82,12 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust }: { orgId: string; ca
         </div>
       )}
 
-      {items.map(({ m, perLoc, total, missingCost }) => {
+      {items.map(({ m, perLoc, total, missingCost, lastReceipt, adj }) => {
         const low = m.reorder_threshold != null && total >= 0 && total <= m.reorder_threshold;
         return (
           <div className={total < 0 ? 'card slim conflict' : 'card slim'} key={m.id}>
             <div className="row">
-              <strong className="grow">{m.name}</strong>
+              <strong className="grow"><Thumb src={m.image} />{m.name}</strong>
               <strong>{formatQty(total)} {unitOf(m.base_unit_id)}</strong>
             </div>
             <div className="badges">
@@ -91,6 +95,13 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust }: { orgId: string; ca
               {low && <span className="pill warn">Sắp hết</span>}
               {missingCost > 0 && <span className="pill warn">{missingCost} lần nhập chưa ghi giá</span>}
             </div>
+            <p className="muted">Nhập cuối: {lastReceipt ? new Date(lastReceipt).toLocaleDateString('vi-VN') : 'chưa có'}</p>
+            {adj && (
+              <p className="muted">
+                Điều chỉnh gần nhất {new Date(adj.last_adjust_date!).toLocaleDateString('vi-VN')}: {(adj.last_adjust_delta ?? 0) > 0 ? '+' : ''}{formatQty(adj.last_adjust_delta ?? 0)} {unitOf(m.base_unit_id)}
+                {adj.last_adjust_reason ? ` — ${adj.last_adjust_reason}` : ''}
+              </p>
+            )}
             {perLoc.length > 1 && perLoc.map((p) => (
               <p className="muted" key={p.locationId}>{locName(p.locationId)}: {formatQty(p.qty)} {unitOf(m.base_unit_id)}</p>
             ))}

@@ -10,7 +10,7 @@ import { declareSections, type DeclareSection } from '../lib/tabs';
 
 /**
  * Tab Khai báo: nơi khai báo, cấu hình, định nghĩa mọi thứ liên quan đến sản xuất của cơ sở.
- * Hiện có: Khu trồng, Cây trồng, Danh mục việc, Quy trình mẫu, Vật tư và kho.
+ * Hiện có: Trang trại, Sản phẩm, Danh mục việc, Quy trình mẫu, Vật tư và kho.
  */
 export function DeclareTab({ section, onSection }: { section?: string; onSection: (s: DeclareSection) => void }) {
   const { active } = useOrgs();

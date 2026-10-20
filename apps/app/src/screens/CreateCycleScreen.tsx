@@ -18,7 +18,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; on
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
   const { cropTypes } = useCatalog();
 
-  const myAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false); // khu trồng đã dừng không tạo vụ mới
+  const myAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false); // trang trại đã dừng không tạo vụ mới
   const [areaId, setAreaId] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [templates, setTemplates] = useState<TemplateRow[] | null>(null);
@@ -86,7 +86,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; on
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!areaId) return setError('Hãy chọn khu trồng. Nếu chưa có, quay lại và thêm khu trồng trước.');
+    if (!areaId) return setError('Hãy chọn trang trại. Nếu chưa có, quay lại và thêm trang trại trước.');
     if (!templateId) return setError('Hãy chọn quy trình mùa vụ. Vụ phải được tạo theo một quy trình.');
     // Báo sớm khi biết chắc đã hết hạn mức; máy chủ vẫn là nơi kiểm tra cuối cùng
     if (startNow && chosen && (!chosen.is_current || (chosen.max_cycles !== null && chosen.used_cycles >= chosen.max_cycles))) {
@@ -121,13 +121,13 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; on
 
       {myAreas.length === 0 ? (
         <>
-          <p className="msg warn">Cơ sở chưa có khu trồng. Hãy thêm khu trồng ở tab Khai báo trước.</p>
+          <p className="msg warn">Cơ sở chưa có trang trại. Hãy thêm trang trại ở tab Khai báo trước.</p>
           <button className="secondary" onClick={onCancel}>Quay lại</button>
         </>
       ) : (
         <form onSubmit={onSubmit} noValidate>
           <label>
-            Khu trồng
+            Trang trại
             <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
               {myAreas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>

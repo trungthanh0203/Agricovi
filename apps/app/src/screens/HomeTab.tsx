@@ -60,7 +60,7 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
           )}
           {canManage ? (
             <button className="primary" onClick={() => (mine.length === 0 && areas.every((a) => a.organization_id !== active.id) ? onGo('declare', 'areas') : onGo('production', 'cycles'))}>
-              {mine.length === 0 ? (areas.some((a) => a.organization_id === active.id) ? 'Tạo vụ đầu tiên' : 'Thêm khu trồng đầu tiên') : 'Mở màn Sản xuất'}
+              {mine.length === 0 ? (areas.some((a) => a.organization_id === active.id) ? 'Tạo vụ đầu tiên' : 'Thêm trang trại đầu tiên') : 'Mở màn Sản xuất'}
             </button>
           ) : (
             <p className="muted">Hãy nhờ chủ cơ sở hoặc quản lý {mine.length === 0 ? 'tạo vụ trồng' : 'bắt đầu sản xuất'}.</p>

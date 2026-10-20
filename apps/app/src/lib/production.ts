@@ -30,14 +30,14 @@ export async function syncDown(): Promise<void> {
   const fresh = <T extends { id: string }>(rows: T[] | null) => (rows ?? []).filter((r) => !pendingIds.has(r.id));
 
   const [areas, cycles, logs, stages, notes] = await Promise.all([
-    supabase.from('production_areas').select('id, organization_id, name, description, is_active'),
+    supabase.from('production_areas').select('id, organization_id, name, description, location, area_size, area_unit, image, is_active'),
     supabase.from('production_cycles').select(CYCLE_COLUMNS),
     supabase.from('activity_logs').select(LOG_COLUMNS).order('performed_at', { ascending: false }).limit(200),
     supabase.from('production_stages').select(STAGE_COLUMNS),
     supabase.from('cycle_notes').select(NOTE_COLUMNS).order('note_date', { ascending: false }).limit(1000),
   ]);
   for (const r of [areas, cycles, logs]) if (r.error) throw r.error;
-  await refreshCatalogCache(); // cây trồng, loại việc và bản chỉnh của cơ sở
+  await refreshCatalogCache(); // sản phẩm, loại việc và bản chỉnh của cơ sở
 
   await db.transaction('rw', [db.areas, db.cycles, db.logs, db.stages, db.notes], async () => {
     // giai đoạn chưa có (CSDL chưa cập nhật) thì bỏ qua, không làm hỏng phần còn lại
@@ -94,21 +94,37 @@ export async function fetchQuotaContexts(householdId: string): Promise<QuotaCont
   return (data ?? []) as QuotaContext[];
 }
 
-/** Thêm khu trồng (cần mạng, quyết định D24) */
-export async function createArea(organizationId: string, name: string, description = ''): Promise<string> {
+/** Thêm trang trại (cần mạng, quyết định D24) */
+export interface FarmInput {
+  name: string;
+  location?: string | null;
+  area_size?: number | null;
+  area_unit?: 'm2' | 'ha';
+  description?: string | null;
+  image?: string | null;
+}
+
+export async function createArea(organizationId: string, f: FarmInput): Promise<string> {
   const id = crypto.randomUUID();
-  const row: AreaRow = { id, organization_id: organizationId, name: name.trim(), description: description.trim() || null };
-  await insertAndCache('production_areas', { ...row }, { ...row }, 'thêm khu trồng');
+  const row: AreaRow = {
+    id, organization_id: organizationId, name: f.name.trim(), description: f.description?.trim() || null,
+    location: f.location?.trim() || null, area_size: f.area_size ?? null, area_unit: f.area_unit ?? 'm2', image: f.image || null,
+  };
+  await insertAndCache('production_areas', { ...row }, { ...row }, 'thêm trang trại');
   return id;
 }
 
-/** Đổi tên hoặc dừng/dùng lại khu trồng (cần mạng). Khu trồng đã dừng giữ lịch sử, không dùng để tạo vụ mới. */
-export async function updateArea(id: string, c: { name?: string; description?: string | null; is_active?: boolean }): Promise<void> {
-  requireOnline('sửa khu trồng');
+/** Đổi tên hoặc dừng/dùng lại trang trại (cần mạng). Trang trại đã dừng giữ lịch sử, không dùng để tạo vụ mới. */
+export async function updateArea(id: string, c: Partial<FarmInput> & { is_active?: boolean }): Promise<void> {
+  requireOnline('sửa trang trại');
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   const patch: Record<string, unknown> = {};
   if (c.name !== undefined) patch.name = c.name.trim();
   if (c.description !== undefined) patch.description = c.description?.trim() || null;
+  if (c.location !== undefined) patch.location = c.location?.trim() || null;
+  if (c.area_size !== undefined) patch.area_size = c.area_size;
+  if (c.area_unit !== undefined) patch.area_unit = c.area_unit;
+  if (c.image !== undefined) patch.image = c.image || null;
   if (c.is_active !== undefined) patch.is_active = c.is_active;
   const { error } = await supabase.from('production_areas').update(patch).eq('id', id);
   if (error) throw new Error(error.message);

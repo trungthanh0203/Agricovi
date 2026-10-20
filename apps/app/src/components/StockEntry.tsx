@@ -44,6 +44,7 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
     if (q === null || Number.isNaN(q) || q <= 0) return setError('Số lượng phải là số lớn hơn 0.');
     const c = parseNumber(cost);
     if (c !== null && (Number.isNaN(c) || c < 0 || !Number.isInteger(c))) return setError('Giá nhập phải là số tiền (đồng), không có phần lẻ.');
+    if (mode === 'receipt' && date > todayLocal()) return setError('Ngày nhập kho không được sau ngày hôm nay.');
     if (mode === 'adjustment' && reason.trim().length < 3) return setError('Điều chỉnh cần ghi lý do (ví dụ: kiểm kê, hao hụt, hỏng).');
     setBusy(true);
     try {

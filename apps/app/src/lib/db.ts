@@ -7,7 +7,11 @@ export interface AreaRow {
   organization_id: string;
   name: string;
   description?: string | null;
-  /** false = khu trồng đã dừng: giữ lịch sử, không dùng để tạo vụ mới */
+  location?: string | null;
+  area_size?: number | null;
+  area_unit?: 'm2' | 'ha';
+  image?: string | null;
+  /** false = trang trại đã dừng: giữ lịch sử, không dùng để tạo vụ mới */
   is_active?: boolean;
 }
 
@@ -63,6 +67,7 @@ export interface StageRow {
 export interface CatalogOverride {
   display_name: string | null;
   description?: string | null;
+  image?: string | null;
   field_schema: FieldDef[] | null;
   is_active: boolean;
 }
@@ -92,6 +97,9 @@ export interface CropTypeRow {
   code: string;
   name: string;
   description?: string | null;
+  /** Loại sản phẩm: cây trồng, vật nuôi hoặc khác */
+  kind?: 'crop' | 'livestock' | 'other';
+  image?: string | null;
   /** null = cây dùng chung; có giá trị = cây do cơ sở khai báo */
   organization_id?: string | null;
   is_active?: boolean;
@@ -132,6 +140,7 @@ export interface MaterialRow {
   organization_id: string;
   name: string;
   description?: string | null;
+  image?: string | null;
   category: string | null;
   /** Thông tin mở rộng (không bắt buộc) */
   brand?: string | null;
@@ -219,6 +228,11 @@ export interface BalanceRow {
   balance: number;
   is_negative: boolean;
   receipts_missing_cost: number;
+  /** Ngày nhập kho gần nhất, và lần điều chỉnh tồn gần nhất (số lượng +/-, lý do) */
+  last_receipt_date?: string | null;
+  last_adjust_date?: string | null;
+  last_adjust_delta?: number | null;
+  last_adjust_reason?: string | null;
 }
 
 /** CSDL cục bộ (IndexedDB). Bản ghi tạo offline có UUID tạo ở thiết bị. */

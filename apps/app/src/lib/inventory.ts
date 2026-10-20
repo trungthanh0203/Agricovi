@@ -30,9 +30,9 @@ export async function syncInventoryDown(): Promise<void> {
   if (!supabase || !navigator.onLine) return;
   const [units, materials, locations, balances] = await Promise.all([
     supabase.from('units_of_measure').select('id, code, name, organization_id'),
-    supabase.from('materials').select('id, organization_id, name, description, category, brand, usage_guide, usage_method, safety_warning, quality_specs, limit_elements, withdrawal_days, base_unit_id, reorder_threshold, is_active'),
+    supabase.from('materials').select('id, organization_id, name, description, image, category, brand, usage_guide, usage_method, safety_warning, quality_specs, limit_elements, withdrawal_days, base_unit_id, reorder_threshold, is_active'),
     supabase.from('inventory_locations').select('id, organization_id, name, description, is_active'),
-    supabase.from('inventory_balances').select('organization_id, location_id, material_id, balance, is_negative, receipts_missing_cost'),
+    supabase.from('inventory_balances').select('organization_id, location_id, material_id, balance, is_negative, receipts_missing_cost, last_receipt_date, last_adjust_date, last_adjust_delta, last_adjust_reason'),
   ]);
   for (const r of [units, materials, locations, balances]) if (r.error) throw r.error;
 
@@ -44,7 +44,7 @@ export async function syncInventoryDown(): Promise<void> {
     );
     await db.locations.bulkPut((locations.data ?? []) as LocationRow[]);
     await db.balances.bulkPut(
-      ((balances.data ?? []) as BalanceRow[]).map((b) => ({ ...b, balance: Number(b.balance), receipts_missing_cost: Number(b.receipts_missing_cost) })),
+      ((balances.data ?? []) as BalanceRow[]).map((b) => ({ ...b, balance: Number(b.balance), receipts_missing_cost: Number(b.receipts_missing_cost), last_adjust_delta: b.last_adjust_delta == null ? null : Number(b.last_adjust_delta) })),
     );
   });
 }
@@ -126,6 +126,7 @@ export async function fetchRecentTransactions(orgId: string, limit = 30): Promis
 
 /** Thông tin mở rộng của vật tư (không bắt buộc) */
 export interface MaterialExt {
+  image: string | null;
   brand: string | null;
   usage_guide: string | null;
   usage_method: string | null;

@@ -73,7 +73,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog }: { cycleId: string
         <span className="pill">{CYCLE_STATUS_LABEL_VI[cycle.status]}</span>
       </div>
       <p className="muted">
-        {cycle.name ? `${crop} · ` : ''}Khu trồng: {area?.name ?? '—'}
+        {cycle.name ? `${crop} · ` : ''}Trang trại: {area?.name ?? '—'}
         {cycle.start_date && ` · Bắt đầu ${fmtDate(cycle.start_date)}`}
         {cycle.expected_end_date && ` · Dự kiến xong ${fmtDate(cycle.expected_end_date)}`}
       </p>

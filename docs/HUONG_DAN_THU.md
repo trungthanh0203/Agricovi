@@ -127,6 +127,14 @@ Cần: đã có khu trồng và ít nhất một quy trình có giai đoạn (b�
 1. Tạo một cơ sở mới (hoặc mở cơ sở cũ chưa có vật tư): **Khai báo → Vật tư** đã có sẵn 11 vật tư phân bón (NPK, hữu cơ vi sinh, urê, vôi…). Bấm ✎ để sửa; mục **Thông tin mở rộng** có hướng dẫn, cách dùng, cảnh báo an toàn, chỉ tiêu chất lượng, thời gian cách ly. ⏸ để dừng vật tư không dùng. Nút **Thêm vật tư mẫu còn thiếu** bổ sung lại mục đã xóa mà không đụng mục đã sửa.
 2. **Khai báo → Quy trình mẫu → Mở**: ở mỗi giai đoạn bấm ✎, đổi việc/mô tả/số ngày rồi bấm **Lưu thay đổi**. Dòng thêm giai đoạn có ô **Mô tả** nằm giữa ô chọn việc và ô số ngày.
 
+## Bài thử 12 — Trang trại, sản phẩm, hình ảnh, kho
+
+1. **Khai báo → Trang trại → + Thêm trang trại**: nhập tên, vị trí, diện tích (m² hoặc ha), đặc điểm, chọn/chụp ảnh. Bảng hiện ảnh nhỏ, vị trí, diện tích. ✎ để sửa.
+2. **Khai báo → Sản phẩm → + Thêm sản phẩm**: chọn loại (Cây trồng / Vật nuôi / Khác), mô tả, ảnh. Sản phẩm có sẵn sửa được tên, mô tả, ảnh cho riêng cơ sở.
+3. **Khai báo → Vật tư → ✎**: có mục **Hình ảnh** ở đầu biểu mẫu sửa.
+4. **Sản xuất → Kho**: mỗi vật tư có dòng **Nhập cuối: ngày…**. Sau khi **Điều chỉnh tồn**, dòng vật tư hiện luôn "Điều chỉnh gần nhất: ngày, số lượng +/-, lý do".
+5. **Nhập kho**: ô ngày không chọn được sau hôm nay; nhập tay ngày tương lai thì app báo lỗi.
+
 ## Những điều cần biết
 
 - Số tiền luôn là **đồng**, số lượng thu hoạch và bán luôn là **kg** ở bản thử này.

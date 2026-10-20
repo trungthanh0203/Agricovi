@@ -11,7 +11,7 @@ export function hasRole(roles: readonly MemberRole[] | undefined, ...wanted: Mem
 
 export const isOwner = (roles: readonly MemberRole[] | undefined) => !!roles?.includes('owner');
 
-/** Chủ, quản lý (và quản lý HTX) tạo khu trồng/vụ, sửa mọi nhật ký */
+/** Chủ, quản lý (và quản lý HTX) tạo trang trại/vụ, sửa mọi nhật ký */
 export const canManageProduction = (roles: readonly MemberRole[] | undefined) =>
   hasRole(roles, 'manager', 'cooperative_manager');
 

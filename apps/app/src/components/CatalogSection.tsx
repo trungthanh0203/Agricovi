@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type MaterialRow } from '../lib/db';
 import { addDefaultMaterials, type MaterialExt } from '../lib/inventory';
+import { ImagePicker, Thumb } from './ImagePicker';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import {
@@ -75,7 +76,7 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
           {mats.length === 0 && <tr><td colSpan={4} className="muted">Chưa có vật tư nào.</td></tr>}
           {mats.map((m) => (
             <tr key={m.id} className={m.is_active ? '' : 'off'}>
-              <td>{m.name}{m.description && <span className="sub">{m.description}</span>}<span className="sub">{unitName(m.base_unit_id)}{m.is_active ? '' : ' · đã dừng'}</span></td>
+              <td><Thumb src={m.image} />{m.name}{m.description && <span className="sub">{m.description}</span>}<span className="sub">{unitName(m.base_unit_id)}{m.is_active ? '' : ' · đã dừng'}</span></td>
               <td className="muted">{m.category ?? '—'}{m.brand ? <span className="sub">{m.brand}</span> : null}</td>
               <td className="num">{m.reorder_threshold != null ? formatQty(m.reorder_threshold) : '—'}</td>
               {canWrite && (
@@ -181,7 +182,7 @@ function MaterialEditor({ m, busy, onSave, onClose }: {
   const [cat, setCat] = useState(m.category ?? '');
   const [desc, setDesc] = useState(m.description ?? '');
   const [ext, setExt] = useState({
-    brand: m.brand ?? '', usage_guide: m.usage_guide ?? '', usage_method: m.usage_method ?? '', safety_warning: m.safety_warning ?? '',
+    image: m.image ?? '', brand: m.brand ?? '', usage_guide: m.usage_guide ?? '', usage_method: m.usage_method ?? '', safety_warning: m.safety_warning ?? '',
     quality_specs: m.quality_specs ?? '', limit_elements: m.limit_elements ?? '', withdrawal_days: m.withdrawal_days == null ? '' : String(m.withdrawal_days),
   });
   const setE = (k: keyof typeof ext) => (e: { target: { value: string } }) => setExt((x) => ({ ...x, [k]: e.target.value }));
@@ -193,6 +194,7 @@ function MaterialEditor({ m, busy, onSave, onClose }: {
       <div className="inline-form">
         <label>Tên<input value={name} onChange={(e) => setName(e.target.value)} /></label>
         <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} /></label>
+        <ImagePicker value={ext.image} onChange={(v) => setExt((x) => ({ ...x, image: v }))} />
         <label>Thương hiệu / xuất xứ<input value={ext.brand} onChange={setE('brand')} /></label>
         <label>Nhóm (phân bón, thuốc BVTV, giống…)<input value={cat} onChange={(e) => setCat(e.target.value)} /></label>
         <label>Báo "sắp hết" khi tồn ≤ (để trống nếu không báo)<input value={thr} inputMode="decimal" onChange={(e) => setThr(e.target.value)} /></label>

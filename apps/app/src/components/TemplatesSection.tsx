@@ -41,7 +41,7 @@ export function TemplatesSection() {
 
   function onCreate(e: FormEvent) {
     e.preventDefault();
-    if (!effCrop) return setError('Hãy chọn cây trồng.');
+    if (!effCrop) return setError('Hãy chọn sản phẩm.');
     if (name.trim().length < 2) return setError('Hãy đặt tên cho quy trình (ít nhất 2 ký tự).');
     setBusy(true);
     setError(null);
@@ -71,10 +71,10 @@ export function TemplatesSection() {
       {error && <p className="msg error" role="alert">{error}</p>}
 
       {canManage && (activeCrops.length === 0 ? (
-        <p className="msg warn">Chưa có cây trồng nào. Hãy thêm ở mục "Cây trồng" trước.</p>
+        <p className="msg warn">Chưa có sản phẩm nào. Hãy thêm ở mục "Sản phẩm" trước.</p>
       ) : (
         <form className="quickadd" onSubmit={onCreate} noValidate>
-          <select value={effCrop} onChange={(e) => setCropId(e.target.value)} aria-label="Cây trồng">
+          <select value={effCrop} onChange={(e) => setCropId(e.target.value)} aria-label="Sản phẩm">
             {activeCrops.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tên quy trình mới" aria-label="Tên quy trình mới" />
@@ -87,7 +87,7 @@ export function TemplatesSection() {
         <thead><tr><th>Quy trình ({rows.length})</th><th className="num">Giai đoạn</th><th className="num">Ngày</th><th></th></tr></thead>
         <tbody>
           {rows.length === 0 && (
-            <tr><td colSpan={4} className="muted">Chưa có quy trình mẫu. Phải có mẫu cho cây nào thì mới tạo được vụ của cây đó.</td></tr>
+            <tr><td colSpan={4} className="muted">Chưa có quy trình mẫu. Phải có mẫu cho sản phẩm nào thì mới tạo được vụ của sản phẩm đó.</td></tr>
           )}
           {rows.map((t) => (
             <tr key={t.id} className={t.is_active ? '' : 'off'}>

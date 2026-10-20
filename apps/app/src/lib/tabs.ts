@@ -40,8 +40,8 @@ export function productionSections(org: MyOrg | null): Section<ProductionSection
 export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
   if (!org) return [];
   return [
-    canManageProduction(org.roles) ? { id: 'areas' as const, label: 'Khu trồng' } : null,
-    canManageProduction(org.roles) ? { id: 'crops' as const, label: 'Cây trồng' } : null,
+    canManageProduction(org.roles) ? { id: 'areas' as const, label: 'Trang trại' } : null,
+    canManageProduction(org.roles) ? { id: 'crops' as const, label: 'Sản phẩm' } : null,
     canManageProduction(org.roles) ? { id: 'worktypes' as const, label: 'Danh mục việc' } : null,
     canManageProduction(org.roles) ? { id: 'templates' as const, label: 'Quy trình mẫu' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư và kho' } : null,

@@ -4,7 +4,7 @@ import { db, type CropTypeRow, type FieldDef, type WorkTypeRow } from './db';
 import { useOrgs } from './orgs';
 
 /**
- * Cây trồng và loại việc HIỆU LỰC cho một cơ sở: mục dùng chung + mục của chính cơ sở, áp bản chỉnh của cơ sở
+ * Sản phẩm và loại việc HIỆU LỰC cho một cơ sở: mục dùng chung + mục của chính cơ sở, áp bản chỉnh của cơ sở
  * (tên riêng, trường ghi riêng, dừng/dùng) — xem quyết định D32. Mục đã dừng vẫn có trong danh sách (is_active = false)
  * để lịch sử hiển thị đúng tên; nơi chọn thì lọc is_active.
  */
@@ -17,7 +17,7 @@ export function effectiveCrops(rows: CropTypeRow[], orgId: string | undefined): 
     .map((r) => {
       const shared = !r.organization_id;
       const o = shared && orgId ? r.ov?.[orgId] : undefined;
-      return { ...r, name: o?.display_name ?? r.name, description: o ? o.description ?? r.description : r.description, base_name: r.name, shared, overridden: Boolean(o), is_active: o ? o.is_active : (r.is_active ?? true) };
+      return { ...r, name: o?.display_name ?? r.name, description: o ? o.description ?? r.description : r.description, image: o ? o.image ?? r.image : r.image, base_name: r.name, shared, overridden: Boolean(o), is_active: o ? o.is_active : (r.is_active ?? true) };
     });
 }
 
