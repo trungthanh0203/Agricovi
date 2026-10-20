@@ -4,7 +4,7 @@ import { useCatalog, type EffCrop } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
-import { canManageProduction } from '../lib/roles';
+import { canPerm } from '../lib/permissions';
 import {
   clearOverride, createCrop, PRODUCT_KIND_LABEL, refreshCatalogCache, saveOverride, updateCrop, type ProductKind,
 } from '../lib/templates';
@@ -27,7 +27,7 @@ export function CropsSection() {
 
   if (!active) return null;
   const org = active.id;
-  const canManage = canManageProduction(active.roles);
+  const canManage = canPerm(active.perms, 'declare', 'edit');
   const rows = cropTypes.filter((c) => showOff || c.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const editRow = cropTypes.find((c) => c.id === editing) ?? null;
 

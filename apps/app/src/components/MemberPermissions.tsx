@@ -47,7 +47,7 @@ export function MemberPermissions({ orgId, userId, roles, overrides, onSaved }: 
 
   return (
     <div className="inline-form">
-      <p className="muted">Chọn người này được thấy và nhập liệu những mục nào ở tab "Vật tư & chi phí". Để "Theo vai trò" nếu không muốn cấp riêng.</p>
+      <p className="muted">Chọn người này được thấy và nhập liệu những mục nào (kho, thu hoạch, chi phí, doanh thu, tổng kết, khai báo). Cấp riêng ở đây sẽ đè lên vai trò và chức vụ. Để "Theo vai trò" nếu không muốn cấp riêng.</p>
       {PERM_MODULES.map((m) => {
         const dflt = PERM_LEVEL_LABEL[defaultPerm(roles, m)];
         const now = PERM_LEVEL_LABEL[effectivePerm(roles, draft[m] ? { [m]: draft[m] as PermLevel } : {}, m)];

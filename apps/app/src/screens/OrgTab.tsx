@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { friendlyError } from '../lib/errors';
 import { useOrgs, type PlanUsage } from '../lib/orgs';
 import { CooperativeSection } from '../components/CooperativeSection';
+import { PositionsSection } from '../components/PositionsSection';
 import { MembersSection } from '../components/MembersSection';
 import { pickSection, SubTabs } from '../components/SubTabs';
 import { TeamsSection } from '../components/TeamsSection';
@@ -81,6 +82,7 @@ export function OrgTab({ section, onSection }: { section?: string; onSection: (s
         </>
       )}
       {current === 'members' && <MembersSection org={active} />}
+      {current === 'positions' && <PositionsSection org={active} />}
       {current === 'teams' && <TeamsSection org={active} />}
       {current === 'coop' && <CooperativeSection org={active} />}
     </section>

@@ -4,7 +4,7 @@ import { useCatalog, type EffWorkType } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
-import { canManageProduction } from '../lib/roles';
+import { canPerm } from '../lib/permissions';
 import { clearOverride, createWorkType, newFieldKey, refreshCatalogCache, saveOverride, updateWorkType } from '../lib/templates';
 
 const TYPE_LABEL: Record<FieldDef['type'], string> = { number: 'Số', text: 'Chữ', select: 'Chọn trong danh sách' };
@@ -58,7 +58,7 @@ export function WorkTypesSection() {
 
   if (!active) return null;
   const org = active.id;
-  const canManage = canManageProduction(active.roles);
+  const canManage = canPerm(active.perms, 'declare', 'edit');
   const rows = workTypes.filter((t) => showOff || t.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const editingRow = workTypes.find((t) => t.id === editing) ?? null;
 

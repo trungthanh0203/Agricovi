@@ -3,7 +3,7 @@ import { TemplateEditor } from './TemplateEditor';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
-import { canManageProduction } from '../lib/roles';
+import { canPerm } from '../lib/permissions';
 import { useCatalog } from '../lib/catalog';
 import { createTemplate, deleteTemplate, listTemplates, refreshCatalogCache, totalDays, type TemplateRow } from '../lib/templates';
 
@@ -33,7 +33,7 @@ export function TemplatesSection() {
   useEffect(() => { void load(); }, [load]);
 
   if (!active) return null;
-  const canManage = canManageProduction(active.roles);
+  const canManage = canPerm(active.perms, 'declare', 'edit');
   const cropName = (id: string) => crops.find((c) => c.id === id)?.name ?? '—';
   const activeCrops = crops.filter((c) => c.is_active);
   const effCrop = cropId || activeCrops[0]?.id || '';

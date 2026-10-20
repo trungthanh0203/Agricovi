@@ -21,7 +21,8 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const sync = useRecordSync();
   // loại việc dùng chung hoặc của cơ sở đang chọn, đã áp bản chỉnh; việc đã dừng không chọn được cho việc mới
   const { workTypes: effWorkTypes, cropTypes } = useCatalog();
-  const workTypes = effWorkTypes.filter((w) => w.is_active);
+  // chức vụ có thể giới hạn loại việc được ghi (D44); máy chủ cũng ép lại
+  const workTypes = effWorkTypes.filter((w) => w.is_active && (!active?.allowedWorkTypes || active.allowedWorkTypes.includes(w.id)));
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
 

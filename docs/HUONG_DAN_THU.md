@@ -158,6 +158,14 @@ Cần: nhân viên có tài khoản (tab Tổ chức → Nhân sự), có tổ v
 4. **Sửa công**: bấm ✎ ở dòng công, nhập giờ đúng và lý do, gửi đề nghị. Quản lý/chủ thấy mục "Yêu cầu sửa công chờ duyệt" và bấm Duyệt hoặc Từ chối. Kỳ đã khóa thì không duyệt được.
 5. **Hồ sơ → Tiền công của tôi**: người lao động xem số tiền từng kỳ ("Dự tính" đến khi chủ khóa kỳ).
 
+## Bài thử 16 — Chức vụ và chấm công cho chủ
+
+1. **Chủ**: Sản xuất → **Chấm công**: app tự tạo hồ sơ lao động cho bạn, bấm Vào ca/Ra ca như nhân sự khác (chọn đơn giá cho chủ ở Khai báo → Đơn giá công nếu muốn tính tiền).
+2. **Tổ chức → Chức vụ → + Thêm chức vụ**: ví dụ "Kỹ thuật viên": cho Khai báo "Xem và nhập liệu", bật "Được bắt đầu/hoàn thành giai đoạn". Hoặc "Phun thuốc": chọn "Chỉ những việc được chọn" rồi tích Phun thuốc.
+3. Ở cùng màn, mục **Gán chức vụ cho người**: bấm tên chức vụ dưới mỗi người để gán/bỏ.
+4. Đăng nhập bằng người được gán: tab **Khai báo** xuất hiện (nếu có quyền Khai báo), nút Bắt đầu/Xong ở giai đoạn dùng được. Với chức vụ giới hạn loại việc, màn **Ghi việc** chỉ còn các loại việc được phép. Hồ sơ → "Tôi được làm gì" ghi rõ chức vụ.
+5. Chủ vẫn cấp riêng từng người ở Nhân sự (đè lên vai trò và chức vụ). Chức vụ ngừng/xóa thì quyền biến mất ngay khi người đó mở lại app.
+
 ## Những điều cần biết
 
 - Số tiền luôn là **đồng**, số lượng thu hoạch và bán luôn là **kg** ở bản thử này.

@@ -51,7 +51,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog }: { cycleId: string
 
   if (!cycle) return <main className="auth"><button className="link" onClick={onClose}>← Quay lại</button><p className="muted">Đang tải vụ…</p></main>;
 
-  const canManage = canManageProduction(active?.roles);
+  const canManage = canManageProduction(active?.roles) || Boolean(active?.canManageStages);
   const isActive = cycle.status === 'active';
   const closed = cycle.status === 'ended' || cycle.status === 'cancelled';
   const canEditStages = canManage && !closed;

@@ -58,6 +58,12 @@ const num = <T extends object>(rows: T[] | null, keys: (keyof T)[]): T[] =>
     return o as T;
   });
 
+/** Chủ/quản lý/nhân viên tự có hồ sơ lao động để chấm công như nhân sự khác (tạo một lần) */
+export async function ensureMyWorker(orgId: string): Promise<string> {
+  needOnline('bật chấm công');
+  return (await ok(client().rpc('ensure_my_worker', { p_org: orgId }))) as string;
+}
+
 // ------------------------------------------------------------------ hồ sơ lao động
 export async function listWorkers(orgId: string): Promise<WorkerLite[]> {
   const rows = await ok(client().from('worker_profiles').select('id, full_name, user_id, work_mode, status').eq('organization_id', orgId).order('full_name'));

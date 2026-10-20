@@ -6,7 +6,7 @@ import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { createArea, updateArea, type FarmInput } from '../lib/production';
-import { canManageProduction } from '../lib/roles';
+import { canPerm } from '../lib/permissions';
 
 const fmtSize = (a: AreaRow) => (a.area_size != null ? `${a.area_size.toLocaleString('vi-VN')} ${a.area_unit === 'ha' ? 'ha' : 'm²'}` : '');
 
@@ -25,7 +25,7 @@ export function AreasSection() {
   const [busy, setBusy] = useState(false);
   if (!active) return null;
 
-  const canManage = canManageProduction(active.roles);
+  const canManage = canPerm(active.perms, 'declare', 'edit');
   const rows = areas
     .filter((a) => a.organization_id === active.id && (showOff || a.is_active !== false))
     .sort((a, b) => a.name.localeCompare(b.name, 'vi'));

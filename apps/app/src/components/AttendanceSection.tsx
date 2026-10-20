@@ -10,7 +10,7 @@ import { useOrgs } from '../lib/orgs';
 import { hasRole } from '../lib/roles';
 import {
   ATT_STATUS_LABEL, clockIn, clockOut, clockOutLocal, confirmAttendance, confirmOutput, decideAdjustment, fmtMinutes, listAdjustments, listAttendance,
-  listOutputs, listWorkers, OUTPUT_STATUS_LABEL, recalledMyWorker, recordOutput, recordShift, rejectAttendance, rememberMyWorker, requestAdjustment,
+  ensureMyWorker, listOutputs, listWorkers, OUTPUT_STATUS_LABEL, recalledMyWorker, recordOutput, recordShift, rejectAttendance, rememberMyWorker, requestAdjustment,
   type AdjustmentRequest, type AttendanceRow, type OutputRow, type WorkerLite,
 } from '../lib/work';
 
@@ -49,12 +49,18 @@ export function AttendanceSection() {
     if (!orgId || !navigator.onLine) return;
     try {
       const from = addDays(todayLocal(), -14);
-      const [w, a, o, aj] = await Promise.all([listWorkers(orgId), listAttendance(orgId, from), listOutputs(orgId, from), listAdjustments(orgId).catch(() => [])]);
+      let w = await listWorkers(orgId);
+      // chủ/quản lý/nhân viên chưa có hồ sơ lao động: tự tạo để chấm công như nhân sự khác
+      if (uid && !w.some((x) => x.user_id === uid) && hasRole(active?.roles, 'manager', 'worker')) {
+        await ensureMyWorker(orgId).catch(() => undefined);
+        w = await listWorkers(orgId);
+      }
+      const [a, o, aj] = await Promise.all([listAttendance(orgId, from), listOutputs(orgId, from), listAdjustments(orgId).catch(() => [])]);
       setWorkers(w); setAtt(a); setOuts(o); setAdjs(aj);
       const mine = w.find((x) => x.user_id === uid);
       if (mine && uid) rememberMyWorker(orgId, uid, mine.id);
     } catch (e) { setError(friendlyError(e)); }
-  }, [orgId, uid]);
+  }, [orgId, uid, active?.roles]);
   useEffect(() => { void load(); }, [load]);
 
   const openShift = useMemo(() => att.find((a) => a.worker_id === me?.id && !a.ended_at && a.status !== 'rejected') ?? null, [att, me?.id]);

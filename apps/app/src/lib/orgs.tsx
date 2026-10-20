@@ -11,7 +11,15 @@ export interface MyOrg {
   roles: MemberRole[];
   /** Quyền hiệu lực theo mục (vai trò + phần chủ cấp riêng), D27 */
   perms: EffectivePerms;
+  /** Chức vụ đang giữ (D44) */
+  positions?: { id: string; name: string }[];
+  /** Loại việc được làm: null = mọi loại */
+  allowedWorkTypes?: string[] | null;
+  /** Được bắt đầu/hoàn thành/sửa giai đoạn nhờ chức vụ */
+  canManageStages?: boolean;
 }
+
+interface PositionRow { id: string; organization_id: string; name: string; perms: PermOverrides; work_type_ids: string[] | null; can_manage_stages: boolean }
 
 export interface PlanUsage {
   plan_name: string;
@@ -77,17 +85,28 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       if (!supabase || !navigator.onLine) throw new Error('offline');
       const { data, error } = await supabase
         .from('organization_memberships')
-        .select('roles, permissions, organizations ( id, type, name )')
+        .select('roles, permissions, position_ids, organizations ( id, type, name )')
         .eq('status', 'active')
         // CHỈ dòng của chính mình: các dòng thành viên khác cùng cơ sở không phải "cơ sở của tôi"
         // và mang vai trò của người khác (lỗi cũ: nhân viên bị hiện giao diện của chủ).
         .eq('user_id', uid);
       if (error) throw error;
+      // chức vụ đang hoạt động của các cơ sở tôi thuộc (lỗi/thiếu bảng thì coi như chưa có chức vụ nào)
+      const posRes = await supabase.from('org_positions').select('id, organization_id, name, perms, work_type_ids, can_manage_stages').eq('is_active', true);
+      const allPos = (posRes.error ? [] : (posRes.data ?? [])) as PositionRow[];
       const list: MyOrg[] = (data ?? []).flatMap((row) => {
         const o = row.organizations as unknown as { id: string; type: OrgType; name: string } | null;
         if (!o) return [];
         const roles = row.roles as MemberRole[];
-        return [{ id: o.id, type: o.type, name: o.name, roles, perms: effectivePerms(roles, row.permissions as PermOverrides | null) }];
+        const mine = allPos.filter((p) => p.organization_id === o.id && ((row as { position_ids?: string[] }).position_ids ?? []).includes(p.id));
+        const restricted = !roles.some((r) => r === 'owner' || r === 'manager') && mine.length > 0 && mine.every((p) => p.work_type_ids !== null);
+        return [{
+          id: o.id, type: o.type, name: o.name, roles,
+          perms: effectivePerms(roles, row.permissions as PermOverrides | null, mine.map((p) => p.perms)),
+          positions: mine.map((p) => ({ id: p.id, name: p.name })),
+          allowedWorkTypes: restricted ? [...new Set(mine.flatMap((p) => p.work_type_ids ?? []))] : null,
+          canManageStages: mine.some((p) => p.can_manage_stages),
+        }];
       });
       list.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
       setOrgs(list);
