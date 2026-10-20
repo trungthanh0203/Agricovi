@@ -55,8 +55,6 @@ export function TeamsSection({ org }: { org: MyOrg }) {
 
   const withAccount = workers.filter((w) => w.user_id);
   const leaderOf = (t: TeamRow) => workers.find((w) => w.id === t.leader_worker_id);
-  const teamOf = (workerId: string) => teams.find((t) => t.id === members.find((m) => m.worker_id === workerId)?.team_id);
-  const teamsWithLeader = teams.filter((t) => t.leader_worker_id);
 
   function onCreateTeam(e: FormEvent) {
     e.preventDefault();
@@ -123,22 +121,6 @@ export function TeamsSection({ org }: { org: MyOrg }) {
         );
       })}
 
-      {workers.length > 0 && (
-        <>
-          <Collapsible inline title="Xếp người vào tổ" summary={`${workers.length} người`}>
-          {workers.map((w) => (
-            <div className="row member" key={w.id}>
-              <span className="grow">{w.full_name}{w.user_id ? '' : ' (không có tài khoản)'}</span>
-              <select aria-label={`Tổ của ${w.full_name}`} value={teamOf(w.id)?.id ?? ''} disabled={busy}
-                onChange={(e) => e.target.value && void run(() => assignWorkerToTeam(w.id, e.target.value))}>
-                <option value="">— Chưa có tổ —</option>
-                {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
-            </div>
-          ))}
-          </Collapsible>
-        </>
-      )}
 
       <Collapsible inline title="＋ Tạo tổ mới">
       <form onSubmit={onCreateTeam} className="inline-form" noValidate>
@@ -176,10 +158,10 @@ export function TeamsSection({ org }: { org: MyOrg }) {
           </select>
         </label>
         <label>
-          Tổ (phải có tổ trưởng)
+          Tổ lao động
           <select value={wTeam} onChange={(e) => setWTeam(e.target.value)}>
             <option value="">— Chọn tổ —</option>
-            {teamsWithLeader.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            {teams.map((t) => <option key={t.id} value={t.id}>{t.name}{t.leader_worker_id ? '' : ' · chưa có tổ trưởng'}</option>)}
           </select>
         </label>
         <button type="submit" className="secondary" disabled={busy}>Thêm người</button>

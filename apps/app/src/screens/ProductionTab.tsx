@@ -14,7 +14,6 @@ import { canManageProduction } from '../lib/roles';
 import { deleteCycle, editCycle, fetchQuotaContexts, setCycleStatus, type QuotaContext } from '../lib/production';
 import type { CycleRow } from '../lib/db';
 import { productionSections, type ProductionSection, type TabId } from '../lib/tabs';
-import { StockPanel } from './StockPanel';
 
 interface Props {
   section?: string;
@@ -38,8 +37,6 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
       <SubTabs items={items} value={current ?? 'cycles'} onChange={onSection} label="Mục sản xuất" />
       {current === 'harvest' ? (
         <HarvestSection />
-      ) : current === 'stock' ? (
-        <StockPanel />
       ) : (
         <CyclesPanel onCreateCycle={onCreateCycle} onOpenCycle={onOpenCycle} onLog={onLog} onHistory={onHistory} onGo={onGo} />
       )}

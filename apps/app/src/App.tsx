@@ -17,6 +17,7 @@ import { LogsScreen } from './screens/LogsScreen';
 import { OrgTab } from './screens/OrgTab';
 import { ProductionTab } from './screens/ProductionTab';
 import { ProfileTab } from './screens/ProfileTab';
+import { StockTab } from './screens/StockTab';
 import { ReportsTab } from './screens/ReportsTab';
 import { syncDown } from './lib/production';
 import { SetupNotice } from './screens/SetupNotice';
@@ -158,6 +159,8 @@ function Shell() {
             onOpenCycle={(id) => { setDetailId(id); setOverlay('detail'); }}
             onGo={goTo}
           />
+        ) : tab === 'stock' ? (
+          <StockTab section={subs.stock} onSection={setSub('stock')} />
         ) : tab === 'declare' ? (
           <DeclareTab section={subs.declare} onSection={setSub('declare')} />
         ) : tab === 'org' ? (

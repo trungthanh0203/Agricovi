@@ -24,8 +24,8 @@ export function StaffCreateForm({
   const [error, setError] = useState<string | null>(null);
   const [creds, setCreds] = useState<StaffCredentials | null>(null);
 
-  // Chỉ tổ đã có tổ trưởng mới nhận người theo kiểu "do tổ trưởng chấm"
-  const teamsWithLeader = teams.filter((t) => t.leader_worker_id);
+  // Hiện mọi tổ đang hoạt động, kể cả tổ chưa có tổ trưởng (chủ chọn tổ trưởng sau, D38)
+  const teamsWithLeader = teams.filter((t) => t.is_active !== false);
   const leaderName = (t: TeamRow) => workers.find((w) => w.id === t.leader_worker_id)?.full_name ?? '';
   const needTeam = isLeaderMode(mode);
 
@@ -38,8 +38,8 @@ export function StaffCreateForm({
     if (needTeam && !teamId) {
       return setError(
         teamsWithLeader.length === 0
-          ? 'Kiểu này cần một tổ đã có tổ trưởng. Hãy tạo tổ và chọn tổ trưởng ở mục Tổ lao động trước.'
-          : 'Hãy chọn tổ (tổ phải có tổ trưởng).',
+          ? 'Kiểu này cần chọn một tổ. Hãy tạo tổ ở mục Tổ lao động trước.'
+          : 'Hãy chọn một tổ lao động.',
       );
     }
     if (!navigator.onLine) return setError('Tạo tài khoản cần có mạng.');
@@ -82,9 +82,9 @@ export function StaffCreateForm({
           Tổ lao động{needTeam ? ' (bắt buộc)' : ' (không bắt buộc)'}
           <select value={teamId} onChange={(e) => setTeamId(e.target.value)}>
             <option value="">— Không chọn —</option>
-            {teamsWithLeader.map((t) => <option key={t.id} value={t.id}>{t.name} · tổ trưởng {leaderName(t)}</option>)}
+            {teamsWithLeader.map((t) => <option key={t.id} value={t.id}>{t.name} · {t.leader_worker_id ? `tổ trưởng ${leaderName(t)}` : 'chưa có tổ trưởng'}</option>)}
           </select>
-          {needTeam && teamsWithLeader.length === 0 && <small>Chưa có tổ nào có tổ trưởng. Hãy tạo ở mục Tổ lao động.</small>}
+          {teamsWithLeader.length === 0 && <small>Chưa có tổ nào. Hãy tạo ở mục Tổ lao động.</small>}
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
         <button type="submit" className="secondary" disabled={busy}>{busy ? 'Đang tạo…' : 'Tạo tài khoản'}</button>

@@ -108,13 +108,14 @@ test('người KHÔNG có tài khoản: chỉ kiểu phân hệ do tổ trưởn
   const mk = (mode, t) => asUser(db, u.mgr, `select create_worker_without_account($1,'Bác Tư','0912345678',$2,$3) id`, [org, mode, t]);
   assert.match(await expectError(mk('self_hourly', team)), /INVALID_MODE/);
   assert.match(await expectError(mk('leader_hourly', null)), /TEAM_REQUIRED/);
-  assert.match(await expectError(mk('leader_hourly', noLeaderTeam)), /TEAM_REQUIRED/);
+  const idNoLeader = (await mk('leader_hourly', noLeaderTeam)).rows[0].id; // tổ chưa có tổ trưởng vẫn chọn được (D38)
+  assert.ok(idNoLeader);
   const id = (await mk('leader_hourly', team)).rows[0].id;
   assert.ok(id);
   // báo những người "kiểu tổ trưởng" mà chưa có tổ trưởng
   await asUser(db, u.mgr, `select set_team_leader($1,null)`, [team]);
   const orphans = (await asUser(db, u.mgr, `select full_name from workers_without_leader`)).rows;
-  assert.deepEqual(orphans.map((r) => r.full_name), ['Bác Tư']);
+  assert.deepEqual(orphans.map((r) => r.full_name), ['Bác Tư', 'Bác Tư']);
 });
 
 test('tạo tài khoản nhân viên kiểu "tổ trưởng chấm" bắt buộc chọn tổ có tổ trưởng; kiêm nhiều vai trò', async () => {
@@ -126,7 +127,7 @@ test('tạo tài khoản nhân viên kiểu "tổ trưởng chấm" bắt buộc
     return db.query(`select staff_finalize($1,$2,$3,$4,$5,'NV',$6::member_role[],$7,$8)`, [u.owner, org, uid(n), pre.phone, pre.auth_email, roles, mode, t]);
   };
   assert.match(await expectError(fin(60, '0911111111', 'leader_hourly', null)), /TEAM_REQUIRED/);
-  assert.match(await expectError(fin(61, '0922222222', 'leader_output', noLeaderTeam)), /TEAM_REQUIRED/);
+  await fin(61, '0922222222', 'leader_output', noLeaderTeam); // tổ chưa có tổ trưởng vẫn chọn được (D38)
   await fin(62, '0933333333', 'leader_hourly', team);
   const roles = (await db.query(`select roles::text[] roles from organization_memberships where user_id=$1`, [uid(62)])).rows[0].roles;
   assert.deepEqual(roles, ['worker', 'inventory_finance']);
