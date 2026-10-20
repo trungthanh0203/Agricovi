@@ -2,9 +2,10 @@ import 'fake-indexeddb/auto';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDb, addUser, asUser, expectError } from './harness.mjs';
-import { describeSchedule, stageRanges, taskDays, totalDays } from '../../apps/app/src/lib/templates.ts';
+import { stageRanges, totalDays } from '../../apps/app/src/lib/templates.ts';
 
-// Migration 0020 (P1): cây trồng riêng, loại việc riêng, quy trình mùa vụ mẫu theo từng cơ sở.
+// Migrations 0020–0021 (P1): cây trồng riêng, loại việc riêng, quy trình mùa vụ mẫu theo từng cơ sở.
+// Giai đoạn của mẫu được chọn từ danh mục việc (D31).
 
 async function setup() {
   const db = await createDb();
@@ -18,12 +19,13 @@ async function setup() {
   return { db, org, org2, owner, mgr, worker, owner2 };
 }
 const melon = `(select id from crop_types where organization_id is null and code='melon')`;
+const wt = (code) => `(select id from work_types where organization_id is null and code='${code}')`;
 const addCrop = (db, u, org, name) => asUser(db, u, `insert into crop_types (organization_id, name) values ($1,$2) returning id, code`, [org, name]);
 const addTemplate = (db, u, org, cropSql, name) =>
   asUser(db, u, `insert into cycle_templates (organization_id, crop_type_id, name) values ($1, ${cropSql}, $2) returning id`, [org, name]);
-const addStage = (db, u, tpl, name, days) =>
-  asUser(db, u, `insert into template_stages (template_id, name, duration_days) values ($1,$2,$3) returning id, seq`, [tpl, name, days]);
-const wt = (code) => `(select id from work_types where organization_id is null and code='${code}')`;
+/** Thêm giai đoạn bằng cách chọn một việc từ danh mục (mã việc dùng chung); tên giai đoạn do máy chủ lấy theo việc */
+const addStage = (db, u, tpl, code, days) =>
+  asUser(db, u, `insert into template_stages (template_id, work_type_id, duration_days) values ($1, ${wt(code)}, $2) returning id, seq, name`, [tpl, days]);
 
 test('cây trồng riêng: chủ/quản lý thêm, mã tự sinh; nhân viên không thêm được; cơ sở khác không thấy; cây dùng chung ai cũng thấy', async () => {
   const { db, org, org2, owner, mgr, worker, owner2 } = await setup();
@@ -33,7 +35,6 @@ test('cây trồng riêng: chủ/quản lý thêm, mã tự sinh; nhân viên kh
   assert.match(await expectError(addCrop(db, worker, org, 'Hành lá')), /row-level security/);
   assert.match(await expectError(addCrop(db, owner, org, 'ớt chuông')), /duplicate|unique/); // trùng tên không phân biệt hoa thường
   await addCrop(db, owner2, org2, 'Ớt chuông');                                               // cơ sở khác dùng lại tên được
-  // đọc
   const names = async (u) => (await asUser(db, u, `select name from crop_types where is_active order by name`)).rows.map((x) => x.name);
   assert.deepEqual(await names(worker), ['Cà chua bi', 'Dưa lưới', 'Ớt chuông']);
   assert.deepEqual(await names(owner2), ['Dưa lưới', 'Ớt chuông']);
@@ -58,14 +59,12 @@ test('quy trình mẫu: quyền ghi/đọc theo cơ sở; cơ sở khác không 
   await addTemplate(db, mgr, org, melon, 'Dưa lưới mùa mưa');
   assert.match(await expectError(addTemplate(db, owner, org, melon, 'Dưa lưới mùa khô')), /duplicate|unique/);
   const count = async (u) => (await asUser(db, u, `select count(*)::int n from cycle_templates`)).rows[0].n;
-  assert.equal(await count(worker), 2);   // nhân viên chỉ đọc
-  assert.equal(await count(owner2), 0);   // cơ sở khác không thấy mẫu của Hộ A
-  await addTemplate(db, owner2, org2, melon, 'Dưa lưới mùa khô');  // mẫu riêng của Hộ B, cùng tên được
-  // giai đoạn: organization_id bị ghi đè theo mẫu dù client gửi giá trị khác
-  await asUser(db, owner, `insert into template_stages (template_id, organization_id, name, duration_days) values ($1,$2,'Gieo',7)`, [t, org2]);
+  assert.equal(await count(worker), 2);
+  assert.equal(await count(owner2), 0);
+  await addTemplate(db, owner2, org2, melon, 'Dưa lưới mùa khô');
+  await asUser(db, owner, `insert into template_stages (template_id, organization_id, work_type_id, duration_days) values ($1,$2,${wt('irrigation')},7)`, [t, org2]);
   assert.equal((await db.query(`select organization_id from template_stages where template_id=$1`, [t])).rows[0].organization_id, org);
-  // người cơ sở khác không thêm giai đoạn vào mẫu của Hộ A
-  assert.match(await expectError(addStage(db, owner2, t, 'Chen vào', 3)), /row-level security/);
+  assert.match(await expectError(addStage(db, owner2, t, 'pollination', 3)), /row-level security/);
 });
 
 test('mẫu chỉ dùng cây dùng chung hoặc cây của chính cơ sở; không đổi cây sau khi tạo', async () => {
@@ -77,57 +76,86 @@ test('mẫu chỉ dùng cây dùng chung hoặc cây của chính cơ sở; khô
   assert.match(await expectError(asUser(db, owner, `update cycle_templates set crop_type_id = ${melon} where id=$1`, [t])), /IMMUTABLE_FIELD/);
 });
 
-test('giai đoạn: số thứ tự tự tăng, dời lên/xuống đổi chỗ, tổng số ngày; việc phải nằm trong giai đoạn', async () => {
-  const { db, org, owner } = await setup();
+test('giai đoạn chọn từ danh mục việc: tên lấy theo việc, bắt buộc có việc, số thứ tự tự tăng', async () => {
+  const { db, org, owner, org2, owner2 } = await setup();
   const t = (await addTemplate(db, owner, org, melon, 'Mẫu 1')).rows[0].id;
-  const s1 = (await addStage(db, owner, t, 'Gieo ươm', 10)).rows[0];
-  const s2 = (await addStage(db, owner, t, 'Ra hoa', 14)).rows[0];
-  const s3 = (await addStage(db, owner, t, 'Thu hoạch', 20)).rows[0];
-  assert.deepEqual([s1.seq, s2.seq, s3.seq], [1, 2, 3]);
-  await asUser(db, owner, `select move_template_stage($1, -1)`, [s3.id]);  // Thu hoạch lên trước Ra hoa
-  await asUser(db, owner, `select move_template_stage($1, -1)`, [s3.id]);  // lên đầu
-  await asUser(db, owner, `select move_template_stage($1, -1)`, [s3.id]);  // đã ở đầu: không đổi
-  const order = (await db.query(`select name from template_stages where template_id=$1 order by seq`, [t])).rows.map((r) => r.name);
-  assert.deepEqual(order, ['Thu hoạch', 'Gieo ươm', 'Ra hoa']);
+  const a = (await addStage(db, owner, t, 'fertilizing', 10)).rows[0];
+  const b = (await addStage(db, owner, t, 'pollination', 14)).rows[0];
+  assert.deepEqual([a.seq, b.seq, a.name, b.name], [1, 2, 'Bón phân', 'Thụ phấn']);
+  // gõ tên tự do không được: phải chọn từ danh mục
+  assert.match(await expectError(asUser(db, owner, `insert into template_stages (template_id, name, duration_days) values ($1,'Tự gõ',5)`, [t])), /INVALID_WORK_TYPE/);
+  // dù client gửi tên khác, máy chủ vẫn lấy tên theo việc đã chọn
+  const c = (await asUser(db, owner, `insert into template_stages (template_id, work_type_id, name, duration_days) values ($1, ${wt('irrigation')}, 'Tên giả', 3) returning name`, [t])).rows[0];
+  assert.equal(c.name, 'Tưới nước');
+  // việc của cơ sở khác không chọn được; việc của chính cơ sở chọn được
+  const other = (await asUser(db, owner2, `insert into work_types (organization_id, name) values ($1,'Việc của Hộ B') returning id`, [org2])).rows[0].id;
+  assert.match(await expectError(asUser(db, owner, `insert into template_stages (template_id, work_type_id, duration_days) values ($1,$2,4)`, [t, other])), /INVALID_WORK_TYPE|row-level|violates/);
+  const mine = (await asUser(db, owner, `insert into work_types (organization_id, name) values ($1,'Kiểm tra độ ngọt') returning id`, [org])).rows[0].id;
+  const d = (await asUser(db, owner, `insert into template_stages (template_id, work_type_id, duration_days) values ($1,$2,2) returning name`, [t, mine])).rows[0];
+  assert.equal(d.name, 'Kiểm tra độ ngọt');
+  // đổi việc của giai đoạn thì tên đổi theo
+  await asUser(db, owner, `update template_stages set work_type_id = ${wt('spraying')} where id=$1`, [a.id]);
+  assert.equal((await db.query(`select name from template_stages where id=$1`, [a.id])).rows[0].name, 'Phun thuốc');
+});
+
+test('sắp xếp giai đoạn: dời lên/xuống và sắp lại cả danh sách (kéo thả); danh sách sai bị từ chối; người chỉ đọc không sắp được', async () => {
+  const { db, org, owner, worker } = await setup();
+  const t = (await addTemplate(db, owner, org, melon, 'Mẫu 2')).rows[0].id;
+  const s1 = (await addStage(db, owner, t, 'irrigation', 10)).rows[0].id;
+  const s2 = (await addStage(db, owner, t, 'fertilizing', 14)).rows[0].id;
+  const s3 = (await addStage(db, owner, t, 'harvesting', 20)).rows[0].id;
+  const order = async () => (await db.query(`select name from template_stages where template_id=$1 order by seq`, [t])).rows.map((r) => r.name);
+
+  await asUser(db, owner, `select move_template_stage($1, -1)`, [s3]);
+  assert.deepEqual(await order(), ['Tưới nước', 'Thu hoạch', 'Bón phân']);
+  await asUser(db, owner, `select reorder_template_stages($1, $2::uuid[])`, [t, [s3, s2, s1]]);
+  assert.deepEqual(await order(), ['Thu hoạch', 'Bón phân', 'Tưới nước']);
   assert.equal((await db.query(`select sum(duration_days)::int n from template_stages where template_id=$1`, [t])).rows[0].n, 44);
 
-  // việc: bắt đầu ngày 2, lặp mỗi 1 ngày; ngày bắt đầu vượt độ dài giai đoạn bị từ chối
-  const task = (stage, start, extra = '') => asUser(db, owner, `insert into template_tasks (stage_id, work_type_id, title, start_day ${extra ? ',' + extra.split('=')[0] : ''}) values ($1, ${wt('pollination')}, 'Thụ phấn', $2 ${extra ? ',' + extra.split('=')[1] : ''}) returning id`, [stage, start]);
-  await task(s2.id, 2, 'repeat_every_days=1');
-  assert.match(await expectError(task(s2.id, 15)), /INVALID_DAY/);
-  assert.match(await expectError(task(s2.id, 0)), /check/);
-  assert.match(await expectError(asUser(db, owner, `insert into template_tasks (stage_id, work_type_id, title, start_day, repeat_every_days) values ($1, ${wt('irrigation')}, 'Tưới', 1, 0)`, [s2.id])), /check/);
-  // rút ngắn giai đoạn xuống dưới ngày bắt đầu của việc: từ chối; rút vừa đủ thì được
-  assert.match(await expectError(asUser(db, owner, `update template_stages set duration_days = 1 where id=$1`, [s2.id])), /INVALID_DURATION/);
-  await asUser(db, owner, `update template_stages set duration_days = 2 where id=$1`, [s2.id]);
+  assert.match(await expectError(asUser(db, owner, `select reorder_template_stages($1, $2::uuid[])`, [t, [s1, s2]])), /INVALID_ARGUMENT/);        // thiếu một giai đoạn
+  assert.match(await expectError(asUser(db, owner, `select reorder_template_stages($1, $2::uuid[])`, [t, [s1, s1, s2]])), /INVALID_ARGUMENT/);    // lặp mã
+  assert.match(await expectError(asUser(db, worker, `select reorder_template_stages($1, $2::uuid[])`, [t, [s1, s2, s3]])), /FORBIDDEN|INVALID_ARGUMENT/);
+  assert.deepEqual(await order(), ['Thu hoạch', 'Bón phân', 'Tưới nước']);
 });
 
-test('loại việc của cơ sở khác không dùng được trong mẫu; phiên bản mẫu tăng khi giai đoạn/việc đổi', async () => {
-  const { db, org, org2, owner, owner2 } = await setup();
-  const t = (await addTemplate(db, owner, org, melon, 'Mẫu 2')).rows[0].id;
-  const st = (await addStage(db, owner, t, 'Gieo', 5)).rows[0].id;
-  const other = (await asUser(db, owner2, `insert into work_types (organization_id, name) values ($1,'Việc của Hộ B') returning id`, [org2])).rows[0].id;
-  assert.match(await expectError(asUser(db, owner, `insert into template_tasks (stage_id, work_type_id, title) values ($1,$2,'X')`, [st, other])), /INVALID_WORK_TYPE|row-level|violates/);
+test('việc chi tiết (bảng cũ, giao diện không dùng): vẫn ràng buộc ngày trong giai đoạn; phiên bản mẫu tăng khi giai đoạn đổi', async () => {
+  const { db, org, owner } = await setup();
+  const t = (await addTemplate(db, owner, org, melon, 'Mẫu 3')).rows[0].id;
+  const st = (await addStage(db, owner, t, 'pollination', 5)).rows[0].id;
+  const task = (start) => asUser(db, owner, `insert into template_tasks (stage_id, work_type_id, title, start_day) values ($1, ${wt('pollination')}, 'Thụ phấn', $2)`, [st, start]);
+  await task(2);
+  assert.match(await expectError(task(6)), /INVALID_DAY/);
+  assert.match(await expectError(asUser(db, owner, `update template_stages set duration_days = 1 where id=$1`, [st])), /INVALID_DURATION/);
   const v0 = (await db.query(`select version from cycle_templates where id=$1`, [t])).rows[0].version;
-  await asUser(db, owner, `insert into template_tasks (stage_id, work_type_id, title) values ($1, ${wt('irrigation')}, 'Tưới')`, [st]);
-  await asUser(db, owner, `update template_stages set name = 'Gieo hạt' where id=$1`, [st]);
-  assert.ok((await db.query(`select version from cycle_templates where id=$1`, [t])).rows[0].version >= v0 + 2);
+  await asUser(db, owner, `update template_stages set duration_days = 6 where id=$1`, [st]);
+  assert.ok((await db.query(`select version from cycle_templates where id=$1`, [t])).rows[0].version > v0);
 });
 
-test('nhân bản mẫu: sao chép giai đoạn và việc sang mẫu mới; người không có quyền thì không nhân bản được', async () => {
+test('nhân bản mẫu: sao chép giai đoạn (kèm việc đã chọn) sang mẫu mới; người không có quyền thì không nhân bản được', async () => {
   const { db, org, owner, mgr, worker } = await setup();
   const t = (await addTemplate(db, owner, org, melon, 'Mẫu gốc')).rows[0].id;
-  const a = (await addStage(db, owner, t, 'Gieo', 5)).rows[0].id;
-  const b = (await addStage(db, owner, t, 'Ra hoa', 9)).rows[0].id;
-  await asUser(db, owner, `insert into template_tasks (stage_id, work_type_id, title, start_day, repeat_every_days) values ($1, ${wt('irrigation')}, 'Tưới', 1, 2), ($2, ${wt('pollination')}, 'Thụ phấn', 3, 1)`, [a, b]);
+  await addStage(db, owner, t, 'irrigation', 5);
+  await addStage(db, owner, t, 'pollination', 9);
   const copy = (await asUser(db, mgr, `select duplicate_cycle_template($1, 'Mẫu bản sao') id`, [t])).rows[0].id;
   assert.notEqual(copy, t);
-  const stages = (await db.query(`select name, seq, duration_days from template_stages where template_id=$1 order by seq`, [copy])).rows;
-  assert.deepEqual(stages.map((s) => [s.name, s.seq, s.duration_days]), [['Gieo', 1, 5], ['Ra hoa', 2, 9]]);
-  assert.equal((await db.query(`select count(*)::int n from template_tasks tt join template_stages s on s.id=tt.stage_id where s.template_id=$1`, [copy])).rows[0].n, 2);
-  assert.equal((await db.query(`select count(*)::int n from template_stages where template_id=$1`, [t])).rows[0].n, 2); // mẫu gốc nguyên vẹn
+  const stages = (await db.query(`select name, seq, duration_days, work_type_id is not null has_wt from template_stages where template_id=$1 order by seq`, [copy])).rows;
+  assert.deepEqual(stages.map((s) => [s.name, s.seq, s.duration_days, s.has_wt]), [['Tưới nước', 1, 5, true], ['Thụ phấn', 2, 9, true]]);
+  assert.equal((await db.query(`select count(*)::int n from template_stages where template_id=$1`, [t])).rows[0].n, 2);
   assert.match(await expectError(asUser(db, worker, `select duplicate_cycle_template($1, 'Của nhân viên')`, [t])), /row-level security/);
   assert.match(await expectError(asUser(db, mgr, `select duplicate_cycle_template($1, 'Mẫu bản sao')`, [t])), /duplicate|unique/);
+});
+
+test('nhân bản mẫu cũ có giai đoạn chưa gắn việc (tạo từ trước): vẫn nhân bản được, tạo mới thì bắt buộc chọn việc', async () => {
+  const { db, org, owner } = await setup();
+  const t = (await addTemplate(db, owner, org, melon, 'Mẫu cũ')).rows[0].id;
+  await db.query(`insert into template_stages (template_id, name, duration_days) values ($1,'Giai đoạn tự gõ',6)`, [t]).catch(() => undefined);
+  // giả lập dữ liệu cũ: tắt trigger để chèn hàng không có việc
+  await db.exec(`alter table template_stages disable trigger template_stages_prepare`);
+  await db.query(`insert into template_stages (template_id, organization_id, seq, name, duration_days) values ($1,$2,1,'Giai đoạn tự gõ',6)`, [t, org]);
+  await db.exec(`alter table template_stages enable trigger template_stages_prepare`);
+  const copy = (await asUser(db, owner, `select duplicate_cycle_template($1, 'Bản sao mẫu cũ') id`, [t])).rows[0].id;
+  assert.equal((await db.query(`select count(*)::int n from template_stages where template_id=$1`, [copy])).rows[0].n, 1);
+  assert.match(await expectError(asUser(db, owner, `insert into template_stages (template_id, name, duration_days) values ($1,'Gõ tay',3)`, [copy])), /INVALID_WORK_TYPE/);
 });
 
 test('HTX: hộ thành viên đọc được mẫu và cây của HTX nhưng không ghi; hộ ngoài HTX không đọc được', async () => {
@@ -139,23 +167,18 @@ test('HTX: hộ thành viên đọc được mẫu và cây của HTX nhưng kh�
   await addTemplate(db, coopOwner, coop, melon, 'Mẫu của HTX');
   await addCrop(db, coopOwner, coop, 'Cây của HTX');
   const seen = async (u) => (await asUser(db, u, `select (select count(*)::int from cycle_templates) t, (select count(*)::int from crop_types where organization_id is not null) c`)).rows[0];
-  assert.deepEqual({ ...(await seen(owner)) }, { t: 0, c: 0 });             // chưa tham gia HTX
+  assert.deepEqual({ ...(await seen(owner)) }, { t: 0, c: 0 });
   await db.query(`insert into cooperative_memberships (household_org_id,cooperative_org_id,status,joined_at) values ($1,$2,'active',now())`, [org, coop]);
-  assert.deepEqual({ ...(await seen(owner)) }, { t: 1, c: 1 });             // đã tham gia: đọc được
-  assert.deepEqual({ ...(await seen(outsider)) }, { t: 0, c: 0 });          // hộ ngoài HTX: không
+  assert.deepEqual({ ...(await seen(owner)) }, { t: 1, c: 1 });
+  assert.deepEqual({ ...(await seen(outsider)) }, { t: 0, c: 0 });
   assert.match(await expectError(addTemplate(db, owner, coop, melon, 'Hộ chen vào mẫu HTX')), /row-level security/);
 });
 
-test('tính ngày ở trình soạn: khoảng ngày từng giai đoạn, lịch lặp của việc, mô tả bằng chữ', () => {
+test('tính ngày ở trình soạn: khoảng ngày từng giai đoạn và tổng số ngày', () => {
   const stages = [{ id: 'a', duration_days: 10 }, { id: 'b', duration_days: 14 }, { id: 'c', duration_days: 5 }];
   assert.equal(totalDays(stages), 29);
   const r = stageRanges(stages);
   assert.deepEqual(r.get('a'), { from: 1, to: 10 });
   assert.deepEqual(r.get('b'), { from: 11, to: 24 });
   assert.deepEqual(r.get('c'), { from: 25, to: 29 });
-  assert.deepEqual(taskDays({ start_day: 3, repeat_every_days: null }, 10), [3]);
-  assert.deepEqual(taskDays({ start_day: 2, repeat_every_days: 3 }, 10), [2, 5, 8]);
-  assert.deepEqual(taskDays({ start_day: 11, repeat_every_days: 1 }, 10), []);
-  assert.equal(describeSchedule({ start_day: 3, repeat_every_days: null }, 10), 'ngày 3');
-  assert.equal(describeSchedule({ start_day: 2, repeat_every_days: 3 }, 10), 'từ ngày 2, lặp mỗi 3 ngày (3 lần)');
 });

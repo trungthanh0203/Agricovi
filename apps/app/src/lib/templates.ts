@@ -27,11 +27,8 @@ export interface TemplateRow {
   version: number; is_active: boolean; updated_at: string;
   template_stages: { id: string; duration_days: number }[];
 }
-export interface StageRow { id: string; template_id: string; seq: number; name: string; duration_days: number; note: string | null }
-export interface TaskRow {
-  id: string; stage_id: string; work_type_id: string; title: string; start_day: number;
-  repeat_every_days: number | null; is_required: boolean; note: string | null;
-}
+/** Giai đoạn = một việc chọn từ danh mục + số ngày. `name` là tên việc lúc chọn (máy chủ tự điền). */
+export interface StageRow { id: string; template_id: string; seq: number; name: string; work_type_id: string | null; duration_days: number; note: string | null }
 
 // ------------------------------------------------------------------ bản lưu trên máy (dùng khi ghi việc, tạo vụ)
 /** Tải lại danh sách cây trồng và loại việc đang dùng về máy (sau khi khai báo hoặc đồng bộ) */
@@ -130,49 +127,32 @@ export async function duplicateTemplate(id: string, name: string): Promise<strin
   return (await ok(client().rpc('duplicate_cycle_template', { p_template: id, p_name: name.trim() }))) as string;
 }
 
-export async function loadTemplate(id: string): Promise<{ template: TemplateRow; stages: StageRow[]; tasks: TaskRow[] }> {
+export async function loadTemplate(id: string): Promise<{ template: TemplateRow; stages: StageRow[] }> {
   const c = client();
-  const [t, s] = await Promise.all([
+  const [t, st] = await Promise.all([
     ok(c.from('cycle_templates').select('id, organization_id, crop_type_id, name, note, version, is_active, updated_at, template_stages(id, duration_days)').eq('id', id).single()),
-    ok(c.from('template_stages').select('id, template_id, seq, name, duration_days, note').eq('template_id', id).order('seq')),
+    ok(c.from('template_stages').select('id, template_id, seq, name, work_type_id, duration_days, note').eq('template_id', id).order('seq')),
   ]);
-  const stages = (s ?? []) as StageRow[];
-  const tasks = stages.length === 0 ? [] : ((await ok(
-    c.from('template_tasks').select('id, stage_id, work_type_id, title, start_day, repeat_every_days, is_required, note')
-      .in('stage_id', stages.map((x) => x.id)).order('start_day'),
-  )) ?? []) as TaskRow[];
-  return { template: t as unknown as TemplateRow, stages, tasks };
+  return { template: t as unknown as TemplateRow, stages: (st ?? []) as StageRow[] };
 }
 
-export async function addStage(templateId: string, s: { name: string; duration_days: number; note: string }): Promise<void> {
+export async function addStage(templateId: string, s: { work_type_id: string; duration_days: number }): Promise<void> {
   needOnline('thêm giai đoạn');
-  await ok(client().from('template_stages').insert({ template_id: templateId, name: s.name.trim(), duration_days: s.duration_days, note: s.note.trim() || null }));
+  await ok(client().from('template_stages').insert({ template_id: templateId, work_type_id: s.work_type_id, duration_days: s.duration_days }));
 }
-export async function updateStage(id: string, s: { name: string; duration_days: number; note: string }): Promise<void> {
+/** Đổi việc (chọn từ danh mục) và/hoặc số ngày của giai đoạn */
+export async function updateStage(id: string, s: { work_type_id?: string; duration_days?: number }): Promise<void> {
   needOnline('sửa giai đoạn');
-  await ok(client().from('template_stages').update({ name: s.name.trim(), duration_days: s.duration_days, note: s.note.trim() || null }).eq('id', id));
+  await ok(client().from('template_stages').update(s).eq('id', id));
 }
 export async function deleteStage(id: string): Promise<void> {
   needOnline('xóa giai đoạn');
   await ok(client().from('template_stages').delete().eq('id', id));
 }
-export async function moveStage(id: string, delta: -1 | 1): Promise<void> {
+/** Sắp xếp lại toàn bộ giai đoạn (kéo thả hoặc nút lên/xuống): ids theo thứ tự mới */
+export async function reorderStages(templateId: string, ids: string[]): Promise<void> {
   needOnline('đổi thứ tự giai đoạn');
-  await ok(client().rpc('move_template_stage', { p_stage: id, p_delta: delta }));
-}
-
-export interface TaskInput { work_type_id: string; title: string; start_day: number; repeat_every_days: number | null; is_required: boolean; note: string }
-export async function addTask(stageId: string, t: TaskInput): Promise<void> {
-  needOnline('thêm việc');
-  await ok(client().from('template_tasks').insert({ stage_id: stageId, ...t, title: t.title.trim(), note: t.note.trim() || null }));
-}
-export async function updateTask(id: string, t: TaskInput): Promise<void> {
-  needOnline('sửa việc');
-  await ok(client().from('template_tasks').update({ ...t, title: t.title.trim(), note: t.note.trim() || null }).eq('id', id));
-}
-export async function deleteTask(id: string): Promise<void> {
-  needOnline('xóa việc');
-  await ok(client().from('template_tasks').delete().eq('id', id));
+  await ok(client().rpc('reorder_template_stages', { p_template: templateId, p_order: ids }));
 }
 
 // ------------------------------------------------------------------ tính ngày (dùng cả để xem trước ở trình soạn)
@@ -188,20 +168,4 @@ export function stageRanges(stages: { id: string; duration_days: number }[]): Ma
     day += s.duration_days;
   }
   return m;
-}
-
-/** Những ngày (1..duration) trong giai đoạn mà một việc xuất hiện */
-export function taskDays(t: { start_day: number; repeat_every_days: number | null }, durationDays: number): number[] {
-  const days: number[] = [];
-  if (t.start_day > durationDays) return days;
-  if (!t.repeat_every_days) return [t.start_day];
-  for (let d = t.start_day; d <= durationDays; d += t.repeat_every_days) days.push(d);
-  return days;
-}
-
-/** Mô tả lịch của việc bằng chữ: "ngày 3" hoặc "từ ngày 3, lặp mỗi 2 ngày (6 lần)" */
-export function describeSchedule(t: { start_day: number; repeat_every_days: number | null }, durationDays: number): string {
-  if (!t.repeat_every_days) return `ngày ${t.start_day}`;
-  const n = taskDays(t, durationDays).length;
-  return `từ ngày ${t.start_day}, lặp mỗi ${t.repeat_every_days} ngày (${n} lần)`;
 }

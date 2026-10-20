@@ -143,3 +143,23 @@ details.fold.inline > .fold-body { padding: 0 0 8px; }
 /* Thanh tổng quan các giai đoạn của quy trình mẫu (tỉ lệ theo số ngày) */
 .timeline { display: flex; gap: 2px; height: 14px; margin: 8px 0; border-radius: 7px; overflow: hidden; }
 .timeline .seg { min-width: 6px; }
+
+/* Danh sách dạng bảng gọn (danh mục việc, cây trồng, quy trình mẫu, giai đoạn) */
+table.grid { width: 100%; border-collapse: collapse; font-size: 15px; margin: 6px 0 10px; }
+.grid th { text-align: left; color: var(--muted); font-weight: 600; font-size: 13px; padding: 6px 8px; border-bottom: 2px solid var(--line); }
+.grid td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; overflow-wrap: anywhere; }
+.grid tbody tr:nth-child(even) td { background: var(--card); }
+.grid .num { text-align: right; white-space: nowrap; }
+.grid .act { text-align: right; white-space: nowrap; }
+.grid .sub { display: block; color: var(--muted); font-size: 13px; }
+.grid tr.off td { opacity: .6; }
+.grid tr.dragging td { background: #c8e6c9; color: #1b1b1b; }
+.grid input.days { width: 64px; min-height: 38px; padding: 4px 8px; text-align: right; }
+.grid select.pick { min-height: 38px; padding: 4px 6px; max-width: 100%; font: inherit; }
+button.icon { min-height: 36px; min-width: 36px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); font: inherit; cursor: pointer; }
+button.icon:disabled { opacity: .4; }
+.handle { cursor: grab; touch-action: none; user-select: none; color: var(--muted); font-size: 18px; padding: 0 6px; }
+.quickadd { display: flex; gap: 8px; align-items: stretch; margin: 6px 0; flex-wrap: wrap; }
+.quickadd input, .quickadd select { flex: 1 1 120px; min-width: 0; }
+.quickadd button { flex: 0 0 auto; width: auto; min-height: 48px; padding: 0 16px; margin: 0; }
+.pill.mine { color: var(--green); }
