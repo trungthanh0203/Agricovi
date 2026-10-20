@@ -30,6 +30,19 @@ export interface CycleRow {
   template_version?: number | null;
 }
 
+/** Ghi chú theo ngày của vụ (nhắc việc ở Trang chủ) */
+export interface NoteRow {
+  id: string;
+  cycle_id: string;
+  organization_id: string;
+  note_date: string;
+  content: string;
+  done: boolean;
+  created_by: string;
+  author_name?: string | null;
+  created_at?: string;
+}
+
 /** Giai đoạn của vụ: bản sao từ quy trình mẫu, có ngày kế hoạch và ngày thực tế */
 export interface StageRow {
   id: string;
@@ -216,6 +229,7 @@ export class LocalDb extends Dexie {
   sales!: Table<SaleRow, string>;
   summaries!: Table<SummaryRow, string>;
   stages!: Table<StageRow, string>;
+  notes!: Table<NoteRow, string>;
 
   constructor(name = 'agriconnect') {
     super(name);
@@ -294,6 +308,11 @@ export class LocalDb extends Dexie {
     this.version(8).stores({
       outbox: 'id, state, table, createdAt',
       stages: 'id, cycle_id',
+    });
+    // v9 (D35): ghi chú theo ngày của vụ
+    this.version(9).stores({
+      outbox: 'id, state, table, createdAt',
+      notes: 'id, cycle_id, note_date',
     });
   }
 }

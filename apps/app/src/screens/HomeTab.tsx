@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { addDays, diffDays, fmtDate } from '../lib/dates';
+import { friendlyError } from '../lib/errors';
+import { setNoteDone } from '../lib/production';
 import { useCatalog } from '../lib/catalog';
 import { SyncBadge } from '../components/SyncBadge';
 import { db } from '../lib/db';
-import { useRecordSync } from '../lib/hooks';
+import { todayLocal, useOnline, useRecordSync } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import type { TabId } from '../lib/tabs';
 import { useAuth } from '../lib/auth';
@@ -17,6 +21,9 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
   const logs = useLiveQuery(() => db.logs.toArray(), [], []);
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
+  const notes = useLiveQuery(() => db.notes.toArray(), [], []);
+  const online = useOnline();
+  const [noteError, setNoteError] = useState<string | null>(null);
   const { workTypes, cropTypes } = useCatalog();
   if (!active) return null;
   const canManage = canManageProduction(active.roles);
@@ -32,6 +39,12 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
   const todayLogs = logs
     .filter((l) => l.cycle_id && mineIds.has(l.cycle_id) && !l.voided_at && new Date(l.performed_at).toDateString() === today)
     .sort((a, b) => b.performed_at.localeCompare(a.performed_at));
+  // Nhắc việc: ghi chú chưa xong của vụ trong cơ sở, quá hạn hoặc trong 3 ngày tới
+  const todayIso = todayLocal();
+  const limit = addDays(todayIso, 3);
+  const reminders = notes
+    .filter((n) => !n.done && mineIds.has(n.cycle_id) && n.note_date <= limit)
+    .sort((a, b) => a.note_date.localeCompare(b.note_date));
   const failed = [...sync.values()].filter((s) => s.state === 'needs_attention').length;
 
   return (
@@ -61,6 +74,31 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
         <div className="card">
           <p className="msg error" role="alert">Có {failed} bản ghi cần xử lý (chưa gửi được lên máy chủ).</p>
           <button className="secondary" onClick={() => void retryFailed()}>Thử gửi lại</button>
+        </div>
+      )}
+
+      {reminders.length > 0 && (
+        <div className="card">
+          <h2>Nhắc việc ({reminders.length})</h2>
+          {noteError && <p className="msg error" role="alert">{noteError}</p>}
+          {reminders.map((n) => {
+            const c = cycles.find((x) => x.id === n.cycle_id);
+            const d = diffDays(todayIso, n.note_date);
+            const when = d < 0 ? `Quá hạn ${-d} ngày` : d === 0 ? 'Hôm nay' : d === 1 ? 'Ngày mai' : `Còn ${d} ngày`;
+            return (
+              <div className="note-row" key={n.id}>
+                <label className="check">
+                  <input type="checkbox" checked={false} disabled={!online} aria-label={`Đánh dấu xong: ${n.content}`}
+                    onChange={() => { setNoteError(null); setNoteDone(n.id, true).catch((e) => setNoteError(friendlyError(e))); }} />
+                  <span>
+                    {n.content}
+                    <small className="muted"> — {c?.name || cropTypes.find((t) => t.id === c?.crop_type_id)?.name || 'Vụ'} · {fmtDate(n.note_date)}</small>
+                  </span>
+                </label>
+                <span className={d < 0 ? 'pill err' : d === 0 ? 'pill warn' : 'pill'}>{when}</span>
+              </div>
+            );
+          })}
         </div>
       )}
 

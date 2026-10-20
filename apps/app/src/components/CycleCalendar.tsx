@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { LogRow, StageRow } from '../lib/db';
+import type { LogRow, NoteRow, StageRow } from '../lib/db';
 import { stageColor } from '../lib/cycles';
 import { addDays, fmtDate, fmtIso, parseDay } from '../lib/dates';
 import { toLocalInput } from '../lib/hooks';
@@ -10,7 +10,14 @@ const WEEKDAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
  * Lịch của vụ theo tháng: mỗi ngày tô màu giai đoạn theo KẾ HOẠCH, chấm tròn nếu hôm đó có nhật ký,
  * viền đậm là hôm nay. Bấm một ngày để xem giai đoạn và số việc đã ghi. Một màn nhìn là nắm cả quy trình của vụ.
  */
-export function CycleCalendar({ stages, logs, today }: { stages: StageRow[]; logs: LogRow[]; today: string }) {
+export function CycleCalendar({ stages, logs, today, notes, canAdd, userId, canManage, busy, onAddNote, onToggleNote, onDeleteNote }: {
+  stages: StageRow[]; logs: LogRow[]; today: string;
+  notes: NoteRow[]; canAdd: boolean; userId?: string; canManage: boolean; busy: boolean;
+  onAddNote: (date: string, text: string) => Promise<void>;
+  onToggleNote: (n: NoteRow) => void;
+  onDeleteNote: (n: NoteRow) => void;
+}) {
+  const [text, setText] = useState('');
   const sorted = useMemo(() => [...stages].sort((a, b) => a.seq - b.seq), [stages]);
   const first = sorted.find((s) => s.planned_start)?.planned_start ?? today;
   const last = [...sorted].reverse().find((s) => s.planned_end)?.planned_end ?? today;
@@ -27,6 +34,12 @@ export function CycleCalendar({ stages, logs, today }: { stages: StageRow[]; log
     }
     return m;
   }, [logs]);
+
+  const noteDays = useMemo(() => {
+    const m = new Map<string, NoteRow[]>();
+    for (const n of notes) m.set(n.note_date, [...(m.get(n.note_date) ?? []), n]);
+    return m;
+  }, [notes]);
 
   const stageOn = (day: string) => {
     const i = sorted.findIndex((s) => s.planned_start && s.planned_end && day >= s.planned_start && day <= s.planned_end);
@@ -67,10 +80,10 @@ export function CycleCalendar({ stages, logs, today }: { stages: StageRow[]; log
             <button
               key={d}
               role="gridcell"
-              className={`cal-c${d === today ? ' today' : ''}${picked === d ? ' picked' : ''}`}
+              className={`cal-c${d === today ? ' today' : ''}${picked === d ? ' picked' : ''}${noteDays.has(d) ? ' has-note' : ''}`}
               style={st ? { background: `${stageColor(st.i)}33`, borderColor: stageColor(st.i) } : undefined}
               onClick={() => setPicked(d === picked ? null : d)}
-              aria-label={`${fmtDate(d)}${st ? `, giai đoạn ${st.s.name}` : ''}${n ? `, ${n} việc đã ghi` : ''}`}
+              aria-label={`${fmtDate(d)}${st ? `, giai đoạn ${st.s.name}` : ''}${n ? `, ${n} việc đã ghi` : ''}${noteDays.has(d) ? ', có ghi chú' : ''}`}
             >
               <span>{Number(d.slice(8))}</span>
               {n > 0 && <i className="dot" />}
@@ -83,12 +96,38 @@ export function CycleCalendar({ stages, logs, today }: { stages: StageRow[]; log
           <span key={s.id}><i style={{ background: stageColor(i) }} /> {s.name}</span>
         ))}
         <span><i className="dot" /> Có ghi việc</span>
+        <span><i className="note-mark" /> Có ghi chú</span>
       </div>
       {picked && (
+        <>
         <p className="muted">
           {fmtDate(picked)}: {info ? `giai đoạn "${info.s.name}" (kế hoạch ${fmtDate(info.s.planned_start)} – ${fmtDate(info.s.planned_end)})` : 'ngoài kế hoạch của vụ'}
           {logDays.get(picked) ? `, đã ghi ${logDays.get(picked)} việc.` : ', chưa ghi việc.'}
         </p>
+        <h3 className="sub">Ghi chú ngày {fmtDate(picked)}</h3>
+        {(noteDays.get(picked) ?? []).length === 0 && <p className="muted">Chưa có ghi chú. Ghi chú sẽ hiện nhắc ở Trang chủ khi gần đến ngày.</p>}
+        {(noteDays.get(picked) ?? []).map((n) => (
+          <div className="note-row" key={n.id}>
+            <label className="check">
+              <input type="checkbox" checked={n.done} disabled={busy || (!canManage && n.created_by !== userId)} onChange={() => onToggleNote(n)} />
+              <span className={n.done ? 'done' : ''}>{n.content}{n.author_name ? <small className="muted"> — {n.author_name}</small> : null}</span>
+            </label>
+            {(canManage || n.created_by === userId) && (
+              <button className="icon" disabled={busy} aria-label="Xóa ghi chú" onClick={() => onDeleteNote(n)}>🗑</button>
+            )}
+          </div>
+        ))}
+        {canAdd && (
+          <form className="quickadd" noValidate onSubmit={(e) => {
+            e.preventDefault();
+            if (!text.trim()) return;
+            void onAddNote(picked, text).then(() => setText('')).catch(() => undefined);
+          }}>
+            <input value={text} maxLength={500} onChange={(e) => setText(e.target.value)} placeholder="Thêm ghi chú nhắc việc cho ngày này" aria-label="Nội dung ghi chú" />
+            <button type="submit" className="primary" disabled={busy || !text.trim()}>Thêm</button>
+          </form>
+        )}
+        </>
       )}
     </div>
   );

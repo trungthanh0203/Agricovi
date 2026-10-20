@@ -178,3 +178,10 @@ button.icon:disabled { opacity: .4; }
 .cal-c .dot { position: absolute; bottom: 4px; right: 4px; }
 .cal-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; margin: 6px 0; }
 .cal-legend i:not(.dot) { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; }
+
+/* Ghi chú theo ngày trên lịch vụ (D35) */
+.cal-c.has-note::after { content: ''; position: absolute; top: 3px; right: 3px; border-style: solid; border-width: 0 9px 9px 0; border-color: transparent var(--warn) transparent transparent; }
+.cal-legend .note-mark { display: inline-block; width: 0; height: 0; border-style: solid; border-width: 0 9px 9px 0; border-color: transparent var(--warn) transparent transparent; }
+.note-row { display: flex; align-items: center; gap: 8px; }
+.note-row .check { flex: 1 1 auto; margin: 4px 0; }
+.note-row .done { text-decoration: line-through; color: var(--muted); }

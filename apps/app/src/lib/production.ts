@@ -1,5 +1,5 @@
 import type { CycleStatus } from '@agriconnect/shared';
-import { db, type AreaRow, type CycleRow, type LogRow, type StageRow } from './db';
+import { db, type AreaRow, type CycleRow, type LogRow, type NoteRow, type StageRow } from './db';
 import { syncFinanceDown } from './finance';
 import { refreshCatalogCache } from './templates';
 import { syncHarvestsDown } from './harvest';
@@ -14,6 +14,8 @@ const CYCLE_COLUMNS =
 const STAGE_COLUMNS =
   'id, cycle_id, name, seq, work_type_id, duration_days, planned_start, planned_end, actual_start, actual_end, status, note';
 
+const NOTE_COLUMNS = 'id, cycle_id, organization_id, note_date, content, done, created_by, author_name, created_at';
+
 const LOG_COLUMNS =
   'id, organization_id, cycle_id, area_id, work_type_id, stage_id, performed_at, data, note, voided_at, void_reason, version, created_by, performed_by, author_name, author_roles, received_at';
 
@@ -27,18 +29,26 @@ export async function syncDown(): Promise<void> {
   );
   const fresh = <T extends { id: string }>(rows: T[] | null) => (rows ?? []).filter((r) => !pendingIds.has(r.id));
 
-  const [areas, cycles, logs, stages] = await Promise.all([
+  const [areas, cycles, logs, stages, notes] = await Promise.all([
     supabase.from('production_areas').select('id, organization_id, name, description, is_active'),
     supabase.from('production_cycles').select(CYCLE_COLUMNS),
     supabase.from('activity_logs').select(LOG_COLUMNS).order('performed_at', { ascending: false }).limit(200),
     supabase.from('production_stages').select(STAGE_COLUMNS),
+    supabase.from('cycle_notes').select(NOTE_COLUMNS).order('note_date', { ascending: false }).limit(1000),
   ]);
   for (const r of [areas, cycles, logs]) if (r.error) throw r.error;
   await refreshCatalogCache(); // cây trồng, loại việc và bản chỉnh của cơ sở
 
-  await db.transaction('rw', [db.areas, db.cycles, db.logs, db.stages], async () => {
+  await db.transaction('rw', [db.areas, db.cycles, db.logs, db.stages, db.notes], async () => {
     // giai đoạn chưa có (CSDL chưa cập nhật) thì bỏ qua, không làm hỏng phần còn lại
-    if (!stages.error) await db.stages.bulkPut((stages.data ?? []) as StageRow[]);
+    if (!stages.error) {
+      await db.stages.clear(); // giai đoạn đã xóa ở nơi khác thì bỏ khỏi máy
+      await db.stages.bulkPut((stages.data ?? []) as StageRow[]);
+    }
+    if (!notes.error) {
+      await db.notes.clear();
+      await db.notes.bulkPut((notes.data ?? []) as NoteRow[]);
+    }
     await db.areas.bulkPut(fresh(areas.data as AreaRow[]));
     await db.cycles.bulkPut(fresh(cycles.data as CycleRow[]));
     await db.logs.bulkPut(fresh(logs.data as LogRow[]));
@@ -142,6 +152,80 @@ export async function refreshCycle(id: string): Promise<void> {
     await db.stages.where('cycle_id').equals(id).delete();
     await db.stages.bulkPut((st.data ?? []) as StageRow[]);
   }
+}
+
+/** Sửa thông tin vụ (cần mạng): tên, ngày bắt đầu, ghi chú. Kèm phiên bản đã thấy, người khác sửa trước thì báo và tải lại. */
+export async function editCycle(cycleId: string, c: { name?: string; start_date?: string | null; note?: string }): Promise<void> {
+  const cur = await db.cycles.get(cycleId);
+  if (!cur) return;
+  await updateAndCache('production_cycles', cycleId, cur.version, { ...c }, 'sửa vụ');
+}
+
+/** Xóa vụ (cần mạng). Chỉ xóa được vụ chưa có dữ liệu; máy chủ từ chối nếu đã có nhật ký, thu hoạch, chi phí… */
+export async function deleteCycle(cycleId: string): Promise<void> {
+  requireOnline('xóa vụ');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { error } = await supabase.rpc('delete_cycle', { p_id: cycleId });
+  if (error) throw new Error(error.message);
+  await db.transaction('rw', [db.cycles, db.stages, db.notes], async () => {
+    await db.stages.where('cycle_id').equals(cycleId).delete();
+    await db.notes.where('cycle_id').equals(cycleId).delete();
+    await db.cycles.delete(cycleId);
+  });
+}
+
+export interface StageEdit {
+  name?: string;
+  work_type_id?: string | null;
+  planned_start?: string;
+  planned_end?: string;
+  note?: string;
+}
+
+async function stageRpc(fn: string, args: Record<string, unknown>, cycleId: string, action: string): Promise<void> {
+  requireOnline(action);
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { error } = await supabase.rpc(fn, args);
+  if (error) throw new Error(error.message);
+  await refreshCycle(cycleId); // ngày dự kiến xong của vụ cũng có thể đổi
+}
+
+/** Sửa thông tin một giai đoạn của vụ (tên, việc, ngày kế hoạch, ghi chú) */
+export const updateCycleStage = (cycleId: string, stageId: string, c: StageEdit) =>
+  stageRpc('update_cycle_stage', { p_stage: stageId, p_changes: c }, cycleId, 'sửa giai đoạn');
+
+/** Thêm giai đoạn vào cuối quy trình của vụ */
+export const addCycleStage = (cycleId: string, s: { workTypeId: string | null; name: string; start: string; end: string; note?: string }) =>
+  stageRpc('add_cycle_stage', { p_cycle: cycleId, p_work_type: s.workTypeId, p_name: s.name, p_start: s.start, p_end: s.end, p_note: s.note ?? null }, cycleId, 'thêm giai đoạn');
+
+export const deleteCycleStage = (cycleId: string, stageId: string) =>
+  stageRpc('delete_cycle_stage', { p_stage: stageId }, cycleId, 'xóa giai đoạn');
+
+/** Thêm ghi chú cho một ngày của vụ (cần mạng) */
+export async function addNote(cycle: CycleRow, userId: string, noteDate: string, content: string): Promise<void> {
+  const row = { id: crypto.randomUUID(), cycle_id: cycle.id, note_date: noteDate, content: content.trim(), created_by: userId };
+  requireOnline('thêm ghi chú');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { error } = await supabase.from('cycle_notes').insert(row);
+  if (error) throw new Error(error.message);
+  await db.notes.put({ ...row, organization_id: cycle.owner_org_id, done: false });
+}
+
+/** Đánh dấu đã xong / chưa xong một ghi chú */
+export async function setNoteDone(id: string, done: boolean): Promise<void> {
+  requireOnline('đổi ghi chú');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { error } = await supabase.from('cycle_notes').update({ done }).eq('id', id);
+  if (error) throw new Error(error.message);
+  await db.notes.update(id, { done });
+}
+
+export async function deleteNote(id: string): Promise<void> {
+  requireOnline('xóa ghi chú');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { error } = await supabase.from('cycle_notes').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  await db.notes.delete(id);
 }
 
 /** Bắt đầu / hoàn thành / mở lại một giai đoạn của vụ (cần mạng, người quản lý vụ). Ngày thực tế mặc định là hôm nay. */

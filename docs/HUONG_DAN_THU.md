@@ -113,6 +113,15 @@ Cần: đã có khu trồng và ít nhất một quy trình có giai đoạn (b�
 6. Kiểm tra quyền: nhân viên thấy giai đoạn và ghi việc được nhưng **không có nút Bắt đầu/Xong**. Vụ Chuẩn bị/Tạm dừng/Kết thúc không đổi giai đoạn được.
 7. Sửa quy trình mẫu (thêm một giai đoạn) rồi mở lại vụ cũ: vụ **không đổi**.
 
+## Bài thử 10 — Quản lý vụ, sửa giai đoạn, ghi chú nhắc việc
+
+1. Tab **Sản xuất → Mùa vụ**: phía trên danh sách có các nhóm **Đang sản xuất / Chuẩn bị / Tạm dừng / Kết thúc** kèm số vụ; bấm từng nhóm để xem.
+2. Ở thẻ vụ (chủ/quản lý): **Sửa vụ** (tên, ngày bắt đầu, ghi chú) và **Xóa vụ**. Thử xóa một vụ mới tạo chưa ghi gì: xóa được. Thử xóa vụ đã có nhật ký: app báo không xóa được, hãy Kết thúc vụ.
+3. Mở vụ → **Danh sách**: bấm ✎ cạnh một giai đoạn để đổi tên, đổi việc, đổi ngày kế hoạch, ghi chú. **+ Thêm giai đoạn** thêm vào cuối. Giai đoạn chưa bắt đầu có nút **Xóa giai đoạn**. Vụ đã Kết thúc thì không sửa được. Quy trình mẫu không bị đổi.
+4. Mở vụ → **Lịch**: bấm một ngày, ở dưới có mục **Ghi chú ngày…**; nhập nội dung rồi bấm **Thêm**. Ngày có ghi chú hiện góc vàng. Tích ô để đánh dấu xong, 🗑 để xóa.
+5. Quay về **Trang chủ**: thẻ **Nhắc việc** hiện các ghi chú chưa xong đã quá hạn hoặc trong 3 ngày tới; tích ô để đánh dấu xong.
+6. Nhân viên: thêm được ghi chú và tích/xóa ghi chú của chính mình, nhưng không thấy nút Sửa vụ, Xóa vụ, sửa giai đoạn.
+
 ## Những điều cần biết
 
 - Số tiền luôn là **đồng**, số lượng thu hoạch và bán luôn là **kg** ở bản thử này.
