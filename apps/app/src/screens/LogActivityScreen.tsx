@@ -18,7 +18,9 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
   const { session } = useAuth();
   const { active } = useOrgs();
   const sync = useRecordSync();
-  const workTypes = useLiveQuery(() => db.workTypes.toArray(), [], []);
+  const allWorkTypes = useLiveQuery(() => db.workTypes.toArray(), [], []);
+  // loại việc dùng chung hoặc do chính cơ sở đang chọn định nghĩa
+  const workTypes = allWorkTypes.filter((w) => !w.organization_id || w.organization_id === active?.id);
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
   const cropTypes = useLiveQuery(() => db.cropTypes.toArray(), [], []);

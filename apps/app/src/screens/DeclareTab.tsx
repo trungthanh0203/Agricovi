@@ -1,5 +1,8 @@
 import { AreasSection } from '../components/AreasSection';
 import { CatalogSection } from '../components/CatalogSection';
+import { CropsSection } from '../components/CropsSection';
+import { TemplatesSection } from '../components/TemplatesSection';
+import { WorkTypesSection } from '../components/WorkTypesSection';
 import { pickSection, SubTabs } from '../components/SubTabs';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
@@ -7,7 +10,7 @@ import { declareSections, type DeclareSection } from '../lib/tabs';
 
 /**
  * Tab Khai báo: nơi khai báo, cấu hình, định nghĩa mọi thứ liên quan đến sản xuất của cơ sở.
- * Hiện có: Khu trồng, Vật tư và kho. Sắp có (kế hoạch P1): Cây trồng và giống, Quy trình mẫu, Danh mục công việc.
+ * Hiện có: Khu trồng, Cây trồng, Danh mục việc, Quy trình mẫu, Vật tư và kho.
  */
 export function DeclareTab({ section, onSection }: { section?: string; onSection: (s: DeclareSection) => void }) {
   const { active } = useOrgs();
@@ -21,12 +24,15 @@ export function DeclareTab({ section, onSection }: { section?: string; onSection
       <SubTabs items={items} value={current ?? 'areas'} onChange={onSection} label="Mục khai báo" />
       {current === 'materials' ? (
         <CatalogSection orgId={active.id} canWrite={canPerm(active.perms, 'inventory', 'edit')} />
+      ) : current === 'crops' ? (
+        <CropsSection />
+      ) : current === 'worktypes' ? (
+        <WorkTypesSection />
+      ) : current === 'templates' ? (
+        <TemplatesSection />
       ) : (
         <AreasSection />
       )}
-      <div className="card slim">
-        <p className="muted">Sắp có ở đây: <strong>Cây trồng và giống</strong>, <strong>Quy trình mùa vụ mẫu</strong> (các giai đoạn, việc, thời gian cho từng cây) và <strong>Danh mục công việc</strong>.</p>
-      </div>
     </section>
   );
 }

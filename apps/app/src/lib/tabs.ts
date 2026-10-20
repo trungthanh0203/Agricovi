@@ -24,7 +24,7 @@ export interface Section<Id extends string = string> {
 }
 
 export type ProductionSection = 'cycles' | 'harvest' | 'stock';
-export type DeclareSection = 'areas' | 'materials';
+export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials';
 export type OrgSection = 'info' | 'members' | 'teams' | 'coop';
 export type ReportSection = 'expense' | 'sales' | 'summary';
 
@@ -41,6 +41,9 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
   if (!org) return [];
   return [
     canManageProduction(org.roles) ? { id: 'areas' as const, label: 'Khu trồng' } : null,
+    canManageProduction(org.roles) ? { id: 'crops' as const, label: 'Cây trồng' } : null,
+    canManageProduction(org.roles) ? { id: 'worktypes' as const, label: 'Danh mục việc' } : null,
+    canManageProduction(org.roles) ? { id: 'templates' as const, label: 'Quy trình mẫu' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư và kho' } : null,
   ].filter((x): x is Section<DeclareSection> => x !== null);
 }

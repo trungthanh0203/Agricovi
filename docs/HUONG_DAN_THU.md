@@ -4,13 +4,13 @@ Tài liệu này dành cho **chủ cơ sở, quản lý, người phụ trách k
 
 ## Bố cục 6 tab
 
-**Trang chủ** (việc hôm nay) · **Sản xuất** (Mùa vụ, Thu hoạch, Kho) · **Khai báo** (Khu trồng, Vật tư và kho) · **Tổ chức** (cơ sở và gói, nhân sự, tổ lao động, hộ thành viên/HTX) · **Báo cáo** (Chi phí, Doanh thu, Tổng kết vụ) · **Hồ sơ** (tài khoản, lời mời, quyền của tôi). Khai báo, Tổ chức, Báo cáo chỉ hiện với người có quyền. Một số mục ghi "Sắp có" sẽ làm ở các bản sau (quy trình mùa vụ mẫu, chức vụ, báo cáo theo nhu cầu).
+**Trang chủ** (việc hôm nay) · **Sản xuất** (Mùa vụ, Thu hoạch, Kho) · **Khai báo** (Khu trồng, Cây trồng, Danh mục việc, Quy trình mẫu, Vật tư và kho) · **Tổ chức** (cơ sở và gói, nhân sự, tổ lao động, hộ thành viên/HTX) · **Báo cáo** (Chi phí, Doanh thu, Tổng kết vụ) · **Hồ sơ** (tài khoản, lời mời, quyền của tôi). Khai báo, Tổ chức, Báo cáo chỉ hiện với người có quyền. Một số mục ghi "Sắp có" sẽ làm ở các bản sau (tạo vụ theo mẫu, chức vụ, báo cáo theo nhu cầu).
 
 ## Trước khi thử (dành cho người cài đặt)
 
 Người phụ trách kỹ thuật làm một lần trước khi mời người dùng thử:
 
-1. Đẩy cơ sở dữ liệu lên (cần cả bốn bản cập nhật mới): `npx supabase db push` (có các bản `0016`, `0017`, `0018` và `0019`).
+1. Đẩy cơ sở dữ liệu lên (cần cả năm bản cập nhật mới): `npx supabase db push` (có các bản `0016` đến `0020`).
 2. Mở app, tạo cơ sở, mời hoặc tạo tài khoản cho từng người theo vai trò bên dưới.
 3. Cài app ra màn hình chính điện thoại (Chrome: menu → "Thêm vào màn hình chính"; iPhone: Safari → Chia sẻ → "Thêm vào MH chính").
 
@@ -85,6 +85,17 @@ Bảng dưới là **mặc định theo vai trò**. Chủ cơ sở có thể **c
 3. Trên máy của nhân viên đó, đóng rồi mở lại app: các mục Thu hoạch, Kho (trong Sản xuất) và Chi phí, Doanh thu, Tổng kết vụ (trong tab Báo cáo) chỉ còn đúng những mục được cấp. Mục "Chỉ xem" thì không có nút ghi. Không được cấp mục nào của tab Báo cáo thì cả tab **biến mất**. Tab **Hồ sơ** liệt kê "Tôi được làm gì" để họ tự xem.
 4. Thử cấp "Chi phí: Xem và nhập liệu" cho một nhân viên: họ ghi được chi phí. Rút lại bằng "Không thấy": họ không còn thấy.
 5. Lưu ý: nhân viên vẫn **ghi việc kèm vật tư đã dùng** bình thường, không phụ thuộc quyền Kho.
+
+## Bài thử 8: Dựng quy trình mùa vụ mẫu (chủ hoặc quản lý, cần có mạng)
+
+1. Vào **Khai báo → Cây trồng**: có sẵn "Dưa lưới". Thêm cây của riêng bạn nếu cần (ví dụ "Ớt chuông").
+2. Vào **Khai báo → Danh mục việc**: xem các việc có sẵn (Tưới nước, Bón phân, Thụ phấn…). Thiếu việc nào thì bấm **＋ Định nghĩa việc mới**, đặt tên và (nếu muốn) thêm trường cần ghi, ví dụ "Độ Brix" kiểu Số.
+3. Vào **Khai báo → Quy trình mẫu → Tạo quy trình mẫu mới**: chọn cây, đặt tên (ví dụ "Dưa lưới mùa khô"), bấm **Tạo và thêm giai đoạn**.
+4. Thêm các giai đoạn theo thứ tự, mỗi giai đoạn có **tên** và **số ngày** (ví dụ Gieo ươm 10 ngày, Ra hoa 14 ngày, Thu hoạch 20 ngày). Thanh màu phía trên cho thấy tỉ lệ các giai đoạn và dòng "tổng … ngày".
+5. Mở một giai đoạn, bấm **＋ Thêm việc vào giai đoạn**: chọn loại việc, **ngày bắt đầu** trong giai đoạn và (nếu việc lặp lại) **lặp mỗi … ngày**. Ví dụ Thụ phấn bắt đầu ngày 2, lặp mỗi 1 ngày. App từ chối nếu ngày bắt đầu vượt độ dài giai đoạn.
+6. Thử **Dời giai đoạn lên/xuống**, **Nhân bản** một mẫu rồi sửa bản sao, **Ngừng dùng** một mẫu.
+7. Kiểm tra: mỗi hộ/HTX chỉ thấy mẫu của mình. Nhân viên không thấy tab Khai báo.
+8. Lưu ý: sửa mẫu **không đổi** các vụ đã tạo trước đó. Việc **tạo vụ theo mẫu** sẽ có ở bản sau.
 
 ## Những điều cần biết
 

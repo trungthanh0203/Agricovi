@@ -9,7 +9,9 @@ import { createCycle, fetchQuotaContexts, type QuotaContext } from '../lib/produ
 export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
   const { active } = useOrgs();
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
-  const cropTypes = useLiveQuery(() => db.cropTypes.toArray(), [], []);
+  const allCrops = useLiveQuery(() => db.cropTypes.toArray(), [], []);
+  // cây dùng chung hoặc do chính cơ sở đang chọn khai báo
+  const cropTypes = allCrops.filter((c) => !c.organization_id || c.organization_id === active?.id);
 
   const myAreas = areas.filter((a) => a.organization_id === active?.id);
   const [areaId, setAreaId] = useState('');

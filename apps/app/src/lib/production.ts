@@ -24,8 +24,8 @@ export async function syncDown(): Promise<void> {
   const [areas, cycles, workTypes, cropTypes, logs] = await Promise.all([
     supabase.from('production_areas').select('id, organization_id, name'),
     supabase.from('production_cycles').select('id, owner_org_id, area_id, crop_type_id, status, start_date, note, version, created_at'),
-    supabase.from('work_types').select('id, code, name, field_schema').eq('is_active', true),
-    supabase.from('crop_types').select('id, code, name').eq('is_active', true),
+    supabase.from('work_types').select('id, code, name, field_schema, organization_id').eq('is_active', true),
+    supabase.from('crop_types').select('id, code, name, organization_id').eq('is_active', true),
     supabase.from('activity_logs').select(LOG_COLUMNS).order('performed_at', { ascending: false }).limit(200),
   ]);
   for (const r of [areas, cycles, workTypes, cropTypes, logs]) if (r.error) throw r.error;

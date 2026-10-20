@@ -139,3 +139,7 @@ details.fold.inline > .fold-body { padding: 0 0 8px; }
 
 /* Sáu tab: chữ nhỏ lại để vừa màn điện thoại */
 .tabs.dense .tab { font-size: 12px; padding: 0 2px; min-height: 52px; }
+
+/* Thanh tổng quan các giai đoạn của quy trình mẫu (tỉ lệ theo số ngày) */
+.timeline { display: flex; gap: 2px; height: 14px; margin: 8px 0; border-radius: 7px; overflow: hidden; }
+.timeline .seg { min-width: 6px; }

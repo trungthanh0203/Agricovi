@@ -1,6 +1,6 @@
 # Phương án bố cục mới: 6 tab, quy trình mùa vụ mẫu, chức vụ do chủ định nghĩa
 
-Trạng thái: **P0 (khung 6 tab) đã làm xong và commit; P1 trở đi chưa làm.** Phương án gốc (20/10/2026; cập nhật cùng ngày: thêm tab Báo cáo, xóa dữ liệu thử, mẫu bắt buộc). Quyết định bố cục là của chủ sản phẩm (D28). Các điểm tôi tự chọn để làm tiếp được ghi ở mục 9 và `docs/DECISIONS.md` (A19–A24), sửa được.
+Trạng thái: **P0 (khung 6 tab) và P1 (cây trồng riêng, danh mục việc, quy trình mẫu; migration 0020) đã làm xong và commit; P2 trở đi chưa làm.** Phương án gốc (20/10/2026; cập nhật cùng ngày: thêm tab Báo cáo, xóa dữ liệu thử, mẫu bắt buộc). Quyết định bố cục là của chủ sản phẩm (D28). Các điểm tôi tự chọn để làm tiếp được ghi ở mục 9 và `docs/DECISIONS.md` (A19–A24), sửa được.
 Đọc cùng: `docs/DESIGN_DASHBOARD.md` (cách trình bày số liệu), `docs/ROLES.md` (quyền hiện tại), `docs/DECISIONS.md` (D24: offline chỉ cho ghi mới của nhân viên).
 
 ## 1. Bố cục mới và chuyện gì xảy ra với phần đã có

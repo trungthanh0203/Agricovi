@@ -25,6 +25,8 @@ export interface WorkTypeRow {
   code: string;
   name: string;
   field_schema: FieldDef[];
+  /** null = loại việc dùng chung; có giá trị = loại việc do cơ sở định nghĩa */
+  organization_id?: string | null;
 }
 
 export interface FieldDef {
@@ -38,6 +40,8 @@ export interface CropTypeRow {
   id: string;
   code: string;
   name: string;
+  /** null = cây dùng chung; có giá trị = cây do cơ sở khai báo */
+  organization_id?: string | null;
 }
 
 export interface LogRow {
