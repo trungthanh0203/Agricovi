@@ -69,7 +69,7 @@ npx supabase functions deploy staff-accounts
 
 ## Cách làm việc hiệu quả
 
-- **Không `git push`/`db push` thay người dùng**: chỉ commit cục bộ rồi nhắc họ tự push. **Test nhẹ máy**: chỉ file test mới/đổi (`npm run test:db:changed`), giao diện thuần chỉ typecheck; bộ đầy đủ để CI chạy (đo: 1 file ≈ 20 giây, `tsc` ≈ 25–70 giây).
+- **Không `git push`/`db push` thay người dùng**: chỉ commit cục bộ rồi nhắc họ tự push. **Tiết kiệm (quy tắc 21/10/2026)**: test CSDL chỉ khi đổi migration SQL (một file test gọn cho logic mới, không chạy lại file cũ); giao diện thuần không chạy test; typecheck MỘT lần ở cuối đợt sửa code, không chạy khi chỉ sửa docs/SQL; không build; docs (DECISIONS/HUONG_DAN_THU/CLAUDE.md) chỉ cập nhật khi thay đổi lớn, gộp một lần cuối. Bộ đầy đủ để CI chạy (đo: 1 file ≈ 20 giây, `tsc` ≈ 25–70 giây).
 - PWA: tự cập nhật âm thầm (`registerType: 'autoUpdate'`), **không** có thông báo cập nhật (người dùng không muốn). Bản mới có hiệu lực sau 1–2 lần mở lại app. Dòng "Phiên bản app" ở Cơ sở của tôi cho biết bản đang chạy (xem `docs/DEPLOY_CLOUDFLARE.md` mục 5b).
 - Giao diện: **mỗi màn hình ngắn gọn** — khối dài dùng `components/Collapsible` (thu gọn mặc định, có dòng tóm tắt; biểu mẫu thêm mới dùng `inline`), thanh chuyển mục một hàng vuốt ngang, một nút chính mỗi màn. Đừng xếp nhiều thẻ dài liền nhau.
 - Sửa nhỏ bằng Edit, không viết lại cả file. Chạy typecheck + `npm run test:db:changed` (chỉ test liên quan); test đầy đủ để CI chạy.
