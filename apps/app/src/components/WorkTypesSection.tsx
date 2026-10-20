@@ -48,6 +48,8 @@ export function WorkTypesSection() {
   const [showOff, setShowOff] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [desc, setDesc] = useState('');
+  const [editDesc, setEditDesc] = useState('');
   const [editFields, setEditFields] = useState<FieldDef[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -72,7 +74,7 @@ export function WorkTypesSection() {
   function onAdd(e: FormEvent) {
     e.preventDefault();
     if (name.trim().length < 2) return setError('Hãy nhập tên việc (ít nhất 2 ký tự).');
-    void run(async () => { await createWorkType(org, name, []); setName(''); });
+    void run(async () => { await createWorkType(org, name, [], desc); setName(''); setDesc(''); });
   }
 
   async function save(t: EffWorkType) {
@@ -82,10 +84,11 @@ export function WorkTypesSection() {
     if (t.shared) {
       await saveOverride(org, 'work_type', t.id, {
         display_name: editName.trim() === t.base_name ? null : editName,
+        description: editDesc,
         field_schema: JSON.stringify(f) === JSON.stringify(t.field_schema) && !t.overridden ? null : f,
       });
     } else {
-      await updateWorkType(t.id, { name: editName, field_schema: f });
+      await updateWorkType(t.id, { name: editName, description: editDesc, field_schema: f });
     }
     setEditing(null);
   }
@@ -98,6 +101,7 @@ export function WorkTypesSection() {
       {canManage && (
         <form className="quickadd" onSubmit={onAdd} noValidate>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Thêm việc mới: nhập tên" aria-label="Tên việc mới" />
+          <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Mô tả (làm thế nào, lưu ý…)" aria-label="Mô tả việc mới" />
           <button type="submit" className="primary" disabled={busy || !online}>Thêm</button>
         </form>
       )}
@@ -110,6 +114,7 @@ export function WorkTypesSection() {
             <tr key={t.id} className={t.is_active ? '' : 'off'}>
               <td>
                 {t.name}
+                {t.description && <span className="sub">{t.description}</span>}
                 {!t.shared && <span className="pill mine"> Riêng</span>}
                 {t.shared && t.overridden && <span className="pill warn"> Đã chỉnh</span>}
                 {t.shared && !t.overridden && <span className="sub">Có sẵn</span>}
@@ -119,7 +124,7 @@ export function WorkTypesSection() {
               {canManage && (
                 <td className="act">
                   <button className="icon" disabled={busy || !online} aria-label={t.is_active ? `Dừng ${t.name}` : `Dùng lại ${t.name}`} onClick={() => void run(() => setActiveFlag(t))}>{t.is_active ? '⏸' : '▶'}</button>{' '}
-                  <button className="icon" aria-label={`Sửa ${t.name}`} onClick={() => { setEditing(editing === t.id ? null : t.id); setEditName(t.name); setEditFields(t.field_schema); }}>✎</button>
+                  <button className="icon" aria-label={`Sửa ${t.name}`} onClick={() => { setEditing(editing === t.id ? null : t.id); setEditName(t.name); setEditDesc(t.description ?? ''); setEditFields(t.field_schema); }}>✎</button>
                 </td>
               )}
             </tr>
@@ -134,6 +139,7 @@ export function WorkTypesSection() {
           <h2>Sửa việc: {editingRow.name}</h2>
           <div className="inline-form">
             <label>Tên việc<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
+            <label>Mô tả<input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} /></label>
             <FieldsEditor fields={editFields} onChange={setEditFields} />
             <button className="primary" disabled={busy || !online} onClick={() => void run(() => save(editingRow))}>Lưu thay đổi</button>
             {editingRow.shared && editingRow.overridden && (

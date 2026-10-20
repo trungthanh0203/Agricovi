@@ -6,6 +6,7 @@ export interface AreaRow {
   id: string;
   organization_id: string;
   name: string;
+  description?: string | null;
   /** false = khu trồng đã dừng: giữ lịch sử, không dùng để tạo vụ mới */
   is_active?: boolean;
 }
@@ -20,11 +21,35 @@ export interface CycleRow {
   version: number;
   note?: string | null;
   created_at?: string;
+  /** Tên riêng của vụ (không bắt buộc) */
+  name?: string | null;
+  expected_end_date?: string | null;
+  /** Quy trình mẫu vụ được tạo theo (bản chụp lúc tạo, P2) */
+  template_id?: string | null;
+  template_name?: string | null;
+  template_version?: number | null;
+}
+
+/** Giai đoạn của vụ: bản sao từ quy trình mẫu, có ngày kế hoạch và ngày thực tế */
+export interface StageRow {
+  id: string;
+  cycle_id: string;
+  name: string;
+  seq: number;
+  work_type_id: string | null;
+  duration_days: number | null;
+  planned_start: string | null;
+  planned_end: string | null;
+  actual_start: string | null;
+  actual_end: string | null;
+  status: 'pending' | 'in_progress' | 'done';
+  note: string | null;
 }
 
 /** Bản chỉnh của một cơ sở lên mục có sẵn dùng chung (D32) */
 export interface CatalogOverride {
   display_name: string | null;
+  description?: string | null;
   field_schema: FieldDef[] | null;
   is_active: boolean;
 }
@@ -33,6 +58,7 @@ export interface WorkTypeRow {
   id: string;
   code: string;
   name: string;
+  description?: string | null;
   field_schema: FieldDef[];
   /** null = loại việc dùng chung; có giá trị = loại việc do cơ sở định nghĩa */
   organization_id?: string | null;
@@ -52,6 +78,7 @@ export interface CropTypeRow {
   id: string;
   code: string;
   name: string;
+  description?: string | null;
   /** null = cây dùng chung; có giá trị = cây do cơ sở khai báo */
   organization_id?: string | null;
   is_active?: boolean;
@@ -64,6 +91,8 @@ export interface LogRow {
   cycle_id: string | null;
   area_id: string | null;
   work_type_id: string;
+  /** Giai đoạn của vụ mà việc này thuộc về (không bắt buộc) */
+  stage_id?: string | null;
   performed_at: string;
   data: Record<string, unknown>;
   note: string | null;
@@ -89,6 +118,7 @@ export interface MaterialRow {
   id: string;
   organization_id: string;
   name: string;
+  description?: string | null;
   category: string | null;
   base_unit_id: string;
   reorder_threshold: number | null;
@@ -99,6 +129,7 @@ export interface LocationRow {
   id: string;
   organization_id: string;
   name: string;
+  description?: string | null;
   is_active: boolean;
 }
 
@@ -184,6 +215,7 @@ export class LocalDb extends Dexie {
   expenses!: Table<ExpenseRow, string>;
   sales!: Table<SaleRow, string>;
   summaries!: Table<SummaryRow, string>;
+  stages!: Table<StageRow, string>;
 
   constructor(name = 'agriconnect') {
     super(name);
@@ -258,6 +290,11 @@ export class LocalDb extends Dexie {
     this.version(7).stores({
       outbox: 'id, state, table, createdAt',
     }).upgrade((tx) => tx.table('outbox').filter((i: { op?: string }) => i.op === 'update').delete());
+    // v8 (P2): giai đoạn của vụ
+    this.version(8).stores({
+      outbox: 'id, state, table, createdAt',
+      stages: 'id, cycle_id',
+    });
   }
 }
 

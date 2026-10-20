@@ -163,3 +163,18 @@ button.icon:disabled { opacity: .4; }
 .quickadd input, .quickadd select { flex: 1 1 120px; min-width: 0; }
 .quickadd button { flex: 0 0 auto; width: auto; min-height: 48px; padding: 0 16px; margin: 0; }
 .pill.mine { color: var(--green); }
+
+/* Chi tiết vụ: tiến độ, giai đoạn, lịch (P2) */
+.progress { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; margin: 8px 0; }
+.progress > i { display: block; height: 100%; background: var(--green); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin: 8px 0; }
+.cal-h { text-align: center; font-size: 13px; color: var(--muted); padding: 2px 0; }
+.cal-c { position: relative; aspect-ratio: 1 / 1; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: none; color: inherit; font: inherit; font-size: 14px; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.cal-c.empty { border: none; cursor: default; }
+.cal-c.today { outline: 3px solid var(--fg); outline-offset: -3px; font-weight: 700; }
+.cal-c.picked { box-shadow: 0 0 0 2px var(--green); }
+.cal-c .dot, .cal-legend .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--fg); }
+.cal-c .dot { position: absolute; bottom: 4px; right: 4px; }
+.cal-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; margin: 6px 0; }
+.cal-legend i:not(.dot) { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; }

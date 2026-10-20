@@ -30,8 +30,8 @@ export async function syncInventoryDown(): Promise<void> {
   if (!supabase || !navigator.onLine) return;
   const [units, materials, locations, balances] = await Promise.all([
     supabase.from('units_of_measure').select('id, code, name, organization_id'),
-    supabase.from('materials').select('id, organization_id, name, category, base_unit_id, reorder_threshold, is_active'),
-    supabase.from('inventory_locations').select('id, organization_id, name, is_active'),
+    supabase.from('materials').select('id, organization_id, name, description, category, base_unit_id, reorder_threshold, is_active'),
+    supabase.from('inventory_locations').select('id, organization_id, name, description, is_active'),
     supabase.from('inventory_balances').select('organization_id, location_id, material_id, balance, is_negative, receipts_missing_cost'),
   ]);
   for (const r of [units, materials, locations, balances]) if (r.error) throw r.error;
@@ -124,12 +124,13 @@ export async function fetchRecentTransactions(orgId: string, limit = 30): Promis
 
 // --- danh mục (cần mạng) ---
 
-export async function createMaterial(orgId: string, m: { name: string; category: string; unitId: string; threshold: number | null }): Promise<void> {
+export async function createMaterial(orgId: string, m: { name: string; category: string; unitId: string; threshold: number | null; description?: string }): Promise<void> {
   needOnline();
   const { error } = await client().from('materials').insert({
     id: crypto.randomUUID(),
     organization_id: orgId,
     name: m.name.trim(),
+    description: m.description?.trim() || null,
     category: m.category.trim() || null,
     base_unit_id: m.unitId,
     reorder_threshold: m.threshold,
@@ -138,10 +139,11 @@ export async function createMaterial(orgId: string, m: { name: string; category:
   await syncInventoryDown();
 }
 
-export async function updateMaterial(id: string, c: { name?: string; category?: string | null; threshold?: number | null; is_active?: boolean }): Promise<void> {
+export async function updateMaterial(id: string, c: { name?: string; description?: string | null; category?: string | null; threshold?: number | null; is_active?: boolean }): Promise<void> {
   needOnline();
   const patch: Record<string, unknown> = {};
   if (c.name !== undefined) patch.name = c.name.trim();
+  if (c.description !== undefined) patch.description = c.description?.trim() || null;
   if (c.category !== undefined) patch.category = c.category?.trim() || null;
   if (c.threshold !== undefined) patch.reorder_threshold = c.threshold;
   if (c.is_active !== undefined) patch.is_active = c.is_active;
@@ -150,19 +152,20 @@ export async function updateMaterial(id: string, c: { name?: string; category?: 
   await syncInventoryDown();
 }
 
-export async function createLocation(orgId: string, name: string): Promise<string> {
+export async function createLocation(orgId: string, name: string, description = ''): Promise<string> {
   needOnline();
   const id = crypto.randomUUID();
-  const { error } = await client().from('inventory_locations').insert({ id, organization_id: orgId, name: name.trim() });
+  const { error } = await client().from('inventory_locations').insert({ id, organization_id: orgId, name: name.trim(), description: description.trim() || null });
   if (error) throw error;
   await syncInventoryDown();
   return id;
 }
 
-export async function updateLocation(id: string, c: { name?: string; is_active?: boolean }): Promise<void> {
+export async function updateLocation(id: string, c: { name?: string; description?: string | null; is_active?: boolean }): Promise<void> {
   needOnline();
   const patch: Record<string, unknown> = {};
   if (c.name !== undefined) patch.name = c.name.trim();
+  if (c.description !== undefined) patch.description = c.description?.trim() || null;
   if (c.is_active !== undefined) patch.is_active = c.is_active;
   const { error } = await client().from('inventory_locations').update(patch).eq('id', id);
   if (error) throw error;

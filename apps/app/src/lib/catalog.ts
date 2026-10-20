@@ -17,7 +17,7 @@ export function effectiveCrops(rows: CropTypeRow[], orgId: string | undefined): 
     .map((r) => {
       const shared = !r.organization_id;
       const o = shared && orgId ? r.ov?.[orgId] : undefined;
-      return { ...r, name: o?.display_name ?? r.name, base_name: r.name, shared, overridden: Boolean(o), is_active: o ? o.is_active : (r.is_active ?? true) };
+      return { ...r, name: o?.display_name ?? r.name, description: o ? o.description ?? r.description : r.description, base_name: r.name, shared, overridden: Boolean(o), is_active: o ? o.is_active : (r.is_active ?? true) };
     });
 }
 
@@ -28,7 +28,7 @@ export function effectiveWorkTypes(rows: WorkTypeRow[], orgId: string | undefine
       const shared = !r.organization_id;
       const o = shared && orgId ? r.ov?.[orgId] : undefined;
       return {
-        ...r, name: o?.display_name ?? r.name, base_name: r.name, shared, overridden: Boolean(o),
+        ...r, name: o?.display_name ?? r.name, description: o ? o.description ?? r.description : r.description, base_name: r.name, shared, overridden: Boolean(o),
         field_schema: o?.field_schema ?? r.field_schema ?? [],
         is_active: o ? o.is_active : (r.is_active ?? true),
       };

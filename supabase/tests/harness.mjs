@@ -29,7 +29,10 @@ let templatePromise;
 export async function createDb() {
   templatePromise ??= buildTemplate();
   const template = await templatePromise;
-  return template.clone();
+  const db = await template.clone();
+  // Các test cũ tạo vụ trực tiếp không qua quy trình mẫu; test P2 (cycles_from_template) tắt cờ này.
+  await db.exec("select set_config('agri.legacy_cycle_insert', 'on', false)");
+  return db;
 }
 
 export const uid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;

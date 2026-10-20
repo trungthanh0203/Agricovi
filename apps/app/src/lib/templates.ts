@@ -35,16 +35,16 @@ export interface StageRow { id: string; template_id: string; seq: number; name: 
  */
 export async function refreshCatalogCache(): Promise<void> {
   const [crops, types, ovr] = await Promise.all([
-    client().from('crop_types').select('id, code, name, organization_id, is_active'),
-    client().from('work_types').select('id, code, name, field_schema, organization_id, is_active'),
-    client().from('org_catalog_overrides').select('organization_id, item_kind, item_id, display_name, field_schema, is_active'),
+    client().from('crop_types').select('id, code, name, description, organization_id, is_active'),
+    client().from('work_types').select('id, code, name, description, field_schema, organization_id, is_active'),
+    client().from('org_catalog_overrides').select('organization_id, item_kind, item_id, display_name, description, field_schema, is_active'),
   ]);
   if (crops.error) throw new Error(crops.error.message);
   if (types.error) throw new Error(types.error.message);
   const ov = { crop_type: new Map<string, Record<string, CatalogOverride>>(), work_type: new Map<string, Record<string, CatalogOverride>>() };
   for (const o of (ovr.error ? [] : ovr.data ?? []) as Array<{ organization_id: string; item_kind: 'crop_type' | 'work_type'; item_id: string } & CatalogOverride>) {
     const m = ov[o.item_kind];
-    m.set(o.item_id, { ...(m.get(o.item_id) ?? {}), [o.organization_id]: { display_name: o.display_name, field_schema: o.field_schema, is_active: o.is_active } });
+    m.set(o.item_id, { ...(m.get(o.item_id) ?? {}), [o.organization_id]: { display_name: o.display_name, description: o.description ?? null, field_schema: o.field_schema, is_active: o.is_active } });
   }
   await db.transaction('rw', db.cropTypes, db.workTypes, async () => {
     await db.cropTypes.clear();
@@ -57,15 +57,16 @@ export async function refreshCatalogCache(): Promise<void> {
 /** Chỉnh một mục có sẵn dùng chung cho riêng cơ sở này (đổi tên, trường ghi, dừng/dùng lại) */
 export async function saveOverride(
   orgId: string, kind: 'crop_type' | 'work_type', itemId: string,
-  patch: { display_name?: string | null; field_schema?: FieldDef[] | null; is_active?: boolean },
+  patch: { display_name?: string | null; description?: string | null; field_schema?: FieldDef[] | null; is_active?: boolean },
 ): Promise<void> {
   needOnline('chỉnh mục có sẵn');
-  const cur = await ok(client().from('org_catalog_overrides').select('display_name, field_schema, is_active')
+  const cur = await ok(client().from('org_catalog_overrides').select('display_name, description, field_schema, is_active')
     .eq('organization_id', orgId).eq('item_kind', kind).eq('item_id', itemId).maybeSingle());
-  const base = (cur as CatalogOverride | null) ?? { display_name: null, field_schema: null, is_active: true };
+  const base = (cur as CatalogOverride | null) ?? { display_name: null, description: null, field_schema: null, is_active: true };
   const row = {
     organization_id: orgId, item_kind: kind, item_id: itemId,
     display_name: patch.display_name === undefined ? base.display_name : (patch.display_name?.trim() || null),
+    description: patch.description === undefined ? base.description ?? null : (patch.description?.trim() || null),
     field_schema: patch.field_schema === undefined ? base.field_schema : patch.field_schema,
     is_active: patch.is_active ?? base.is_active,
   };
@@ -81,32 +82,34 @@ export async function clearOverride(orgId: string, kind: 'crop_type' | 'work_typ
 }
 
 // ------------------------------------------------------------------ cây trồng
-export async function createCrop(orgId: string, name: string): Promise<void> {
+export async function createCrop(orgId: string, name: string, description = ''): Promise<void> {
   needOnline('thêm cây trồng');
-  await ok(client().from('crop_types').insert({ organization_id: orgId, name: name.trim() }));
+  await ok(client().from('crop_types').insert({ organization_id: orgId, name: name.trim(), description: description.trim() || null }));
   await refreshCatalogCache().catch(() => undefined);
 }
 
-export async function updateCrop(id: string, c: { name?: string; is_active?: boolean }): Promise<void> {
+export async function updateCrop(id: string, c: { name?: string; description?: string | null; is_active?: boolean }): Promise<void> {
   needOnline('sửa cây trồng');
   const patch: Record<string, unknown> = {};
   if (c.name !== undefined) patch.name = c.name.trim();
+  if (c.description !== undefined) patch.description = c.description?.trim() || null;
   if (c.is_active !== undefined) patch.is_active = c.is_active;
   await ok(client().from('crop_types').update(patch).eq('id', id));
   await refreshCatalogCache().catch(() => undefined);
 }
 
 // ------------------------------------------------------------------ loại việc
-export async function createWorkType(orgId: string, name: string, fields: FieldDef[]): Promise<void> {
+export async function createWorkType(orgId: string, name: string, fields: FieldDef[], description = ''): Promise<void> {
   needOnline('thêm loại việc');
-  await ok(client().from('work_types').insert({ organization_id: orgId, name: name.trim(), field_schema: fields }));
+  await ok(client().from('work_types').insert({ organization_id: orgId, name: name.trim(), description: description.trim() || null, field_schema: fields }));
   await refreshCatalogCache().catch(() => undefined);
 }
 
-export async function updateWorkType(id: string, c: { name?: string; field_schema?: FieldDef[]; is_active?: boolean }): Promise<void> {
+export async function updateWorkType(id: string, c: { name?: string; description?: string | null; field_schema?: FieldDef[]; is_active?: boolean }): Promise<void> {
   needOnline('sửa loại việc');
   const patch: Record<string, unknown> = {};
   if (c.name !== undefined) patch.name = c.name.trim();
+  if (c.description !== undefined) patch.description = c.description?.trim() || null;
   if (c.field_schema !== undefined) patch.field_schema = c.field_schema;
   if (c.is_active !== undefined) patch.is_active = c.is_active;
   await ok(client().from('work_types').update(patch).eq('id', id));
@@ -143,6 +146,12 @@ export async function updateTemplate(id: string, c: { name?: string; note?: stri
   if (c.note !== undefined) patch.note = c.note?.trim() || null;
   if (c.is_active !== undefined) patch.is_active = c.is_active;
   await ok(client().from('cycle_templates').update(patch).eq('id', id));
+}
+
+/** Xóa quy trình mẫu (kèm các giai đoạn). Mẫu đã có vụ dùng thì máy chủ từ chối: chỉ ngừng dùng được. */
+export async function deleteTemplate(id: string): Promise<void> {
+  needOnline('xóa quy trình mẫu');
+  await ok(client().from('cycle_templates').delete().eq('id', id));
 }
 
 export async function duplicateTemplate(id: string, name: string): Promise<string> {

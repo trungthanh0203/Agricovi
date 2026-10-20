@@ -27,6 +27,8 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
   const [editLoc, setEditLoc] = useState<string | null>(null);
 
   const [mName, setMName] = useState('');
+  const [mDesc, setMDesc] = useState('');
+  const [lDesc, setLDesc] = useState('');
   const [mUnit, setMUnit] = useState('');
   const [lName, setLName] = useState('');
   const [uName, setUName] = useState('');
@@ -46,7 +48,7 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
     if (mName.trim().length < 2) return setError('Hãy nhập tên vật tư.');
     const unitId = mUnit || allUnits[0]?.id;
     if (!unitId) return setError('Chưa tải được danh sách đơn vị. Hãy kết nối mạng rồi thử lại.');
-    void run(async () => { await createMaterial(orgId, { name: mName, category: '', unitId, threshold: null }); setMName(''); });
+    void run(async () => { await createMaterial(orgId, { name: mName, category: '', unitId, threshold: null, description: mDesc }); setMName(''); setMDesc(''); });
   }
 
   return (
@@ -59,6 +61,7 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
       {canWrite && (
         <form className="quickadd" onSubmit={onAddMaterial} noValidate>
           <input value={mName} onChange={(e) => setMName(e.target.value)} placeholder="Thêm vật tư mới: nhập tên" aria-label="Tên vật tư mới" />
+          <input value={mDesc} onChange={(e) => setMDesc(e.target.value)} placeholder="Mô tả (nhãn hiệu, công dụng…)" aria-label="Mô tả vật tư mới" />
           <select value={mUnit || allUnits[0]?.id || ''} onChange={(e) => setMUnit(e.target.value)} aria-label="Đơn vị tính" style={{ maxWidth: 130 }}>
             {allUnits.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
@@ -71,7 +74,7 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
           {mats.length === 0 && <tr><td colSpan={4} className="muted">Chưa có vật tư nào.</td></tr>}
           {mats.map((m) => (
             <tr key={m.id} className={m.is_active ? '' : 'off'}>
-              <td>{m.name}<span className="sub">{unitName(m.base_unit_id)}{m.is_active ? '' : ' · đã dừng'}</span></td>
+              <td>{m.name}{m.description && <span className="sub">{m.description}</span>}<span className="sub">{unitName(m.base_unit_id)}{m.is_active ? '' : ' · đã dừng'}</span></td>
               <td className="muted">{m.category ?? '—'}</td>
               <td className="num">{m.reorder_threshold != null ? formatQty(m.reorder_threshold) : '—'}</td>
               {canWrite && (
@@ -95,9 +98,10 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
         <form className="quickadd" noValidate onSubmit={(e) => {
           e.preventDefault();
           if (lName.trim().length < 2) return setError('Hãy nhập tên kho.');
-          void run(async () => { await createLocation(orgId, lName); setLName(''); });
+          void run(async () => { await createLocation(orgId, lName, lDesc); setLName(''); setLDesc(''); });
         }}>
           <input value={lName} onChange={(e) => setLName(e.target.value)} placeholder="Thêm kho mới: nhập tên (ví dụ Kho chính)" aria-label="Tên kho mới" />
+          <input value={lDesc} onChange={(e) => setLDesc(e.target.value)} placeholder="Mô tả (vị trí, loại hàng chứa…)" aria-label="Mô tả kho mới" />
           <button type="submit" className="primary" disabled={busy || !online}>Thêm</button>
         </form>
       )}
@@ -109,8 +113,8 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
             <tr key={l.id} className={l.is_active ? '' : 'off'}>
               <td>
                 {editLoc === l.id ? (
-                  <LocationRename name={l.name} busy={busy || !writable} onSave={(n) => void run(async () => { await updateLocation(l.id, { name: n }); setEditLoc(null); })} />
-                ) : (<>{l.name}{!l.is_active && <span className="sub">Đã dừng</span>}</>)}
+                  <LocationRename name={l.name} description={l.description ?? ''} busy={busy || !writable} onSave={(n, d) => void run(async () => { await updateLocation(l.id, { name: n, description: d }); setEditLoc(null); })} />
+                ) : (<>{l.name}{l.description && <span className="sub">{l.description}</span>}{!l.is_active && <span className="sub">Đã dừng</span>}</>)}
               </td>
               {canWrite && (
                 <td className="act">
@@ -150,22 +154,25 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
   );
 }
 
-function LocationRename({ name, busy, onSave }: { name: string; busy: boolean; onSave: (n: string) => void }) {
+function LocationRename({ name, description, busy, onSave }: { name: string; description: string; busy: boolean; onSave: (n: string, d: string) => void }) {
   const [v, setV] = useState(name);
+  const [d, setD] = useState(description);
   return (
     <div className="quickadd">
       <input value={v} onChange={(e) => setV(e.target.value)} aria-label="Tên kho" />
-      <button className="primary" disabled={busy || v.trim().length < 2} onClick={() => onSave(v)}>Lưu</button>
+      <input value={d} onChange={(e) => setD(e.target.value)} placeholder="Mô tả" aria-label="Mô tả kho" />
+      <button className="primary" disabled={busy || v.trim().length < 2} onClick={() => onSave(v, d)}>Lưu</button>
     </div>
   );
 }
 
 function MaterialEditor({ m, busy, onSave, onClose }: {
   m: MaterialRow; busy: boolean;
-  onSave: (c: { name: string; category: string | null; threshold: number | null }) => void; onClose: () => void;
+  onSave: (c: { name: string; description: string; category: string | null; threshold: number | null }) => void; onClose: () => void;
 }) {
   const [name, setName] = useState(m.name);
   const [cat, setCat] = useState(m.category ?? '');
+  const [desc, setDesc] = useState(m.description ?? '');
   const [thr, setThr] = useState(m.reorder_threshold == null ? '' : String(m.reorder_threshold));
   const [err, setErr] = useState<string | null>(null);
   return (
@@ -173,6 +180,7 @@ function MaterialEditor({ m, busy, onSave, onClose }: {
       <h2>Sửa vật tư: {m.name}</h2>
       <div className="inline-form">
         <label>Tên<input value={name} onChange={(e) => setName(e.target.value)} /></label>
+        <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} /></label>
         <label>Nhóm (phân bón, thuốc BVTV, giống…)<input value={cat} onChange={(e) => setCat(e.target.value)} /></label>
         <label>Báo "sắp hết" khi tồn ≤ (để trống nếu không báo)<input value={thr} inputMode="decimal" onChange={(e) => setThr(e.target.value)} /></label>
         {err && <p className="msg error" role="alert">{err}</p>}
@@ -181,7 +189,7 @@ function MaterialEditor({ m, busy, onSave, onClose }: {
           if (name.trim().length < 2) return setErr('Hãy nhập tên vật tư.');
           if (v !== null && (Number.isNaN(v) || v < 0)) return setErr('Mức cảnh báo phải là số không âm.');
           setErr(null);
-          onSave({ name, category: cat.trim() || null, threshold: v });
+          onSave({ name, description: desc, category: cat.trim() || null, threshold: v });
         }}>Lưu thay đổi</button>
         <button className="secondary" onClick={onClose}>Đóng</button>
       </div>

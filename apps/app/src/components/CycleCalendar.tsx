@@ -1,0 +1,95 @@
+import { useMemo, useState } from 'react';
+import type { LogRow, StageRow } from '../lib/db';
+import { stageColor } from '../lib/cycles';
+import { addDays, fmtDate, fmtIso, parseDay } from '../lib/dates';
+import { toLocalInput } from '../lib/hooks';
+
+const WEEKDAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+/**
+ * Lịch của vụ theo tháng: mỗi ngày tô màu giai đoạn theo KẾ HOẠCH, chấm tròn nếu hôm đó có nhật ký,
+ * viền đậm là hôm nay. Bấm một ngày để xem giai đoạn và số việc đã ghi. Một màn nhìn là nắm cả quy trình của vụ.
+ */
+export function CycleCalendar({ stages, logs, today }: { stages: StageRow[]; logs: LogRow[]; today: string }) {
+  const sorted = useMemo(() => [...stages].sort((a, b) => a.seq - b.seq), [stages]);
+  const first = sorted.find((s) => s.planned_start)?.planned_start ?? today;
+  const last = [...sorted].reverse().find((s) => s.planned_end)?.planned_end ?? today;
+  const initial = today >= first && today <= last ? today : first;
+  const [month, setMonth] = useState(() => initial.slice(0, 7)); // YYYY-MM
+  const [picked, setPicked] = useState<string | null>(null);
+
+  const logDays = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const l of logs) {
+      if (l.voided_at) continue;
+      const d = toLocalInput(new Date(l.performed_at)).slice(0, 10);
+      m.set(d, (m.get(d) ?? 0) + 1);
+    }
+    return m;
+  }, [logs]);
+
+  const stageOn = (day: string) => {
+    const i = sorted.findIndex((s) => s.planned_start && s.planned_end && day >= s.planned_start && day <= s.planned_end);
+    return i < 0 ? null : { s: sorted[i]!, i };
+  };
+
+  const [y, m] = month.split('-').map(Number) as [number, number];
+  const firstOfMonth = fmtIso(new Date(y, m - 1, 1));
+  const lead = (parseDay(firstOfMonth).getDay() + 6) % 7; // thứ Hai = 0
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const cells: (string | null)[] = [
+    ...Array<null>(lead).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, k) => addDays(firstOfMonth, k)),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const shift = (delta: number) => {
+    const d = new Date(y, m - 1 + delta, 1);
+    setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    setPicked(null);
+  };
+  const info = picked ? stageOn(picked) : null;
+
+  return (
+    <div className="cal">
+      <div className="row">
+        <button className="icon" aria-label="Tháng trước" onClick={() => shift(-1)}>‹</button>
+        <strong className="grow" style={{ textAlign: 'center' }}>Tháng {m}/{y}</strong>
+        <button className="icon" aria-label="Tháng sau" onClick={() => shift(1)}>›</button>
+      </div>
+      <div className="cal-grid" role="grid" aria-label={`Lịch tháng ${m}/${y}`}>
+        {WEEKDAYS.map((w) => <div key={w} className="cal-h" role="columnheader">{w}</div>)}
+        {cells.map((d, i) => {
+          if (!d) return <div key={`e${i}`} className="cal-c empty" />;
+          const st = stageOn(d);
+          const n = logDays.get(d) ?? 0;
+          return (
+            <button
+              key={d}
+              role="gridcell"
+              className={`cal-c${d === today ? ' today' : ''}${picked === d ? ' picked' : ''}`}
+              style={st ? { background: `${stageColor(st.i)}33`, borderColor: stageColor(st.i) } : undefined}
+              onClick={() => setPicked(d === picked ? null : d)}
+              aria-label={`${fmtDate(d)}${st ? `, giai đoạn ${st.s.name}` : ''}${n ? `, ${n} việc đã ghi` : ''}`}
+            >
+              <span>{Number(d.slice(8))}</span>
+              {n > 0 && <i className="dot" />}
+            </button>
+          );
+        })}
+      </div>
+      <div className="cal-legend">
+        {sorted.map((s, i) => (
+          <span key={s.id}><i style={{ background: stageColor(i) }} /> {s.name}</span>
+        ))}
+        <span><i className="dot" /> Có ghi việc</span>
+      </div>
+      {picked && (
+        <p className="muted">
+          {fmtDate(picked)}: {info ? `giai đoạn "${info.s.name}" (kế hoạch ${fmtDate(info.s.planned_start)} – ${fmtDate(info.s.planned_end)})` : 'ngoài kế hoạch của vụ'}
+          {logDays.get(picked) ? `, đã ghi ${logDays.get(picked)} việc.` : ', chưa ghi việc.'}
+        </p>
+      )}
+    </div>
+  );
+}

@@ -9,6 +9,7 @@ import { TAB_LABEL, visibleTabs, type TabId } from './lib/tabs';
 import { AuthScreen } from './screens/AuthScreen';
 import { CreateOrgScreen } from './screens/CreateOrgScreen';
 import { CreateCycleScreen } from './screens/CreateCycleScreen';
+import { CycleDetailScreen, type LogPreset } from './screens/CycleDetailScreen';
 import { DeclareTab } from './screens/DeclareTab';
 import { HomeTab } from './screens/HomeTab';
 import { LogActivityScreen } from './screens/LogActivityScreen';
@@ -69,7 +70,9 @@ function Shell() {
   // mục con đang chọn của từng tab (nhớ khi chuyển qua lại)
   const [subs, setSubs] = useState<Partial<Record<TabId, string>>>({});
   const [adding, setAdding] = useState(false);
-  const [overlay, setOverlay] = useState<null | 'log' | 'cycle' | 'logs'>(null);
+  const [overlay, setOverlay] = useState<null | 'log' | 'cycle' | 'logs' | 'detail'>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [logPreset, setLogPreset] = useState<LogPreset | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
   const [counts, setCounts] = useState<Record<SyncState, number> | null>(null);
 
@@ -103,7 +106,12 @@ function Shell() {
   }, [refresh]);
 
   if (overlay === 'logs') return <LogsScreen onClose={() => setOverlay(null)} />;
-  if (overlay === 'log') return <LogActivityScreen onClose={() => setOverlay(null)} />;
+  if (overlay === 'detail' && detailId) {
+    return <CycleDetailScreen cycleId={detailId} onClose={() => setOverlay(null)} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} />;
+  }
+  if (overlay === 'log') {
+    return <LogActivityScreen preset={logPreset} onClose={() => { setOverlay(logPreset && detailId ? 'detail' : null); setLogPreset(null); }} />;
+  }
   if (overlay === 'cycle') return <CreateCycleScreen onDone={() => { setOverlay(null); setTab('production'); }} onCancel={() => setOverlay(null)} />;
   if (adding) {
     return <CreateOrgScreen onDone={() => { setAdding(false); setTab('home'); }} onCancel={() => setAdding(false)} />;
@@ -139,14 +147,15 @@ function Shell() {
 
       <main className="content">
         {tab === 'home' ? (
-          <HomeTab onLog={() => setOverlay('log')} onHistory={() => setOverlay('logs')} onGo={goTo} />
+          <HomeTab onLog={() => { setLogPreset(null); setOverlay('log'); }} onHistory={() => setOverlay('logs')} onGo={goTo} />
         ) : tab === 'production' ? (
           <ProductionTab
             section={subs.production}
             onSection={setSub('production')}
-            onLog={() => setOverlay('log')}
+            onLog={() => { setLogPreset(null); setOverlay('log'); }}
             onHistory={() => setOverlay('logs')}
             onCreateCycle={() => setOverlay('cycle')}
+            onOpenCycle={(id) => { setDetailId(id); setOverlay('detail'); }}
             onGo={goTo}
           />
         ) : tab === 'declare' ? (

@@ -15,7 +15,7 @@ const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 const LAST_LOCATION_KEY = 'agriconnect.lastLocation'; // dùng chung với màn nhập kho
 
 /** Luồng "Ghi việc vừa làm" (v1.1 mục 3.4): chọn loại việc -> xác nhận vụ -> lưu. Dùng được offline. */
-export function LogActivityScreen({ onClose }: { onClose: () => void }) {
+export function LogActivityScreen({ onClose, preset }: { onClose: () => void; preset?: { cycleId: string; workTypeId?: string | null; stageId?: string | null } | null }) {
   const { session } = useAuth();
   const { active } = useOrgs();
   const sync = useRecordSync();
@@ -46,11 +46,16 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
   const remembered = (() => {
     try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; }
   })();
-  const [cycleId, setCycleId] = useState<string>('');
+  const [cycleId, setCycleId] = useState<string>(preset?.cycleId ?? '');
   const effectiveCycleId = cycleId || (options.find((c) => c.id === remembered)?.id ?? options[0]?.id ?? '');
   const cycle = options.find((c) => c.id === effectiveCycleId) ?? null;
 
-  const [workTypeId, setWorkTypeId] = useState<string | null>(null);
+  const [workTypeId, setWorkTypeId] = useState<string | null>(preset?.workTypeId ?? null);
+  const stages = useLiveQuery(() => db.stages.where('cycle_id').equals(effectiveCycleId).sortBy('seq'), [effectiveCycleId], []);
+  // giai đoạn gắn với việc: mặc định theo preset, nếu không thì giai đoạn đang làm có cùng loại việc
+  const [stageSel, setStageSel] = useState<string | null | undefined>(preset?.stageId);
+  const autoStage = stages.find((s) => s.status === 'in_progress' && s.work_type_id === workTypeId)?.id ?? null;
+  const effStage = stageSel === undefined ? autoStage : stageSel;
   const [when, setWhen] = useState(toLocalInput(new Date()));
   const [values, setValues] = useState<Record<string, string>>({});
   const [note, setNote] = useState('');
@@ -109,6 +114,7 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
       data,
       note,
       userId: session.user.id,
+      stageId: effStage,
       used: items.length > 0 && active ? { organizationId: active.id, locationId: effLocation, items } : undefined,
     });
     try { localStorage.setItem(LAST_CYCLE_KEY, cycle.id); } catch { /* bỏ qua */ }
@@ -185,7 +191,7 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
 
           <label>
             Vụ trồng
-            <select value={effectiveCycleId} onChange={(e) => setCycleId(e.target.value)}>
+            <select value={effectiveCycleId} onChange={(e) => { setCycleId(e.target.value); setStageSel(undefined); }}>
               {options.map((c) => (
                 <option key={c.id} value={c.id}>
                   {cropName(c.crop_type_id)} · {areaName(c.area_id)} ({CYCLE_STATUS_LABEL_VI[c.status]})
@@ -193,6 +199,16 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
               ))}
             </select>
           </label>
+
+          {stages.length > 0 && (
+            <label>
+              Thuộc giai đoạn
+              <select value={effStage ?? ''} onChange={(e) => setStageSel(e.target.value || null)}>
+                <option value="">— Không gắn giai đoạn —</option>
+                {stages.map((st) => <option key={st.id} value={st.id}>{st.name}</option>)}
+              </select>
+            </label>
+          )}
 
           <label>
             Thời điểm làm

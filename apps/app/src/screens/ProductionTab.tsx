@@ -6,7 +6,9 @@ import { HarvestSection } from '../components/HarvestSection';
 import { pickSection, SubTabs } from '../components/SubTabs';
 import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
-import { useOnline } from '../lib/hooks';
+import { todayLocal, useOnline } from '../lib/hooks';
+import { cycleProgress } from '../lib/cycles';
+import { fmtDate } from '../lib/dates';
 import { useOrgs } from '../lib/orgs';
 import { canManageProduction } from '../lib/roles';
 import { fetchQuotaContexts, setCycleStatus, type QuotaContext } from '../lib/production';
@@ -17,13 +19,14 @@ interface Props {
   section?: string;
   onSection: (s: ProductionSection) => void;
   onCreateCycle: () => void;
+  onOpenCycle: (id: string) => void;
   onLog: () => void;
   onHistory: () => void;
   onGo: (tab: TabId, section?: string) => void;
 }
 
 /** Tab Sản xuất: Mùa vụ (trạng thái các vụ, ghi việc), Thu hoạch, Kho. Khu trồng và danh mục nằm ở tab Khai báo. */
-export function ProductionTab({ section, onSection, onCreateCycle, onLog, onHistory, onGo }: Props) {
+export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Props) {
   const { active } = useOrgs();
   const items = productionSections(active);
   const current = pickSection(items, section);
@@ -37,18 +40,20 @@ export function ProductionTab({ section, onSection, onCreateCycle, onLog, onHist
       ) : current === 'stock' ? (
         <StockPanel />
       ) : (
-        <CyclesPanel onCreateCycle={onCreateCycle} onLog={onLog} onHistory={onHistory} onGo={onGo} />
+        <CyclesPanel onCreateCycle={onCreateCycle} onOpenCycle={onOpenCycle} onLog={onLog} onHistory={onHistory} onGo={onGo} />
       )}
     </section>
   );
 }
 
-function CyclesPanel({ onCreateCycle, onLog, onHistory, onGo }: Pick<Props, 'onCreateCycle' | 'onLog' | 'onHistory' | 'onGo'>) {
+function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pick<Props, 'onCreateCycle' | 'onOpenCycle' | 'onLog' | 'onHistory' | 'onGo'>) {
   const { active } = useOrgs();
   const online = useOnline();
   const [actionError, setActionError] = useState<string | null>(null);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
+  const allStages = useLiveQuery(() => db.stages.toArray(), [], []);
+  const today = todayLocal();
   const { cropTypes } = useCatalog();
   const [contexts, setContexts] = useState<QuotaContext[]>([]);
 
@@ -102,17 +107,30 @@ function CyclesPanel({ onCreateCycle, onLog, onHistory, onGo }: Pick<Props, 'onC
       {myCycles.length === 0 && <p className="muted">Chưa có vụ trồng nào.</p>}
       {myCycles.map((c) => {
         const owner = ownerLabel(c.owner_org_id);
+        const prog = cycleProgress(allStages.filter((s) => s.cycle_id === c.id), today);
         return (
           <div className="card slim" key={c.id}>
             <div className="row">
-              <strong>{cropName(c.crop_type_id)}</strong>
+              <strong>{c.name || cropName(c.crop_type_id)}</strong>
               <span className="pill">{CYCLE_STATUS_LABEL_VI[c.status]}</span>
             </div>
             <p className="muted">
               Khu trồng: {areaById.get(c.area_id)?.name ?? '—'}
               {c.start_date && ` · Bắt đầu ${new Date(c.start_date).toLocaleDateString('vi-VN')}`}
             </p>
+            {c.name && <p className="muted">Cây: {cropName(c.crop_type_id)}</p>}
             {owner && <p className="muted">Ghi theo: {owner}</p>}
+            {prog.total > 0 && (
+              <>
+                <div className="progress" role="progressbar" aria-valuenow={prog.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Tiến độ vụ"><i style={{ width: `${prog.percent}%` }} /></div>
+                <p className="muted">
+                  {prog.done}/{prog.total} giai đoạn
+                  {prog.current ? ` · Hiện tại: ${prog.current.name} (${fmtDate(prog.current.planned_start)} – ${fmtDate(prog.current.planned_end)})` : ' · Đã hoàn tất'}
+                  {c.status === 'active' && prog.delay > 0 && <span className="pill warn"> Trễ {prog.delay} ngày</span>}
+                </p>
+              </>
+            )}
+            <div className="actions"><button className="secondary" onClick={() => onOpenCycle(c.id)}>Xem quy trình &amp; lịch</button></div>
             {canManage && (
               <div className="actions">
                 {c.status === 'preparing' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'active')}>Bắt đầu sản xuất</button>}

@@ -27,6 +27,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
   const [order, setOrder] = useState<string[] | null>(null); // thứ tự tạm khi đang kéo
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState('');
+  const [descr, setDescr] = useState('');
   const [newWt, setNewWt] = useState('');
   const [newDays, setNewDays] = useState('');
   const [defining, setDefining] = useState(false);
@@ -115,6 +116,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
           <h2 className="grow">{tpl.name}</h2>
           {!tpl.is_active && <span className="pill warn">Ngừng dùng</span>}
         </div>
+        {tpl.note && <p>{tpl.note}</p>}
         <p className="muted">{stages.length} giai đoạn · tổng {days} ngày · bản {tpl.version}</p>
         {stages.length > 0 && (
           <div className="timeline" role="img" aria-label={`Tổng quan ${stages.length} giai đoạn, ${days} ngày`}>
@@ -123,7 +125,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
         )}
         {canEdit && (
           <div className="actions">
-            <button className="secondary" disabled={!online || busy} onClick={() => { setRenaming(!renaming); setName(tpl.name); }}>Đổi tên</button>
+            <button className="secondary" disabled={!online || busy} onClick={() => { setRenaming(!renaming); setName(tpl.name); setDescr(tpl.note ?? ''); }}>Đổi tên / mô tả</button>
             <button className="secondary" disabled={!online || busy} onClick={() => void run(async () => { onOpenOther(await duplicateTemplate(templateId, `${tpl.name} (bản sao)`)); })}>Nhân bản</button>
             <button className="secondary" disabled={!online || busy} onClick={() => void run(() => updateTemplate(templateId, { is_active: !tpl.is_active }))}>{tpl.is_active ? 'Ngừng dùng' : 'Dùng lại'}</button>
           </div>
@@ -131,7 +133,8 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
         {renaming && (
           <div className="quickadd">
             <input value={name} onChange={(e) => setName(e.target.value)} aria-label="Tên quy trình" />
-            <button className="primary" disabled={busy || !online || name.trim().length < 2} onClick={() => void run(async () => { await updateTemplate(templateId, { name }); setRenaming(false); })}>Lưu</button>
+            <input value={descr} onChange={(e) => setDescr(e.target.value)} placeholder="Mô tả" aria-label="Mô tả quy trình" />
+            <button className="primary" disabled={busy || !online || name.trim().length < 2} onClick={() => void run(async () => { await updateTemplate(templateId, { name, note: descr }); setRenaming(false); })}>Lưu</button>
           </div>
         )}
       </div>

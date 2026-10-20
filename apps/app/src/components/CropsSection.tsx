@@ -18,6 +18,8 @@ export function CropsSection() {
   const [showOff, setShowOff] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [desc, setDesc] = useState('');
+  const [editDesc, setEditDesc] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -38,14 +40,14 @@ export function CropsSection() {
   const rename = (c: EffCrop) => {
     if (editName.trim().length < 2) throw new Error('Tên cây cần ít nhất 2 ký tự.');
     return c.shared
-      ? saveOverride(org, 'crop_type', c.id, { display_name: editName.trim() === c.base_name ? null : editName })
-      : updateCrop(c.id, { name: editName });
+      ? saveOverride(org, 'crop_type', c.id, { display_name: editName.trim() === c.base_name ? null : editName, description: editDesc })
+      : updateCrop(c.id, { name: editName, description: editDesc });
   };
 
   function onAdd(e: FormEvent) {
     e.preventDefault();
     if (name.trim().length < 2) return setError('Hãy nhập tên cây trồng (ít nhất 2 ký tự).');
-    void run(async () => { await createCrop(org, name); setName(''); });
+    void run(async () => { await createCrop(org, name, desc); setName(''); setDesc(''); });
   }
 
   return (
@@ -56,6 +58,7 @@ export function CropsSection() {
       {canManage && (
         <form className="quickadd" onSubmit={onAdd} noValidate>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Thêm cây mới: nhập tên" aria-label="Tên cây mới" />
+          <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Mô tả (giống, đặc điểm…)" aria-label="Mô tả cây mới" />
           <button type="submit" className="primary" disabled={busy || !online}>Thêm</button>
         </form>
       )}
@@ -70,11 +73,13 @@ export function CropsSection() {
                 {editing === c.id ? (
                   <div className="quickadd">
                     <input value={editName} onChange={(e) => setEditName(e.target.value)} aria-label="Tên cây" />
+                    <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Mô tả" aria-label="Mô tả cây" />
                     <button className="primary" disabled={busy || !online} onClick={() => void run(async () => { await rename(c); setEditing(null); })}>Lưu</button>
                   </div>
                 ) : (
                   <>
                     {c.name}
+                    {c.description && <span className="sub">{c.description}</span>}
                     {!c.shared && <span className="pill mine"> Riêng</span>}
                     {c.shared && c.overridden && <span className="pill warn"> Đã chỉnh</span>}
                     {c.shared && !c.overridden && <span className="sub">Có sẵn</span>}
@@ -95,7 +100,7 @@ export function CropsSection() {
                   ) : (
                     <>
                       <button className="icon" disabled={busy || !online} aria-label={c.is_active ? `Dừng ${c.name}` : `Dùng lại ${c.name}`} onClick={() => void run(() => toggle(c))}>{c.is_active ? '⏸' : '▶'}</button>{' '}
-                      <button className="icon" aria-label={`Sửa ${c.name}`} onClick={() => { setEditing(c.id); setEditName(c.name); }}>✎</button>
+                      <button className="icon" aria-label={`Sửa ${c.name}`} onClick={() => { setEditing(c.id); setEditName(c.name); setEditDesc(c.description ?? ''); }}>✎</button>
                     </>
                   )}
                 </td>

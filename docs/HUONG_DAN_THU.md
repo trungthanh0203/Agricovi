@@ -97,7 +97,21 @@ Bảng dưới là **mặc định theo vai trò**. Chủ cơ sở có thể **c
 6. **Đổi thứ tự**: cầm ký hiệu ⠿ ở đầu dòng rồi kéo lên/xuống, hoặc bấm nút ↑ ↓. Đổi việc của một giai đoạn bằng ô chọn ngay trên dòng; ✕ để xóa giai đoạn.
 7. Thử **Nhân bản** một quy trình rồi sửa bản sao, **Đổi tên**, **Ngừng dùng**.
 8. Kiểm tra: mỗi hộ/HTX chỉ thấy mẫu của mình. Nhân viên không thấy tab Khai báo.
-9. Lưu ý: sửa mẫu **không đổi** các vụ đã tạo trước đó. Việc **tạo vụ theo mẫu** sẽ có ở bản sau.
+9. Lưu ý: sửa mẫu **không đổi** các vụ đã tạo trước đó.
+10. Danh sách quy trình có nút 🗑 để **xóa** (hỏi lại trước khi xóa). Quy trình đã có vụ dùng thì không xóa được: bấm "Ngừng dùng".
+11. Mọi bảng ở Khai báo (khu trồng, cây, việc, quy trình, vật tư, kho) có ô **Mô tả**: nhập ở dòng thêm nhanh hoặc bấm ✎; mô tả hiện thành dòng chữ nhỏ dưới tên.
+
+## Bài thử 9 — Tạo vụ theo quy trình và theo dõi từng giai đoạn
+
+Cần: đã có khu trồng và ít nhất một quy trình có giai đoạn (bài thử 8).
+
+1. Tab **Sản xuất** → **+ Tạo vụ mới**. Chọn khu trồng, **chọn quy trình** (bắt buộc; chưa chọn thì nút Tạo vụ bị khóa), đặt tên vụ nếu muốn, chọn ngày bắt đầu. Bên dưới hiện **bảng các giai đoạn kèm ngày từ–đến** để bạn kiểm tra trước khi tạo.
+2. Bấm **Tạo vụ**. Ở danh sách vụ, mỗi vụ có thanh tiến độ, giai đoạn hiện tại và nút **Xem quy trình & lịch**.
+3. Mở vụ: bảng giai đoạn có ngày kế hoạch và thực tế. Với vụ **Đang sản xuất**, chủ/quản lý bấm **Bắt đầu** rồi **Xong** cho từng giai đoạn (nút ↺ để mở lại nếu bấm nhầm). Giai đoạn quá hạn hiện "trễ N ngày".
+4. Bấm **Lịch**: mỗi ngày tô màu theo giai đoạn dự kiến, chấm tròn là hôm đó có ghi việc, viền đậm là hôm nay; bấm một ngày để xem chi tiết; ‹ › chuyển tháng.
+5. Ở giai đoạn đang làm bấm **Ghi việc**: màn ghi việc mở sẵn đúng vụ, đúng loại việc và gắn giai đoạn. Sau khi ghi, mở lại vụ sẽ thấy số việc đã ghi của giai đoạn.
+6. Kiểm tra quyền: nhân viên thấy giai đoạn và ghi việc được nhưng **không có nút Bắt đầu/Xong**. Vụ Chuẩn bị/Tạm dừng/Kết thúc không đổi giai đoạn được.
+7. Sửa quy trình mẫu (thêm một giai đoạn) rồi mở lại vụ cũ: vụ **không đổi**.
 
 ## Những điều cần biết
 
