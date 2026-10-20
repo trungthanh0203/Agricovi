@@ -8,7 +8,7 @@ Nền tảng quản lý nuôi trồng (app PWA) + website xúc tiến thương m
 2. `docs/ROLES.md` — ma trận vai trò/quyền (nguồn sự thật là CSDL).
 3. `AgriConnect_Dac_ta_thiet_ke_nghiep_vu_v1.1.md` + `AgriConnect_Dac_ta_bo_sung_v1.2.md` + `AgriConnect_Backlog_v1.2.md` — đặc tả và backlog (mã FR-…).
 4. `docs/ERD.md`, `docs/SETUP_SUPABASE.md`.
-5a. `docs/PLAN_BO_CUC_MOI.md` — **bố cục 5 tab mới (D28)** và kế hoạch P0–P5 (khung tab, quy trình mẫu, tạo vụ theo mẫu, chức vụ, hồ sơ, trang chủ thống kê). Làm theo thứ tự trong tài liệu.
+5a. `docs/PLAN_BO_CUC_MOI.md` — **bố cục 6 tab mới (D28–D30)** và kế hoạch P0–P6 (khung tab, quy trình mẫu bắt buộc theo từng cơ sở, tạo vụ theo mẫu, chức vụ, hồ sơ, trang chủ thống kê, báo cáo). Làm theo thứ tự trong tài liệu.
 5. `docs/DESIGN_DASHBOARD.md` — **nguyên tắc trình bày số liệu/dashboard** (thẻ số lớn, màu theo nghĩa, vòng cơ cấu, tiến độ, cảnh báo; kèm kế hoạch nâng cấp từng màn). Đọc trước khi làm hoặc nâng cấp màn có số liệu.
 
 ## Cấu trúc
@@ -39,7 +39,7 @@ npx supabase functions deploy staff-accounts
 ## Quy tắc bất biến (đã trả giá bằng lỗi thật)
 
 - **Phân quyền và hạn mức được ép trong CSDL** (RLS, hàm, trigger), không chỉ ở giao diện. Khóa `service_role` không bao giờ vào frontend.
-- **Mọi thay đổi schema = migration mới** (không sửa migration đã đẩy; chỉ sửa file chưa từng được áp dụng). Không dán SQL tay vào Supabase; không bao giờ `supabase db reset` trên dự án thật.
+- **Mọi thay đổi schema = migration mới** (không sửa migration đã đẩy; chỉ sửa file chưa từng được áp dụng). Không dán SQL tay vào Supabase; không bao giờ `supabase db reset` trên dự án thật. (Muốn xóa sạch dữ liệu thử: người dùng tự chạy `supabase/maintenance/wipe_all_data.sql` có khóa xác nhận; Claude không chạy.)
 - **Offline chỉ cho GHI MỚI việc hằng ngày của nhân viên** (nhật ký + vật tư đã dùng, thu hoạch; sau này chấm công) — quyết định D24. Bản ghi đó có **UUID tạo ở thiết bị**, gửi bằng `ON CONFLICT DO NOTHING` qua `outbox.ts`. **Mọi thứ khác cần mạng, ghi thẳng** bằng `serverWrite.ts` (có `busy`/mã nhập tạo sẵn để bấm lặp không nhân đôi); **không** thêm đường offline cho chức năng quản lý. Sửa/hủy luôn qua hàm có **phiên bản + op_id** (`update_*`); không ghi đè âm thầm: gặp CONFLICT thì tải lại bản mới và báo người dùng.
 - Dữ liệu vận hành mặc định riêng tư; website chỉ đọc `public_*` (bản chụp bất biến đã duyệt).
 - Giao dịch kho và nhật ký **chỉ thêm**; sửa = sự kiện điều chỉnh + audit; hủy = đánh dấu, không xóa.
