@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type MaterialRow } from '../lib/db';
+import { addDefaultMaterials, type MaterialExt } from '../lib/inventory';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import {
@@ -69,13 +70,13 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
         </form>
       )}
       <table className="grid">
-        <thead><tr><th>Vật tư</th><th>Nhóm</th><th className="num">Báo sắp hết ≤</th>{canWrite && <th></th>}</tr></thead>
+        <thead><tr><th>Vật tư</th><th>Danh mục</th><th className="num">Báo sắp hết ≤</th>{canWrite && <th></th>}</tr></thead>
         <tbody>
           {mats.length === 0 && <tr><td colSpan={4} className="muted">Chưa có vật tư nào.</td></tr>}
           {mats.map((m) => (
             <tr key={m.id} className={m.is_active ? '' : 'off'}>
               <td>{m.name}{m.description && <span className="sub">{m.description}</span>}<span className="sub">{unitName(m.base_unit_id)}{m.is_active ? '' : ' · đã dừng'}</span></td>
-              <td className="muted">{m.category ?? '—'}</td>
+              <td className="muted">{m.category ?? '—'}{m.brand ? <span className="sub">{m.brand}</span> : null}</td>
               <td className="num">{m.reorder_threshold != null ? formatQty(m.reorder_threshold) : '—'}</td>
               {canWrite && (
                 <td className="act">
@@ -149,6 +150,12 @@ export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: b
           <p className="muted">Đã có sẵn: kg, g, lít, ml, bao, chai, gói, cái, cây (dùng chung, không sửa).{orgUnits.length > 0 ? ` Đơn vị riêng: ${orgUnits.map((u) => u.name).join(', ')}.` : ''}</p>
         </>
       )}
+      {canWrite && (
+        <button className="secondary" disabled={busy || !online}
+          onClick={() => void run(async () => { const n = await addDefaultMaterials(orgId); setError(n > 0 ? null : 'Đã có đủ vật tư mẫu rồi.'); })}>
+          Thêm vật tư mẫu còn thiếu (phân bón thông dụng)
+        </button>
+      )}
       <p className="muted">⏸ dừng (không chọn được cho giao dịch mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Vật tư và kho đã có lịch sử thì không xóa được, chỉ dừng.</p>
     </>
   );
@@ -168,11 +175,16 @@ function LocationRename({ name, description, busy, onSave }: { name: string; des
 
 function MaterialEditor({ m, busy, onSave, onClose }: {
   m: MaterialRow; busy: boolean;
-  onSave: (c: { name: string; description: string; category: string | null; threshold: number | null }) => void; onClose: () => void;
+  onSave: (c: { name: string; description: string; category: string | null; threshold: number | null; ext: MaterialExt }) => void; onClose: () => void;
 }) {
   const [name, setName] = useState(m.name);
   const [cat, setCat] = useState(m.category ?? '');
   const [desc, setDesc] = useState(m.description ?? '');
+  const [ext, setExt] = useState({
+    brand: m.brand ?? '', usage_guide: m.usage_guide ?? '', usage_method: m.usage_method ?? '', safety_warning: m.safety_warning ?? '',
+    quality_specs: m.quality_specs ?? '', limit_elements: m.limit_elements ?? '', withdrawal_days: m.withdrawal_days == null ? '' : String(m.withdrawal_days),
+  });
+  const setE = (k: keyof typeof ext) => (e: { target: { value: string } }) => setExt((x) => ({ ...x, [k]: e.target.value }));
   const [thr, setThr] = useState(m.reorder_threshold == null ? '' : String(m.reorder_threshold));
   const [err, setErr] = useState<string | null>(null);
   return (
@@ -181,15 +193,27 @@ function MaterialEditor({ m, busy, onSave, onClose }: {
       <div className="inline-form">
         <label>Tên<input value={name} onChange={(e) => setName(e.target.value)} /></label>
         <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} /></label>
+        <label>Thương hiệu / xuất xứ<input value={ext.brand} onChange={setE('brand')} /></label>
         <label>Nhóm (phân bón, thuốc BVTV, giống…)<input value={cat} onChange={(e) => setCat(e.target.value)} /></label>
         <label>Báo "sắp hết" khi tồn ≤ (để trống nếu không báo)<input value={thr} inputMode="decimal" onChange={(e) => setThr(e.target.value)} /></label>
+        <details className="fold">
+          <summary>Thông tin mở rộng (không bắt buộc)</summary>
+          <label>Hướng dẫn sử dụng<textarea rows={3} value={ext.usage_guide} onChange={setE('usage_guide')} /></label>
+          <label>Phương thức sử dụng<textarea rows={3} value={ext.usage_method} onChange={setE('usage_method')} /></label>
+          <label>Cảnh báo an toàn<textarea rows={3} value={ext.safety_warning} onChange={setE('safety_warning')} /></label>
+          <label>Chỉ tiêu chất lượng<textarea rows={3} value={ext.quality_specs} onChange={setE('quality_specs')} /></label>
+          <label>Hàm lượng yếu tố hạn chế<textarea rows={3} value={ext.limit_elements} onChange={setE('limit_elements')} /></label>
+          <label>Thời gian cách ly (số ngày)<input value={ext.withdrawal_days} inputMode="numeric" onChange={setE('withdrawal_days')} /></label>
+        </details>
         {err && <p className="msg error" role="alert">{err}</p>}
         <button className="primary" disabled={busy} onClick={() => {
+          const days = ext.withdrawal_days.trim() === '' ? null : Number(ext.withdrawal_days);
+          if (days !== null && (!Number.isInteger(days) || days < 0)) return setErr('Thời gian cách ly phải là số ngày nguyên, không âm.');
           const v = parseNumber(thr);
           if (name.trim().length < 2) return setErr('Hãy nhập tên vật tư.');
           if (v !== null && (Number.isNaN(v) || v < 0)) return setErr('Mức cảnh báo phải là số không âm.');
           setErr(null);
-          onSave({ name, description: desc, category: cat.trim() || null, threshold: v });
+          onSave({ name, description: desc, category: cat.trim() || null, threshold: v, ext: { ...ext, withdrawal_days: days } });
         }}>Lưu thay đổi</button>
         <button className="secondary" onClick={onClose}>Đóng</button>
       </div>

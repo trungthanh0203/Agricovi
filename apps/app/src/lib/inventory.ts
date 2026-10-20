@@ -30,7 +30,7 @@ export async function syncInventoryDown(): Promise<void> {
   if (!supabase || !navigator.onLine) return;
   const [units, materials, locations, balances] = await Promise.all([
     supabase.from('units_of_measure').select('id, code, name, organization_id'),
-    supabase.from('materials').select('id, organization_id, name, description, category, base_unit_id, reorder_threshold, is_active'),
+    supabase.from('materials').select('id, organization_id, name, description, category, brand, usage_guide, usage_method, safety_warning, quality_specs, limit_elements, withdrawal_days, base_unit_id, reorder_threshold, is_active'),
     supabase.from('inventory_locations').select('id, organization_id, name, description, is_active'),
     supabase.from('inventory_balances').select('organization_id, location_id, material_id, balance, is_negative, receipts_missing_cost'),
   ]);
@@ -124,6 +124,26 @@ export async function fetchRecentTransactions(orgId: string, limit = 30): Promis
 
 // --- danh mục (cần mạng) ---
 
+/** Thông tin mở rộng của vật tư (không bắt buộc) */
+export interface MaterialExt {
+  brand: string | null;
+  usage_guide: string | null;
+  usage_method: string | null;
+  safety_warning: string | null;
+  quality_specs: string | null;
+  limit_elements: string | null;
+  withdrawal_days: number | null;
+}
+
+/** Thêm các vật tư mẫu còn thiếu (không đụng mục đã có); trả về số mục mới thêm */
+export async function addDefaultMaterials(orgId: string): Promise<number> {
+  needOnline();
+  const { data, error } = await client().rpc('add_default_materials', { p_org: orgId });
+  if (error) throw error;
+  await syncInventoryDown();
+  return Number(data ?? 0);
+}
+
 export async function createMaterial(orgId: string, m: { name: string; category: string; unitId: string; threshold: number | null; description?: string }): Promise<void> {
   needOnline();
   const { error } = await client().from('materials').insert({
@@ -139,9 +159,10 @@ export async function createMaterial(orgId: string, m: { name: string; category:
   await syncInventoryDown();
 }
 
-export async function updateMaterial(id: string, c: { name?: string; description?: string | null; category?: string | null; threshold?: number | null; is_active?: boolean }): Promise<void> {
+export async function updateMaterial(id: string, c: { name?: string; description?: string | null; category?: string | null; threshold?: number | null; is_active?: boolean; ext?: Partial<MaterialExt> }): Promise<void> {
   needOnline();
   const patch: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(c.ext ?? {})) patch[k] = typeof v === 'string' ? v.trim() || null : v;
   if (c.name !== undefined) patch.name = c.name.trim();
   if (c.description !== undefined) patch.description = c.description?.trim() || null;
   if (c.category !== undefined) patch.category = c.category?.trim() || null;

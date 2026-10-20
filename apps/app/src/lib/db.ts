@@ -133,6 +133,15 @@ export interface MaterialRow {
   name: string;
   description?: string | null;
   category: string | null;
+  /** Thông tin mở rộng (không bắt buộc) */
+  brand?: string | null;
+  usage_guide?: string | null;
+  usage_method?: string | null;
+  safety_warning?: string | null;
+  quality_specs?: string | null;
+  limit_elements?: string | null;
+  /** Thời gian cách ly (số ngày) */
+  withdrawal_days?: number | null;
   base_unit_id: string;
   reorder_threshold: number | null;
   is_active: boolean;

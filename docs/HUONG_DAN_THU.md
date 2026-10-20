@@ -122,6 +122,11 @@ Cần: đã có khu trồng và ít nhất một quy trình có giai đoạn (b�
 5. Quay về **Trang chủ**: thẻ **Nhắc việc** hiện các ghi chú chưa xong đã quá hạn hoặc trong 3 ngày tới; tích ô để đánh dấu xong.
 6. Nhân viên: thêm được ghi chú và tích/xóa ghi chú của chính mình, nhưng không thấy nút Sửa vụ, Xóa vụ, sửa giai đoạn.
 
+## Bài thử 11 — Vật tư mẫu và sửa giai đoạn mẫu
+
+1. Tạo một cơ sở mới (hoặc mở cơ sở cũ chưa có vật tư): **Khai báo → Vật tư** đã có sẵn 11 vật tư phân bón (NPK, hữu cơ vi sinh, urê, vôi…). Bấm ✎ để sửa; mục **Thông tin mở rộng** có hướng dẫn, cách dùng, cảnh báo an toàn, chỉ tiêu chất lượng, thời gian cách ly. ⏸ để dừng vật tư không dùng. Nút **Thêm vật tư mẫu còn thiếu** bổ sung lại mục đã xóa mà không đụng mục đã sửa.
+2. **Khai báo → Quy trình mẫu → Mở**: ở mỗi giai đoạn bấm ✎, đổi việc/mô tả/số ngày rồi bấm **Lưu thay đổi**. Dòng thêm giai đoạn có ô **Mô tả** nằm giữa ô chọn việc và ô số ngày.
+
 ## Những điều cần biết
 
 - Số tiền luôn là **đồng**, số lượng thu hoạch và bán luôn là **kg** ở bản thử này.

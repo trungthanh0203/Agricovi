@@ -264,13 +264,13 @@ test('danh mục: chỉ chủ và Kho & chi phí thay đổi; mọi thành viên
   const addMat = (u, id, name) => asUser(db, u, `insert into materials (id,organization_id,name,base_unit_id) values ($1,$2,$3,${unit})`, [id, org, name]);
   const addLoc = (u, id, name) => asUser(db, u, `insert into inventory_locations (id,organization_id,name) values ($1,$2,$3)`, [id, org, name]);
 
-  assert.match(await expectError(addMat(mgr, tid(70), 'Vôi')), /row-level security/);
-  assert.match(await expectError(addMat(w1, tid(71), 'Vôi')), /row-level security/);
+  assert.match(await expectError(addMat(mgr, tid(70), 'Vôi thử')), /row-level security/);
+  assert.match(await expectError(addMat(w1, tid(71), 'Vôi thử')), /row-level security/);
   assert.match(await expectError(addLoc(mgr, tid(72), 'Kho phụ')), /row-level security/);
-  await addMat(fin, tid(73), 'Vôi');
-  await addMat(owner, tid(74), 'Phân hữu cơ');
+  await addMat(fin, tid(73), 'Vôi thử');
+  await addMat(owner, tid(74), 'Phân hữu cơ thử');
   await addLoc(fin, tid(75), 'Kho phụ');
-  assert.match(await expectError(addMat(fin, tid(76), 'Vôi')), /duplicate|unique/);
+  assert.match(await expectError(addMat(fin, tid(76), 'Vôi thử')), /duplicate|unique/);
   assert.match(await expectError(addLoc(owner, tid(77), 'Kho phụ')), /duplicate|unique/);
 
   // mọi thành viên đọc danh mục (nhân viên cần chọn vật tư khi ghi việc); người ngoài thì không

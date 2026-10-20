@@ -30,6 +30,8 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
   const [descr, setDescr] = useState('');
   const [newWt, setNewWt] = useState('');
   const [newDays, setNewDays] = useState('');
+  const [newNote, setNewNote] = useState('');
+  const [editId, setEditId] = useState<string | null>(null);
   const [defining, setDefining] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
   const bodyRef = useRef<HTMLTableSectionElement>(null);
@@ -102,7 +104,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
     const wtId = newWt || types[0]?.id || '';
     if (!wtId) return setError('Hãy chọn việc từ danh mục.');
     if (d === null || !Number.isInteger(d) || d < 1) return setError('Số ngày phải là số nguyên từ 1 trở lên.');
-    void run(async () => { await addStage(templateId, { work_type_id: wtId, duration_days: d }); setNewDays(''); });
+    void run(async () => { await addStage(templateId, { work_type_id: wtId, duration_days: d, note: newNote }); setNewDays(''); setNewNote(''); });
   }
 
   if (!tpl) return <p className="muted">{error ?? 'Đang tải…'}</p>;
@@ -161,27 +163,16 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
                 )}
                 <td>{i + 1}</td>
                 <td>
-                  {editable ? (
-                    <select className="pick" value={s.work_type_id ?? ''} aria-label={`Việc của giai đoạn ${i + 1}`}
-                      onChange={(e) => e.target.value && void run(() => updateStage(s.id, { work_type_id: e.target.value }))}>
-                      {!s.work_type_id && <option value="">{s.name} (tên cũ)</option>}
-                      {types.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-                    </select>
-                  ) : s.name}
+                  {s.name}
+                  {s.note && <span className="sub">{s.note}</span>}
                 </td>
                 <td className="num">
-                  {editable ? (
-                    <input className="days" inputMode="numeric" defaultValue={s.duration_days} key={`${s.id}-${s.duration_days}`} aria-label={`Số ngày giai đoạn ${i + 1}`}
-                      onBlur={(e) => {
-                        const d = parseNumber(e.target.value);
-                        if (d === null || !Number.isInteger(d) || d < 1) { setError('Số ngày phải là số nguyên từ 1 trở lên.'); e.target.value = String(s.duration_days); return; }
-                        if (d !== s.duration_days) void run(() => updateStage(s.id, { duration_days: d }));
-                      }} />
-                  ) : s.duration_days}
+                  {s.duration_days}
                 </td>
                 <td className="num muted">{r ? `${r.from}–${r.to}` : ''}</td>
                 {canEdit && (
                   <td className="act">
+                    <button className="icon" disabled={!editable} aria-label={`Sửa giai đoạn ${i + 1}`} onClick={() => setEditId(editId === s.id ? null : s.id)}>✎</button>{' '}
                     <button className="icon" disabled={!editable || i === 0} aria-label="Lên" onClick={() => moveBy(i, -1)}>↑</button>{' '}
                     <button className="icon" disabled={!editable || i === shown.length - 1} aria-label="Xuống" onClick={() => moveBy(i, 1)}>↓</button>{' '}
                     <button className="icon" disabled={!editable} aria-label={`Xóa giai đoạn ${i + 1}`}
@@ -194,12 +185,19 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
         </tbody>
       </table>
 
+      {canEdit && editId && stages.find((s) => s.id === editId) && (
+        <StageEditForm key={editId} stage={stages.find((s) => s.id === editId)!} types={types} busy={busy || !online}
+          onClose={() => setEditId(null)}
+          onSave={(v) => run(async () => { await updateStage(editId, v); setEditId(null); })} />
+      )}
+
       {canEdit && (
         <>
           <div className="quickadd">
             <select value={newWt || types[0]?.id || ''} onChange={(e) => setNewWt(e.target.value)} aria-label="Việc từ danh mục">
               {types.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
             </select>
+            <input value={newNote} onChange={(e) => setNewNote(e.target.value)} placeholder="Mô tả giai đoạn (không bắt buộc)" aria-label="Mô tả giai đoạn" />
             <input value={newDays} inputMode="numeric" onChange={(e) => setNewDays(e.target.value)} placeholder="Số ngày" aria-label="Số ngày" style={{ maxWidth: 110 }} />
             <button className="primary" disabled={busy || !online} onClick={onAdd}>Thêm</button>
           </div>
@@ -215,5 +213,39 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
       )}
       <p className="muted">Sửa mẫu không đổi các vụ đã tạo trước đó. Cầm ⠿ kéo để đổi thứ tự, hoặc dùng nút ↑ ↓.</p>
     </>
+  );
+}
+
+/** Sửa một giai đoạn: đổi việc, mô tả, số ngày rồi bấm Lưu (không lưu tự động để tránh nhầm) */
+function StageEditForm({ stage, types, busy, onSave, onClose }: {
+  stage: StageRow; types: { id: string; name: string }[]; busy: boolean;
+  onSave: (v: { work_type_id?: string; duration_days: number; note: string }) => Promise<void>; onClose: () => void;
+}) {
+  const [wt, setWt] = useState(stage.work_type_id ?? '');
+  const [note, setNote] = useState(stage.note ?? '');
+  const [days, setDays] = useState(String(stage.duration_days));
+  const [err, setErr] = useState<string | null>(null);
+  return (
+    <div className="card">
+      <h2>Sửa giai đoạn: {stage.name}</h2>
+      <div className="inline-form">
+        <label>Việc trong danh mục
+          <select value={wt} onChange={(e) => setWt(e.target.value)}>
+            {!stage.work_type_id && <option value="">{stage.name} (tên cũ)</option>}
+            {types.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+          </select>
+        </label>
+        <label>Mô tả<input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} /></label>
+        <label>Số ngày<input value={days} inputMode="numeric" onChange={(e) => setDays(e.target.value)} /></label>
+        {err && <p className="msg error" role="alert">{err}</p>}
+        <button className="primary" disabled={busy} onClick={() => {
+          const d = parseNumber(days);
+          if (d === null || !Number.isInteger(d) || d < 1) return setErr('Số ngày phải là số nguyên từ 1 trở lên.');
+          setErr(null);
+          void onSave({ ...(wt && wt !== stage.work_type_id ? { work_type_id: wt } : {}), duration_days: d, note }).catch(() => undefined);
+        }}>Lưu thay đổi</button>
+        <button className="secondary" onClick={onClose}>Đóng</button>
+      </div>
+    </div>
   );
 }

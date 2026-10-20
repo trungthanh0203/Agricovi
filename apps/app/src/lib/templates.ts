@@ -168,14 +168,15 @@ export async function loadTemplate(id: string): Promise<{ template: TemplateRow;
   return { template: t as unknown as TemplateRow, stages: (st ?? []) as StageRow[] };
 }
 
-export async function addStage(templateId: string, s: { work_type_id: string; duration_days: number }): Promise<void> {
+export async function addStage(templateId: string, s: { work_type_id: string; duration_days: number; note?: string }): Promise<void> {
   needOnline('thêm giai đoạn');
-  await ok(client().from('template_stages').insert({ template_id: templateId, work_type_id: s.work_type_id, duration_days: s.duration_days }));
+  await ok(client().from('template_stages').insert({ template_id: templateId, work_type_id: s.work_type_id, duration_days: s.duration_days, note: s.note?.trim() || null }));
 }
 /** Đổi việc (chọn từ danh mục) và/hoặc số ngày của giai đoạn */
-export async function updateStage(id: string, s: { work_type_id?: string; duration_days?: number }): Promise<void> {
+export async function updateStage(id: string, s: { work_type_id?: string; duration_days?: number; note?: string | null }): Promise<void> {
   needOnline('sửa giai đoạn');
-  await ok(client().from('template_stages').update(s).eq('id', id));
+  const patch = { ...s, ...(s.note !== undefined ? { note: s.note?.trim() || null } : {}) };
+  await ok(client().from('template_stages').update(patch).eq('id', id));
 }
 export async function deleteStage(id: string): Promise<void> {
   needOnline('xóa giai đoạn');
