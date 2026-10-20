@@ -3,11 +3,12 @@ import { SyncBadge } from '../components/SyncBadge';
 import { db } from '../lib/db';
 import { useRecordSync } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
+import type { TabId } from '../lib/tabs';
 import { useAuth } from '../lib/auth';
 import { authorLabel, canManageProduction } from '../lib/roles';
 import { retryFailed } from '../lib/outbox';
 
-export function HomeTab({ onLog, onHistory, goProduction }: { onLog: () => void; onHistory: () => void; goProduction: () => void }) {
+export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHistory: () => void; onGo: (tab: TabId, section?: string) => void }) {
   const { active } = useOrgs();
   const sync = useRecordSync();
   const { session } = useAuth();
@@ -45,7 +46,9 @@ export function HomeTab({ onLog, onHistory, goProduction }: { onLog: () => void;
             <p className="muted">Vụ đang chuẩn bị hoặc tạm dừng chỉ ghi việc được sau khi bấm "Bắt đầu sản xuất" hoặc "Tiếp tục" ở màn Sản xuất.</p>
           )}
           {canManage ? (
-            <button className="primary" onClick={goProduction}>{mine.length === 0 ? 'Tạo khu trồng và vụ đầu tiên' : 'Mở màn Sản xuất'}</button>
+            <button className="primary" onClick={() => (mine.length === 0 && areas.every((a) => a.organization_id !== active.id) ? onGo('declare', 'areas') : onGo('production', 'cycles'))}>
+              {mine.length === 0 ? (areas.some((a) => a.organization_id === active.id) ? 'Tạo vụ đầu tiên' : 'Thêm khu trồng đầu tiên') : 'Mở màn Sản xuất'}
+            </button>
           ) : (
             <p className="muted">Hãy nhờ chủ cơ sở hoặc quản lý {mine.length === 0 ? 'tạo vụ trồng' : 'bắt đầu sản xuất'}.</p>
           )}

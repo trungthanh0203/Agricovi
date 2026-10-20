@@ -2,6 +2,10 @@
 
 Tài liệu này dành cho **chủ cơ sở, quản lý, người phụ trách kho & chi phí và nhân viên** dùng thử app. Bạn không cần biết về công nghệ. Nếu gặp chỗ khó hiểu, đó là lỗi của app, không phải lỗi của bạn: hãy ghi lại và báo cho chúng tôi (xem cuối trang).
 
+## Bố cục 6 tab
+
+**Trang chủ** (việc hôm nay) · **Sản xuất** (Mùa vụ, Thu hoạch, Kho) · **Khai báo** (Khu trồng, Vật tư và kho) · **Tổ chức** (cơ sở và gói, nhân sự, tổ lao động, hộ thành viên/HTX) · **Báo cáo** (Chi phí, Doanh thu, Tổng kết vụ) · **Hồ sơ** (tài khoản, lời mời, quyền của tôi). Khai báo, Tổ chức, Báo cáo chỉ hiện với người có quyền. Một số mục ghi "Sắp có" sẽ làm ở các bản sau (quy trình mùa vụ mẫu, chức vụ, báo cáo theo nhu cầu).
+
 ## Trước khi thử (dành cho người cài đặt)
 
 Người phụ trách kỹ thuật làm một lần trước khi mời người dùng thử:
@@ -23,10 +27,10 @@ Bảng dưới là **mặc định theo vai trò**. Chủ cơ sở có thể **c
 
 ## Bài thử 1: Chuẩn bị kho (người Kho & chi phí hoặc chủ, cần có mạng)
 
-1. Vào **Vật tư & chi phí → Danh mục**.
+1. Vào tab **Khai báo → Vật tư và kho** (danh mục). Khu trồng cũng khai báo ở **Khai báo → Khu trồng**.
 2. Thêm một **kho** (ví dụ "Kho chính").
 3. Thêm vài **vật tư** (ví dụ "Phân NPK" tính bằng kg). Có thể đặt mức "sắp hết".
-4. Quay lại **Tồn kho → Nhập kho**: chọn vật tư, nhập số lượng và **giá nhập**.
+4. Vào **Sản xuất → Kho → Nhập kho**: chọn vật tư, nhập số lượng và **giá nhập**.
    - Nếu chưa biết giá, để trống. App sẽ ghi rõ là "chưa ghi giá" chứ không tự đoán.
 5. Kiểm tra: tồn kho hiện đúng số bạn vừa nhập.
 
@@ -40,28 +44,28 @@ Bảng dưới là **mặc định theo vai trò**. Chủ cơ sở có thể **c
 3. **Thử khi mất mạng:** tắt Wi-Fi và dữ liệu di động, rồi ghi thêm một việc kèm vật tư.
    - App phải báo "Đã lưu trên thiết bị — chưa đồng bộ" và không mất dữ liệu.
 4. Bật mạng lại. Sau ít phút, nhãn phải đổi thành "Đã đồng bộ".
-5. Người Kho & chi phí mở **Tồn kho**: số tồn phải giảm đúng bằng số đã dùng.
-6. Mở **Lịch sử nhật ký** và **Giao dịch gần đây** (mục Tồn kho): mỗi dòng phải hiện **người làm và vai trò**, ví dụ "Bón phân - Công (Nhân viên sản xuất)" và "Phân NPK 4 kg - Công (Nhân viên sản xuất)". Việc bạn vừa ghi khi mất mạng hiện "Bạn" cho tới khi gửi xong.
+5. Người có quyền Kho mở **Sản xuất → Kho**: số tồn phải giảm đúng bằng số đã dùng.
+6. Mở **Sản xuất → Mùa vụ → Lịch sử nhật ký** và **Sản xuất → Kho → Giao dịch gần đây**: mỗi dòng phải hiện **người làm và vai trò**, ví dụ "Bón phân - Công (Nhân viên sản xuất)" và "Phân NPK 4 kg - Công (Nhân viên sản xuất)". Việc bạn vừa ghi khi mất mạng hiện "Bạn" cho tới khi gửi xong.
 
 ## Bài thử 3: Ghi thu hoạch (mọi người)
 
-1. Vào **Vật tư & chi phí → Thu hoạch → Ghi thu hoạch**.
+1. Vào **Sản xuất → Thu hoạch → Ghi thu hoạch**.
 2. Nhập số kg thu, phân loại (không bắt buộc) và hao hụt (nếu có). Hao hụt nằm trong số kg đã thu.
 3. Thử **khi mất mạng** như bài 2: ghi mới phải lưu được trên điện thoại và tự gửi khi có mạng.
 4. Có mạng và phiếu đã gửi xong: thử **Sửa** và **Hủy phiếu** (hủy cần ghi lý do; phiếu đã hủy không khôi phục được). Khi mất mạng, hai nút này ẩn đi vì sửa và hủy cần có mạng.
 
 ## Bài thử 4: Chi phí và bán hàng (chủ hoặc Kho & chi phí)
 
-1. **Chi phí → Ghi chi phí**: chọn nhóm (vật tư, nhân công, điện nước…), loại và số tiền.
+1. Vào tab **Báo cáo → Chi phí → Ghi chi phí**: chọn nhóm (vật tư, nhân công, điện nước…), loại và số tiền.
    - "Tiền thực chi" là tiền đã bỏ ra thật.
    - "Ước tính" hoặc "phân bổ" **bắt buộc ghi cách tính** vào ô ghi chú.
    - Đừng ghi "Vật tư đã dùng (ghi tay)" cho vật tư xuất từ kho, vì kho đã tự tính.
-2. **Doanh thu → Ghi bán hàng**: nhập số kg bán và số tiền thu được.
+2. **Báo cáo → Doanh thu → Ghi bán hàng**: nhập số kg bán và số tiền thu được.
 3. Với tài khoản **quản lý**: các mục này chỉ xem, không có nút ghi hay sửa.
 
 ## Bài thử 5: Xem tổng kết vụ (chủ, quản lý, Kho & chi phí)
 
-1. Vào **Vật tư & chi phí → Tổng kết**, chọn vụ.
+1. Vào **Báo cáo → Tổng kết vụ**, chọn vụ.
 2. Đọc các dòng cảnh báo màu vàng. Ví dụ "Chưa ghi thu hoạch", "Có lần dùng vật tư chưa biết giá vốn". Đó là app đang nói **số liệu chưa đủ**.
 3. **Giá thành mỗi kg** chỉ hiện khi có thu hoạch và đủ giá vốn. Nếu chưa đủ, app ghi "Chưa tính được".
 4. Dòng **Doanh thu trừ chi phí đã ghi** chỉ hiện khi đủ dữ liệu và không phải lợi nhuận chính thức.
@@ -76,9 +80,9 @@ Bảng dưới là **mặc định theo vai trò**. Chủ cơ sở có thể **c
 
 ## Bài thử 7: Chủ cấp quyền theo mục (chỉ chủ cơ sở)
 
-1. Vào **Cơ sở của tôi → Thành viên**, mở một nhân viên → **Quyền vật tư, chi phí, thu hoạch**.
+1. Vào tab **Tổ chức → Nhân sự**, mở một nhân viên → **Quyền vật tư, chi phí, thu hoạch**.
 2. Với mỗi mục (Kho, Thu hoạch, Chi phí, Doanh thu, Tổng kết) chọn: **Theo vai trò**, **Không thấy**, **Chỉ xem** hoặc **Xem và nhập liệu**. Bấm **Lưu quyền**.
-3. Trên máy của nhân viên đó, đóng rồi mở lại app: tab **Vật tư & chi phí** chỉ còn đúng các mục được cấp. Mục "Chỉ xem" thì không có nút ghi. Không được cấp mục nào thì cả tab **biến mất**.
+3. Trên máy của nhân viên đó, đóng rồi mở lại app: các mục Thu hoạch, Kho (trong Sản xuất) và Chi phí, Doanh thu, Tổng kết vụ (trong tab Báo cáo) chỉ còn đúng những mục được cấp. Mục "Chỉ xem" thì không có nút ghi. Không được cấp mục nào của tab Báo cáo thì cả tab **biến mất**. Tab **Hồ sơ** liệt kê "Tôi được làm gì" để họ tự xem.
 4. Thử cấp "Chi phí: Xem và nhập liệu" cho một nhân viên: họ ghi được chi phí. Rút lại bằng "Không thấy": họ không còn thấy.
 5. Lưu ý: nhân viên vẫn **ghi việc kèm vật tư đã dùng** bình thường, không phụ thuộc quyền Kho.
 

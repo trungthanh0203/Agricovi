@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Collapsible } from '../components/Collapsible';
-import { CatalogSection } from '../components/CatalogSection';
-import { ExpenseSection } from '../components/ExpenseSection';
-import { HarvestSection } from '../components/HarvestSection';
-import { SalesSection } from '../components/SalesSection';
-import { SummarySection } from '../components/SummarySection';
 import { StockEntry } from '../components/StockEntry';
 import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
@@ -13,80 +8,17 @@ import {
   fetchRecentTransactions, formatMoney, formatQty, pendingDeltas, syncInventoryDown, TXN_TYPE_LABEL, type TxnHistoryRow,
 } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
-import { canPerm, type PermModule } from '../lib/permissions';
+import { canPerm } from '../lib/permissions';
 import { authorLabel } from '../lib/roles';
 
-type View = 'stock' | 'harvest' | 'expense' | 'sales' | 'summary' | 'catalog' | 'receipt' | 'adjustment';
-
-/**
- * Tab "Vật tư & chi phí". Mỗi mục chỉ hiện với người được cấp quyền (chủ cơ sở cấp cho từng người, D27):
- * kho, thu hoạch, chi phí, doanh thu, tổng kết. Ẩn/hiện ở đây chỉ là giao diện; máy chủ luôn kiểm tra lại.
- */
-export function InventoryTab() {
+/** Kho (mục con của Sản xuất): tồn kho, lịch sử giao dịch, nhập kho, điều chỉnh. Danh mục vật tư/kho nằm ở tab Khai báo. */
+export function StockPanel() {
   const { active } = useOrgs();
-  const [picked, setPicked] = useState<View | null>(null);
+  const [mode, setMode] = useState<'list' | 'receipt' | 'adjustment'>('list');
   if (!active) return null;
-  const can = (m: PermModule, need: 'view' | 'edit' = 'view') => canPerm(active.perms, m, need);
-
-  const sections: { id: View; label: string }[] = [
-    can('inventory') ? { id: 'stock' as View, label: 'Tồn kho' } : null,
-    can('harvest') ? { id: 'harvest' as View, label: 'Thu hoạch' } : null,
-    can('expenses') ? { id: 'expense' as View, label: 'Chi phí' } : null,
-    can('sales') ? { id: 'sales' as View, label: 'Doanh thu' } : null,
-    can('summary') ? { id: 'summary' as View, label: 'Tổng kết' } : null,
-    can('inventory') ? { id: 'catalog' as View, label: 'Danh mục' } : null,
-  ].filter((x): x is { id: View; label: string } => x !== null);
-
-  const isEntry = picked === 'receipt' || picked === 'adjustment';
-  const view: View | null = isEntry
-    ? (can('inventory', 'edit') ? picked : (sections[0]?.id ?? null))
-    : picked && sections.some((x) => x.id === picked) ? picked : (sections[0]?.id ?? null);
-  const canWrite = can('inventory', 'edit');
-
-  if (!view) {
-    return (
-      <section>
-        <h1>Vật tư & chi phí</h1>
-        <div className="card">
-          <p>Bạn chưa được cấp quyền xem mục nào ở đây.</p>
-          <p className="muted">Chủ cơ sở cấp quyền cho từng người. Khi dùng vật tư lúc ghi việc, hãy chọn vật tư trong màn hình "Ghi việc vừa làm".</p>
-        </div>
-      </section>
-    );
-  }
-
-  if (view === 'receipt' || view === 'adjustment') {
-    return <StockEntry orgId={active.id} mode={view} onClose={() => setPicked('stock')} />;
-  }
-
-  return (
-    <section>
-      <h1>Vật tư & chi phí</h1>
-      {sections.length > 1 && (
-        <div className="chips" role="tablist" aria-label="Mục vật tư">
-          {sections.map((x) => (
-            <button key={x.id} role="tab" aria-selected={view === x.id} className={view === x.id ? 'chip active' : 'chip'} onClick={() => setPicked(x.id)}>
-              {x.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {view === 'harvest' ? (
-        <HarvestSection />
-      ) : view === 'expense' ? (
-        <ExpenseSection />
-      ) : view === 'sales' ? (
-        <SalesSection />
-      ) : view === 'summary' ? (
-        <SummarySection />
-      ) : view === 'catalog' ? (
-        <CatalogSection orgId={active.id} canWrite={canWrite} />
-      ) : (
-        <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setPicked('receipt')} onAdjust={() => setPicked('adjustment')} />
-      )}
-    </section>
-  );
+  const canWrite = canPerm(active.perms, 'inventory', 'edit');
+  if (mode !== 'list') return <StockEntry orgId={active.id} mode={mode} onClose={() => setMode('list')} />;
+  return <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setMode('receipt')} onAdjust={() => setMode('adjustment')} />;
 }
 
 function StockList({ orgId, canWrite, onReceipt, onAdjust }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void }) {

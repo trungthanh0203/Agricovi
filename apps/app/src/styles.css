@@ -136,3 +136,6 @@ details.fold.inline > .fold-body { padding: 0 0 8px; }
 .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 4px -16px 10px; padding: 2px 16px; gap: 8px; }
 .chips::-webkit-scrollbar { display: none; }
 .chip { flex: 0 0 auto; min-height: 40px; padding: 0 16px; white-space: nowrap; }
+
+/* Sáu tab: chữ nhỏ lại để vừa màn điện thoại */
+.tabs.dense .tab { font-size: 12px; padding: 0 2px; min-height: 52px; }

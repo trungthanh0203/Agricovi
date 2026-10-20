@@ -1,34 +1,27 @@
 import { useCallback, useEffect, useState } from 'react';
 import { SYNC_STATE_LABEL_VI, type SyncState } from '@agriconnect/shared';
 import { AuthProvider, useAuth } from './lib/auth';
+import { purgeCachesIfUserChanged } from './lib/localData';
 import { countByState, flushOutbox } from './lib/outbox';
 import { OrgProvider, useOrgs } from './lib/orgs';
 import { supabase } from './lib/supabase';
+import { TAB_LABEL, visibleTabs, type TabId } from './lib/tabs';
 import { AuthScreen } from './screens/AuthScreen';
 import { CreateOrgScreen } from './screens/CreateOrgScreen';
-import { OrgTab } from './screens/OrgTab';
 import { CreateCycleScreen } from './screens/CreateCycleScreen';
+import { DeclareTab } from './screens/DeclareTab';
 import { HomeTab } from './screens/HomeTab';
 import { LogActivityScreen } from './screens/LogActivityScreen';
 import { LogsScreen } from './screens/LogsScreen';
-import { InventoryTab } from './screens/InventoryTab';
+import { OrgTab } from './screens/OrgTab';
 import { ProductionTab } from './screens/ProductionTab';
+import { ProfileTab } from './screens/ProfileTab';
+import { ReportsTab } from './screens/ReportsTab';
 import { syncDown } from './lib/production';
 import { SetupNotice } from './screens/SetupNotice';
 import { WelcomeScreen } from './screens/WelcomeScreen';
 import { ForcePasswordScreen } from './screens/ForcePasswordScreen';
-import { canPerm, PERM_MODULES } from './lib/permissions';
 import { fetchStaffStatus, type StaffStatus } from './lib/staff';
-
-type Tab = 'home' | 'production' | 'inventory' | 'org';
-
-// Bốn mục điều hướng chính theo v1.1 mục 3.2. Không thêm mục mới nếu chưa được duyệt.
-const TABS: { id: Tab; label: string; title: string }[] = [
-  { id: 'home', label: 'Trang chủ', title: 'Việc hôm nay' },
-  { id: 'production', label: 'Sản xuất', title: 'Khu trồng, vụ, nhật ký, chấm công' },
-  { id: 'inventory', label: 'Vật tư & chi phí', title: 'Kho, chi phí, thu hoạch' },
-  { id: 'org', label: 'Cơ sở của tôi', title: 'Thành viên, hồ sơ, gói dịch vụ' },
-];
 
 export function App() {
   if (!supabase) return <SetupNotice />;
@@ -55,6 +48,9 @@ function Gate() {
   }, [uid]);
   useEffect(() => { void loadStaff(); }, [loadStaff]);
 
+  // Tài khoản khác đăng nhập trên thiết bị này: bỏ bản lưu offline của người trước
+  useEffect(() => { if (uid) void purgeCachesIfUserChanged(uid); }, [uid]);
+
   if (loading) return <p className="center muted">Đang tải…</p>;
   if (!session || recovering) return <AuthScreen />;
   if (staff === undefined) return <p className="center muted">Đang tải…</p>;
@@ -66,9 +62,12 @@ function Gate() {
   if (orgs.length === 0) return <WelcomeScreen isStaff={Boolean(staff?.is_staff)} />;
   return <Shell />;
 }
+
 function Shell() {
   const { orgs, active, setActive } = useOrgs();
-  const [tabState, setTab] = useState<Tab>('home');
+  const [tabState, setTab] = useState<TabId>('home');
+  // mục con đang chọn của từng tab (nhớ khi chuyển qua lại)
+  const [subs, setSubs] = useState<Partial<Record<TabId, string>>>({});
   const [adding, setAdding] = useState(false);
   const [overlay, setOverlay] = useState<null | 'log' | 'cycle' | 'logs'>(null);
   const [online, setOnline] = useState(navigator.onLine);
@@ -76,10 +75,14 @@ function Shell() {
 
   const refresh = useCallback(async () => setCounts(await countByState()), []);
 
-  // Tab "Vật tư & chi phí" chỉ hiện với người được cấp quyền xem ít nhất một mục trong đó (D27)
-  const showInventory = PERM_MODULES.some((m) => canPerm(active?.perms, m));
-  const visibleTabs = TABS.filter((t) => t.id !== 'inventory' || showInventory);
-  const tab: Tab = visibleTabs.some((t) => t.id === tabState) ? tabState : 'home';
+  // Tab Khai báo, Tổ chức, Báo cáo chỉ hiện với người có quyền (xem lib/tabs.ts)
+  const tabs = visibleTabs(active);
+  const tab: TabId = tabs.includes(tabState) ? tabState : 'home';
+  const setSub = (t: TabId) => (s: string) => setSubs((cur) => ({ ...cur, [t]: s }));
+  const goTo = useCallback((t: TabId, section?: string) => {
+    setTab(t);
+    if (section) setSubs((cur) => ({ ...cur, [t]: section }));
+  }, []);
 
   useEffect(() => {
     const sync = () => void syncDown().catch(() => undefined).finally(() => void refresh());
@@ -136,25 +139,36 @@ function Shell() {
 
       <main className="content">
         {tab === 'home' ? (
-          <HomeTab onLog={() => setOverlay('log')} onHistory={() => setOverlay('logs')} goProduction={() => setTab('production')} />
+          <HomeTab onLog={() => setOverlay('log')} onHistory={() => setOverlay('logs')} onGo={goTo} />
         ) : tab === 'production' ? (
-          <ProductionTab onLog={() => setOverlay('log')} onHistory={() => setOverlay('logs')} onCreateCycle={() => setOverlay('cycle')} />
+          <ProductionTab
+            section={subs.production}
+            onSection={setSub('production')}
+            onLog={() => setOverlay('log')}
+            onHistory={() => setOverlay('logs')}
+            onCreateCycle={() => setOverlay('cycle')}
+            onGo={goTo}
+          />
+        ) : tab === 'declare' ? (
+          <DeclareTab section={subs.declare} onSection={setSub('declare')} />
         ) : tab === 'org' ? (
-          <OrgTab onAddOrg={() => setAdding(true)} />
+          <OrgTab section={subs.org} onSection={setSub('org')} />
+        ) : tab === 'reports' ? (
+          <ReportsTab section={subs.reports} onSection={setSub('reports')} />
         ) : (
-          <InventoryTab />
+          <ProfileTab onAddOrg={() => setAdding(true)} />
         )}
       </main>
 
-      <nav className="tabs" aria-label="Điều hướng chính" style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr)` }}>
-        {visibleTabs.map((t) => (
+      <nav className={tabs.length >= 6 ? 'tabs dense' : 'tabs'} aria-label="Điều hướng chính" style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
+        {tabs.map((t) => (
           <button
-            key={t.id}
-            className={t.id === tab ? 'tab active' : 'tab'}
-            aria-current={t.id === tab ? 'page' : undefined}
-            onClick={() => setTab(t.id)}
+            key={t}
+            className={t === tab ? 'tab active' : 'tab'}
+            aria-current={t === tab ? 'page' : undefined}
+            onClick={() => setTab(t)}
           >
-            {t.label}
+            {TAB_LABEL[t]}
           </button>
         ))}
       </nav>
