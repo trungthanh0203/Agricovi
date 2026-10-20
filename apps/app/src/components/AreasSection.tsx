@@ -4,55 +4,87 @@ import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
-import { createArea } from '../lib/production';
+import { createArea, updateArea } from '../lib/production';
 import { canManageProduction } from '../lib/roles';
 
-/** Khu trồng của cơ sở (tab Khai báo). Thêm khu trồng cần mạng (D24). */
+/** Khu trồng của cơ sở: bảng gọn, thêm nhanh một dòng, đổi tên, dừng/dùng lại. Cần mạng để thêm/sửa (D24). */
 export function AreasSection() {
   const { active } = useOrgs();
   const online = useOnline();
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
   const [name, setName] = useState('');
+  const [showOff, setShowOff] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   if (!active) return null;
 
-  const mine = areas.filter((a) => a.organization_id === active.id).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const canManage = canManageProduction(active.roles);
+  const rows = areas
+    .filter((a) => a.organization_id === active.id && (showOff || a.is_active !== false))
+    .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
 
-  async function onAdd(e: FormEvent) {
+  async function run(fn: () => Promise<unknown>) {
+    setBusy(true);
+    setError(null);
+    try { await fn(); } catch (err) { setError(friendlyError(err)); } finally { setBusy(false); }
+  }
+
+  function onAdd(e: FormEvent) {
     e.preventDefault();
     if (name.trim().length < 1) return setError('Hãy nhập tên khu trồng.');
-    setError(null);
-    setBusy(true);
-    try {
-      await createArea(active!.id, name);
-      setName('');
-    } catch (err) {
-      setError(friendlyError(err));
-    } finally {
-      setBusy(false);
-    }
+    void run(async () => { await createArea(active!.id, name); setName(''); });
   }
 
   return (
     <>
-      <p className="muted">Khu trồng là nơi diễn ra các vụ: nhà màng, ruộng, vườn… Mỗi vụ được tạo trên một khu trồng.</p>
-      {!online && canManage && <p className="msg warn" role="status">Đang offline: thêm khu trồng cần có mạng.</p>}
-      {mine.length === 0 && <p className="muted">Chưa có khu trồng nào.{canManage ? ' Hãy thêm khu trồng đầu tiên bên dưới.' : ''}</p>}
-      {mine.map((a) => (
-        <div className="card slim" key={a.id}><span>{a.name}</span></div>
-      ))}
+      {!online && canManage && <p className="msg warn" role="status">Đang offline: thêm và sửa khu trồng cần có mạng.</p>}
+      {error && <p className="msg error" role="alert">{error}</p>}
+
       {canManage && (
-        <form onSubmit={onAdd} className="inline-form" noValidate>
-          <label>
-            Tên khu trồng mới
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Nhà màng số 1" />
-          </label>
-          {error && <p className="msg error" role="alert">{error}</p>}
-          <button type="submit" className="primary" disabled={!online || busy}>Thêm khu trồng</button>
+        <form className="quickadd" onSubmit={onAdd} noValidate>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Thêm khu trồng mới: nhập tên" aria-label="Tên khu trồng mới" />
+          <button type="submit" className="primary" disabled={busy || !online}>Thêm</button>
         </form>
       )}
+
+      <table className="grid">
+        <thead><tr><th>Khu trồng ({rows.length})</th>{canManage && <th></th>}</tr></thead>
+        <tbody>
+          {rows.length === 0 && <tr><td colSpan={2} className="muted">Chưa có khu trồng nào.{canManage ? ' Hãy thêm khu trồng đầu tiên ở ô trên.' : ''}</td></tr>}
+          {rows.map((a) => (
+            <tr key={a.id} className={a.is_active === false ? 'off' : ''}>
+              <td>
+                {editing === a.id ? (
+                  <div className="quickadd">
+                    <input value={editName} onChange={(e) => setEditName(e.target.value)} aria-label="Tên khu trồng" />
+                    <button className="primary" disabled={busy || !online || editName.trim().length < 1}
+                      onClick={() => void run(async () => { await updateArea(a.id, { name: editName }); setEditing(null); })}>Lưu</button>
+                  </div>
+                ) : (
+                  <>{a.name}{a.is_active === false && <span className="sub">Đã dừng</span>}</>
+                )}
+              </td>
+              {canManage && (
+                <td className="act">
+                  {editing === a.id ? (
+                    <button className="icon" aria-label="Đóng" onClick={() => setEditing(null)}>✕</button>
+                  ) : (
+                    <>
+                      <button className="icon" disabled={busy || !online} aria-label={a.is_active === false ? `Dùng lại ${a.name}` : `Dừng ${a.name}`}
+                        onClick={() => void run(() => updateArea(a.id, { is_active: a.is_active === false }))}>{a.is_active === false ? '▶' : '⏸'}</button>{' '}
+                      <button className="icon" aria-label={`Sửa ${a.name}`} onClick={() => { setEditing(a.id); setEditName(a.name); }}>✎</button>
+                    </>
+                  )}
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả khu trồng đã dừng</label>
+      <p className="muted">Khu trồng đã dừng vẫn giữ lịch sử nhưng không chọn được để tạo vụ mới.</p>
     </>
   );
 }

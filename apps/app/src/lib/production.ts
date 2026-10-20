@@ -1,11 +1,12 @@
 import type { CycleStatus } from '@agriconnect/shared';
 import { db, type AreaRow, type CycleRow, type LogRow } from './db';
 import { syncFinanceDown } from './finance';
+import { refreshCatalogCache } from './templates';
 import { syncHarvestsDown } from './harvest';
 import { toLocalInput } from './hooks';
 import { syncInventoryDown } from './inventory';
 import { enqueue, flushOutbox } from './outbox';
-import { insertAndCache, updateAndCache } from './serverWrite';
+import { insertAndCache, requireOnline, updateAndCache } from './serverWrite';
 import { supabase } from './supabase';
 
 const LOG_COLUMNS =
@@ -21,20 +22,17 @@ export async function syncDown(): Promise<void> {
   );
   const fresh = <T extends { id: string }>(rows: T[] | null) => (rows ?? []).filter((r) => !pendingIds.has(r.id));
 
-  const [areas, cycles, workTypes, cropTypes, logs] = await Promise.all([
-    supabase.from('production_areas').select('id, organization_id, name'),
+  const [areas, cycles, logs] = await Promise.all([
+    supabase.from('production_areas').select('id, organization_id, name, is_active'),
     supabase.from('production_cycles').select('id, owner_org_id, area_id, crop_type_id, status, start_date, note, version, created_at'),
-    supabase.from('work_types').select('id, code, name, field_schema, organization_id').eq('is_active', true),
-    supabase.from('crop_types').select('id, code, name, organization_id').eq('is_active', true),
     supabase.from('activity_logs').select(LOG_COLUMNS).order('performed_at', { ascending: false }).limit(200),
   ]);
-  for (const r of [areas, cycles, workTypes, cropTypes, logs]) if (r.error) throw r.error;
+  for (const r of [areas, cycles, logs]) if (r.error) throw r.error;
+  await refreshCatalogCache(); // cây trồng, loại việc và bản chỉnh của cơ sở
 
-  await db.transaction('rw', [db.areas, db.cycles, db.workTypes, db.cropTypes, db.logs], async () => {
+  await db.transaction('rw', [db.areas, db.cycles, db.logs], async () => {
     await db.areas.bulkPut(fresh(areas.data as AreaRow[]));
     await db.cycles.bulkPut(fresh(cycles.data as CycleRow[]));
-    await db.workTypes.bulkPut(workTypes.data ?? []);
-    await db.cropTypes.bulkPut(cropTypes.data ?? []);
     await db.logs.bulkPut(fresh(logs.data as LogRow[]));
   });
   // Vật tư & kho: lỗi ở đây không làm hỏng đồng bộ sản xuất ở trên
@@ -84,6 +82,18 @@ export async function createArea(organizationId: string, name: string): Promise<
   const row: AreaRow = { id, organization_id: organizationId, name: name.trim() };
   await insertAndCache('production_areas', { ...row }, { ...row }, 'thêm khu trồng');
   return id;
+}
+
+/** Đổi tên hoặc dừng/dùng lại khu trồng (cần mạng). Khu trồng đã dừng giữ lịch sử, không dùng để tạo vụ mới. */
+export async function updateArea(id: string, c: { name?: string; is_active?: boolean }): Promise<void> {
+  requireOnline('sửa khu trồng');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const patch: Record<string, unknown> = {};
+  if (c.name !== undefined) patch.name = c.name.trim();
+  if (c.is_active !== undefined) patch.is_active = c.is_active;
+  const { error } = await supabase.from('production_areas').update(patch).eq('id', id);
+  if (error) throw new Error(error.message);
+  await db.areas.update(id, patch);
 }
 
 export interface NewCycle {

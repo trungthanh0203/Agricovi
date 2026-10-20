@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useCatalog } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type FieldDef } from '../lib/db';
 import { friendlyError } from '../lib/errors';
@@ -8,7 +9,7 @@ import { editLog } from '../lib/production';
 /** Sửa nhật ký đã ghi (FR-LOG-005). Không đổi được vụ hay loại việc: muốn đổi hãy hủy và ghi lại. */
 export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () => void }) {
   const log = useLiveQuery(() => db.logs.get(logId), [logId]);
-  const workTypes = useLiveQuery(() => db.workTypes.toArray(), [], []);
+  const { workTypes } = useCatalog();
   const [when, setWhen] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string> | null>(null);
   const [note, setNote] = useState<string | null>(null);

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useCatalog } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
 import { HarvestSection } from '../components/HarvestSection';
@@ -48,7 +49,7 @@ function CyclesPanel({ onCreateCycle, onLog, onHistory, onGo }: Pick<Props, 'onC
   const [actionError, setActionError] = useState<string | null>(null);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
-  const cropTypes = useLiveQuery(() => db.cropTypes.toArray(), [], []);
+  const { cropTypes } = useCatalog();
   const [contexts, setContexts] = useState<QuotaContext[]>([]);
 
   const canManage = canManageProduction(active?.roles);

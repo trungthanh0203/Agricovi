@@ -20,5 +20,10 @@ export function friendlyError(err: unknown): string {
   if (coded && coded[1] !== 'FORBIDDEN') return coded[2]!;
   if (/row-level security|permission denied|FORBIDDEN/i.test(msg)) return 'Bạn chưa có quyền thực hiện thao tác này.';
   if (/NOT_FOUND/.test(msg)) return 'Không tìm thấy dữ liệu. Hãy tải lại rồi thử lại.';
-  return 'Có lỗi xảy ra. Hãy thử lại; nếu vẫn lỗi, liên hệ hỗ trợ.';
+  // Cơ sở dữ liệu chưa chạy migration mới (thiếu cột/hàm/bảng): nói rõ để người cài đặt biết việc cần làm
+  if (/schema cache|could not find the|does not exist|column .* of relation|PGRST20[0-9]/i.test(msg)) {
+    return 'Cơ sở dữ liệu chưa được cập nhật lên bản mới nhất. Hãy nhờ người cài đặt chạy "npx supabase db push" rồi tải lại app.';
+  }
+  // Lỗi lạ: kèm dòng chi tiết ngắn để gửi cho người hỗ trợ (không còn câu chung chung khó chẩn đoán)
+  return msg ? `Có lỗi xảy ra. Hãy thử lại; nếu vẫn lỗi, gửi dòng này cho người hỗ trợ: ${msg.slice(0, 160)}` : 'Có lỗi xảy ra. Hãy thử lại; nếu vẫn lỗi, liên hệ hỗ trợ.';
 }

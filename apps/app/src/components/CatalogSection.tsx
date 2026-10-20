@@ -1,214 +1,190 @@
 import { useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Collapsible } from './Collapsible';
-import { db, type LocationRow, type MaterialRow } from '../lib/db';
+import { db, type MaterialRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
+import { useOnline } from '../lib/hooks';
 import {
   createLocation, createMaterial, createUnit, formatQty, parseNumber, updateLocation, updateMaterial,
 } from '../lib/inventory';
 
-/** Danh mục vật tư, kho, đơn vị. Chỉ thay đổi khi có mạng (quyết định D22). */
+/**
+ * Danh mục vật tư, kho, đơn vị riêng: các bảng gọn, thêm nhanh một dòng, đổi tên, dừng/dùng lại.
+ * Chỉ thay đổi khi có mạng (D22, D24). Đơn vị có sẵn (kg, lít, bao…) dùng chung, không sửa.
+ */
 export function CatalogSection({ orgId, canWrite }: { orgId: string; canWrite: boolean }) {
+  const online = useOnline();
   const materials = useLiveQuery(() => db.materials.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const locations = useLiveQuery(() => db.locations.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const units = useLiveQuery(() => db.units.toArray(), [], []);
   const orgUnits = units.filter((u) => u.organization_id === orgId);
   const allUnits = [...units].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const unitName = (id: string) => units.find((u) => u.id === id)?.name ?? '';
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showOff, setShowOff] = useState(false);
   const [editMat, setEditMat] = useState<string | null>(null);
   const [editLoc, setEditLoc] = useState<string | null>(null);
 
   const [mName, setMName] = useState('');
-  const [mCat, setMCat] = useState('');
   const [mUnit, setMUnit] = useState('');
-  const [mThr, setMThr] = useState('');
   const [lName, setLName] = useState('');
   const [uName, setUName] = useState('');
 
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
     setError(null);
-    try {
-      await fn();
-    } catch (e) {
-      setError(friendlyError(e));
-    } finally {
-      setBusy(false);
-    }
+    try { await fn(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
 
-  function thr(raw: string): number | null | undefined {
-    const v = parseNumber(raw);
-    if (v !== null && (Number.isNaN(v) || v < 0)) {
-      setError('Mức cảnh báo phải là số không âm.');
-      return undefined;
-    }
-    return v;
-  }
+  const mats = materials.filter((m) => showOff || m.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const locs = locations.filter((l) => showOff || l.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const writable = canWrite && online;
 
   function onAddMaterial(e: FormEvent) {
     e.preventDefault();
     if (mName.trim().length < 2) return setError('Hãy nhập tên vật tư.');
     const unitId = mUnit || allUnits[0]?.id;
     if (!unitId) return setError('Chưa tải được danh sách đơn vị. Hãy kết nối mạng rồi thử lại.');
-    const t = thr(mThr);
-    if (t === undefined) return;
-    void run(async () => {
-      await createMaterial(orgId, { name: mName, category: mCat, unitId, threshold: t });
-      setMName(''); setMCat(''); setMThr('');
-    });
+    void run(async () => { await createMaterial(orgId, { name: mName, category: '', unitId, threshold: null }); setMName(''); });
   }
 
   return (
-    <div>
-      {!navigator.onLine && <p className="msg warn">Đang offline: chỉ xem được danh mục. Cần có mạng để thêm hoặc sửa.</p>}
+    <>
+      {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được danh mục. Thêm và sửa cần có mạng.</p>}
       {!canWrite && <p className="muted">Bạn chỉ được xem danh mục. Chủ cơ sở cấp quyền nhập liệu kho cho từng người.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
-      <Collapsible title="Vật tư" defaultOpen summary={materials.length > 0 ? `${materials.length} vật tư` : 'Chưa có'}>
-        {materials.length === 0 && <p className="muted">Chưa có vật tư nào.</p>}
-        {[...materials].sort((a, b) => a.name.localeCompare(b.name, 'vi')).map((m) => (
-          <MaterialItem key={m.id} m={m} unitName={units.find((u) => u.id === m.base_unit_id)?.name ?? ''}
-            editing={editMat === m.id} canWrite={canWrite && navigator.onLine} busy={busy}
-            onEdit={() => setEditMat(editMat === m.id ? null : m.id)}
-            onSave={(c) => run(async () => { await updateMaterial(m.id, c); setEditMat(null); })}
-            onThrError={setError} />
-        ))}
-        {canWrite && (
-          <Collapsible inline title="＋ Thêm vật tư">
-          <form className="inline-form" onSubmit={onAddMaterial} noValidate>
-            <label>
-              Tên vật tư
-              <input value={mName} onChange={(e) => setMName(e.target.value)} placeholder="Ví dụ: Phân NPK 20-20-15" />
-            </label>
-            <label>
-              Nhóm (không bắt buộc)
-              <input value={mCat} onChange={(e) => setMCat(e.target.value)} placeholder="Phân bón, thuốc BVTV, giống…" />
-            </label>
-            <label>
-              Đơn vị tính
-              <select value={mUnit || allUnits[0]?.id || ''} onChange={(e) => setMUnit(e.target.value)}>
-                {allUnits.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
-            </label>
-            <label>
-              Báo "sắp hết" khi tồn còn từ mức này trở xuống (không bắt buộc)
-              <input value={mThr} inputMode="decimal" onChange={(e) => setMThr(e.target.value)} />
-            </label>
-            <button type="submit" className="secondary" disabled={busy || !navigator.onLine}>Thêm vật tư</button>
-          </form>
-          </Collapsible>
-        )}
-      </Collapsible>
+      <h2 className="sect">Vật tư ({mats.length})</h2>
+      {canWrite && (
+        <form className="quickadd" onSubmit={onAddMaterial} noValidate>
+          <input value={mName} onChange={(e) => setMName(e.target.value)} placeholder="Thêm vật tư mới: nhập tên" aria-label="Tên vật tư mới" />
+          <select value={mUnit || allUnits[0]?.id || ''} onChange={(e) => setMUnit(e.target.value)} aria-label="Đơn vị tính" style={{ maxWidth: 130 }}>
+            {allUnits.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+          <button type="submit" className="primary" disabled={busy || !online}>Thêm</button>
+        </form>
+      )}
+      <table className="grid">
+        <thead><tr><th>Vật tư</th><th>Nhóm</th><th className="num">Báo sắp hết ≤</th>{canWrite && <th></th>}</tr></thead>
+        <tbody>
+          {mats.length === 0 && <tr><td colSpan={4} className="muted">Chưa có vật tư nào.</td></tr>}
+          {mats.map((m) => (
+            <tr key={m.id} className={m.is_active ? '' : 'off'}>
+              <td>{m.name}<span className="sub">{unitName(m.base_unit_id)}{m.is_active ? '' : ' · đã dừng'}</span></td>
+              <td className="muted">{m.category ?? '—'}</td>
+              <td className="num">{m.reorder_threshold != null ? formatQty(m.reorder_threshold) : '—'}</td>
+              {canWrite && (
+                <td className="act">
+                  <button className="icon" disabled={busy || !writable} aria-label={m.is_active ? `Dừng ${m.name}` : `Dùng lại ${m.name}`}
+                    onClick={() => void run(() => updateMaterial(m.id, { is_active: !m.is_active }))}>{m.is_active ? '⏸' : '▶'}</button>{' '}
+                  <button className="icon" aria-label={`Sửa ${m.name}`} onClick={() => setEditMat(editMat === m.id ? null : m.id)}>✎</button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {editMat && mats.concat(materials).find((m) => m.id === editMat) && (
+        <MaterialEditor key={editMat} m={materials.find((x) => x.id === editMat)!} busy={busy || !writable}
+          onSave={(c) => void run(async () => { await updateMaterial(editMat, c); setEditMat(null); })} onClose={() => setEditMat(null)} />
+      )}
 
-      <Collapsible title="Kho" summary={locations.length > 0 ? `${locations.length} kho` : 'Chưa có — hãy thêm kho đầu tiên'} warn={locations.length === 0 && canWrite}>
-        {locations.length === 0 && <p className="muted">Chưa có kho nào. Hãy tạo kho đầu tiên (ví dụ "Kho chính") để nhập vật tư.</p>}
-        {[...locations].sort((a, b) => a.name.localeCompare(b.name, 'vi')).map((l) => (
-          <LocationItem key={l.id} l={l} editing={editLoc === l.id} canWrite={canWrite && navigator.onLine} busy={busy}
-            onEdit={() => setEditLoc(editLoc === l.id ? null : l.id)}
-            onSave={(c) => run(async () => { await updateLocation(l.id, c); setEditLoc(null); })} />
-        ))}
-        {canWrite && (
-          <Collapsible inline title="＋ Thêm kho">
-          <form className="inline-form" noValidate onSubmit={(e) => {
-            e.preventDefault();
-            if (lName.trim().length < 2) return setError('Hãy nhập tên kho.');
-            void run(async () => { await createLocation(orgId, lName); setLName(''); });
-          }}>
-            <label>
-              Tên kho
-              <input value={lName} onChange={(e) => setLName(e.target.value)} placeholder="Kho chính" />
-            </label>
-            <button type="submit" className="secondary" disabled={busy || !navigator.onLine}>Thêm kho</button>
-          </form>
-          </Collapsible>
-        )}
-      </Collapsible>
+      <h2 className="sect">Kho ({locs.length})</h2>
+      {canWrite && (
+        <form className="quickadd" noValidate onSubmit={(e) => {
+          e.preventDefault();
+          if (lName.trim().length < 2) return setError('Hãy nhập tên kho.');
+          void run(async () => { await createLocation(orgId, lName); setLName(''); });
+        }}>
+          <input value={lName} onChange={(e) => setLName(e.target.value)} placeholder="Thêm kho mới: nhập tên (ví dụ Kho chính)" aria-label="Tên kho mới" />
+          <button type="submit" className="primary" disabled={busy || !online}>Thêm</button>
+        </form>
+      )}
+      <table className="grid">
+        <thead><tr><th>Kho</th>{canWrite && <th></th>}</tr></thead>
+        <tbody>
+          {locs.length === 0 && <tr><td colSpan={2} className="muted">Chưa có kho nào{canWrite ? ' — hãy thêm kho đầu tiên ở ô trên.' : '.'}</td></tr>}
+          {locs.map((l) => (
+            <tr key={l.id} className={l.is_active ? '' : 'off'}>
+              <td>
+                {editLoc === l.id ? (
+                  <LocationRename name={l.name} busy={busy || !writable} onSave={(n) => void run(async () => { await updateLocation(l.id, { name: n }); setEditLoc(null); })} />
+                ) : (<>{l.name}{!l.is_active && <span className="sub">Đã dừng</span>}</>)}
+              </td>
+              {canWrite && (
+                <td className="act">
+                  {editLoc === l.id ? (
+                    <button className="icon" aria-label="Đóng" onClick={() => setEditLoc(null)}>✕</button>
+                  ) : (
+                    <>
+                      <button className="icon" disabled={busy || !writable} aria-label={l.is_active ? `Dừng ${l.name}` : `Dùng lại ${l.name}`}
+                        onClick={() => void run(() => updateLocation(l.id, { is_active: !l.is_active }))}>{l.is_active ? '⏸' : '▶'}</button>{' '}
+                      <button className="icon" aria-label={`Sửa ${l.name}`} onClick={() => setEditLoc(l.id)}>✎</button>
+                    </>
+                  )}
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả vật tư, kho đã dừng</label>
 
       {canWrite && (
-        <Collapsible title="Đơn vị riêng" summary={orgUnits.length > 0 ? `${orgUnits.length} đơn vị` : 'Đã có sẵn kg, lít, bao…'}>
-          <p className="muted">Đã có sẵn: kg, g, lít, ml, bao, chai, gói, cái, cây. Chỉ thêm nếu bạn cần đơn vị khác.</p>
-          {orgUnits.map((u) => <p key={u.id} className="member">{u.name}</p>)}
-          <form className="inline-form" noValidate onSubmit={(e) => {
+        <>
+          <h2 className="sect">Đơn vị riêng ({orgUnits.length})</h2>
+          <form className="quickadd" noValidate onSubmit={(e) => {
             e.preventDefault();
             if (uName.trim().length < 1) return setError('Hãy nhập tên đơn vị.');
             void run(async () => { await createUnit(orgId, uName); setUName(''); });
           }}>
-            <label>
-              Tên đơn vị mới
-              <input value={uName} onChange={(e) => setUName(e.target.value)} placeholder="Ví dụ: Thùng" />
-            </label>
-            <button type="submit" className="secondary" disabled={busy || !navigator.onLine}>Thêm đơn vị</button>
+            <input value={uName} onChange={(e) => setUName(e.target.value)} placeholder="Thêm đơn vị mới (ví dụ Thùng)" aria-label="Tên đơn vị mới" />
+            <button type="submit" className="primary" disabled={busy || !online}>Thêm</button>
           </form>
-        </Collapsible>
+          <p className="muted">Đã có sẵn: kg, g, lít, ml, bao, chai, gói, cái, cây (dùng chung, không sửa).{orgUnits.length > 0 ? ` Đơn vị riêng: ${orgUnits.map((u) => u.name).join(', ')}.` : ''}</p>
+        </>
       )}
+      <p className="muted">⏸ dừng (không chọn được cho giao dịch mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Vật tư và kho đã có lịch sử thì không xóa được, chỉ dừng.</p>
+    </>
+  );
+}
+
+function LocationRename({ name, busy, onSave }: { name: string; busy: boolean; onSave: (n: string) => void }) {
+  const [v, setV] = useState(name);
+  return (
+    <div className="quickadd">
+      <input value={v} onChange={(e) => setV(e.target.value)} aria-label="Tên kho" />
+      <button className="primary" disabled={busy || v.trim().length < 2} onClick={() => onSave(v)}>Lưu</button>
     </div>
   );
 }
 
-function MaterialItem({ m, unitName, editing, canWrite, busy, onEdit, onSave, onThrError }: {
-  m: MaterialRow; unitName: string; editing: boolean; canWrite: boolean; busy: boolean;
-  onEdit: () => void;
-  onSave: (c: { name?: string; category?: string | null; threshold?: number | null; is_active?: boolean }) => void;
-  onThrError: (msg: string) => void;
+function MaterialEditor({ m, busy, onSave, onClose }: {
+  m: MaterialRow; busy: boolean;
+  onSave: (c: { name: string; category: string | null; threshold: number | null }) => void; onClose: () => void;
 }) {
   const [name, setName] = useState(m.name);
   const [cat, setCat] = useState(m.category ?? '');
   const [thr, setThr] = useState(m.reorder_threshold == null ? '' : String(m.reorder_threshold));
+  const [err, setErr] = useState<string | null>(null);
   return (
-    <div className="member">
-      <div className="row">
-        <span className="grow">
-          <strong>{m.name}</strong> <span className="muted">· {unitName}{m.category ? ` · ${m.category}` : ''}</span>
-          {m.reorder_threshold != null && <small className="muted"> · báo sắp hết ≤ {formatQty(m.reorder_threshold)}</small>}
-        </span>
-        {!m.is_active && <span className="pill warn">Ngừng dùng</span>}
-        {canWrite && <button className="link inline" onClick={onEdit}>{editing ? 'Đóng' : 'Sửa'}</button>}
+    <div className="card">
+      <h2>Sửa vật tư: {m.name}</h2>
+      <div className="inline-form">
+        <label>Tên<input value={name} onChange={(e) => setName(e.target.value)} /></label>
+        <label>Nhóm (phân bón, thuốc BVTV, giống…)<input value={cat} onChange={(e) => setCat(e.target.value)} /></label>
+        <label>Báo "sắp hết" khi tồn ≤ (để trống nếu không báo)<input value={thr} inputMode="decimal" onChange={(e) => setThr(e.target.value)} /></label>
+        {err && <p className="msg error" role="alert">{err}</p>}
+        <button className="primary" disabled={busy} onClick={() => {
+          const v = parseNumber(thr);
+          if (name.trim().length < 2) return setErr('Hãy nhập tên vật tư.');
+          if (v !== null && (Number.isNaN(v) || v < 0)) return setErr('Mức cảnh báo phải là số không âm.');
+          setErr(null);
+          onSave({ name, category: cat.trim() || null, threshold: v });
+        }}>Lưu thay đổi</button>
+        <button className="secondary" onClick={onClose}>Đóng</button>
       </div>
-      {editing && (
-        <div className="inline-form">
-          <label>Tên<input value={name} onChange={(e) => setName(e.target.value)} /></label>
-          <label>Nhóm<input value={cat} onChange={(e) => setCat(e.target.value)} /></label>
-          <label>Báo "sắp hết" khi tồn ≤<input value={thr} inputMode="decimal" onChange={(e) => setThr(e.target.value)} /></label>
-          <button className="primary" disabled={busy} onClick={() => {
-            if (name.trim().length < 2) return onThrError('Hãy nhập tên vật tư.');
-            const v = parseNumber(thr);
-            if (v !== null && (Number.isNaN(v) || v < 0)) return onThrError('Mức cảnh báo phải là số không âm.');
-            onSave({ name, category: cat, threshold: v });
-          }}>Lưu thay đổi</button>
-          <button className="secondary" disabled={busy} onClick={() => onSave({ is_active: !m.is_active })}>
-            {m.is_active ? 'Ngừng dùng vật tư này' : 'Dùng lại vật tư này'}
-          </button>
-          <small className="muted">Vật tư không xóa được vì còn lịch sử kho; chỉ ngừng dùng.</small>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function LocationItem({ l, editing, canWrite, busy, onEdit, onSave }: {
-  l: LocationRow; editing: boolean; canWrite: boolean; busy: boolean;
-  onEdit: () => void; onSave: (c: { name?: string; is_active?: boolean }) => void;
-}) {
-  const [name, setName] = useState(l.name);
-  return (
-    <div className="member">
-      <div className="row">
-        <strong className="grow">{l.name}</strong>
-        {!l.is_active && <span className="pill warn">Ngừng dùng</span>}
-        {canWrite && <button className="link inline" onClick={onEdit}>{editing ? 'Đóng' : 'Sửa'}</button>}
-      </div>
-      {editing && (
-        <div className="inline-form">
-          <label>Tên kho<input value={name} onChange={(e) => setName(e.target.value)} /></label>
-          <button className="primary" disabled={busy || name.trim().length < 2} onClick={() => onSave({ name })}>Lưu thay đổi</button>
-          <button className="secondary" disabled={busy} onClick={() => onSave({ is_active: !l.is_active })}>
-            {l.is_active ? 'Ngừng dùng kho này' : 'Dùng lại kho này'}
-          </button>
-        </div>
-      )}
     </div>
   );
 }

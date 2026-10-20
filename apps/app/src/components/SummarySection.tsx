@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCatalog } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { db } from '../lib/db';
@@ -18,7 +19,7 @@ export function SummarySection() {
   const { active } = useOrgs();
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
-  const cropTypes = useLiveQuery(() => db.cropTypes.toArray(), [], []);
+  const { cropTypes } = useCatalog();
   const outbox = useLiveQuery(() => db.outbox.toArray(), [], []);
 
   // chỉ vụ do cơ sở này sở hữu (quyền xem tổng kết theo chủ vụ)

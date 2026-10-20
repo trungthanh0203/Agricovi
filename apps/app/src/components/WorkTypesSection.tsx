@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import type { FieldDef } from '../lib/db';
+import { useCatalog, type EffWorkType } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { canManageProduction } from '../lib/roles';
-import { createWorkType, listWorkTypes, newFieldKey, updateWorkType, type WorkTypeFull } from '../lib/templates';
+import { clearOverride, createWorkType, newFieldKey, refreshCatalogCache, saveOverride, updateWorkType } from '../lib/templates';
 
 const TYPE_LABEL: Record<FieldDef['type'], string> = { number: 'Số', text: 'Chữ', select: 'Chọn trong danh sách' };
 
@@ -36,12 +37,13 @@ const cleanFields = (fields: FieldDef[]) => fields.filter((f) => f.label.trim())
 
 /**
  * Danh mục công việc: MỘT bảng gồm việc có sẵn và việc cơ sở tự định nghĩa (việc mới vào bảng ngay).
- * Thêm nhanh ở dòng trên cùng; bấm "Sửa" để đổi tên hoặc thêm trường cần ghi. Cần mạng để thêm/sửa.
+ * Việc có sẵn cũng sửa/dừng được cho riêng cơ sở (bản chỉnh, D32): đổi tên, thêm trường ghi, dừng, khôi phục mặc định.
+ * Cần mạng để thêm/sửa.
  */
 export function WorkTypesSection() {
   const { active } = useOrgs();
   const online = useOnline();
-  const [types, setTypes] = useState<WorkTypeFull[]>([]);
+  const { workTypes } = useCatalog();
   const [name, setName] = useState('');
   const [showOff, setShowOff] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -50,27 +52,42 @@ export function WorkTypesSection() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const load = useCallback(async () => {
-    if (!active || !navigator.onLine) return;
-    try { setTypes(await listWorkTypes(active.id)); } catch (e) { setError(friendlyError(e)); }
-  }, [active]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { if (navigator.onLine) void refreshCatalogCache().catch((e) => setError(friendlyError(e))); }, []);
 
   if (!active) return null;
+  const org = active.id;
   const canManage = canManageProduction(active.roles);
-  const rows = types.filter((t) => showOff || t.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-  const editingRow = types.find((t) => t.id === editing) ?? null;
+  const rows = workTypes.filter((t) => showOff || t.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const editingRow = workTypes.find((t) => t.id === editing) ?? null;
 
   async function run(fn: () => Promise<void>) {
     setBusy(true);
     setError(null);
-    try { await fn(); await load(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+    try { await fn(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
+
+  const setActiveFlag = (t: EffWorkType) =>
+    t.shared ? saveOverride(org, 'work_type', t.id, { is_active: !t.is_active }) : updateWorkType(t.id, { is_active: !t.is_active });
 
   function onAdd(e: FormEvent) {
     e.preventDefault();
     if (name.trim().length < 2) return setError('Hãy nhập tên việc (ít nhất 2 ký tự).');
-    void run(async () => { await createWorkType(active!.id, name, []); setName(''); });
+    void run(async () => { await createWorkType(org, name, []); setName(''); });
+  }
+
+  async function save(t: EffWorkType) {
+    const f = cleanFields(editFields);
+    if (f.some((x) => x.type === 'select' && (x.options ?? []).length === 0)) throw new Error('Trường "Chọn trong danh sách" cần có ít nhất một lựa chọn.');
+    if (editName.trim().length < 2) throw new Error('Tên việc cần ít nhất 2 ký tự.');
+    if (t.shared) {
+      await saveOverride(org, 'work_type', t.id, {
+        display_name: editName.trim() === t.base_name ? null : editName,
+        field_schema: JSON.stringify(f) === JSON.stringify(t.field_schema) && !t.overridden ? null : f,
+      });
+    } else {
+      await updateWorkType(t.id, { name: editName, field_schema: f });
+    }
+    setEditing(null);
   }
 
   return (
@@ -89,30 +106,28 @@ export function WorkTypesSection() {
         <thead><tr><th>Việc ({rows.length})</th><th>Thông tin cần ghi</th>{canManage && <th></th>}</tr></thead>
         <tbody>
           {rows.length === 0 && <tr><td colSpan={3} className="muted">{online ? 'Chưa có việc nào.' : 'Cần mạng để tải danh sách.'}</td></tr>}
-          {rows.map((t) => {
-            const own = t.organization_id !== null;
-            return (
-              <tr key={t.id} className={t.is_active ? '' : 'off'}>
-                <td>
-                  {t.name}
-                  {own && <span className="pill mine"> Riêng</span>}
-                  {!t.is_active && <span className="sub">Ngừng dùng</span>}
+          {rows.map((t) => (
+            <tr key={t.id} className={t.is_active ? '' : 'off'}>
+              <td>
+                {t.name}
+                {!t.shared && <span className="pill mine"> Riêng</span>}
+                {t.shared && t.overridden && <span className="pill warn"> Đã chỉnh</span>}
+                {t.shared && !t.overridden && <span className="sub">Có sẵn</span>}
+                {!t.is_active && <span className="sub">Đã dừng</span>}
+              </td>
+              <td className="muted">{t.field_schema.length > 0 ? t.field_schema.map((f) => f.label).join(', ') : '—'}</td>
+              {canManage && (
+                <td className="act">
+                  <button className="icon" disabled={busy || !online} aria-label={t.is_active ? `Dừng ${t.name}` : `Dùng lại ${t.name}`} onClick={() => void run(() => setActiveFlag(t))}>{t.is_active ? '⏸' : '▶'}</button>{' '}
+                  <button className="icon" aria-label={`Sửa ${t.name}`} onClick={() => { setEditing(editing === t.id ? null : t.id); setEditName(t.name); setEditFields(t.field_schema); }}>✎</button>
                 </td>
-                <td className="muted">{t.field_schema.length > 0 ? t.field_schema.map((f) => f.label).join(', ') : '—'}</td>
-                {canManage && (
-                  <td className="act">
-                    {own && t.organization_id === active.id && (
-                      <button className="icon" aria-label={`Sửa ${t.name}`} onClick={() => { setEditing(editing === t.id ? null : t.id); setEditName(t.name); setEditFields(t.field_schema); }}>✎</button>
-                    )}
-                  </td>
-                )}
-              </tr>
-            );
-          })}
+              )}
+            </tr>
+          ))}
         </tbody>
       </table>
-      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả việc đã ngừng dùng</label>
-      <p className="muted">Việc "Riêng" do cơ sở bạn định nghĩa; các việc còn lại có sẵn. Việc đã dùng trong nhật ký hoặc quy trình thì không xóa được, chỉ ngừng dùng.</p>
+      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả việc đã dừng</label>
+      <p className="muted">Bấm ⏸ để dừng (không chọn được cho việc mới, lịch sử vẫn giữ) và ▶ để dùng lại; ✎ để đổi tên hoặc thêm thông tin cần ghi. Việc có sẵn chỉnh ở đây chỉ áp dụng cho cơ sở của bạn.</p>
 
       {editingRow && (
         <div className="card">
@@ -120,17 +135,11 @@ export function WorkTypesSection() {
           <div className="inline-form">
             <label>Tên việc<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
             <FieldsEditor fields={editFields} onChange={setEditFields} />
-            <button className="primary" disabled={busy || !online || editName.trim().length < 2}
-              onClick={() => void run(async () => {
-                const f = cleanFields(editFields);
-                if (f.some((x) => x.type === 'select' && (x.options ?? []).length === 0)) throw new Error('Trường "Chọn trong danh sách" cần có ít nhất một lựa chọn.');
-                await updateWorkType(editingRow.id, { name: editName, field_schema: f });
-                setEditing(null);
-              })}>Lưu thay đổi</button>
-            <button className="secondary" disabled={busy || !online}
-              onClick={() => void run(async () => { await updateWorkType(editingRow.id, { is_active: !editingRow.is_active }); setEditing(null); })}>
-              {editingRow.is_active ? 'Ngừng dùng việc này' : 'Dùng lại việc này'}
-            </button>
+            <button className="primary" disabled={busy || !online} onClick={() => void run(() => save(editingRow))}>Lưu thay đổi</button>
+            {editingRow.shared && editingRow.overridden && (
+              <button className="secondary" disabled={busy || !online} onClick={() => void run(async () => { await clearOverride(org, 'work_type', editingRow.id); setEditing(null); })}>Khôi phục mặc định</button>
+            )}
+            <button className="secondary" onClick={() => setEditing(null)}>Đóng</button>
           </div>
         </div>
       )}

@@ -6,6 +6,8 @@ export interface AreaRow {
   id: string;
   organization_id: string;
   name: string;
+  /** false = khu trồng đã dừng: giữ lịch sử, không dùng để tạo vụ mới */
+  is_active?: boolean;
 }
 
 export interface CycleRow {
@@ -20,6 +22,13 @@ export interface CycleRow {
   created_at?: string;
 }
 
+/** Bản chỉnh của một cơ sở lên mục có sẵn dùng chung (D32) */
+export interface CatalogOverride {
+  display_name: string | null;
+  field_schema: FieldDef[] | null;
+  is_active: boolean;
+}
+
 export interface WorkTypeRow {
   id: string;
   code: string;
@@ -27,6 +36,9 @@ export interface WorkTypeRow {
   field_schema: FieldDef[];
   /** null = loại việc dùng chung; có giá trị = loại việc do cơ sở định nghĩa */
   organization_id?: string | null;
+  is_active?: boolean;
+  /** Bản chỉnh theo mã cơ sở (chỉ có ở mục dùng chung) */
+  ov?: Record<string, CatalogOverride>;
 }
 
 export interface FieldDef {
@@ -42,6 +54,8 @@ export interface CropTypeRow {
   name: string;
   /** null = cây dùng chung; có giá trị = cây do cơ sở khai báo */
   organization_id?: string | null;
+  is_active?: boolean;
+  ov?: Record<string, CatalogOverride>;
 }
 
 export interface LogRow {

@@ -182,3 +182,41 @@ test('tính ngày ở trình soạn: khoảng ngày từng giai đoạn và tổ
   assert.deepEqual(r.get('b'), { from: 11, to: 24 });
   assert.deepEqual(r.get('c'), { from: 25, to: 29 });
 });
+
+test('chỉnh/dừng mục có sẵn theo từng cơ sở: chủ/quản lý chỉnh được; cơ sở khác không bị ảnh hưởng; mục riêng thì sửa trực tiếp', async () => {
+  const { db, org, org2, owner, mgr, worker, owner2 } = await setup();
+  const irrigation = `(select id from work_types where organization_id is null and code='irrigation')`;
+  const up = (u, orgId, kind, itemSql, extra = '') =>
+    asUser(db, u, `insert into org_catalog_overrides (organization_id, item_kind, item_id, display_name, is_active ${extra ? ',' + extra.split('=')[0] : ''})
+       values ($1,$2,${itemSql},$3,$4 ${extra ? ',' + extra.split('=')[1] : ''})
+       on conflict (organization_id, item_kind, item_id) do update set display_name = excluded.display_name, is_active = excluded.is_active`, [orgId, kind, 'Tưới nhỏ giọt', false]);
+  await up(mgr, org, 'work_type', irrigation);
+  assert.match(await expectError(up(worker, org, 'work_type', irrigation)), /row-level security/);
+  assert.match(await expectError(up(owner2, org, 'work_type', irrigation)), /row-level security/);       // cơ sở khác không chỉnh hộ A
+  const seen = async (u) => (await asUser(db, u, `select display_name, is_active from org_catalog_overrides`)).rows;
+  assert.deepEqual(await seen(worker), [{ display_name: 'Tưới nhỏ giọt', is_active: false }]);           // nhân viên đọc được (để hiển thị đúng)
+  assert.deepEqual(await seen(owner2), []);                                                              // hộ B không thấy bản chỉnh của hộ A
+  // chỉnh cho riêng hộ B không ảnh hưởng hộ A
+  await up(owner2, org2, 'work_type', irrigation);
+  assert.equal((await db.query(`select count(*)::int n from org_catalog_overrides`)).rows[0].n, 2);
+
+  // chỉ chỉnh được mục dùng chung; mục của cơ sở thì không (sửa trực tiếp); cây trồng không có trường dữ liệu
+  const mine = (await asUser(db, owner, `insert into work_types (organization_id, name) values ($1,'Việc riêng') returning id`, [org])).rows[0].id;
+  assert.match(await expectError(up(owner, org, 'work_type', `'${mine}'`)), /INVALID_ITEM/);
+  assert.match(await expectError(up(owner, org, 'work_type', `'00000000-0000-4000-8000-00000000abcd'`)), /INVALID_ITEM/);
+  assert.match(await expectError(up(owner, org, 'crop_type', melon, `field_schema='[]'::jsonb`)), /INVALID_ITEM/);
+  await up(owner, org, 'crop_type', melon);   // đổi tên/dừng cây có sẵn cho riêng hộ A
+
+  // tên giai đoạn theo bản chỉnh của cơ sở; hộ B (cũng đổi tên) có tên của hộ B
+  const t = (await addTemplate(db, owner, org, melon, 'Mẫu bản chỉnh')).rows[0].id;
+  const stage = (await asUser(db, owner, `insert into template_stages (template_id, work_type_id, duration_days) values ($1, ${irrigation}, 3) returning name`, [t])).rows[0];
+  assert.equal(stage.name, 'Tưới nhỏ giọt');
+});
+
+test('khu trồng dừng được: có cột is_active, mặc định đang dùng', async () => {
+  const { db, org, owner } = await setup();
+  await db.query(`insert into production_areas (id,organization_id,name) values ('20000000-0000-4000-8000-0000000000e1',$1,'N1')`, [org]);
+  assert.equal((await db.query(`select is_active from production_areas`)).rows[0].is_active, true);
+  await asUser(db, owner, `update production_areas set is_active = false where id='20000000-0000-4000-8000-0000000000e1'`);
+  assert.equal((await db.query(`select is_active from production_areas`)).rows[0].is_active, false);
+});

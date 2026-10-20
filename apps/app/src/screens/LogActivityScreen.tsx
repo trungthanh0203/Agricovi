@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { useCatalog } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
 import { SyncBadge } from '../components/SyncBadge';
@@ -18,12 +19,11 @@ export function LogActivityScreen({ onClose }: { onClose: () => void }) {
   const { session } = useAuth();
   const { active } = useOrgs();
   const sync = useRecordSync();
-  const allWorkTypes = useLiveQuery(() => db.workTypes.toArray(), [], []);
-  // loại việc dùng chung hoặc do chính cơ sở đang chọn định nghĩa
-  const workTypes = allWorkTypes.filter((w) => !w.organization_id || w.organization_id === active?.id);
+  // loại việc dùng chung hoặc của cơ sở đang chọn, đã áp bản chỉnh; việc đã dừng không chọn được cho việc mới
+  const { workTypes: effWorkTypes, cropTypes } = useCatalog();
+  const workTypes = effWorkTypes.filter((w) => w.is_active);
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
-  const cropTypes = useLiveQuery(() => db.cropTypes.toArray(), [], []);
 
   const areaName = (id: string) => areas.find((a) => a.id === id)?.name ?? '—';
   const cropName = (id: string) => cropTypes.find((c) => c.id === id)?.name ?? '—';

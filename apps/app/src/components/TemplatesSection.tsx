@@ -4,7 +4,8 @@ import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { canManageProduction } from '../lib/roles';
-import { createTemplate, listCrops, listTemplates, totalDays, type CropRow, type TemplateRow } from '../lib/templates';
+import { useCatalog } from '../lib/catalog';
+import { createTemplate, listTemplates, refreshCatalogCache, totalDays, type TemplateRow } from '../lib/templates';
 
 /**
  * Quy trình mùa vụ mẫu của cơ sở: một bảng gọn (quy trình, số giai đoạn, số ngày), bấm "Mở" để soạn.
@@ -14,7 +15,7 @@ export function TemplatesSection() {
   const { active } = useOrgs();
   const online = useOnline();
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
-  const [crops, setCrops] = useState<CropRow[]>([]);
+  const { cropTypes: crops } = useCatalog();
   const [openId, setOpenId] = useState<string | null>(null);
   const [cropId, setCropId] = useState('');
   const [name, setName] = useState('');
@@ -24,9 +25,8 @@ export function TemplatesSection() {
   const load = useCallback(async () => {
     if (!active || !navigator.onLine) return;
     try {
-      const [t, c] = await Promise.all([listTemplates(active.id), listCrops(active.id)]);
-      setTemplates(t);
-      setCrops(c);
+      setTemplates(await listTemplates(active.id));
+      void refreshCatalogCache().catch(() => undefined);
     } catch (e) { setError(friendlyError(e)); }
   }, [active]);
   useEffect(() => { void load(); }, [load]);

@@ -1,15 +1,19 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { useCatalog, type EffCrop } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { canManageProduction } from '../lib/roles';
-import { createCrop, listCrops, updateCrop, type CropRow } from '../lib/templates';
+import { clearOverride, createCrop, refreshCatalogCache, saveOverride, updateCrop } from '../lib/templates';
 
-/** Cây trồng: một bảng gồm cây có sẵn và cây do cơ sở tự khai báo (thêm xong vào bảng ngay). Cần mạng để thêm/sửa. */
+/**
+ * Cây trồng: MỘT bảng gồm cây có sẵn và cây cơ sở tự khai báo (thêm xong vào bảng ngay).
+ * Cây có sẵn cũng đổi tên/dừng được cho riêng cơ sở (bản chỉnh, D32). Cần mạng để thêm/sửa.
+ */
 export function CropsSection() {
   const { active } = useOrgs();
   const online = useOnline();
-  const [crops, setCrops] = useState<CropRow[]>([]);
+  const { cropTypes } = useCatalog();
   const [name, setName] = useState('');
   const [showOff, setShowOff] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -17,26 +21,31 @@ export function CropsSection() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const load = useCallback(async () => {
-    if (!active || !navigator.onLine) return;
-    try { setCrops(await listCrops(active.id)); } catch (e) { setError(friendlyError(e)); }
-  }, [active]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { if (navigator.onLine) void refreshCatalogCache().catch((e) => setError(friendlyError(e))); }, []);
 
   if (!active) return null;
+  const org = active.id;
   const canManage = canManageProduction(active.roles);
-  const rows = crops.filter((c) => showOff || c.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const rows = cropTypes.filter((c) => showOff || c.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
 
   async function run(fn: () => Promise<void>) {
     setBusy(true);
     setError(null);
-    try { await fn(); await load(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+    try { await fn(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
+
+  const toggle = (c: EffCrop) => (c.shared ? saveOverride(org, 'crop_type', c.id, { is_active: !c.is_active }) : updateCrop(c.id, { is_active: !c.is_active }));
+  const rename = (c: EffCrop) => {
+    if (editName.trim().length < 2) throw new Error('Tên cây cần ít nhất 2 ký tự.');
+    return c.shared
+      ? saveOverride(org, 'crop_type', c.id, { display_name: editName.trim() === c.base_name ? null : editName })
+      : updateCrop(c.id, { name: editName });
+  };
 
   function onAdd(e: FormEvent) {
     e.preventDefault();
     if (name.trim().length < 2) return setError('Hãy nhập tên cây trồng (ít nhất 2 ký tự).');
-    void run(async () => { await createCrop(active!.id, name); setName(''); });
+    void run(async () => { await createCrop(org, name); setName(''); });
   }
 
   return (
@@ -55,44 +64,48 @@ export function CropsSection() {
         <thead><tr><th>Cây trồng ({rows.length})</th>{canManage && <th></th>}</tr></thead>
         <tbody>
           {rows.length === 0 && <tr><td colSpan={2} className="muted">{online ? 'Chưa có cây nào.' : 'Cần mạng để tải danh sách.'}</td></tr>}
-          {rows.map((c) => {
-            const own = c.organization_id === active.id;
-            return (
-              <tr key={c.id} className={c.is_active ? '' : 'off'}>
-                <td>
+          {rows.map((c) => (
+            <tr key={c.id} className={c.is_active ? '' : 'off'}>
+              <td>
+                {editing === c.id ? (
+                  <div className="quickadd">
+                    <input value={editName} onChange={(e) => setEditName(e.target.value)} aria-label="Tên cây" />
+                    <button className="primary" disabled={busy || !online} onClick={() => void run(async () => { await rename(c); setEditing(null); })}>Lưu</button>
+                  </div>
+                ) : (
+                  <>
+                    {c.name}
+                    {!c.shared && <span className="pill mine"> Riêng</span>}
+                    {c.shared && c.overridden && <span className="pill warn"> Đã chỉnh</span>}
+                    {c.shared && !c.overridden && <span className="sub">Có sẵn</span>}
+                    {!c.is_active && <span className="sub">Đã dừng</span>}
+                  </>
+                )}
+              </td>
+              {canManage && (
+                <td className="act">
                   {editing === c.id ? (
-                    <div className="quickadd">
-                      <input value={editName} onChange={(e) => setEditName(e.target.value)} aria-label="Tên cây" />
-                      <button className="primary" disabled={busy || !online || editName.trim().length < 2}
-                        onClick={() => void run(async () => { await updateCrop(c.id, { name: editName }); setEditing(null); })}>Lưu</button>
-                    </div>
+                    <>
+                      {c.shared && c.overridden && (
+                        <button className="icon" disabled={busy || !online} aria-label="Khôi phục mặc định" title="Khôi phục mặc định"
+                          onClick={() => void run(async () => { await clearOverride(org, 'crop_type', c.id); setEditing(null); })}>↺</button>
+                      )}{' '}
+                      <button className="icon" aria-label="Đóng" onClick={() => setEditing(null)}>✕</button>
+                    </>
                   ) : (
                     <>
-                      {c.name}
-                      {c.organization_id !== null && <span className="pill mine"> Riêng</span>}
-                      {!c.is_active && <span className="sub">Ngừng dùng</span>}
+                      <button className="icon" disabled={busy || !online} aria-label={c.is_active ? `Dừng ${c.name}` : `Dùng lại ${c.name}`} onClick={() => void run(() => toggle(c))}>{c.is_active ? '⏸' : '▶'}</button>{' '}
+                      <button className="icon" aria-label={`Sửa ${c.name}`} onClick={() => { setEditing(c.id); setEditName(c.name); }}>✎</button>
                     </>
                   )}
                 </td>
-                {canManage && (
-                  <td className="act">
-                    {own && editing !== c.id && <button className="icon" aria-label={`Sửa ${c.name}`} onClick={() => { setEditing(c.id); setEditName(c.name); }}>✎</button>}
-                    {own && editing === c.id && (
-                      <>
-                        <button className="icon" disabled={busy || !online} aria-label={c.is_active ? 'Ngừng dùng' : 'Dùng lại'}
-                          onClick={() => void run(async () => { await updateCrop(c.id, { is_active: !c.is_active }); setEditing(null); })}>{c.is_active ? '⏸' : '▶'}</button>
-                        <button className="icon" aria-label="Đóng" onClick={() => setEditing(null)}>✕</button>
-                      </>
-                    )}
-                  </td>
-                )}
-              </tr>
-            );
-          })}
+              )}
+            </tr>
+          ))}
         </tbody>
       </table>
-      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả cây đã ngừng dùng</label>
-      <p className="muted">Cây "Riêng" do cơ sở bạn khai báo (nút ⏸ là ngừng dùng). Cây đã có quy trình mẫu hoặc vụ thì không xóa được.</p>
+      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả cây đã dừng</label>
+      <p className="muted">⏸ dừng (không chọn được cho quy trình/vụ mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ đổi tên, ↺ khôi phục tên mặc định. Cây có sẵn chỉnh ở đây chỉ áp dụng cho cơ sở của bạn.</p>
     </>
   );
 }

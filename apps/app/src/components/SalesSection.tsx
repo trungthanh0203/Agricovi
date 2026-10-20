@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { useCatalog } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { Collapsible } from './Collapsible';
@@ -21,7 +22,7 @@ export function SalesSection() {
   const sales = useLiveQuery(() => db.sales.toArray(), [], []);
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
-  const cropTypes = useLiveQuery(() => db.cropTypes.toArray(), [], []);
+  const { cropTypes } = useCatalog();
 
   const [mode, setMode] = useState<{ kind: 'list' } | { kind: 'new' } | { kind: 'edit'; id: string }>({ kind: 'list' });
   const [cycleFilter, setCycleFilter] = useState('');

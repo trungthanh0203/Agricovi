@@ -10,7 +10,7 @@ Tài liệu này dành cho **chủ cơ sở, quản lý, người phụ trách k
 
 Người phụ trách kỹ thuật làm một lần trước khi mời người dùng thử:
 
-1. Đẩy cơ sở dữ liệu lên (cần cả sáu bản cập nhật mới): `npx supabase db push` (có các bản `0016` đến `0021`).
+1. Đẩy cơ sở dữ liệu lên (cần cả bảy bản cập nhật mới): `npx supabase db push` (có các bản `0016` đến `0022`).
 2. Mở app, tạo cơ sở, mời hoặc tạo tài khoản cho từng người theo vai trò bên dưới.
 3. Cài app ra màn hình chính điện thoại (Chrome: menu → "Thêm vào màn hình chính"; iPhone: Safari → Chia sẻ → "Thêm vào MH chính").
 
@@ -88,8 +88,9 @@ Bảng dưới là **mặc định theo vai trò**. Chủ cơ sở có thể **c
 
 ## Bài thử 8: Dựng quy trình mùa vụ mẫu (chủ hoặc quản lý, cần có mạng)
 
-1. Vào **Khai báo → Cây trồng**: có sẵn "Dưa lưới". Muốn thêm cây của riêng bạn, gõ tên vào ô trên cùng rồi bấm **Thêm**; cây mới vào bảng ngay (đánh dấu "Riêng").
-2. Vào **Khai báo → Danh mục việc**: một bảng gồm các việc có sẵn (Tưới nước, Bón phân, Thụ phấn…) và việc của cơ sở. Thiếu việc nào thì gõ tên vào ô trên cùng rồi **Thêm**; việc mới vào bảng ngay. Bấm ✎ ở việc "Riêng" để đổi tên hoặc thêm trường cần ghi (ví dụ "Độ Brix" kiểu Số).
+0. Mọi danh sách trong tab Khai báo (Khu trồng, Cây trồng, Danh mục việc, Quy trình mẫu, Vật tư, Kho) là **bảng gọn**: gõ tên vào ô trên cùng rồi **Thêm**; mỗi dòng có **⏸ dừng / ▶ dùng lại** và **✎ sửa**. Mục đã dùng thì không xóa, chỉ dừng (lịch sử vẫn giữ).
+1. Vào **Khai báo → Cây trồng**: có sẵn "Dưa lưới". **Cây có sẵn cũng sửa/dừng được** cho riêng cơ sở bạn (đổi tên, dừng; ↺ khôi phục mặc định). Muốn thêm cây của riêng bạn, gõ tên vào ô trên cùng rồi bấm **Thêm**; cây mới vào bảng ngay (đánh dấu "Riêng").
+2. Vào **Khai báo → Danh mục việc**: một bảng gồm các việc có sẵn (Tưới nước, Bón phân, Thụ phấn…) và việc của cơ sở. Thiếu việc nào thì gõ tên vào ô trên cùng rồi **Thêm**; việc mới vào bảng ngay. Bấm ✎ ở **bất kỳ việc nào** (kể cả việc có sẵn) để đổi tên hoặc thêm trường cần ghi (ví dụ "Độ Brix" kiểu Số); bấm ⏸ để dừng việc đó cho cơ sở bạn. Việc có sẵn đã chỉnh hiện nhãn "Đã chỉnh", có nút "Khôi phục mặc định".
 3. Vào **Khai báo → Quy trình mẫu**: chọn cây, gõ tên quy trình (ví dụ "Dưa lưới mùa khô"), bấm **Tạo**. Quy trình mở ra ngay.
 4. Thêm **giai đoạn**: ở dòng dưới bảng, chọn **việc từ danh mục** (tên giai đoạn chính là tên việc) và gõ **số ngày**, bấm **Thêm**. Làm lần lượt cho các giai đoạn (ví dụ Làm đất 7 ngày, Gieo hạt 10 ngày, Thụ phấn 14 ngày, Thu hoạch 20 ngày). Thiếu việc thì bấm **Định nghĩa việc mới** ngay tại đó.
 5. Quy trình hiện thành **danh sách**: số thứ tự, việc, số ngày (sửa trực tiếp ô số ngày), khoảng ngày "từ–đến". Thanh màu phía trên cho thấy tỉ lệ các giai đoạn và tổng số ngày.

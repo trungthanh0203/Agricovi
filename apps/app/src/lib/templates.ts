@@ -1,4 +1,4 @@
-import { db, type FieldDef } from './db';
+import { db, type CatalogOverride, type FieldDef } from './db';
 import { supabase } from './supabase';
 
 /**
@@ -20,8 +20,6 @@ async function ok<T>(p: PromiseLike<{ data: T; error: { message: string } | null
 }
 
 // ------------------------------------------------------------------ kiểu dữ liệu
-export interface CropRow { id: string; organization_id: string | null; code: string; name: string; is_active: boolean }
-export interface WorkTypeFull { id: string; organization_id: string | null; code: string; name: string; field_schema: FieldDef[]; is_active: boolean }
 export interface TemplateRow {
   id: string; organization_id: string; crop_type_id: string; name: string; note: string | null;
   version: number; is_active: boolean; updated_at: string;
@@ -30,29 +28,59 @@ export interface TemplateRow {
 /** Giai đoạn = một việc chọn từ danh mục + số ngày. `name` là tên việc lúc chọn (máy chủ tự điền). */
 export interface StageRow { id: string; template_id: string; seq: number; name: string; work_type_id: string | null; duration_days: number; note: string | null }
 
-// ------------------------------------------------------------------ bản lưu trên máy (dùng khi ghi việc, tạo vụ)
-/** Tải lại danh sách cây trồng và loại việc đang dùng về máy (sau khi khai báo hoặc đồng bộ) */
+// ------------------------------------------------------------------ bản lưu trên máy (dùng khi ghi việc, tạo vụ, hiển thị)
+/**
+ * Tải lại cây trồng và loại việc (kể cả đã dừng, để lịch sử vẫn hiện đúng tên) cùng bản chỉnh của các cơ sở về máy.
+ * Bản chỉnh lỗi/chưa có (CSDL chưa cập nhật) thì coi như không có, không làm hỏng phần còn lại.
+ */
 export async function refreshCatalogCache(): Promise<void> {
-  const [crops, types] = await Promise.all([
-    client().from('crop_types').select('id, code, name, organization_id').eq('is_active', true),
-    client().from('work_types').select('id, code, name, field_schema, organization_id').eq('is_active', true),
+  const [crops, types, ovr] = await Promise.all([
+    client().from('crop_types').select('id, code, name, organization_id, is_active'),
+    client().from('work_types').select('id, code, name, field_schema, organization_id, is_active'),
+    client().from('org_catalog_overrides').select('organization_id, item_kind, item_id, display_name, field_schema, is_active'),
   ]);
   if (crops.error) throw new Error(crops.error.message);
   if (types.error) throw new Error(types.error.message);
+  const ov = { crop_type: new Map<string, Record<string, CatalogOverride>>(), work_type: new Map<string, Record<string, CatalogOverride>>() };
+  for (const o of (ovr.error ? [] : ovr.data ?? []) as Array<{ organization_id: string; item_kind: 'crop_type' | 'work_type'; item_id: string } & CatalogOverride>) {
+    const m = ov[o.item_kind];
+    m.set(o.item_id, { ...(m.get(o.item_id) ?? {}), [o.organization_id]: { display_name: o.display_name, field_schema: o.field_schema, is_active: o.is_active } });
+  }
   await db.transaction('rw', db.cropTypes, db.workTypes, async () => {
     await db.cropTypes.clear();
     await db.workTypes.clear();
-    await db.cropTypes.bulkPut(crops.data ?? []);
-    await db.workTypes.bulkPut(types.data ?? []);
+    await db.cropTypes.bulkPut((crops.data ?? []).map((c) => ({ ...c, ov: ov.crop_type.get(c.id) })));
+    await db.workTypes.bulkPut((types.data ?? []).map((w) => ({ ...w, ov: ov.work_type.get(w.id) })));
   });
 }
 
-// ------------------------------------------------------------------ cây trồng
-export async function listCrops(orgId: string): Promise<CropRow[]> {
-  const rows = await ok(client().from('crop_types').select('id, organization_id, code, name, is_active').order('name'));
-  return ((rows ?? []) as CropRow[]).filter((c) => c.organization_id === null || c.organization_id === orgId);
+/** Chỉnh một mục có sẵn dùng chung cho riêng cơ sở này (đổi tên, trường ghi, dừng/dùng lại) */
+export async function saveOverride(
+  orgId: string, kind: 'crop_type' | 'work_type', itemId: string,
+  patch: { display_name?: string | null; field_schema?: FieldDef[] | null; is_active?: boolean },
+): Promise<void> {
+  needOnline('chỉnh mục có sẵn');
+  const cur = await ok(client().from('org_catalog_overrides').select('display_name, field_schema, is_active')
+    .eq('organization_id', orgId).eq('item_kind', kind).eq('item_id', itemId).maybeSingle());
+  const base = (cur as CatalogOverride | null) ?? { display_name: null, field_schema: null, is_active: true };
+  const row = {
+    organization_id: orgId, item_kind: kind, item_id: itemId,
+    display_name: patch.display_name === undefined ? base.display_name : (patch.display_name?.trim() || null),
+    field_schema: patch.field_schema === undefined ? base.field_schema : patch.field_schema,
+    is_active: patch.is_active ?? base.is_active,
+  };
+  await ok(client().from('org_catalog_overrides').upsert(row, { onConflict: 'organization_id,item_kind,item_id' }));
+  await refreshCatalogCache().catch(() => undefined);
 }
 
+/** Bỏ bản chỉnh: mục trở về mặc định của nền tảng */
+export async function clearOverride(orgId: string, kind: 'crop_type' | 'work_type', itemId: string): Promise<void> {
+  needOnline('khôi phục mặc định');
+  await ok(client().from('org_catalog_overrides').delete().eq('organization_id', orgId).eq('item_kind', kind).eq('item_id', itemId));
+  await refreshCatalogCache().catch(() => undefined);
+}
+
+// ------------------------------------------------------------------ cây trồng
 export async function createCrop(orgId: string, name: string): Promise<void> {
   needOnline('thêm cây trồng');
   await ok(client().from('crop_types').insert({ organization_id: orgId, name: name.trim() }));
@@ -69,11 +97,6 @@ export async function updateCrop(id: string, c: { name?: string; is_active?: boo
 }
 
 // ------------------------------------------------------------------ loại việc
-export async function listWorkTypes(orgId: string): Promise<WorkTypeFull[]> {
-  const rows = await ok(client().from('work_types').select('id, organization_id, code, name, field_schema, is_active').order('name'));
-  return ((rows ?? []) as WorkTypeFull[]).filter((w) => w.organization_id === null || w.organization_id === orgId);
-}
-
 export async function createWorkType(orgId: string, name: string, fields: FieldDef[]): Promise<void> {
   needOnline('thêm loại việc');
   await ok(client().from('work_types').insert({ organization_id: orgId, name: name.trim(), field_schema: fields }));

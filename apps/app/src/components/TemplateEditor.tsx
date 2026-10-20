@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../lib/db';
+import { useCatalog } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { parseNumber } from '../lib/inventory';
@@ -20,7 +19,7 @@ interface Props { templateId: string; canEdit: boolean; onBack: () => void; onOp
  */
 export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Props) {
   const online = useOnline();
-  const allTypes = useLiveQuery(() => db.workTypes.toArray(), [], []);
+  const { workTypes: allTypes } = useCatalog();
   const [tpl, setTpl] = useState<TemplateRow | null>(null);
   const [stages, setStages] = useState<StageRow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -46,8 +45,8 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
 
   // Việc chọn được: dùng chung hoặc của chính cơ sở của mẫu
   const types = useMemo(
-    () => allTypes.filter((w) => !w.organization_id || w.organization_id === tpl?.organization_id).sort((a, b) => a.name.localeCompare(b.name, 'vi')),
-    [allTypes, tpl],
+    () => allTypes.filter((w) => w.is_active || stages.some((s) => s.work_type_id === w.id)).sort((a, b) => a.name.localeCompare(b.name, 'vi')),
+    [allTypes, stages],
   );
   const shown = useMemo(
     () => (order ? order.map((id) => stages.find((s) => s.id === id)).filter((s): s is StageRow => Boolean(s)) : stages),

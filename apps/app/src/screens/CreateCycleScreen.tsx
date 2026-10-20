@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { useCatalog } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
@@ -9,11 +10,11 @@ import { createCycle, fetchQuotaContexts, type QuotaContext } from '../lib/produ
 export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
   const { active } = useOrgs();
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
-  const allCrops = useLiveQuery(() => db.cropTypes.toArray(), [], []);
-  // cây dùng chung hoặc do chính cơ sở đang chọn khai báo
-  const cropTypes = allCrops.filter((c) => !c.organization_id || c.organization_id === active?.id);
+  // cây dùng chung hoặc của cơ sở đang chọn, đã áp bản chỉnh; cây đã dừng không chọn được
+  const { cropTypes: allCrops } = useCatalog();
+  const cropTypes = allCrops.filter((c) => c.is_active);
 
-  const myAreas = areas.filter((a) => a.organization_id === active?.id);
+  const myAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false); // khu trồng đã dừng không tạo vụ mới
   const [areaId, setAreaId] = useState('');
   const [cropId, setCropId] = useState('');
   const [startNow, setStartNow] = useState(true);

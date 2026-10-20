@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useCatalog } from '../lib/catalog';
 import { SyncBadge } from '../components/SyncBadge';
 import { db } from '../lib/db';
 import { useRecordSync } from '../lib/hooks';
@@ -16,8 +17,7 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
   const logs = useLiveQuery(() => db.logs.toArray(), [], []);
   const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
-  const workTypes = useLiveQuery(() => db.workTypes.toArray(), [], []);
-  const cropTypes = useLiveQuery(() => db.cropTypes.toArray(), [], []);
+  const { workTypes, cropTypes } = useCatalog();
   if (!active) return null;
   const canManage = canManageProduction(active.roles);
 
