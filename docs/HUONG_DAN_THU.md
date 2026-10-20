@@ -150,6 +150,14 @@ Cần: nhân viên có tài khoản (tab Tổ chức → Nhân sự), có tổ v
 4. **Chủ/quản lý**: Báo cáo → **Tiền công** → "＋ Tạo kỳ trả công" → mở kỳ → "Tính tiền công". Mở từng người để xem cách tính từng dòng. Thiếu đơn giá thì app báo. Thêm thưởng/khấu trừ/tạm ứng rồi tính lại.
 5. **Chủ** bấm "Khóa kỳ (chốt số)". Sau khóa không tính lại, không sửa công trong kỳ. "Mở khóa kỳ" cần lý do.
 
+## Bài thử 15 — Chấm công nâng cao
+
+1. **Vị trí**: bấm Vào ca/Ra ca, cho phép vị trí khi điện thoại hỏi; công hiện "đã ghi vị trí". Không cho phép vẫn chấm công được.
+2. **Mất mạng**: tắt mạng, bấm Vào ca (ca lưu trên máy). Bật mạng lại hoặc vẫn tắt, bấm Ra ca: công được gửi khi có mạng và hiện "Chờ xác nhận". Lưu ý: ca bấm Vào ca **khi có mạng** thì Ra ca cũng cần mạng.
+3. **Gắn vụ**: ở thẻ Chấm công của tôi, chấm công hộ, ghi sản lượng có ô chọn vụ (không bắt buộc). Sau khi tính tiền công, **Báo cáo → Tổng kết vụ** có dòng Nhân công (đã khóa / dự tính) và được cộng vào giá thành.
+4. **Sửa công**: bấm ✎ ở dòng công, nhập giờ đúng và lý do, gửi đề nghị. Quản lý/chủ thấy mục "Yêu cầu sửa công chờ duyệt" và bấm Duyệt hoặc Từ chối. Kỳ đã khóa thì không duyệt được.
+5. **Hồ sơ → Tiền công của tôi**: người lao động xem số tiền từng kỳ ("Dự tính" đến khi chủ khóa kỳ).
+
 ## Những điều cần biết
 
 - Số tiền luôn là **đồng**, số lượng thu hoạch và bán luôn là **kg** ở bản thử này.

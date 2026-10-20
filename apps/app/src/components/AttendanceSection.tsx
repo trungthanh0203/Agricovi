@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { Collapsible } from './Collapsible';
+import { db } from '../lib/db';
 import { useAuth } from '../lib/auth';
 import { addDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
@@ -7,8 +9,9 @@ import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { hasRole } from '../lib/roles';
 import {
-  ATT_STATUS_LABEL, clockIn, clockOut, confirmAttendance, confirmOutput, fmtMinutes, listAttendance, listOutputs, listWorkers,
-  OUTPUT_STATUS_LABEL, recordOutput, recordShift, rejectAttendance, type AttendanceRow, type OutputRow, type WorkerLite,
+  ATT_STATUS_LABEL, clockIn, clockOut, clockOutLocal, confirmAttendance, confirmOutput, decideAdjustment, fmtMinutes, listAdjustments, listAttendance,
+  listOutputs, listWorkers, OUTPUT_STATUS_LABEL, recalledMyWorker, recordOutput, recordShift, rejectAttendance, rememberMyWorker, requestAdjustment,
+  type AdjustmentRequest, type AttendanceRow, type OutputRow, type WorkerLite,
 } from '../lib/work';
 
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
@@ -28,6 +31,12 @@ export function AttendanceSection() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [brk, setBrk] = useState('0');
+  const [cycleId, setCycleId] = useState('');
+  const [adjFor, setAdjFor] = useState<string | null>(null);
+  const [adjs, setAdjs] = useState<AdjustmentRequest[]>([]);
+  const localShift = useLiveQuery(async () => (active ? (await db.localShifts.where('org').equals(active.id).toArray())[0] ?? null : null), [active?.id], null);
+  const cycles = useLiveQuery(() => db.cycles.toArray(), [], []).filter((c) => c.status === 'active' && c.owner_org_id === active?.id);
+  const recalled = active && uid ? recalledMyWorker(active.id, uid) : null;
 
   const orgId = active?.id;
   const isAdmin = hasRole(active?.roles, 'manager');
@@ -40,10 +49,12 @@ export function AttendanceSection() {
     if (!orgId || !navigator.onLine) return;
     try {
       const from = addDays(todayLocal(), -14);
-      const [w, a, o] = await Promise.all([listWorkers(orgId), listAttendance(orgId, from), listOutputs(orgId, from)]);
-      setWorkers(w); setAtt(a); setOuts(o);
+      const [w, a, o, aj] = await Promise.all([listWorkers(orgId), listAttendance(orgId, from), listOutputs(orgId, from), listAdjustments(orgId).catch(() => [])]);
+      setWorkers(w); setAtt(a); setOuts(o); setAdjs(aj);
+      const mine = w.find((x) => x.user_id === uid);
+      if (mine && uid) rememberMyWorker(orgId, uid, mine.id);
     } catch (e) { setError(friendlyError(e)); }
-  }, [orgId]);
+  }, [orgId, uid]);
   useEffect(() => { void load(); }, [load]);
 
   const openShift = useMemo(() => att.find((a) => a.worker_id === me?.id && !a.ended_at && a.status !== 'rejected') ?? null, [att, me?.id]);
@@ -62,20 +73,36 @@ export function AttendanceSection() {
       {!online && <p className="msg warn" role="status">Đang offline: chấm công cần có mạng. Hãy kết nối mạng rồi thử lại.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
-      {me ? (
+      {me || recalled ? (
         <div className="card">
           <h2>Chấm công của tôi</h2>
-          {openShift ? (
+          {localShift ? (
             <>
-              <p>Bạn vào ca lúc <strong>{hhmm(openShift.started_at)}</strong> ngày {fmtDate(openShift.work_date)}.</p>
+              <p>Bạn vào ca lúc <strong>{hhmm(localShift.started_at)}</strong> (lưu trên máy{online ? '' : ', đang mất mạng'}).</p>
+              <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
+              <button className="primary" disabled={busy}
+                onClick={() => void run(() => clockOutLocal(localShift, Math.max(0, parseInt(brk || '0', 10) || 0), cycleId || null))}>Ra ca</button>
+              <p className="muted">Ca sẽ được gửi lên khi có mạng, rồi chờ tổ trưởng hoặc quản lý xác nhận.</p>
+            </>
+          ) : openShift ? (
+            <>
+              <p>Bạn vào ca lúc <strong>{hhmm(openShift.started_at)}</strong> ngày {fmtDate(openShift.work_date)}{openShift.start_lat != null ? ' · đã ghi vị trí' : ''}.</p>
               <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
               <button className="primary" disabled={busy || !online}
-                onClick={() => void run(() => clockOut(openShift.id, Math.max(0, parseInt(brk || '0', 10) || 0)))}>Ra ca</button>
+                onClick={() => void run(() => clockOut(openShift.id, Math.max(0, parseInt(brk || '0', 10) || 0), cycleId || null))}>Ra ca</button>
             </>
           ) : (
-            <button className="primary" disabled={busy || !online} onClick={() => void run(() => clockIn(active.id))}>Vào ca</button>
+            <button className="primary" disabled={busy} onClick={() => void run(() => clockIn(active.id, me?.id ?? recalled, cycleId || null))}>Vào ca</button>
           )}
-          <p className="muted">Công của bạn được tổ trưởng hoặc quản lý xác nhận trước khi tính tiền.</p>
+          {cycles.length > 0 && (
+            <label>Làm cho vụ (không bắt buộc)
+              <select value={cycleId} onChange={(e) => setCycleId(e.target.value)}>
+                <option value="">— Không gắn vụ —</option>
+                {cycles.map((c) => <option key={c.id} value={c.id}>{c.name || c.template_name || 'Vụ'}</option>)}
+              </select>
+            </label>
+          )}
+          <p className="muted">Vị trí chỉ được ghi lúc bạn bấm Vào ca/Ra ca (nếu bạn cho phép), không theo dõi liên tục. Công được xác nhận trước khi tính tiền.</p>
         </div>
       ) : (
         <p className="muted">Bạn chưa có hồ sơ lao động ở cơ sở này nên không tự chấm công được{canRecordFor.length > 0 ? ', nhưng có thể chấm công hộ người trong tổ' : ''}.</p>
@@ -84,10 +111,10 @@ export function AttendanceSection() {
       {canRecordFor.length > 0 && (
         <>
           <Collapsible inline title="＋ Chấm công hộ" summary="nhập ca đã làm của người khác">
-            <ShiftForm workers={canRecordFor} busy={busy || !online} onSave={(w, s, e, b, n) => run(() => recordShift(w, s, e, b, n))} />
+            <ShiftForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
           </Collapsible>
           <Collapsible inline title="＋ Ghi sản lượng" summary="khối lượng đã làm của người khác">
-            <OutputForm workers={canRecordFor} busy={busy || !online} onSave={(w, d, q, u, n) => run(() => recordOutput(w, d, q, u, n))} />
+            <OutputForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onSave={(w, d, q, u, n, c) => run(() => recordOutput(w, d, q, u, n, c))} />
           </Collapsible>
         </>
       )}
@@ -108,6 +135,9 @@ export function AttendanceSection() {
                 <span className={a.status === 'confirmed' ? 'pill ok' : a.status === 'rejected' ? 'pill err' : 'pill warn'}>{ATT_STATUS_LABEL[a.status]}</span>
               </td>
               <td className="act">
+                {a.ended_at && a.status !== 'rejected' && (a.worker_id === me?.id || canConfirm(a)) && (
+                  <button className="icon" disabled={busy || !online} aria-label="Đề nghị sửa công" title="Đề nghị sửa giờ" onClick={() => setAdjFor(adjFor === a.id ? null : a.id)}>✎</button>
+                )}{' '}
                 {a.ended_at && a.status === 'needs_confirmation' && canConfirm(a) && (
                   <>
                     <button className="icon" disabled={busy || !online} aria-label="Xác nhận công" title="Xác nhận" onClick={() => void run(() => confirmAttendance(a.id))}>✔</button>{' '}
@@ -122,6 +152,33 @@ export function AttendanceSection() {
           ))}
         </tbody>
       </table>
+
+      {adjFor && att.find((x) => x.id === adjFor) && (
+        <AdjustForm key={adjFor} rec={att.find((x) => x.id === adjFor)!} busy={busy || !online} onClose={() => setAdjFor(null)}
+          onSave={(p, r) => run(async () => { await requestAdjustment(adjFor, p, r); setAdjFor(null); })} />
+      )}
+
+      {adjs.filter((x) => x.status === 'pending').length > 0 && (
+        <>
+          <h2 className="sect">Yêu cầu sửa công chờ duyệt</h2>
+          {adjs.filter((x) => x.status === 'pending').map((x) => {
+            const rec = att.find((r) => r.id === x.attendance_id);
+            return (
+              <div className="card slim" key={x.id}>
+                <strong>{rec ? nameOf(rec.worker_id) : 'Công'}</strong> · {rec ? fmtDate(rec.work_date) : ''}
+                <p className="muted">Đề nghị: {x.proposed.started_at ? `vào ${hhmm(x.proposed.started_at)} ` : ''}{x.proposed.ended_at ? `ra ${hhmm(x.proposed.ended_at)} ` : ''}{x.proposed.break_minutes != null ? `nghỉ ${x.proposed.break_minutes} phút` : ''}</p>
+                <p className="muted">Lý do: {x.reason}</p>
+                {isAdmin ? (
+                  <div className="actions">
+                    <button className="primary" disabled={busy || !online} onClick={() => void run(() => decideAdjustment(x.id, true))}>Duyệt</button>
+                    <button className="secondary" disabled={busy || !online} onClick={() => void run(() => decideAdjustment(x.id, false))}>Từ chối</button>
+                  </div>
+                ) : <span className="pill warn">Chờ quản lý duyệt</span>}
+              </div>
+            );
+          })}
+        </>
+      )}
 
       {outs.length > 0 && (
         <>
@@ -149,7 +206,18 @@ export function AttendanceSection() {
   );
 }
 
-function ShiftForm({ workers, busy, onSave }: { workers: WorkerLite[]; busy: boolean; onSave: (w: string, s: Date, e: Date, b: number, note: string) => Promise<unknown> }) {
+type CycleOpt = { id: string; name?: string | null; template_name?: string | null };
+const CycleSelect = ({ cycles, value, onChange }: { cycles: CycleOpt[]; value: string; onChange: (v: string) => void }) => cycles.length === 0 ? null : (
+  <label>Vụ (không bắt buộc)
+    <select value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">— Không gắn vụ —</option>
+      {cycles.map((c) => <option key={c.id} value={c.id}>{c.name || c.template_name || 'Vụ'}</option>)}
+    </select>
+  </label>
+);
+
+function ShiftForm({ workers, cycles, busy, onSave }: { workers: WorkerLite[]; cycles: CycleOpt[]; busy: boolean; onSave: (w: string, s: Date, e: Date, b: number, note: string, c: string | null) => Promise<unknown> }) {
+  const [cyc, setCyc] = useState('');
   const [w, setW] = useState(workers[0]?.id ?? '');
   const [date, setDate] = useState(todayLocal());
   const [from, setFrom] = useState('07:00');
@@ -164,7 +232,7 @@ function ShiftForm({ workers, busy, onSave }: { workers: WorkerLite[]; busy: boo
     if (!w) return setErr('Hãy chọn người.');
     if (!(t > s)) return setErr('Giờ kết thúc phải sau giờ bắt đầu.');
     setErr(null);
-    void onSave(w, s, t, Math.max(0, parseInt(brk || '0', 10) || 0), note).then(() => setNote('')).catch(() => undefined);
+    void onSave(w, s, t, Math.max(0, parseInt(brk || '0', 10) || 0), note, cyc || null).then(() => setNote('')).catch(() => undefined);
   }
   return (
     <form className="inline-form" onSubmit={submit} noValidate>
@@ -177,6 +245,7 @@ function ShiftForm({ workers, busy, onSave }: { workers: WorkerLite[]; busy: boo
         <label>Đến giờ<input type="time" value={to} onChange={(e) => setTo(e.target.value)} /></label>
       </div>
       <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
+      <CycleSelect cycles={cycles} value={cyc} onChange={setCyc} />
       <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
       {err && <p className="msg error" role="alert">{err}</p>}
       <button type="submit" className="secondary" disabled={busy}>Lưu công</button>
@@ -184,7 +253,8 @@ function ShiftForm({ workers, busy, onSave }: { workers: WorkerLite[]; busy: boo
   );
 }
 
-function OutputForm({ workers, busy, onSave }: { workers: WorkerLite[]; busy: boolean; onSave: (w: string, d: string, q: number, u: string, n: string) => Promise<unknown> }) {
+function OutputForm({ workers, cycles, busy, onSave }: { workers: WorkerLite[]; cycles: CycleOpt[]; busy: boolean; onSave: (w: string, d: string, q: number, u: string, n: string, c: string | null) => Promise<unknown> }) {
+  const [cyc, setCyc] = useState('');
   const [w, setW] = useState(workers[0]?.id ?? '');
   const [date, setDate] = useState(todayLocal());
   const [qty, setQty] = useState('');
@@ -198,7 +268,7 @@ function OutputForm({ workers, busy, onSave }: { workers: WorkerLite[]; busy: bo
     if (!qty.trim() || Number.isNaN(q) || q <= 0) return setErr('Sản lượng phải là số lớn hơn 0.');
     if (!unit.trim()) return setErr('Hãy nhập đơn vị (kg, giỏ, cây…).');
     setErr(null);
-    void onSave(w, date, q, unit, note).then(() => { setQty(''); setNote(''); }).catch(() => undefined);
+    void onSave(w, date, q, unit, note, cyc || null).then(() => { setQty(''); setNote(''); }).catch(() => undefined);
   }
   return (
     <form className="inline-form" onSubmit={submit} noValidate>
@@ -210,9 +280,47 @@ function OutputForm({ workers, busy, onSave }: { workers: WorkerLite[]; busy: bo
         <label>Sản lượng<input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} /></label>
         <label>Đơn vị<input value={unit} onChange={(e) => setUnit(e.target.value)} /></label>
       </div>
+      <CycleSelect cycles={cycles} value={cyc} onChange={setCyc} />
       <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
       {err && <p className="msg error" role="alert">{err}</p>}
       <button type="submit" className="secondary" disabled={busy}>Lưu sản lượng</button>
     </form>
+  );
+}
+
+/** Đề nghị sửa giờ vào/ra/phút nghỉ của một ca đã xong (có lý do); quản lý duyệt thì công được cập nhật và xác nhận */
+function AdjustForm({ rec, busy, onSave, onClose }: {
+  rec: AttendanceRow; busy: boolean; onSave: (p: { started_at?: string; ended_at?: string; break_minutes?: number }, reason: string) => Promise<unknown>; onClose: () => void;
+}) {
+  const toTime = (iso: string) => new Date(iso).toTimeString().slice(0, 5);
+  const [from, setFrom] = useState(toTime(rec.started_at));
+  const [to, setTo] = useState(rec.ended_at ? toTime(rec.ended_at) : '');
+  const [brk, setBrk] = useState(String(rec.break_minutes));
+  const [reason, setReason] = useState('');
+  const [err, setErr] = useState<string | null>(null);
+  return (
+    <div className="card">
+      <h2>Đề nghị sửa công ngày {fmtDate(rec.work_date)}</h2>
+      <div className="inline-form">
+        <div className="pair">
+          <label>Giờ vào<input type="time" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+          <label>Giờ ra<input type="time" value={to} onChange={(e) => setTo(e.target.value)} /></label>
+        </div>
+        <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
+        <label>Lý do (bắt buộc)<input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Ví dụ: quên bấm Ra ca" /></label>
+        {err && <p className="msg error" role="alert">{err}</p>}
+        <button className="primary" disabled={busy} onClick={() => {
+          if (reason.trim().length < 3) return setErr('Hãy ghi lý do.');
+          if (!from || !to) return setErr('Hãy nhập giờ vào và giờ ra.');
+          const day = rec.work_date;
+          const s = new Date(`${day}T${from}:00`);
+          const e = new Date(`${day}T${to}:00`);
+          if (!(e > s)) return setErr('Giờ ra phải sau giờ vào.');
+          setErr(null);
+          void onSave({ started_at: s.toISOString(), ended_at: e.toISOString(), break_minutes: Math.max(0, parseInt(brk || '0', 10) || 0) }, reason).catch(() => undefined);
+        }}>Gửi đề nghị</button>
+        <button className="secondary" onClick={onClose}>Đóng</button>
+      </div>
+    </div>
   );
 }

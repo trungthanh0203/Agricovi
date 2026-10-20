@@ -47,6 +47,18 @@ export interface NoteRow {
   created_at?: string;
 }
 
+/** Ca chấm công bắt đầu khi KHÔNG có mạng: giữ trên máy tới khi ra ca rồi gửi một lần qua hàng đợi (D43) */
+export interface LocalShift {
+  id: string;
+  org: string;
+  worker_id: string;
+  started_at: string;
+  cycle_id: string | null;
+  lat: number | null;
+  lng: number | null;
+  acc: number | null;
+}
+
 /** Giai đoạn của vụ: bản sao từ quy trình mẫu, có ngày kế hoạch và ngày thực tế */
 export interface StageRow {
   id: string;
@@ -253,6 +265,7 @@ export class LocalDb extends Dexie {
   summaries!: Table<SummaryRow, string>;
   stages!: Table<StageRow, string>;
   notes!: Table<NoteRow, string>;
+  localShifts!: Table<LocalShift, string>;
 
   constructor(name = 'agriconnect') {
     super(name);
@@ -336,6 +349,11 @@ export class LocalDb extends Dexie {
     this.version(9).stores({
       outbox: 'id, state, table, createdAt',
       notes: 'id, cycle_id, note_date',
+    });
+    // v10 (D43): ca chấm công bắt đầu khi mất mạng, chờ ra ca để gửi
+    this.version(10).stores({
+      outbox: 'id, state, table, createdAt',
+      localShifts: 'id, org',
     });
   }
 }

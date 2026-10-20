@@ -30,6 +30,7 @@ export async function changeMyPassword(newPassword: string): Promise<void> {
 }
 
 export interface MyWork {
+  workerId: string;
   mode: string | null;
   teamName: string | null;
   leadsTeams: string[];
@@ -51,5 +52,5 @@ export async function fetchMyWork(uid: string, orgId: string): Promise<MyWork | 
     const t = await supabase.from('worker_teams').select('name').in('id', teamIds).limit(1);
     teamName = ((t.data ?? []) as { name: string }[])[0]?.name ?? null;
   }
-  return { mode: me.work_mode, teamName, leadsTeams: ((led.data ?? []) as { name: string }[]).map((r) => r.name) };
+  return { workerId: me.id, mode: me.work_mode, teamName, leadsTeams: ((led.data ?? []) as { name: string }[]).map((r) => r.name) };
 }

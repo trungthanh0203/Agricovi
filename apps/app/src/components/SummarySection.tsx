@@ -132,6 +132,8 @@ export function SummarySection() {
             <Row k="Vật tư đã dùng (từ kho)" v={formatMoney(summary.material_used_cost)} />
             <Row k="Vật tư đã dùng (ghi tay)" v={formatMoney(summary.material_used_manual)} />
             <Row k="Phân bổ / ước tính" v={formatMoney(summary.allocated_or_estimated)} />
+            <Row k="Nhân công (kỳ đã khóa)" v={formatMoney(summary.labor_cost ?? 0)} />
+            {(summary.labor_estimated ?? 0) > 0 && <Row k="Nhân công (kỳ chưa khóa, dự tính)" v={formatMoney(summary.labor_estimated ?? 0)} />}
             <div className="row member"><strong>Tổng chi phí đã ghi</strong><strong>{formatMoney(summary.total_cost)}</strong></div>
             <p className="muted">
               Tiền mua vật tư ({formatMoney(summary.cash_paid_material)}) không cộng vào tổng vì chi phí vật tư đã tính khi dùng.

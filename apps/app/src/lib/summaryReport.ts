@@ -15,6 +15,9 @@ export interface CycleSummary {
   material_used_cost: number;
   material_used_manual: number;
   allocated_or_estimated: number;
+  /** Tiền công gắn vụ: kỳ đã khóa (đã duyệt) và kỳ chưa khóa (dự tính). Có thể thiếu ở bản máy chủ cũ. */
+  labor_cost?: number;
+  labor_estimated?: number;
   total_cost: number;
   harvested_gross_qty: number;
   harvest_loss_qty: number;
@@ -58,6 +61,9 @@ export function summaryNotes(s: CycleSummary, pendingCount = 0): SummaryNote[] {
   if (s.has_estimated_cost) {
     notes.push({ level: 'info', text: 'Tổng chi phí có cả khoản ước tính hoặc phân bổ (không phải tiền đã thực chi).' });
   }
+  if ((s.labor_estimated ?? 0) > 0) {
+    notes.push({ level: 'info', text: 'Nhân công có phần của kỳ trả công chưa khóa nên mới là dự tính. Chủ khóa kỳ để chốt số.' });
+  }
   return notes;
 }
 
@@ -88,6 +94,8 @@ export function buildSummaryCsv(opts: { cycleLabel: string; summary: CycleSummar
     ['Vật tư đã dùng (tính từ kho)', s.material_used_cost, 'đồng', 'Giá vốn bình quân các lần nhập có giá'],
     ['Vật tư đã dùng (ghi tay)', s.material_used_manual, 'đồng', ''],
     ['Chi phí phân bổ / ước tính', s.allocated_or_estimated, 'đồng', ''],
+    ['Nhân công (kỳ đã khóa)', s.labor_cost ?? 0, 'đồng', 'Tiền công của công/sản lượng gắn vụ'],
+    ['Nhân công (kỳ chưa khóa, dự tính)', s.labor_estimated ?? 0, 'đồng', ''],
     ['Tổng chi phí đã ghi', s.total_cost, 'đồng', 'Chưa gồm tiền mua vật tư (đã tính khi dùng)'],
     ['Tiền mua vật tư (chỉ để tham khảo)', s.cash_paid_material, 'đồng', 'Không cộng vào tổng chi phí'],
     ['Tổng thu hoạch', s.harvested_gross_qty, 'kg', ''],

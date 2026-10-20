@@ -7,6 +7,8 @@ import { useOrgs } from '../lib/orgs';
 import { PERM_LEVEL_LABEL, PERM_MODULE_LABEL, PERM_MODULES } from '../lib/permissions';
 import { changeMyPassword, fetchDisplayName, fetchMyWork, saveDisplayName, type MyWork } from '../lib/profile';
 import { isOwner, roleSummary } from '../lib/roles';
+import { fetchMyPay, fmtVnd, type MyPay } from '../lib/work';
+import { fmtDate } from '../lib/dates';
 import { fetchStaffStatus, WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
 
 /**
@@ -20,6 +22,7 @@ export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
   const [staffName, setStaffName] = useState<string | null>(null);
   const [display, setDisplay] = useState<string | null>(null);
   const [work, setWork] = useState<MyWork | null>(null);
+  const [pay, setPay] = useState<MyPay[]>([]);
   const uid = session?.user.id;
 
   useEffect(() => {
@@ -30,6 +33,11 @@ export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
   useEffect(() => {
     if (uid && active) void fetchMyWork(uid, active.id).then(setWork).catch(() => setWork(null));
   }, [uid, active]);
+
+  useEffect(() => {
+    if (work?.workerId) void fetchMyPay(work.workerId).then(setPay).catch(() => setPay([]));
+    else setPay([]);
+  }, [work?.workerId]);
 
   const ownsOrg = orgs.some((o) => isOwner(o.roles));
   const email = session?.user.email ?? '';
@@ -75,6 +83,19 @@ export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
           {work.teamName && <p>Tổ lao động: <strong>{work.teamName}</strong></p>}
           {work.leadsTeams.length > 0 && <p>Tổ tôi phụ trách (tổ trưởng): <strong>{work.leadsTeams.join(', ')}</strong></p>}
           {work.mode && <p className="muted">Cách tính công: {WORK_MODE_LABEL[work.mode as WorkMode] ?? work.mode}</p>}
+        </div>
+      )}
+
+      {pay.length > 0 && (
+        <div className="card">
+          <h2>Tiền công của tôi</h2>
+          {pay.slice(0, 6).map((p) => (
+            <div className="row member" key={p.periodId}>
+              <span>{fmtDate(p.start)} – {fmtDate(p.end)}</span>
+              <span><strong>{fmtVnd(p.total)}</strong> <span className={p.approved ? 'pill ok' : 'pill warn'}>{p.approved ? 'Đã chốt' : 'Dự tính'}</span></span>
+            </div>
+          ))}
+          <p className="muted">Số "Dự tính" có thể đổi đến khi chủ cơ sở khóa kỳ.</p>
         </div>
       )}
 
