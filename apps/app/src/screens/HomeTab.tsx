@@ -52,7 +52,6 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
   return (
     <section>
       <h1>Trang chủ</h1>
-      <p className="muted">{active.name}</p>
 
       {running.length === 0 ? (
         <div className="card">

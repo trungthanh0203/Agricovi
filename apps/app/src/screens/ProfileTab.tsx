@@ -10,7 +10,7 @@ import { friendlyError } from '../lib/errors';
 import type { LicenseRow } from '../lib/licenses';
 import { useOrgs } from '../lib/orgs';
 import { PERM_LEVEL_LABEL, PERM_MODULE_LABEL, PERM_MODULES } from '../lib/permissions';
-import { changeMyPassword, fetchDisplayName, fetchMyWork, saveDisplayName, type MyWork } from '../lib/profile';
+import { changeMyPassword, fetchDisplayName, fetchMyWork, renameOrg, saveDisplayName, type MyWork } from '../lib/profile';
 import { buildAccountQr } from '../lib/qr';
 import { hasRole, isOwner, roleSummary } from '../lib/roles';
 import { fetchStaffStatus, WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
@@ -22,7 +22,7 @@ import { fetchMyPay, fmtVnd, type MyPay } from '../lib/work';
  */
 export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
   const { session, signOut } = useAuth();
-  const { active, orgs } = useOrgs();
+  const { active, orgs, refresh } = useOrgs();
   const [isStaff, setIsStaff] = useState(true); // mặc định ẩn nút cho tới khi biết chắc không phải tài khoản nhân viên
   const [staffName, setStaffName] = useState<string | null>(null);
   const [display, setDisplay] = useState<string | null>(null);
@@ -103,8 +103,14 @@ export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
         </Collapsible>
       )}
 
+      {active && isOwner(active.roles) && (
+        <Collapsible title="Thông tin cơ sở" summary={active.name}>
+          <OrgNameForm orgId={active.id} name={active.name} onSaved={() => void refresh()} />
+        </Collapsible>
+      )}
+
       {active && hasRole(active.roles, 'manager') && (
-        <Collapsible title="Gói dịch vụ" summary={active.name}>
+        <Collapsible title="Gói dịch vụ">
           <PlanCard />
         </Collapsible>
       )}
@@ -150,6 +156,34 @@ function AccountQr({ name, login, orgName, orgType, orgId, roles, licenses }: {
       <label className="check"><input type="checkbox" checked={withLicenses} onChange={(e) => setWithLicenses(e.target.checked)} /> Kèm danh sách giấy phép, chứng chỉ ({licenses.length})</label>
       <QrCard text={text} filename="qr-tai-khoan.png" />
     </>
+  );
+}
+
+/** Chủ đổi tên cơ sở (nhà vườn, trang trại, HTX) đã đăng ký lúc đầu */
+function OrgNameForm({ orgId, name: initial, onSaved }: { orgId: string; name: string; onSaved: () => void }) {
+  const [name, setName] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    if (name.trim().length < 2) return setMsg({ ok: false, text: 'Tên cơ sở cần ít nhất 2 ký tự.' });
+    if (!navigator.onLine) return setMsg({ ok: false, text: 'Đổi tên cần có mạng.' });
+    setBusy(true);
+    setMsg(null);
+    renameOrg(orgId, name)
+      .then(() => { setMsg({ ok: true, text: 'Đã đổi tên cơ sở.' }); onSaved(); })
+      .catch((err) => setMsg({ ok: false, text: friendlyError(err) }))
+      .finally(() => setBusy(false));
+  }
+  return (
+    <form className="inline-form" onSubmit={submit} noValidate>
+      <label>Tên cơ sở<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
+      {msg && <p className={msg.ok ? 'msg ok' : 'msg error'} role="status">{msg.text}</p>}
+      <div className="btnrow">
+        <button type="submit" className="primary" disabled={busy}>Lưu</button>
+        <button type="button" className="secondary" onClick={() => { setName(initial); setMsg(null); }}>Hủy</button>
+      </div>
+    </form>
   );
 }
 

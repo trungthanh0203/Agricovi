@@ -32,7 +32,6 @@ export function PlanCard() {
 
   return (
     <>
-      <p><strong>{active.name}</strong></p>
       <p className="muted">{TYPE_LABEL[active.type]} · {roleSummary(active.roles)}</p>
       {stale && <p className="msg warn">Đang hiển thị dữ liệu đã lưu trên thiết bị (chưa cập nhật từ máy chủ).</p>}
       {error && <p className="msg error">{error}</p>}

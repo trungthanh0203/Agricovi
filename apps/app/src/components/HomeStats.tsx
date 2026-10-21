@@ -161,7 +161,7 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
         </>
       )}
 
-      <h2 className="sect">{active.name}</h2>
+      <h2 className="sect">Của cơ sở</h2>
       <div className="kpis">
         <KpiTile label="Vụ đang sản xuất" value={String(running.length)} tone="info" />
         <KpiTile label="Việc ghi hôm nay" value={String(stat.orgToday)} tone={stat.orgToday > 0 ? 'ok' : 'neutral'} note="của cả cơ sở" />

@@ -31,6 +31,16 @@ export async function changeMyPassword(newPassword: string): Promise<void> {
   if (error) throw error;
 }
 
+/** Chủ đổi tên cơ sở (chính sách CSDL chỉ cho chủ sửa) */
+export async function renameOrg(orgId: string, name: string): Promise<void> {
+  needOnline('đổi tên cơ sở');
+  const n = name.trim();
+  if (n.length < 2) throw new Error('INVALID_NAME: Tên cơ sở cần ít nhất 2 ký tự.');
+  const { data, error } = await client().from('organizations').update({ name: n }).eq('id', orgId).select('id');
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) throw new Error('FORBIDDEN: Chỉ chủ cơ sở được đổi tên cơ sở.');
+}
+
 export interface MyWork {
   workerId: string;
   mode: string | null;
