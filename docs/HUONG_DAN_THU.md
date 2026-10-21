@@ -180,6 +180,12 @@ Cần: nhân viên có tài khoản (tab Tổ chức → Nhân sự), có tổ v
 3. **Tổ chức → Nhân sự**: bên phải dòng tên có ✎ (sửa tên, SĐT), ⏸ (tạm dừng), 🗑 (gỡ). Dòng "Vai trò:" có nút **Đổi vai trò** và **Đặt lại mật khẩu** ở bên phải. Mục **Phân quyền chức năng** có nền sáng hơn.
 4. Đổi vai trò / tạo nhân viên: danh sách vai trò lấy từ danh mục; chọn vai trò riêng thì tự tích thêm vai trò nền.
 
+## Bài thử 19 — Mã QR, giấy phép, Hồ sơ thu gọn
+
+1. **Hồ sơ**: mọi phần là một thẻ bấm mở/đóng (tài khoản mở sẵn). Mục **Giấy phép, chứng chỉ**: chủ/quản lý bấm "+ Thêm", nhập tên giấy, nơi cấp, số, ngày cấp, hạn, chọn ảnh. Trạng thái hạn hiện bằng chữ: "Còn N ngày", "Sắp hết hạn", "Đã hết hạn".
+2. **Hồ sơ → Mã QR tài khoản**: thấy mã QR; tích/bỏ "Kèm email/số điện thoại" và "Kèm giấy phép"; "Tải ảnh QR", "Sao chép nội dung", "Xem nội dung trong mã". Quét bằng camera điện thoại: hiện chữ tiếng Việt đúng dấu.
+3. **Tạo vụ mới**: xong sẽ tự mở chi tiết vụ với **Mã QR của vụ** đã mở sẵn (tên vụ, nơi trồng, thời gian, vật tư đã dùng). Sau khi ghi việc có dùng phân/thuốc, mở lại vụ và bấm "Cập nhật mã" để mã có thêm vật tư rồi quét thử.
+
 ## Những điều cần biết
 
 - Số tiền luôn là **đồng**, số lượng thu hoạch và bán luôn là **kg** ở bản thử này.

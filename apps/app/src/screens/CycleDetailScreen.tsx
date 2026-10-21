@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { CycleCalendar } from '../components/CycleCalendar';
+import { Collapsible } from '../components/Collapsible';
+import { CycleQr } from '../components/CycleQr';
 import { useCatalog } from '../lib/catalog';
 import { cycleProgress, stageColor, stageDelayDays, STAGE_STATUS_LABEL_VI } from '../lib/cycles';
 import { db, type NoteRow, type StageRow } from '../lib/db';
@@ -22,7 +24,7 @@ export interface LogPreset { cycleId: string; workTypeId?: string | null; stageI
  * Người quản lý bấm Bắt đầu / Hoàn thành, sửa/thêm/xóa giai đoạn của vụ này; mọi người ghi việc thẳng vào giai đoạn đang làm
  * và thêm ghi chú cho từng ngày ở dạng lịch (hiện nhắc ở Trang chủ).
  */
-export function CycleDetailScreen({ cycleId, onClose, onLog }: { cycleId: string; onClose: () => void; onLog: (p: LogPreset) => void }) {
+export function CycleDetailScreen({ cycleId, onClose, onLog, openQr }: { cycleId: string; onClose: () => void; onLog: (p: LogPreset) => void; openQr?: boolean }) {
   const { active } = useOrgs();
   const { session } = useAuth();
   const online = useOnline();
@@ -79,6 +81,9 @@ export function CycleDetailScreen({ cycleId, onClose, onLog }: { cycleId: string
       </p>
       <p className="muted">Quy trình: {cycle.template_name ?? 'không có (vụ cũ)'}{cycle.template_version ? ` · bản ${cycle.template_version}` : ''}</p>
       {cycle.note && <p>{cycle.note}</p>}
+      <Collapsible title="Mã QR của vụ" summary="tên vụ, nơi trồng, thời gian, vật tư đã dùng" defaultOpen={openQr}>
+        <CycleQr cycleId={cycleId} label={cycle.name || crop} />
+      </Collapsible>
 
       {prog.total > 0 ? (
         <div className="card slim">

@@ -223,3 +223,12 @@ button.icon:disabled { opacity: .4; }
 .rowbtns > button { min-height: 40px; width: auto; margin: 0; padding: 0 12px; font-size: 14px; }
 details.fold.highlight { background: color-mix(in srgb, var(--green) 10%, var(--bg)); border-color: var(--green); }
 details.fold.highlight > summary .fold-title { color: var(--green); }
+
+/* Mã QR, giấy phép (D50) */
+.qrcard { margin: 8px 0; }
+.qrbox { width: min(280px, 100%); margin: 8px auto; background: #fff; padding: 8px; border-radius: 8px; border: 1px solid var(--line); }
+.qrbox svg { display: block; width: 100%; height: auto; }
+.qrtext { white-space: pre-wrap; word-break: break-word; font: inherit; font-size: 13px; margin: 0; }
+.licfig { margin: 8px 0; }
+.licfig img { max-width: 100%; border-radius: 8px; border: 1px solid var(--line); }
+.licfig figcaption { font-size: 13px; color: var(--muted); }

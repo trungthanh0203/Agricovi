@@ -13,7 +13,7 @@ import { listTemplates, loadTemplate, type StageRow, type TemplateRow } from '..
  * Tạo vụ mới (P2): BẮT BUỘC chọn quy trình mẫu của cơ sở sở hữu vụ. Giai đoạn và ngày kế hoạch của vụ
  * được sao từ mẫu lúc tạo; sau này theo dõi vụ đúng theo các giai đoạn đó.
  */
-export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: string) => void; onCancel: () => void }) {
   const { active } = useOrgs();
   const areas = useLiveQuery(() => db.areas.toArray(), [], []);
   const { cropTypes } = useCatalog();
@@ -98,7 +98,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; on
     }
     setBusy(true);
     try {
-      await createCycle({
+      const newId = await createCycle({
         ownerOrgId: ownerId || active!.id,
         areaId,
         templateId,
@@ -106,7 +106,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; on
         startDate: startDate || null,
         name,
       });
-      onDone();
+      onDone(newId); // mở chi tiết vụ kèm mã QR vừa tạo
     } catch (err) {
       setError(friendlyError(err)); // gồm cả lỗi vượt hạn mức từ máy chủ
     } finally {

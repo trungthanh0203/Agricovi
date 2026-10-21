@@ -75,6 +75,7 @@ function Shell() {
   const [adding, setAdding] = useState(false);
   const [overlay, setOverlay] = useState<null | 'log' | 'cycle' | 'logs' | 'detail'>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [qrFirst, setQrFirst] = useState(false); // vừa tạo vụ: mở sẵn mã QR
   const [logPreset, setLogPreset] = useState<LogPreset | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
   const [counts, setCounts] = useState<Record<SyncState, number> | null>(null);
@@ -110,12 +111,12 @@ function Shell() {
 
   if (overlay === 'logs') return <LogsScreen onClose={() => setOverlay(null)} />;
   if (overlay === 'detail' && detailId) {
-    return <CycleDetailScreen cycleId={detailId} onClose={() => setOverlay(null)} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} />;
+    return <CycleDetailScreen cycleId={detailId} openQr={qrFirst} onClose={() => { setQrFirst(false); setOverlay(null); }} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} />;
   }
   if (overlay === 'log') {
     return <LogActivityScreen preset={logPreset} onClose={() => { setOverlay(logPreset && detailId ? 'detail' : null); setLogPreset(null); }} />;
   }
-  if (overlay === 'cycle') return <CreateCycleScreen onDone={() => { setOverlay(null); setTab('production'); }} onCancel={() => setOverlay(null)} />;
+  if (overlay === 'cycle') return <CreateCycleScreen onDone={(id) => { setDetailId(id); setQrFirst(true); setOverlay('detail'); setTab('production'); }} onCancel={() => setOverlay(null)} />;
   if (adding) {
     return <CreateOrgScreen onDone={() => { setAdding(false); setTab('home'); }} onCancel={() => setAdding(false)} />;
   }
@@ -162,7 +163,7 @@ function Shell() {
             onLog={() => { setLogPreset(null); setOverlay('log'); }}
             onHistory={() => setOverlay('logs')}
             onCreateCycle={() => setOverlay('cycle')}
-            onOpenCycle={(id) => { setDetailId(id); setOverlay('detail'); }}
+            onOpenCycle={(id) => { setDetailId(id); setQrFirst(false); setOverlay('detail'); }}
             onGo={goTo}
           />
         ) : tab === 'declare' ? (
