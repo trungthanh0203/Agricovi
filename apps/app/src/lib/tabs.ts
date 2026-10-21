@@ -1,5 +1,6 @@
 import type { MyOrg } from './orgs';
 import { canPerm } from './permissions';
+import { REPORT_TYPES } from './reports';
 import { canManageProduction, hasRole } from './roles';
 
 /**
@@ -26,7 +27,7 @@ export interface Section<Id extends string = string> {
 export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'attendance';
 export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'rates';
 export type OrgSection = 'info' | 'members' | 'positions' | 'teams' | 'coop';
-export type ReportSection = 'expense' | 'sales' | 'summary' | 'payroll';
+export type ReportSection = 'expense' | 'sales' | 'summary' | 'payroll' | 'custom';
 
 export function productionSections(org: MyOrg | null): Section<ProductionSection>[] {
   if (!org) return [];
@@ -70,6 +71,7 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
     canPerm(org.perms, 'sales') ? { id: 'sales' as const, label: 'Doanh thu' } : null,
     canPerm(org.perms, 'summary') ? { id: 'summary' as const, label: 'Tổng kết vụ' } : null,
     hasRole(org.roles, 'manager') ? { id: 'payroll' as const, label: 'Tiền công' } : null,
+    REPORT_TYPES.some((t) => t.allowed(org.perms, org.roles)) ? { id: 'custom' as const, label: 'Theo nhu cầu' } : null,
   ].filter((x): x is Section<ReportSection> => x !== null);
 }
 

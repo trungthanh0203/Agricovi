@@ -166,6 +166,13 @@ Cần: nhân viên có tài khoản (tab Tổ chức → Nhân sự), có tổ v
 4. Đăng nhập bằng người được gán: tab **Khai báo** xuất hiện (nếu có quyền Khai báo), nút Bắt đầu/Xong ở giai đoạn dùng được. Với chức vụ giới hạn loại việc, màn **Ghi việc** chỉ còn các loại việc được phép. Hồ sơ → "Tôi được làm gì" ghi rõ chức vụ.
 5. Chủ vẫn cấp riêng từng người ở Nhân sự (đè lên vai trò và chức vụ). Chức vụ ngừng/xóa thì quyền biến mất ngay khi người đó mở lại app.
 
+## Bài thử 17 — Báo cáo theo nhu cầu
+
+1. **Báo cáo → Theo nhu cầu**: chọn loại (chỉ hiện loại bạn có quyền), nhóm theo, bấm chọn nhanh khoảng ngày (30 ngày, tháng này, tháng trước, năm nay) hoặc tự chọn ngày, chọn vụ nếu cần, bấm **Xem báo cáo**.
+2. Đối chiếu số với màn Chi phí, Doanh thu, Thu hoạch, Tổng kết vụ. Chi phí không cộng tiền mua vật tư (đã tính khi dùng).
+3. **Xuất CSV** mở bằng Excel. **Lưu báo cáo này**: đặt tên, tick "Chia sẻ" nếu muốn cả cơ sở dùng. Mục "Báo cáo đã lưu" có Mở (tính số mới) và 🗑 (người tạo xóa).
+4. Đăng nhập người ít quyền: chỉ thấy các loại báo cáo mình được xem; mở báo cáo chia sẻ mà không đủ quyền thì báo lỗi, không lộ số.
+
 ## Những điều cần biết
 
 - Số tiền luôn là **đồng**, số lượng thu hoạch và bán luôn là **kg** ở bản thử này.
