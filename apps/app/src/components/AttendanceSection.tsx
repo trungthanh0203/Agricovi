@@ -250,7 +250,7 @@ function ShiftForm({ workers, cycles, att, busy, onSave }: { workers: WorkerLite
     setOk(null);
     const who = workers.find((x) => x.id === wid)?.full_name ?? '';
     void onSave(wid, s, t, Math.max(0, parseInt(brk || '0', 10) || 0), note, cyc || null)
-      .then(() => { setNote(''); setFrom(''); setTo(''); setOk(`Đã lưu công cho ${who}: ${date.split('-').reverse().join('/')} ${hhmm(s.toISOString())}–${hhmm(t.toISOString())}.`); })
+      .then(() => { setNote(''); setFrom(''); setTo(''); setOk(`Đã lưu công cho ${who} (đang ở trạng thái Chờ xác nhận): ${date.split('-').reverse().join('/')} ${hhmm(s.toISOString())}–${hhmm(t.toISOString())}.`); })
       .catch(() => undefined);
   }
   return (

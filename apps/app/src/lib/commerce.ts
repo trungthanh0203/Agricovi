@@ -93,12 +93,14 @@ const LISTING_COLS = 'id, name, description, specification, unit, season, price_
 export async function listListings(profileId: string): Promise<Listing[]> {
   return ((await ok(client().from('product_listings').select(LISTING_COLS).eq('business_profile_id', profileId).order('created_at'))) ?? []) as Listing[];
 }
-export async function saveListing(orgId: string, profileId: string, id: string | null, f: ListingForm): Promise<void> {
+export async function saveListing(orgId: string, profileId: string, id: string | null, f: ListingForm): Promise<string> {
   needOnline('lưu sản phẩm');
   const row = { name: f.name.trim(), description: nul(f.description), specification: nul(f.specification), unit: nul(f.unit), season: nul(f.season),
     price_note: nul(f.price_note), min_order: nul(f.min_order), cycle_id: f.cycle_id || null, crop_type_id: f.crop_type_id || null, include_in_publication: f.include_in_publication };
-  if (id) await ok(client().from('product_listings').update(row).eq('id', id));
-  else await ok(client().from('product_listings').insert({ ...row, organization_id: orgId, business_profile_id: profileId }));
+  if (id) { await ok(client().from('product_listings').update(row).eq('id', id)); return id; }
+  const nid = crypto.randomUUID(); // mã tạo sẵn: không cần đọc lại hàng vừa thêm
+  await ok(client().from('product_listings').insert({ ...row, id: nid, organization_id: orgId, business_profile_id: profileId }));
+  return nid;
 }
 export async function deleteListing(id: string): Promise<void> {
   needOnline('xóa sản phẩm');

@@ -42,7 +42,8 @@ test('ca tự ghi gửi từ hàng đợi offline: máy chủ ép trạng thái,
 
 test('yêu cầu sửa công: người lao động đề nghị, quản lý duyệt cập nhật giờ và giữ giá trị trước/sau; kỳ khóa chặn', async () => {
   const { db, wk, mgr, owner, org, ww } = await setup();
-  await asUser(db, mgr, `select * from record_shift($1,$2,now() - interval '3 days', now() - interval '3 days' + interval '2 hours', 0)`, [id(20), ww]); // 120 phút, đã xác nhận
+  await asUser(db, mgr, `select * from record_shift($1,$2,now() - interval '3 days', now() - interval '3 days' + interval '2 hours', 0)`, [id(20), ww]); // 120 phút
+  await asUser(db, mgr, `select * from confirm_attendance($1)`, [id(20)]);
   const req = (await asUser(db, wk, `select * from request_attendance_adjustment($1, jsonb_build_object('ended_at', (now() - interval '3 days' + interval '4 hours')), 'Quên ra ca')`, [id(20)])).rows[0];
   assert.equal(req.status, 'pending');
   assert.equal(req.before_values.approved_minutes, 120);
@@ -66,7 +67,9 @@ test('yêu cầu sửa công: người lao động đề nghị, quản lý duy�
 test('tổng kết vụ có nhân công: kỳ chưa khóa là dự tính, kỳ đã khóa là đã duyệt; vào tổng chi phí', async () => {
   const { db, owner, mgr, org, ww, cyc } = await setup();
   await asUser(db, mgr, `select * from record_shift($1,$2,now() - interval '2 days', now() - interval '2 days' + interval '4 hours', 0, $3)`, [id(40), ww, cyc]); // 4 giờ
-  await asUser(db, mgr, `select * from record_shift($1,$2,now() - interval '2 days', now() - interval '2 days' + interval '2 hours', 0, null)`, [id(41), ww]); // không gắn vụ
+  await asUser(db, mgr, `select * from confirm_attendance($1)`, [id(40)]);
+  await asUser(db, mgr, `select * from record_shift($1,$2,now() - interval '1 day', now() - interval '1 day' + interval '2 hours', 0, null)`, [id(41), ww]); // không gắn vụ
+  await asUser(db, mgr, `select * from confirm_attendance($1)`, [id(41)]);
   await asUser(db, owner, `insert into work_rates (organization_id,rate_type,amount,valid_from) values ($1,'hour',30000,'2020-01-01')`, [org]);
   const per = (await asUser(db, mgr, `insert into payroll_periods (id,organization_id,start_date,end_date) values ($1,$2,current_date - 6, current_date) returning id`, [id(50), org])).rows[0].id;
   await asUser(db, mgr, `select compute_payroll($1)`, [per]);

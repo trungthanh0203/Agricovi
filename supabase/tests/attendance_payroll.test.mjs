@@ -18,6 +18,7 @@ async function setup() {
   await db.query(`insert into worker_team_memberships (team_id,worker_id,valid_from) values ($1,$2,'2020-01-01')`, [team, ww]);
   return { db, owner, mgr, leader, wk, org, lw, ww, team };
 }
+const shiftOtherDay = `select * from record_shift($1,$2,now() - interval '5 days', now() - interval '5 days' + interval '4 hours', 30, null, null)`;
 const shiftSql = `select * from record_shift($1,$2,now() - interval '2 days', now() - interval '2 days' + interval '4 hours', 30, null, null)`;
 
 test('vào ca / ra ca của chính mình: không mở hai ca; bấm lặp không nhân đôi; người không có hồ sơ bị chặn', async () => {
@@ -34,7 +35,7 @@ test('vào ca / ra ca của chính mình: không mở hai ca; bấm lặp không
   assert.match(await expectError(asUser(db, wk, `select * from confirm_attendance($1)`, [id(1)])), /FORBIDDEN/);
 });
 
-test('tổ trưởng chấm hộ chờ xác nhận, tổ trưởng xác nhận được; quản lý nhập thì xác nhận ngay; người ngoài tổ bị chặn', async () => {
+test('tổ trưởng chấm hộ chờ xác nhận, tổ trưởng xác nhận được; quản lý nhập cũng chờ xác nhận; chặn trùng giờ; người ngoài tổ bị chặn', async () => {
   const { db, wk, leader, mgr, owner, org, ww, lw } = await setup();
   const r = (await asUser(db, leader, shiftSql, [id(10), ww])).rows[0];
   assert.equal(r.status, 'needs_confirmation');
@@ -43,10 +44,13 @@ test('tổ trưởng chấm hộ chờ xác nhận, tổ trưởng xác nhận �
   assert.deepEqual([c.status, c.approved_minutes], ['confirmed', 210]);
 
   const m = (await asUser(db, mgr, shiftSql, [id(11), lw])).rows[0];
-  assert.deepEqual([m.status, m.approved_minutes, m.source], ['confirmed', 210, 'admin']);
+  assert.deepEqual([m.status, m.approved_minutes, m.source], ['needs_confirmation', null, 'admin']); // chấm hộ luôn chờ xác nhận, kể cả quản lý nhập
+  assert.equal((await asUser(db, mgr, `select * from confirm_attendance($1)`, [id(11)])).rows[0].approved_minutes, 210);
+  // nhập trùng giờ của cùng một người bị chặn; công bị từ chối thì không tính
+  assert.match(await expectError(asUser(db, mgr, shiftSql, [id(17), lw])), /DUPLICATE/);
   // tổ trưởng không chấm hộ chính mình; nhân viên thường không chấm hộ ai
-  assert.match(await expectError(asUser(db, leader, shiftSql, [id(12), lw])), /row-level security/);
-  assert.match(await expectError(asUser(db, wk, shiftSql, [id(13), lw])), /row-level security/);
+  assert.match(await expectError(asUser(db, leader, shiftOtherDay, [id(12), lw])), /row-level security/);
+  assert.match(await expectError(asUser(db, wk, shiftOtherDay, [id(13), lw])), /row-level security/);
   // giờ tương lai và giờ ngược bị từ chối
   assert.match(await expectError(asUser(db, owner, `select * from record_shift($1,$2,now(), now() + interval '5 hours', 0)`, [id(14), ww])), /INVALID_TIME/);
   assert.match(await expectError(asUser(db, owner, `select * from record_shift($1,$2,now() - interval '1 day', now() - interval '2 days', 0)`, [id(15), ww])), /INVALID_TIME/);
