@@ -253,3 +253,12 @@ button.kpi { text-align: left; font: inherit; color: inherit; cursor: pointer; w
 /* Hình khóa nhỏ dẫn tới Quản trị nền tảng, chỉ hiện với quản trị viên (D54) */
 .adminlock { display: block; width: max-content; margin: 24px 0 8px auto; padding: 6px 10px; font-size: 18px; text-decoration: none; opacity: .55; border-radius: 8px; border: 1px solid var(--line); }
 .adminlock:hover, .adminlock:focus { opacity: 1; }
+
+/* Hồ sơ website (D55) */
+.checklist { margin: 6px 0 10px 18px; padding: 0; color: var(--warn); }
+.imggrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 8px 0; }
+.imggrid figure { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.imggrid img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
+.imggrid figcaption { font-size: 13px; color: var(--muted); }
+.preview { border: 1px dashed var(--line); border-radius: 12px; padding: 12px; margin-top: 10px; }
+.facts { margin: 6px 0; padding-left: 18px; }

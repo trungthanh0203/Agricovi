@@ -4,7 +4,7 @@ import type { Section } from '../lib/tabs';
 const ICONS: Record<string, string> = {
   cycles: '🌱', logs: '📒', harvest: '🧺', stock: '📦', attendance: '⏱',
   areas: '🏡', crops: '🌾', worktypes: '🧰', templates: '📋', materials: '🧪', places: '🏬', rates: '💵',
-  members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
+  commerce: '🌐', members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
   expense: '💸', sales: '💰', summary: '📊', payroll: '🧾', custom: '🔎',
 };
 

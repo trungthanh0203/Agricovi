@@ -211,3 +211,14 @@ Khi gặp lỗi hoặc chỗ khó hiểu, hãy gửi cho chúng tôi:
 4. Nếu app báo **"Cần xử lý"**, bấm mở "Chi tiết kỹ thuật" và gửi kèm đoạn chữ đó.
 
 Điều chúng tôi muốn biết nhất: bạn **dừng lại ở đâu**, **nhầm ở đâu**, và **cần ai hướng dẫn** ở bước nào.
+
+## Bài thử 21 — Hồ sơ website
+
+1. Đăng nhập bằng tài khoản chủ → tab **Tổ chức** → **Hồ sơ website** → "Tạo hồ sơ website".
+2. Điền Thông tin giới thiệu (mô tả ít nhất 20 ký tự, có tỉnh/thành), Liên hệ, thêm ảnh, thêm sản phẩm rồi bấm ✎ để thêm ảnh sản phẩm.
+3. Ở Giấy phép, chứng chỉ (tab Tài khoản) thêm một giấy phép, quay lại "Chứng chỉ công khai" và tích chọn.
+4. Mục **Đồng ý công khai**: chọn nhóm, tích đồng ý, bấm đồng ý. Xác nhận liên hệ ở mục Liên hệ.
+5. Bấm **Xem trước website**, kiểm tra rồi **Gửi duyệt** (danh sách "Còn thiếu" biến mất mới gửi được).
+6. Vào `/quan-tri/` → Duyệt hồ sơ → **Xem trước** → Duyệt và công khai.
+7. Quay lại app: trạng thái "Đã công khai". Sửa mô tả → Gửi duyệt lại. Thử Tạm ẩn và Rút đồng ý.
+8. Kiểm tra tài khoản nhân viên thường không thấy mục Hồ sơ website.
