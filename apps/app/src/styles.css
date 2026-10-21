@@ -249,3 +249,7 @@ button.primary.head-btn { width: auto; flex: 0 0 auto; min-height: 44px; margin:
 .row > h1.grow { margin: 0; }
 .chip.add { border-style: dashed; color: var(--green); font-weight: 700; }
 button.kpi { text-align: left; font: inherit; color: inherit; cursor: pointer; width: 100%; }
+
+/* Hình khóa nhỏ dẫn tới Quản trị nền tảng, chỉ hiện với quản trị viên (D54) */
+.adminlock { display: block; width: max-content; margin: 24px 0 8px auto; padding: 6px 10px; font-size: 18px; text-decoration: none; opacity: .55; border-radius: 8px; border: 1px solid var(--line); }
+.adminlock:hover, .adminlock:focus { opacity: 1; }

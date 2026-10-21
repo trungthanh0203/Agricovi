@@ -74,10 +74,10 @@ Làm tương tự, **mỗi cái một dự án Pages riêng**:
 
 | Dự án | Build command | Build output directory | Biến môi trường |
 |---|---|---|---|
-| admin | `npm ci && npm run build -w @agriconnect/admin` | `apps/admin/dist` | như app |
+| admin | (chung với app, không tạo riêng) | `apps/app/dist/quan-tri` | như app |
 | web | `npm ci && npm run build -w @agriconnect/web` | `apps/web/dist` | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` |
 
-Trang **admin** đã có nội dung (D53): tạo thêm một dự án Cloudflare như app, lệnh build `npm ci && npm run build -w @agriconnect/admin`, thư mục `apps/admin/dist`, cùng hai biến `VITE_SUPABASE_URL` và `VITE_SUPABASE_ANON_KEY`; dùng địa chỉ riêng và nên bật Cloudflare Access (chỉ email của bạn) làm lớp bảo vệ thứ hai. Cấp quyền quản trị cho tài khoản của bạn (một lần, trong SQL Editor): `insert into platform_admins (user_id) select id from auth.users where email = 'email-cua-ban@...';`. Trang **web** vẫn là khung (giai đoạn 3).
+Trang **admin** (D53, D54) **không cần dự án Cloudflare riêng**: lệnh build của app (`npm run build -w @agriconnect/app`) tự build admin và đặt vào `apps/app/dist/quan-tri`, nên cùng một dự án phục vụ cả hai; admin ở địa chỉ `địa-chỉ-app/quan-tri/`. Không đổi gì ở Cloudflare. Nên bật Cloudflare Access cho đường dẫn `/quan-tri/*` (chỉ email của bạn). Cấp quyền quản trị cho tài khoản (một lần, trong SQL Editor): `insert into platform_admins (user_id) select id from auth.users where email = 'email-cua-ban@...';`. Thu hồi: `delete from platform_admins where user_id = (select id from auth.users where email = 'email-cu@...');`. Trang **web** vẫn là khung (giai đoạn 3).
 
 ## 4. Quy trình làm việc hằng ngày
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { SYNC_STATE_LABEL_VI, type SyncState } from '@agriconnect/shared';
 import { AuthProvider, useAuth } from './lib/auth';
 import { useMyName } from './lib/profile';
+import { ADMIN_URL, useIsPlatformAdmin } from './lib/platformAdmin';
 import { purgeCachesIfUserChanged } from './lib/localData';
 import { countByState, flushOutbox } from './lib/outbox';
 import { OrgProvider, useOrgs } from './lib/orgs';
@@ -68,6 +69,7 @@ function Shell() {
   const { orgs, active, setActive } = useOrgs();
   const { session: me, signOut } = useAuth();
   const myName = useMyName(me?.user.id, me?.user.email ?? undefined);
+  const isPlatformAdmin = useIsPlatformAdmin(me?.user.id);
   const [tabState, setTab] = useState<TabId>('home');
   // mục con đang chọn của từng tab (nhớ khi chuyển qua lại)
   const [subs, setSubs] = useState<Partial<Record<TabId, string>>>({});
@@ -172,6 +174,9 @@ function Shell() {
           <ReportsTab section={subs.reports} onSection={setSub('reports')} />
         ) : (
           <ProfileTab onAddOrg={() => setAdding(true)} />
+        )}
+        {isPlatformAdmin && (
+          <a className="adminlock" href={ADMIN_URL} aria-label="Quản trị nền tảng" title="Quản trị nền tảng">🔒</a>
         )}
       </main>
 

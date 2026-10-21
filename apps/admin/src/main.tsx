@@ -61,6 +61,7 @@ function Admin({ session }: { session: Session }) {
           ))}
         </nav>
         <div className="who">
+          <a href={import.meta.env.DEV ? 'http://localhost:5180/' : '/'}>← Về ứng dụng</a>
           <small>{session.user.email}</small>
           <button onClick={() => void supabase!.auth.signOut()}>Đăng xuất</button>
         </div>

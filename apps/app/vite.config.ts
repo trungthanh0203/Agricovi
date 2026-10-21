@@ -31,6 +31,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg}'],
+        // trang quản trị (/quan-tri/) là bản dựng riêng, không để app chặn điều hướng vào đó
+        navigateFallbackDenylist: [/^\/quan-tri/],
       },
     }),
   ],
