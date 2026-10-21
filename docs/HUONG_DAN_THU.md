@@ -173,6 +173,13 @@ Cần: nhân viên có tài khoản (tab Tổ chức → Nhân sự), có tổ v
 3. **Xuất CSV** mở bằng Excel. **Lưu báo cáo này**: đặt tên, tick "Chia sẻ" nếu muốn cả cơ sở dùng. Mục "Báo cáo đã lưu" có Mở (tính số mới) và 🗑 (người tạo xóa).
 4. Đăng nhập người ít quyền: chỉ thấy các loại báo cáo mình được xem; mở báo cáo chia sẻ mà không đủ quyền thì báo lỗi, không lộ số.
 
+## Bài thử 18 — Danh mục Vai trò và Nhân sự gọn hơn
+
+1. **Tổ chức → Vai trò**: thấy các vai trò có sẵn (có nhãn "Có sẵn") cùng vai trò riêng. ✎ sửa quyền từng mục, loại việc, quyền giai đoạn (vai trò có sẵn giữ nguyên tên); 🗑 xóa (vai trò có sẵn đang có người giữ thì báo chưa xóa được). "Thêm lại vai trò có sẵn đã xóa" khôi phục.
+2. Sửa quyền "Quản lý" (ví dụ cho nhập kho), đăng nhập người quản lý: quyền đổi theo ngay khi mở lại app.
+3. **Tổ chức → Nhân sự**: bên phải dòng tên có ✎ (sửa tên, SĐT), ⏸ (tạm dừng), 🗑 (gỡ). Dòng "Vai trò:" có nút **Đổi vai trò** và **Đặt lại mật khẩu** ở bên phải. Mục **Phân quyền chức năng** có nền sáng hơn.
+4. Đổi vai trò / tạo nhân viên: danh sách vai trò lấy từ danh mục; chọn vai trò riêng thì tự tích thêm vai trò nền.
+
 ## Những điều cần biết
 
 - Số tiền luôn là **đồng**, số lượng thu hoạch và bán luôn là **kg** ở bản thử này.

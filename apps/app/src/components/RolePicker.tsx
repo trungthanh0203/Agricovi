@@ -1,19 +1,54 @@
+import { useEffect, useState } from 'react';
 import type { MemberRole } from '@agriconnect/shared';
+import { listPositions, type PositionRow } from '../lib/positions';
 import { assignableRoles, ROLE_LABEL } from '../lib/roles';
 
-/** Chọn một hoặc nhiều vai trò (một người có thể kiêm nhiều vai trò). Chủ cơ sở không nằm trong danh sách. */
+/**
+ * Chọn một hoặc nhiều vai trò (một người có thể kiêm nhiều vai trò). Danh sách lấy từ DANH MỤC VAI TRÒ của cơ sở (D49):
+ * vai trò có sẵn còn tồn tại + vai trò chủ tự tạo (nếu cho phép). Chọn vai trò tự tạo thì tự tích thêm vai trò nền của nó.
+ * Chủ cơ sở không nằm trong danh sách. Chưa tải được danh mục (offline) thì dùng danh sách vai trò có sẵn.
+ */
 export function RolePicker({
-  orgType, value, onChange, disabled,
-}: { orgType: 'household' | 'cooperative'; value: MemberRole[]; onChange: (v: MemberRole[]) => void; disabled?: boolean }) {
-  const toggle = (r: MemberRole) =>
-    onChange(value.includes(r) ? value.filter((x) => x !== r) : [...value, r]);
+  orgType, orgId, value, onChange, positionIds, onPositionsChange, disabled,
+}: {
+  orgType: 'household' | 'cooperative';
+  orgId: string;
+  value: MemberRole[];
+  onChange: (v: MemberRole[]) => void;
+  /** Có thì cho chọn cả vai trò tự tạo */
+  positionIds?: string[];
+  onPositionsChange?: (ids: string[]) => void;
+  disabled?: boolean;
+}) {
+  const [catalog, setCatalog] = useState<PositionRow[] | null>(null);
+  useEffect(() => {
+    if (!navigator.onLine) return;
+    let alive = true;
+    void listPositions(orgId).then((r) => { if (alive) setCatalog(r); }).catch(() => undefined);
+    return () => { alive = false; };
+  }, [orgId]);
+
+  const builtin = assignableRoles(orgType).filter((r) => !catalog || catalog.some((p) => p.is_builtin && p.base_role === r));
+  const custom = onPositionsChange ? (catalog ?? []).filter((p) => !p.is_builtin && p.is_active) : [];
+  const toggle = (r: MemberRole) => onChange(value.includes(r) ? value.filter((x) => x !== r) : [...value, r]);
+  const toggleCustom = (p: PositionRow) => {
+    const on = (positionIds ?? []).includes(p.id);
+    onPositionsChange?.(on ? (positionIds ?? []).filter((x) => x !== p.id) : [...(positionIds ?? []), p.id]);
+    if (!on && !value.includes(p.base_role)) onChange([...value, p.base_role]);
+  };
   return (
     <fieldset className="roles">
       <legend>Vai trò (chọn một hoặc nhiều)</legend>
-      {assignableRoles(orgType).map((r) => (
+      {builtin.map((r) => (
         <label key={r} className="check">
           <input type="checkbox" checked={value.includes(r)} disabled={disabled} onChange={() => toggle(r)} />
-          {ROLE_LABEL[r]}
+          {catalog?.find((p) => p.is_builtin && p.base_role === r)?.name ?? ROLE_LABEL[r]}
+        </label>
+      ))}
+      {custom.map((p) => (
+        <label key={p.id} className="check">
+          <input type="checkbox" checked={(positionIds ?? []).includes(p.id)} disabled={disabled} onChange={() => toggleCustom(p)} />
+          {p.name} <span className="muted">(vai trò riêng)</span>
         </label>
       ))}
     </fieldset>

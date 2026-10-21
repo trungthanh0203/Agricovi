@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { MemberRole } from '@agriconnect/shared';
 import { useCatalog } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
@@ -6,24 +7,9 @@ import { listMembers, type Member } from '../lib/members';
 import type { MyOrg } from '../lib/orgs';
 import { PERM_LEVEL_LABEL, PERM_MODULE_LABEL, PERM_MODULES, type PermLevel, type PermModule, type PermOverrides } from '../lib/permissions';
 import {
-  deletePosition, listMemberPositions, listPositions, savePosition, setMemberPositions, type PositionRow,
+  addBuiltinRoles, deletePosition, listMemberPositions, listPositions, savePosition, setMemberPositions, type PositionRow,
 } from '../lib/positions';
 import { assignableRoles, ROLE_LABEL, roleSummary } from '../lib/roles';
-import { defaultPerm } from '../lib/permissions';
-import type { MemberRole } from '@agriconnect/shared';
-
-/** Mô tả ngắn các vai trò có sẵn của hệ thống (dùng như chức vụ có sẵn) */
-const ROLE_DESC: Record<string, string> = {
-  manager: 'Quản lý sản xuất: tạo vụ, quản lý giai đoạn, nhân sự, chấm công; xem kho, chi phí, doanh thu.',
-  worker: 'Nhân viên sản xuất: ghi nhật ký, thu hoạch, xuất dùng vật tư và chấm công của mình.',
-  inventory_finance: 'Kho & chi phí: nhập kho, điều chỉnh tồn, ghi chi phí và doanh thu.',
-  cooperative_manager: 'Quản lý HTX: quản lý hộ thành viên và vụ ghi theo HTX.',
-  profile_editor: 'Biên tập hồ sơ: soạn nội dung hồ sơ giới thiệu (chưa có màn hình riêng).',
-};
-const roleSummarize = (r: MemberRole) => {
-  const parts = PERM_MODULES.filter((m) => defaultPerm([r], m) !== 'none').map((m) => `${PERM_MODULE_LABEL[m].split(' (')[0]}: ${PERM_LEVEL_LABEL[defaultPerm([r], m)].toLowerCase()}`);
-  return parts.length ? parts.join(' · ') : 'Không có quyền theo mục';
-};
 
 const summarize = (p: PositionRow) => {
   const parts = PERM_MODULES.filter((m) => p.perms[m] && p.perms[m] !== 'none').map((m) => `${PERM_MODULE_LABEL[m].split(' (')[0]}: ${PERM_LEVEL_LABEL[p.perms[m] as PermLevel].toLowerCase()}`);
@@ -33,8 +19,9 @@ const summarize = (p: PositionRow) => {
 };
 
 /**
- * Chức vụ (D44, chỉ chủ): tự đặt tên và chọn quyền từng mục, loại việc được làm, quyền quản lý giai đoạn; gán cho từng người.
- * Quyền của một người = lớn nhất của vai trò và các chức vụ giữ; chủ cấp riêng (ở Nhân sự) đè lên. Người chưa có chức vụ: như cũ.
+ * Vai trò của cơ sở (D44, D49, chỉ chủ): MỘT danh mục gồm vai trò có sẵn (Quản lý, Nhân viên sản xuất, Kho & chi phí…) và vai trò chủ tự tạo.
+ * Cả hai đều sửa quyền từng mục, loại việc được làm, quyền quản lý giai đoạn; xóa được (vai trò có sẵn chỉ xóa khi không ai giữ).
+ * Quyền của một người = lớn nhất giữa các vai trò họ giữ; chủ cấp riêng (ở Nhân sự) đè lên. Các nơi chọn vai trò đều lấy từ danh mục này.
  */
 export function PositionsSection({ org }: { org: MyOrg }) {
   const online = useOnline();
@@ -60,41 +47,55 @@ export function PositionsSection({ org }: { org: MyOrg }) {
     try { await fn(); await load(); } catch (e) { setError(friendlyError(e)); throw e; } finally { setBusy(false); }
   }
   const people = members.filter((m) => !m.roles.includes('owner'));
-  const holders = (id: string) => people.filter((m) => (held.get(m.user_id) ?? []).includes(id)).length;
+  const holders = (p: PositionRow) => p.is_builtin
+    ? people.filter((m) => m.roles.includes(p.base_role)).length
+    : people.filter((m) => (held.get(m.user_id) ?? []).includes(p.id)).length;
   const editRow = positions.find((p) => p.id === editing) ?? null;
+  const sorted = [...positions].sort((a, b) => Number(b.is_builtin) - Number(a.is_builtin) || a.name.localeCompare(b.name, 'vi'));
+  const missing = assignableRoles(org.type).filter((r) => !positions.some((p) => p.is_builtin && p.base_role === r));
+  const custom = positions.filter((p) => !p.is_builtin && p.is_active);
 
   return (
     <>
-      {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Tạo và gán chức vụ cần có mạng.</p>}
+      {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Tạo, sửa và gán vai trò cần có mạng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
-      {!editing && <button className="secondary" disabled={!online} onClick={() => setEditing('new')}>+ Thêm chức vụ</button>}
+      {!editing && <button className="secondary" disabled={!online} onClick={() => setEditing('new')}>+ Thêm vai trò</button>}
+      {!editing && missing.length > 0 && (
+        <button className="link" disabled={busy || !online} onClick={() => void run(() => addBuiltinRoles(org.id)).catch(() => undefined)}>
+          Thêm lại vai trò có sẵn đã xóa ({missing.map((r) => ROLE_LABEL[r]).join(', ')})
+        </button>
+      )}
       {editing && (
-        <PositionForm key={editing} org={org} initial={editRow} busy={busy || !online} onClose={() => setEditing(null)}
+        <RoleForm key={editing} initial={editRow} orgType={org.type} busy={busy || !online} onClose={() => setEditing(null)}
           onSave={(f) => run(async () => { await savePosition(org.id, editRow?.id ?? null, f); setEditing(null); })} />
       )}
 
       <table className="grid">
-        <thead><tr><th>Chức vụ ({assignableRoles(org.type).length + positions.length})</th><th className="num">Người</th><th></th></tr></thead>
+        <thead><tr><th>Vai trò ({positions.length})</th><th className="num">Người</th><th></th></tr></thead>
         <tbody>
-          {assignableRoles(org.type).map((r) => (
-            <tr key={r}>
-              <td>{ROLE_LABEL[r]}<span className="pill"> Có sẵn</span><span className="sub">{ROLE_DESC[r]}</span><span className="sub">{roleSummarize(r)}</span></td>
-              <td className="num">{people.filter((m) => m.roles.includes(r)).length}</td>
-              <td className="act muted">gán ở Nhân sự</td>
-            </tr>
-          ))}
-          {positions.length === 0 && <tr><td colSpan={3} className="muted">Chức vụ tự tạo: ví dụ "Kỹ thuật viên" được sửa Khai báo, "Tổ trưởng thu hoạch" chỉ ghi việc thu hoạch. Bấm "+ Thêm chức vụ".</td></tr>}
-          {positions.map((p) => (
+          {sorted.length === 0 && <tr><td colSpan={3} className="muted">{online ? 'Chưa có vai trò nào. Bấm "+ Thêm vai trò".' : 'Cần mạng để tải danh sách.'}</td></tr>}
+          {sorted.map((p) => (
             <tr key={p.id} className={p.is_active ? '' : 'off'}>
-              <td>{p.name}{p.description && <span className="sub">{p.description}</span>}<span className="sub">{summarize(p)}{p.is_active ? '' : ' · đã dừng'}</span></td>
-              <td className="num">{holders(p.id)}</td>
+              <td>
+                {p.name}{p.is_builtin ? <span className="pill"> Có sẵn</span> : <span className="pill mine"> Riêng</span>}
+                {p.description && <span className="sub">{p.description}</span>}
+                <span className="sub">{summarize(p)}{p.is_active ? '' : ' · đã dừng'}{!p.is_builtin ? ` · dựa trên ${ROLE_LABEL[p.base_role] ?? p.base_role}` : ''}</span>
+              </td>
+              <td className="num">{holders(p)}</td>
               <td className="act">
-                <button className="icon" disabled={busy || !online} aria-label={p.is_active ? `Dừng ${p.name}` : `Dùng lại ${p.name}`}
-                  onClick={() => void run(() => savePosition(org.id, p.id, { name: p.name, description: p.description ?? '', perms: p.perms, workTypeIds: p.work_type_ids, canManageStages: p.can_manage_stages, isActive: !p.is_active })).catch(() => undefined)}>{p.is_active ? '⏸' : '▶'}</button>{' '}
+                {!p.is_builtin && (
+                  <>
+                    <button className="icon" disabled={busy || !online} aria-label={p.is_active ? `Dừng ${p.name}` : `Dùng lại ${p.name}`}
+                      onClick={() => void run(() => savePosition(org.id, p.id, { name: p.name, description: p.description ?? '', perms: p.perms, workTypeIds: p.work_type_ids, canManageStages: p.can_manage_stages, isActive: !p.is_active, baseRole: p.base_role })).catch(() => undefined)}>{p.is_active ? '⏸' : '▶'}</button>{' '}
+                  </>
+                )}
                 <button className="icon" aria-label={`Sửa ${p.name}`} onClick={() => setEditing(editing === p.id ? null : p.id)}>✎</button>{' '}
                 <button className="icon" disabled={busy || !online} aria-label={`Xóa ${p.name}`} onClick={() => {
-                  if (window.confirm(`Xóa chức vụ "${p.name}"? Những người đang giữ chức vụ này sẽ mất các quyền do chức vụ cấp.`)) void run(() => deletePosition(p.id)).catch(() => undefined);
+                  const msg = p.is_builtin
+                    ? `Xóa vai trò có sẵn "${p.name}"? Chỉ xóa được khi không ai đang giữ; có thể thêm lại sau.`
+                    : `Xóa vai trò "${p.name}"? Những người đang giữ sẽ mất các quyền do vai trò này cấp.`;
+                  if (window.confirm(msg)) void run(() => deletePosition(p.id)).catch(() => undefined);
                 }}>🗑</button>
               </td>
             </tr>
@@ -102,16 +103,16 @@ export function PositionsSection({ org }: { org: MyOrg }) {
         </tbody>
       </table>
 
-      {positions.some((p) => p.is_active) && people.length > 0 && (
+      {custom.length > 0 && people.length > 0 && (
         <>
-          <h2 className="sect">Gán chức vụ cho người</h2>
+          <h2 className="sect">Gán vai trò riêng cho người</h2>
           {people.map((m) => {
             const mine = held.get(m.user_id) ?? [];
             return (
               <div className="member" key={m.user_id}>
                 <strong>{m.is_staff ? m.full_name : m.email}</strong> <span className="muted">· {roleSummary(m.roles)}</span>
                 <div className="chips">
-                  {positions.filter((p) => p.is_active || mine.includes(p.id)).map((p) => {
+                  {custom.map((p) => {
                     const on = mine.includes(p.id);
                     return (
                       <button key={p.id} className={on ? 'chip active' : 'chip'} aria-pressed={on} disabled={busy || !online}
@@ -126,34 +127,43 @@ export function PositionsSection({ org }: { org: MyOrg }) {
           })}
         </>
       )}
-      <p className="muted">Quyền hiệu lực của một người là mức cao nhất giữa vai trò và các chức vụ họ giữ. Phần chủ cấp riêng ở Nhân sự sẽ đè lên. Chức vụ chọn "chỉ những việc đã chọn" thì người giữ chỉ ghi được các loại việc đó (quản lý và chủ luôn ghi mọi loại).</p>
+      <p className="muted">Vai trò có sẵn gán ở mục Nhân sự (Đổi vai trò). Quyền của một người là mức cao nhất giữa các vai trò họ giữ; phần chủ cấp riêng ở Nhân sự đè lên. Vai trò chọn "chỉ những việc được chọn" thì người giữ chỉ ghi được các loại việc đó (quản lý và chủ luôn ghi mọi loại). Vai trò riêng "dựa trên" một vai trò có sẵn để giữ các thao tác gốc của vai trò đó.</p>
     </>
   );
 }
 
-function PositionForm({ org, initial, busy, onSave, onClose }: {
-  org: MyOrg; initial: PositionRow | null; busy: boolean;
-  onSave: (f: { name: string; description: string; perms: PermOverrides; workTypeIds: string[] | null; canManageStages: boolean; isActive: boolean }) => Promise<unknown>;
+function RoleForm({ initial, orgType, busy, onSave, onClose }: {
+  initial: PositionRow | null; orgType: 'household' | 'cooperative'; busy: boolean;
+  onSave: (f: { name: string; description: string; perms: PermOverrides; workTypeIds: string[] | null; canManageStages: boolean; isActive: boolean; baseRole: MemberRole }) => Promise<unknown>;
   onClose: () => void;
 }) {
   const { workTypes } = useCatalog();
+  const builtin = Boolean(initial?.is_builtin);
   const [name, setName] = useState(initial?.name ?? '');
   const [desc, setDesc] = useState(initial?.description ?? '');
+  const [base, setBase] = useState<MemberRole>(initial?.base_role ?? 'worker');
   const [perms, setPerms] = useState<PermOverrides>(initial?.perms ?? {});
   const [limited, setLimited] = useState(initial ? initial.work_type_ids !== null : false);
   const [wts, setWts] = useState<string[]>(initial?.work_type_ids ?? []);
   const [stages, setStages] = useState(initial?.can_manage_stages ?? false);
   const [err, setErr] = useState<string | null>(null);
   const toggleWt = (id: string) => setWts((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
-  void org;
   return (
     <div className="card">
-      <h2>{initial ? `Sửa chức vụ: ${initial.name}` : 'Thêm chức vụ'}</h2>
+      <h2>{initial ? `Sửa vai trò: ${initial.name}` : 'Thêm vai trò'}</h2>
       <div className="inline-form">
-        <label>Tên chức vụ<input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Kỹ thuật viên" /></label>
+        <label>Tên vai trò<input value={name} maxLength={60} disabled={builtin} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Kỹ thuật viên" />{builtin && <small>Tên vai trò có sẵn giữ nguyên.</small>}</label>
         <label>Mô tả (người này làm được gì)<input value={desc} maxLength={300} onChange={(e) => setDesc(e.target.value)} /></label>
+        {!builtin && (
+          <label>Dựa trên vai trò
+            <select value={base} onChange={(e) => setBase(e.target.value as MemberRole)}>
+              {assignableRoles(orgType).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+            </select>
+            <small>Người giữ vai trò này tự có thêm vai trò nền để dùng các thao tác gốc (ví dụ ghi nhật ký).</small>
+          </label>
+        )}
         <fieldset className="roles">
-          <legend>Quyền theo mục (cộng thêm vào vai trò của người giữ)</legend>
+          <legend>Quyền theo mục</legend>
           {PERM_MODULES.map((m: PermModule) => (
             <label key={m}>{PERM_MODULE_LABEL[m]}
               <select value={perms[m] ?? 'none'} onChange={(e) => setPerms((cur) => ({ ...cur, [m]: e.target.value as PermLevel }))}>
@@ -176,13 +186,13 @@ function PositionForm({ org, initial, busy, onSave, onClose }: {
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {
-            if (name.trim().length < 2) return setErr('Tên chức vụ cần ít nhất 2 ký tự.');
+            if (name.trim().length < 2) return setErr('Tên vai trò cần ít nhất 2 ký tự.');
             if (limited && wts.length === 0) return setErr('Hãy chọn ít nhất một loại việc, hoặc chọn "Mọi loại việc".');
             setErr(null);
             const clean: PermOverrides = {};
-            for (const m of PERM_MODULES) if (perms[m] && perms[m] !== 'none') clean[m] = perms[m];
-            void onSave({ name, description: desc, perms: clean, workTypeIds: limited ? wts : null, canManageStages: stages, isActive: initial?.is_active ?? true }).catch(() => undefined);
-          }}>Lưu chức vụ</button>
+            for (const m of PERM_MODULES) if (perms[m]) clean[m] = perms[m];
+            void onSave({ name, description: desc, perms: clean, workTypeIds: limited ? wts : null, canManageStages: stages, isActive: initial?.is_active ?? true, baseRole: base }).catch(() => undefined);
+          }}>Lưu</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>
       </div>

@@ -217,3 +217,9 @@ button.icon:disabled { opacity: .4; }
 
 .scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .scrollx table.grid { min-width: 560px; }
+
+/* Nhân sự: nút bên lề phải; mục nổi bật nền sáng */
+.rowbtns { display: flex; gap: 6px; align-items: center; flex: 0 0 auto; }
+.rowbtns > button { min-height: 40px; width: auto; margin: 0; padding: 0 12px; font-size: 14px; }
+details.fold.highlight { background: color-mix(in srgb, var(--green) 10%, var(--bg)); border-color: var(--green); }
+details.fold.highlight > summary .fold-title { color: var(--green); }

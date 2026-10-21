@@ -52,11 +52,17 @@ export function defaultPerm(roles: readonly MemberRole[], module: PermModule): P
  */
 export function effectivePerm(
   roles: readonly MemberRole[], overrides: PermOverrides | null | undefined, module: PermModule, positions: readonly PermOverrides[] = [],
+  builtin: Partial<Record<string, PermOverrides>> = {},
 ): PermLevel {
   if (roles.includes('owner')) return 'edit';
   const o = overrides?.[module];
   if (o) return o;
-  let best = defaultPerm(roles, module);
+  // vai trò có sẵn: lấy theo dòng của cơ sở (sửa được, D49); chưa có dòng thì theo mặc định
+  let best: PermLevel = 'none';
+  for (const r of roles) {
+    const lv = builtin[r]?.[module] ?? defaultPerm([r], module);
+    if (RANK[lv] > RANK[best]) best = lv;
+  }
   for (const p of positions) {
     const lv = p[module];
     if (lv && RANK[lv] > RANK[best]) best = lv;
@@ -64,8 +70,11 @@ export function effectivePerm(
   return best;
 }
 
-export function effectivePerms(roles: readonly MemberRole[], overrides: PermOverrides | null | undefined, positions: readonly PermOverrides[] = []): EffectivePerms {
-  return Object.fromEntries(PERM_MODULES.map((m) => [m, effectivePerm(roles, overrides, m, positions)])) as EffectivePerms;
+export function effectivePerms(
+  roles: readonly MemberRole[], overrides: PermOverrides | null | undefined, positions: readonly PermOverrides[] = [],
+  builtin: Partial<Record<string, PermOverrides>> = {},
+): EffectivePerms {
+  return Object.fromEntries(PERM_MODULES.map((m) => [m, effectivePerm(roles, overrides, m, positions, builtin)])) as EffectivePerms;
 }
 
 /** Có ít nhất mức `need` ở mục đó không (edit gồm view) */

@@ -19,7 +19,10 @@ export interface MyOrg {
   canManageStages?: boolean;
 }
 
-interface PositionRow { id: string; organization_id: string; name: string; perms: PermOverrides; work_type_ids: string[] | null; can_manage_stages: boolean }
+interface PositionRow {
+  id: string; organization_id: string; name: string; perms: PermOverrides; work_type_ids: string[] | null; can_manage_stages: boolean;
+  base_role: MemberRole; is_builtin: boolean;
+}
 
 export interface PlanUsage {
   plan_name: string;
@@ -92,20 +95,26 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         .eq('user_id', uid);
       if (error) throw error;
       // chức vụ đang hoạt động của các cơ sở tôi thuộc (lỗi/thiếu bảng thì coi như chưa có chức vụ nào)
-      const posRes = await supabase.from('org_positions').select('id, organization_id, name, perms, work_type_ids, can_manage_stages').eq('is_active', true);
+      const posRes = await supabase.from('org_positions').select('id, organization_id, name, perms, work_type_ids, can_manage_stages, base_role, is_builtin').eq('is_active', true);
       const allPos = (posRes.error ? [] : (posRes.data ?? [])) as PositionRow[];
       const list: MyOrg[] = (data ?? []).flatMap((row) => {
         const o = row.organizations as unknown as { id: string; type: OrgType; name: string } | null;
         if (!o) return [];
         const roles = row.roles as MemberRole[];
-        const mine = allPos.filter((p) => p.organization_id === o.id && ((row as { position_ids?: string[] }).position_ids ?? []).includes(p.id));
-        const restricted = !roles.some((r) => r === 'owner' || r === 'manager') && mine.length > 0 && mine.every((p) => p.work_type_ids !== null);
+        const orgPos = allPos.filter((p) => p.organization_id === o.id);
+        const held = ((row as { position_ids?: string[] }).position_ids ?? []);
+        const mine = orgPos.filter((p) => !p.is_builtin && held.includes(p.id)); // vai trò tự tạo đang giữ
+        const builtinHeld = orgPos.filter((p) => p.is_builtin && roles.includes(p.base_role)); // vai trò có sẵn đang giữ
+        const builtin = Object.fromEntries(orgPos.filter((p) => p.is_builtin).map((p) => [p.base_role, p.perms]));
+        // loại việc: có vai trò tự tạo thì tính các vai trò tự tạo, không thì tính vai trò có sẵn (khớp work_type_allowed ở CSDL)
+        const rule = mine.length > 0 ? mine : builtinHeld;
+        const restricted = !roles.some((r) => r === 'owner' || r === 'manager') && rule.length > 0 && rule.every((p) => p.work_type_ids !== null);
         return [{
           id: o.id, type: o.type, name: o.name, roles,
-          perms: effectivePerms(roles, row.permissions as PermOverrides | null, mine.map((p) => p.perms)),
+          perms: effectivePerms(roles, row.permissions as PermOverrides | null, mine.map((p) => p.perms), builtin),
           positions: mine.map((p) => ({ id: p.id, name: p.name })),
-          allowedWorkTypes: restricted ? [...new Set(mine.flatMap((p) => p.work_type_ids ?? []))] : null,
-          canManageStages: mine.some((p) => p.can_manage_stages),
+          allowedWorkTypes: restricted ? [...new Set(rule.flatMap((p) => p.work_type_ids ?? []))] : null,
+          canManageStages: [...mine, ...builtinHeld].some((p) => p.can_manage_stages),
         }];
       });
       list.sort((a, b) => a.name.localeCompare(b.name, 'vi'));

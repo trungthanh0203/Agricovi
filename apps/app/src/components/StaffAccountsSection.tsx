@@ -7,6 +7,7 @@ import {
 } from '../lib/staff';
 import type { TeamRow, WorkerRow } from '../lib/teams';
 import { RolePicker } from './RolePicker';
+import { setMemberPositions } from '../lib/positions';
 
 /**
  * Chủ cơ sở tạo tài khoản nhân viên đăng nhập bằng số điện thoại; hệ thống sinh mật khẩu tạm ngẫu nhiên, hiện MỘT lần.
@@ -18,6 +19,7 @@ export function StaffCreateForm({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [roles, setRoles] = useState<MemberRole[]>(['worker']);
+  const [posIds, setPosIds] = useState<string[]>([]);
   const [mode, setMode] = useState<WorkMode>('self_hourly');
   const [teamId, setTeamId] = useState('');
   const [busy, setBusy] = useState(false);
@@ -48,6 +50,7 @@ export function StaffCreateForm({
       const res = await createStaffAccount({
         organization_id: org.id, full_name: name, phone, roles, work_mode: mode, team_id: needTeam || teamId ? teamId || null : null,
       });
+      if (posIds.length > 0 && res.user_id) await setMemberPositions(org.id, res.user_id, posIds); // vai trò riêng
       setCreds(res);
       setName('');
       setPhone('');
@@ -71,7 +74,7 @@ export function StaffCreateForm({
           Số điện thoại
           <input type="tel" inputMode="tel" autoComplete="off" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0912345678" />
         </label>
-        <RolePicker orgType={org.type} value={roles} onChange={setRoles} />
+        <RolePicker orgType={org.type} orgId={org.id} value={roles} onChange={setRoles} positionIds={posIds} onPositionsChange={setPosIds} />
         <label>
           Kiểu phân hệ
           <select value={mode} onChange={(e) => setMode(e.target.value as WorkMode)}>

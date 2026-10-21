@@ -14,6 +14,7 @@ import type { PermOverrides } from '../lib/permissions';
 import { MemberPermissions } from './MemberPermissions';
 import { updateStaffProfile } from '../lib/staff';
 import { setMemberSuspended } from '../lib/members';
+import { listMemberPositions, listPositions, setMemberPositions, type PositionRow } from '../lib/positions';
 import { RolePicker } from './RolePicker';
 import { CredentialsCard, ResetPasswordButton, StaffCreateForm } from './StaffAccountsSection';
 
@@ -34,6 +35,9 @@ export function MembersSection({ org }: { org: MyOrg }) {
   const [inviteRoles, setInviteRoles] = useState<MemberRole[]>(['worker']);
   const [editing, setEditing] = useState<string | null>(null);
   const [editRoles, setEditRoles] = useState<MemberRole[]>([]);
+  const [editPos, setEditPos] = useState<string[]>([]);
+  const [held, setHeld] = useState<Map<string, string[]>>(new Map());
+  const [catalog, setCatalog] = useState<PositionRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -48,6 +52,10 @@ export function MembersSection({ org }: { org: MyOrg }) {
         ownerOf(org.roles) ? fetchPermissionOverrides(org.id) : Promise.resolve({} as Record<string, PermOverrides>),
       ]);
       setOverrides(ov);
+      if (ownerOf(org.roles)) {
+        const [h, cat] = await Promise.all([listMemberPositions(org.id).catch(() => new Map<string, string[]>()), listPositions(org.id).catch(() => [] as PositionRow[])]);
+        setHeld(h); setCatalog(cat);
+      }
       setMembers(m);
       setInvites(i);
       setTeams(t.teams);
@@ -88,6 +96,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
     if (editRoles.length === 0) return setError('Hãy chọn ít nhất một vai trò.');
     void run(async () => {
       await setMemberRoles(org.id, userId, editRoles);
+      await setMemberPositions(org.id, userId, editPos); // vai trò riêng (tự cộng vai trò nền)
       setEditing(null);
     });
   }
@@ -109,41 +118,42 @@ export function MembersSection({ org }: { org: MyOrg }) {
               <span className="grow">{label}{m.is_self && ' (bạn)'}</span>
               {isOwner && !owner && (
                 <>
+                  {m.is_staff && !suspended && (
+                    <button className="icon" disabled={busy} aria-label={`Sửa tên, số điện thoại của ${label}`} title="Sửa tên, số điện thoại"
+                      onClick={() => { setEditInfo(editInfo === m.user_id ? null : m.user_id); setInfoName(m.full_name ?? ''); setInfoPhone(m.phone ?? ''); setError(null); }}>✎</button>
+                  )}
                   <button className="icon" disabled={busy} aria-label={suspended ? `Dùng lại ${label}` : `Tạm dừng ${label}`}
                     title={suspended ? 'Dùng lại (cho đăng nhập)' : 'Tạm dừng (không cho đăng nhập)'}
                     onClick={() => {
                       if (suspended || window.confirm(`Tạm dừng ${label}? Người này sẽ không đăng nhập hay xem được dữ liệu cơ sở cho tới khi bạn bấm Dùng lại.`))
                         void run(() => setMemberSuspended(org.id, m.user_id, !suspended));
                     }}>{suspended ? '▶' : '⏸'}</button>
-                  {m.is_staff && !suspended && (
-                    <button className="icon" disabled={busy} aria-label={`Sửa tên, số điện thoại của ${label}`} title="Sửa tên, số điện thoại"
-                      onClick={() => { setEditInfo(editInfo === m.user_id ? null : m.user_id); setInfoName(m.full_name ?? ''); setInfoPhone(m.phone ?? ''); setError(null); }}>✎</button>
-                  )}
+                  <button className="icon" disabled={busy} aria-label={`Gỡ ${label} khỏi cơ sở`} title="Gỡ khỏi cơ sở"
+                    onClick={() => window.confirm(`Gỡ ${label} khỏi cơ sở? Người này sẽ không vào được nữa; lịch sử đã ghi vẫn được giữ.`) && void run(() => removeMember(org.id, m.user_id))}>🗑</button>
                 </>
               )}
             </div>
             {suspended && <p className="msg warn" role="status">Đang tạm dừng: người này không đăng nhập được. Bấm ▶ để dùng lại.</p>}
-            <div className="badges">
-              <span className="muted">Vai trò:</span>
-              <span className="pill">{roleSummary(m.roles)}</span>
-              {m.leads_teams && m.leads_teams.length > 0 && (
-                <span className="pill ok">Tổ trưởng — {m.leads_teams.join(', ')}</span>
+            <div className="row">
+              <div className="badges grow">
+                <span className="muted">Vai trò:</span>
+                <span className="pill">{roleSummary(m.roles)}</span>
+                {(held.get(m.user_id) ?? []).map((id) => catalog.find((p) => p.id === id)).filter(Boolean).map((p) => <span key={p!.id} className="pill mine">{p!.name}</span>)}
+                {m.leads_teams && m.leads_teams.length > 0 && (
+                  <span className="pill ok">Tổ trưởng — {m.leads_teams.join(', ')}</span>
+                )}
+              </div>
+              {isOwner && !owner && !suspended && editing !== m.user_id && (
+                <div className="rowbtns">
+                  <button className="secondary" disabled={busy} onClick={() => { setEditing(m.user_id); setEditRoles(m.roles.filter((r) => r !== 'owner')); setEditPos(held.get(m.user_id) ?? []); setError(null); }}>Đổi vai trò</button>
+                  {m.is_staff && <ResetPasswordButton org={org} userId={m.user_id} onDone={(c) => { setCreds(c); void load(); }} />}
+                </div>
               )}
             </div>
             {m.is_staff && m.must_change_password && <p className="msg warn">Chưa đổi mật khẩu tạm — chưa dùng được dữ liệu.</p>}
 
-            {isOwner && !owner && !suspended && editing !== m.user_id && (
-              <div className="actions">
-                <button className="secondary" disabled={busy} onClick={() => { setEditing(m.user_id); setEditRoles(m.roles.filter((r) => r !== 'owner')); setError(null); }}>Đổi vai trò</button>
-                {m.is_staff && <ResetPasswordButton org={org} userId={m.user_id} onDone={(c) => { setCreds(c); void load(); }} />}
-                <button className="link" disabled={busy}
-                  onClick={() => window.confirm(`Gỡ ${label} khỏi cơ sở? Người này sẽ không vào được nữa; lịch sử đã ghi vẫn được giữ.`) && void run(() => removeMember(org.id, m.user_id))}>
-                  Gỡ khỏi cơ sở
-                </button>
-              </div>
-            )}
             {isOwner && !owner && !suspended && (
-              <Collapsible inline title="Phân quyền theo chức năng" summary={Object.keys(overrides[m.user_id] ?? {}).length > 0 ? 'Đã cấp riêng' : 'Theo vai trò'}>
+              <Collapsible inline highlight title="Phân quyền chức năng" summary={Object.keys(overrides[m.user_id] ?? {}).length > 0 ? 'Đã cấp riêng' : 'Theo vai trò'}>
                 <MemberPermissions key={JSON.stringify(overrides[m.user_id] ?? {})} orgId={org.id} userId={m.user_id} roles={m.roles}
                   overrides={overrides[m.user_id] ?? {}} onSaved={() => void load()} />
               </Collapsible>
@@ -167,10 +177,10 @@ export function MembersSection({ org }: { org: MyOrg }) {
             )}
             {isOwner && editing === m.user_id && (
               <div className="inline-form">
-                <RolePicker orgType={org.type} value={editRoles} onChange={setEditRoles} disabled={busy} />
-                <div className="actions">
-                  <button className="secondary" disabled={busy} onClick={() => saveRoles(m.user_id)}>Lưu vai trò</button>
-                  <button className="link" onClick={() => setEditing(null)}>Hủy</button>
+                <RolePicker orgType={org.type} orgId={org.id} value={editRoles} onChange={setEditRoles} positionIds={editPos} onPositionsChange={setEditPos} disabled={busy} />
+                <div className="btnrow">
+                  <button className="primary" disabled={busy} onClick={() => saveRoles(m.user_id)}>Lưu</button>
+                  <button type="button" className="secondary" onClick={() => setEditing(null)}>Hủy</button>
                 </div>
               </div>
             )}
@@ -199,7 +209,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
             Email người được mời
             <input type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </label>
-          <RolePicker orgType={org.type} value={inviteRoles} onChange={setInviteRoles} />
+          <RolePicker orgType={org.type} orgId={org.id} value={inviteRoles} onChange={setInviteRoles} />
           <button type="submit" className="secondary" disabled={busy}>Gửi lời mời</button>
         </form>
         </Collapsible>

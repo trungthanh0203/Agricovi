@@ -65,7 +65,7 @@ export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
         <div className="card">
           <h2>Tôi được làm gì ở {active.name}</h2>
           <p className="muted">Vai trò: {roleSummary(active.roles)}</p>
-          {(active.positions ?? []).length > 0 && <p className="muted">Chức vụ: {(active.positions ?? []).map((p) => p.name).join(', ')}</p>}
+          {(active.positions ?? []).length > 0 && <p className="muted">Vai trò tự tạo: {(active.positions ?? []).map((p) => p.name).join(', ')}</p>}
           {active.allowedWorkTypes && <p className="muted">Chỉ ghi được {active.allowedWorkTypes.length} loại việc được phân công.</p>}
           {active.canManageStages && <p className="muted">Được bắt đầu/hoàn thành và sửa giai đoạn của vụ.</p>}
           {PERM_MODULES.map((m) => (

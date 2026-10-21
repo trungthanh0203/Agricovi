@@ -1,3 +1,4 @@
+import type { MemberRole } from '@agriconnect/shared';
 import type { PermOverrides } from './permissions';
 import { supabase } from './supabase';
 
@@ -13,6 +14,9 @@ export interface PositionRow {
   work_type_ids: string[] | null;
   can_manage_stages: boolean;
   is_active: boolean;
+  /** Vai trò nền (quyền thao tác gốc); vai trò có sẵn có is_builtin = true */
+  base_role: MemberRole;
+  is_builtin: boolean;
 }
 
 function client() {
@@ -30,23 +34,29 @@ async function ok<T>(p: PromiseLike<{ data: T; error: { message: string } | null
 
 export async function listPositions(orgId: string): Promise<PositionRow[]> {
   const rows = await ok(client().from('org_positions')
-    .select('id, organization_id, name, description, perms, work_type_ids, can_manage_stages, is_active').eq('organization_id', orgId).order('name'));
+    .select('id, organization_id, name, description, perms, work_type_ids, can_manage_stages, is_active, base_role, is_builtin').eq('organization_id', orgId).order('name'));
   return (rows ?? []) as PositionRow[];
 }
 
 export async function savePosition(
   orgId: string, id: string | null,
-  f: { name: string; description: string; perms: PermOverrides; workTypeIds: string[] | null; canManageStages: boolean; isActive?: boolean },
+  f: { name: string; description: string; perms: PermOverrides; workTypeIds: string[] | null; canManageStages: boolean; isActive?: boolean; baseRole?: MemberRole },
 ): Promise<void> {
-  needOnline('lưu chức vụ');
+  needOnline('lưu vai trò');
   await ok(client().rpc('save_position', {
     p_org: orgId, p_id: id, p_name: f.name, p_description: f.description, p_perms: f.perms,
-    p_work_type_ids: f.workTypeIds, p_can_manage_stages: f.canManageStages, p_active: f.isActive ?? true,
+    p_work_type_ids: f.workTypeIds, p_can_manage_stages: f.canManageStages, p_active: f.isActive ?? true, p_base_role: f.baseRole ?? 'worker',
   }));
 }
 
+/** Thêm lại các vai trò có sẵn đã xóa (không đụng vai trò đã có) */
+export async function addBuiltinRoles(orgId: string): Promise<number> {
+  needOnline('thêm vai trò có sẵn');
+  return Number(await ok(client().rpc('add_builtin_roles', { p_org: orgId })));
+}
+
 export async function deletePosition(id: string): Promise<void> {
-  needOnline('xóa chức vụ');
+  needOnline('xóa vai trò');
   await ok(client().rpc('delete_position', { p_id: id }));
 }
 

@@ -58,7 +58,7 @@ export function orgSections(org: MyOrg | null): Section<OrgSection>[] {
   return [
     manager ? { id: 'info' as const, label: 'Cơ sở và gói' } : null,
     manager ? { id: 'members' as const, label: 'Nhân sự' } : null,
-    hasRole(org.roles, 'owner') ? { id: 'positions' as const, label: 'Chức vụ' } : null,
+    hasRole(org.roles, 'owner') ? { id: 'positions' as const, label: 'Vai trò' } : null,
     manager ? { id: 'teams' as const, label: 'Tổ lao động' } : null,
     hasRole(org.roles, 'cooperative_manager', 'manager') ? { id: 'coop' as const, label: org.type === 'cooperative' ? 'Hộ thành viên' : 'Hợp tác xã' } : null,
   ].filter((x): x is Section<OrgSection> => x !== null);
