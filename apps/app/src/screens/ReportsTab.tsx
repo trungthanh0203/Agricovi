@@ -20,8 +20,8 @@ export function ReportsTab({ section, onSection }: { section?: string; onSection
   return (
     <section>
       <h1>Báo cáo</h1>
-      <SubTabs items={items} value={current ?? 'expense'} onChange={onSection} label="Mục báo cáo" />
-      {current === 'sales' ? <SalesSection /> : current === 'summary' ? <SummarySection /> : current === 'payroll' ? <PayrollSection /> : current === 'custom' ? <ReportBuilder /> : <ExpenseSection />}
+      <SubTabs items={items} value={current} onChange={onSection} onBack={() => onSection('' as ReportSection)} label="Báo cáo" />
+      {current === 'sales' ? <SalesSection /> : current === 'summary' ? <SummarySection /> : current === 'payroll' ? <PayrollSection /> : current === 'custom' ? <ReportBuilder /> : current === 'expense' ? <ExpenseSection /> : null}
     </section>
   );
 }

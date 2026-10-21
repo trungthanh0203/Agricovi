@@ -124,7 +124,7 @@ export function CycleCalendar({ stages, logs, today, notes, canAdd, userId, canM
             void onAddNote(picked, text).then(() => setText('')).catch(() => undefined);
           }}>
             <input value={text} maxLength={500} onChange={(e) => setText(e.target.value)} placeholder="Thêm ghi chú nhắc việc cho ngày này" aria-label="Nội dung ghi chú" />
-            <button type="submit" className="primary" disabled={busy || !text.trim()}>Thêm</button>
+            <button type="submit" className="primary" disabled={busy || !text.trim()}>Thêm ghi chú</button>
           </form>
         )}
         </>

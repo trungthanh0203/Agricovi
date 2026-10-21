@@ -38,16 +38,16 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
   return (
     <section>
       <h1>Sản xuất</h1>
-      <SubTabs items={items} value={current ?? 'cycles'} onChange={onSection} label="Mục sản xuất" />
+      <SubTabs items={items} value={current} onChange={onSection} onBack={() => onSection('' as ProductionSection)} label="Sản xuất" />
       {current === 'harvest' ? (
         <HarvestSection />
       ) : current === 'stock' ? (
         <StockPanel />
       ) : current === 'attendance' ? (
         <AttendanceSection />
-      ) : (
+      ) : current === 'cycles' ? (
         <CyclesPanel onCreateCycle={onCreateCycle} onOpenCycle={onOpenCycle} onLog={onLog} onHistory={onHistory} onGo={onGo} />
-      )}
+      ) : null}
     </section>
   );
 }

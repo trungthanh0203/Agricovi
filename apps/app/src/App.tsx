@@ -183,7 +183,7 @@ function Shell() {
             key={t}
             className={t === tab ? 'tab active' : 'tab'}
             aria-current={t === tab ? 'page' : undefined}
-            onClick={() => setTab(t)}
+            onClick={() => { setTab(t); setSubs((cur) => ({ ...cur, [t]: '' })); }} // chạm tab = về menu của tab
           >
             {TAB_LABEL[t]}
           </button>

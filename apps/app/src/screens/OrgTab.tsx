@@ -19,7 +19,7 @@ export function OrgTab({ section, onSection }: { section?: string; onSection: (s
   return (
     <section>
       <h1>Tổ chức</h1>
-      <SubTabs items={items} value={current ?? 'members'} onChange={onSection} label="Mục tổ chức" />
+      <SubTabs items={items} value={current} onChange={onSection} onBack={() => onSection('' as OrgSection)} label="Tổ chức" />
       {current === 'members' && <MembersSection org={active} />}
       {current === 'positions' && <PositionsSection org={active} />}
       {current === 'teams' && <TeamsSection org={active} />}

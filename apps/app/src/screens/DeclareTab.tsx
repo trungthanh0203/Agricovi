@@ -22,7 +22,7 @@ export function DeclareTab({ section, onSection }: { section?: string; onSection
   return (
     <section>
       <h1>Khai báo</h1>
-      <SubTabs items={items} value={current ?? 'areas'} onChange={onSection} label="Mục khai báo" />
+      <SubTabs items={items} value={current} onChange={onSection} onBack={() => onSection('' as DeclareSection)} label="Khai báo" />
       {current === 'materials' || current === 'places' ? (
         <CatalogSection orgId={active.id} part={current} canWrite={canPerm(active.perms, 'inventory', 'edit')} />
       ) : current === 'rates' ? (
@@ -33,9 +33,9 @@ export function DeclareTab({ section, onSection }: { section?: string; onSection
         <WorkTypesSection />
       ) : current === 'templates' ? (
         <TemplatesSection />
-      ) : (
+      ) : current === 'areas' ? (
         <AreasSection />
-      )}
+      ) : null}
     </section>
   );
 }

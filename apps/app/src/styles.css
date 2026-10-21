@@ -232,3 +232,15 @@ details.fold.highlight > summary .fold-title { color: var(--green); }
 .licfig { margin: 8px 0; }
 .licfig img { max-width: 100%; border-radius: 8px; border: 1px solid var(--line); }
 .licfig figcaption { font-size: 13px; color: var(--muted); }
+
+/* Menu dọc của tab (D51) */
+.menu { display: flex; flex-direction: column; margin: 8px 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.menu-item { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 60px; padding: 0 16px; background: none; border: 0; border-top: 1px solid var(--line); color: var(--fg); font: inherit; font-size: 1.05rem; text-align: left; cursor: pointer; }
+.menu-item:first-child { border-top: 0; }
+.menu-item:active { background: color-mix(in srgb, var(--green) 10%, var(--card)); }
+.menu-ico { font-size: 1.4rem; width: 32px; text-align: center; }
+.menu-label { flex: 1 1 auto; }
+.menu-go { color: var(--muted); font-size: 1.4rem; }
+.menubar { display: flex; align-items: center; gap: 12px; margin: 4px 0 10px; }
+.menu-back { min-height: 44px; padding: 0 14px; background: none; border: 1px solid var(--line); border-radius: 10px; color: var(--green); font: inherit; font-weight: 700; cursor: pointer; }
+.menu-cur { font-size: 1.05rem; }
