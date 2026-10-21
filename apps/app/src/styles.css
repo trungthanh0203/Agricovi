@@ -204,3 +204,9 @@ button.icon:disabled { opacity: .4; }
 .kpi.bad { border-left-color: var(--err); }
 .kpi.info { border-left-color: #1976d2; }
 .card.alert-warn { border-left: 5px solid var(--warn); }
+
+/* Thanh trên: tên người dùng, đăng xuất, biểu tượng mạng */
+.who { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.who-name { max-width: 28vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: 14px; }
+.who-out { background: none; border: 1px solid var(--line); color: var(--fg); border-radius: 8px; min-height: 36px; padding: 0 10px; font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.net { font-size: 18px; line-height: 1; }

@@ -12,6 +12,7 @@ import type { StaffCredentials } from '../lib/staff';
 import { Collapsible } from './Collapsible';
 import type { PermOverrides } from '../lib/permissions';
 import { MemberPermissions } from './MemberPermissions';
+import { updateStaffProfile } from '../lib/staff';
 import { RolePicker } from './RolePicker';
 import { CredentialsCard, ResetPasswordButton, StaffCreateForm } from './StaffAccountsSection';
 
@@ -24,6 +25,9 @@ export function MembersSection({ org }: { org: MyOrg }) {
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<PendingInvite[]>([]);
   const [teams, setTeams] = useState<TeamRow[]>([]);
+  const [editInfo, setEditInfo] = useState<string | null>(null);
+  const [infoName, setInfoName] = useState('');
+  const [infoPhone, setInfoPhone] = useState('');
   const [workers, setWorkers] = useState<WorkerRow[]>([]);
   const [email, setEmail] = useState('');
   const [inviteRoles, setInviteRoles] = useState<MemberRole[]>(['worker']);
@@ -113,6 +117,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
             {isOwner && !owner && editing !== m.user_id && (
               <div className="actions">
                 <button className="secondary" disabled={busy} onClick={() => { setEditing(m.user_id); setEditRoles(m.roles.filter((r) => r !== 'owner')); setError(null); }}>Đổi vai trò</button>
+                {m.is_staff && <button className="secondary" disabled={busy} onClick={() => { setEditInfo(editInfo === m.user_id ? null : m.user_id); setInfoName(m.full_name ?? ''); setInfoPhone(m.phone ?? ''); setError(null); }}>Sửa tên, số điện thoại</button>}
                 {m.is_staff && <ResetPasswordButton org={org} userId={m.user_id} onDone={(c) => { setCreds(c); void load(); }} />}
                 <button className="link" disabled={busy}
                   onClick={() => window.confirm(`Gỡ ${label} khỏi cơ sở? Người này sẽ không vào được nữa; lịch sử đã ghi vẫn được giữ.`) && void run(() => removeMember(org.id, m.user_id))}>
@@ -125,6 +130,21 @@ export function MembersSection({ org }: { org: MyOrg }) {
                 <MemberPermissions key={JSON.stringify(overrides[m.user_id] ?? {})} orgId={org.id} userId={m.user_id} roles={m.roles}
                   overrides={overrides[m.user_id] ?? {}} onSaved={() => void load()} />
               </Collapsible>
+            )}
+            {isOwner && editInfo === m.user_id && (
+              <div className="inline-form">
+                <label>Họ tên<input value={infoName} maxLength={80} onChange={(e) => setInfoName(e.target.value)} /></label>
+                <label>Số điện thoại (dùng để đăng nhập)<input type="tel" inputMode="tel" value={infoPhone} onChange={(e) => setInfoPhone(e.target.value)} /></label>
+                <p className="muted">Nếu đổi số điện thoại, nhân viên đăng nhập bằng số mới (mật khẩu giữ nguyên).</p>
+                <div className="actions">
+                  <button className="primary" disabled={busy} onClick={() => {
+                    if (infoName.trim().length < 2) return setError('Hãy nhập họ tên (ít nhất 2 ký tự).');
+                    if (!infoPhone.trim()) return setError('Hãy nhập số điện thoại.');
+                    void run(async () => { await updateStaffProfile(org.id, m.user_id, infoName, infoPhone); setEditInfo(null); }, 'Đã cập nhật thông tin nhân viên.');
+                  }}>Lưu</button>
+                  <button className="link" onClick={() => setEditInfo(null)}>Hủy</button>
+                </div>
+              </div>
             )}
             {isOwner && editing === m.user_id && (
               <div className="inline-form">

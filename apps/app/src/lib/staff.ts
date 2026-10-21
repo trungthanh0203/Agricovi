@@ -80,5 +80,9 @@ export const createStaffAccount = (p: {
   organization_id: string; full_name: string; phone: string; roles: string[]; work_mode: WorkMode; team_id?: string | null;
 }) => callFunction<StaffCredentials>({ action: 'create', ...p });
 
+/** Chủ đổi họ tên và số điện thoại (= tên đăng nhập) của nhân viên. Cần triển khai lại Edge Function staff-accounts. */
+export const updateStaffProfile = (organization_id: string, user_id: string, full_name: string, phone: string) =>
+  callFunction<{ phone: string; full_name: string }>({ action: 'update', organization_id, user_id, full_name, phone });
+
 export const resetStaffPassword = (organization_id: string, user_id: string) =>
   callFunction<StaffCredentials>({ action: 'reset_password', organization_id, user_id });

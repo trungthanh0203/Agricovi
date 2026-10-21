@@ -11,7 +11,7 @@ import { todayLocal, useOnline, useRecordSync } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import type { TabId } from '../lib/tabs';
 import { useAuth } from '../lib/auth';
-import { authorLabel, canManageProduction } from '../lib/roles';
+import { authorLabel, canManageProduction, hasRole } from '../lib/roles';
 import { retryFailed } from '../lib/outbox';
 
 export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHistory: () => void; onGo: (tab: TabId, section?: string) => void }) {
@@ -28,6 +28,7 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
   const { workTypes, cropTypes } = useCatalog();
   if (!active) return null;
   const canManage = canManageProduction(active.roles);
+  const canClock = hasRole(active.roles, 'manager', 'worker'); // chủ/quản lý/nhân viên tự chấm công
 
   const mine = cycles.filter(
     (c) => c.owner_org_id === active.id || areas.find((a) => a.id === c.area_id)?.organization_id === active.id,
@@ -68,7 +69,10 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
           )}
         </div>
       ) : (
-        <button className="primary big" onClick={onLog}>Ghi việc vừa làm</button>
+        <div className="pair">
+          <button className="primary big" onClick={onLog}>Ghi việc vừa làm</button>
+          {canClock && <button className="secondary big" onClick={() => onGo('production', 'attendance')}>⏱ Vào ca / Ra ca</button>}
+        </div>
       )}
 
       {failed > 0 && (

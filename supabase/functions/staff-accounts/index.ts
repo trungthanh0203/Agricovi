@@ -7,6 +7,8 @@
 // Hợp đồng:
 //   POST { action: 'create', organization_id, full_name, phone, roles: string[], work_mode, team_id? }
 //        -> { user_id, phone, temp_password, expires_at }
+//   POST { action: 'update', organization_id, user_id, full_name, phone }
+//        -> { phone, full_name }   (đổi họ tên và số điện thoại = tên đăng nhập)
 //   POST { action: 'reset_password', organization_id, user_id }
 //        -> { phone?, temp_password, expires_at }
 // Lỗi: HTTP 400 { error: "MÃ_LỖI: nội dung tiếng Việt" }. Mật khẩu tạm CHỈ có trong phản hồi này, không lưu ở đâu khác.
@@ -114,6 +116,26 @@ Deno.serve(async (req) => {
       return json({ user_id: userId, phone, temp_password: password, expires_at: fin.data });
     }
 
+    if (body.action === 'update') {
+      const userId = String(body.user_id ?? '');
+      if (!/^[0-9a-f-]{36}$/i.test(userId)) return fail('BAD_REQUEST: Thiếu người dùng');
+      const name = String(body.full_name ?? '');
+      const phoneIn = String(body.phone ?? '');
+      // 1) Cập nhật CSDL (kiểm tra chủ cơ sở, số hợp lệ, không trùng)
+      const up = await admin.rpc('staff_update_profile', { p_actor: actor, p_org: org, p_user: userId, p_name: name, p_phone: phoneIn });
+      if (up.error) return fail(up.error.message);
+      const r = up.data as { phone: string; auth_email: string; old_phone: string; old_email: string; old_name: string };
+      // 2) Đổi email đăng nhập ở Auth nếu số điện thoại đổi; lỗi thì hoàn tác CSDL
+      if (r.auth_email !== r.old_email) {
+        const ch = await admin.auth.admin.updateUserById(userId, { email: r.auth_email, email_confirm: true, user_metadata: { staff: true, phone: r.phone, full_name: name.trim() } });
+        if (ch.error) {
+          await admin.rpc('staff_update_profile', { p_actor: actor, p_org: org, p_user: userId, p_name: r.old_name, p_phone: r.old_phone });
+          return fail(ch.error.message?.includes('already') ? 'PHONE_IN_USE: Số điện thoại này đã có tài khoản.' : cleanMessage(ch.error));
+        }
+      }
+      return json({ phone: r.phone, full_name: name.trim() });
+    }
+
     if (body.action === 'reset_password') {
       const userId = String(body.user_id ?? '');
       if (!/^[0-9a-f-]{36}$/i.test(userId)) return fail('BAD_REQUEST: Thiếu người dùng');
@@ -123,7 +145,7 @@ Deno.serve(async (req) => {
         .from('staff_accounts').select('user_id, phone').eq('user_id', userId).eq('organization_id', org).maybeSingle();
       const isOwner = await admin
         .from('organization_memberships').select('id').eq('organization_id', org).eq('user_id', actor)
-        .eq('role', 'owner').eq('status', 'active').maybeSingle();
+        .contains('roles', ['owner']).eq('status', 'active').maybeSingle();
       if (!isOwner.data) return fail('FORBIDDEN: Chỉ chủ cơ sở được đặt lại mật khẩu nhân viên');
       if (!check.data) return fail('NOT_FOUND: Không phải tài khoản nhân viên của cơ sở này');
 

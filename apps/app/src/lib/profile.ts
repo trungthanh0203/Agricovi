@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { fetchStaffStatus } from './staff';
 import { supabase } from './supabase';
 
 function client() {
@@ -53,4 +55,24 @@ export async function fetchMyWork(uid: string, orgId: string): Promise<MyWork | 
     teamName = ((t.data ?? []) as { name: string }[])[0]?.name ?? null;
   }
   return { workerId: me.id, mode: me.work_mode, teamName, leadsTeams: ((led.data ?? []) as { name: string }[]).map((r) => r.name) };
+}
+
+/** Tên hiển thị của người đang đăng nhập (tên tự đặt > họ tên nhân viên > phần đầu email), nhớ trên máy để hiện cả khi offline */
+export function useMyName(uid: string | undefined, email: string | undefined): string {
+  const key = uid ? `agriconnect.myname.${uid}` : '';
+  const [name, setName] = useState(() => {
+    try { return (key && localStorage.getItem(key)) || ''; } catch { return ''; }
+  });
+  useEffect(() => {
+    if (!uid || !navigator.onLine) return;
+    let alive = true;
+    void Promise.all([fetchDisplayName(uid).catch(() => null), fetchStaffStatus(uid).catch(() => null)]).then(([d, s]) => {
+      const n = d ?? s?.full_name ?? '';
+      if (!alive || !n) return;
+      setName(n);
+      try { localStorage.setItem(key, n); } catch { /* bỏ qua */ }
+    });
+    return () => { alive = false; };
+  }, [uid, key]);
+  return name || (email?.includes('@sdt.') ? email.split('@')[0]! : email?.split('@')[0]) || '';
 }

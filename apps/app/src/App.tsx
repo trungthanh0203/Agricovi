@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { SYNC_STATE_LABEL_VI, type SyncState } from '@agriconnect/shared';
 import { AuthProvider, useAuth } from './lib/auth';
+import { useMyName } from './lib/profile';
 import { purgeCachesIfUserChanged } from './lib/localData';
 import { countByState, flushOutbox } from './lib/outbox';
 import { OrgProvider, useOrgs } from './lib/orgs';
@@ -66,6 +67,8 @@ function Gate() {
 
 function Shell() {
   const { orgs, active, setActive } = useOrgs();
+  const { session: me, signOut } = useAuth();
+  const myName = useMyName(me?.user.id, me?.user.email ?? undefined);
   const [tabState, setTab] = useState<TabId>('home');
   // mục con đang chọn của từng tab (nhớ khi chuyển qua lại)
   const [subs, setSubs] = useState<Partial<Record<TabId, string>>>({});
@@ -135,7 +138,11 @@ function Shell() {
         ) : (
           <strong className="orgname">{active?.name}</strong>
         )}
-        <span className={online ? 'pill ok' : 'pill warn'}>{online ? 'Có mạng' : 'Đang offline'}</span>
+        <div className="who">
+          <span className="who-name" title={myName}>{myName}</span>
+          <button className="who-out" onClick={() => void signOut()} aria-label="Đăng xuất">Đăng xuất</button>
+          <span className={online ? 'net ok' : 'net off'} role="img" aria-label={online ? 'Có mạng' : 'Đang offline (mất mạng)'} title={online ? 'Có mạng' : 'Đang offline (mất mạng)'}>{online ? '🟢' : '🔴'}</span>
+        </div>
       </header>
 
       {(waiting > 0 || attention > 0) && (
