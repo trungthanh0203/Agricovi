@@ -146,8 +146,10 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
         {!online && <p className="msg warn">Đang offline. Nhập kho và điều chỉnh cần có mạng; hãy kết nối mạng rồi bấm Lưu.</p>}
-        <button type="submit" className="primary" disabled={!online || busy}>Lưu</button>
-        <button type="button" className="link" onClick={onClose}>Hủy</button>
+        <div className="btnrow">
+          <button type="submit" className="primary" disabled={!online || busy}>Lưu</button>
+          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        </div>
       </form>
     </section>
   );

@@ -218,7 +218,7 @@ function StageForm({ title, stage, defaults, workTypes, busy, canDelete, onSave,
     <div className="card">
       <h2>{title}</h2>
       <div className="inline-form">
-        <label>Việc trong danh mục
+        <label>Đầu việc
           <select value={wt} onChange={(e) => { setWt(e.target.value); if (!name.trim() || workTypes.some((w) => w.name === name)) setName(workTypes.find((w) => w.id === e.target.value)?.name ?? name); }}>
             <option value="">— Không chọn —</option>
             {workTypes.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
@@ -231,15 +231,17 @@ function StageForm({ title, stage, defaults, workTypes, busy, canDelete, onSave,
         </div>
         <label>Ghi chú / mô tả<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
         {err && <p className="msg error" role="alert">{err}</p>}
-        <button className="primary" disabled={busy} onClick={() => {
-          if (!name.trim()) return setErr('Hãy nhập tên giai đoạn hoặc chọn việc.');
-          if (!start || !end) return setErr('Hãy chọn ngày bắt đầu và kết thúc.');
-          if (end < start) return setErr('Ngày kết thúc không thể trước ngày bắt đầu.');
-          setErr(null);
-          void onSave({ name, workTypeId: wt || null, start, end, note }).catch(() => undefined);
-        }}>Lưu</button>
-        {canDelete && onDelete && <button className="secondary" disabled={busy} onClick={onDelete}>Xóa giai đoạn</button>}
-        <button className="secondary" onClick={onClose}>Đóng</button>
+        <div className="btnrow">
+          <button className="primary" disabled={busy} onClick={() => {
+            if (!name.trim()) return setErr('Hãy nhập tên giai đoạn hoặc chọn việc.');
+            if (!start || !end) return setErr('Hãy chọn ngày bắt đầu và kết thúc.');
+            if (end < start) return setErr('Ngày kết thúc không thể trước ngày bắt đầu.');
+            setErr(null);
+            void onSave({ name, workTypeId: wt || null, start, end, note }).catch(() => undefined);
+          }}>Lưu</button>
+          {canDelete && onDelete && <button className="secondary" disabled={busy} onClick={onDelete}>Xóa giai đoạn</button>}
+          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        </div>
       </div>
     </div>
   );

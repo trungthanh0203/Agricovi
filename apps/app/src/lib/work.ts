@@ -273,5 +273,29 @@ export async function unlockPayroll(periodId: string, reason: string): Promise<v
   await ok(client().rpc('unlock_payroll', { p_period: periodId, p_reason: reason }));
 }
 
+/** Người "do tổ trưởng chấm" chưa thuộc tổ có tổ trưởng (cần chủ xử lý) */
+export async function listOrphans(orgId: string): Promise<{ worker_id: string; full_name: string; team_name: string | null }[]> {
+  const rows = await ok(client().from('workers_without_leader').select('worker_id, full_name, team_name').eq('organization_id', orgId));
+  return (rows ?? []) as { worker_id: string; full_name: string; team_name: string | null }[];
+}
+
+/** CSV bảng lương một kỳ (mở được bằng Excel): mỗi dòng công/sản lượng và khoản cộng/trừ, kèm tổng từng người */
+export function buildPayrollCsv(period: { start_date: string; end_date: string; status: string }, workers: WorkerLite[],
+  statements: StatementRow[], lines: LineRow[], adjustments: AdjustmentRow[]): string {
+  const cell = (v: string | number | null) => {
+    const t = v === null ? '' : String(v);
+    return /[,"\n]/.test(t) ? '"' + t.split('"').join('""') + '"' : t;
+  };
+  const rows: (string | number | null)[][] = [['Người', 'Loại', 'Diễn giải', 'Số lượng', 'Đơn vị', 'Đơn giá (đồng)', 'Thành tiền (đồng)']];
+  const name = (id: string) => workers.find((w) => w.id === id)?.full_name ?? '';
+  for (const s of statements) {
+    for (const l of lines.filter((x) => x.statement_id === s.id)) rows.push([name(s.worker_id), l.line_type === 'hours' ? 'Giờ công' : 'Sản lượng', l.explanation, l.quantity, l.unit, l.rate_amount, l.amount]);
+    for (const a of adjustments.filter((x) => x.worker_id === s.worker_id)) rows.push([name(s.worker_id), ADJ_KIND_LABEL[a.kind], a.reason, '', '', '', a.kind === 'bonus' ? a.amount : -a.amount]);
+    rows.push([name(s.worker_id), 'TỔNG', period.status === 'locked' ? 'Đã duyệt (khóa kỳ)' : 'Dự tính (chưa khóa)', '', '', '', period.status === 'locked' ? s.total_approved ?? s.total_estimated : s.total_estimated]);
+  }
+  const NL = String.fromCharCode(13, 10);
+  return String.fromCharCode(0xfeff) + `Kỳ ${period.start_date} đến ${period.end_date}` + NL + rows.map((r) => r.map(cell).join(',')).join(NL) + NL;
+}
+
 export const fmtMinutes = (m: number | null) => (m == null ? '—' : `${Math.floor(m / 60)} giờ ${String(m % 60).padStart(2, '0')} phút`);
 export const fmtVnd = (n: number) => `${Math.round(n).toLocaleString('vi-VN')} đ`;

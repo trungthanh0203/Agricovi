@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Collapsible } from './Collapsible';
+import { downloadCsv } from '../lib/summary';
 import { addDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { isOwner } from '../lib/roles';
 import {
-  addAdjustment, ADJ_KIND_LABEL, computePayroll, createPeriod, fmtVnd, listPeriods, listWorkers, loadStatements, lockPayroll,
+  addAdjustment, ADJ_KIND_LABEL, buildPayrollCsv, computePayroll, createPeriod, fmtVnd, listPeriods, listWorkers, loadStatements, lockPayroll,
   PERIOD_STATUS_LABEL, unlockPayroll, type AdjustmentRow, type LineRow, type PayrollResult, type PeriodRow, type StatementRow, type WorkerLite,
 } from '../lib/work';
 
@@ -128,6 +129,9 @@ function PeriodView({ period, workers, isOwner: owner, onBack, onChanged }: {
             const r = window.prompt('Lý do mở khóa kỳ này (ít nhất 5 ký tự)?');
             if (r) void run(async () => { await unlockPayroll(period.id, r); setStatus('draft'); });
           }}>Mở khóa kỳ</button>
+        )}
+        {data && data.statements.length > 0 && (
+          <button className="secondary" onClick={() => downloadCsv(`tien-cong-${period.start_date}_${period.end_date}.csv`, buildPayrollCsv({ start_date: period.start_date, end_date: period.end_date, status }, workers, data.statements, data.lines, data.adjustments))}>Xuất CSV</button>
         )}
         {!owner && !locked && <p className="muted">Chỉ chủ cơ sở được khóa kỳ.</p>}
       </div>

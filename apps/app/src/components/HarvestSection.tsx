@@ -288,8 +288,10 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
             {editing ? 'Đang offline. Sửa phiếu cần có mạng; hãy kết nối mạng rồi bấm Lưu thay đổi.' : 'Đang offline. Phiếu sẽ được lưu trên điện thoại và tự gửi khi có mạng.'}
           </p>
         )}
-        <button type="submit" className="primary" disabled={Boolean(editing) && !online}>{editing ? 'Lưu thay đổi' : 'Lưu'}</button>
-        <button type="button" className="link" onClick={onClose}>Hủy</button>
+        <div className="btnrow">
+          <button type="submit" className="primary" disabled={Boolean(editing) && !online}>{editing ? 'Lưu thay đổi' : 'Lưu'}</button>
+          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        </div>
       </form>
     </section>
   );

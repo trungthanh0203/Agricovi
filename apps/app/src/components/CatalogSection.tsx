@@ -215,16 +215,18 @@ function MaterialEditor({ m, busy, onSave, onClose }: {
           <label>Thời gian cách ly (số ngày)<input value={ext.withdrawal_days} inputMode="numeric" onChange={setE('withdrawal_days')} /></label>
         </details>
         {err && <p className="msg error" role="alert">{err}</p>}
-        <button className="primary" disabled={busy} onClick={() => {
-          const days = ext.withdrawal_days.trim() === '' ? null : Number(ext.withdrawal_days);
-          if (days !== null && (!Number.isInteger(days) || days < 0)) return setErr('Thời gian cách ly phải là số ngày nguyên, không âm.');
-          const v = parseNumber(thr);
-          if (name.trim().length < 2) return setErr('Hãy nhập tên vật tư.');
-          if (v !== null && (Number.isNaN(v) || v < 0)) return setErr('Mức cảnh báo phải là số không âm.');
-          setErr(null);
-          onSave({ name, description: desc, category: cat.trim() || null, threshold: v, ext: { ...ext, withdrawal_days: days } });
-        }}>Lưu thay đổi</button>
-        <button className="secondary" onClick={onClose}>Đóng</button>
+        <div className="btnrow">
+          <button className="primary" disabled={busy} onClick={() => {
+            const days = ext.withdrawal_days.trim() === '' ? null : Number(ext.withdrawal_days);
+            if (days !== null && (!Number.isInteger(days) || days < 0)) return setErr('Thời gian cách ly phải là số ngày nguyên, không âm.');
+            const v = parseNumber(thr);
+            if (name.trim().length < 2) return setErr('Hãy nhập tên vật tư.');
+            if (v !== null && (Number.isNaN(v) || v < 0)) return setErr('Mức cảnh báo phải là số không âm.');
+            setErr(null);
+            onSave({ name, description: desc, category: cat.trim() || null, threshold: v, ext: { ...ext, withdrawal_days: days } });
+          }}>Lưu thay đổi</button>
+          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        </div>
       </div>
     </div>
   );

@@ -267,8 +267,10 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
 
           {error && <p className="msg error" role="alert">{error}</p>}
           {!navigator.onLine && <p className="msg warn">Đang offline. Bản ghi sẽ được lưu trên điện thoại và gửi sau.</p>}
-          <button type="submit" className="primary">Lưu</button>
-          <button type="button" className="link" onClick={onClose}>Hủy</button>
+          <div className="btnrow">
+            <button type="submit" className="primary">Lưu</button>
+            <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+          </div>
         </form>
       )}
     </main>

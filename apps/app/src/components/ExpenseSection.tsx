@@ -271,8 +271,10 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
         {!online && <p className="msg warn">Đang offline. Cần có mạng để lưu; hãy kết nối mạng rồi bấm Lưu.</p>}
-        <button type="submit" className="primary" disabled={!online || busy}>{editing ? 'Lưu thay đổi' : 'Lưu'}</button>
-        <button type="button" className="link" onClick={onClose}>Hủy</button>
+        <div className="btnrow">
+          <button type="submit" className="primary" disabled={!online || busy}>{editing ? 'Lưu thay đổi' : 'Lưu'}</button>
+          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        </div>
       </form>
     </section>
   );

@@ -207,8 +207,10 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: () => void; on
           )}
 
           {error && <p className="msg error" role="alert">{error}</p>}
-          <button type="submit" className="primary" disabled={!online || busy || !templateId}>{busy ? 'Đang tạo…' : 'Tạo vụ'}</button>
-          <button type="button" className="link" onClick={onCancel}>Hủy</button>
+          <div className="btnrow">
+            <button type="submit" className="primary" disabled={!online || busy || !templateId}>{busy ? 'Đang tạo…' : 'Tạo vụ'}</button>
+            <button type="button" className="secondary" onClick={onCancel}>Hủy</button>
+          </div>
         </form>
       )}
     </main>

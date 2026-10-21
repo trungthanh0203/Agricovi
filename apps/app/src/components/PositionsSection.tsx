@@ -8,7 +8,22 @@ import { PERM_LEVEL_LABEL, PERM_MODULE_LABEL, PERM_MODULES, type PermLevel, type
 import {
   deletePosition, listMemberPositions, listPositions, savePosition, setMemberPositions, type PositionRow,
 } from '../lib/positions';
-import { roleSummary } from '../lib/roles';
+import { assignableRoles, ROLE_LABEL, roleSummary } from '../lib/roles';
+import { defaultPerm } from '../lib/permissions';
+import type { MemberRole } from '@agriconnect/shared';
+
+/** Mô tả ngắn các vai trò có sẵn của hệ thống (dùng như chức vụ có sẵn) */
+const ROLE_DESC: Record<string, string> = {
+  manager: 'Quản lý sản xuất: tạo vụ, quản lý giai đoạn, nhân sự, chấm công; xem kho, chi phí, doanh thu.',
+  worker: 'Nhân viên sản xuất: ghi nhật ký, thu hoạch, xuất dùng vật tư và chấm công của mình.',
+  inventory_finance: 'Kho & chi phí: nhập kho, điều chỉnh tồn, ghi chi phí và doanh thu.',
+  cooperative_manager: 'Quản lý HTX: quản lý hộ thành viên và vụ ghi theo HTX.',
+  profile_editor: 'Biên tập hồ sơ: soạn nội dung hồ sơ giới thiệu (chưa có màn hình riêng).',
+};
+const roleSummarize = (r: MemberRole) => {
+  const parts = PERM_MODULES.filter((m) => defaultPerm([r], m) !== 'none').map((m) => `${PERM_MODULE_LABEL[m].split(' (')[0]}: ${PERM_LEVEL_LABEL[defaultPerm([r], m)].toLowerCase()}`);
+  return parts.length ? parts.join(' · ') : 'Không có quyền theo mục';
+};
 
 const summarize = (p: PositionRow) => {
   const parts = PERM_MODULES.filter((m) => p.perms[m] && p.perms[m] !== 'none').map((m) => `${PERM_MODULE_LABEL[m].split(' (')[0]}: ${PERM_LEVEL_LABEL[p.perms[m] as PermLevel].toLowerCase()}`);
@@ -60,9 +75,16 @@ export function PositionsSection({ org }: { org: MyOrg }) {
       )}
 
       <table className="grid">
-        <thead><tr><th>Chức vụ ({positions.length})</th><th className="num">Người</th><th></th></tr></thead>
+        <thead><tr><th>Chức vụ ({assignableRoles(org.type).length + positions.length})</th><th className="num">Người</th><th></th></tr></thead>
         <tbody>
-          {positions.length === 0 && <tr><td colSpan={3} className="muted">Chưa có chức vụ. Ví dụ: "Kỹ thuật viên" được sửa Khai báo, "Tổ trưởng thu hoạch" chỉ ghi việc thu hoạch.</td></tr>}
+          {assignableRoles(org.type).map((r) => (
+            <tr key={r}>
+              <td>{ROLE_LABEL[r]}<span className="pill"> Có sẵn</span><span className="sub">{ROLE_DESC[r]}</span><span className="sub">{roleSummarize(r)}</span></td>
+              <td className="num">{people.filter((m) => m.roles.includes(r)).length}</td>
+              <td className="act muted">gán ở Nhân sự</td>
+            </tr>
+          ))}
+          {positions.length === 0 && <tr><td colSpan={3} className="muted">Chức vụ tự tạo: ví dụ "Kỹ thuật viên" được sửa Khai báo, "Tổ trưởng thu hoạch" chỉ ghi việc thu hoạch. Bấm "+ Thêm chức vụ".</td></tr>}
           {positions.map((p) => (
             <tr key={p.id} className={p.is_active ? '' : 'off'}>
               <td>{p.name}{p.description && <span className="sub">{p.description}</span>}<span className="sub">{summarize(p)}{p.is_active ? '' : ' · đã dừng'}</span></td>
@@ -152,15 +174,17 @@ function PositionForm({ org, initial, busy, onSave, onClose }: {
           ))}
         </fieldset>
         {err && <p className="msg error" role="alert">{err}</p>}
-        <button className="primary" disabled={busy} onClick={() => {
-          if (name.trim().length < 2) return setErr('Tên chức vụ cần ít nhất 2 ký tự.');
-          if (limited && wts.length === 0) return setErr('Hãy chọn ít nhất một loại việc, hoặc chọn "Mọi loại việc".');
-          setErr(null);
-          const clean: PermOverrides = {};
-          for (const m of PERM_MODULES) if (perms[m] && perms[m] !== 'none') clean[m] = perms[m];
-          void onSave({ name, description: desc, perms: clean, workTypeIds: limited ? wts : null, canManageStages: stages, isActive: initial?.is_active ?? true }).catch(() => undefined);
-        }}>Lưu chức vụ</button>
-        <button className="secondary" onClick={onClose}>Đóng</button>
+        <div className="btnrow">
+          <button className="primary" disabled={busy} onClick={() => {
+            if (name.trim().length < 2) return setErr('Tên chức vụ cần ít nhất 2 ký tự.');
+            if (limited && wts.length === 0) return setErr('Hãy chọn ít nhất một loại việc, hoặc chọn "Mọi loại việc".');
+            setErr(null);
+            const clean: PermOverrides = {};
+            for (const m of PERM_MODULES) if (perms[m] && perms[m] !== 'none') clean[m] = perms[m];
+            void onSave({ name, description: desc, perms: clean, workTypeIds: limited ? wts : null, canManageStages: stages, isActive: initial?.is_active ?? true }).catch(() => undefined);
+          }}>Lưu chức vụ</button>
+          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        </div>
       </div>
     </div>
   );

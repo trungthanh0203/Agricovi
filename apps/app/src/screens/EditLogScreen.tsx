@@ -74,8 +74,10 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
         {!online && <p className="msg warn">Đang offline. Sửa nhật ký cần có mạng; hãy kết nối mạng rồi bấm Lưu thay đổi.</p>}
-        <button type="submit" className="primary" disabled={!online}>Lưu thay đổi</button>
-        <button type="button" className="link" onClick={onClose}>Hủy</button>
+        <div className="btnrow">
+          <button type="submit" className="primary" disabled={!online}>Lưu thay đổi</button>
+          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        </div>
       </form>
     </main>
   );

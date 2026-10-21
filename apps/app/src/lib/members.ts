@@ -31,6 +31,8 @@ export interface Member {
   user_id: string;
   email: string;
   roles: MemberRole[];
+  /** 'suspended' = chủ đã tạm dừng, người này không vào được cơ sở */
+  status?: 'active' | 'suspended';
   is_self: boolean;
   is_staff: boolean;
   phone: string | null;
@@ -73,6 +75,8 @@ export const inviteMember = (org: string, email: string, roles: MemberRole[]) =>
 export const revokeInvitation = (id: string) => rpc<void>('revoke_invitation', { p_id: id });
 export const setMemberRoles = (org: string, user: string, roles: MemberRole[]) =>
   rpc<void>('set_member_roles', { p_org: org, p_user: user, p_roles: roles });
+export const setMemberSuspended = (org: string, user: string, suspended: boolean) =>
+  rpc<void>('set_member_suspended', { p_org: org, p_user: user, p_suspended: suspended });
 export const removeMember = (org: string, user: string) => rpc<void>('remove_member', { p_org: org, p_user: user });
 
 export async function pendingOrgInvites(org: string): Promise<PendingInvite[]> {

@@ -141,11 +141,13 @@ export function WorkTypesSection() {
             <label>Tên việc<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
             <label>Mô tả<input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} /></label>
             <FieldsEditor fields={editFields} onChange={setEditFields} />
-            <button className="primary" disabled={busy || !online} onClick={() => void run(() => save(editingRow))}>Lưu thay đổi</button>
-            {editingRow.shared && editingRow.overridden && (
-              <button className="secondary" disabled={busy || !online} onClick={() => void run(async () => { await clearOverride(org, 'work_type', editingRow.id); setEditing(null); })}>Khôi phục mặc định</button>
-            )}
-            <button className="secondary" onClick={() => setEditing(null)}>Đóng</button>
+            <div className="btnrow">
+              <button className="primary" disabled={busy || !online} onClick={() => void run(() => save(editingRow))}>Lưu thay đổi</button>
+              {editingRow.shared && editingRow.overridden && (
+                <button className="secondary" disabled={busy || !online} onClick={() => void run(async () => { await clearOverride(org, 'work_type', editingRow.id); setEditing(null); })}>Khôi phục mặc định</button>
+              )}
+              <button type="button" className="secondary" onClick={() => setEditing(null)}>Hủy</button>
+            </div>
           </div>
         </div>
       )}

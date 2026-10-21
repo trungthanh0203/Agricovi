@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Collapsible } from './Collapsible';
+import { AttendanceOverview } from './AttendanceOverview';
 import { db } from '../lib/db';
 import { useAuth } from '../lib/auth';
 import { addDays, fmtDate } from '../lib/dates';
@@ -48,7 +49,7 @@ export function AttendanceSection() {
   const load = useCallback(async () => {
     if (!orgId || !navigator.onLine) return;
     try {
-      const from = addDays(todayLocal(), -14);
+      const from = addDays(todayLocal(), -31);
       let w = await listWorkers(orgId);
       // chủ/quản lý/nhân viên chưa có hồ sơ lao động: tự tạo để chấm công như nhân sự khác
       if (uid && !w.some((x) => x.user_id === uid) && hasRole(active?.roles, 'manager', 'worker')) {
@@ -72,6 +73,7 @@ export function AttendanceSection() {
   }
 
   if (!active) return null;
+  const recent = att.filter((a) => a.work_date >= addDays(todayLocal(), -14));
   const canConfirm = (a: { worker_id: string }) => isAdmin || (a.worker_id !== me?.id && workers.some((w) => w.id === a.worker_id));
 
   return (
@@ -114,6 +116,8 @@ export function AttendanceSection() {
         <p className="muted">Bạn chưa có hồ sơ lao động ở cơ sở này nên không tự chấm công được{canRecordFor.length > 0 ? ', nhưng có thể chấm công hộ người trong tổ' : ''}.</p>
       )}
 
+      {canRecordFor.length > 0 && <AttendanceOverview orgId={active.id} workers={workers} att={att} isAdmin={isAdmin} />}
+
       {canRecordFor.length > 0 && (
         <>
           <Collapsible inline title="＋ Chấm công hộ" summary="nhập ca đã làm của người khác">
@@ -125,12 +129,12 @@ export function AttendanceSection() {
         </>
       )}
 
-      <h2 className="sect">Công 14 ngày qua ({att.length})</h2>
+      <h2 className="sect">Công gần đây ({recent.length})</h2>
       <table className="grid">
         <thead><tr><th>Người · ngày</th><th>Giờ làm</th><th></th></tr></thead>
         <tbody>
-          {att.length === 0 && <tr><td colSpan={3} className="muted">Chưa có bản ghi công.</td></tr>}
-          {att.map((a) => (
+          {recent.length === 0 && <tr><td colSpan={3} className="muted">Chưa có bản ghi công.</td></tr>}
+          {recent.map((a) => (
             <tr key={a.id} className={a.status === 'rejected' ? 'off' : ''}>
               <td>
                 {nameOf(a.worker_id)}<span className="sub">{fmtDate(a.work_date)} · {hhmm(a.started_at)}{a.ended_at ? `–${hhmm(a.ended_at)}` : ' (đang trong ca)'}</span>
@@ -188,7 +192,7 @@ export function AttendanceSection() {
 
       {outs.length > 0 && (
         <>
-          <h2 className="sect">Sản lượng 14 ngày qua ({outs.length})</h2>
+          <h2 className="sect">Sản lượng gần đây ({outs.length})</h2>
           <table className="grid">
             <thead><tr><th>Người · ngày</th><th className="num">Sản lượng</th><th></th></tr></thead>
             <tbody>
@@ -315,17 +319,19 @@ function AdjustForm({ rec, busy, onSave, onClose }: {
         <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
         <label>Lý do (bắt buộc)<input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Ví dụ: quên bấm Ra ca" /></label>
         {err && <p className="msg error" role="alert">{err}</p>}
-        <button className="primary" disabled={busy} onClick={() => {
-          if (reason.trim().length < 3) return setErr('Hãy ghi lý do.');
-          if (!from || !to) return setErr('Hãy nhập giờ vào và giờ ra.');
-          const day = rec.work_date;
-          const s = new Date(`${day}T${from}:00`);
-          const e = new Date(`${day}T${to}:00`);
-          if (!(e > s)) return setErr('Giờ ra phải sau giờ vào.');
-          setErr(null);
-          void onSave({ started_at: s.toISOString(), ended_at: e.toISOString(), break_minutes: Math.max(0, parseInt(brk || '0', 10) || 0) }, reason).catch(() => undefined);
-        }}>Gửi đề nghị</button>
-        <button className="secondary" onClick={onClose}>Đóng</button>
+        <div className="btnrow">
+          <button className="primary" disabled={busy} onClick={() => {
+            if (reason.trim().length < 3) return setErr('Hãy ghi lý do.');
+            if (!from || !to) return setErr('Hãy nhập giờ vào và giờ ra.');
+            const day = rec.work_date;
+            const s = new Date(`${day}T${from}:00`);
+            const e = new Date(`${day}T${to}:00`);
+            if (!(e > s)) return setErr('Giờ ra phải sau giờ vào.');
+            setErr(null);
+            void onSave({ started_at: s.toISOString(), ended_at: e.toISOString(), break_minutes: Math.max(0, parseInt(brk || '0', 10) || 0) }, reason).catch(() => undefined);
+          }}>Gửi đề nghị</button>
+          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        </div>
       </div>
     </div>
   );

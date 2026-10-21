@@ -210,3 +210,10 @@ button.icon:disabled { opacity: .4; }
 .who-name { max-width: 28vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: 14px; }
 .who-out { background: none; border: 1px solid var(--line); color: var(--fg); border-radius: 8px; min-height: 36px; padding: 0 10px; font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
 .net { font-size: 18px; line-height: 1; }
+
+/* Cặp nút Lưu / Hủy cạnh nhau, giống nhau (D46) */
+.btnrow { display: flex; gap: 8px; margin: 8px 0; }
+.btnrow > button { flex: 1 1 0; width: auto; margin: 0; min-height: 48px; }
+
+.scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scrollx table.grid { min-width: 560px; }

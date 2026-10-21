@@ -13,6 +13,7 @@ import { Collapsible } from './Collapsible';
 import type { PermOverrides } from '../lib/permissions';
 import { MemberPermissions } from './MemberPermissions';
 import { updateStaffProfile } from '../lib/staff';
+import { setMemberSuspended } from '../lib/members';
 import { RolePicker } from './RolePicker';
 import { CredentialsCard, ResetPasswordButton, StaffCreateForm } from './StaffAccountsSection';
 
@@ -101,12 +102,29 @@ export function MembersSection({ org }: { org: MyOrg }) {
       {members.map((m) => {
         const label = m.is_staff ? `${m.full_name ?? ''} · ${m.phone ?? ''}` : m.email;
         const owner = m.roles.includes('owner');
+        const suspended = m.status === 'suspended';
         return (
           <div className="member" key={m.user_id}>
             <div className="row">
               <span className="grow">{label}{m.is_self && ' (bạn)'}</span>
+              {isOwner && !owner && (
+                <>
+                  <button className="icon" disabled={busy} aria-label={suspended ? `Dùng lại ${label}` : `Tạm dừng ${label}`}
+                    title={suspended ? 'Dùng lại (cho đăng nhập)' : 'Tạm dừng (không cho đăng nhập)'}
+                    onClick={() => {
+                      if (suspended || window.confirm(`Tạm dừng ${label}? Người này sẽ không đăng nhập hay xem được dữ liệu cơ sở cho tới khi bạn bấm Dùng lại.`))
+                        void run(() => setMemberSuspended(org.id, m.user_id, !suspended));
+                    }}>{suspended ? '▶' : '⏸'}</button>
+                  {m.is_staff && !suspended && (
+                    <button className="icon" disabled={busy} aria-label={`Sửa tên, số điện thoại của ${label}`} title="Sửa tên, số điện thoại"
+                      onClick={() => { setEditInfo(editInfo === m.user_id ? null : m.user_id); setInfoName(m.full_name ?? ''); setInfoPhone(m.phone ?? ''); setError(null); }}>✎</button>
+                  )}
+                </>
+              )}
             </div>
+            {suspended && <p className="msg warn" role="status">Đang tạm dừng: người này không đăng nhập được. Bấm ▶ để dùng lại.</p>}
             <div className="badges">
+              <span className="muted">Vai trò:</span>
               <span className="pill">{roleSummary(m.roles)}</span>
               {m.leads_teams && m.leads_teams.length > 0 && (
                 <span className="pill ok">Tổ trưởng — {m.leads_teams.join(', ')}</span>
@@ -114,10 +132,9 @@ export function MembersSection({ org }: { org: MyOrg }) {
             </div>
             {m.is_staff && m.must_change_password && <p className="msg warn">Chưa đổi mật khẩu tạm — chưa dùng được dữ liệu.</p>}
 
-            {isOwner && !owner && editing !== m.user_id && (
+            {isOwner && !owner && !suspended && editing !== m.user_id && (
               <div className="actions">
                 <button className="secondary" disabled={busy} onClick={() => { setEditing(m.user_id); setEditRoles(m.roles.filter((r) => r !== 'owner')); setError(null); }}>Đổi vai trò</button>
-                {m.is_staff && <button className="secondary" disabled={busy} onClick={() => { setEditInfo(editInfo === m.user_id ? null : m.user_id); setInfoName(m.full_name ?? ''); setInfoPhone(m.phone ?? ''); setError(null); }}>Sửa tên, số điện thoại</button>}
                 {m.is_staff && <ResetPasswordButton org={org} userId={m.user_id} onDone={(c) => { setCreds(c); void load(); }} />}
                 <button className="link" disabled={busy}
                   onClick={() => window.confirm(`Gỡ ${label} khỏi cơ sở? Người này sẽ không vào được nữa; lịch sử đã ghi vẫn được giữ.`) && void run(() => removeMember(org.id, m.user_id))}>
@@ -125,8 +142,8 @@ export function MembersSection({ org }: { org: MyOrg }) {
                 </button>
               </div>
             )}
-            {isOwner && !owner && (
-              <Collapsible inline title="Quyền vật tư, chi phí, thu hoạch" summary={Object.keys(overrides[m.user_id] ?? {}).length > 0 ? 'Đã cấp riêng' : 'Theo vai trò'}>
+            {isOwner && !owner && !suspended && (
+              <Collapsible inline title="Phân quyền theo chức năng" summary={Object.keys(overrides[m.user_id] ?? {}).length > 0 ? 'Đã cấp riêng' : 'Theo vai trò'}>
                 <MemberPermissions key={JSON.stringify(overrides[m.user_id] ?? {})} orgId={org.id} userId={m.user_id} roles={m.roles}
                   overrides={overrides[m.user_id] ?? {}} onSaved={() => void load()} />
               </Collapsible>
@@ -137,12 +154,14 @@ export function MembersSection({ org }: { org: MyOrg }) {
                 <label>Số điện thoại (dùng để đăng nhập)<input type="tel" inputMode="tel" value={infoPhone} onChange={(e) => setInfoPhone(e.target.value)} /></label>
                 <p className="muted">Nếu đổi số điện thoại, nhân viên đăng nhập bằng số mới (mật khẩu giữ nguyên).</p>
                 <div className="actions">
-                  <button className="primary" disabled={busy} onClick={() => {
-                    if (infoName.trim().length < 2) return setError('Hãy nhập họ tên (ít nhất 2 ký tự).');
-                    if (!infoPhone.trim()) return setError('Hãy nhập số điện thoại.');
-                    void run(async () => { await updateStaffProfile(org.id, m.user_id, infoName, infoPhone); setEditInfo(null); }, 'Đã cập nhật thông tin nhân viên.');
-                  }}>Lưu</button>
-                  <button className="link" onClick={() => setEditInfo(null)}>Hủy</button>
+                  <div className="btnrow">
+                    <button className="primary" disabled={busy} onClick={() => {
+                      if (infoName.trim().length < 2) return setError('Hãy nhập họ tên (ít nhất 2 ký tự).');
+                      if (!infoPhone.trim()) return setError('Hãy nhập số điện thoại.');
+                      void run(async () => { await updateStaffProfile(org.id, m.user_id, infoName, infoPhone); setEditInfo(null); }, 'Đã cập nhật thông tin nhân viên.');
+                    }}>Lưu</button>
+                    <button type="button" className="secondary" onClick={() => setEditInfo(null)}>Hủy</button>
+                  </div>
                 </div>
               </div>
             )}

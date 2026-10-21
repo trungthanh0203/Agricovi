@@ -74,12 +74,14 @@ function CycleEditForm({ cycle, busy, onSave, onClose }: {
       <label>Ngày bắt đầu<input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></label>
       <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
       {err && <p className="msg error" role="alert">{err}</p>}
-      <button className="primary" disabled={busy || saving} onClick={() => {
-        setSaving(true);
-        setErr(null);
-        onSave({ name, start_date: start || null, note }).catch((e) => setErr(friendlyError(e))).finally(() => setSaving(false));
-      }}>Lưu thay đổi</button>
-      <button className="secondary" onClick={onClose}>Đóng</button>
+      <div className="btnrow">
+        <button className="primary" disabled={busy || saving} onClick={() => {
+          setSaving(true);
+          setErr(null);
+          onSave({ name, start_date: start || null, note }).catch((e) => setErr(friendlyError(e))).finally(() => setSaving(false));
+        }}>Lưu thay đổi</button>
+        <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+      </div>
     </div>
   );
 }

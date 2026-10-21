@@ -63,8 +63,10 @@ export function CreateOrgScreen({ first, onDone, onCancel }: Props) {
         </label>
 
         {error && <p className="msg error" role="alert">{error}</p>}
-        <button type="submit" className="primary" disabled={busy}>{busy ? 'Đang tạo…' : 'Tạo cơ sở'}</button>
-        {onCancel && <button type="button" className="link" onClick={onCancel}>Hủy</button>}
+        <div className="btnrow">
+          <button type="submit" className="primary" disabled={busy}>{busy ? 'Đang tạo…' : 'Tạo cơ sở'}</button>
+          {onCancel && <button type="button" className="secondary" onClick={onCancel}>Hủy</button>}
+        </div>
       </form>
     </main>
   );

@@ -122,13 +122,15 @@ function ProductForm({ title, initial, busy, onSave, onReset, onClose }: {
         <label>Mô tả<textarea rows={3} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Giống, đặc điểm, thời gian sinh trưởng…" /></label>
         <ImagePicker value={image} onChange={setImage} />
         {err && <p className="msg error" role="alert">{err}</p>}
-        <button className="primary" disabled={busy} onClick={() => {
-          if (name.trim().length < 2) return setErr('Tên sản phẩm cần ít nhất 2 ký tự.');
-          setErr(null);
-          void onSave({ name, kind, description: desc, image }).catch(() => undefined);
-        }}>Lưu</button>
-        {onReset && <button className="secondary" disabled={busy} onClick={() => void onReset().catch(() => undefined)}>Khôi phục mặc định</button>}
-        <button className="secondary" onClick={onClose}>Đóng</button>
+        <div className="btnrow">
+          <button className="primary" disabled={busy} onClick={() => {
+            if (name.trim().length < 2) return setErr('Tên sản phẩm cần ít nhất 2 ký tự.');
+            setErr(null);
+            void onSave({ name, kind, description: desc, image }).catch(() => undefined);
+          }}>Lưu</button>
+          {onReset && <button className="secondary" disabled={busy} onClick={() => void onReset().catch(() => undefined)}>Khôi phục mặc định</button>}
+          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        </div>
       </div>
     </div>
   );

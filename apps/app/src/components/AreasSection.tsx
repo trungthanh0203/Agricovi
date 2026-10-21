@@ -113,14 +113,16 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
         <label>Đặc điểm<textarea rows={3} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Loại đất/ao/chuồng, nguồn nước, nhà màng…" /></label>
         <ImagePicker value={image} onChange={setImage} />
         {err && <p className="msg error" role="alert">{err}</p>}
-        <button className="primary" disabled={busy} onClick={() => {
-          if (!name.trim()) return setErr('Hãy nhập tên trang trại.');
-          const n = size.trim() === '' ? null : Number(size.replace(',', '.'));
-          if (n !== null && (Number.isNaN(n) || n < 0)) return setErr('Diện tích phải là số không âm.');
-          setErr(null);
-          void onSave({ name, location, area_size: n, area_unit: unit, description: desc, image }).catch(() => undefined);
-        }}>Lưu</button>
-        <button className="secondary" onClick={onClose}>Đóng</button>
+        <div className="btnrow">
+          <button className="primary" disabled={busy} onClick={() => {
+            if (!name.trim()) return setErr('Hãy nhập tên trang trại.');
+            const n = size.trim() === '' ? null : Number(size.replace(',', '.'));
+            if (n !== null && (Number.isNaN(n) || n < 0)) return setErr('Diện tích phải là số không âm.');
+            setErr(null);
+            void onSave({ name, location, area_size: n, area_unit: unit, description: desc, image }).catch(() => undefined);
+          }}>Lưu</button>
+          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        </div>
       </div>
     </div>
   );
