@@ -4,6 +4,7 @@ import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { CycleCalendar } from '../components/CycleCalendar';
 import { Collapsible } from '../components/Collapsible';
 import { CycleQr } from '../components/CycleQr';
+import { cycleCode } from '../lib/qr';
 import { useCatalog } from '../lib/catalog';
 import { cycleProgress, stageColor, stageDelayDays, STAGE_STATUS_LABEL_VI } from '../lib/cycles';
 import { db, type NoteRow, type StageRow } from '../lib/db';
@@ -79,6 +80,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr }: { cycleId
         {cycle.start_date && ` · Bắt đầu ${fmtDate(cycle.start_date)}`}
         {cycle.expected_end_date && ` · Dự kiến xong ${fmtDate(cycle.expected_end_date)}`}
       </p>
+      <p className="muted">Mã vụ: <strong>{cycleCode(cycleId)}</strong></p>
       <p className="muted">Quy trình: {cycle.template_name ?? 'không có (vụ cũ)'}{cycle.template_version ? ` · bản ${cycle.template_version}` : ''}</p>
       {cycle.note && <p>{cycle.note}</p>}
       <Collapsible title="Mã QR của vụ" summary="tên vụ, nơi trồng, thời gian, vật tư đã dùng" defaultOpen={openQr}>

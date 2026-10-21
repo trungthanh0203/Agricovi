@@ -10,6 +10,8 @@ import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { cycleProgress } from '../lib/cycles';
+import { cycleCode } from '../lib/qr';
+import { CycleQr } from '../components/CycleQr';
 import { fmtDate } from '../lib/dates';
 import { useOrgs } from '../lib/orgs';
 import { canManageProduction } from '../lib/roles';
@@ -98,6 +100,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const [contexts, setContexts] = useState<QuotaContext[]>([]);
   const [group, setGroup] = useState<CycleGroup | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
+  const [qrId, setQrId] = useState<string | null>(null);
 
   const canManage = canManageProduction(active?.roles);
 
@@ -192,7 +195,12 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
                 </p>
               </>
             )}
-            <div className="actions"><button className="secondary" onClick={() => onOpenCycle(c.id)}>Xem quy trình &amp; lịch</button></div>
+            <p className="muted">Mã vụ: <strong>{cycleCode(c.id)}</strong></p>
+            <div className="actions">
+              <button className="secondary" onClick={() => onOpenCycle(c.id)}>Xem quy trình &amp; lịch</button>
+              <button className="secondary" aria-expanded={qrId === c.id} onClick={() => setQrId(qrId === c.id ? null : c.id)}>{qrId === c.id ? 'Ẩn mã QR' : 'Mã QR của vụ'}</button>
+            </div>
+            {qrId === c.id && <CycleQr cycleId={c.id} label={c.name || cropName(c.crop_type_id)} />}
             {editId === c.id && (
               <CycleEditForm cycle={c} busy={!online} onClose={() => setEditId(null)}
                 onSave={async (v) => { await editCycle(c.id, v); setEditId(null); }} />

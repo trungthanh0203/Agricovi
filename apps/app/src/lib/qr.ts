@@ -75,6 +75,9 @@ export function buildAccountQr(a: AccountQrInput): string {
 }
 
 // ------------------------------------------------------------------ mã QR của vụ
+/** Mã vụ ngắn dễ đọc/ghi lên bao bì: 8 ký tự đầu của mã vụ */
+export const cycleCode = (id: string) => `VU-${id.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
+
 export interface CycleTrace {
   cycle_id: string;
   name: string;
@@ -121,6 +124,6 @@ export function buildCycleQr(t: CycleTrace): string {
   } else {
     lines.push('Vật tư đã dùng: chưa ghi');
   }
-  lines.push(`Cập nhật: ${new Date(t.generated_at).toLocaleString('vi-VN')}`, `Mã vụ: ${t.cycle_id}`);
+  lines.push(`Cập nhật: ${new Date(t.generated_at).toLocaleString('vi-VN')}`, `Mã vụ: ${cycleCode(t.cycle_id)} (${t.cycle_id})`);
   return lines.join('\n');
 }
