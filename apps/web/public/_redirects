@@ -1,2 +1,2 @@
-/co-so/*      /co-so/index.html      200
-/truyxuat/*   /truyxuat/index.html   200
+/co-so/:slug      /co-so/      200
+/truyxuat/:ma     /truyxuat/   200
