@@ -5,6 +5,7 @@ import { LicensesSection, licenseStatus } from '../components/LicensesSection';
 import { PlanCard } from '../components/PlanCard';
 import { QrCard } from '../components/QrCard';
 import { useAuth } from '../lib/auth';
+import { ADMIN_URL } from "../lib/platformAdmin";
 import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import type { LicenseRow } from '../lib/licenses';
@@ -20,8 +21,8 @@ import { fetchMyPay, fmtVnd, type MyPay } from '../lib/work';
  * Tab Tài khoản (D40, D50): mọi phần đều THU GỌN được — tài khoản (tên hiển thị, đổi mật khẩu), "Tôi được làm gì", công việc,
  * tiền công, giấy phép/chứng chỉ của cơ sở, mã QR tài khoản, phiên bản app, đăng xuất.
  */
-export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
-  const { session, signOut } = useAuth();
+export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void; isPlatformAdmin: boolean }) {
+  const { session } = useAuth();
   const { active, orgs, refresh } = useOrgs();
   const [isStaff, setIsStaff] = useState(true); // mặc định ẩn nút cho tới khi biết chắc không phải tài khoản nhân viên
   const [staffName, setStaffName] = useState<string | null>(null);
@@ -123,11 +124,11 @@ export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
       )}
 
       <div className="card">
-        <p className="muted">Phiên bản app: {__APP_VERSION__}</p>
-        <div className="actions">
-          {!ownsOrg && !isStaff && <button className="secondary" onClick={onAddOrg}>Tạo cơ sở của riêng tôi</button>}
-          <button className="secondary" onClick={() => void signOut()}>Đăng xuất</button>
+        <div className="verline">
+          <p className="muted">Phiên bản app: {__APP_VERSION__}</p>
+          {isPlatformAdmin && <a className="adminlock" href={ADMIN_URL} aria-label="Quản trị nền tảng" title="Quản trị nền tảng">🔒</a>}
         </div>
+        {!ownsOrg && !isStaff && <div className="actions"><button className="secondary" onClick={onAddOrg}>Tạo cơ sở của riêng tôi</button></div>}
       </div>
     </section>
   );

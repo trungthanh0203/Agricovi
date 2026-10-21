@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { SYNC_STATE_LABEL_VI, type SyncState } from '@agriconnect/shared';
 import { AuthProvider, useAuth } from './lib/auth';
 import { useMyName } from './lib/profile';
-import { ADMIN_URL, useIsPlatformAdmin } from './lib/platformAdmin';
+import { useIsPlatformAdmin } from './lib/platformAdmin';
 import { purgeCachesIfUserChanged } from './lib/localData';
 import { countByState, flushOutbox } from './lib/outbox';
 import { OrgProvider, useOrgs } from './lib/orgs';
@@ -173,10 +173,7 @@ function Shell() {
         ) : tab === 'reports' ? (
           <ReportsTab section={subs.reports} onSection={setSub('reports')} />
         ) : (
-          <ProfileTab onAddOrg={() => setAdding(true)} />
-        )}
-        {isPlatformAdmin && (
-          <a className="adminlock" href={ADMIN_URL} aria-label="Quản trị nền tảng" title="Quản trị nền tảng">🔒</a>
+          <ProfileTab onAddOrg={() => setAdding(true)} isPlatformAdmin={isPlatformAdmin} />
         )}
       </main>
 

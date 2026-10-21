@@ -84,6 +84,14 @@ export function AttendanceSection() {
       {me || recalled ? (
         <div className="card">
           <h2>Chấm công của tôi</h2>
+          {cycles.length > 0 && (
+            <label>Làm cho vụ (không bắt buộc)
+              <select value={cycleId} onChange={(e) => setCycleId(e.target.value)}>
+                <option value="">— Không gắn vụ —</option>
+                {cycles.map((c) => <option key={c.id} value={c.id}>{c.name || c.template_name || 'Vụ'}</option>)}
+              </select>
+            </label>
+          )}
           {localShift ? (
             <>
               <p>Bạn vào ca lúc <strong>{hhmm(localShift.started_at)}</strong> (lưu trên máy{online ? '' : ', đang mất mạng'}).</p>
@@ -102,14 +110,6 @@ export function AttendanceSection() {
           ) : (
             <button className="primary" disabled={busy} onClick={() => void run(() => clockIn(active.id, me?.id ?? recalled, cycleId || null))}>Vào ca</button>
           )}
-          {cycles.length > 0 && (
-            <label>Làm cho vụ (không bắt buộc)
-              <select value={cycleId} onChange={(e) => setCycleId(e.target.value)}>
-                <option value="">— Không gắn vụ —</option>
-                {cycles.map((c) => <option key={c.id} value={c.id}>{c.name || c.template_name || 'Vụ'}</option>)}
-              </select>
-            </label>
-          )}
           <p className="muted">Vị trí chỉ được ghi lúc bạn bấm Vào ca/Ra ca (nếu bạn cho phép), không theo dõi liên tục. Công được xác nhận trước khi tính tiền.</p>
         </div>
       ) : (
@@ -121,7 +121,7 @@ export function AttendanceSection() {
       {canRecordFor.length > 0 && (
         <>
           <Collapsible inline title="＋ Chấm công hộ" summary="nhập ca đã làm của người khác">
-            <ShiftForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
+            <ShiftForm workers={canRecordFor} cycles={cycles} att={att} busy={busy || !online} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
           </Collapsible>
           <Collapsible inline title="＋ Ghi sản lượng" summary="khối lượng đã làm của người khác">
             <OutputForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onSave={(w, d, q, u, n, c) => run(() => recordOutput(w, d, q, u, n, c))} />
@@ -226,23 +226,32 @@ const CycleSelect = ({ cycles, value, onChange }: { cycles: CycleOpt[]; value: s
   </label>
 );
 
-function ShiftForm({ workers, cycles, busy, onSave }: { workers: WorkerLite[]; cycles: CycleOpt[]; busy: boolean; onSave: (w: string, s: Date, e: Date, b: number, note: string, c: string | null) => Promise<unknown> }) {
+function ShiftForm({ workers, cycles, att, busy, onSave }: { workers: WorkerLite[]; cycles: CycleOpt[]; att: AttendanceRow[]; busy: boolean; onSave: (w: string, s: Date, e: Date, b: number, note: string, c: string | null) => Promise<unknown> }) {
   const [cyc, setCyc] = useState('');
   const [w, setW] = useState(workers[0]?.id ?? '');
   const [date, setDate] = useState(todayLocal());
-  const [from, setFrom] = useState('07:00');
-  const [to, setTo] = useState('11:00');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const [brk, setBrk] = useState('0');
   const [note, setNote] = useState('');
   const [err, setErr] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
   function submit(e: FormEvent) {
     e.preventDefault();
     const s = new Date(`${date}T${from}:00`);
     const t = new Date(`${date}T${to}:00`);
-    if (!w) return setErr('Hãy chọn người.');
+    const wid = w || workers[0]?.id;
+    if (!wid) return setErr('Hãy chọn người.');
+    if (!from || !to) return setErr('Hãy nhập giờ bắt đầu và giờ kết thúc.');
     if (!(t > s)) return setErr('Giờ kết thúc phải sau giờ bắt đầu.');
+    const clash = att.find((a) => a.worker_id === wid && a.status !== 'rejected' && new Date(a.started_at) < t && (a.ended_at ? new Date(a.ended_at) > s : true));
+    if (clash) return setErr(`Người này đã có công ${hhmm(clash.started_at)}${clash.ended_at ? `–${hhmm(clash.ended_at)}` : ''} ngày ${fmtDate(clash.work_date)}, trùng giờ vừa nhập. Hãy kiểm tra lại.`);
     setErr(null);
-    void onSave(w, s, t, Math.max(0, parseInt(brk || '0', 10) || 0), note, cyc || null).then(() => setNote('')).catch(() => undefined);
+    setOk(null);
+    const who = workers.find((x) => x.id === wid)?.full_name ?? '';
+    void onSave(wid, s, t, Math.max(0, parseInt(brk || '0', 10) || 0), note, cyc || null)
+      .then(() => { setNote(''); setFrom(''); setTo(''); setOk(`Đã lưu công cho ${who}: ${date.split('-').reverse().join('/')} ${hhmm(s.toISOString())}–${hhmm(t.toISOString())}.`); })
+      .catch(() => undefined);
   }
   return (
     <form className="inline-form" onSubmit={submit} noValidate>
@@ -258,6 +267,7 @@ function ShiftForm({ workers, cycles, busy, onSave }: { workers: WorkerLite[]; c
       <CycleSelect cycles={cycles} value={cyc} onChange={setCyc} />
       <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
       {err && <p className="msg error" role="alert">{err}</p>}
+      {ok && <p className="msg ok" role="status">{ok}</p>}
       <button type="submit" className="secondary" disabled={busy}>Lưu công</button>
     </form>
   );

@@ -251,7 +251,7 @@ button.primary.head-btn { width: auto; flex: 0 0 auto; min-height: 44px; margin:
 button.kpi { text-align: left; font: inherit; color: inherit; cursor: pointer; width: 100%; }
 
 /* Hình khóa nhỏ dẫn tới Quản trị nền tảng, chỉ hiện với quản trị viên (D54) */
-.adminlock { display: block; width: max-content; margin: 24px 0 8px auto; padding: 6px 10px; font-size: 18px; text-decoration: none; opacity: .55; border-radius: 8px; border: 1px solid var(--line); }
+.adminlock { display: block; width: max-content; margin: 0; padding: 6px 10px; font-size: 18px; text-decoration: none; opacity: .55; border-radius: 8px; border: 1px solid var(--line); }
 .adminlock:hover, .adminlock:focus { opacity: 1; }
 
 /* Hồ sơ website (D55) */
@@ -262,3 +262,6 @@ button.kpi { text-align: left; font: inherit; color: inherit; cursor: pointer; w
 .imggrid figcaption { font-size: 13px; color: var(--muted); }
 .preview { border: 1px dashed var(--line); border-radius: 12px; padding: 12px; margin-top: 10px; }
 .facts { margin: 6px 0; padding-left: 18px; }
+
+.verline { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.verline p { margin: 0; }
