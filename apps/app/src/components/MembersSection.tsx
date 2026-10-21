@@ -102,7 +102,8 @@ export function MembersSection({ org }: { org: MyOrg }) {
   }
 
   return (
-    <Collapsible title="Thành viên" summary={members.length > 0 ? `${members.length} người${invites.length > 0 ? ` · ${invites.length} lời mời chờ` : ''}` : undefined}>
+    <>
+      <h2 className="sect">Thành viên{members.length > 0 ? ` (${members.length} người${invites.length > 0 ? ` · ${invites.length} lời mời chờ` : ''})` : ''}</h2>
       {!navigator.onLine && <p className="msg warn">Cần có mạng để xem và quản lý thành viên.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
       {info && <p className="msg ok" role="status">{info}</p>}
@@ -214,6 +215,6 @@ export function MembersSection({ org }: { org: MyOrg }) {
         </form>
         </Collapsible>
       )}
-    </Collapsible>
+    </>
   );
 }

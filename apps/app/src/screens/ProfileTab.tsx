@@ -57,8 +57,9 @@ export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
       <InvitationsPanel />
 
       <Collapsible title={shownName || 'Tài khoản'} summary={login} defaultOpen>
-        <Collapsible inline title="Đổi tên hiển thị" summary="tên hiện trong nhật ký">
-          <NameForm initial={shownName} onSaved={setDisplay} />
+        <Collapsible inline title="Đổi tên hiển thị" summary="tên cơ sở và tên người dùng">
+          <NamesForm userName={shownName} orgName={active?.name ?? ''} orgId={active?.id ?? null} canRenameOrg={Boolean(active && isOwner(active.roles))}
+            onUserSaved={setDisplay} onOrgSaved={() => void refresh()} />
         </Collapsible>
         <Collapsible inline title="Đổi mật khẩu">
           <PasswordForm />
@@ -100,12 +101,6 @@ export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
             </div>
           ))}
           <p className="muted">Số "Dự tính" có thể đổi đến khi chủ cơ sở khóa kỳ.</p>
-        </Collapsible>
-      )}
-
-      {active && isOwner(active.roles) && (
-        <Collapsible title="Thông tin cơ sở" summary={active.name}>
-          <OrgNameForm orgId={active.id} name={active.name} onSaved={() => void refresh()} />
         </Collapsible>
       )}
 
@@ -159,53 +154,46 @@ function AccountQr({ name, login, orgName, orgType, orgId, roles, licenses }: {
   );
 }
 
-/** Chủ đổi tên cơ sở (nhà vườn, trang trại, HTX) đã đăng ký lúc đầu */
-function OrgNameForm({ orgId, name: initial, onSaved }: { orgId: string; name: string; onSaved: () => void }) {
-  const [name, setName] = useState(initial);
+/**
+ * Đổi tên: Tên cơ sở (chỉ chủ sửa được; người khác chỉ xem) và Tên người dùng (tên hiện trong nhật ký, ghi từ lúc đổi trở đi),
+ * rồi Lưu / Hủy cạnh nhau.
+ */
+function NamesForm({ userName, orgName, orgId, canRenameOrg, onUserSaved, onOrgSaved }: {
+  userName: string; orgName: string; orgId: string | null; canRenameOrg: boolean; onUserSaved: (n: string) => void; onOrgSaved: () => void;
+}) {
+  const [org, setOrg] = useState(orgName);
+  const [user, setUser] = useState(userName);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  function submit(e: FormEvent) {
+  useEffect(() => { setOrg(orgName); }, [orgName]);
+  useEffect(() => { setUser(userName); }, [userName]);
+
+  async function submit(e: FormEvent) {
     e.preventDefault();
-    if (name.trim().length < 2) return setMsg({ ok: false, text: 'Tên cơ sở cần ít nhất 2 ký tự.' });
+    setMsg(null);
+    if (canRenameOrg && org.trim().length < 2) return setMsg({ ok: false, text: 'Tên cơ sở cần ít nhất 2 ký tự.' });
+    if (user.trim().length < 2) return setMsg({ ok: false, text: 'Tên người dùng cần ít nhất 2 ký tự.' });
     if (!navigator.onLine) return setMsg({ ok: false, text: 'Đổi tên cần có mạng.' });
     setBusy(true);
-    setMsg(null);
-    renameOrg(orgId, name)
-      .then(() => { setMsg({ ok: true, text: 'Đã đổi tên cơ sở.' }); onSaved(); })
-      .catch((err) => setMsg({ ok: false, text: friendlyError(err) }))
-      .finally(() => setBusy(false));
+    try {
+      if (canRenameOrg && orgId && org.trim() !== orgName) { await renameOrg(orgId, org); onOrgSaved(); }
+      if (user.trim() !== userName) onUserSaved(await saveDisplayName(user));
+      setMsg({ ok: true, text: 'Đã lưu. Tên người dùng mới hiện ở các nhật ký bạn ghi từ bây giờ.' });
+    } catch (err) {
+      setMsg({ ok: false, text: friendlyError(err) });
+    } finally {
+      setBusy(false);
+    }
   }
   return (
-    <form className="inline-form" onSubmit={submit} noValidate>
-      <label>Tên cơ sở<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
+    <form className="inline-form" onSubmit={(e) => void submit(e)} noValidate>
+      <label>Tên cơ sở<input value={org} maxLength={120} disabled={!canRenameOrg} onChange={(e) => setOrg(e.target.value)} />{!canRenameOrg && <small>Chỉ chủ cơ sở đổi được tên cơ sở.</small>}</label>
+      <label>Tên người dùng<input value={user} maxLength={80} onChange={(e) => setUser(e.target.value)} /></label>
       {msg && <p className={msg.ok ? 'msg ok' : 'msg error'} role="status">{msg.text}</p>}
       <div className="btnrow">
         <button type="submit" className="primary" disabled={busy}>Lưu</button>
-        <button type="button" className="secondary" onClick={() => { setName(initial); setMsg(null); }}>Hủy</button>
+        <button type="button" className="secondary" onClick={() => { setOrg(orgName); setUser(userName); setMsg(null); }}>Hủy</button>
       </div>
-    </form>
-  );
-}
-
-function NameForm({ initial, onSaved }: { initial: string; onSaved: (n: string) => void }) {
-  const [name, setName] = useState(initial);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (name.trim().length < 2) return setMsg({ ok: false, text: 'Tên cần ít nhất 2 ký tự.' });
-    setBusy(true);
-    setMsg(null);
-    saveDisplayName(name)
-      .then((n) => { onSaved(n); setMsg({ ok: true, text: 'Đã lưu. Tên mới hiện ở các nhật ký bạn ghi từ bây giờ.' }); })
-      .catch((err) => setMsg({ ok: false, text: friendlyError(err) }))
-      .finally(() => setBusy(false));
-  }
-  return (
-    <form className="inline-form" onSubmit={onSubmit} noValidate>
-      <label>Tên hiển thị<input value={name} maxLength={80} onChange={(e) => setName(e.target.value)} /></label>
-      {msg && <p className={msg.ok ? 'msg ok' : 'msg error'} role="status">{msg.text}</p>}
-      <button type="submit" className="primary" disabled={busy}>Lưu</button>
     </form>
   );
 }

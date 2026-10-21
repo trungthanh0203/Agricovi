@@ -33,10 +33,10 @@ export function productionSections(org: MyOrg | null): Section<ProductionSection
   if (!org) return [];
   return [
     { id: 'cycles' as const, label: 'Mùa vụ' },
-    { id: 'logs' as const, label: 'Nhật ký việc làm' },
     canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'stock' as const, label: 'Kho' } : null,
     hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,
+    { id: 'logs' as const, label: 'Nhật ký việc làm' },
   ].filter((x): x is Section<ProductionSection> => x !== null);
 }
 

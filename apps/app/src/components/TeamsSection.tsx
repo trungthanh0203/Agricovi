@@ -79,9 +79,8 @@ export function TeamsSection({ org }: { org: MyOrg }) {
   }
 
   return (
-    <Collapsible title="Tổ lao động"
-      warn={orphans.length > 0}
-      summary={orphans.length > 0 ? `${orphans.length} người cần xử lý` : teams.length > 0 ? `${teams.length} tổ` : 'Chưa có tổ'}>
+    <>
+      <h2 className="sect">Tổ lao động{orphans.length > 0 ? ` (${orphans.length} người cần xử lý)` : teams.length > 0 ? ` (${teams.length} tổ)` : ''}</h2>
       <p className="muted">Tổ trưởng chấm công và ghi sản lượng hộ người trong tổ. Công của chính tổ trưởng do quản lý hoặc chủ xác nhận.</p>
       {!navigator.onLine && <p className="msg warn">Cần có mạng để quản lý tổ.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
@@ -167,6 +166,6 @@ export function TeamsSection({ org }: { org: MyOrg }) {
         <button type="submit" className="secondary" disabled={busy}>Thêm người</button>
       </form>
       </Collapsible>
-    </Collapsible>
+    </>
   );
 }
