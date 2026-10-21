@@ -149,3 +149,15 @@ Làm theo thứ tự; mỗi bước đều làm được mà không ngắt bản
 - [ ] SMTP riêng đã cấu hình và thử gửi thư đặt lại mật khẩu.
 - [ ] Đã bật sao lưu của Supabase và thử khôi phục một lần (v1.1 NFR-SEC-004).
 - [ ] Đã thử đủ các bài trong `docs/HUONG_DAN_THU.md` trên điện thoại thật ở địa chỉ mới.
+
+## Website công khai (apps/web) trên Cloudflare Workers
+
+Tạo một Worker riêng tên `agriconnect` (khác Worker của app), nối cùng kho GitHub. Ở **Settings → Build**:
+
+| Ô | Giá trị |
+|---|---|
+| Root directory | để **trống** (gốc kho) |
+| Build command | `npm ci && npm run build -w @agriconnect/web` |
+| Deploy command | `npx wrangler deploy --config apps/web/wrangler.jsonc` |
+
+Biến lúc build (Build variables): `NODE_VERSION` = `22`. Khóa công khai đã nằm trong `apps/web/.env.production` nên không bắt buộc khai thêm. Tên Worker phải trùng `name` trong `apps/web/wrangler.jsonc` (`agriconnect`).

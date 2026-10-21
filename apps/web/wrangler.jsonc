@@ -1,0 +1,11 @@
+{
+  // Cấu hình triển khai WEBSITE công khai lên Cloudflare (Workers với tệp tĩnh). Xem docs/DEPLOY_CLOUDFLARE.md, mục "Website".
+  // Tên phải trùng tên Worker bạn tạo trên Cloudflare.
+  "name": "agriconnect",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./dist",
+    // Trang tĩnh nhiều trang (không phải SPA); public/_redirects đã chuyển /co-so/* và /truyxuat/* về đúng trang
+    "not_found_handling": "404-page"
+  }
+}
