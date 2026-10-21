@@ -4,6 +4,7 @@ import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { CycleCalendar } from '../components/CycleCalendar';
 import { Collapsible } from '../components/Collapsible';
 import { CycleQr } from '../components/CycleQr';
+import { PublishCycle } from '../components/PublishCycle';
 import { cycleCode } from '../lib/qr';
 import { useCatalog } from '../lib/catalog';
 import { cycleProgress, stageColor, stageDelayDays, STAGE_STATUS_LABEL_VI } from '../lib/cycles';
@@ -16,7 +17,7 @@ import { useOrgs } from '../lib/orgs';
 import {
   addCycleStage, addNote, advanceStage, deleteCycleStage, deleteNote, refreshCycle, setNoteDone, updateCycleStage,
 } from '../lib/production';
-import { canManageProduction } from '../lib/roles';
+import { canManageProduction, isOwner } from '../lib/roles';
 
 export interface LogPreset { cycleId: string; workTypeId?: string | null; stageId?: string | null }
 
@@ -83,6 +84,11 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr }: { cycleId
       <p className="muted">Mã vụ: <strong>{cycleCode(cycleId)}</strong></p>
       <p className="muted">Quy trình: {cycle.template_name ?? 'không có (vụ cũ)'}{cycle.template_version ? ` · bản ${cycle.template_version}` : ''}</p>
       {cycle.note && <p>{cycle.note}</p>}
+      {isOwner(active?.roles) && cycle.owner_org_id === active?.id && (
+        <Collapsible title="Công khai lên website" summary="chủ cơ sở tự chọn công khai">
+          <PublishCycle cycleId={cycleId} />
+        </Collapsible>
+      )}
       <Collapsible title="Mã QR của vụ" summary="tên vụ, nơi trồng, thời gian, vật tư đã dùng" defaultOpen={openQr}>
         <CycleQr cycleId={cycleId} label={cycle.name || crop} />
       </Collapsible>

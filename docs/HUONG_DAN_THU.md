@@ -186,6 +186,12 @@ Cần: nhân viên có tài khoản (tab Tổ chức → Nhân sự), có tổ v
 2. **Hồ sơ → Mã QR tài khoản**: thấy mã QR; tích/bỏ "Kèm email/số điện thoại" và "Kèm giấy phép"; "Tải ảnh QR", "Sao chép nội dung", "Xem nội dung trong mã". Quét bằng camera điện thoại: hiện chữ tiếng Việt đúng dấu.
 3. **Tạo vụ mới**: xong sẽ tự mở chi tiết vụ với **Mã QR của vụ** đã mở sẵn (tên vụ, nơi trồng, thời gian, vật tư đã dùng). Sau khi ghi việc có dùng phân/thuốc, mở lại vụ và bấm "Cập nhật mã" để mã có thêm vật tư rồi quét thử.
 
+## Bài thử 20 — Công khai vụ và trang quản trị
+
+1. **App, chủ cơ sở**: Sản xuất → Mùa vụ → ở thẻ vụ bấm **🌐 Công khai lên website** (hoặc trong chi tiết vụ mục "Công khai lên website"). Đọc hộp thoại, bấm đồng ý. Trạng thái hiện "Đang công khai · mã VU-… · bản 1". Thử **Cập nhật bản công khai** và **Ngừng công khai**. Nhân viên/quản lý không thấy nút này.
+2. **Admin** (cần cấp quyền quản trị cho tài khoản của bạn, xem docs/DEPLOY_CLOUDFLARE.md): đăng nhập; **Tổng quan** có số cơ sở theo trạng thái; **Cơ sở** tìm và mở một cơ sở; **Ghi nhận thanh toán và gia hạn** (nhập số tiền, ngày, số quý) rồi xem gói đã nối tiếp hạn; thử **Tạm khóa** (bắt buộc ghi lý do) rồi mở khóa.
+3. **Gói và giá**: thêm/sửa gói. **Cấu hình**: đổi số ngày dùng thử. **Vụ công khai**: thấy vụ vừa công khai, thử **Tạm ẩn** (ghi lý do) rồi vào app: chủ không công khai lại được. **Nhật ký kiểm toán**: mọi thao tác vừa làm đều có dòng ghi lại.
+
 ## Những điều cần biết
 
 - Số tiền luôn là **đồng**, số lượng thu hoạch và bán luôn là **kg** ở bản thử này.

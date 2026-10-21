@@ -77,7 +77,7 @@ Làm tương tự, **mỗi cái một dự án Pages riêng**:
 | admin | `npm ci && npm run build -w @agriconnect/admin` | `apps/admin/dist` | như app |
 | web | `npm ci && npm run build -w @agriconnect/web` | `apps/web/dist` | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` |
 
-Hiện admin và web mới là khung; chưa cần tạo cho tới khi có nội dung.
+Trang **admin** đã có nội dung (D53): tạo thêm một dự án Cloudflare như app, lệnh build `npm ci && npm run build -w @agriconnect/admin`, thư mục `apps/admin/dist`, cùng hai biến `VITE_SUPABASE_URL` và `VITE_SUPABASE_ANON_KEY`; dùng địa chỉ riêng và nên bật Cloudflare Access (chỉ email của bạn) làm lớp bảo vệ thứ hai. Cấp quyền quản trị cho tài khoản của bạn (một lần, trong SQL Editor): `insert into platform_admins (user_id) select id from auth.users where email = 'email-cua-ban@...';`. Trang **web** vẫn là khung (giai đoạn 3).
 
 ## 4. Quy trình làm việc hằng ngày
 

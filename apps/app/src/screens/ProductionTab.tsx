@@ -13,9 +13,10 @@ import { todayLocal, useOnline } from '../lib/hooks';
 import { cycleProgress } from '../lib/cycles';
 import { cycleCode } from '../lib/qr';
 import { CycleQr } from '../components/CycleQr';
+import { PublishCycle } from '../components/PublishCycle';
 import { fmtDate } from '../lib/dates';
 import { useOrgs } from '../lib/orgs';
-import { canManageProduction } from '../lib/roles';
+import { canManageProduction, isOwner } from '../lib/roles';
 import { deleteCycle, editCycle, fetchQuotaContexts, setCycleStatus, type QuotaContext } from '../lib/production';
 import type { CycleRow } from '../lib/db';
 import { productionSections, type ProductionSection, type TabId } from '../lib/tabs';
@@ -109,6 +110,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const [group, setGroup] = useState<CycleGroup | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [qrId, setQrId] = useState<string | null>(null);
+  const [pubId, setPubId] = useState<string | null>(null);
 
   const canManage = canManageProduction(active?.roles);
 
@@ -206,7 +208,11 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
             <div className="actions">
               <button className="secondary" onClick={() => onOpenCycle(c.id)}>Quy trình &amp; Lịch</button>
               <button className="secondary" aria-expanded={qrId === c.id} onClick={() => setQrId(qrId === c.id ? null : c.id)}>{qrId === c.id ? 'Ẩn mã QR' : 'Mã QR của vụ'}</button>
+              {isOwner(active.roles) && c.owner_org_id === active.id && (
+                <button className="secondary" aria-expanded={pubId === c.id} onClick={() => setPubId(pubId === c.id ? null : c.id)}>{pubId === c.id ? 'Ẩn mục công khai' : '🌐 Công khai lên website'}</button>
+              )}
             </div>
+            {pubId === c.id && <PublishCycle cycleId={c.id} />}
             {qrId === c.id && <CycleQr cycleId={c.id} label={c.name || cropName(c.crop_type_id)} />}
             {editId === c.id && (
               <CycleEditForm cycle={c} busy={!online} onClose={() => setEditId(null)}
