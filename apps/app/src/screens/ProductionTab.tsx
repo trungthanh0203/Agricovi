@@ -197,7 +197,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
             )}
             <p className="muted">Mã vụ: <strong>{cycleCode(c.id)}</strong></p>
             <div className="actions">
-              <button className="secondary" onClick={() => onOpenCycle(c.id)}>Xem quy trình &amp; lịch</button>
+              <button className="secondary" onClick={() => onOpenCycle(c.id)}>Quy trình &amp; Lịch</button>
               <button className="secondary" aria-expanded={qrId === c.id} onClick={() => setQrId(qrId === c.id ? null : c.id)}>{qrId === c.id ? 'Ẩn mã QR' : 'Mã QR của vụ'}</button>
             </div>
             {qrId === c.id && <CycleQr cycleId={c.id} label={c.name || cropName(c.crop_type_id)} />}

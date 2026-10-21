@@ -28,12 +28,12 @@ export function QrCard({ text, filename }: { text: string; filename: string }) {
     <div className="qrcard">
       <div className="qrbox" role="img" aria-label="Mã QR" dangerouslySetInnerHTML={{ __html: qr.svg }} />
       {qr.truncated && <p className="msg warn">Nội dung dài nên mã chỉ chứa phần đầu.</p>}
-      <div className="btnrow">
-        <button type="button" className="secondary" onClick={() => void download()}>Tải ảnh QR</button>
-        <button type="button" className="secondary" onClick={() => void copy()}>Sao chép nội dung</button>
-      </div>
+      <button type="button" className="secondary" onClick={() => void download()}>Tải ảnh QR</button>
       {msg && <p className="muted" role="status">{msg}</p>}
-      <details className="fold inline"><summary><span className="fold-title">Xem nội dung trong mã</span></summary><div className="fold-body"><pre className="qrtext">{qr.text}</pre></div></details>
+      <details className="fold inline"><summary><span className="fold-title">Xem nội dung trong mã</span></summary><div className="fold-body">
+        <button type="button" className="secondary" onClick={() => void copy()}>Chép nội dung</button>
+        <pre className="qrtext">{qr.text}</pre>
+      </div></details>
     </div>
   );
 }

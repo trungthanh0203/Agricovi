@@ -26,7 +26,7 @@ export interface Section<Id extends string = string> {
 
 export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'attendance';
 export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'rates';
-export type OrgSection = 'info' | 'members' | 'positions' | 'teams' | 'coop';
+export type OrgSection = 'members' | 'positions' | 'teams' | 'coop';
 export type ReportSection = 'expense' | 'sales' | 'summary' | 'payroll' | 'custom';
 
 export function productionSections(org: MyOrg | null): Section<ProductionSection>[] {
@@ -56,7 +56,6 @@ export function orgSections(org: MyOrg | null): Section<OrgSection>[] {
   if (!org) return [];
   const manager = hasRole(org.roles, 'manager');
   return [
-    manager ? { id: 'info' as const, label: 'Cơ sở và gói' } : null,
     manager ? { id: 'members' as const, label: 'Nhân sự' } : null,
     hasRole(org.roles, 'owner') ? { id: 'positions' as const, label: 'Vai trò' } : null,
     manager ? { id: 'teams' as const, label: 'Tổ lao động' } : null,

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Collapsible } from '../components/Collapsible';
 import { InvitationsPanel } from '../components/InvitationsPanel';
 import { LicensesSection, licenseStatus } from '../components/LicensesSection';
+import { PlanCard } from '../components/PlanCard';
 import { QrCard } from '../components/QrCard';
 import { useAuth } from '../lib/auth';
 import { fmtDate } from '../lib/dates';
@@ -99,6 +100,12 @@ export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
             </div>
           ))}
           <p className="muted">Số "Dự tính" có thể đổi đến khi chủ cơ sở khóa kỳ.</p>
+        </Collapsible>
+      )}
+
+      {active && hasRole(active.roles, 'manager') && (
+        <Collapsible title="Gói dịch vụ" summary={active.name}>
+          <PlanCard />
         </Collapsible>
       )}
 
