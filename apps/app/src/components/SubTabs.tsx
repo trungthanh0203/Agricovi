@@ -2,7 +2,7 @@ import type { Section } from '../lib/tabs';
 
 /** Biểu tượng cho từng mục (menu dọc) */
 const ICONS: Record<string, string> = {
-  cycles: '🌱', harvest: '🧺', stock: '📦', attendance: '⏱',
+  cycles: '🌱', logs: '📒', harvest: '🧺', stock: '📦', attendance: '⏱',
   areas: '🏡', crops: '🌾', worktypes: '🧰', templates: '📋', materials: '🧪', places: '🏬', rates: '💵',
   members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
   expense: '💸', sales: '💰', summary: '📊', payroll: '🧾', custom: '🔎',

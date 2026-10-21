@@ -24,7 +24,7 @@ function summarize(wt: WorkTypeRow | undefined, data: Record<string, unknown>): 
 }
 
 /** Lịch sử nhật ký có lọc theo vụ / loại việc / ngày; sửa và hủy theo quyền (FR-LOG-004/005). */
-export function LogsScreen({ onClose }: { onClose: () => void }) {
+export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedded?: boolean }) {
   const { session } = useAuth();
   const { active } = useOrgs();
   const sync = useRecordSync();
@@ -123,11 +123,13 @@ export function LogsScreen({ onClose }: { onClose: () => void }) {
   if (editing) return <EditLogScreen logId={editing} onClose={() => setEditing(null)} />;
 
   return (
-    <main className="auth wide">
-      <div className="row">
-        <h1>Nhật ký</h1>
-        <button className="link" onClick={onClose}>Đóng</button>
-      </div>
+    <main className={embedded ? '' : 'auth wide'}>
+      {!embedded && (
+        <div className="row">
+          <h1>Nhật ký</h1>
+          <button className="link" onClick={onClose}>Đóng</button>
+        </div>
+      )}
 
       <div className="filters">
         <label>

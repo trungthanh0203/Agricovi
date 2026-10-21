@@ -1,4 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { daysLeft, listLicenses } from '../lib/licenses';
+import { hasRole } from '../lib/roles';
+import { listAdjustments, listAttendance, listWorkers } from '../lib/work';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { cycleProgress } from '../lib/cycles';
 import { addDays, fmtDate } from '../lib/dates';
@@ -13,14 +16,17 @@ import { useAuth } from '../lib/auth';
 type Tone = 'ok' | 'warn' | 'bad' | 'info' | 'neutral';
 
 /** Thẻ số: nhãn nhỏ, số lớn, ghi chú/đơn vị. Màu có nghĩa cố định và luôn kèm chữ (docs/DESIGN_DASHBOARD.md). */
-export function KpiTile({ label, value, note, tone = 'neutral', title }: { label: string; value: string; note?: string; tone?: Tone; title?: string }) {
-  return (
-    <div className={`kpi ${tone}`} title={title}>
+export function KpiTile({ label, value, note, tone = 'neutral', title, onClick }: { label: string; value: string; note?: string; tone?: Tone; title?: string; onClick?: () => void }) {
+  const inner = (
+    <>
       <span className="kpi-label">{label}</span>
       <strong className="kpi-value">{value}</strong>
       {note && <span className="kpi-note">{note}</span>}
-    </div>
+    </>
   );
+  return onClick
+    ? <button type="button" className={`kpi ${tone}`} title={title} onClick={onClick}>{inner}</button>
+    : <div className={`kpi ${tone}`} title={title}>{inner}</div>;
 }
 
 /** Tiền rút gọn: 1,2 triệu · 3,4 tỷ (chạm vào thẻ để xem đủ số) */
@@ -39,7 +45,7 @@ const fullMoney = (n: number) => `${n.toLocaleString('vi-VN')} đ`;
  * Tính trên dữ liệu đã tải về máy (nhật ký 200 bản ghi gần nhất, thu hoạch/chi/thu 200 bản ghi gần nhất), nên xem được cả khi offline.
  * Phần tiền, thu hoạch, kho chỉ hiện với người có quyền xem mục đó.
  */
-export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (tab: 'production' | 'reports', section?: string) => void }) {
+export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (tab: 'production' | 'reports' | 'profile', section?: string) => void }) {
   const { active } = useOrgs();
   const { session } = useAuth();
   const uid = session?.user.id;
@@ -52,9 +58,44 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
   const balances = useLiveQuery(() => db.balances.toArray(), [], []);
   const materials = useLiveQuery(() => db.materials.toArray(), [], []);
   const [stamp, setStamp] = useState(() => new Date());
+  const [pendingAtt, setPendingAtt] = useState(0);
+  const [pendingAdj, setPendingAdj] = useState(0);
+  const [openShiftAt, setOpenShiftAt] = useState<string | null>(null);
+  const [licSoon, setLicSoon] = useState(0);
+  const [licExpired, setLicExpired] = useState(0);
   const [busy, setBusy] = useState(false);
 
   const today = todayLocal();
+
+  // Chấm công chờ xác nhận, yêu cầu sửa công, ca đang mở của tôi, giấy phép sắp hết hạn (cần mạng; lỗi thì bỏ qua)
+  const orgId = active?.id;
+  useEffect(() => {
+    if (!orgId || !uid || !navigator.onLine) return;
+    let alive = true;
+    void (async () => {
+      try {
+        const att = await listAttendance(orgId, addDays(todayLocal(), -31));
+        const w = await listWorkers(orgId);
+        const me = w.find((x) => x.user_id === uid);
+        if (!alive) return;
+        setPendingAtt(att.filter((a) => a.ended_at && a.status === 'needs_confirmation' && a.worker_id !== me?.id).length);
+        setOpenShiftAt(att.find((a) => !a.ended_at && a.worker_id === me?.id && a.status !== 'rejected')?.started_at ?? null);
+      } catch { /* bỏ qua */ }
+      try {
+        const adj = await listAdjustments(orgId);
+        if (alive) setPendingAdj(adj.filter((x) => x.status === 'pending').length);
+      } catch { /* bỏ qua */ }
+      try {
+        const lic = await listLicenses(orgId);
+        if (alive) {
+          setLicSoon(lic.filter((l) => { const d = daysLeft(l.expires_date); return d !== null && d >= 0 && d <= 30; }).length);
+          setLicExpired(lic.filter((l) => { const d = daysLeft(l.expires_date); return d !== null && d < 0; }).length);
+        }
+      } catch { /* bỏ qua */ }
+    })();
+    return () => { alive = false; };
+  }, [orgId, uid, stamp]);
+
   const stat = useMemo(() => {
     const day = (iso: string) => toLocalInput(new Date(iso)).slice(0, 10);
     const week = addDays(today, -6);
@@ -88,6 +129,8 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
     }).filter((x): x is { m: (typeof materials)[number]; total: number; state: 'neg' | 'low' } => x !== null)
     : [];
 
+  const isAdminRole = hasRole(active.roles, 'manager');
+  const canConfirmAtt = isAdminRole || pendingAtt > 0; // tổ trưởng chỉ thấy khi có người trong tổ chờ xác nhận
   const canHarvest = canPerm(active.perms, 'harvest');
   const canExpense = canPerm(active.perms, 'expenses');
   const canSale = canPerm(active.perms, 'sales');
@@ -104,6 +147,19 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
         <KpiTile label="Việc tôi ghi hôm nay" value={String(stat.myToday)} tone={stat.myToday > 0 ? 'ok' : 'neutral'} note={stat.myToday > 0 ? 'đã ghi' : 'chưa ghi việc nào'} />
         <KpiTile label="Việc tôi ghi 7 ngày qua" value={String(stat.myWeek)} tone="info" />
       </div>
+
+      {(canConfirmAtt || openShiftAt || licSoon + licExpired > 0) && (
+        <>
+          <h2 className="sect">Cần làm</h2>
+          <div className="kpis">
+            {openShiftAt && <KpiTile label="Bạn đang trong ca" value={new Date(openShiftAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} tone="info" note="bấm để Ra ca" onClick={() => onGo('production', 'attendance')} />}
+            {canConfirmAtt && <KpiTile label="Chờ xác nhận chấm công" value={String(pendingAtt)} tone={pendingAtt > 0 ? 'warn' : 'ok'} note={pendingAtt > 0 ? 'bấm để xem và xác nhận' : 'đã xong'} onClick={() => onGo('production', 'attendance')} />}
+            {isAdminRole && pendingAdj > 0 && <KpiTile label="Yêu cầu sửa công" value={String(pendingAdj)} tone="warn" note="chờ duyệt" onClick={() => onGo('production', 'attendance')} />}
+            {licExpired > 0 && <KpiTile label="Giấy phép đã hết hạn" value={String(licExpired)} tone="bad" note="xem ở Hồ sơ" onClick={() => onGo('profile')} />}
+            {licSoon > 0 && <KpiTile label="Giấy phép sắp hết hạn" value={String(licSoon)} tone="warn" note="trong 30 ngày" onClick={() => onGo('profile')} />}
+          </div>
+        </>
+      )}
 
       <h2 className="sect">{active.name}</h2>
       <div className="kpis">

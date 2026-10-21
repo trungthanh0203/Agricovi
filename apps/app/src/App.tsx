@@ -14,7 +14,6 @@ import { CycleDetailScreen, type LogPreset } from './screens/CycleDetailScreen';
 import { DeclareTab } from './screens/DeclareTab';
 import { HomeTab } from './screens/HomeTab';
 import { LogActivityScreen } from './screens/LogActivityScreen';
-import { LogsScreen } from './screens/LogsScreen';
 import { OrgTab } from './screens/OrgTab';
 import { ProductionTab } from './screens/ProductionTab';
 import { ProfileTab } from './screens/ProfileTab';
@@ -109,7 +108,6 @@ function Shell() {
     };
   }, [refresh]);
 
-  if (overlay === 'logs') return <LogsScreen onClose={() => setOverlay(null)} />;
   if (overlay === 'detail' && detailId) {
     return <CycleDetailScreen cycleId={detailId} openQr={qrFirst} onClose={() => { setQrFirst(false); setOverlay(null); }} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} />;
   }
@@ -155,13 +153,13 @@ function Shell() {
 
       <main className="content">
         {tab === 'home' ? (
-          <HomeTab onLog={() => { setLogPreset(null); setOverlay('log'); }} onHistory={() => setOverlay('logs')} onGo={goTo} />
+          <HomeTab onLog={() => { setLogPreset(null); setOverlay('log'); }} onHistory={() => goTo('production', 'logs')} onGo={goTo} />
         ) : tab === 'production' ? (
           <ProductionTab
             section={subs.production}
             onSection={setSub('production')}
             onLog={() => { setLogPreset(null); setOverlay('log'); }}
-            onHistory={() => setOverlay('logs')}
+            onHistory={() => goTo('production', 'logs')}
             onCreateCycle={() => setOverlay('cycle')}
             onOpenCycle={(id) => { setDetailId(id); setQrFirst(false); setOverlay('detail'); }}
             onGo={goTo}

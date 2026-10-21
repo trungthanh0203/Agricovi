@@ -24,7 +24,7 @@ export interface Section<Id extends string = string> {
   label: string;
 }
 
-export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'attendance';
+export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'attendance' | 'logs';
 export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'rates';
 export type OrgSection = 'members' | 'positions' | 'teams' | 'coop';
 export type ReportSection = 'expense' | 'sales' | 'summary' | 'payroll' | 'custom';
@@ -33,6 +33,7 @@ export function productionSections(org: MyOrg | null): Section<ProductionSection
   if (!org) return [];
   return [
     { id: 'cycles' as const, label: 'Mùa vụ' },
+    { id: 'logs' as const, label: 'Nhật ký việc làm' },
     canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'stock' as const, label: 'Kho' } : null,
     hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,

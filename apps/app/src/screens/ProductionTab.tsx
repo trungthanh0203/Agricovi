@@ -3,6 +3,7 @@ import { useCatalog } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
 import { StockPanel } from './StockPanel';
+import { LogsScreen } from './LogsScreen';
 import { AttendanceSection } from '../components/AttendanceSection';
 import { HarvestSection } from '../components/HarvestSection';
 import { pickSection, SubTabs } from '../components/SubTabs';
@@ -34,10 +35,15 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
   const { active } = useOrgs();
   const items = productionSections(active);
   const current = pickSection(items, section);
+  const cyclesAll = useLiveQuery(() => db.cycles.toArray(), [], []);
+  const hasActive = cyclesAll.some((c) => c.status === 'active' && c.owner_org_id === active?.id);
 
   return (
     <section>
-      <h1>Sản xuất</h1>
+      <div className="row">
+        <h1 className="grow">Sản xuất</h1>
+        <button className="primary head-btn" onClick={onLog} disabled={!hasActive}>Ghi việc vừa làm</button>
+      </div>
       <SubTabs items={items} value={current} onChange={onSection} onBack={() => onSection('' as ProductionSection)} label="Sản xuất" />
       {current === 'harvest' ? (
         <HarvestSection />
@@ -45,6 +51,8 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
         <StockPanel />
       ) : current === 'attendance' ? (
         <AttendanceSection />
+      ) : current === 'logs' ? (
+        <LogsScreen embedded onClose={() => onSection('' as ProductionSection)} />
       ) : current === 'cycles' ? (
         <CyclesPanel onCreateCycle={onCreateCycle} onOpenCycle={onOpenCycle} onLog={onLog} onHistory={onHistory} onGo={onGo} />
       ) : null}
@@ -147,10 +155,6 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
 
   return (
     <>
-      <div className="pair">
-        <button className="primary" onClick={onLog} disabled={!myCycles.some((c) => c.status === 'active')}>Ghi việc vừa làm</button>
-        <button className="secondary" onClick={onHistory}>Lịch sử nhật ký</button>
-      </div>
       {myCycles.length === 0 && <p className="muted">Tạo vụ trồng trước để bắt đầu ghi nhật ký.</p>}
       {myCycles.length > 0 && !myCycles.some((c) => c.status === 'active') && (
         <p className="muted">Chỉ vụ đang sản xuất mới ghi việc được. Hãy bấm "Bắt đầu sản xuất" hoặc "Tiếp tục" ở vụ bên dưới.</p>
@@ -160,13 +164,16 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
       {actionError && <p className="msg error" role="alert">{actionError}</p>}
       <h2 className="sect">Vụ trồng ({myCycles.length})</h2>
       {myCycles.length === 0 && <p className="muted">Chưa có vụ trồng nào.</p>}
-      {myCycles.length > 0 && (
+      {(myCycles.length > 0 || (canManage && hasAreas)) && (
         <div className="chips" role="tablist" aria-label="Nhóm vụ theo trạng thái">
           {GROUPS.map((g) => (
             <button key={g.id} role="tab" aria-selected={curGroup === g.id} className={curGroup === g.id ? 'chip active' : 'chip'} onClick={() => { setGroup(g.id); setEditId(null); }}>
               {g.label} ({inGroup(g.id).length})
             </button>
           ))}
+          {canManage && hasAreas && (
+            <button className="chip add" onClick={onCreateCycle} disabled={!online}>+ Tạo vụ mới</button>
+          )}
         </div>
       )}
       {myCycles.length > 0 && shown.length === 0 && <p className="muted">Không có vụ nào ở nhóm này.</p>}
@@ -227,9 +234,6 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
           <p>Chưa có trang trại nên chưa tạo được vụ.</p>
           <button className="secondary" onClick={() => onGo('declare', 'areas')}>Thêm trang trại ở tab Khai báo</button>
         </div>
-      )}
-      {canManage && hasAreas && (
-        <button className="secondary" onClick={onCreateCycle} disabled={!online}>+ Tạo vụ mới</button>
       )}
     </>
   );
