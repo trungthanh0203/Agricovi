@@ -8,7 +8,7 @@ import { orgSections, type OrgSection } from '../lib/tabs';
 
 /**
  * Tab Tổ chức: nhân sự (thành viên, tài khoản nhân viên, quyền), vai trò, tổ lao động, hộ thành viên/HTX.
- * Gói dịch vụ nằm ở tab Hồ sơ.
+ * Gói dịch vụ nằm ở tab Tài khoản.
  */
 export function OrgTab({ section, onSection }: { section?: string; onSection: (s: OrgSection) => void }) {
   const { active } = useOrgs();

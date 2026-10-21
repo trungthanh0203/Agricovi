@@ -4,7 +4,7 @@ import { REPORT_TYPES } from './reports';
 import { canManageProduction, hasRole } from './roles';
 
 /**
- * Bố cục 6 tab (quyết định D28, D30): Trang chủ · Sản xuất · Khai báo · Tổ chức · Báo cáo · Hồ sơ,
+ * Bố cục 6 tab (quyết định D28, D30): Trang chủ · Tổ chức · Khai báo · Sản xuất · Báo cáo · Hồ sơ,
  * mỗi tab có các mục con. Hiện/ẩn theo quyền chỉ là giao diện; máy chủ luôn kiểm tra lại.
  * Khai báo và Tổ chức tạm theo vai trò; sẽ chuyển sang quyền theo mục khi làm chức vụ (kế hoạch P3).
  */
@@ -16,7 +16,7 @@ export const TAB_LABEL: Record<TabId, string> = {
   declare: 'Khai báo',
   org: 'Tổ chức',
   reports: 'Báo cáo',
-  profile: 'Hồ sơ',
+  profile: 'Tài khoản',
 };
 
 export interface Section<Id extends string = string> {
@@ -77,9 +77,11 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
 
 /** Các tab được hiện với người đang đăng nhập ở cơ sở đang chọn */
 export function visibleTabs(org: MyOrg | null): TabId[] {
-  const tabs: TabId[] = ['home', 'production'];
-  if (declareSections(org).length > 0) tabs.push('declare');
+  // Thứ tự: Trang chủ · Tổ chức · Khai báo · Sản xuất · Báo cáo · Tài khoản
+  const tabs: TabId[] = ['home'];
   if (orgSections(org).length > 0) tabs.push('org');
+  if (declareSections(org).length > 0) tabs.push('declare');
+  tabs.push('production');
   if (reportSections(org).length > 0) tabs.push('reports');
   tabs.push('profile');
   return tabs;

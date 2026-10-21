@@ -155,7 +155,7 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
             {openShiftAt && <KpiTile label="Bạn đang trong ca" value={new Date(openShiftAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} tone="info" note="bấm để Ra ca" onClick={() => onGo('production', 'attendance')} />}
             {canConfirmAtt && <KpiTile label="Chờ xác nhận chấm công" value={String(pendingAtt)} tone={pendingAtt > 0 ? 'warn' : 'ok'} note={pendingAtt > 0 ? 'bấm để xem và xác nhận' : 'đã xong'} onClick={() => onGo('production', 'attendance')} />}
             {isAdminRole && pendingAdj > 0 && <KpiTile label="Yêu cầu sửa công" value={String(pendingAdj)} tone="warn" note="chờ duyệt" onClick={() => onGo('production', 'attendance')} />}
-            {licExpired > 0 && <KpiTile label="Giấy phép đã hết hạn" value={String(licExpired)} tone="bad" note="xem ở Hồ sơ" onClick={() => onGo('profile')} />}
+            {licExpired > 0 && <KpiTile label="Giấy phép đã hết hạn" value={String(licExpired)} tone="bad" note="xem ở Tài khoản" onClick={() => onGo('profile')} />}
             {licSoon > 0 && <KpiTile label="Giấy phép sắp hết hạn" value={String(licSoon)} tone="warn" note="trong 30 ngày" onClick={() => onGo('profile')} />}
           </div>
         </>

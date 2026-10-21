@@ -17,7 +17,7 @@ import { fetchStaffStatus, WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
 import { fetchMyPay, fmtVnd, type MyPay } from '../lib/work';
 
 /**
- * Tab Hồ sơ (D40, D50): mọi phần đều THU GỌN được — tài khoản (tên hiển thị, đổi mật khẩu), "Tôi được làm gì", công việc,
+ * Tab Tài khoản (D40, D50): mọi phần đều THU GỌN được — tài khoản (tên hiển thị, đổi mật khẩu), "Tôi được làm gì", công việc,
  * tiền công, giấy phép/chứng chỉ của cơ sở, mã QR tài khoản, phiên bản app, đăng xuất.
  */
 export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
@@ -52,7 +52,7 @@ export function ProfileTab({ onAddOrg }: { onAddOrg: () => void }) {
 
   return (
     <section>
-      <h1>Hồ sơ</h1>
+      <h1>Tài khoản</h1>
 
       <InvitationsPanel />
 
