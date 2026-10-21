@@ -1,5 +1,4 @@
 import { useOrgs } from '../lib/orgs';
-import { CommerceProfile } from '../components/CommerceProfile';
 import { CooperativeSection } from '../components/CooperativeSection';
 import { PositionsSection } from '../components/PositionsSection';
 import { MembersSection } from '../components/MembersSection';
@@ -25,7 +24,6 @@ export function OrgTab({ section, onSection }: { section?: string; onSection: (s
       {current === 'positions' && <PositionsSection org={active} />}
       {current === 'teams' && <TeamsSection org={active} />}
       {current === 'coop' && <CooperativeSection org={active} />}
-      {current === 'commerce' && <CommerceProfile org={active} />}
     </section>
   );
 }

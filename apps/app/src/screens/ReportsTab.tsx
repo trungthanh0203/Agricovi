@@ -1,3 +1,4 @@
+import { CommerceProfile } from '../components/CommerceProfile';
 import { ExpenseSection } from '../components/ExpenseSection';
 import { ReportBuilder } from '../components/ReportBuilder';
 import { PayrollSection } from '../components/PayrollSection';
@@ -21,7 +22,7 @@ export function ReportsTab({ section, onSection }: { section?: string; onSection
     <section>
       <h1>Báo cáo</h1>
       <SubTabs items={items} value={current} onChange={onSection} onBack={() => onSection('' as ReportSection)} label="Báo cáo" />
-      {current === 'sales' ? <SalesSection /> : current === 'summary' ? <SummarySection /> : current === 'payroll' ? <PayrollSection /> : current === 'custom' ? <ReportBuilder /> : current === 'expense' ? <ExpenseSection /> : null}
+      {current === 'sales' ? <SalesSection /> : current === 'summary' ? <SummarySection /> : current === 'payroll' ? <PayrollSection /> : current === 'custom' ? <ReportBuilder /> : current === 'commerce' ? <CommerceProfile org={active} /> : current === 'expense' ? <ExpenseSection /> : null}
     </section>
   );
 }

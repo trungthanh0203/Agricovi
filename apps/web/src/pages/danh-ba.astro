@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Danh bạ cơ sở — AgriConnect" description="Danh bạ cơ sở sản xuất nông nghiệp đã được kiểm duyệt.">
+  <h1>Danh bạ cơ sở</h1>
+  <div class="filters">
+    <input id="q" placeholder="Tìm theo tên cơ sở hoặc sản phẩm" aria-label="Tìm kiếm" />
+    <select id="prov" aria-label="Tỉnh/thành"><option value="">Tất cả tỉnh/thành</option></select>
+    <select id="avail" aria-label="Tình trạng"><option value="">Tất cả</option><option value="1">Chỉ nơi đang có hàng</option></select>
+  </div>
+  <p id="count" class="muted"></p>
+  <div id="list" class="grid"><p class="muted">Đang tải…</p></div>
+</Base>
+
+<script>
+  import { esc, loadDirectory, profileCard } from '../lib/db';
+  const list = document.getElementById('list')!;
+  const qEl = document.getElementById('q') as HTMLInputElement;
+  const provEl = document.getElementById('prov') as HTMLSelectElement;
+  const availEl = document.getElementById('avail') as HTMLSelectElement;
+  const countEl = document.getElementById('count')!;
+  const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
+  qEl.value = new URLSearchParams(location.search).get('q') ?? '';
+
+  loadDirectory().then(({ rows, snaps, prods }) => {
+    for (const p of [...new Set(rows.map((r) => r.province).filter((x): x is string => Boolean(x)))].sort((a, b) => a.localeCompare(b, 'vi'))) {
+      provEl.insertAdjacentHTML('beforeend', `<option>${esc(p)}</option>`);
+    }
+    const render = () => {
+      const q = fold(qEl.value.trim());
+      const out = rows.filter((d) => {
+        const ps = prods.get(d.profile_id) ?? [];
+        if (provEl.value && d.province !== provEl.value) return false;
+        if (availEl.value && !ps.some((p) => p.supply_status === 'available')) return false;
+        if (!q) return true;
+        const hay = fold([d.display_name, d.province, d.district, d.description, ...ps.map((p) => p.snapshot.name + ' ' + (p.snapshot.crop ?? ''))].join(' '));
+        return q.split(/\s+/).every((w) => hay.includes(w));
+      });
+      countEl.textContent = `${out.length} cơ sở`;
+      list.innerHTML = out.length ? out.map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? [])).join('') : '<p class="empty">Không tìm thấy cơ sở phù hợp.</p>';
+    };
+    for (const el of [qEl, provEl, availEl]) el.addEventListener('input', render);
+    render();
+  }).catch((e) => { list.innerHTML = `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>`; });
+</script>

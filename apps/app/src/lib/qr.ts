@@ -124,6 +124,8 @@ export function buildCycleQr(t: CycleTrace): string {
   } else {
     lines.push('Vật tư đã dùng: chưa ghi');
   }
+  const site = (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, '');
+  if (site) lines.push(`Xem trên website: ${site}/truyxuat/${cycleCode(t.cycle_id)}`);
   lines.push(`Cập nhật: ${new Date(t.generated_at).toLocaleString('vi-VN')}`, `Mã vụ: ${cycleCode(t.cycle_id)} (${t.cycle_id})`);
   return lines.join('\n');
 }

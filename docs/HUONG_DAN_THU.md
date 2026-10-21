@@ -222,3 +222,11 @@ Khi gặp lỗi hoặc chỗ khó hiểu, hãy gửi cho chúng tôi:
 6. Vào `/quan-tri/` → Duyệt hồ sơ → **Xem trước** → Duyệt và công khai.
 7. Quay lại app: trạng thái "Đã công khai". Sửa mô tả → Gửi duyệt lại. Thử Tạm ẩn và Rút đồng ý.
 8. Kiểm tra tài khoản nhân viên thường không thấy mục Hồ sơ website.
+
+## Bài thử 22 — Website công khai
+
+1. Sau khi hồ sơ ở bài 21 được duyệt: chạy `npm run dev:web` rồi mở http://localhost:4321/ (trang chủ), /danh-ba/ (thử tìm, lọc tỉnh, "chỉ nơi đang có hàng").
+2. Bấm vào thẻ cơ sở: xem ảnh, sản phẩm, chứng chỉ, liên hệ (chỉ hiện nếu chủ đã đồng ý và xác nhận). Khi chạy thử cục bộ dùng địa chỉ `/co-so/?s=<slug>`.
+3. Ở app: Sản xuất → Mùa vụ → "Mở công khai website" cho một vụ. Mở `/truyxuat/?ma=VU-XXXXXXXX` kiểm tra thông tin vụ, vật tư, giấy phép.
+4. Ở app đổi "Tình trạng cung ứng" thành Đang có hàng: tải lại trang chủ website, sản phẩm hiện ở mục "Đang có hàng".
+5. Tạm ẩn hồ sơ hoặc ngừng công khai vụ: tải lại, trang báo không tìm thấy.

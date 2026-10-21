@@ -1,0 +1,76 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base title="Hồ sơ cơ sở — AgriConnect">
+  <div id="app"><p class="muted">Đang tải…</p></div>
+</Base>
+
+<script>
+  import { CERT_LABEL, esc, fmtDate, img, link, place, sb, supplyPill, CYCLE_STATUS, type ProductRow, type ProfileSnap } from '../../lib/db';
+  const app = document.getElementById('app')!;
+  // Địa chỉ dạng /co-so/<slug> (Cloudflare chuyển về trang này); khi chạy thử cục bộ dùng ?s=<slug>
+  const slug = new URLSearchParams(location.search).get('s') ?? decodeURIComponent(location.pathname.split('/').filter(Boolean)[1] ?? '');
+
+  async function main() {
+    if (!sb) throw new Error('Website chưa được cấu hình kết nối dữ liệu.');
+    if (!slug) { app.innerHTML = '<p class="empty">Chưa chọn cơ sở. <a href="/danh-ba/">Xem danh bạ</a></p>'; return; }
+    const { data: pr, error } = await sb.from('public_profiles').select('profile_id, organization_id, snapshot, published_at').eq('slug', slug).eq('is_visible', true).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!pr) { app.innerHTML = '<p class="empty">Không tìm thấy cơ sở này, hoặc hồ sơ đang được tạm ẩn. <a href="/danh-ba/">Xem danh bạ</a></p>'; return; }
+    const s = pr.snapshot as ProfileSnap;
+    document.title = `${s.display_name} — AgriConnect`;
+    const [pp, cy] = await Promise.all([
+      sb.from('public_products').select('listing_id, profile_id, supply_status, supply_updated_on, snapshot').eq('profile_id', pr.profile_id).eq('is_visible', true),
+      sb.from('public_cycles').select('code, snapshot, published_at').eq('organization_id', pr.organization_id).eq('is_visible', true).order('published_at', { ascending: false }).limit(12),
+    ]);
+    const prods = (pp.data ?? []) as ProductRow[];
+    const cycles = (cy.data ?? []) as { code: string; snapshot: { name?: string; crop?: string; status?: string; start_date?: string }; published_at: string }[];
+
+    const gallery = (s.images ?? []).map((i) => ({ src: img(i.src), cap: i.caption })).filter((i) => i.src);
+    const facts: [string, string][] = [];
+    if (place(s)) facts.push(['Địa bàn', place(s)]);
+    if (s.established_year) facts.push(['Thành lập', String(s.established_year)]);
+    if (s.total_area != null) facts.push(['Diện tích', `${Number(s.total_area).toLocaleString('vi-VN')} ${s.area_unit === 'm2' ? 'm²' : 'ha'}`]);
+    if (s.practices) facts.push(['Canh tác', s.practices]);
+    if (s.capacity_note) facts.push(['Năng lực', s.capacity_note]);
+
+    const c = s.contact;
+    const contact = c ? [
+      c.phone && `📞 <a href="tel:${esc(c.phone.replace(/[^\d+]/g, ''))}">${esc(c.phone)}</a>`,
+      c.zalo && `💬 Zalo: ${esc(c.zalo)}`,
+      c.email && `✉️ <a href="mailto:${esc(c.email)}">${esc(c.email)}</a>`,
+      link(c.website) && `🌐 <a href="${esc(link(c.website))}" rel="noopener nofollow" target="_blank">${esc(c.website)}</a>`,
+      link(c.facebook) && `📘 <a href="${esc(link(c.facebook))}" rel="noopener nofollow" target="_blank">Facebook</a>`,
+    ].filter(Boolean).join('<br>') : '';
+
+    app.innerHTML = `
+      <p><a href="/danh-ba/">← Danh bạ</a></p>
+      <h1>${esc(s.display_name)}</h1>
+      ${s.tagline ? `<p class="tag">${esc(s.tagline)}</p>` : ''}
+      ${gallery.length ? `<div class="gallery">${gallery.map((g) => `<img src="${g.src}" alt="${esc(g.cap ?? s.display_name)}" loading="lazy" />`).join('')}</div>` : ''}
+      ${s.description ? `<div class="panel"><p style="white-space:pre-line;margin:0">${esc(s.description)}</p></div>` : ''}
+      ${facts.length ? `<div class="facts">${facts.map(([k, v]) => `<div><b>${esc(k)}</b>${esc(v)}</div>`).join('')}</div>` : ''}
+      ${prods.length ? `<h2>Sản phẩm</h2>${prods.map(productHtml).join('')}` : ''}
+      ${s.certifications?.length ? `<h2>Giấy phép, chứng chỉ</h2><div class="panel">${s.certifications.map((k) =>
+        `<p>🏅 <b>${esc(k.name)}</b>${k.issuer ? ' — ' + esc(k.issuer) : ''}${k.number ? ' · số ' + esc(k.number) : ''}${k.expires ? ' · hạn ' + fmtDate(k.expires) : ''}<br><span class="pill">${esc(CERT_LABEL[k.status] ?? k.status)}</span></p>`).join('')}</div>` : ''}
+      ${cycles.length ? `<h2>Mùa vụ có truy xuất nguồn gốc</h2><div class="panel">${cycles.map((v) =>
+        `<p><a href="/truyxuat/${encodeURIComponent(v.code)}">${esc(v.snapshot.name ?? v.code)}</a> <span class="pill">${esc(CYCLE_STATUS[v.snapshot.status ?? ''] ?? '')}</span><br><span class="muted">${esc(v.snapshot.crop ?? '')} · mã ${esc(v.code)}</span></p>`).join('')}</div>` : ''}
+      <h2>Liên hệ</h2>
+      <div class="panel">${contact || '<span class="muted">Cơ sở chưa công khai thông tin liên hệ.</span>'}</div>
+      <p class="muted">Hồ sơ được duyệt ngày ${fmtDate(pr.published_at)}.</p>`;
+  }
+
+  function productHtml(p: ProductRow): string {
+    const x = p.snapshot;
+    const pics = (x.images ?? []).map((i) => img(i.src)).filter(Boolean);
+    const meta = [x.specification, x.unit && 'Đơn vị: ' + x.unit, x.season && 'Mùa vụ: ' + x.season, x.price_note && 'Giá: ' + x.price_note, x.min_order && 'Đặt tối thiểu: ' + x.min_order].filter(Boolean);
+    return `<div class="panel"><h3>${esc(x.name)} ${supplyPill(p.supply_status)}</h3>
+      ${p.supply_updated_on ? `<p class="muted">Cập nhật tình trạng: ${fmtDate(p.supply_updated_on)}</p>` : ''}
+      ${pics.length ? `<div class="gallery">${pics.map((u) => `<img src="${u}" alt="${esc(x.name)}" loading="lazy" />`).join('')}</div>` : ''}
+      ${x.description ? `<p>${esc(x.description)}</p>` : ''}
+      ${meta.length ? `<p class="muted">${esc(meta.join(' · '))}</p>` : ''}
+      ${x.trace_code ? `<p>🔎 <a href="/truyxuat/${encodeURIComponent(x.trace_code)}">Xem nguồn gốc mùa vụ (${esc(x.trace_code)})</a></p>` : ''}</div>`;
+  }
+
+  main().catch((e) => { app.innerHTML = `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>`; });
+</script>

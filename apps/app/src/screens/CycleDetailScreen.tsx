@@ -85,7 +85,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr }: { cycleId
       <p className="muted">Quy trình: {cycle.template_name ?? 'không có (vụ cũ)'}{cycle.template_version ? ` · bản ${cycle.template_version}` : ''}</p>
       {cycle.note && <p>{cycle.note}</p>}
       {isOwner(active?.roles) && cycle.owner_org_id === active?.id && (
-        <Collapsible title="Công khai lên website" summary="chủ cơ sở tự chọn công khai">
+        <Collapsible title="Mở công khai website" summary="chủ cơ sở tự chọn công khai">
           <PublishCycle cycleId={cycleId} />
         </Collapsible>
       )}

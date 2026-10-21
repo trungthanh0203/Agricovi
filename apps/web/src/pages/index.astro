@@ -1,16 +1,56 @@
 ---
-// Website công khai. CHỈ đọc view/bảng public_* bằng khóa anon (FR-WEB-007, FR-WEB-017).
-// Không bao giờ đọc bảng nội bộ.
+import Base from '../layouts/Base.astro';
 ---
-<html lang="vi">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AgriConnect — Kết nối nông sản</title>
-    <meta name="description" content="Danh bạ cơ sở sản xuất nông nghiệp và sản phẩm." />
-  </head>
-  <body style="font-family: system-ui; max-width: 720px; margin: 2rem auto; padding: 0 1rem;">
-    <h1>AgriConnect</h1>
-    <p>Danh bạ cơ sở sản xuất và sản phẩm nông nghiệp. Khung dự án; nội dung sẽ làm theo backlog E5-S8.</p>
-  </body>
-</html>
+<Base title="AgriConnect — Kết nối nông sản">
+  <section class="hero">
+    <h1>Tìm nơi trồng, sản phẩm và nguồn gốc nông sản</h1>
+    <p>Danh bạ cơ sở sản xuất đã được kiểm duyệt, tình trạng cung ứng cập nhật thường xuyên, và truy xuất nguồn gốc từng mùa vụ.</p>
+    <form class="search" action="/danh-ba/" method="get">
+      <input name="q" placeholder="Tìm cơ sở hoặc sản phẩm: dưa lưới, cà chua…" aria-label="Tìm kiếm" />
+      <button class="btn" type="submit">Tìm</button>
+    </form>
+  </section>
+
+  <h2>Đang có hàng</h2>
+  <div id="avail" class="grid"><p class="muted">Đang tải…</p></div>
+
+  <h2>Cơ sở nổi bật</h2>
+  <div id="featured" class="grid"><p class="muted">Đang tải…</p></div>
+  <p><a href="/danh-ba/">Xem tất cả cơ sở →</a></p>
+
+  <h2>Kiểm tra nguồn gốc</h2>
+  <form class="search" action="/truyxuat/" method="get">
+    <input name="ma" placeholder="Nhập mã vụ in trên bao bì, ví dụ VU-1A2B3C4D" aria-label="Mã vụ" />
+    <button class="btn solid" type="submit">Truy xuất</button>
+  </form>
+</Base>
+
+<script>
+  import { esc, img, loadDirectory, profileCard, supplyPill, type DirRow } from '../lib/db';
+  const avail = document.getElementById('avail')!;
+  const featured = document.getElementById('featured')!;
+  loadDirectory().then(({ rows, snaps, prods }) => {
+    featured.innerHTML = rows.length === 0
+      ? '<p class="empty">Chưa có cơ sở nào được công khai.</p>'
+      : rows.slice(0, 6).map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? [])).join('');
+    const byId = new Map<string, DirRow>(rows.map((r) => [r.profile_id, r]));
+    const items: string[] = [];
+    for (const [pid, list] of prods) {
+      const d = byId.get(pid);
+      if (!d) continue;
+      for (const p of list) {
+        if (p.supply_status !== 'available') continue;
+        const pic = img(p.snapshot.images?.[0]?.src);
+        items.push(`<a class="card" href="/co-so/${encodeURIComponent(d.slug)}">
+          ${pic ? `<img class="cover" src="${pic}" alt="" loading="lazy" />` : '<div class="cover ph">🥬</div>'}
+          <div class="body"><h3>${esc(p.snapshot.name)}</h3>${supplyPill(p.supply_status)}
+          <p class="muted">${esc(d.display_name)} · ${esc(d.province ?? '')}</p>
+          <p class="muted">${esc([p.snapshot.price_note, p.snapshot.min_order && 'tối thiểu ' + p.snapshot.min_order].filter(Boolean).join(' · '))}</p></div></a>`);
+      }
+    }
+    avail.innerHTML = items.length ? items.slice(0, 6).join('') : '<p class="empty">Hiện chưa có sản phẩm nào báo "Đang có hàng".</p>';
+  }).catch((e) => {
+    const m = `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>`;
+    avail.innerHTML = m; featured.innerHTML = '';
+  });
+</script>

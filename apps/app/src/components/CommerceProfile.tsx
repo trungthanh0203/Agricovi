@@ -331,7 +331,7 @@ function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: str
         </div>
         <label>Vụ để người mua xem truy xuất (không bắt buộc)
           <select value={f.cycle_id} onChange={set('cycle_id')}><option value="">— Không liên kết —</option>{cycles.map((c) => <option key={c.id} value={c.id}>{c.name || c.template_name || 'Vụ'}</option>)}</select>
-          <small>Chỉ hiện truy xuất nếu vụ đó đã được bạn bấm "Công khai vụ lên website".</small>
+          <small>Chỉ hiện truy xuất nếu vụ đó đã được bạn bấm "Mở công khai website".</small>
         </label>
         <label className="check"><input type="checkbox" checked={f.include} onChange={(e) => setF({ ...f, include: e.target.checked })} /> Đưa sản phẩm này lên website</label>
         {err && <p className="msg error" role="alert">⚠ {err}</p>}

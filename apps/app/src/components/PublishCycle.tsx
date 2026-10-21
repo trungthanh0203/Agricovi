@@ -58,7 +58,7 @@ export function PublishCycle({ cycleId }: { cycleId: string }) {
       ) : (
         <>
           {st && <p className="muted">Đã ngừng công khai.</p>}
-          <button className="secondary" disabled={busy || !online} onClick={() => publish(false)}>🌐 Công khai vụ lên website</button>
+          <button className="secondary" disabled={busy || !online} onClick={() => publish(false)}>🌐 Mở công khai website</button>
         </>
       )}
     </div>

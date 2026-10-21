@@ -1,0 +1,68 @@
+---
+interface Props { title: string; description?: string }
+const { title, description = 'Danh bạ cơ sở sản xuất nông nghiệp, sản phẩm đang có hàng và truy xuất nguồn gốc mùa vụ.' } = Astro.props;
+---
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#1f7a3d" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="/">🌱 AgriConnect</a>
+      <nav>
+        <a href="/danh-ba/">Danh bạ</a>
+        <a href="/truyxuat/">Truy xuất</a>
+      </nav>
+    </header>
+    <main><slot /></main>
+    <footer>
+      <p>AgriConnect — kết nối người trồng và người mua. Thông tin do từng cơ sở tự khai và được kiểm duyệt trước khi hiển thị.
+        Nhãn "Tự khai báo" nghĩa là chưa được xác minh độc lập.</p>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root { --g: #1f7a3d; --g2: #e8f4ec; --ink: #1c2a22; --muted: #5c6b62; --line: #d9e3dc; --warn: #b45309; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: #f7faf8; line-height: 1.5; }
+  a { color: var(--g); }
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  .top nav { display: flex; gap: 16px; }
+  .brand { font-weight: 700; font-size: 1.15rem; text-decoration: none; color: var(--g); }
+  main { max-width: 1040px; margin: 0 auto; padding: 16px; min-height: 70vh; }
+  footer { max-width: 1040px; margin: 0 auto; padding: 16px; color: var(--muted); font-size: .85rem; }
+  h1 { font-size: 1.6rem; margin: .4em 0; } h2 { font-size: 1.2rem; margin: 1.4em 0 .5em; } h3 { margin: 0 0 .2em; font-size: 1.05rem; }
+  .muted { color: var(--muted); } .tag { margin: 0 0 .3em; font-style: italic; }
+  .hero { background: linear-gradient(135deg, var(--g), #3c9d5d); color: #fff; border-radius: 16px; padding: 28px 20px; margin-bottom: 8px; }
+  .hero h1 { margin-top: 0; } .hero p { margin: .3em 0 1em; opacity: .95; }
+  .search { display: flex; gap: 8px; flex-wrap: wrap; }
+  .search input, .filters input, .filters select { flex: 1 1 200px; padding: 12px; border-radius: 10px; border: 1px solid var(--line); font-size: 1rem; }
+  .btn { background: #fff; color: var(--g); border: 0; border-radius: 10px; padding: 12px 18px; font-weight: 600; font-size: 1rem; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn.solid { background: var(--g); color: #fff; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .card { display: block; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; text-decoration: none; color: inherit; }
+  .card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+  .card .cover { width: 100%; height: 150px; object-fit: cover; display: block; } .card .ph { display: grid; place-items: center; font-size: 2.5rem; background: var(--g2); }
+  .card .body { padding: 12px; } .card .body p { margin: .2em 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .chip { background: var(--g2); color: var(--g); border-radius: 999px; padding: 2px 10px; font-size: .82rem; }
+  .pill { display: inline-block; background: #eef1ef; border-radius: 999px; padding: 2px 10px; font-size: .8rem; color: var(--muted); }
+  .pill.ok { background: #d9f2e1; color: #14632f; } .pill.pri { background: #fff1d6; color: var(--warn); }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+  .panel { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin: 12px 0; }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+  .gallery img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 10px; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin: 8px 0; }
+  .facts div { background: var(--g2); border-radius: 10px; padding: 8px 12px; } .facts b { display: block; font-size: .8rem; color: var(--muted); font-weight: 500; }
+  table { width: 100%; border-collapse: collapse; } td, th { padding: 6px 4px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .err { background: #fdecea; color: #8a1c13; border-radius: 10px; padding: 12px; }
+  .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+  .timeline { list-style: none; padding: 0; margin: 0; } .timeline li { padding: 6px 0 6px 14px; border-left: 3px solid var(--g2); }
+  @media (max-width: 480px) { .top nav { gap: 10px; } }
+</style>
