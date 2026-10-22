@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@agriconnect/admin-kit": "*",
     "@agriconnect/shared": "*",
     "@supabase/supabase-js": "^2.45.4",
     "react": "^18.3.1",

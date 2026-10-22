@@ -4,6 +4,8 @@ Nguồn: `docs/AgriConnect_Thiet_ke_website_ban_2_1.docx` (thiết kế đầy �
 
 Cập nhật 22/10/2026: header có **Tin nông nghiệp | Tin xuất khẩu | Tin hội chợ | Giao thương** (Giá thị trường chuyển vào menu Tin nông nghiệp, không còn là mục riêng).
 
+> **Cập nhật 22/10/2026 (D63):** quản trị website là ứng dụng riêng `apps/webadmin` (Worker `agriconnect-admin`); mọi "màn Admin" ghi trong các lát W1–W8 bên dưới nằm ở đó. Quản trị nền tảng (`apps/admin`) chỉ giữ cơ sở, gói, thanh toán, cấu hình, nhật ký kiểm toán. W1 và W2 đã xong về code; bước "quản trị thống nhất" (D63) làm trước W3.
+
 ## 1. Nguyên tắc triển khai
 
 - **Mỗi lát = một bản dùng được**: migration (nếu có) + test CSDL gọn + giao diện web/admin + mục hướng dẫn thử trong `docs/HUONG_DAN_THU.md`. Commit sau mỗi lát; người dùng tự `db push`, tự deploy.

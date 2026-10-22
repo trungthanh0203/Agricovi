@@ -166,8 +166,23 @@ Biến lúc build (Build variables): `NODE_VERSION` = `22`. Khóa công khai đ�
 
 Biến tùy chọn lúc build: `PUBLIC_APP_URL` (địa chỉ app, để chân trang có nút "Mở ứng dụng").
 
-### Quản trị nội dung website (W1, migration 0042)
+**Ba địa chỉ khác nhau (D63):** ứng dụng và quản trị nền tảng ở Worker `agricovi` (`https://agricovi.onstudy.workers.dev` và `/quan-tri/`); website công khai ở Worker `agriconnect`; quản trị website ở Worker `agriconnect-admin`. Biến `VITE_PUBLIC_SITE_URL` (đã khai trong `apps/app/.env.production`) làm mã QR của vụ và các nút "Xem" trỏ đúng website.
 
-Sau khi `db push` 0042, trang quản trị `/quan-tri/` có nhóm **Website**: Trang tĩnh, Banner trang chủ, Menu và chân trang, Thông tin chung, Người biên tập. Quản trị viên nền tảng luôn đủ quyền; cấp vai trò cho người khác ở **Website → Người biên tập** (người đó phải có tài khoản AgriConnect đăng ký bằng email): *Tổng biên tập* (đăng, gỡ, sửa menu và thông tin chung), *Biên tập viên* (soạn nháp, gửi duyệt), *Kiểm duyệt viên* (xem nháp). Chưa có nội dung trong CSDL thì website dùng nội dung mặc định (xem `packages/shared/src/site.ts`); các trang pháp lý (điều khoản, bảo mật, quy chế, giải quyết tranh chấp) chỉ là khung chờ văn bản chính thức.
+## Quản trị website (apps/webadmin) — Worker riêng (D63)
 
-**Hai địa chỉ khác nhau:** ứng dụng và trang quản trị ở Worker của app (ví dụ `https://agricovi.onstudy.workers.dev/quan-tri/`); website công khai ở Worker `agriconnect` (ví dụ `https://agriconnect.onstudy.workers.dev`) và **không có** trang quản trị riêng (gõ `/quan-tri/` ở website sẽ tự chuyển sang địa chỉ ứng dụng khai trong `PUBLIC_APP_URL` của `apps/web/.env.production`). Ở dự án **app**, đặt biến `VITE_PUBLIC_SITE_URL=https://agriconnect.onstudy.workers.dev` để mã QR của vụ và các nút "Xem" trong trang quản trị trỏ đúng website.
+Từ D63 quản trị nội dung và kiểm duyệt website là **một dự án Cloudflare riêng**, tách khỏi quản trị nền tảng (`/quan-tri/` của app, chỉ còn cơ sở, gói, thanh toán, cấu hình, nhật ký kiểm toán). Tạo thêm một Worker tên `agriconnect-admin`, nối cùng kho GitHub. Ở **Settings → Build** (giống Worker của app):
+
+| Ô | Giá trị |
+|---|---|
+| Root directory | để **trống** (gốc kho) |
+| Build command | `npm ci && npm run build -w @agriconnect/webadmin` |
+| Deploy command | `npx wrangler deploy --config apps/webadmin/wrangler.jsonc` |
+
+Biến lúc build: `NODE_VERSION` = `22`. Khóa công khai Supabase và địa chỉ các dự án đã nằm trong `apps/app/.env.production` (trang quản trị website đọc chung tệp này): `VITE_APP_URL` (app), `VITE_PUBLIC_SITE_URL` (website). Nếu lệnh deploy báo không thấy tệp cấu hình, thử `npx wrangler deploy` hoặc `npx wrangler deploy --config wrangler.jsonc` (tùy Cloudflare chạy lệnh ở thư mục nào).
+
+Sau khi có địa chỉ Worker quản trị (ví dụ `https://agriconnect-admin.onstudy.workers.dev`):
+1. Bỏ dấu `#` và điền `VITE_WEBADMIN_URL=` ở cuối `apps/app/.env.production` (quản trị nền tảng sẽ có liên kết sang quản trị website) rồi deploy lại app.
+2. Bỏ dấu `#` và điền `PUBLIC_WEBADMIN_URL=` ở cuối `apps/web/.env.production` (gõ `/quan-tri` ở website sẽ chuyển sang trang quản trị website) rồi deploy lại website.
+3. Nên bật **Cloudflare Access** cho Worker quản trị (chỉ email của bạn và nhân sự biên tập vào được): lớp bảo vệ thứ hai ngoài quyền kiểm ở CSDL.
+
+Quyền: quản trị viên nền tảng (bảng `platform_admins`) luôn đủ quyền; cấp vai trò biên tập cho người khác ở **Người biên tập** (tổng biên tập, biên tập viên, kiểm duyệt viên; người đó phải có tài khoản AgriConnect đăng ký bằng email). Chưa có nội dung trong CSDL thì website dùng nội dung mặc định (`packages/shared/src/site.ts`); các trang pháp lý chỉ là khung chờ văn bản chính thức.

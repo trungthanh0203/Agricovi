@@ -1,7 +1,7 @@
 ---
-// Trang quản trị nằm ở ỨNG DỤNG (Worker khác), không nằm ở website: chuyển người dùng sang đúng địa chỉ.
-const app = import.meta.env.PUBLIC_APP_URL as string | undefined;
-if (app && /^https:\/\/[^\s]+$/.test(app)) return Astro.redirect(`${app.replace(/\/$/, '')}/quan-tri/`, 302);
+// Trang quản trị website là một Worker riêng (D63): chuyển người dùng sang đúng địa chỉ nếu đã khai PUBLIC_WEBADMIN_URL.
+const admin = import.meta.env.PUBLIC_WEBADMIN_URL as string | undefined;
+if (admin && /^https:\/\/[^\s]+$/.test(admin)) return Astro.redirect(admin, 302);
 Astro.response.status = 404;
 ---
-<p>Trang quản trị nằm ở địa chỉ của ứng dụng, thêm <code>/quan-tri/</code>.</p>
+<p>Trang quản trị website là một trang riêng, không nằm trong website công khai.</p>

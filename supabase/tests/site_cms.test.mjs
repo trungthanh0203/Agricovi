@@ -115,3 +115,18 @@ test('mọi thao tác ghi đều có nhật ký kiểm toán', async () => {
   assert.ok(acts.includes('site_role_grant') && acts.includes('site_page_create'));
   void admin;
 });
+
+test('0044: cài đặt trang chủ, tổng quan website, nhật ký thao tác website', async () => {
+  const { db, admin, chief, editor, nobody } = await setup();
+  await asUser(db, chief, `select site_save_setting('home','{"blocks":[{"id":"giao_thuong","on":false}]}'::jsonb,null)`);
+  assert.equal((await asAnon(db, `select value->'blocks'->0->>'id' b from site_settings where key='home'`)).rows[0].b, 'giao_thuong');
+  assert.match(await expectError(asUser(db, chief, `select site_save_setting('khac','{}'::jsonb,null)`)), /check|INVALID/i);
+  assert.match(await expectError(asUser(db, nobody, `select site_overview()`)), /FORBIDDEN/);
+  const o = (await asUser(db, editor, `select site_overview() o`)).rows[0].o;
+  assert.equal(Number(o.quotes_new), 0);
+  assert.equal(o.profiles_pending, null);                       // biên tập viên không thấy số hồ sơ chờ duyệt
+  assert.equal(Number((await asUser(db, admin, `select site_overview() o`)).rows[0].o.profiles_pending), 0);
+  assert.match(await expectError(asUser(db, editor, `select site_list_audit(10)`)), /FORBIDDEN/);
+  const a = (await asUser(db, chief, `select site_list_audit(50) a`)).rows[0].a;
+  assert.ok(a.length >= 3 && a.every((x) => x.action.startsWith('site_')));
+});

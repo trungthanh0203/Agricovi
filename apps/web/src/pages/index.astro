@@ -29,7 +29,12 @@ const rowFor = (slug: string) => {
   const ids = descendantIds(cats, c.id);
   return { cat: c, items: allProducts.filter((p) => p.categoryId && ids.has(p.categoryId)).slice(0, 6) };
 };
-const rows = ['trai-cay', 'rau-cu-qua', 'vat-nuoi'].map(rowFor).filter((r): r is NonNullable<ReturnType<typeof rowFor>> => r !== null && r.items.length > 0);
+const rowOf: Record<string, NonNullable<ReturnType<typeof rowFor>>> = {};
+for (const [blockId, slug] of [['trai_cay', 'trai-cay'], ['rau_cu_qua', 'rau-cu-qua'], ['vat_nuoi', 'vat-nuoi']] as const) {
+  const r = rowFor(slug);
+  if (r && r.items.length > 0) rowOf[blockId] = r;
+}
+const blocks = chrome.home.filter((b) => b.on);
 const day = today();
 const latest = articles.filter((a) => a.channel !== 'hoi_cho' || !a.end || a.end >= day || a.publishedAt).slice(0, 4);
 let dirError = '';
@@ -89,52 +94,58 @@ try {
     </div>
   </section>
 
-  <div class="sechead"><h2>Giao thương</h2><a href="/giao-thuong/">Xem tất cả</a></div>
-  <div class="panel soon">
-    <b>Sắp ra mắt</b>
-    <p class="muted">Người mua đăng tin cần mua, người bán đăng tin cần bán. Khách có thể xem danh sách; đăng nhập để xem chi tiết và trao đổi.</p>
-  </div>
-
-  <div class="sechead"><h2>Khám phá nhà cung cấp dành cho bạn</h2><a href="/danh-ba/">Xem tất cả</a></div>
-  {dirError && <p class="err">{dirError}</p>}
-  {!dirError && featured.length === 0 && <p class="empty">Chưa có cơ sở nào được công khai.</p>}
-  <div class="grid" set:html={featured.join('')} />
-
-  <div class="sechead"><h2>Đang có hàng</h2><a href="/danh-ba/">Xem thêm</a></div>
-  {!dirError && available.length === 0 && <p class="empty">Hiện chưa có sản phẩm nào báo "Đang có hàng".</p>}
-  <div class="grid" set:html={available.join('')} />
-
-  {rows.map((r) => (
-    <>
-      <div class="sechead"><h2>{r.cat.name}</h2><a href={catHref(r.cat)}>Xem thêm</a></div>
-      <div class="pgrid">{r.items.map((p) => <ProductCard p={p} />)}</div>
-    </>
+  {blocks.map((b) => (
+    b.id === 'giao_thuong' ? (
+      <>
+        <div class="sechead"><h2>Giao thương</h2><a href="/giao-thuong/">Xem tất cả</a></div>
+        <div class="panel soon">
+          <b>Sắp ra mắt</b>
+          <p class="muted">Người mua đăng tin cần mua, người bán đăng tin cần bán. Khách có thể xem danh sách; đăng nhập để xem chi tiết và trao đổi.</p>
+        </div>
+      </>
+    ) : b.id === 'nha_cung_cap' ? (
+      <>
+        <div class="sechead"><h2>Khám phá nhà cung cấp dành cho bạn</h2><a href="/danh-ba/">Xem tất cả</a></div>
+        {dirError && <p class="err">{dirError}</p>}
+        {!dirError && featured.length === 0 && <p class="empty">Chưa có cơ sở nào được công khai.</p>}
+        <div class="grid" set:html={featured.join('')} />
+      </>
+    ) : b.id === 'dang_co_hang' ? (
+      <>
+        <div class="sechead"><h2>Đang có hàng</h2><a href="/danh-ba/">Xem thêm</a></div>
+        {!dirError && available.length === 0 && <p class="empty">Hiện chưa có sản phẩm nào báo "Đang có hàng".</p>}
+        <div class="grid" set:html={available.join('')} />
+      </>
+    ) : rowOf[b.id] ? (
+      <>
+        <div class="sechead"><h2>{rowOf[b.id]!.cat.name}</h2><a href={catHref(rowOf[b.id]!.cat)}>Xem thêm</a></div>
+        <div class="pgrid">{rowOf[b.id]!.items.map((p) => <ProductCard p={p} />)}</div>
+      </>
+    ) : b.id === 'vat_tu' && materials.length > 0 ? (
+      <>
+        <div class="sechead"><h2>Vật tư nông nghiệp</h2><a href="/vat-tu/">Xem thêm</a></div>
+        <div class="pgrid">{materials.map((m) => <MaterialCard m={m} />)}</div>
+      </>
+    ) : b.id === 'tin' && latest.length > 0 ? (
+      <>
+        <div class="sechead"><h2>Sự kiện, hội chợ và tin tức</h2><a href="/tin-nong-nghiep/">Xem tất cả</a></div>
+        <div class="pgrid">{latest.map((a) => <ArticleCard a={a} />)}</div>
+      </>
+    ) : b.id === 'truy_xuat' ? (
+      <>
+        <div class="sechead"><h2>Kiểm tra nguồn gốc</h2></div>
+        <form class="search" action="/truyxuat/" method="get">
+          <input name="ma" placeholder="Nhập mã vụ in trên bao bì, ví dụ VU-1A2B3C4D" aria-label="Mã vụ" />
+          <button class="btn solid" type="submit">Truy xuất</button>
+        </form>
+      </>
+    ) : b.id === 'cta' ? (
+      <section class="cta">
+        <div><h2 style="margin:0">Bạn là nhà vườn hay hợp tác xã?</h2><p style="margin:.3em 0 0">Ghi chép sản xuất, truy xuất nguồn gốc và giới thiệu sản phẩm đến người mua. Dùng thử miễn phí.</p></div>
+        <a class="btn" href="/danh-cho-nguoi-ban">Tìm hiểu thêm</a>
+      </section>
+    ) : null
   ))}
-
-  {materials.length > 0 && (
-    <>
-      <div class="sechead"><h2>Vật tư nông nghiệp</h2><a href="/vat-tu/">Xem thêm</a></div>
-      <div class="pgrid">{materials.map((m) => <MaterialCard m={m} />)}</div>
-    </>
-  )}
-
-  {latest.length > 0 && (
-    <>
-      <div class="sechead"><h2>Sự kiện, hội chợ và tin tức</h2><a href="/tin-nong-nghiep/">Xem tất cả</a></div>
-      <div class="pgrid">{latest.map((a) => <ArticleCard a={a} />)}</div>
-    </>
-  )}
-
-  <div class="sechead"><h2>Kiểm tra nguồn gốc</h2></div>
-  <form class="search" action="/truyxuat/" method="get">
-    <input name="ma" placeholder="Nhập mã vụ in trên bao bì, ví dụ VU-1A2B3C4D" aria-label="Mã vụ" />
-    <button class="btn solid" type="submit">Truy xuất</button>
-  </form>
-
-  <section class="cta">
-    <div><h2 style="margin:0">Bạn là nhà vườn hay hợp tác xã?</h2><p style="margin:.3em 0 0">Ghi chép sản xuất, truy xuất nguồn gốc và giới thiệu sản phẩm đến người mua. Dùng thử miễn phí.</p></div>
-    <a class="btn" href="/danh-cho-nguoi-ban">Tìm hiểu thêm</a>
-  </section>
 </Base>
 
 <style is:global>

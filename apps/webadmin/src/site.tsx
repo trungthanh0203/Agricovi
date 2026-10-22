@@ -3,8 +3,7 @@ import {
   DEFAULT_ABOUT_MENU, DEFAULT_FOOTER_COLS, DEFAULT_HEADER_NAV, DEFAULT_PAGES, DEFAULT_SETTINGS, parseBody, safeHref,
   type SiteFooterCol, type SiteLink, type SiteNavItem, type SiteSettings,
 } from '@agriconnect/shared';
-import { Err, useLoad } from './pages';
-import { clean, fmtDateTime, rpc, supabase } from './supabase';
+import { clean, Err, fmtDateTime, rpc, supabase, useLoad } from '@agriconnect/admin-kit';
 
 /**
  * Quản trị nội dung website (W1, D60–D61): trang tĩnh, banner, menu, thông tin chung, người biên tập.

@@ -227,3 +227,33 @@ export function parseBody(text: string): Block[] {
   }
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// Các khối trang chủ (sau banner): quản trị website đổi thứ tự và ẩn/hiện (cài đặt 'home')
+// ---------------------------------------------------------------------------
+export interface HomeBlock { id: string; on: boolean }
+export const HOME_BLOCK_LABEL: Record<string, string> = {
+  giao_thuong: 'Giao thương',
+  nha_cung_cap: 'Khám phá nhà cung cấp',
+  dang_co_hang: 'Đang có hàng',
+  trai_cay: 'Trái cây',
+  rau_cu_qua: 'Rau củ quả',
+  vat_nuoi: 'Vật nuôi',
+  vat_tu: 'Vật tư nông nghiệp',
+  tin: 'Sự kiện, hội chợ và tin tức',
+  truy_xuat: 'Kiểm tra nguồn gốc',
+  cta: 'Lời mời nhà vườn, hợp tác xã',
+};
+export const DEFAULT_HOME_BLOCKS: HomeBlock[] = Object.keys(HOME_BLOCK_LABEL).map((id) => ({ id, on: true }));
+
+/** Ghép cấu hình đã lưu với danh sách mặc định: giữ thứ tự đã lưu, bỏ mã lạ, thêm khối mới ở cuối */
+export function normalizeHomeBlocks(raw: unknown): HomeBlock[] {
+  const saved = Array.isArray(raw) ? (raw as { id?: unknown; on?: unknown }[]) : [];
+  const seen = new Set<string>();
+  const out: HomeBlock[] = [];
+  for (const b of saved) {
+    if (typeof b.id === 'string' && HOME_BLOCK_LABEL[b.id] && !seen.has(b.id)) { seen.add(b.id); out.push({ id: b.id, on: b.on !== false }); }
+  }
+  for (const d of DEFAULT_HOME_BLOCKS) if (!seen.has(d.id)) out.push({ ...d });
+  return out;
+}

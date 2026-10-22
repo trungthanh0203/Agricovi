@@ -10,6 +10,7 @@
   "scripts": {
     "dev:app": "npm run dev -w @agriconnect/app",
     "dev:admin": "npm run dev -w @agriconnect/admin",
+    "dev:webadmin": "npm run dev -w @agriconnect/webadmin",
     "dev:web": "npm run dev -w @agriconnect/web",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",

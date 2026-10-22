@@ -18,6 +18,17 @@
         "dev:web"
       ],
       "port": 4321
+    },
+    {
+      "name": "webadmin",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "-w",
+        "@agriconnect/webadmin"
+      ],
+      "port": 5182
     }
   ]
 }

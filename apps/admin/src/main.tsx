@@ -1,34 +1,25 @@
 import { StrictMode, useEffect, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Session } from '@supabase/supabase-js';
-import { AuditPage, OrgDetailPage, OrgsPage, OverviewPage, PaymentsPage, PlansPage, PublicCyclesPage, ReviewsPage, SettingsPage } from './pages';
-import { SiteArticlesPage, SiteCategoriesPage, SiteMaterialsPage, SiteQuotesPage } from './site2';
-import { SiteBannersPage, SiteMenusPage, SitePagesPage, SiteRolesPage, SiteSettingsPage } from './site';
-import { clean, rpc, supabase } from './supabase';
-import './styles.css';
+import { clean, rpc, supabase } from '@agriconnect/admin-kit';
+import { AuditPage, OrgDetailPage, OrgsPage, OverviewPage, PaymentsPage, PlansPage, SettingsPage } from './pages';
+import '@agriconnect/admin-kit/src/styles.css';
 
 /**
- * Trang quản trị nền tảng AgriConnect (D53). Chỉ tài khoản có tên trong bảng quản trị viên vào được; quyền kiểm ở CSDL
- * (mọi hàm admin_* đều kiểm lại). Quản trị viên chỉ xem số liệu tổng hợp, không đọc dữ liệu vận hành của nhà vườn.
+ * Trang quản trị NỀN TẢNG AgriConnect (D53): cơ sở, gói, thanh toán, cấu hình, nhật ký kiểm toán. Chỉ tài khoản có tên trong bảng
+ * quản trị viên vào được; quyền kiểm ở CSDL (mọi hàm admin_* đều kiểm lại). Quản trị viên chỉ xem số liệu tổng hợp, không đọc dữ liệu
+ * vận hành của nhà vườn.
+ * Từ D63, nội dung và kiểm duyệt WEBSITE (bài viết, vật tư, banner, duyệt hồ sơ, vụ công khai…) nằm ở trang quản trị website riêng (apps/webadmin).
  */
-const PAGES: { id: string; label: string; icon: string; group: 'platform' | 'site'; adminOnly?: boolean }[] = [
-  { id: 'overview', label: 'Tổng quan', icon: '📊', group: 'platform', adminOnly: true },
-  { id: 'orgs', label: 'Cơ sở', icon: '🏡', group: 'platform', adminOnly: true },
-  { id: 'plans', label: 'Gói và giá', icon: '🏷️', group: 'platform', adminOnly: true },
-  { id: 'payments', label: 'Thanh toán', icon: '💵', group: 'platform', adminOnly: true },
-  { id: 'reviews', label: 'Duyệt hồ sơ', icon: '✅', group: 'platform', adminOnly: true },
-  { id: 'public', label: 'Vụ công khai', icon: '🌐', group: 'platform', adminOnly: true },
-  { id: 'settings', label: 'Cấu hình', icon: '⚙️', group: 'platform', adminOnly: true },
-  { id: 'audit', label: 'Nhật ký kiểm toán', icon: '📜', group: 'platform', adminOnly: true },
-  { id: 'site-articles', label: 'Bài viết và tin hội chợ', icon: '📰', group: 'site' },
-  { id: 'site-materials', label: 'Vật tư nông nghiệp', icon: '🌿', group: 'site' },
-  { id: 'site-categories', label: 'Danh mục sản phẩm', icon: '🗂️', group: 'site' },
-  { id: 'site-quotes', label: 'Yêu cầu báo giá', icon: '💬', group: 'site' },
-  { id: 'site-pages', label: 'Trang tĩnh', icon: '📄', group: 'site' },
-  { id: 'site-banners', label: 'Banner trang chủ', icon: '🖼️', group: 'site' },
-  { id: 'site-menus', label: 'Menu và chân trang', icon: '🧭', group: 'site' },
-  { id: 'site-settings', label: 'Thông tin chung', icon: '🛠️', group: 'site' },
-  { id: 'site-roles', label: 'Người biên tập', icon: '👥', group: 'site', adminOnly: true },
+const WEBADMIN_URL = ((import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {}).VITE_WEBADMIN_URL;
+
+const PAGES: { id: string; label: string; icon: string }[] = [
+  { id: 'overview', label: 'Tổng quan', icon: '📊' },
+  { id: 'orgs', label: 'Cơ sở', icon: '🏡' },
+  { id: 'plans', label: 'Gói và giá', icon: '🏷️' },
+  { id: 'payments', label: 'Thanh toán', icon: '💵' },
+  { id: 'settings', label: 'Cấu hình', icon: '⚙️' },
+  { id: 'audit', label: 'Nhật ký kiểm toán', icon: '📜' },
 ];
 
 function Login() {
@@ -57,30 +48,21 @@ function Login() {
   );
 }
 
-function Admin({ session, roles }: { session: Session; roles: string[] }) {
-  const isAdmin = roles.includes('admin');
-  const visible = PAGES.filter((p) => isAdmin || !p.adminOnly);
-  const [page, setPage] = useState(isAdmin ? 'overview' : 'site-articles');
+function Admin({ session }: { session: Session }) {
+  const [page, setPage] = useState('overview');
   const [orgId, setOrgId] = useState<string | null>(null);
-  const go = (p: string) => { setPage(p); setOrgId(null); };
+  // "reviews" (hồ sơ chờ duyệt) giờ ở quản trị website
+  const go = (p: string) => { if (p === 'reviews' && WEBADMIN_URL) { window.open(WEBADMIN_URL, '_blank', 'noopener'); return; } setPage(p); setOrgId(null); };
   const title = PAGES.find((p) => p.id === page)?.label ?? '';
-  const groups: { id: 'platform' | 'site'; label: string }[] = [{ id: 'platform', label: 'Nền tảng' }, { id: 'site', label: 'Website' }];
   return (
     <div className="shell">
       <aside>
         <h1>AgriConnect<br /><small>Quản trị nền tảng</small></h1>
         <nav>
-          {groups.map((g) => {
-            const items = visible.filter((p) => p.group === g.id);
-            return items.length === 0 ? null : (
-              <div key={g.id}>
-                {isAdmin && <small style={{ display: 'block', margin: '10px 0 4px', textTransform: 'uppercase', letterSpacing: '.04em' }}>{g.label}</small>}
-                {items.map((p) => (
-                  <button key={p.id} className={page === p.id ? 'active' : ''} onClick={() => go(p.id)}><span>{p.icon}</span> {p.label}</button>
-                ))}
-              </div>
-            );
-          })}
+          {PAGES.map((p) => (
+            <button key={p.id} className={page === p.id ? 'active' : ''} onClick={() => go(p.id)}><span>{p.icon}</span> {p.label}</button>
+          ))}
+          {WEBADMIN_URL && <a className="navlink" href={WEBADMIN_URL} target="_blank" rel="noopener noreferrer"><span>🌐</span> Quản trị website ↗</a>}
         </nav>
         <div className="who">
           <a href={import.meta.env.DEV ? 'http://localhost:5180/' : '/'}>← Về ứng dụng</a>
@@ -94,19 +76,8 @@ function Admin({ session, roles }: { session: Session; roles: string[] }) {
         {page === 'orgs' && (orgId ? <OrgDetailPage id={orgId} onBack={() => setOrgId(null)} /> : <OrgsPage onOpen={setOrgId} />)}
         {page === 'plans' && <PlansPage />}
         {page === 'payments' && <PaymentsPage />}
-        {page === 'reviews' && <ReviewsPage />}
-        {page === 'public' && <PublicCyclesPage />}
         {page === 'settings' && <SettingsPage />}
         {page === 'audit' && <AuditPage />}
-        {page === 'site-articles' && <SiteArticlesPage roles={roles} />}
-        {page === 'site-materials' && <SiteMaterialsPage roles={roles} />}
-        {page === 'site-categories' && <SiteCategoriesPage roles={roles} />}
-        {page === 'site-quotes' && <SiteQuotesPage />}
-        {page === 'site-pages' && <SitePagesPage roles={roles} />}
-        {page === 'site-banners' && <SiteBannersPage roles={roles} />}
-        {page === 'site-menus' && <SiteMenusPage roles={roles} />}
-        {page === 'site-settings' && <SiteSettingsPage roles={roles} />}
-        {page === 'site-roles' && isAdmin && <SiteRolesPage />}
       </main>
     </div>
   );
@@ -114,7 +85,7 @@ function Admin({ session, roles }: { session: Session; roles: string[] }) {
 
 function Root() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
-  const [roles, setRoles] = useState<string[] | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -123,28 +94,25 @@ function Root() {
     return () => data.subscription.unsubscribe();
   }, []);
   useEffect(() => {
-    setRoles(null);
-    // Vai trò quản trị/biên tập (migration 0042); nếu chưa chạy migration thì chỉ kiểm quản trị viên như trước
-    if (session) {
-      void rpc<string[]>('get_my_site_roles').then(setRoles).catch(() =>
-        rpc<boolean>('is_platform_admin').then((a) => setRoles(a ? ['admin'] : [])).catch(() => setRoles([])));
-    }
+    setIsAdmin(null);
+    if (session) void rpc<boolean>('is_platform_admin').then(setIsAdmin).catch(() => setIsAdmin(false));
   }, [session]);
 
   if (!supabase) return <main className="login"><h1>Chưa cấu hình</h1><p className="muted">Thiếu biến môi trường VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY khi build (xem docs/DEPLOY_CLOUDFLARE.md).</p></main>;
   if (session === undefined) return <p className="muted" style={{ padding: 24 }}>Đang tải…</p>;
   if (!session) return <Login />;
-  if (roles === null) return <p className="muted" style={{ padding: 24 }}>Đang kiểm tra quyền…</p>;
-  if (roles.length === 0) {
+  if (isAdmin === null) return <p className="muted" style={{ padding: 24 }}>Đang kiểm tra quyền…</p>;
+  if (!isAdmin) {
     return (
       <main className="login">
         <h1>Không có quyền</h1>
-        <p className="msg error">Tài khoản {session.user.email} chưa được cấp quyền quản trị hoặc biên tập.</p>
+        <p className="msg error">Tài khoản {session.user.email} không phải quản trị viên nền tảng.</p>
+        {WEBADMIN_URL && <p>Nếu bạn là biên tập viên website, hãy vào <a href={WEBADMIN_URL}>trang quản trị website</a>.</p>}
         <button onClick={() => void supabase!.auth.signOut()}>Đăng xuất</button>
       </main>
     );
   }
-  return <Admin session={session} roles={roles} />;
+  return <Admin session={session} />;
 }
 
 createRoot(document.getElementById('root')!).render(<StrictMode><Root /></StrictMode>);

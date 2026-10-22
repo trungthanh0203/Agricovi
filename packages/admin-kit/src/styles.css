@@ -54,3 +54,6 @@ tr.off td { opacity: .55; }
 hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
 a { color: var(--info); }
 @media (max-width: 800px) { .shell { grid-template-columns: 1fr; } aside { position: static; height: auto; } .content { padding: 14px; } }
+
+aside nav a.navlink { text-align: left; padding: 10px 12px; border-radius: 8px; color: var(--fg); text-decoration: none; margin-top: 8px; border-top: 1px solid var(--line); }
+aside nav a.navlink:hover { background: color-mix(in srgb, var(--green) 8%, var(--card)); }

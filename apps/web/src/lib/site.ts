@@ -1,6 +1,6 @@
 import {
-  DEFAULT_ABOUT_MENU, DEFAULT_FOOTER_COLS, DEFAULT_HEADER_NAV, DEFAULT_SETTINGS, safeHref,
-  type SiteFooterCol, type SiteLink, type SiteNavItem, type SiteSettings,
+  DEFAULT_ABOUT_MENU, DEFAULT_FOOTER_COLS, DEFAULT_HEADER_NAV, DEFAULT_HOME_BLOCKS, DEFAULT_SETTINGS, normalizeHomeBlocks, safeHref,
+  type HomeBlock, type SiteFooterCol, type SiteLink, type SiteNavItem, type SiteSettings,
 } from '@agriconnect/shared';
 import { sb, img } from './db';
 
@@ -10,7 +10,7 @@ import { sb, img } from './db';
  * Lưu đệm trong bộ nhớ của Worker ~60 giây để không gọi CSDL ở mỗi lượt xem.
  */
 export interface Banner { id: string; slot: 'hero' | 'side'; title: string; subtitle: string; image: string; link: string }
-export interface SiteChrome { settings: SiteSettings; header: SiteNavItem[]; about: SiteLink[]; footer: SiteFooterCol[]; banners: Banner[] }
+export interface SiteChrome { settings: SiteSettings; header: SiteNavItem[]; about: SiteLink[]; footer: SiteFooterCol[]; banners: Banner[]; home: HomeBlock[] }
 
 const TTL_MS = 60_000;
 let cached: { at: number; value: SiteChrome } | null = null;
@@ -66,7 +66,7 @@ function timeout<T>(p: PromiseLike<T>, ms = 2500): Promise<T> {
 
 export async function loadChrome(): Promise<SiteChrome> {
   if (cached && Date.now() - cached.at < TTL_MS) return cached.value;
-  const value: SiteChrome = { settings: DEFAULT_SETTINGS, header: DEFAULT_HEADER_NAV, about: DEFAULT_ABOUT_MENU, footer: DEFAULT_FOOTER_COLS, banners: [] };
+  const value: SiteChrome = { settings: DEFAULT_SETTINGS, header: DEFAULT_HEADER_NAV, about: DEFAULT_ABOUT_MENU, footer: DEFAULT_FOOTER_COLS, banners: [], home: DEFAULT_HOME_BLOCKS };
   if (sb) {
     try {
       const [m, s, b] = await timeout(Promise.all([
@@ -81,7 +81,12 @@ export async function loadChrome(): Promise<SiteChrome> {
           else if (r.key === 'footer_cols') { const n = cleanFooter(r.items); if (n.length) value.footer = n; }
         }
       }
-      if (!s.error) value.settings = cleanSettings((s.data ?? []) as { key: string; value: unknown }[]);
+      if (!s.error) {
+        const rows = (s.data ?? []) as { key: string; value: unknown }[];
+        value.settings = cleanSettings(rows.filter((r) => r.key !== 'home'));
+        const home = rows.find((r) => r.key === 'home');
+        if (home) value.home = normalizeHomeBlocks((home.value as { blocks?: unknown } | null)?.blocks);
+      }
       if (!b.error) {
         value.banners = ((b.data ?? []) as { id: string; slot: string; title: string; subtitle: string | null; image: string | null; link: string | null }[])
           .filter((x) => x.slot === 'hero' || x.slot === 'side')

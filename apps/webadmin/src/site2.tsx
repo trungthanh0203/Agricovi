@@ -1,8 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { DEFAULT_HEADER_NAV, parseBody } from '@agriconnect/shared';
-import { Err, useLoad } from './pages';
 import { canPublish, compressImage, locked, SITE_URL, SiteBadge, STATUS_LABEL, statusOptions } from './site';
-import { clean, downloadCsv, fmtDateTime, rpc, supabase } from './supabase';
+import { clean, downloadCsv, Err, fmtDateTime, rpc, supabase, useLoad } from '@agriconnect/admin-kit';
 
 /**
  * W2 (D60–D61): danh mục sản phẩm, vật tư do quản trị nhập (nhập tay hoặc từ CSV), bài viết/tin xuất khẩu/tin hội chợ, hàng đợi yêu cầu báo giá.
