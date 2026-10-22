@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { COMING_SOON_SECTIONS, DEFAULT_PAGES, parseBody, type Block } from '@agriconnect/shared';
 import { loadPage } from '../lib/site';
+import { localizePage } from '../lib/translations';
 
 // Trang tĩnh do quản trị viên soạn (CMS) hoặc nội dung mặc định; mục sắp ra mắt hiện thông báo thay vì lỗi 404.
 const parts = (Astro.params.slug ?? '').split('/').filter(Boolean);
@@ -11,6 +12,7 @@ let soon = '';
 if (parts.length === 1 && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(first)) {
   page = (await loadPage(first)) ?? DEFAULT_PAGES[first] ?? null;
 }
+if (page) page = localizePage(page, first, Astro.locals.tr);
 if (!page && COMING_SOON_SECTIONS[first]) soon = COMING_SOON_SECTIONS[first]!;
 if (!page && !soon) Astro.response.status = 404;
 const blocks: Block[] = page ? parseBody(page.body) : [];

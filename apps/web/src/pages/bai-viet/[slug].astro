@@ -2,8 +2,10 @@
 import Base from '../../layouts/Base.astro';
 import { parseBody } from '@agriconnect/shared';
 import { fmtDay, loadArticle } from '../../lib/catalog';
+import { localizeArticle } from '../../lib/translations';
 
-const a = await loadArticle(Astro.params.slug ?? '');
+const a0 = await loadArticle(Astro.params.slug ?? '');
+const a = a0 ? localizeArticle(a0, Astro.locals.tr) : null;
 if (!a) Astro.response.status = 404;
 const CH = { nong_nghiep: ['Tin nông nghiệp', '/tin-nong-nghiep/'], xuat_khau: ['Tin xuất khẩu', '/tin-xuat-khau/'], hoi_cho: ['Tin hội chợ', '/tin-hoi-cho/'] } as const;
 const ch = a ? CH[a.channel] : null;

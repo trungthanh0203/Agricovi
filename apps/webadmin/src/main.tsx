@@ -6,6 +6,7 @@ import { SiteAuditPage, SiteHomePage, SiteOverviewPage, SiteUsersPage } from './
 import { SiteShopMaterialsPage, SiteShopsPage } from './shops';
 import { SiteReportsPage, SiteTradePage } from './trade';
 import { SiteReviewsPage } from './reviews2';
+import { SiteTranslationsPage } from './translations';
 import { PublicCyclesPage, ReviewsPage } from './reviews';
 import { SiteBannersPage, SiteMenusPage, SitePagesPage, SiteRolesPage, SiteSettingsPage } from './site';
 import { SiteArticlesPage, SiteCategoriesPage, SiteMaterialsPage, SiteQuotesPage } from './site2';
@@ -29,6 +30,7 @@ const PAGES: PageDef[] = [
   { id: 'site-home', label: 'Các khối trang chủ', icon: '🏠', group: 'Nội dung' },
   { id: 'site-menus', label: 'Menu và chân trang', icon: '🧭', group: 'Nội dung' },
   { id: 'site-settings', label: 'Thông tin chung', icon: '🛠️', group: 'Nội dung' },
+  { id: 'site-translations', label: 'Bản dịch tiếng Anh', icon: '🌐', group: 'Nội dung' },
   { id: 'site-categories', label: 'Danh mục sản phẩm', icon: '🗂️', group: 'Sản phẩm' },
   { id: 'site-materials', label: 'Vật tư nông nghiệp', icon: '🌿', group: 'Sản phẩm' },
   { id: 'site-quotes', label: 'Yêu cầu báo giá', icon: '💬', group: 'Tiếp nhận và kiểm duyệt' },
@@ -108,6 +110,7 @@ function Admin({ session, roles }: { session: Session; roles: string[] }) {
         {page === 'site-home' && <SiteHomePage roles={roles} />}
         {page === 'site-menus' && <SiteMenusPage roles={roles} />}
         {page === 'site-settings' && <SiteSettingsPage roles={roles} />}
+        {page === 'site-translations' && <SiteTranslationsPage />}
         {page === 'site-categories' && <SiteCategoriesPage roles={roles} />}
         {page === 'site-materials' && <SiteMaterialsPage roles={roles} />}
         {page === 'site-quotes' && <SiteQuotesPage />}

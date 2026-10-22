@@ -6,7 +6,7 @@ import Base from '../layouts/Base.astro';
 </Base>
 
 <script>
-  import { BADGE_LABEL, BADGE_LEVEL, CERT_LABEL, esc, fmtDate, img, link, place, sb, supplyPill, CYCLE_STATUS, type ProductRow, type ProfileSnap } from '../lib/db';
+  import { BADGE_LABEL, BADGE_LEVEL, CERT_LABEL, withImageUrls, esc, fmtDate, img, link, place, sb, supplyPill, CYCLE_STATUS, type ProductRow, type ProfileSnap } from '../lib/db';
   const app = document.getElementById('app')!;
   // Địa chỉ dạng /co-so/<slug>; cũng nhận ?s=<slug>
   const slug = new URLSearchParams(location.search).get('s') ?? decodeURIComponent(location.pathname.split('/').filter(Boolean)[1] ?? '');
@@ -14,13 +14,13 @@ import Base from '../layouts/Base.astro';
   async function main() {
     if (!sb) throw new Error('Website chưa được cấu hình kết nối dữ liệu.');
     if (!slug) { app.innerHTML = '<p class="empty">Chưa chọn cơ sở. <a href="/danh-ba/">Xem danh bạ</a></p>'; return; }
-    const { data: pr, error } = await sb.from('public_profiles').select('profile_id, organization_id, snapshot, published_at').eq('slug', slug).eq('is_visible', true).maybeSingle();
+    const { data: pr, error } = await sb.from('public_profiles_lite').select('profile_id, organization_id, snapshot, published_at').eq('slug', slug).maybeSingle();
     if (error) throw new Error(error.message);
     if (!pr) { app.innerHTML = '<p class="empty">Không tìm thấy cơ sở này, hoặc hồ sơ đang được tạm ẩn. <a href="/danh-ba/">Xem danh bạ</a></p>'; return; }
-    const s = pr.snapshot as ProfileSnap;
+    const s = withImageUrls(pr.snapshot as ProfileSnap, 'cs', pr.profile_id);
     document.title = `${s.display_name} — AgriConnect`;
     const [pp, cy, rv, rt, bd] = await Promise.all([
-      sb.from('public_products').select('listing_id, profile_id, supply_status, supply_updated_on, snapshot').eq('profile_id', pr.profile_id).eq('is_visible', true),
+      sb.from('public_products_lite').select('listing_id, profile_id, supply_status, supply_updated_on, snapshot').eq('profile_id', pr.profile_id),
       sb.from('public_cycles').select('code, snapshot, published_at').eq('organization_id', pr.organization_id).eq('is_visible', true).order('published_at', { ascending: false }).limit(12),
       sb.from('public_reviews').select('stars, comment, reply, created_at, buyer_label').eq('profile_id', pr.profile_id).order('created_at', { ascending: false }).limit(10),
       sb.from('public_supplier_ratings').select('avg_stars, review_count').eq('profile_id', pr.profile_id).maybeSingle(),
@@ -30,7 +30,7 @@ import Base from '../layouts/Base.astro';
     const reviews = (rv.data ?? []) as { stars: number; comment: string | null; reply: string | null; created_at: string; buyer_label: string }[];
     const rating = rt.data as { avg_stars: number | string; review_count: number } | null;
     const starsOf = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
-    const prods = (pp.data ?? []) as ProductRow[];
+    const prods = ((pp.data ?? []) as ProductRow[]).map((r) => ({ ...r, snapshot: withImageUrls(r.snapshot, 'sp', r.listing_id) }));
     const cycles = (cy.data ?? []) as { code: string; snapshot: { name?: string; crop?: string; status?: string; start_date?: string }; published_at: string }[];
 
     const gallery = (s.images ?? []).map((i) => ({ src: img(i.src), cap: i.caption })).filter((i) => i.src);

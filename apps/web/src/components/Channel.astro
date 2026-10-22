@@ -3,6 +3,7 @@ import { DEFAULT_HEADER_NAV } from '@agriconnect/shared';
 import Base from '../layouts/Base.astro';
 import ArticleCard from './ArticleCard.astro';
 import { loadArticles, today, type Article } from '../lib/catalog';
+import { localizeArticle } from '../lib/translations';
 
 interface Props { channel: Article['channel']; section?: string }
 const { channel, section } = Astro.props;
@@ -16,7 +17,7 @@ const current = section ? sections.find((s) => s.slug === section) : undefined;
 if (section && !current) Astro.response.status = 404;
 
 const day = today();
-const all = (await loadArticles()).filter((a) => a.channel === channel);
+const all = (await loadArticles()).filter((a) => a.channel === channel).map((a) => localizeArticle(a, Astro.locals.tr));
 const isEnded = (a: Article) => (a.end || a.start) < day;
 const byStart = (x: Article, y: Article) => (x.start || '9999').localeCompare(y.start || '9999');
 let blocks: { heading?: string; items: Article[] }[] = [];

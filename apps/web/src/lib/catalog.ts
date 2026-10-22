@@ -108,11 +108,11 @@ export const loadShops = (): Promise<Shop[]> => cached('shops', async () => {
   if (error) return [];
   return (data ?? []).map((r) => ({ id: r.id as string, slug: r.slug as string, name: r.name as string, description: (r.description as string | null) ?? '', province: r.province as string, district: (r.district as string | null) ?? '', verified: Boolean(r.license_verified) }));
 }, [] as Shop[]);
-const MAT_COLS = 'id, slug, name, brand, summary, ingredients, usage, safety, unit, price_from, price_note, distributor, image, category_id, shop_id';
+const MAT_COLS = 'id, slug, name, brand, summary, ingredients, usage, safety, unit, price_from, price_note, distributor, has_image, category_id, shop_id';
 function toMaterial(r: Record<string, unknown>): Material {
   const t = (k: string) => (typeof r[k] === 'string' ? (r[k] as string) : '');
   return { id: t('id'), slug: t('slug'), name: t('name'), brand: t('brand'), summary: t('summary'), ingredients: t('ingredients'), usage: t('usage'), safety: t('safety'), unit: t('unit'),
-    priceFrom: r.price_from == null ? null : Number(r.price_from), priceNote: t('price_note'), distributor: t('distributor'), image: img(r.image), categoryId: (r.category_id as string | null) ?? null, shopId: (r.shop_id as string | null) ?? null, shopSlug: '', shopName: '' };
+    priceFrom: r.price_from == null ? null : Number(r.price_from), priceNote: t('price_note'), distributor: t('distributor'), image: r.has_image ? `/anh/vt/${t('id')}` : '', categoryId: (r.category_id as string | null) ?? null, shopId: (r.shop_id as string | null) ?? null, shopSlug: '', shopName: '' };
 }
 export const loadMaterials = (): Promise<Material[]> => cached('materials', async () => {
   if (!sb) return [];
@@ -131,10 +131,10 @@ export interface Article {
   id: string; channel: 'nong_nghiep' | 'xuat_khau' | 'hoi_cho'; section: string; slug: string; title: string; summary: string; body: string; image: string;
   sourceName: string; sourceUrl: string; start: string; end: string; place: string; organizer: string; publishedAt: string;
 }
-const ART_COLS = 'id, channel, section, slug, title, summary, body, image, source_name, source_url, event_start, event_end, event_place, event_organizer, published_at';
+const ART_COLS = 'id, channel, section, slug, title, summary, body, has_image, source_name, source_url, event_start, event_end, event_place, event_organizer, published_at';
 export function toArticle(r: Record<string, unknown>): Article {
   const t = (k: string) => (typeof r[k] === 'string' ? (r[k] as string) : '');
-  return { id: t('id'), channel: r.channel as Article['channel'], section: t('section'), slug: t('slug'), title: t('title'), summary: t('summary'), body: t('body'), image: img(r.image),
+  return { id: t('id'), channel: r.channel as Article['channel'], section: t('section'), slug: t('slug'), title: t('title'), summary: t('summary'), body: t('body'), image: r.has_image ? `/anh/bv/${t('id')}` : '',
     sourceName: t('source_name'), sourceUrl: safeHref(t('source_url')), start: t('event_start'), end: t('event_end'), place: t('event_place'), organizer: t('event_organizer'), publishedAt: t('published_at') };
 }
 /** Bài đã đăng (không kèm thân bài để danh sách nhẹ), mới nhất trước */

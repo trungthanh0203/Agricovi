@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
 import { DEFAULT_PAGES } from '@agriconnect/shared';
+import { localizePath } from '@agriconnect/shared/src/i18n';
 import { loadArticles, loadCategories, loadMaterials, loadProducts, loadShops } from '../lib/catalog';
 import { loadDirectory, sb } from '../lib/db';
 
-// Sơ đồ trang cho công cụ tìm kiếm: trang tĩnh, danh mục, sản phẩm, vật tư, bài viết, nhà cung cấp.
+// Sơ đồ trang cho công cụ tìm kiếm: trang tĩnh, danh mục, sản phẩm, vật tư, bài viết, nhà cung cấp; mỗi trang có cả bản tiếng Việt và tiếng Anh (/en/…).
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 export const GET: APIRoute = async ({ url }) => {
@@ -22,6 +23,12 @@ export const GET: APIRoute = async ({ url }) => {
     for (const sh of await loadShops()) paths.add(`/gian-hang-vat-tu/${sh.slug}`);
     for (const d of (await loadDirectory()).rows) paths.add(`/co-so/${encodeURIComponent(d.slug)}`);
   } catch { /* trả phần đã có */ }
-  const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...paths].map((p) => `  <url><loc>${esc(origin + p)}</loc></url>`).join('\n')}\n</urlset>\n`;
+  const entries = [...paths].map((p) => {
+    const vi = esc(origin + p);
+    const en = esc(origin + localizePath(p, 'en'));
+    const alt = `<xhtml:link rel="alternate" hreflang="vi" href="${vi}"/><xhtml:link rel="alternate" hreflang="en" href="${en}"/>`;
+    return `  <url><loc>${vi}</loc>${alt}</url>\n  <url><loc>${en}</loc>${alt}</url>`;
+  });
+  const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries.join('\n')}\n</urlset>\n`;
   return new Response(body, { headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=0, s-maxage=600' } });
 };

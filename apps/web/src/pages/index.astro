@@ -10,6 +10,7 @@ import { loadTradePosts } from '../lib/trade';
 import { catHref, catTree, descendantIds, loadArticles, loadCategories, loadMaterials, loadProducts, loadShops, today } from '../lib/catalog';
 import { esc, img, loadDirectory, profileCard, supplyPill, type DirRow } from '../lib/db';
 import { loadChrome } from '../lib/site';
+import { localizeArticle } from '../lib/translations';
 
 const chrome = await loadChrome();
 const brand = chrome.settings.brand.name ?? 'AgriConnect';
@@ -25,7 +26,7 @@ const cats = await loadCategories();
 const { top: topCats } = catTree(cats);
 const allProducts = await loadProducts();
 const materials = (await loadMaterials()).slice(0, 4);
-const articles = await loadArticles();
+const articles = (await loadArticles()).map((a) => localizeArticle(a, Astro.locals.tr));
 const rowFor = (slug: string) => {
   const c = cats.find((x) => x.slug === slug);
   if (!c) return null;

@@ -12,7 +12,12 @@ const ENT: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"
 /** Mọi chữ do người dùng nhập phải qua hàm này trước khi đưa vào HTML */
 export const esc = (s: unknown): string => String(s ?? '').replace(/[&<>"']/g, (c) => ENT[c]!);
 /** Chỉ nhận ảnh nhúng dạng data:image */
-export const img = (s: unknown): string => (typeof s === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(s) ? s : '');
+export const img = (s: unknown): string => (typeof s === 'string' && (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(s) || /^\/anh\/(sp|cs|vt|bv|bn)\/[0-9a-f-]{36}(\/\d)?$/.test(s)) ? s : '');
+/** Bản "nhẹ" của hồ sơ/sản phẩm (view *_lite) chỉ có chú thích + cờ ok; đổi thành đường dẫn ảnh /anh/<loại>/<mã>/<thứ tự> */
+export function withImageUrls<T extends { images?: { src?: string; ok?: boolean; caption?: string }[] }>(snap: T, kind: 'sp' | 'cs', id: string): T {
+  const images = (snap.images ?? []).map((i, n) => (i.ok ? { src: `/anh/${kind}/${id}/${n}`, caption: i.caption } : null)).filter((x): x is { src: string; caption: string | undefined } => x !== null);
+  return { ...snap, images } as T;
+}
 export const link = (s: unknown): string => (typeof s === 'string' && /^https?:\/\/[^\s"'<>]+$/i.test(s) ? s : '');
 export const fmtDate = (d: string | null | undefined): string => (d ? new Date(d).toLocaleDateString('vi-VN') : '—');
 
@@ -28,7 +33,7 @@ export interface ProfileSnap {
   display_name: string; tagline?: string; description?: string; province?: string; district?: string; commune?: string;
   established_year?: number; total_area?: number; area_unit?: string; practices?: string; capacity_note?: string;
   contact?: { phone?: string; email?: string; zalo?: string; website?: string; facebook?: string };
-  images?: { src: string; caption?: string }[];
+  images?: { src: string; ok?: boolean; caption?: string }[];
   certifications?: { name: string; issuer?: string; status: string; number?: string; expires?: string }[];
 }
 export interface ProductRow {
@@ -78,13 +83,13 @@ export async function loadDirectory(): Promise<{ rows: DirRow[]; snaps: Map<stri
   const badges = new Map<string, Badge>();
   if (ids.length > 0) {
     const [p, q, b] = await Promise.all([
-      sb.from('public_profiles').select('profile_id, snapshot').in('profile_id', ids),
-      sb.from('public_products').select('listing_id, profile_id, supply_status, supply_updated_on, snapshot').in('profile_id', ids).eq('is_visible', true),
+      sb.from('public_profiles_lite').select('profile_id, snapshot').in('profile_id', ids),
+      sb.from('public_products_lite').select('listing_id, profile_id, supply_status, supply_updated_on, snapshot').in('profile_id', ids),
       sb.from('public_profile_badges').select('profile_id, level, badges').in('profile_id', ids),
     ]);
     for (const r of (b.data ?? []) as { profile_id: string; level: number; badges: string[] }[]) badges.set(r.profile_id, { level: r.level, badges: r.badges });
-    for (const r of (p.data ?? []) as { profile_id: string; snapshot: ProfileSnap }[]) snaps.set(r.profile_id, r.snapshot);
-    for (const r of (q.data ?? []) as ProductRow[]) { const a = prods.get(r.profile_id) ?? []; a.push(r); prods.set(r.profile_id, a); }
+    for (const r of (p.data ?? []) as { profile_id: string; snapshot: ProfileSnap }[]) snaps.set(r.profile_id, withImageUrls(r.snapshot, 'cs', r.profile_id));
+    for (const r of (q.data ?? []) as ProductRow[]) { r.snapshot = withImageUrls(r.snapshot, 'sp', r.listing_id); const a = prods.get(r.profile_id) ?? []; a.push(r); prods.set(r.profile_id, a); }
   }
   return { rows: list, snaps, prods, badges };
 }

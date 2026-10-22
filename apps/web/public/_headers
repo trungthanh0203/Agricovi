@@ -1,0 +1,8 @@
+# Tiêu đề bảo mật cho tệp tĩnh (trang quản trị website ở /admin/). Trang do Astro dựng được gắn tiêu đề tương tự ở src/middleware.ts.
+/admin/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Cross-Origin-Opener-Policy: same-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'

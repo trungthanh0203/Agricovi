@@ -15,7 +15,7 @@ import { TRADE_TAGS, TRADE_UNITS } from '@agriconnect/shared';
         <label>Tên sản phẩm cụ thể (không bắt buộc)<input name="product" maxlength="60" placeholder="Ví dụ: Dưa lưới Taki" /></label>
         <div class="formgrid">
           <label>Số lượng<input name="qty" inputmode="decimal" required /></label>
-          <label>Đơn vị<select name="unit" required>{TRADE_UNITS.map((u) => <option>{u}</option>)}</select></label>
+          <label>Đơn vị<select name="unit" required>{TRADE_UNITS.map((u) => <option value={u}>{u}</option>)}</select></label>
           <label>Giá thấp nhất (đồng/đơn vị, không bắt buộc)<input name="pmin" inputmode="numeric" /></label>
           <label>Giá cao nhất (không bắt buộc)<input name="pmax" inputmode="numeric" /></label>
           <label>Tỉnh/thành<input name="province" required maxlength="60" placeholder="Ví dụ: Long An" /></label>

@@ -30,6 +30,7 @@ Cả hai dùng chung tài khoản Supabase (cùng email, mật khẩu) nhưng **
 | | **Các khối trang chủ** | Đổi thứ tự và ẩn/hiện các khối dưới banner (Giao thương, Nhà cung cấp, Trái cây…) |
 | | Menu và chân trang | Thanh chuyên mục, menu "Tìm hiểu về", các cột chân trang |
 | | Thông tin chung | Tên thương hiệu, hotline, email, địa chỉ, đơn vị vận hành, mạng xã hội, thông tin đăng ký thương mại điện tử |
+| | **Bản dịch tiếng Anh** *(biên tập viên, tổng biên tập)* | Website có bản tiếng Anh ở `/en/` (nút VI/EN ở đầu trang). Giao diện cố định đã dịch sẵn. Ở đây dịch phần **bạn soạn**: tab *Cụm từ chung* (menu, banner, tên danh mục, khẩu hiệu — mục "Chữ còn thiếu" tự liệt kê chữ chưa có bản dịch, bạn chỉ việc gõ tiếng Anh rồi Lưu), tab *Trang tĩnh* và *Bài viết* (dịch tiêu đề, mô tả/tóm tắt, nội dung). Chưa dịch thì bản EN hiện tiếng Việt. Nội dung người dùng tự nhập (tên sản phẩm, tin đăng…) không được dịch tự động. Thay đổi hiện sau khoảng 1 phút |
 | Sản phẩm | Danh mục sản phẩm | Cây danh mục (không xóa, chỉ tắt "Đang dùng") |
 | | Vật tư nông nghiệp | Nhập tay hoặc nhập từ **CSV** (có tệp mẫu; mọi dòng vào dạng Nháp) |
 | Tiếp nhận và kiểm duyệt | Yêu cầu báo giá | Hàng đợi khách gửi từ website: liên hệ lại, chuyển cho nhà cung cấp, bấm Đã xử lý hoặc Rác |

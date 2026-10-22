@@ -1,0 +1,11 @@
+# Tiêu đề bảo mật cho ứng dụng (D71). Chưa đặt Content-Security-Policy vì ứng dụng dùng service worker và sẽ thêm camera/giọng nói ở Giai đoạn 2; nên cân nhắc khi đó.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Cross-Origin-Opener-Policy: same-origin
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/sw.js
+  Cache-Control: no-cache

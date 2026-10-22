@@ -35,7 +35,7 @@ import Base from '../layouts/Base.astro';
     if (!data) { app.innerHTML = `<h1>Truy xuất nguồn gốc</h1><p class="err">Không có thông tin công khai cho mã ${esc(code)}. Cơ sở có thể chưa mở công khai hoặc đã ngừng công khai vụ này.</p>${form}`; return; }
     const s = data.snapshot as Snap;
     document.title = `${s.name ?? code} — Truy xuất nguồn gốc`;
-    const { data: prof } = await sb.from('public_profiles').select('slug, snapshot').eq('organization_id', data.organization_id).eq('is_visible', true).maybeSingle();
+    const { data: prof } = await sb.from('public_profiles_lite').select('slug, snapshot').eq('organization_id', data.organization_id).maybeSingle();
     const size = s.area_size != null ? `${Number(s.area_size).toLocaleString('vi-VN')} ${s.area_unit === 'ha' ? 'ha' : 'm²'}` : '';
     const facts: [string, string][] = [
       ['Sản phẩm', s.crop ?? '—'],

@@ -2,7 +2,7 @@ import {
   DEFAULT_ABOUT_MENU, DEFAULT_FOOTER_COLS, DEFAULT_HEADER_NAV, DEFAULT_HOME_BLOCKS, DEFAULT_SETTINGS, normalizeHomeBlocks, safeHref,
   type HomeBlock, type SiteFooterCol, type SiteLink, type SiteNavItem, type SiteSettings,
 } from '@agriconnect/shared';
-import { sb, img } from './db';
+import { sb } from './db';
 
 /**
  * Nội dung "khung" của website (menu, chân trang, cài đặt, banner) lấy từ CMS (migration 0042).
@@ -72,7 +72,7 @@ export async function loadChrome(): Promise<SiteChrome> {
       const [m, s, b] = await timeout(Promise.all([
         sb.from('site_menus').select('key, items'),
         sb.from('site_settings').select('key, value'),
-        sb.from('site_banners').select('id, slot, title, subtitle, image, link, sort_order').order('sort_order').order('created_at', { ascending: false }).limit(20),
+        sb.from('site_banners').select('id, slot, title, subtitle, has_image, link, sort_order').order('sort_order').order('created_at', { ascending: false }).limit(20),
       ]));
       if (!m.error) {
         for (const r of (m.data ?? []) as { key: string; items: unknown }[]) {
@@ -88,9 +88,9 @@ export async function loadChrome(): Promise<SiteChrome> {
         if (home) value.home = normalizeHomeBlocks((home.value as { blocks?: unknown } | null)?.blocks);
       }
       if (!b.error) {
-        value.banners = ((b.data ?? []) as { id: string; slot: string; title: string; subtitle: string | null; image: string | null; link: string | null }[])
+        value.banners = ((b.data ?? []) as { id: string; slot: string; title: string; subtitle: string | null; has_image: boolean; link: string | null }[])
           .filter((x) => x.slot === 'hero' || x.slot === 'side')
-          .map((x) => ({ id: x.id, slot: x.slot as 'hero' | 'side', title: x.title, subtitle: x.subtitle ?? '', image: img(x.image), link: safeHref(x.link) }));
+          .map((x) => ({ id: x.id, slot: x.slot as 'hero' | 'side', title: x.title, subtitle: x.subtitle ?? '', image: x.has_image ? `/anh/bn/${x.id}` : '', link: safeHref(x.link) }));
       }
     } catch {
       // giữ mặc định; không lưu đệm lâu khi lỗi

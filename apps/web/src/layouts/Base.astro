@@ -10,7 +10,11 @@ const chrome = await loadChrome();
 const { top: topCats, kids: subCats } = catTree(await loadCategories());
 const { settings, header, about, footer } = chrome;
 const brand = settings.brand.name ?? 'AgriConnect';
-const canonical = new URL(Astro.url.pathname, Astro.url.origin).toString();
+// Song ngữ (middleware): /en/… là bản tiếng Anh của cùng trang
+const lang: 'vi' | 'en' = Astro.locals.lang ?? 'vi';
+const pathVi = Astro.locals.pathVi ?? Astro.url.pathname;
+const withLang = (l: 'vi' | 'en') => new URL((l === 'en' ? (pathVi === '/' ? '/en/' : '/en' + pathVi) : pathVi) + Astro.url.search, Astro.url.origin).toString();
+const canonical = withLang(lang).replace(/\?.*$/, '');
 const appUrl = import.meta.env.PUBLIC_APP_URL as string | undefined;
 const year = new Date().getFullYear();
 const social = Object.entries({ Facebook: settings.social.facebook, 'Zalo OA': settings.social.zalo, YouTube: settings.social.youtube, TikTok: settings.social.tiktok })
@@ -18,9 +22,10 @@ const social = Object.entries({ Facebook: settings.social.facebook, 'Zalo OA': s
 
 // Trang công khai không chứa dữ liệu riêng của người dùng nên được phép lưu đệm ngắn ở biên Cloudflare
 if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
+else Astro.response.headers.set('Cache-Control', 'private, no-store');
 ---
 <!doctype html>
-<html lang="vi">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -33,8 +38,15 @@ if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-max
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:locale" content="vi_VN" />
-    {noindex && <meta name="robots" content="noindex" />}
+    <meta property="og:locale" content={lang === 'en' ? 'en_US' : 'vi_VN'} />
+    {noindex ? <meta name="robots" content="noindex" /> : (
+      <>
+        <link rel="alternate" hreflang="vi" href={withLang('vi').replace(/\?.*$/, '')} />
+        <link rel="alternate" hreflang="en" href={withLang('en').replace(/\?.*$/, '')} />
+        <link rel="alternate" hreflang="x-default" href={withLang('vi').replace(/\?.*$/, '')} />
+      </>
+    )}
+    {lang === 'vi' && <script is:inline set:html={"try{var p=location.pathname;if(localStorage.getItem('lang')==='en'&&p!=='/en'&&p.indexOf('/en/')!==0&&p.indexOf('/admin')!==0&&p.indexOf('/anh/')!==0){location.replace('/en'+p+location.search+location.hash)}}catch(e){}"} />}
   </head>
   <body>
     <header class="site-head">
@@ -48,6 +60,7 @@ if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-max
           <a class="yl" href="/danh-cho-nguoi-ban">Dành cho người bán</a>
           <a class="yl" href="/danh-cho-nguoi-mua">Dành cho người mua</a>
         </nav>
+        <div class="langsw" role="group" aria-label="Language / Ngôn ngữ"><a href={withLang('vi')} data-lang="vi" aria-current={lang === 'vi' ? 'true' : undefined} lang="vi">VI</a><a href={withLang('en')} data-lang="en" aria-current={lang === 'en' ? 'true' : undefined} lang="en">EN</a></div>
         <div class="acct" id="acct"><a href="/dang-nhap/">Đăng nhập</a><span aria-hidden="true">|</span><a href="/dang-ky/">Đăng ký</a></div>
       </div>
       <div class="bar2">
@@ -111,6 +124,39 @@ if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-max
       <p class="note">Thông tin do từng cơ sở tự khai và được kiểm duyệt trước khi hiển thị. Nhãn "Tự khai báo" nghĩa là chưa được xác minh độc lập.</p>
     </footer>
     <script>
+      // Ngôn ngữ: nhớ lựa chọn ở máy; bản tiếng Anh dịch cả nội dung chèn bằng mã sau khi trang tải (từ điển nạp riêng, chỉ khi cần)
+      document.querySelectorAll<HTMLAnchorElement>('.langsw a').forEach((a) => a.addEventListener('click', () => { try { localStorage.setItem('lang', a.dataset.lang ?? 'vi'); } catch { /* bỏ qua */ } }));
+      if (document.documentElement.lang === 'en') {
+        void import('@agriconnect/shared/src/i18n').then(({ translate, localizePath }) => {
+          const SKIP = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'CODE', 'PRE']);
+          const ATTRS = ['placeholder', 'title', 'aria-label', 'alt'];
+          const fixText = (n: Text) => { const p = n.parentElement; if (p && SKIP.has(p.tagName)) return; const t = translate(n.data); if (t !== n.data) n.data = t; };
+          const fixEl = (el: Element) => {
+            for (const a of ATTRS) { const v = el.getAttribute(a); if (v) { const t = translate(v); if (t !== v) el.setAttribute(a, t); } }
+            for (const a of ['href', 'action']) { const v = el.getAttribute(a); if (v && v.startsWith('/')) { const t = localizePath(v, 'en'); if (t !== v) el.setAttribute(a, t); } }
+          };
+          const walk = (root: Node) => {
+            if (root.nodeType === Node.TEXT_NODE) { fixText(root as Text); return; }
+            if (root.nodeType !== Node.ELEMENT_NODE) return;
+            if (SKIP.has((root as Element).tagName)) return;
+            fixEl(root as Element);
+            const tw = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+            for (let n = tw.nextNode(); n; n = tw.nextNode()) { if (n.nodeType === Node.TEXT_NODE) fixText(n as Text); else if (!SKIP.has((n as Element).tagName)) fixEl(n as Element); }
+          };
+          walk(document.documentElement);
+          new MutationObserver((muts) => {
+            for (const m of muts) {
+              if (m.type === 'childList') m.addedNodes.forEach(walk);
+              else if (m.type === 'characterData') { if (m.target.nodeType === Node.TEXT_NODE) fixText(m.target as Text); }
+              else if (m.type === 'attributes') fixEl(m.target as Element);
+            }
+          }).observe(document.documentElement, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: [...ATTRS, 'href', 'action'] });
+          // hộp thoại của trình duyệt (alert/confirm/prompt) cũng dịch
+          const w = window as unknown as Record<string, (...a: unknown[]) => unknown>;
+          for (const k of ['alert', 'confirm', 'prompt']) { const o = w[k]!.bind(window); w[k] = (m: unknown, ...r: unknown[]) => o(translate(String(m ?? '')), ...r); }
+        });
+      }
+
       // Chỉ đọc dấu hiệu đăng nhập đã lưu ở máy (không nạp thư viện đăng nhập ở mọi trang); dữ liệu thật luôn kiểm ở máy chủ.
       function stored(): { access_token?: string; user?: { email?: string; user_metadata?: { full_name?: string } } } | null {
         for (let i = 0; i < localStorage.length; i++) {
@@ -141,17 +187,20 @@ if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-max
         li.appendChild(b); ul.appendChild(li); d.appendChild(ul); acct.appendChild(d);
         // chuông thông báo: số chưa đọc (một lệnh gọi nhẹ, chỉ khi đã đăng nhập)
         const bell = document.createElement('a'); bell.href = '/thong-bao/'; bell.className = 'bell'; bell.textContent = '🔔'; bell.title = 'Thông báo'; acct.prepend(bell);
-        void import('../lib/auth').then((m) => m.call<number>('unread_notification_count')).then((n) => { if (n > 0) { bell.textContent = '🔔 ' + n; bell.classList.add('has'); } }).catch(() => { /* chưa đăng nhập được: bỏ qua */ });
       }
 
-      // Số sản phẩm trong giỏ (chỉ khi đã đăng nhập)
+      // Số thông báo chưa đọc và số sản phẩm trong giỏ: MỘT lệnh gọi nhẹ, chỉ khi đã đăng nhập
       const cartLink = document.getElementById('cartLink');
-      const paintCart = () => {
-        if (!cartLink || !s?.access_token) return;
-        void import('../lib/auth').then((m) => m.call<number>('cart_count')).then((n) => { cartLink.textContent = n > 0 ? '🛒 Giỏ hàng (' + n + ')' : '🛒 Giỏ hàng'; }).catch(() => { /* bỏ qua */ });
+      const bellEl = document.querySelector<HTMLElement>('.bell');
+      const paintShell = () => {
+        if (!s?.access_token) return;
+        void import('../lib/auth').then((m) => m.call<{ unread: number; cart: number }>('web_shell_counts')).then((c) => {
+          if (bellEl && c.unread > 0) { bellEl.textContent = '🔔 ' + c.unread; bellEl.classList.add('has'); }
+          if (cartLink) cartLink.textContent = c.cart > 0 ? '🛒 Giỏ hàng (' + c.cart + ')' : '🛒 Giỏ hàng';
+        }).catch(() => { /* chưa lấy được: bỏ qua */ });
       };
-      window.addEventListener('cart:refresh', paintCart);
-      paintCart();
+      window.addEventListener('cart:refresh', paintShell);
+      paintShell();
 
       // Nút yêu thích: <button data-fav data-kind="supplier|product" data-ref="..."> (trang hồ sơ và sản phẩm)
       let favs: { suppliers: Set<string>; products: Set<string> } | null = null;
@@ -161,6 +210,7 @@ if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-max
         el.dataset.on = on ? '1' : '';
       });
       async function loadFavs() {
+        if (!document.querySelector('[data-fav]')) return;   // trang không có nút yêu thích thì khỏi tải danh sách
         if (!s?.access_token) { paint(); return; }
         try {
           const { call } = await import('../lib/auth');
@@ -203,6 +253,8 @@ if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-max
   .logo { background: #fff; color: var(--g) !important; font-weight: 700; font-size: 1.1rem; padding: 8px 16px; align-self: stretch; display: flex; align-items: center; }
   .mid { display: flex; gap: 24px; margin: 0 auto; }
   .yl { color: var(--yl) !important; font-weight: 600; }
+  .langsw { display: inline-flex; border: 1px solid rgba(255,255,255,.7); border-radius: 6px; overflow: hidden; margin-left: auto; }
+  .langsw a { padding: 2px 9px; font-size: .8rem; font-weight: 600; color: #fff; text-decoration: none; } .langsw a[aria-current="true"] { background: #fff; color: var(--g); }
   .acct { display: flex; gap: 8px; align-items: center; white-space: nowrap; }
   .about, .cats { position: relative; }
   .about summary { cursor: pointer; border: 1px solid #fff; border-radius: 4px; padding: 3px 10px; list-style: none; font-size: .9rem; }

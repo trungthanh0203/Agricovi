@@ -39,7 +39,7 @@ import Base from '../layouts/Base.astro';
 
   loadDirectory().then(({ rows, snaps, prods, badges }) => {
     for (const p of [...new Set(rows.map((r) => r.province).filter((x): x is string => Boolean(x)))].sort((a, b) => a.localeCompare(b, 'vi'))) {
-      provEl.insertAdjacentHTML('beforeend', `<option>${esc(p)}</option>`);
+      provEl.insertAdjacentHTML('beforeend', `<option value="${esc(p)}">${esc(p)}</option>`);
     }
     const render = () => {
       const q = fold(qEl.value.trim());
