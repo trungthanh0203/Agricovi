@@ -158,6 +158,14 @@ Tạo một Worker riêng tên `agriconnect` (khác Worker của app), nối cù
 |---|---|
 | Root directory | để **trống** (gốc kho) |
 | Build command | `npm ci && npm run build -w @agriconnect/web` |
-| Deploy command | `npx wrangler deploy --config apps/web/wrangler.jsonc` |
+| Deploy command | `cd apps/web && npx wrangler deploy` |
 
 Biến lúc build (Build variables): `NODE_VERSION` = `22`. Khóa công khai đã nằm trong `apps/web/.env.production` nên không bắt buộc khai thêm. Tên Worker phải trùng `name` trong `apps/web/wrangler.jsonc` (`agriconnect`).
+
+**Từ W0 (D60) website dựng phía máy chủ** (Astro 7 + `@astrojs/cloudflare` 14, chạy trên Workers): `npm run build -w @agriconnect/web` tạo `apps/web/dist/client` (tệp tĩnh) và `apps/web/dist/server` (Worker) kèm cấu hình `wrangler.json` sinh sẵn; lệnh `wrangler deploy` chạy **trong thư mục `apps/web`** sẽ tự dùng cấu hình đó (vì vậy lệnh deploy có `cd apps/web`, khác bản tĩnh trước đây; tệp `_redirects` không còn). Nếu bước deploy báo không tìm thấy cấu hình, thử `npx wrangler deploy --config dist/server/wrangler.json` trong `apps/web`. Trang công khai gửi `Cache-Control: s-maxage=60`, nên nội dung CMS xuất hiện trên website sau tối đa khoảng 1 phút, không cần deploy lại.
+
+Biến tùy chọn lúc build: `PUBLIC_APP_URL` (địa chỉ app, để chân trang có nút "Mở ứng dụng").
+
+### Quản trị nội dung website (W1, migration 0042)
+
+Sau khi `db push` 0042, trang quản trị `/quan-tri/` có nhóm **Website**: Trang tĩnh, Banner trang chủ, Menu và chân trang, Thông tin chung, Người biên tập. Quản trị viên nền tảng luôn đủ quyền; cấp vai trò cho người khác ở **Website → Người biên tập** (người đó phải có tài khoản AgriConnect đăng ký bằng email): *Tổng biên tập* (đăng, gỡ, sửa menu và thông tin chung), *Biên tập viên* (soạn nháp, gửi duyệt), *Kiểm duyệt viên* (xem nháp). Chưa có nội dung trong CSDL thì website dùng nội dung mặc định (xem `packages/shared/src/site.ts`); các trang pháp lý (điều khoản, bảo mật, quy chế, giải quyết tranh chấp) chỉ là khung chờ văn bản chính thức.

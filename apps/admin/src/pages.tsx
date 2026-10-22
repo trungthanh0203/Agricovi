@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from
 import { clean, downloadCsv, fmtDate, fmtDateTime, rpc, supabase, vnd } from './supabase';
 
 /** Tải dữ liệu bằng một hàm; trả {data, error, reload, loading} */
-function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = []) {
+export function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -17,7 +17,7 @@ function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = []) {
   return { data, error, loading, reload };
 }
 
-const Err = ({ e }: { e: string | null }) => (e ? <p className="msg error" role="alert">{e}</p> : null);
+export const Err = ({ e }: { e: string | null }) => (e ? <p className="msg error" role="alert">{e}</p> : null);
 
 const STATUS_LABEL: Record<string, string> = { trial: 'Dùng thử', active: 'Đang hoạt động', expired: 'Hết hạn', suspended: 'Tạm khóa', none: 'Chưa có gói' };
 const STATUS_CLS: Record<string, string> = { trial: 'info', active: 'ok', expired: 'warn', suspended: 'bad', none: '' };

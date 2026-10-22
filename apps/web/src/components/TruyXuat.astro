@@ -1,0 +1,62 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Truy xuất nguồn gốc — AgriConnect" description="Xem nguồn gốc, quá trình sản xuất và vật tư đã dùng của một mùa vụ.">
+  <div id="app"><p class="muted">Đang tải…</p></div>
+</Base>
+
+<script>
+  import { CYCLE_STATUS, esc, fmtDate, sb } from '../lib/db';
+  const app = document.getElementById('app')!;
+  // Địa chỉ dạng /truyxuat/VU-XXXXXXXX (mã QR); cũng nhận ?ma=
+  const raw = new URLSearchParams(location.search).get('ma') ?? decodeURIComponent(location.pathname.split('/').filter(Boolean)[1] ?? '');
+  const code = raw.trim().toUpperCase();
+
+  const form = `<form class="search" action="/truyxuat/" method="get" style="margin:12px 0">
+    <input name="ma" placeholder="Nhập mã vụ, ví dụ VU-1A2B3C4D" value="${esc(code)}" aria-label="Mã vụ" />
+    <button class="btn solid" type="submit">Truy xuất</button></form>`;
+
+  interface Snap {
+    name?: string; crop?: string; org?: string; status?: string; farm?: string; location?: string; area_size?: number; area_unit?: string;
+    start_date?: string; expected_end_date?: string; end_date?: string; template?: string; generated_at?: string;
+    materials?: { name: string; category?: string; unit: string; quantity: number; first?: string; last?: string }[];
+    licenses?: { name: string; issuer?: string; expires?: string }[];
+  }
+
+  async function main() {
+    if (!sb) throw new Error('Website chưa được cấu hình kết nối dữ liệu.');
+    if (!code) { app.innerHTML = `<h1>Truy xuất nguồn gốc</h1><p>Nhập mã vụ in trên bao bì hoặc quét mã QR.</p>${form}`; return; }
+    if (!/^VU-[0-9A-F]{8}$/.test(code)) { app.innerHTML = `<h1>Truy xuất nguồn gốc</h1><p class="err">Mã vụ chưa đúng. Mã có dạng VU- và 8 ký tự, ví dụ VU-1A2B3C4D.</p>${form}`; return; }
+    const { data, error } = await sb.from('public_cycles').select('organization_id, snapshot, published_at, version').eq('code', code).eq('is_visible', true).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) { app.innerHTML = `<h1>Truy xuất nguồn gốc</h1><p class="err">Không có thông tin công khai cho mã ${esc(code)}. Cơ sở có thể chưa mở công khai hoặc đã ngừng công khai vụ này.</p>${form}`; return; }
+    const s = data.snapshot as Snap;
+    document.title = `${s.name ?? code} — Truy xuất nguồn gốc`;
+    const { data: prof } = await sb.from('public_profiles').select('slug, snapshot').eq('organization_id', data.organization_id).eq('is_visible', true).maybeSingle();
+    const size = s.area_size != null ? `${Number(s.area_size).toLocaleString('vi-VN')} ${s.area_unit === 'ha' ? 'ha' : 'm²'}` : '';
+    const facts: [string, string][] = [
+      ['Sản phẩm', s.crop ?? '—'],
+      ['Đơn vị sản xuất', s.org ?? '—'],
+      ['Nơi trồng', [s.farm, s.location, size].filter(Boolean).join(' · ') || '—'],
+      ['Tình trạng', CYCLE_STATUS[s.status ?? ''] ?? '—'],
+      ['Bắt đầu', fmtDate(s.start_date)],
+      [s.end_date ? 'Kết thúc' : 'Dự kiến kết thúc', fmtDate(s.end_date ?? s.expected_end_date)],
+    ];
+    if (s.template) facts.push(['Quy trình', s.template]);
+    const mats = s.materials ?? [];
+    app.innerHTML = `
+      <h1>${esc(s.name ?? code)}</h1>
+      <p><span class="pill ok">✔ Thông tin do cơ sở công khai</span> <span class="pill">Mã ${esc(code)}</span></p>
+      <div class="facts">${facts.map(([k, v]) => `<div><b>${esc(k)}</b>${esc(v)}</div>`).join('')}</div>
+      <h2>Phân, thuốc, vật tư đã dùng</h2>
+      <div class="panel">${mats.length ? `<table><thead><tr><th>Tên</th><th>Số lượng</th><th>Thời gian dùng</th></tr></thead><tbody>${mats.map((m) =>
+        `<tr><td>${esc(m.name)}${m.category ? `<br><span class="muted">${esc(m.category)}</span>` : ''}</td><td>${esc(Number(m.quantity).toLocaleString('vi-VN', { maximumFractionDigits: 2 }))} ${esc(m.unit.toLowerCase())}</td><td>${m.first ? (m.first === m.last ? fmtDate(m.first) : `${fmtDate(m.first)} – ${fmtDate(m.last)}`) : '—'}</td></tr>`).join('')}</tbody></table>`
+        : '<span class="muted">Cơ sở chưa ghi vật tư cho vụ này.</span>'}</div>
+      ${s.licenses?.length ? `<h2>Giấy phép, chứng chỉ còn hạn của cơ sở</h2><div class="panel">${s.licenses.map((l) =>
+        `<p>🏅 <b>${esc(l.name)}</b>${l.issuer ? ' — ' + esc(l.issuer) : ''}${l.expires ? ' · hạn ' + fmtDate(l.expires) : ''} <span class="pill">Tự khai báo</span></p>`).join('')}</div>` : ''}
+      ${prof ? `<p><a class="btn solid" href="/co-so/${encodeURIComponent((prof as { slug: string }).slug)}">Xem hồ sơ cơ sở: ${esc((prof as { snapshot: { display_name: string } }).snapshot.display_name)}</a></p>` : ''}
+      <p class="muted">Thông tin chụp lúc cơ sở bấm công khai (${fmtDate(data.published_at)}, bản ${esc(data.version)}). Chi phí, doanh thu và nhật ký chi tiết không được công khai. Vật tư và giấy phép là do cơ sở tự khai, chưa được xác minh độc lập.</p>
+      <h2>Tra mã khác</h2>${form}`;
+  }
+  main().catch((e) => { app.innerHTML = `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>${form}`; });
+</script>

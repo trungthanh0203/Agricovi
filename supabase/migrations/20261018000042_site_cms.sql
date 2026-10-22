@@ -164,7 +164,7 @@ returns uuid language plpgsql security definer set search_path = public as $$
 declare cur site_pages; sl text := lower(trim(coalesce(p_slug, ''))); r uuid;
 begin
   perform site_guard(array['chief_editor', 'editor']);
-  if sl in ('co-so', 'danh-ba', 'truyxuat', 'quan-tri', 'api', 'admin', 'dang-nhap', 'dang-ky', 'giao-thuong', 'tin-tuc', 'san-pham', 'vat-tu', 'gio-hang', 'don-hang', 'tai-khoan', 'tim-kiem', 'danh-muc', 'su-kien', 'hoi-cho') then
+  if sl in ('co-so', 'danh-ba', 'truyxuat', 'quan-tri', 'api', 'admin', 'dang-nhap', 'dang-ky', 'giao-thuong', 'tin-tuc', 'san-pham', 'vat-tu', 'gio-hang', 'don-hang', 'tai-khoan', 'tim-kiem', 'danh-muc', 'su-kien', 'hoi-cho', 'tin-nong-nghiep', 'tin-xuat-khau', 'tin-hoi-cho', 'gia-thi-truong', 'nha-cung-cap', 'hop-thu', 'thong-bao') then
     raise exception 'INVALID: Địa chỉ "%" đã dành cho chức năng khác. Hãy chọn tên khác.', sl;
   end if;
   if sl !~ '^[a-z0-9]+(-[a-z0-9]+)*$' then raise exception 'INVALID: Địa chỉ chỉ gồm chữ thường không dấu, số và dấu gạch ngang.'; end if;

@@ -1,56 +1,123 @@
 ---
 import Base from '../layouts/Base.astro';
+import { DEFAULT_CATEGORIES, safeHref } from '@agriconnect/shared';
+import { esc, img, loadDirectory, profileCard, supplyPill, type DirRow } from '../lib/db';
+import { loadChrome } from '../lib/site';
+
+const chrome = await loadChrome();
+const brand = chrome.settings.brand.name ?? 'AgriConnect';
+const hero = chrome.banners.filter((b) => b.slot === 'hero').slice(0, 6);
+const sideDefault = [
+  { id: 'd1', title: 'Giao thương', subtitle: 'Đăng tin cần mua, cần bán', image: '', link: '/giao-thuong/' },
+  { id: 'd2', title: 'Dành cho người bán', subtitle: 'Dùng thử ứng dụng quản lý sản xuất', image: '', link: '/danh-cho-nguoi-ban' },
+];
+const sideBanners = chrome.banners.filter((b) => b.slot === 'side').slice(0, 2);
+const side = sideBanners.length ? sideBanners : sideDefault;
+
+let dirError = '';
+let featured: string[] = [];
+let available: string[] = [];
+try {
+  const { rows, snaps, prods } = await loadDirectory();
+  featured = rows.slice(0, 6).map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? []));
+  const byId = new Map<string, DirRow>(rows.map((r) => [r.profile_id, r]));
+  for (const [pid, list] of prods) {
+    const d = byId.get(pid);
+    if (!d) continue;
+    for (const p of list) {
+      if (p.supply_status !== 'available') continue;
+      const pic = img(p.snapshot.images?.[0]?.src);
+      available.push(`<a class="card" href="/co-so/${encodeURIComponent(d.slug)}">
+        ${pic ? `<img class="cover" src="${pic}" alt="" loading="lazy" />` : '<div class="cover ph">🥬</div>'}
+        <div class="body"><h3>${esc(p.snapshot.name)}</h3>${supplyPill(p.supply_status)}
+        <p class="muted">${esc(d.display_name)} · ${esc(d.province ?? '')}</p>
+        <p class="muted">${esc([p.snapshot.price_note, p.snapshot.min_order && 'tối thiểu ' + p.snapshot.min_order].filter(Boolean).join(' · '))}</p></div></a>`);
+    }
+  }
+  available = available.slice(0, 8);
+} catch (e) {
+  dirError = e instanceof Error ? e.message : String(e);
+}
 ---
-<Base title="AgriConnect — Kết nối nông sản">
-  <section class="hero">
-    <h1>Tìm nơi trồng, sản phẩm và nguồn gốc nông sản</h1>
-    <p>Danh bạ cơ sở sản xuất đã được kiểm duyệt, tình trạng cung ứng cập nhật thường xuyên, và truy xuất nguồn gốc từng mùa vụ.</p>
-    <form class="search" action="/danh-ba/" method="get">
-      <input name="q" placeholder="Tìm cơ sở hoặc sản phẩm: dưa lưới, cà chua…" aria-label="Tìm kiếm" />
-      <button class="btn" type="submit">Tìm</button>
-    </form>
+<Base title={`${brand} — Kết nối nông sản`} description={chrome.settings.brand.description}>
+  <section class="hero2">
+    <ul class="catlist">
+      {DEFAULT_CATEGORIES.map((c) => <li><a href={c.href}>{c.label}<span aria-hidden="true">›</span></a></li>)}
+    </ul>
+
+    <div class="carousel" aria-label="Banner">
+      {hero.length === 0 && (
+        <div class="slide fallback">
+          <h1>Tìm nơi trồng, sản phẩm và nguồn gốc nông sản</h1>
+          <p>Danh bạ nhà cung cấp đã được kiểm duyệt, tình trạng cung ứng cập nhật thường xuyên và truy xuất nguồn gốc từng mùa vụ.</p>
+          <a class="btn" href="/danh-ba/">Xem nhà cung cấp</a>
+        </div>
+      )}
+      {hero.map((b) => (
+        <a class="slide" href={b.link || '#'}>
+          {b.image && <img src={b.image} alt={b.title} />}
+          <span class="cap"><b>{b.title}</b>{b.subtitle && <small>{b.subtitle}</small>}</span>
+        </a>
+      ))}
+    </div>
+
+    <div class="sidebans">
+      {side.map((b) => (
+        <a class="sideban" href={safeHref(b.link) || '#'}>
+          {b.image && <img src={b.image} alt="" />}
+          <span><b>{b.title}</b>{b.subtitle && <small>{b.subtitle}</small>}</span>
+        </a>
+      ))}
+    </div>
   </section>
 
-  <h2>Đang có hàng</h2>
-  <div id="avail" class="grid"><p class="muted">Đang tải…</p></div>
+  <div class="sechead"><h2>Giao thương</h2><a href="/giao-thuong/">Xem tất cả</a></div>
+  <div class="panel soon">
+    <b>Sắp ra mắt</b>
+    <p class="muted">Người mua đăng tin cần mua, người bán đăng tin cần bán. Khách có thể xem danh sách; đăng nhập để xem chi tiết và trao đổi.</p>
+  </div>
 
-  <h2>Cơ sở nổi bật</h2>
-  <div id="featured" class="grid"><p class="muted">Đang tải…</p></div>
-  <p><a href="/danh-ba/">Xem tất cả cơ sở →</a></p>
+  <div class="sechead"><h2>Khám phá nhà cung cấp dành cho bạn</h2><a href="/danh-ba/">Xem tất cả</a></div>
+  {dirError && <p class="err">{dirError}</p>}
+  {!dirError && featured.length === 0 && <p class="empty">Chưa có cơ sở nào được công khai.</p>}
+  <div class="grid" set:html={featured.join('')} />
 
-  <h2>Kiểm tra nguồn gốc</h2>
+  <div class="sechead"><h2>Đang có hàng</h2><a href="/danh-ba/">Xem thêm</a></div>
+  {!dirError && available.length === 0 && <p class="empty">Hiện chưa có sản phẩm nào báo "Đang có hàng".</p>}
+  <div class="grid" set:html={available.join('')} />
+
+  <div class="sechead"><h2>Kiểm tra nguồn gốc</h2></div>
   <form class="search" action="/truyxuat/" method="get">
     <input name="ma" placeholder="Nhập mã vụ in trên bao bì, ví dụ VU-1A2B3C4D" aria-label="Mã vụ" />
     <button class="btn solid" type="submit">Truy xuất</button>
   </form>
+
+  <section class="cta">
+    <div><h2 style="margin:0">Bạn là nhà vườn hay hợp tác xã?</h2><p style="margin:.3em 0 0">Ghi chép sản xuất, truy xuất nguồn gốc và giới thiệu sản phẩm đến người mua. Dùng thử miễn phí.</p></div>
+    <a class="btn" href="/danh-cho-nguoi-ban">Tìm hiểu thêm</a>
+  </section>
 </Base>
 
-<script>
-  import { esc, img, loadDirectory, profileCard, supplyPill, type DirRow } from '../lib/db';
-  const avail = document.getElementById('avail')!;
-  const featured = document.getElementById('featured')!;
-  loadDirectory().then(({ rows, snaps, prods }) => {
-    featured.innerHTML = rows.length === 0
-      ? '<p class="empty">Chưa có cơ sở nào được công khai.</p>'
-      : rows.slice(0, 6).map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? [])).join('');
-    const byId = new Map<string, DirRow>(rows.map((r) => [r.profile_id, r]));
-    const items: string[] = [];
-    for (const [pid, list] of prods) {
-      const d = byId.get(pid);
-      if (!d) continue;
-      for (const p of list) {
-        if (p.supply_status !== 'available') continue;
-        const pic = img(p.snapshot.images?.[0]?.src);
-        items.push(`<a class="card" href="/co-so/${encodeURIComponent(d.slug)}">
-          ${pic ? `<img class="cover" src="${pic}" alt="" loading="lazy" />` : '<div class="cover ph">🥬</div>'}
-          <div class="body"><h3>${esc(p.snapshot.name)}</h3>${supplyPill(p.supply_status)}
-          <p class="muted">${esc(d.display_name)} · ${esc(d.province ?? '')}</p>
-          <p class="muted">${esc([p.snapshot.price_note, p.snapshot.min_order && 'tối thiểu ' + p.snapshot.min_order].filter(Boolean).join(' · '))}</p></div></a>`);
-      }
-    }
-    avail.innerHTML = items.length ? items.slice(0, 6).join('') : '<p class="empty">Hiện chưa có sản phẩm nào báo "Đang có hàng".</p>';
-  }).catch((e) => {
-    const m = `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>`;
-    avail.innerHTML = m; featured.innerHTML = '';
-  });
-</script>
+<style is:global>
+  .hero2 { display: grid; grid-template-columns: 210px minmax(0, 1fr) 240px; gap: 14px; margin-bottom: 8px; }
+  .catlist { list-style: none; margin: 0; padding: 0; background: #fff; border: 1px solid var(--line); border-radius: 14px; align-self: start; }
+  .catlist a { display: flex; justify-content: space-between; padding: 11px 14px; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
+  .catlist li:last-child a { border-bottom: 0; } .catlist a:hover { background: var(--g2); color: var(--g); }
+  .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 16px; background: var(--g2); min-height: 280px; scrollbar-width: thin; }
+  .slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; display: block; text-decoration: none; color: inherit; min-height: 280px; }
+  .slide img { width: 100%; height: 100%; min-height: 280px; object-fit: cover; display: block; }
+  .slide .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 18px; color: #fff; background: rgba(0,0,0,.45); display: flex; flex-direction: column; }
+  .slide.fallback { background: linear-gradient(135deg, var(--g), #3c9d5d); color: #fff; padding: 28px 24px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 8px; }
+  .slide.fallback h1 { margin: 0; font-size: 1.7rem; } .slide.fallback p { margin: 0 0 8px; opacity: .95; }
+  .sidebans { display: grid; gap: 14px; grid-template-rows: 1fr 1fr; }
+  .sideban { position: relative; display: flex; align-items: flex-end; background: var(--g2); border-radius: 14px; overflow: hidden; text-decoration: none; color: var(--ink); min-height: 132px; padding: 12px 14px; }
+  .sideban img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .sideban span { position: relative; display: flex; flex-direction: column; } .sideban small { color: var(--muted); }
+  .sideban img + span { color: #fff; background: rgba(0,0,0,.45); padding: 6px 10px; border-radius: 8px; } .sideban img + span small { color: #fff; }
+  .sechead { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; }
+  .sechead a { font-size: .9rem; }
+  .soon { background: #fff8e6; border-color: #f3dfa7; } .soon p { margin: .3em 0 0; }
+  .cta { margin-top: 28px; background: var(--g); color: #fff; border-radius: 16px; padding: 20px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .cta p { opacity: .95; }
+  @media (max-width: 900px) { .hero2 { grid-template-columns: 1fr; } .catlist { display: flex; overflow-x: auto; } .catlist li { flex: 0 0 auto; } .catlist a { border-bottom: 0; border-right: 1px solid var(--line); gap: 8px; } .sidebans { grid-template-columns: 1fr 1fr; grid-template-rows: none; } }
+</style>

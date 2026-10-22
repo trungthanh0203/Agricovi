@@ -1,0 +1,48 @@
+---
+import Base from '../layouts/Base.astro';
+import { COMING_SOON_SECTIONS, DEFAULT_PAGES, parseBody, type Block } from '@agriconnect/shared';
+import { loadPage } from '../lib/site';
+
+// Trang tĩnh do quản trị viên soạn (CMS) hoặc nội dung mặc định; mục sắp ra mắt hiện thông báo thay vì lỗi 404.
+const parts = (Astro.params.slug ?? '').split('/').filter(Boolean);
+const first = parts[0] ?? '';
+let page: { title: string; description: string; body: string } | null = null;
+let soon = '';
+if (parts.length === 1 && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(first)) {
+  page = (await loadPage(first)) ?? DEFAULT_PAGES[first] ?? null;
+}
+if (!page && COMING_SOON_SECTIONS[first]) soon = COMING_SOON_SECTIONS[first]!;
+if (!page && !soon) Astro.response.status = 404;
+const blocks: Block[] = page ? parseBody(page.body) : [];
+---
+{page && (
+  <Base title={`${page.title} — AgriConnect`} description={page.description || undefined}>
+    <article class="prose">
+      <h1>{page.title}</h1>
+      {blocks.map((b) => (
+        b.t === 'h' ? <h2>{b.text}</h2>
+        : b.t === 'p' ? <p>{b.text}</p>
+        : b.t === 'ul' ? <ul>{b.items.map((i) => <li>{i}</li>)}</ul>
+        : <p><a class="btn solid" href={b.href}>{b.label}</a></p>
+      ))}
+    </article>
+  </Base>
+)}
+{!page && soon && (
+  <Base title={`${soon} — AgriConnect`} noindex cache={false}>
+    <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
+      <h1>{soon}</h1>
+      <p class="muted">Mục này đang được chuẩn bị và sẽ sớm ra mắt.</p>
+      <p><a class="btn solid" href="/">Về trang chủ</a> <a class="btn outline" href="/danh-ba/">Xem nhà cung cấp</a></p>
+    </div>
+  </Base>
+)}
+{!page && !soon && (
+  <Base title="Không tìm thấy trang — AgriConnect" noindex cache={false}>
+    <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
+      <h1>Không tìm thấy trang</h1>
+      <p class="muted">Địa chỉ này không tồn tại hoặc đã được chuyển.</p>
+      <p><a class="btn solid" href="/">Về trang chủ</a></p>
+    </div>
+  </Base>
+)}

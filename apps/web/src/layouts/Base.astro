@@ -1,6 +1,22 @@
 ---
-interface Props { title: string; description?: string }
-const { title, description = 'Danh bạ cơ sở sản xuất nông nghiệp, sản phẩm đang có hàng và truy xuất nguồn gốc mùa vụ.' } = Astro.props;
+import { safeHref } from '@agriconnect/shared';
+import { DEFAULT_CATEGORIES } from '@agriconnect/shared';
+import { loadChrome } from '../lib/site';
+
+interface Props { title: string; description?: string; noindex?: boolean; cache?: boolean }
+const { title, description = 'Danh bạ nhà cung cấp nông sản, vật tư và truy xuất nguồn gốc mùa vụ.', noindex = false, cache = true } = Astro.props;
+
+const chrome = await loadChrome();
+const { settings, header, about, footer } = chrome;
+const brand = settings.brand.name ?? 'AgriConnect';
+const canonical = new URL(Astro.url.pathname, Astro.url.origin).toString();
+const appUrl = import.meta.env.PUBLIC_APP_URL as string | undefined;
+const year = new Date().getFullYear();
+const social = Object.entries({ Facebook: settings.social.facebook, 'Zalo OA': settings.social.zalo, YouTube: settings.social.youtube, TikTok: settings.social.tiktok })
+  .map(([label, href]) => ({ label, href: safeHref(href) })).filter((s) => s.href);
+
+// Trang công khai không chứa dữ liệu riêng của người dùng nên được phép lưu đệm ngắn ở biên Cloudflare
+if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
 ---
 <!doctype html>
 <html lang="vi">
@@ -9,42 +25,146 @@ const { title, description = 'Danh bạ cơ sở sản xuất nông nghiệp, s�
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#1f7a3d" />
+    <meta name="theme-color" content="#1b8a4b" />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={brand} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="vi_VN" />
+    {noindex && <meta name="robots" content="noindex" />}
   </head>
   <body>
-    <header class="top">
-      <a class="brand" href="/">🌱 AgriConnect</a>
-      <nav>
-        <a href="/danh-ba/">Danh bạ</a>
-        <a href="/truyxuat/">Truy xuất</a>
-      </nav>
+    <header class="site-head">
+      <div class="bar1">
+        <a class="logo" href="/">{brand}</a>
+        <details class="about">
+          <summary>Tìm hiểu về {brand}</summary>
+          <ul>{about.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+        </details>
+        <nav class="mid" aria-label="Dành cho">
+          <a class="yl" href="/danh-cho-nguoi-ban">Dành cho người bán</a>
+          <a class="yl" href="/danh-cho-nguoi-mua">Dành cho người mua</a>
+        </nav>
+        <div class="acct"><a href="/dang-nhap/">Đăng nhập</a><span aria-hidden="true">|</span><a href="/dang-ky/">Đăng ký</a></div>
+      </div>
+      <div class="bar2">
+        <details class="cats">
+          <summary>▦ Danh mục</summary>
+          <ul>{DEFAULT_CATEGORIES.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>
+        </details>
+        <form class="hsearch" action="/danh-ba/" method="get" role="search">
+          <input name="q" placeholder="Tìm sản phẩm, vật tư, nhà cung cấp" aria-label="Tìm kiếm" />
+        </form>
+        <nav class="topnav" aria-label="Chuyên mục">
+          {header.map((it) => (
+            <div class="ni">
+              <a href={it.href}>{it.label}</a>
+              {it.children && <ul class="sub">{it.children.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>}
+            </div>
+          ))}
+        </nav>
+        <a class="cart" href="/gio-hang/">🛒 Giỏ hàng</a>
+      </div>
     </header>
+
     <main><slot /></main>
-    <footer>
-      <p>AgriConnect — kết nối người trồng và người mua. Thông tin do từng cơ sở tự khai và được kiểm duyệt trước khi hiển thị.
-        Nhãn "Tự khai báo" nghĩa là chưa được xác minh độc lập.</p>
+
+    <footer class="site-foot">
+      <div class="fgrid">
+        <div class="fabout">
+          <b>{brand}</b>
+          <p>{settings.brand.description}</p>
+          {settings.legal.registration && <p class="reg"><b>Chứng nhận đăng ký</b><br />{settings.legal.registration}</p>}
+        </div>
+        {footer.map((col) => (
+          <div>
+            <b>{col.title}</b>
+            <ul>{col.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+          </div>
+        ))}
+        <div>
+          <b>Thông tin liên hệ</b>
+          <ul>
+            {settings.contact.hotline && <li>Hotline: {settings.contact.hotline}</li>}
+            {settings.contact.email && <li>Email: {settings.contact.email}</li>}
+            {settings.contact.address && <li>{settings.contact.address}</li>}
+            {!settings.contact.hotline && !settings.contact.email && !settings.contact.address && <li class="muted">Đang cập nhật</li>}
+          </ul>
+          {social.length > 0 && <><b>Mạng xã hội</b><ul class="soc">{social.map((s) => <li><a href={s.href} rel="noopener nofollow" target="_blank">{s.label}</a></li>)}</ul></>}
+        </div>
+        <div>
+          <b>Dùng trên điện thoại</b>
+          <p>Nhà vườn và hợp tác xã cài ứng dụng {brand} lên màn hình chính để ghi chép mọi lúc, kể cả khi mất mạng.</p>
+          {safeHref(appUrl) && <a class="btn solid" href={safeHref(appUrl)}>Mở ứng dụng</a>}
+        </div>
+      </div>
+      <div class="fbottom">
+        <span>{settings.legal.copyright ?? `© ${year} ${settings.contact.operator ?? brand}`}</span>
+        <span class="plinks"><a href="/chinh-sach-bao-mat">Chính sách bảo mật</a><a href="/dieu-khoan-su-dung">Điều khoản sử dụng</a><a href="/quy-che-hoat-dong">Quy chế hoạt động</a></span>
+      </div>
+      <p class="note">Thông tin do từng cơ sở tự khai và được kiểm duyệt trước khi hiển thị. Nhãn "Tự khai báo" nghĩa là chưa được xác minh độc lập.</p>
     </footer>
   </body>
 </html>
 
 <style is:global>
-  :root { --g: #1f7a3d; --g2: #e8f4ec; --ink: #1c2a22; --muted: #5c6b62; --line: #d9e3dc; --warn: #b45309; }
+  :root { --g: #1b8a4b; --g2: #e8f4ec; --ink: #1c2a22; --muted: #5c6b62; --line: #d9e3dc; --warn: #b45309; --yl: #ffe45c; }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: #f7faf8; line-height: 1.5; }
   a { color: var(--g); }
-  .top { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
-  .top nav { display: flex; gap: 16px; }
-  .brand { font-weight: 700; font-size: 1.15rem; text-decoration: none; color: var(--g); }
-  main { max-width: 1040px; margin: 0 auto; padding: 16px; min-height: 70vh; }
-  footer { max-width: 1040px; margin: 0 auto; padding: 16px; color: var(--muted); font-size: .85rem; }
+  main { max-width: 1120px; margin: 0 auto; padding: 16px; min-height: 60vh; }
+
+  .site-head { position: sticky; top: 0; z-index: 20; background: #fff; box-shadow: 0 1px 0 var(--line); }
+  .bar1 { background: var(--g); color: #fff; display: flex; align-items: center; gap: 18px; padding: 0 16px 0 0; min-height: 40px; }
+  .bar1 a { color: inherit; text-decoration: none; }
+  .logo { background: #fff; color: var(--g) !important; font-weight: 700; font-size: 1.1rem; padding: 8px 16px; align-self: stretch; display: flex; align-items: center; }
+  .mid { display: flex; gap: 24px; margin: 0 auto; }
+  .yl { color: var(--yl) !important; font-weight: 600; }
+  .acct { display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+  .about, .cats { position: relative; }
+  .about summary { cursor: pointer; border: 1px solid #fff; border-radius: 4px; padding: 3px 10px; list-style: none; font-size: .9rem; }
+  .about summary::after { content: " ▾"; }
+  details > summary::-webkit-details-marker { display: none; }
+  .about ul, .cats ul { position: absolute; top: calc(100% + 6px); left: 0; min-width: 220px; margin: 0; padding: 8px 0; list-style: none; background: #fff; color: var(--ink); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.18); z-index: 30; }
+  .about li a, .cats li a { display: block; padding: 8px 16px; color: var(--ink); text-decoration: none; }
+  .about li a:hover, .cats li a:hover { background: var(--g2); }
+  .bar2 { display: flex; align-items: center; gap: 14px; padding: 8px 16px; max-width: 1280px; margin: 0 auto; }
+  .cats summary { cursor: pointer; list-style: none; font-weight: 600; white-space: nowrap; padding: 6px 4px; }
+  .hsearch { flex: 0 1 260px; }
+  .hsearch input { width: 100%; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: #f3f6f4; font-size: .95rem; }
+  .topnav { display: flex; gap: 4px; margin-left: 10px; flex: 1; }
+  .ni { position: relative; }
+  .ni > a { display: block; padding: 8px 12px; color: var(--ink); text-decoration: none; font-weight: 600; white-space: nowrap; }
+  .ni + .ni > a { border-left: 1px solid var(--line); }
+  .ni > a:hover { color: var(--g); }
+  .sub { display: none; position: absolute; top: 100%; left: 0; min-width: 230px; margin: 0; padding: 8px 0; list-style: none; background: #fff; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.18); z-index: 30; }
+  .ni:hover .sub, .ni:focus-within .sub { display: block; }
+  .sub a { display: block; padding: 8px 16px; color: var(--ink); text-decoration: none; white-space: nowrap; }
+  .sub a:hover { background: var(--g2); }
+  .cart { color: var(--ink); text-decoration: none; font-weight: 600; white-space: nowrap; margin-left: auto; }
+
+  .site-foot { background: #eef3ef; margin-top: 24px; padding: 24px 16px 12px; font-size: .88rem; color: var(--muted); }
+  .fgrid { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr; gap: 20px; }
+  .site-foot b { display: block; color: var(--ink); margin-bottom: 6px; }
+  .site-foot ul { list-style: none; margin: 0 0 10px; padding: 0; }
+  .site-foot li { margin: 4px 0; }
+  .site-foot a { color: var(--muted); text-decoration: none; }
+  .site-foot a:hover { color: var(--g); text-decoration: underline; }
+  .site-foot .btn { color: #fff; }
+  .site-foot p { margin: 0 0 8px; }
+  .fbottom { max-width: 1120px; margin: 16px auto 0; padding-top: 12px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .plinks { display: flex; gap: 16px; flex-wrap: wrap; }
+  .site-foot .note { max-width: 1120px; margin: 8px auto 0; font-size: .8rem; }
+
   h1 { font-size: 1.6rem; margin: .4em 0; } h2 { font-size: 1.2rem; margin: 1.4em 0 .5em; } h3 { margin: 0 0 .2em; font-size: 1.05rem; }
   .muted { color: var(--muted); } .tag { margin: 0 0 .3em; font-style: italic; }
-  .hero { background: linear-gradient(135deg, var(--g), #3c9d5d); color: #fff; border-radius: 16px; padding: 28px 20px; margin-bottom: 8px; }
-  .hero h1 { margin-top: 0; } .hero p { margin: .3em 0 1em; opacity: .95; }
   .search { display: flex; gap: 8px; flex-wrap: wrap; }
   .search input, .filters input, .filters select { flex: 1 1 200px; padding: 12px; border-radius: 10px; border: 1px solid var(--line); font-size: 1rem; }
   .btn { background: #fff; color: var(--g); border: 0; border-radius: 10px; padding: 12px 18px; font-weight: 600; font-size: 1rem; cursor: pointer; text-decoration: none; display: inline-block; }
   .btn.solid { background: var(--g); color: #fff; }
+  .btn.outline { border: 1px solid var(--g); }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
   .card { display: block; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; text-decoration: none; color: inherit; }
   .card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
@@ -64,5 +184,14 @@ const { title, description = 'Danh bạ cơ sở sản xuất nông nghiệp, s�
   .err { background: #fdecea; color: #8a1c13; border-radius: 10px; padding: 12px; }
   .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
   .timeline { list-style: none; padding: 0; margin: 0; } .timeline li { padding: 6px 0 6px 14px; border-left: 3px solid var(--g2); }
-  @media (max-width: 480px) { .top nav { gap: 10px; } }
+  .prose { max-width: 760px; } .prose p, .prose ul { margin: .7em 0; } .prose li { margin: .3em 0; }
+
+  @media (max-width: 960px) {
+    .bar1 { flex-wrap: wrap; gap: 6px 14px; padding-bottom: 6px; } .logo { padding: 8px 14px; }
+    .mid { order: 3; margin: 0; width: 100%; padding-left: 14px; gap: 18px; } .acct { margin-left: auto; }
+    .bar2 { flex-wrap: wrap; } .hsearch { flex: 1 1 200px; order: 2; } .cart { order: 3; margin-left: 0; }
+    .topnav { order: 4; width: 100%; margin-left: 0; overflow-x: auto; flex-basis: 100%; }
+    .fgrid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 520px) { .fgrid { grid-template-columns: 1fr; } .about { display: none; } }
 </style>

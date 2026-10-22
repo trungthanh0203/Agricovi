@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@agriconnect/shared": "*",
+    "@astrojs/cloudflare": "^14.4.2",
     "@supabase/supabase-js": "^2.45.4",
-    "astro": "^4.15.9"
+    "astro": "^7.4.2"
   }
 }

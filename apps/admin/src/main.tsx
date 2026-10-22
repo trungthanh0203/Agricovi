@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Session } from '@supabase/supabase-js';
 import { AuditPage, OrgDetailPage, OrgsPage, OverviewPage, PaymentsPage, PlansPage, PublicCyclesPage, ReviewsPage, SettingsPage } from './pages';
+import { SiteBannersPage, SiteMenusPage, SitePagesPage, SiteRolesPage, SiteSettingsPage } from './site';
 import { clean, rpc, supabase } from './supabase';
 import './styles.css';
 
@@ -9,15 +10,20 @@ import './styles.css';
  * Trang quản trị nền tảng AgriConnect (D53). Chỉ tài khoản có tên trong bảng quản trị viên vào được; quyền kiểm ở CSDL
  * (mọi hàm admin_* đều kiểm lại). Quản trị viên chỉ xem số liệu tổng hợp, không đọc dữ liệu vận hành của nhà vườn.
  */
-const PAGES: { id: string; label: string; icon: string }[] = [
-  { id: 'overview', label: 'Tổng quan', icon: '📊' },
-  { id: 'orgs', label: 'Cơ sở', icon: '🏡' },
-  { id: 'plans', label: 'Gói và giá', icon: '🏷️' },
-  { id: 'payments', label: 'Thanh toán', icon: '💵' },
-  { id: 'reviews', label: 'Duyệt hồ sơ', icon: '✅' },
-  { id: 'public', label: 'Vụ công khai', icon: '🌐' },
-  { id: 'settings', label: 'Cấu hình', icon: '⚙️' },
-  { id: 'audit', label: 'Nhật ký kiểm toán', icon: '📜' },
+const PAGES: { id: string; label: string; icon: string; group: 'platform' | 'site'; adminOnly?: boolean }[] = [
+  { id: 'overview', label: 'Tổng quan', icon: '📊', group: 'platform', adminOnly: true },
+  { id: 'orgs', label: 'Cơ sở', icon: '🏡', group: 'platform', adminOnly: true },
+  { id: 'plans', label: 'Gói và giá', icon: '🏷️', group: 'platform', adminOnly: true },
+  { id: 'payments', label: 'Thanh toán', icon: '💵', group: 'platform', adminOnly: true },
+  { id: 'reviews', label: 'Duyệt hồ sơ', icon: '✅', group: 'platform', adminOnly: true },
+  { id: 'public', label: 'Vụ công khai', icon: '🌐', group: 'platform', adminOnly: true },
+  { id: 'settings', label: 'Cấu hình', icon: '⚙️', group: 'platform', adminOnly: true },
+  { id: 'audit', label: 'Nhật ký kiểm toán', icon: '📜', group: 'platform', adminOnly: true },
+  { id: 'site-pages', label: 'Trang tĩnh', icon: '📄', group: 'site' },
+  { id: 'site-banners', label: 'Banner trang chủ', icon: '🖼️', group: 'site' },
+  { id: 'site-menus', label: 'Menu và chân trang', icon: '🧭', group: 'site' },
+  { id: 'site-settings', label: 'Thông tin chung', icon: '🛠️', group: 'site' },
+  { id: 'site-roles', label: 'Người biên tập', icon: '👥', group: 'site', adminOnly: true },
 ];
 
 function Login() {
@@ -46,19 +52,30 @@ function Login() {
   );
 }
 
-function Admin({ session }: { session: Session }) {
-  const [page, setPage] = useState('overview');
+function Admin({ session, roles }: { session: Session; roles: string[] }) {
+  const isAdmin = roles.includes('admin');
+  const visible = PAGES.filter((p) => isAdmin || !p.adminOnly);
+  const [page, setPage] = useState(isAdmin ? 'overview' : 'site-pages');
   const [orgId, setOrgId] = useState<string | null>(null);
   const go = (p: string) => { setPage(p); setOrgId(null); };
   const title = PAGES.find((p) => p.id === page)?.label ?? '';
+  const groups: { id: 'platform' | 'site'; label: string }[] = [{ id: 'platform', label: 'Nền tảng' }, { id: 'site', label: 'Website' }];
   return (
     <div className="shell">
       <aside>
         <h1>AgriConnect<br /><small>Quản trị nền tảng</small></h1>
         <nav>
-          {PAGES.map((p) => (
-            <button key={p.id} className={page === p.id ? 'active' : ''} onClick={() => go(p.id)}><span>{p.icon}</span> {p.label}</button>
-          ))}
+          {groups.map((g) => {
+            const items = visible.filter((p) => p.group === g.id);
+            return items.length === 0 ? null : (
+              <div key={g.id}>
+                {isAdmin && <small style={{ display: 'block', margin: '10px 0 4px', textTransform: 'uppercase', letterSpacing: '.04em' }}>{g.label}</small>}
+                {items.map((p) => (
+                  <button key={p.id} className={page === p.id ? 'active' : ''} onClick={() => go(p.id)}><span>{p.icon}</span> {p.label}</button>
+                ))}
+              </div>
+            );
+          })}
         </nav>
         <div className="who">
           <a href={import.meta.env.DEV ? 'http://localhost:5180/' : '/'}>← Về ứng dụng</a>
@@ -76,6 +93,11 @@ function Admin({ session }: { session: Session }) {
         {page === 'public' && <PublicCyclesPage />}
         {page === 'settings' && <SettingsPage />}
         {page === 'audit' && <AuditPage />}
+        {page === 'site-pages' && <SitePagesPage roles={roles} />}
+        {page === 'site-banners' && <SiteBannersPage roles={roles} />}
+        {page === 'site-menus' && <SiteMenusPage roles={roles} />}
+        {page === 'site-settings' && <SiteSettingsPage roles={roles} />}
+        {page === 'site-roles' && isAdmin && <SiteRolesPage />}
       </main>
     </div>
   );
@@ -83,7 +105,7 @@ function Admin({ session }: { session: Session }) {
 
 function Root() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [roles, setRoles] = useState<string[] | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -92,24 +114,28 @@ function Root() {
     return () => data.subscription.unsubscribe();
   }, []);
   useEffect(() => {
-    setIsAdmin(null);
-    if (session) void rpc<boolean>('is_platform_admin').then(setIsAdmin).catch(() => setIsAdmin(false));
+    setRoles(null);
+    // Vai trò quản trị/biên tập (migration 0042); nếu chưa chạy migration thì chỉ kiểm quản trị viên như trước
+    if (session) {
+      void rpc<string[]>('get_my_site_roles').then(setRoles).catch(() =>
+        rpc<boolean>('is_platform_admin').then((a) => setRoles(a ? ['admin'] : [])).catch(() => setRoles([])));
+    }
   }, [session]);
 
   if (!supabase) return <main className="login"><h1>Chưa cấu hình</h1><p className="muted">Thiếu biến môi trường VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY khi build (xem docs/DEPLOY_CLOUDFLARE.md).</p></main>;
   if (session === undefined) return <p className="muted" style={{ padding: 24 }}>Đang tải…</p>;
   if (!session) return <Login />;
-  if (isAdmin === null) return <p className="muted" style={{ padding: 24 }}>Đang kiểm tra quyền…</p>;
-  if (!isAdmin) {
+  if (roles === null) return <p className="muted" style={{ padding: 24 }}>Đang kiểm tra quyền…</p>;
+  if (roles.length === 0) {
     return (
       <main className="login">
         <h1>Không có quyền</h1>
-        <p className="msg error">Tài khoản {session.user.email} không phải quản trị viên nền tảng.</p>
+        <p className="msg error">Tài khoản {session.user.email} chưa được cấp quyền quản trị hoặc biên tập.</p>
         <button onClick={() => void supabase!.auth.signOut()}>Đăng xuất</button>
       </main>
     );
   }
-  return <Admin session={session} />;
+  return <Admin session={session} roles={roles} />;
 }
 
 createRoot(document.getElementById('root')!).render(<StrictMode><Root /></StrictMode>);

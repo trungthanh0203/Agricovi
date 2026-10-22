@@ -4,8 +4,20 @@
     {
       "name": "app",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:app"],
+      "runtimeArgs": [
+        "run",
+        "dev:app"
+      ],
       "port": 5180
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:web"
+      ],
+      "port": 4321
     }
   ]
 }
