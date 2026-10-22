@@ -17,7 +17,7 @@ import Base from '../../layouts/Base.astro';
   async function main() {
     if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent('/giao-thuong/cua-toi/')); return; }
     try { await loadAccount(); } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
-    await render(new URLSearchParams(location.search).get('moi') ? note('ok', 'Đã gửi tin. Tin đang chờ kiểm duyệt; bạn sẽ nhận thông báo khi được duyệt.') : '');
+    await render(new URLSearchParams(location.search).get('moi') ? note('ok', 'Đã gửi tin. Tin đang chờ kiểm duyệt; bạn sẽ nhận thông báo khi được duyệt.') : new URLSearchParams(location.search).get('sua') ? note('ok', 'Đã lưu thay đổi. Tin sẽ hiển thị lại sau khi được kiểm duyệt.') : '');
   }
   async function render(msg = '') {
     let list: Mine[] = [];
@@ -30,7 +30,7 @@ import Base from '../../layouts/Base.astro';
           <h3 style="margin:.3em 0"><a href="/giao-thuong/tin/${esc(p.id)}">${esc(p.title)}</a></h3>
           <span class="muted">Hạn ${esc(new Date(p.expires_at).toLocaleDateString('vi-VN'))} · ${p.responses} ${p.kind === 'buy' ? 'báo giá' : 'người quan tâm'}${p.open_responses ? ` (<b>${p.open_responses} chưa xử lý</b>)` : ''}</span>
           ${p.review_note ? `<br><span class="muted">Ghi chú kiểm duyệt: ${esc(p.review_note)}</span>` : ''}
-          ${p.status === 'published' || p.status === 'pending' ? `<p style="margin:.5em 0 0"><button class="btn sm" data-ext="${esc(p.id)}">Gia hạn 14 ngày</button> <button class="btn sm danger" data-close="${esc(p.id)}">Đóng tin</button></p>` : ''}</div>`;
+          ${p.status !== 'closed' ? `<p style="margin:.5em 0 0"><a class="btn sm" href="/giao-thuong/dang-tin/?sua=${esc(p.id)}">Sửa tin</a> ${p.status === 'published' || p.status === 'pending' ? `<button class="btn sm" data-ext="${esc(p.id)}">Gia hạn 14 ngày</button> <button class="btn sm danger" data-close="${esc(p.id)}">Đóng tin</button>` : '<span class="muted">Sửa xong, tin được gửi duyệt lại.</span>'}</p>` : ''}</div>`;
       }).join('')}`;
     app.querySelectorAll<HTMLElement>('[data-ext]').forEach((b) => b.addEventListener('click', async () => { try { await call('extend_trade_post', { p_id: b.dataset.ext, p_days: 14 }); await render(note('ok', 'Đã gia hạn.')); } catch (e) { await render(note('err', friendly(e))); } }));
     app.querySelectorAll<HTMLElement>('[data-close]').forEach((b) => b.addEventListener('click', async () => { if (!confirm('Đóng tin này?')) return; try { await call('close_trade_post', { p_id: b.dataset.close }); await render(note('ok', 'Đã đóng tin.')); } catch (e) { await render(note('err', friendly(e))); } }));

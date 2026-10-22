@@ -4,7 +4,7 @@ import { TRADE_TAGS, TRADE_UNITS } from '@agriconnect/shared';
 ---
 <Base title="Đăng tin giao thương — AgriConnect" noindex cache={false}>
   <div class="prose">
-    <h1>Đăng tin giao thương</h1>
+    <h1 id="h1">Đăng tin giao thương</h1>
     <div id="app"><p class="muted">Đang tải…</p></div>
     <template id="tpl">
       <form id="pf" class="form mini">
@@ -45,9 +45,11 @@ import { TRADE_TAGS, TRADE_UNITS } from '@agriconnect/shared';
 
   const app = document.getElementById('app')!;
   let images: string[] = [];
+  const editId = new URLSearchParams(location.search).get('sua');
+  interface Post { id: string; kind: string; status: string; category_id: string | null; product_name: string | null; quantity: number | null; unit: string; price_min: number | null; price_max: number | null; province: string; district: string | null; when_date: string | null; quality: string[]; description: string | null; images: string[]; is_owner: boolean }
 
   async function main() {
-    if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent('/giao-thuong/dang-tin/')); return; }
+    if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent(location.pathname + location.search)); return; }
     let acc: WebAccount;
     try { acc = await loadAccount(); } catch (e) { app.innerHTML = `<p class="err">${esc(friendly(e))}</p>`; return; }
     if (acc.profile?.login_kind !== 'email' || acc.email_verified === false) {
@@ -77,6 +79,30 @@ import { TRADE_TAGS, TRADE_UNITS } from '@agriconnect/shared';
       else sel.insertAdjacentHTML('beforeend', `<optgroup label="${esc(top.name)}">${kids.map((k) => `<option value="${esc(k.id)}">${esc(k.name)}</option>`).join('')}</optgroup>`);
     }
 
+    // chế độ sửa: nạp tin hiện có; loại tin và cơ sở không đổi
+    if (editId) {
+      const go0 = document.getElementById('go') as HTMLButtonElement;
+      try {
+        const p = await call<Post>('get_trade_post', { p_id: editId });
+        if (!p.is_owner || p.status === 'closed') { app.innerHTML = `<div class="panel"><b>Tin này không sửa được.</b><p class="muted">Chỉ chủ tin mới sửa, và tin đã đóng thì cần đăng tin mới. <a href="/giao-thuong/cua-toi/">Về tin của tôi</a></p></div>`; return; }
+        document.getElementById('h1')!.textContent = 'Sửa tin giao thương';
+        document.title = 'Sửa tin giao thương — AgriConnect';
+        kind.innerHTML = `<option value="${esc(p.kind)}">${p.kind === 'sell' ? 'Cần bán' : 'Cần mua'}</option>`; kind.disabled = true; syncKind();
+        (document.getElementById('orgRow') as HTMLElement).hidden = true;
+        const el = (n: string) => f.elements.namedItem(n) as HTMLInputElement;
+        sel.value = p.category_id ?? '';
+        el('product').value = p.product_name ?? ''; el('qty').value = p.quantity != null ? String(p.quantity) : ''; el('unit').value = p.unit;
+        el('pmin').value = p.price_min != null ? String(p.price_min) : ''; el('pmax').value = p.price_max != null ? String(p.price_max) : '';
+        el('province').value = p.province; el('district').value = p.district ?? ''; el('when').value = p.when_date ?? ''; el('desc').value = p.description ?? '';
+        const dsel = f.elements.namedItem('days') as HTMLSelectElement;
+        dsel.insertAdjacentHTML('afterbegin', '<option value="">Giữ nguyên hạn hiện tại</option>'); dsel.value = '';
+        f.querySelectorAll<HTMLInputElement>('input[name="tag"]').forEach((c) => { c.checked = p.quality.includes(c.value); });
+        images = [...p.images];
+        go0.textContent = 'Lưu thay đổi';
+        f.insertAdjacentHTML('afterbegin', `<p class="muted">${p.status === 'published' ? 'Sửa số lượng, giá, ngày thì áp dụng ngay. Sửa loại sản phẩm, tên, mô tả hoặc ảnh thì tin sẽ được kiểm duyệt lại.' : p.status === 'pending' ? 'Tin đang chờ duyệt, bạn có thể sửa thoải mái.' : 'Sau khi sửa, tin sẽ được gửi duyệt lại.'}</p>`);
+      } catch (x) { app.innerHTML = `<p class="err">${esc(friendly(x))}</p>`; return; }
+    }
+
     const prev = document.getElementById('prev')!;
     const paint = () => { prev.innerHTML = images.map((s, i) => `<figure style="margin:0"><img src="${s}" alt="" /><button type="button" class="btn" data-rm="${i}" style="padding:2px 8px">Bỏ</button></figure>`).join(''); prev.querySelectorAll<HTMLElement>('[data-rm]').forEach((b) => b.addEventListener('click', () => { images.splice(Number(b.dataset.rm), 1); paint(); })); };
     document.getElementById('imgs')!.addEventListener('change', async (e) => {
@@ -90,22 +116,31 @@ import { TRADE_TAGS, TRADE_UNITS } from '@agriconnect/shared';
       (e.target as HTMLInputElement).value = ''; paint();
     });
 
+    paint();
     f.addEventListener('submit', async (e) => {
       e.preventDefault();
       const go = document.getElementById('go') as HTMLButtonElement;
       const msg = document.getElementById('msg')!;
-      msg.hidden = true; go.disabled = true; go.textContent = 'Đang đăng…';
+      msg.hidden = true; go.disabled = true; go.textContent = editId ? 'Đang lưu…' : 'Đang đăng…';
       const d = new FormData(f);
       const digits = (k: string) => { const v = String(d.get(k) ?? '').replace(/[^0-9]/g, ''); return v ? Number(v) : null; };
       const qty = Number(String(d.get('qty') ?? '').replace(',', '.').replace(/[^0-9.]/g, '')) || null;
       try {
+        if (editId) {
+          const r = await call<{ id: string; status: string }>('update_trade_post', {
+            p_id: editId, p_category: d.get('cat'), p_product: d.get('product'), p_quantity: qty, p_unit: d.get('unit'), p_price_min: digits('pmin'), p_price_max: digits('pmax'),
+            p_province: d.get('province'), p_district: d.get('district'), p_when: d.get('when') || null, p_days: d.get('days') ? Number(d.get('days')) : null, p_quality: d.getAll('tag'), p_description: d.get('desc'), p_images: images,
+          });
+          location.assign(r.status === 'published' ? '/giao-thuong/tin/' + r.id : '/giao-thuong/cua-toi/?sua=1');
+          return;
+        }
         const r = await call<{ id: string; status: string }>('create_trade_post', {
           p_kind: d.get('kind'), p_category: d.get('cat'), p_product: d.get('product'), p_quantity: qty, p_unit: d.get('unit'), p_price_min: digits('pmin'), p_price_max: digits('pmax'),
           p_province: d.get('province'), p_district: d.get('district'), p_when: d.get('when') || null, p_days: Number(d.get('days')), p_quality: d.getAll('tag'), p_description: d.get('desc'), p_images: images,
           p_org: d.get('kind') === 'sell' ? d.get('org') : null,
         });
         location.assign(r.status === 'published' ? '/giao-thuong/tin/' + r.id : '/giao-thuong/cua-toi/?moi=1');
-      } catch (x) { msg.textContent = friendly(x); msg.hidden = false; go.disabled = false; go.textContent = 'Đăng tin'; msg.scrollIntoView({ block: 'center' }); }
+      } catch (x) { msg.textContent = friendly(x); msg.hidden = false; go.disabled = false; go.textContent = editId ? 'Lưu thay đổi' : 'Đăng tin'; msg.scrollIntoView({ block: 'center' }); }
     });
   }
   void main();

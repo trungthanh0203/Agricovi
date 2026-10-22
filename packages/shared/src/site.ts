@@ -92,7 +92,6 @@ export const COMING_SOON_SECTIONS: Record<string, string> = {
   'tim-kiem': 'Tìm kiếm',
   'dang-nhap': 'Đăng nhập',
   'dang-ky': 'Đăng ký',
-  'gio-hang': 'Giỏ hàng',
 };
 
 export interface DefaultPage { title: string; description: string; body: string }
@@ -264,3 +263,10 @@ export const TRADE_UNITS = ['kg', 'tấn', 'quả', 'trái', 'bó', 'thùng', 'b
 export const TRADE_TAGS = ['VietGAP', 'Hữu cơ', 'Có truy xuất nguồn gốc', 'Loại 1', 'Đồng đều kích cỡ', 'Giao tận nơi', 'Có hóa đơn', 'Có kiểm định'] as const;
 export const TRADE_KIND_LABEL: Record<string, string> = { buy: 'Cần mua', sell: 'Cần bán' };
 export const TRADE_STATUS_LABEL: Record<string, string> = { pending: 'Chờ duyệt', published: 'Đang hiển thị', closed: 'Đã đóng', rejected: 'Chưa được duyệt', hidden: 'Đã bị ẩn' };
+
+/** Đơn đặt hàng nông sản (W5, D68) */
+export const ORDER_STATUS_LABEL: Record<string, string> = {
+  placed: 'Chờ nhà cung cấp báo giá', quoted: 'Đã báo giá, chờ bạn đồng ý', accepted: 'Đã chốt', preparing: 'Đang chuẩn bị hàng', shipped: 'Đang giao',
+  delivered: 'Đã giao, chờ xác nhận', completed: 'Hoàn tất', cancelled: 'Đã hủy', rejected: 'Bị từ chối',
+};
+export const PAYMENT_LABEL: Record<string, string> = { unpaid: 'Chưa thanh toán', partial: 'Đã thanh toán một phần', paid: 'Đã thanh toán đủ' };

@@ -105,6 +105,19 @@ begin
   on conflict (user_id, listing_id) do update set quantity = excluded.quantity, name = excluded.name, updated_at = now();
 end $$;
 
+-- Thêm vào giỏ: cộng dồn số lượng nếu đã có
+create or replace function cart_add_item(p_listing uuid, p_qty numeric) returns numeric
+language plpgsql security definer set search_path = public as $$
+declare cur numeric; nq numeric;
+begin
+  perform web_guard();
+  if p_qty is null or p_qty <= 0 then raise exception 'INVALID: Hãy nhập số lượng lớn hơn 0.'; end if;
+  select quantity into cur from cart_items where user_id = auth.uid() and listing_id = p_listing;
+  nq := coalesce(cur, 0) + p_qty;
+  perform cart_set_item(p_listing, least(nq, 1000000));
+  return least(nq, 1000000);
+end $$;
+
 create or replace function cart_count() returns integer
 language plpgsql stable security definer set search_path = public as $$
 begin
@@ -460,12 +473,12 @@ end $$;
 -- ---------------------------------------------------------------------------
 revoke all on cart_items, web_orders, web_order_items, web_order_events from public, anon, authenticated;
 revoke execute on function update_trade_post(uuid, uuid, text, numeric, text, numeric, numeric, text, text, date, integer, text[], text, text[]),
-  cart_set_item(uuid, numeric), cart_count(), cart_get(), checkout_cart(uuid, uuid, date, text), reorder(uuid), list_orders(text, text), get_order(uuid),
+  cart_set_item(uuid, numeric), cart_add_item(uuid, numeric), cart_count(), cart_get(), checkout_cart(uuid, uuid, date, text), reorder(uuid), list_orders(text, text), get_order(uuid),
   quote_order(uuid, jsonb, numeric, text, date), order_action(uuid, text, text), set_order_payment(uuid, text, text),
   order_side(uuid, uuid), order_total(uuid), order_event(uuid, text, text, text, text, text), notify_order_sellers(uuid, text, text, uuid), complete_overdue_orders(),
   web_order_events_append_only() from public, anon;
 revoke execute on function order_side(uuid, uuid), order_total(uuid), order_event(uuid, text, text, text, text, text), notify_order_sellers(uuid, text, text, uuid), complete_overdue_orders() from authenticated;
 grant execute on function update_trade_post(uuid, uuid, text, numeric, text, numeric, numeric, text, text, date, integer, text[], text, text[]),
-  cart_set_item(uuid, numeric), cart_count(), cart_get(), checkout_cart(uuid, uuid, date, text), reorder(uuid), list_orders(text, text), get_order(uuid),
+  cart_set_item(uuid, numeric), cart_add_item(uuid, numeric), cart_count(), cart_get(), checkout_cart(uuid, uuid, date, text), reorder(uuid), list_orders(text, text), get_order(uuid),
   quote_order(uuid, jsonb, numeric, text, date), order_action(uuid, text, text), set_order_payment(uuid, text, text) to authenticated;
 grant execute on function site_search(text) to anon, authenticated;

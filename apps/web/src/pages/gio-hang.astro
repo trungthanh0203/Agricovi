@@ -1,0 +1,92 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Giỏ hàng — AgriConnect" noindex cache={false}>
+  <h1>Giỏ hàng</h1>
+  <div id="app"><p class="muted">Đang tải…</p></div>
+</Base>
+
+<script>
+  import { auth, call, friendly, loadAccount, session } from '../lib/auth';
+  import { esc } from '../lib/db';
+  import { fmtVnd } from '../lib/catalog';
+
+  const app = document.getElementById('app')!;
+  interface Item { listing_id: string; name: string; unit: string | null; price_from: number | string | null; price_note: string | null; min_order: string | null; supply_status: string | null; quantity: number | string; sellable: boolean }
+  interface Group { profile_id: string; slug: string; supplier: string; province: string | null; items: Item[] }
+  interface Cart { groups: Group[]; gone: { listing_id: string; name: string }[] }
+  interface Addr { id: string; label: string; recipient: string; phone: string; province: string; district: string | null; address: string; is_default: boolean }
+  const note = (cls: string, t: string) => `<p class="${cls}" role="${cls === 'err' ? 'alert' : 'status'}">${esc(t)}</p>`;
+  let addrs: Addr[] = [];
+  let verified = true;
+
+  async function main() {
+    if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent('/gio-hang/')); return; }
+    try {
+      const acc = await loadAccount();
+      verified = acc.profile?.login_kind === 'email' && acc.email_verified !== false;
+      const { data } = await auth!.from('buyer_addresses').select('*').order('created_at'); addrs = (data ?? []) as Addr[];
+    } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
+    await render();
+  }
+
+  const unitPrice = (i: Item) => (i.price_from != null && Number(i.price_from) > 0 ? Number(i.price_from) : null);
+
+  async function render(msg = '') {
+    let cart: Cart;
+    try { cart = await call<Cart>('cart_get'); } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
+    window.dispatchEvent(new Event('cart:refresh'));
+    if (cart.groups.length === 0 && cart.gone.length === 0) {
+      app.innerHTML = `${msg}<p class="empty">Giỏ hàng đang trống.</p><p><a class="btn solid" href="/">Xem sản phẩm</a> <a class="btn outline" href="/don-hang/">Đơn hàng của tôi</a></p>`;
+      return;
+    }
+    app.innerHTML = `${msg}
+      <p class="muted">Mỗi nhà cung cấp là một đơn riêng. Giá hiện là <b>giá tham khảo</b>; nhà cung cấp sẽ báo giá chính thức (và phí giao hàng) cho bạn xác nhận. <b>Chưa thanh toán trực tuyến</b> — hai bên tự thỏa thuận cách thanh toán và giao nhận.</p>
+      ${cart.gone.length ? `<div class="panel"><b class="err">Có sản phẩm không còn bán</b>${cart.gone.map((g) => `<p style="margin:.3em 0">${esc(g.name)} <button class="btn sm danger" data-rm="${esc(g.listing_id)}">Bỏ khỏi giỏ</button></p>`).join('')}</div>` : ''}
+      ${cart.groups.map((g) => {
+        const est = g.items.reduce((s, i) => s + (unitPrice(i) ?? 0) * Number(i.quantity), 0);
+        const unknown = g.items.some((i) => unitPrice(i) === null);
+        const hasBad = g.items.some((i) => !i.sellable);
+        return `<section class="panel" data-g="${esc(g.profile_id)}">
+          <h3 style="margin:0 0 6px"><a href="/co-so/${encodeURIComponent(g.slug)}">${esc(g.supplier)}</a> <span class="muted">${g.province ? '· 📍 ' + esc(g.province) : ''}</span></h3>
+          ${g.items.map((i) => `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line)">
+            <div style="flex:1;min-width:160px"><b>${esc(i.name)}</b>${i.sellable ? '' : ' <span class="stat bad">Tạm hết hàng</span>'}<br><span class="muted">${unitPrice(i) !== null ? 'Từ ' + fmtVnd(unitPrice(i)!) + '/' + esc(i.unit ?? '') : esc(i.price_note || 'Liên hệ báo giá')}${i.min_order ? ' · tối thiểu ' + esc(i.min_order) : ''}</span></div>
+            <label style="font-weight:400">SL (${esc(i.unit ?? '')}) <input type="number" min="0" step="any" value="${esc(i.quantity)}" data-q="${esc(i.listing_id)}" style="width:90px" /></label>
+            <button class="btn sm danger" data-rm="${esc(i.listing_id)}">Bỏ</button></div>`).join('')}
+          <p style="margin:.6em 0"><b>Tạm tính tham khảo: ${est > 0 ? fmtVnd(est) : '—'}</b>${unknown ? ' <span class="muted">(có sản phẩm chưa có giá — nhà cung cấp sẽ báo)</span>' : ''}</p>
+          ${hasBad ? '<p class="err">Hãy bỏ sản phẩm tạm hết hàng trước khi đặt.</p>' : checkout(g)}
+        </section>`;
+      }).join('')}`;
+    app.querySelectorAll<HTMLInputElement>('[data-q]').forEach((el) => el.addEventListener('change', async () => {
+      try { await call('cart_set_item', { p_listing: el.dataset.q, p_qty: Number(String(el.value).replace(',', '.')) }); await render(); } catch (e) { await render(note('err', friendly(e))); }
+    }));
+    app.querySelectorAll<HTMLElement>('[data-rm]').forEach((b) => b.addEventListener('click', async () => {
+      try { await call('cart_set_item', { p_listing: b.dataset.rm, p_qty: 0 }); await render(); } catch (e) { await render(note('err', friendly(e))); }
+    }));
+    app.querySelectorAll<HTMLFormElement>('form[data-order]').forEach((f) => f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = f.querySelector<HTMLButtonElement>('button[type=submit]')!;
+      const d = new FormData(f);
+      if (!d.get('addr')) { f.querySelector<HTMLElement>('.omsg')!.textContent = 'Hãy chọn địa chỉ nhận hàng.'; return; }
+      btn.disabled = true; btn.textContent = 'Đang gửi đơn…';
+      try {
+        const id = await call<string>('checkout_cart', { p_profile: f.dataset.order, p_address: d.get('addr'), p_date: d.get('date') || null, p_note: d.get('note') });
+        location.assign('/don-hang/' + id + '?moi=1');
+      } catch (x) { f.querySelector<HTMLElement>('.omsg')!.textContent = friendly(x); btn.disabled = false; btn.textContent = 'Gửi đơn đặt hàng'; }
+    }));
+  }
+
+  function checkout(g: Group): string {
+    if (!verified) return `<p class="err">Cần tài khoản email đã xác nhận để đặt hàng. <a href="/tai-khoan/">Về tài khoản</a></p>`;
+    if (addrs.length === 0) return `<p class="err">Bạn chưa có địa chỉ nhận hàng. <a href="/tai-khoan/#dia-chi">Thêm địa chỉ</a> rồi quay lại.</p>`;
+    const def = addrs.find((a) => a.is_default) ?? addrs[0]!;
+    return `<form data-order="${esc(g.profile_id)}" class="form mini">
+      <label>Giao tới<select name="addr">${addrs.map((a) => `<option value="${esc(a.id)}"${a.id === def.id ? ' selected' : ''}>${esc(a.label)} — ${esc(a.recipient)}, ${esc([a.address, a.district, a.province].filter(Boolean).join(', '))}</option>`).join('')}</select></label>
+      <div class="formgrid"><label>Muốn nhận hàng trước ngày (không bắt buộc)<input type="date" name="date" /></label>
+      <label>Ghi chú cho nhà cung cấp (không ghi số điện thoại, email)<input name="note" maxlength="300" /></label></div>
+      <p class="err omsg" role="alert"></p>
+      <button class="btn solid" type="submit">Gửi đơn đặt hàng</button>
+    </form>`;
+  }
+  void main();
+</script>

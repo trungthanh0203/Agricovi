@@ -40,12 +40,38 @@ const jsonLd = p ? JSON.stringify({
           <b>Nhà cung cấp</b>
           <h3 style="margin:.3em 0"><a href={`/co-so/${encodeURIComponent(p.supplierSlug)}`}>{p.supplier}</a></h3>
           {p.province && <p class="muted" style="margin:0">📍 {p.province}</p>}
-          <p><a class="btn solid" style="width:100%;text-align:center" href={`/bao-gia/?loai=product&ma=${encodeURIComponent(p.id)}`}>Yêu cầu báo giá</a></p>
+          {p.supply !== 'out_of_stock' && p.supply !== 'paused' ? (
+            <form id="addCart" data-listing={p.id} data-min={p.minOrder} style="margin:.6em 0">
+              <label style="display:block;font-weight:600">Số lượng ({p.unit || 'đơn vị'})
+                <input name="qty" type="number" min="0.1" step="any" value="1" required style="width:100%;margin-top:4px" /></label>
+              <button class="btn solid" style="width:100%;margin-top:8px" type="submit">🛒 Thêm vào giỏ</button>
+              <p id="cartMsg" class="muted" role="status" style="margin:.4em 0 0"></p>
+            </form>
+          ) : <p class="stat bad">Tạm hết hàng / tạm ngừng bán</p>}
+          <p><a class="btn outline" style="width:100%;text-align:center" href={`/bao-gia/?loai=product&ma=${encodeURIComponent(p.id)}`}>Yêu cầu báo giá</a></p>
           <p><button type="button" data-fav data-kind="product" data-ref={p.id}>♡ Lưu sản phẩm</button> <button type="button" data-fav data-kind="supplier" data-ref={p.profileId}>♡ Lưu nhà cung cấp</button></p>
           <p><a href={`/co-so/${encodeURIComponent(p.supplierSlug)}`}>Xem hồ sơ nhà cung cấp →</a></p>
         </div>
       </aside>
     </div>
+    <script>
+      import { call, friendly, session } from '../../lib/auth';
+      const f = document.getElementById('addCart') as HTMLFormElement | null;
+      f?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const msg = document.getElementById('cartMsg')!;
+        if (!(await session())) { location.assign('/dang-nhap/?next=' + encodeURIComponent(location.pathname)); return; }
+        const qty = Number(String(new FormData(f).get('qty')).replace(',', '.'));
+        if (!(qty > 0)) { msg.textContent = 'Hãy nhập số lượng lớn hơn 0.'; return; }
+        const btn = f.querySelector('button')!; btn.disabled = true;
+        try {
+          await call('cart_add_item', { p_listing: f.dataset.listing, p_qty: qty });
+          msg.innerHTML = 'Đã thêm vào giỏ. <a href="/gio-hang/">Xem giỏ hàng →</a>';
+          window.dispatchEvent(new Event('cart:refresh'));
+        } catch (x) { msg.textContent = friendly(x); }
+        btn.disabled = false;
+      });
+    </script>
   </Base>
 ) : (
   <Base title="Không tìm thấy sản phẩm — AgriConnect" noindex cache={false}>

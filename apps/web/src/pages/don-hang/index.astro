@@ -1,0 +1,45 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base title="Đơn hàng — AgriConnect" noindex cache={false}>
+  <h1 id="h1">Đơn hàng của tôi</h1>
+  <div id="app"><p class="muted">Đang tải…</p></div>
+</Base>
+
+<script>
+  import { ORDER_STATUS_LABEL, PAYMENT_LABEL } from '@agriconnect/shared';
+  import { call, friendly, loadAccount, session } from '../../lib/auth';
+  import { esc } from '../../lib/db';
+  import { fmtVnd } from '../../lib/catalog';
+
+  const app = document.getElementById('app')!;
+  interface Row { id: string; code: string; status: string; payment_status: string; supplier_name: string; recipient: string; created_at: string; total: number | string | null; item_count: number; item_names: string }
+  const note = (cls: string, t: string) => `<p class="${cls}" role="${cls === 'err' ? 'alert' : 'status'}">${esc(t)}</p>`;
+  const tone = (s: string) => (s === 'completed' || s === 'delivered' ? 'ok' : s === 'cancelled' || s === 'rejected' ? 'bad' : 'warn');
+  let role: 'buyer' | 'seller' = new URLSearchParams(location.search).get('vai') === 'ban' ? 'seller' : 'buyer';
+  let status = '';
+
+  async function main() {
+    if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent(location.pathname + location.search)); return; }
+    try { await loadAccount(); } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
+    await render();
+  }
+
+  async function render() {
+    let list: Row[] = [];
+    let err = '';
+    try { list = await call<Row[]>('list_orders', { p_role: role, p_status: status || null }); } catch (e) { err = note('err', friendly(e)); }
+    document.getElementById('h1')!.textContent = role === 'seller' ? 'Đơn đặt hàng nhận được' : 'Đơn hàng của tôi';
+    app.innerHTML = `<p><button class="btn sm ${role === 'buyer' ? 'solid' : 'outline'}" data-role="buyer">Đơn tôi đặt</button> <button class="btn sm ${role === 'seller' ? 'solid' : 'outline'}" data-role="seller">Đơn nhận được (gian hàng của tôi)</button>
+      <select id="st" aria-label="Lọc theo trạng thái"><option value="">Mọi trạng thái</option>${Object.entries(ORDER_STATUS_LABEL).map(([k, v]) => `<option value="${k}"${k === status ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></p>
+      ${err}${list.length === 0 && !err ? `<p class="empty">${role === 'seller' ? 'Chưa có đơn nào gửi tới gian hàng của bạn.' : 'Bạn chưa có đơn hàng nào.'}</p>` : ''}
+      ${list.map((o) => `<a class="panel" style="display:block;text-decoration:none;color:inherit" href="/don-hang/${esc(o.id)}">
+        <b>${esc(o.code)}</b> <span class="stat ${tone(o.status)}">${esc(ORDER_STATUS_LABEL[o.status] ?? o.status)}</span>${o.payment_status !== 'unpaid' ? ` <span class="pill">${esc(PAYMENT_LABEL[o.payment_status] ?? '')}</span>` : ''}
+        <br>${role === 'seller' ? 'Người nhận: ' + esc(o.recipient) : esc(o.supplier_name)} · <span class="muted">${esc(new Date(o.created_at).toLocaleString('vi-VN'))}</span>
+        <br><span class="muted">${esc(o.item_names.length > 120 ? o.item_names.slice(0, 120) + '…' : o.item_names)}</span>
+        <br>${o.total != null ? `<b>${fmtVnd(Number(o.total))}</b> (đã gồm phí giao)` : '<span class="muted">Chờ nhà cung cấp báo giá</span>'}</a>`).join('')}`;
+    app.querySelectorAll<HTMLElement>('[data-role]').forEach((b) => b.addEventListener('click', () => { role = b.dataset.role as 'buyer' | 'seller'; status = ''; void render(); }));
+    document.getElementById('st')!.addEventListener('change', (e) => { status = (e.target as HTMLSelectElement).value; void render(); });
+  }
+  void main();
+</script>

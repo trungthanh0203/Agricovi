@@ -5,8 +5,9 @@ import ProductCard from '../components/ProductCard.astro';
 import MaterialCard from '../components/MaterialCard.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import TradeCard from '../components/TradeCard.astro';
+import ShopCard from '../components/ShopCard.astro';
 import { loadTradePosts } from '../lib/trade';
-import { catHref, catTree, descendantIds, loadArticles, loadCategories, loadMaterials, loadProducts, today } from '../lib/catalog';
+import { catHref, catTree, descendantIds, loadArticles, loadCategories, loadMaterials, loadProducts, loadShops, today } from '../lib/catalog';
 import { esc, img, loadDirectory, profileCard, supplyPill, type DirRow } from '../lib/db';
 import { loadChrome } from '../lib/site';
 
@@ -41,6 +42,7 @@ const trades = (await loadTradePosts()).slice(0, 6);
 const day = today();
 const latest = articles.filter((a) => a.channel !== 'hoi_cho' || !a.end || a.end >= day || a.publishedAt).slice(0, 4);
 let dirError = '';
+const shopsHome = (await loadShops()).slice(0, 3);
 let featured: string[] = [];
 let available: string[] = [];
 try {
@@ -114,6 +116,7 @@ try {
         {dirError && <p class="err">{dirError}</p>}
         {!dirError && featured.length === 0 && <p class="empty">Chưa có cơ sở nào được công khai.</p>}
         <div class="grid" set:html={featured.join('')} />
+        {shopsHome.length > 0 && <div class="grid" style="margin-top:14px">{shopsHome.map((s) => <ShopCard s={s} />)}</div>}
       </>
     ) : b.id === 'dang_co_hang' ? (
       <>

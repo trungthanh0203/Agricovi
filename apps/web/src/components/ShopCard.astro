@@ -1,0 +1,14 @@
+---
+import type { Shop } from '../lib/catalog';
+interface Props { s: Shop }
+const { s } = Astro.props;
+---
+<a class="card" href={`/gian-hang-vat-tu/${encodeURIComponent(s.slug)}`}>
+  <div class="ph">🧪</div>
+  <div class="body">
+    <h3>{s.name}</h3>
+    <p><span class="pill">Gian hàng vật tư</span>{s.verified && <> <span class="stat ok">Đã kiểm tra giấy phép</span></>}</p>
+    <p class="muted">📍 {[s.district, s.province].filter(Boolean).join(', ')}</p>
+    {s.description && <p class="muted">{s.description.slice(0, 90)}{s.description.length > 90 ? '…' : ''}</p>}
+  </div>
+</a>

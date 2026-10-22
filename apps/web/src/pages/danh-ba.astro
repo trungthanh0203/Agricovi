@@ -10,10 +10,12 @@ import Base from '../layouts/Base.astro';
   </div>
   <p id="count" class="muted"></p>
   <div id="list" class="grid"><p class="muted">Đang tải…</p></div>
+  <h2 id="shopsH" hidden>Gian hàng vật tư</h2>
+  <div id="shops" class="grid"></div>
 </Base>
 
 <script>
-  import { esc, loadDirectory, profileCard } from '../lib/db';
+  import { esc, loadDirectory, profileCard, sb } from '../lib/db';
   const list = document.getElementById('list')!;
   const qEl = document.getElementById('q') as HTMLInputElement;
   const provEl = document.getElementById('prov') as HTMLSelectElement;
@@ -21,6 +23,19 @@ import Base from '../layouts/Base.astro';
   const countEl = document.getElementById('count')!;
   const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
   qEl.value = new URLSearchParams(location.search).get('q') ?? '';
+
+  // Gian hàng vật tư đang hoạt động (chỉ phần công khai)
+  interface ShopRow { slug: string; name: string; description: string | null; province: string; district: string | null; license_verified: boolean }
+  let shopRows: ShopRow[] | null = null;
+  async function renderShops(q: string) {
+    if (shopRows === null) {
+      shopRows = [];
+      if (sb) { const { data } = await sb.from('public_material_shops').select('slug, name, description, province, district, license_verified').order('name').limit(200); shopRows = (data ?? []) as ShopRow[]; }
+    }
+    const out = shopRows.filter((s) => (!provEl.value || s.province === provEl.value) && !availEl.value && (!q || q.split(/\s+/).every((w) => fold([s.name, s.province, s.district ?? '', s.description ?? ''].join(' ')).includes(w))));
+    document.getElementById('shopsH')!.hidden = out.length === 0;
+    document.getElementById('shops')!.innerHTML = out.map((s) => `<a class="card" href="/gian-hang-vat-tu/${encodeURIComponent(s.slug)}"><div class="ph">🧪</div><div class="body"><h3>${esc(s.name)}</h3><p><span class="pill">Gian hàng vật tư</span>${s.license_verified ? ' <span class="stat ok">Đã kiểm tra giấy phép</span>' : ''}</p><p class="muted">📍 ${esc([s.district, s.province].filter(Boolean).join(', '))}</p>${s.description ? `<p class="muted">${esc(s.description.slice(0, 90))}</p>` : ''}</div></a>`).join('');
+  }
 
   loadDirectory().then(({ rows, snaps, prods }) => {
     for (const p of [...new Set(rows.map((r) => r.province).filter((x): x is string => Boolean(x)))].sort((a, b) => a.localeCompare(b, 'vi'))) {
@@ -37,6 +52,7 @@ import Base from '../layouts/Base.astro';
         return q.split(/\s+/).every((w) => hay.includes(w));
       });
       countEl.textContent = `${out.length} cơ sở`;
+      void renderShops(q);
       list.innerHTML = out.length ? out.map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? [])).join('') : '<p class="empty">Không tìm thấy cơ sở phù hợp.</p>';
     };
     for (const el of [qEl, provEl, availEl]) el.addEventListener('input', render);

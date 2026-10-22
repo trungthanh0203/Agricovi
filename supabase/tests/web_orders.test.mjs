@@ -40,6 +40,8 @@ test('giỏ hàng: cần tài khoản người mua; không đặt của chính m
   assert.match(await expectError(asUser(db, staff, `select cart_set_item($1,1)`, [l1])), /FORBIDDEN/);
   assert.match(await expectError(asUser(db, owner, `select cart_set_item($1,1)`, [l1])), /INVALID/);
   await asUser(db, buyer, `select cart_set_item($1,3)`, [l1]);
+  assert.equal(Number((await asUser(db, buyer, `select cart_add_item($1,2) q`, [l1])).rows[0].q), 5);            // thêm vào giỏ cộng dồn
+  assert.match(await expectError(asUser(db, buyer, `select cart_add_item($1,0)`, [l1])), /INVALID/);
   await asUser(db, buyer, `select cart_set_item($1,4)`, [l1]);              // đặt lại thì ghi đè, không nhân đôi
   await asUser(db, buyer, `select cart_set_item($1,2)`, [l2]);
   assert.equal((await asUser(db, buyer, `select cart_count() n`)).rows[0].n, 2);
