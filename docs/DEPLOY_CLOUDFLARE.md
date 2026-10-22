@@ -158,11 +158,11 @@ Tạo một Worker riêng tên `agriconnect` (khác Worker của app), nối cù
 |---|---|
 | Root directory | để **trống** (gốc kho) |
 | Build command | `npm ci && npm run build -w @agriconnect/web` |
-| Deploy command | `cd apps/web && npx wrangler deploy` |
+| Deploy command | `npx wrangler deploy --config apps/web/dist/server/wrangler.json` |
 
 Biến lúc build (Build variables): `NODE_VERSION` = `22`. Khóa công khai đã nằm trong `apps/web/.env.production` nên không bắt buộc khai thêm. Tên Worker phải trùng `name` trong `apps/web/wrangler.jsonc` (`agriconnect`).
 
-**Từ W0 (D60) website dựng phía máy chủ** (Astro 7 + `@astrojs/cloudflare` 14, chạy trên Workers): `npm run build -w @agriconnect/web` tạo `apps/web/dist/client` (tệp tĩnh) và `apps/web/dist/server` (Worker) kèm cấu hình `wrangler.json` sinh sẵn; lệnh `wrangler deploy` chạy **trong thư mục `apps/web`** sẽ tự dùng cấu hình đó (vì vậy lệnh deploy có `cd apps/web`, khác bản tĩnh trước đây; tệp `_redirects` không còn). Nếu bước deploy báo không tìm thấy cấu hình, thử `npx wrangler deploy --config dist/server/wrangler.json` trong `apps/web`. Trang công khai gửi `Cache-Control: s-maxage=60`, nên nội dung CMS xuất hiện trên website sau tối đa khoảng 1 phút, không cần deploy lại.
+**Từ W0 (D60) website dựng phía máy chủ** (Astro 7 + `@astrojs/cloudflare` 14, chạy trên Workers): `npm run build -w @agriconnect/web` tạo `apps/web/dist/client` (tệp tĩnh) và `apps/web/dist/server` (Worker) kèm cấu hình `wrangler.json` sinh sẵn; lệnh deploy trỏ thẳng vào tệp cấu hình sinh sẵn đó (`--config apps/web/dist/server/wrangler.json`, chạy từ gốc kho; không dùng `cd`, vì thư mục chạy lệnh deploy trên Cloudflare không chắc là gốc kho; tệp `_redirects` không còn). Trang công khai gửi `Cache-Control: s-maxage=60`, nên nội dung CMS xuất hiện trên website sau tối đa khoảng 1 phút, không cần deploy lại.
 
 Biến tùy chọn lúc build: `PUBLIC_APP_URL` (địa chỉ app, để chân trang có nút "Mở ứng dụng").
 
