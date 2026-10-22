@@ -12,3 +12,5 @@ supabase/.temp/
 supabase/.branches/
 *.log
 .DS_Store
+# Sinh tự động khi build website (scripts/include-webadmin.mjs)
+apps/web/public/admin/

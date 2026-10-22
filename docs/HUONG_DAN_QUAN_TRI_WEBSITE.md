@@ -1,18 +1,18 @@
 # Hướng dẫn quản trị website
 
-Từ D63, **quản trị website là một trang riêng**, không còn nằm trong quản trị của app. Hai trang quản trị:
+Từ D63, **quản trị website là một trang riêng**, không còn nằm trong quản trị của app; từ D64 nó nằm **cùng Worker với website, ở đường dẫn `/admin/`**. Hai trang quản trị:
 
 | Trang | Địa chỉ | Dùng để |
 |---|---|---|
-| **Quản trị website** | Worker `agriconnect-admin` (ví dụ `https://agriconnect-admin.onstudy.workers.dev`) | Nội dung website, sản phẩm/vật tư, kiểm duyệt, người biên tập |
+| **Quản trị website** | `https://agriconnect.onstudy.workers.dev/admin/` (cùng Worker với website) | Nội dung website, sản phẩm/vật tư, kiểm duyệt, người biên tập |
 | Quản trị nền tảng | `https://agricovi.onstudy.workers.dev/quan-tri/` | Cơ sở, gói và giá, thanh toán, cấu hình, nhật ký kiểm toán |
 
-Cả hai dùng chung tài khoản Supabase (cùng email, mật khẩu) nhưng **đăng nhập riêng** vì khác địa chỉ. Cách tạo Worker quản trị website: `docs/DEPLOY_CLOUDFLARE.md`, mục "Quản trị website".
+Cả hai dùng chung tài khoản Supabase (cùng email, mật khẩu) nhưng **đăng nhập riêng** vì khác địa chỉ. Không cần tạo Worker riêng; xem `docs/DEPLOY_CLOUDFLARE.md`, mục "Quản trị website".
 
 ## 1. Điều kiện (làm một lần)
 
 1. `npx supabase db push` để áp migration **0042, 0043, 0044**. Chưa chạy thì các màn báo lỗi "không tìm thấy bảng/hàm".
-2. Đã tạo và deploy Worker `agriconnect-admin`.
+2. Đã deploy lại website (lệnh build của website tự build cả quản trị website).
 3. Tài khoản của bạn là quản trị viên nền tảng. Nếu chưa, chạy trong Supabase → SQL Editor (thay email):
    ```sql
    insert into platform_admins (user_id) select id from auth.users where email = 'email-cua-ban@...';
@@ -69,5 +69,5 @@ Quản trị website → **Người biên tập**, nhập email người đó v�
 - Ảnh chỉ 1 ảnh mỗi chỗ và tự thu nhỏ; ảnh quá phức tạp có thể bị từ chối, hãy chọn ảnh nhỏ hơn.
 - Yêu cầu báo giá chứa thông tin cá nhân của khách: chỉ dùng để liên hệ báo giá, không chia sẻ ra ngoài.
 - Chưa nhập thuốc bảo vệ thực vật và thuốc thú y (hàng hạn chế) cho tới khi có tư vấn pháp lý.
-- Nên bật **Cloudflare Access** cho Worker quản trị.
+- Nên bật **Cloudflare Access** cho đường dẫn `/admin/*` của website.
 - Chạy thử trên máy cá nhân: `npm run dev:webadmin` (cần biến `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).

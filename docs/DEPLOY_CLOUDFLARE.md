@@ -166,23 +166,12 @@ Biến lúc build (Build variables): `NODE_VERSION` = `22`. Khóa công khai đ�
 
 Biến tùy chọn lúc build: `PUBLIC_APP_URL` (địa chỉ app, để chân trang có nút "Mở ứng dụng").
 
-**Ba địa chỉ khác nhau (D63):** ứng dụng và quản trị nền tảng ở Worker `agricovi` (`https://agricovi.onstudy.workers.dev` và `/quan-tri/`); website công khai ở Worker `agriconnect`; quản trị website ở Worker `agriconnect-admin`. Biến `VITE_PUBLIC_SITE_URL` (đã khai trong `apps/app/.env.production`) làm mã QR của vụ và các nút "Xem" trỏ đúng website.
+**Hai địa chỉ (D64):** ứng dụng và quản trị nền tảng ở Worker `agricovi` (`https://agricovi.onstudy.workers.dev` và `/quan-tri/`); website công khai **và quản trị website** ở Worker `agriconnect` (`https://agriconnect.onstudy.workers.dev` và `/admin/`). Biến `VITE_PUBLIC_SITE_URL` (đã khai trong `apps/app/.env.production`) làm mã QR của vụ và các nút "Xem" trỏ đúng website.
 
-## Quản trị website (apps/webadmin) — Worker riêng (D63)
+## Quản trị website (apps/webadmin) — cùng Worker với website, ở /admin/ (D64)
 
-Từ D63 quản trị nội dung và kiểm duyệt website là **một dự án Cloudflare riêng**, tách khỏi quản trị nền tảng (`/quan-tri/` của app, chỉ còn cơ sở, gói, thanh toán, cấu hình, nhật ký kiểm toán). Tạo thêm một Worker tên `agriconnect-admin`, nối cùng kho GitHub. Ở **Settings → Build** (giống Worker của app):
+Quản trị nội dung và kiểm duyệt website là một ứng dụng riêng trong kho (`apps/webadmin`, tách khỏi quản trị nền tảng của app) nhưng **được đặt vào chính Worker của website**: lệnh build của website (`npm run build -w @agriconnect/web`) tự build quản trị website (`scripts/include-webadmin.mjs`) và chép vào `apps/web/public/admin`. **Không tạo thêm Worker, không đổi lệnh build/deploy của website**. Địa chỉ: `https://agriconnect.onstudy.workers.dev/admin/` (gõ `/admin` cũng tự chuyển sang `/admin/`). Quản trị website đọc chung tệp `apps/app/.env.production` (khóa công khai Supabase, `VITE_APP_URL`, `VITE_PUBLIC_SITE_URL`); `VITE_WEBADMIN_URL` trong tệp đó làm quản trị nền tảng có liên kết sang quản trị website.
 
-| Ô | Giá trị |
-|---|---|
-| Root directory | để **trống** (gốc kho) |
-| Build command | `npm ci && npm run build -w @agriconnect/webadmin` |
-| Deploy command | `npx wrangler deploy --config apps/webadmin/wrangler.jsonc` |
-
-Biến lúc build: `NODE_VERSION` = `22`. Khóa công khai Supabase và địa chỉ các dự án đã nằm trong `apps/app/.env.production` (trang quản trị website đọc chung tệp này): `VITE_APP_URL` (app), `VITE_PUBLIC_SITE_URL` (website). Nếu lệnh deploy báo không thấy tệp cấu hình, thử `npx wrangler deploy` hoặc `npx wrangler deploy --config wrangler.jsonc` (tùy Cloudflare chạy lệnh ở thư mục nào).
-
-Sau khi có địa chỉ Worker quản trị (ví dụ `https://agriconnect-admin.onstudy.workers.dev`):
-1. Bỏ dấu `#` và điền `VITE_WEBADMIN_URL=` ở cuối `apps/app/.env.production` (quản trị nền tảng sẽ có liên kết sang quản trị website) rồi deploy lại app.
-2. Bỏ dấu `#` và điền `PUBLIC_WEBADMIN_URL=` ở cuối `apps/web/.env.production` (gõ `/quan-tri` ở website sẽ chuyển sang trang quản trị website) rồi deploy lại website.
-3. Nên bật **Cloudflare Access** cho Worker quản trị (chỉ email của bạn và nhân sự biên tập vào được): lớp bảo vệ thứ hai ngoài quyền kiểm ở CSDL.
+Lưu ý an toàn: vì cùng địa chỉ với website công khai, quản trị website dùng khóa lưu phiên đăng nhập riêng (`agriconnect-webadmin-auth`) để không lẫn với phiên của người dùng website sau này; nên bật **Cloudflare Access** cho đường dẫn `/admin/*` (chỉ email của bạn và nhân sự biên tập vào được), lớp bảo vệ thứ hai ngoài quyền kiểm ở CSDL.
 
 Quyền: quản trị viên nền tảng (bảng `platform_admins`) luôn đủ quyền; cấp vai trò biên tập cho người khác ở **Người biên tập** (tổng biên tập, biên tập viên, kiểm duyệt viên; người đó phải có tài khoản AgriConnect đăng ký bằng email). Chưa có nội dung trong CSDL thì website dùng nội dung mặc định (`packages/shared/src/site.ts`); các trang pháp lý chỉ là khung chờ văn bản chính thức.

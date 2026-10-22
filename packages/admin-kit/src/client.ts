@@ -4,8 +4,12 @@ const env = ((import.meta as unknown as { env?: Record<string, string | undefine
 const url = env.VITE_SUPABASE_URL;
 const anon = env.VITE_SUPABASE_ANON_KEY;
 
+// Quản trị website chạy ở /admin/ CÙNG địa chỉ với website công khai (D64): dùng khóa lưu phiên riêng để không lẫn với phiên đăng nhập
+// của người dùng website sau này (người mua, nhà cung cấp). Quản trị nền tảng chạy ở /quan-tri/ của app nên dùng chung phiên với app.
+const storageKey = typeof location !== 'undefined' && location.pathname.startsWith('/admin') ? 'agriconnect-webadmin-auth' : undefined;
+
 /** null khi chưa cấu hình biến môi trường (giống app chính) */
-export const supabase = url && anon ? createClient(url, anon) : null;
+export const supabase = url && anon ? createClient(url, anon, storageKey ? { auth: { storageKey } } : undefined) : null;
 
 /** Gọi hàm máy chủ; lỗi dạng "MÃ: nội dung" được rút gọn thành nội dung tiếng Việt */
 export async function rpc<T = unknown>(fn: string, args: Record<string, unknown> = {}): Promise<T> {

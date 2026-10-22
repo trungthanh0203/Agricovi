@@ -1,6 +1,0 @@
----
-const admin = import.meta.env.PUBLIC_WEBADMIN_URL as string | undefined;
-if (admin && /^https:\/\/[^\s]+$/.test(admin)) return Astro.redirect(admin, 302);
-Astro.response.status = 404;
----
-<p>Trang quản trị website là một trang riêng, không nằm trong website công khai.</p>

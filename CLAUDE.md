@@ -18,7 +18,7 @@ Nền tảng quản lý nuôi trồng (app PWA) + website xúc tiến thương m
 |---|---|
 | `apps/app` | App PWA (Vite + React + TS, Dexie/IndexedDB, hàng đợi offline `src/lib/outbox.ts` chỉ cho ghi mới của nhân viên; còn lại ghi thẳng bằng `src/lib/serverWrite.ts`) |
 | `apps/admin` | Quản trị NỀN TẢNG (cơ sở, gói, thanh toán, cấu hình, nhật ký kiểm toán); phục vụ ở `/quan-tri/` của app |
-| `apps/webadmin` | Quản trị WEBSITE (nội dung, sản phẩm/vật tư, kiểm duyệt, người biên tập); Worker riêng `agriconnect-admin` (D63) |
+| `apps/webadmin` | Quản trị WEBSITE (nội dung, sản phẩm/vật tư, kiểm duyệt, người biên tập); đặt vào Worker của website ở `/admin/` (D63–D64) |
 | `packages/admin-kit` | Phần dùng chung của hai trang quản trị (kết nối Supabase, `useLoad`, kiểu dáng) |
 | `apps/web` | Website công khai (Astro; chỉ đọc `public_*`) — mới là khung |
 | `packages/shared` | Kiểu dùng chung |
@@ -35,7 +35,7 @@ npm run test:db:changed                   # tự chọn test theo phần vừa s
 npm run test:db:file -- supabase/tests/roles.test.mjs   # một file test cụ thể
 npm run test:db                           # toàn bộ test CSDL (chậm hơn; CI cũng chạy)
 npm run dev:app                           # http://localhost:5180
-npm run dev:webadmin                      # http://localhost:5182 (quản trị website)
+npm run dev:webadmin                      # http://localhost:5182 (quản trị website; khi build nằm ở /admin/ của website)
 npx supabase db push                      # đẩy migration (người dùng tự chạy)
 npx supabase functions deploy staff-accounts
 ```

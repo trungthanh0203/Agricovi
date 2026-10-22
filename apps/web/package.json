@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev --port 4321",
-    "build": "astro build",
+    "build": "node ../../scripts/include-webadmin.mjs && astro build",
     "preview": "astro preview"
   },
   "dependencies": {
