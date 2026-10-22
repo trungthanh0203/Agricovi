@@ -7,7 +7,7 @@ import {
   addImage, addSupply, CERT_STATUS_LABEL, confirmContact, createProfile, deleteImage, deleteListing, getProfile, grantConsent, hideProfile,
   lastReviewNote, latestConsent, listCerts, listImages, listListings, listSupply, missingItems, previewProfile, PROFILE_STATUS_LABEL, PROFILE_STATUS_TONE,
   saveListing, saveProfile, SCOPE_LABEL, submitForReview, SUPPLY_LABEL, setCertPublic, updateImage,
-  type BizProfile, type CertRow, type Consent, type ImageRow, type Listing, type ListingForm, type Preview, type ProfileForm, type SupplyRow, type SupplyStatus,
+  listSiteCategories, type SiteCategory, type BizProfile, type CertRow, type Consent, type ImageRow, type Listing, type ListingForm, type Preview, type ProfileForm, type SupplyRow, type SupplyStatus,
 } from '../lib/commerce';
 import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
@@ -225,7 +225,7 @@ function ImagesBlock({ org, profileId, listingId, owner, onChanged }: { org: MyO
   }, [profileId, listingId]);
   useEffect(() => { void load(); }, [load]);
   const after = async () => { await load(); await onChanged(); };
-  const max = listingId ? 4 : 6;
+  const max = 2; // chưa dùng Storage: mỗi chỗ chỉ 1–2 ảnh nhỏ để nhẹ cơ sở dữ liệu (quyết định 22/10/2026)
   return (
     <>
       <div className="imggrid">
@@ -308,7 +308,11 @@ function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: str
   const [f, setF] = useState({
     name: initial?.name ?? '', description: initial?.description ?? '', specification: initial?.specification ?? '', unit: initial?.unit ?? '', season: initial?.season ?? '',
     price_note: initial?.price_note ?? '', min_order: initial?.min_order ?? '', cycle_id: initial?.cycle_id ?? '', crop_type_id: initial?.crop_type_id ?? '', include: initial?.include_in_publication ?? true,
+    category_id: initial?.category_id ?? '', price_from: initial?.price_from != null ? String(initial.price_from) : '',
   });
+  const [siteCats, setSiteCats] = useState<SiteCategory[]>([]);
+  useEffect(() => { void listSiteCategories().then(setSiteCats).catch(() => setSiteCats([])); }, []);
+  const catLabel = (c: SiteCategory) => { const p = siteCats.find((x) => x.id === c.parent_id); return p ? `${p.name} › ${c.name}` : c.name; };
   const [err, setErr] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((x) => ({ ...x, [k]: e.target.value }));
   return (
@@ -319,6 +323,12 @@ function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: str
         <label>Thuộc sản phẩm đã khai báo (không bắt buộc)
           <select value={f.crop_type_id} onChange={set('crop_type_id')}><option value="">— Không chọn —</option>{cropTypes.filter((c) => c.is_active).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
         </label>
+        {siteCats.length > 0 && (
+          <label>Danh mục trên website
+            <select value={f.category_id} onChange={set('category_id')}><option value="">— Chưa chọn —</option>{siteCats.map((c) => <option key={c.id} value={c.id}>{catLabel(c)}</option>)}</select>
+            <small>Chọn để người mua tìm thấy sản phẩm trong đúng mục (ví dụ Trái cây, Rau củ quả).</small>
+          </label>
+        )}
         <label>Mô tả<textarea rows={3} value={f.description} onChange={set('description')} /></label>
         <label>Quy cách<input value={f.specification} onChange={set('specification')} placeholder="Quả 1,5–2 kg, độ ngọt 12–14 Brix" /></label>
         <div className="pair">
@@ -326,7 +336,8 @@ function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: str
           <label>Mùa vụ<input value={f.season} maxLength={120} onChange={set('season')} placeholder="Tháng 10 – 12" /></label>
         </div>
         <div className="pair">
-          <label>Giá tham khảo<input value={f.price_note} maxLength={120} onChange={set('price_note')} placeholder="Liên hệ / 35.000đ/kg" /></label>
+          <label>Giá "từ" (đồng, không bắt buộc)<input value={f.price_from} inputMode="numeric" onChange={set('price_from')} placeholder="40000" /></label>
+          <label>Giá ghi chữ<input value={f.price_note} maxLength={120} onChange={set('price_note')} placeholder="Liên hệ / 35.000đ/kg" /></label>
           <label>Đặt tối thiểu<input value={f.min_order} maxLength={120} onChange={set('min_order')} placeholder="50 kg" /></label>
         </div>
         <label>Vụ để người mua xem truy xuất (không bắt buộc)
@@ -339,7 +350,7 @@ function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: str
           <button className="primary" disabled={busy} onClick={() => {
             if (f.name.trim().length < 2) return setErr('Hãy nhập tên sản phẩm (ít nhất 2 ký tự).');
             setErr(null);
-            void onSave({ name: f.name, description: f.description, specification: f.specification, unit: f.unit, season: f.season, price_note: f.price_note, min_order: f.min_order, cycle_id: f.cycle_id || null, crop_type_id: f.crop_type_id || null, include_in_publication: f.include });
+            void onSave({ name: f.name, description: f.description, specification: f.specification, unit: f.unit, season: f.season, price_note: f.price_note, min_order: f.min_order, cycle_id: f.cycle_id || null, crop_type_id: f.crop_type_id || null, include_in_publication: f.include, category_id: f.category_id || null, price_from: f.price_from.trim() ? Number(f.price_from.replace(/[^0-9]/g, '')) || null : null });
           }}>{busy ? 'Đang lưu…' : 'Lưu'}</button>
           <button type="button" className="secondary" onClick={onClose}>{initial ? 'Đóng' : 'Hủy'}</button>
         </div>

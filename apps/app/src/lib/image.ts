@@ -2,7 +2,7 @@
  * Thu nhỏ ảnh người dùng chọn thành ảnh JPEG nhỏ (cạnh dài tối đa `max` px) dạng data URL để lưu cùng bản ghi.
  * Ảnh nhỏ giúp tải nhanh trên điện thoại và không cần cấu hình kho lưu trữ riêng ở bản thử (D37).
  */
-export async function fileToSmallImage(file: File, max = 480, quality = 0.72): Promise<string> {
+export async function fileToSmallImage(file: File, max = 480, quality = 0.6): Promise<string> {
   if (!file.type.startsWith('image/')) throw new Error('Hãy chọn một tệp ảnh.');
   const bmp = await createImageBitmap(file);
   const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
@@ -18,6 +18,6 @@ export async function fileToSmallImage(file: File, max = 480, quality = 0.72): P
   ctx.drawImage(bmp, 0, 0, w, h);
   bmp.close();
   const url = canvas.toDataURL('image/jpeg', quality);
-  if (url.length > 380_000) throw new Error('Ảnh quá lớn, hãy chọn ảnh khác.');
+  if (url.length > 200_000) throw new Error('Ảnh quá lớn, hãy chọn ảnh khác.');
   return url;
 }

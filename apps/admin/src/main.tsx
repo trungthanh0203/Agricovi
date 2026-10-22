@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Session } from '@supabase/supabase-js';
 import { AuditPage, OrgDetailPage, OrgsPage, OverviewPage, PaymentsPage, PlansPage, PublicCyclesPage, ReviewsPage, SettingsPage } from './pages';
+import { SiteArticlesPage, SiteCategoriesPage, SiteMaterialsPage, SiteQuotesPage } from './site2';
 import { SiteBannersPage, SiteMenusPage, SitePagesPage, SiteRolesPage, SiteSettingsPage } from './site';
 import { clean, rpc, supabase } from './supabase';
 import './styles.css';
@@ -19,6 +20,10 @@ const PAGES: { id: string; label: string; icon: string; group: 'platform' | 'sit
   { id: 'public', label: 'Vụ công khai', icon: '🌐', group: 'platform', adminOnly: true },
   { id: 'settings', label: 'Cấu hình', icon: '⚙️', group: 'platform', adminOnly: true },
   { id: 'audit', label: 'Nhật ký kiểm toán', icon: '📜', group: 'platform', adminOnly: true },
+  { id: 'site-articles', label: 'Bài viết và tin hội chợ', icon: '📰', group: 'site' },
+  { id: 'site-materials', label: 'Vật tư nông nghiệp', icon: '🌿', group: 'site' },
+  { id: 'site-categories', label: 'Danh mục sản phẩm', icon: '🗂️', group: 'site' },
+  { id: 'site-quotes', label: 'Yêu cầu báo giá', icon: '💬', group: 'site' },
   { id: 'site-pages', label: 'Trang tĩnh', icon: '📄', group: 'site' },
   { id: 'site-banners', label: 'Banner trang chủ', icon: '🖼️', group: 'site' },
   { id: 'site-menus', label: 'Menu và chân trang', icon: '🧭', group: 'site' },
@@ -55,7 +60,7 @@ function Login() {
 function Admin({ session, roles }: { session: Session; roles: string[] }) {
   const isAdmin = roles.includes('admin');
   const visible = PAGES.filter((p) => isAdmin || !p.adminOnly);
-  const [page, setPage] = useState(isAdmin ? 'overview' : 'site-pages');
+  const [page, setPage] = useState(isAdmin ? 'overview' : 'site-articles');
   const [orgId, setOrgId] = useState<string | null>(null);
   const go = (p: string) => { setPage(p); setOrgId(null); };
   const title = PAGES.find((p) => p.id === page)?.label ?? '';
@@ -93,6 +98,10 @@ function Admin({ session, roles }: { session: Session; roles: string[] }) {
         {page === 'public' && <PublicCyclesPage />}
         {page === 'settings' && <SettingsPage />}
         {page === 'audit' && <AuditPage />}
+        {page === 'site-articles' && <SiteArticlesPage roles={roles} />}
+        {page === 'site-materials' && <SiteMaterialsPage roles={roles} />}
+        {page === 'site-categories' && <SiteCategoriesPage roles={roles} />}
+        {page === 'site-quotes' && <SiteQuotesPage />}
         {page === 'site-pages' && <SitePagesPage roles={roles} />}
         {page === 'site-banners' && <SiteBannersPage roles={roles} />}
         {page === 'site-menus' && <SiteMenusPage roles={roles} />}

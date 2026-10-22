@@ -11,17 +11,17 @@ import { clean, fmtDateTime, rpc, supabase } from './supabase';
  * Quyền thật do CSDL ép (migration 0042); giao diện chỉ ẩn bớt nút cho gọn.
  * Biên tập viên chỉ soạn nháp/gửi duyệt; đăng, gỡ, sửa bản đã đăng, menu và thông tin chung cần tổng biên tập hoặc quản trị viên.
  */
-const STATUS_LABEL: Record<string, string> = { draft: 'Nháp', review: 'Chờ duyệt', published: 'Đã đăng', hidden: 'Đã gỡ' };
+export const STATUS_LABEL: Record<string, string> = { draft: 'Nháp', review: 'Chờ duyệt', published: 'Đã đăng', hidden: 'Đã gỡ' };
 const STATUS_CLS: Record<string, string> = { draft: '', review: 'info', published: 'ok', hidden: 'warn' };
-const SiteBadge = ({ s }: { s: string }) => <span className={`badge ${STATUS_CLS[s] ?? ''}`}>{STATUS_LABEL[s] ?? s}</span>;
+export const SiteBadge = ({ s }: { s: string }) => <span className={`badge ${STATUS_CLS[s] ?? ''}`}>{STATUS_LABEL[s] ?? s}</span>;
 
 export const canPublish = (roles: string[]) => roles.includes('admin') || roles.includes('chief_editor');
-const statusOptions = (roles: string[]) => (canPublish(roles) ? ['draft', 'review', 'published', 'hidden'] : ['draft', 'review']);
+export const statusOptions = (roles: string[]) => (canPublish(roles) ? ['draft', 'review', 'published', 'hidden'] : ['draft', 'review']);
 
-const SITE_URL = ((import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {}).VITE_PUBLIC_SITE_URL;
+export const SITE_URL = ((import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {}).VITE_PUBLIC_SITE_URL;
 
 /** Chỉ tổng biên tập/quản trị đổi được bản đã đăng */
-const locked = (roles: string[], status: string | undefined) => !canPublish(roles) && (status === 'published' || status === 'hidden');
+export const locked = (roles: string[], status: string | undefined) => !canPublish(roles) && (status === 'published' || status === 'hidden');
 
 // ============================================================ Trang tĩnh
 interface PageRow { id: string; slug: string; title: string; description: string | null; body: string; status: string; version: number; updated_at: string }
@@ -155,23 +155,27 @@ const emptyBanner: BannerForm = { id: null, version: null, slot: 'hero', title: 
 const toLocal = (iso: string | null) => (iso ? new Date(new Date(iso).getTime() - new Date(iso).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '');
 const fromLocal = (s: string) => (s ? new Date(s).toISOString() : null);
 
-/** Thu nhỏ ảnh banner (cạnh dài tối đa 1400 px), giảm chất lượng dần cho tới khi vừa giới hạn của CSDL */
-async function fileToBannerImage(file: File): Promise<string> {
+/**
+ * Thu nhỏ ảnh (cạnh dài tối đa `max` px), giảm chất lượng dần cho tới khi vừa `limit` ký tự.
+ * Ảnh lưu nén trong cột CSDL (chưa dùng Storage) nên giữ ảnh nhỏ: mỗi chỗ chỉ 1 ảnh.
+ */
+export async function compressImage(file: File, max = 640, limit = 80_000): Promise<string> {
   if (!file.type.startsWith('image/')) throw new Error('Hãy chọn một tệp ảnh.');
   const bmp = await createImageBitmap(file);
-  const scale = Math.min(1, 1400 / Math.max(bmp.width, bmp.height));
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
   const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale));
   const canvas = document.createElement('canvas');
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Không xử lý được ảnh trên thiết bị này.');
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(bmp, 0, 0, w, h); bmp.close();
-  for (const q of [0.82, 0.7, 0.58, 0.46]) {
+  for (const q of [0.7, 0.58, 0.46, 0.36]) {
     const url = canvas.toDataURL('image/jpeg', q);
-    if (url.length <= 390_000) return url;
+    if (url.length <= limit) return url;
   }
   throw new Error('Ảnh quá phức tạp để nén gọn. Hãy chọn ảnh nhỏ hơn hoặc ít chi tiết hơn.');
 }
+const fileToBannerImage = (file: File) => compressImage(file, 1100, 160_000);
 
 export function SiteBannersPage({ roles }: { roles: string[] }) {
   const { data, error, reload } = useLoad(async () => {
