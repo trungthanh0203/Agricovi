@@ -1,0 +1,86 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Hộp thư — AgriConnect" noindex cache={false}>
+  <div id="app"><p class="muted">Đang tải…</p></div>
+</Base>
+
+<style is:global>
+  .inbox { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; align-items: start; } @media (max-width: 760px) { .inbox { grid-template-columns: 1fr; } }
+  .clist .ci { display: block; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; margin-bottom: 8px; text-decoration: none; color: inherit; }
+  .clist .ci.on { border-color: var(--g); background: var(--g2); } .clist .ci b { display: block; line-height: 1.3; } .clist .ci small { color: var(--muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .badge2 { background: #d92d4b; color: #fff; border-radius: 999px; font-size: .72rem; padding: 0 7px; margin-left: 6px; }
+  .chat { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  .msgs { height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 4px; }
+  .msg { max-width: 80%; padding: 7px 11px; border-radius: 12px; background: #eef1ef; white-space: pre-wrap; word-break: break-word; } .msg.mine { align-self: flex-end; background: var(--g); color: #fff; } .msg.sys { align-self: center; background: transparent; color: var(--muted); font-size: .85rem; text-align: center; max-width: 95%; }
+  .msg small { display: block; opacity: .7; font-size: .72rem; }
+  .sendrow { display: flex; gap: 8px; margin-top: 8px; } .sendrow input { flex: 1; padding: 10px; border: 1px solid var(--line); border-radius: 10px; font: inherit; }
+</style>
+
+<script>
+  import { call, friendly, loadAccount, session } from '../lib/auth';
+  import { esc } from '../lib/db';
+
+  const app = document.getElementById('app')!;
+  interface Conv { id: string; title: string; post_id: string | null; last_message_at: string; last_body: string | null; unread: number; with_whom: string }
+  interface Detail { id: string; title: string; post_id: string | null; me_share: boolean; other_share: boolean; members: { me: boolean; name: string }[]; messages: { id: string; mine: boolean; system: boolean; body: string; at: string }[] }
+  let timer: number | undefined;
+  let current = new URLSearchParams(location.search).get('c');
+
+  async function main() {
+    if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent('/hop-thu/' + location.search)); return; }
+    try { await loadAccount(); } catch (e) { app.innerHTML = `<p class="err">${esc(friendly(e))}</p>`; return; }
+    await renderList();
+  }
+
+  async function renderList() {
+    let list: Conv[] = [];
+    try { list = await call<Conv[]>('list_my_conversations'); } catch (e) { app.innerHTML = `<p class="err">${esc(friendly(e))}</p>`; return; }
+    if (!current && list.length) current = list[0]!.id;
+    app.innerHTML = `<h1>Hộp thư</h1>
+      <div class="inbox"><div class="clist">${list.length === 0 ? '<p class="empty">Chưa có cuộc trao đổi nào. Cuộc trao đổi mở khi người đăng tin chấp nhận một báo giá hoặc quan tâm.</p>' : list.map((c) => `<a class="ci ${c.id === current ? 'on' : ''}" href="?c=${esc(c.id)}" data-c="${esc(c.id)}"><b>${esc(c.title)}${c.unread ? `<span class="badge2">${c.unread}</span>` : ''}</b><small>${esc(c.with_whom)}</small><small>${esc(c.last_body ?? '')}</small></a>`).join('')}</div>
+      <div id="chat">${current ? '<p class="muted">Đang tải…</p>' : ''}</div></div>`;
+    app.querySelectorAll<HTMLAnchorElement>('[data-c]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); current = a.dataset.c ?? null; history.replaceState(null, '', '?c=' + current); void renderList(); }));
+    window.clearInterval(timer);
+    if (current) { await renderChat(); timer = window.setInterval(() => { if (!document.hidden) void refreshMessages(); }, 8000); }
+  }
+
+  let lastCount = -1;
+  async function renderChat(msg = '') {
+    const box = document.getElementById('chat')!;
+    let d: Detail;
+    try { d = await call<Detail>('get_conversation', { p_id: current }); } catch (e) { box.innerHTML = `<p class="err">${esc(friendly(e))}</p>`; return; }
+    const both = d.me_share && d.other_share;
+    box.innerHTML = `<div class="chat"><b>${esc(d.title)}</b>${d.post_id ? ` · <a href="/giao-thuong/tin/${esc(d.post_id)}">Xem tin</a>` : ''}
+      <div class="panel" style="margin:8px 0">${both ? '<button class="btn sm solid" id="seeContact">Xem liên hệ của bên kia</button> ' : ''}
+        <label style="display:inline-flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="share" style="width:auto"${d.me_share ? ' checked' : ''} /> Tôi đồng ý chia sẻ liên hệ của tôi</label>
+        <span class="muted"> · ${d.other_share ? 'Bên kia đã đồng ý' : 'Bên kia chưa đồng ý'}. Liên hệ chỉ hiện khi cả hai cùng đồng ý; tới lúc đó tin nhắn không được ghi số điện thoại, email, đường dẫn.</span><div id="contacts"></div></div>
+      ${msg}
+      <div class="msgs" id="msgs">${d.messages.map(bubble).join('')}</div>
+      <form class="sendrow" id="sf"><input name="body" maxlength="1000" placeholder="Nhập tin nhắn…" autocomplete="off" required /><button class="btn solid" type="submit">Gửi</button></form></div>`;
+    lastCount = d.messages.length;
+    const m = document.getElementById('msgs')!; m.scrollTop = m.scrollHeight;
+    document.getElementById('sf')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = (e.target as HTMLFormElement).elements.namedItem('body') as HTMLInputElement;
+      try { await call('send_message', { p_conv: current, p_body: input.value }); input.value = ''; await renderChat(); } catch (x) { await renderChat(`<p class="err" role="alert">${esc(friendly(x))}</p>`); }
+    });
+    document.getElementById('share')!.addEventListener('change', async (e) => { try { await call('set_share_contact', { p_conv: current, p_on: (e.target as HTMLInputElement).checked }); await renderChat(); } catch (x) { await renderChat(`<p class="err">${esc(friendly(x))}</p>`); } });
+    document.getElementById('seeContact')?.addEventListener('click', async () => {
+      try {
+        const cs = await call<{ name: string; phone: string | null; email: string | null }[]>('get_conversation_contacts', { p_conv: current });
+        document.getElementById('contacts')!.innerHTML = cs.map((c) => `<p style="margin:.4em 0"><b>${esc(c.name)}</b>${c.phone ? ` · 📞 <a href="tel:${esc(c.phone)}">${esc(c.phone)}</a>` : ''}${c.email ? ` · ✉️ <a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ''}${!c.phone && !c.email ? ' <span class="muted">(chưa khai báo liên hệ trong hồ sơ)</span>' : ''}</p>`).join('');
+      } catch (x) { document.getElementById('contacts')!.innerHTML = `<p class="err">${esc(friendly(x))}</p>`; }
+    });
+  }
+  const bubble = (m: Detail['messages'][number]) => `<div class="msg ${m.system ? 'sys' : m.mine ? 'mine' : ''}">${esc(m.body)}${m.system ? '' : `<small>${esc(new Date(m.at).toLocaleString('vi-VN'))}</small>`}</div>`;
+
+  // Tải định kỳ (chưa dùng thời gian thực): chỉ vẽ lại khi có tin mới và người dùng không đang gõ
+  async function refreshMessages() {
+    if (!current) return;
+    const active = document.activeElement as HTMLInputElement | null;
+    if (active && active.name === 'body' && active.value) return;
+    try { const d = await call<Detail>('get_conversation', { p_id: current }); if (d.messages.length !== lastCount) await renderChat(); } catch { /* bỏ qua */ }
+  }
+  void main();
+</script>

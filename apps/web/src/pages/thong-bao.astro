@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Thông báo — AgriConnect" noindex cache={false}>
+  <div id="app"><p class="muted">Đang tải…</p></div>
+</Base>
+
+<script>
+  import { call, friendly, loadAccount, session } from '../lib/auth';
+  import { esc } from '../lib/db';
+
+  const app = document.getElementById('app')!;
+  interface N { id: string; kind: string; title: string; body: string | null; link: string | null; read_at: string | null; created_at: string }
+  async function main() {
+    if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent('/thong-bao/')); return; }
+    try { await loadAccount(); } catch (e) { app.innerHTML = `<p class="err">${esc(friendly(e))}</p>`; return; }
+    await render();
+  }
+  async function render() {
+    let list: N[] = [];
+    try { list = await call<N[]>('list_my_notifications', { p_limit: 100 }); } catch (e) { app.innerHTML = `<p class="err">${esc(friendly(e))}</p>`; return; }
+    const unread = list.filter((n) => !n.read_at).length;
+    app.innerHTML = `<h1>Thông báo</h1>${unread ? `<p><button class="btn sm" id="all">Đánh dấu tất cả đã đọc (${unread})</button></p>` : ''}
+      ${list.length === 0 ? '<p class="empty">Chưa có thông báo nào.</p>' : list.map((n) => `<a class="panel" style="display:block;text-decoration:none;color:inherit;${n.read_at ? '' : 'border-color:var(--g);background:var(--g2)'}" href="${esc(n.link ?? '#')}" data-id="${esc(n.id)}">
+        <b>${esc(n.title)}</b>${n.read_at ? '' : ' <span class="stat ok">Mới</span>'}<br>${n.body ? `<span class="muted">${esc(n.body)}</span><br>` : ''}<small class="muted">${esc(new Date(n.created_at).toLocaleString('vi-VN'))}</small></a>`).join('')}`;
+    document.getElementById('all')?.addEventListener('click', async () => { await call('mark_notifications_read', { p_ids: null }); await render(); });
+    app.querySelectorAll<HTMLAnchorElement>('a[data-id]').forEach((a) => a.addEventListener('click', () => { void call('mark_notifications_read', { p_ids: [a.dataset.id] }); }));
+  }
+  void main();
+</script>

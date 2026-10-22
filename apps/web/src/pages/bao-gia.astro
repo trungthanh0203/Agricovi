@@ -46,7 +46,7 @@ try {
         <p><a class="btn solid" href="/">Về trang chủ</a></p>
       </div>
     ) : (
-      <form class="form" method="post">
+      <form class="form" method="post" id="qf">
         {target && <p class="panel" style="margin:0 0 10px">Bạn đang hỏi giá: <b>{target}</b></p>}
         {error && <p class="err" role="alert">{error}</p>}
         <input type="hidden" name="loai" value={kind} />
@@ -58,8 +58,37 @@ try {
         <label>Số lượng cần mua (không bắt buộc)<input name="qty" maxlength="120" value={v.qty} placeholder="Ví dụ: 200 kg mỗi tuần" /></label>
         <label>Nội dung<textarea name="msg" required rows="4" maxlength="1000" placeholder="Bạn cần gì, giao ở đâu, khi nào?">{v.msg}</textarea></label>
         <p class="muted">Thông tin của bạn chỉ dùng để nhà cung cấp liên hệ báo giá và không được công khai. Vui lòng không dán đường dẫn trong nội dung.</p>
-        <button class="btn solid" type="submit">Gửi yêu cầu</button>
+        <p class="muted" id="autoNote" hidden>Đã tự điền từ tài khoản của bạn; bạn có thể sửa.</p>
+        <button class="btn solid" type="submit" id="qgo">Gửi yêu cầu</button>
       </form>
     )}
   </div>
 </Base>
+
+<script>
+  // Đã đăng nhập: tự điền họ tên, số điện thoại, email từ tài khoản; gửi bằng phiên đăng nhập để người dùng xem lại ở "Yêu cầu của tôi".
+  import { call, friendly, loadAccount, session } from '../lib/auth';
+  const f = document.getElementById('qf') as HTMLFormElement | null;
+  async function init() {
+    if (!f || !(await session())) return;
+    let acc;
+    try { acc = await loadAccount(); } catch { return; }
+    const set = (name: string, v: string | null | undefined) => { const el = f.elements.namedItem(name) as HTMLInputElement | null; if (el && !el.value && v) el.value = v; };
+    set('name', acc.profile?.full_name); set('phone', acc.profile?.phone); set('email', acc.email);
+    document.getElementById('autoNote')!.hidden = false;
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = new FormData(f);
+      const btn = document.getElementById('qgo') as HTMLButtonElement; btn.disabled = true;
+      try {
+        await call('submit_quote_request', { p_kind: d.get('loai'), p_target: d.get('ma') || null, p_name: d.get('name'), p_phone: d.get('phone') || null, p_email: d.get('email') || null, p_qty: d.get('qty') || null, p_message: d.get('msg') });
+        f.outerHTML = '<div class="ok"><p><b>Đã gửi yêu cầu.</b> Nhà cung cấp sẽ liên hệ lại với bạn. Bạn xem lại ở <a href="/tai-khoan/#bao-gia">Tài khoản → Yêu cầu báo giá của tôi</a>.</p><p><a class="btn solid" href="/">Về trang chủ</a></p></div>';
+      } catch (x) {
+        btn.disabled = false;
+        let m = document.getElementById('qerr'); if (!m) { m = document.createElement('p'); m.id = 'qerr'; m.className = 'err'; m.setAttribute('role', 'alert'); f.prepend(m); }
+        m.textContent = friendly(x);
+      }
+    });
+  }
+  void init();
+</script>

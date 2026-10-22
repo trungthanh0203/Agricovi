@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import type { Session } from '@supabase/supabase-js';
 import { clean, rpc, supabase } from '@agriconnect/admin-kit';
 import { SiteAuditPage, SiteHomePage, SiteOverviewPage, SiteUsersPage } from './extras';
+import { SiteReportsPage, SiteTradePage } from './trade';
 import { PublicCyclesPage, ReviewsPage } from './reviews';
 import { SiteBannersPage, SiteMenusPage, SitePagesPage, SiteRolesPage, SiteSettingsPage } from './site';
 import { SiteArticlesPage, SiteCategoriesPage, SiteMaterialsPage, SiteQuotesPage } from './site2';
@@ -17,7 +18,7 @@ import '@agriconnect/admin-kit/src/styles.css';
 const env = ((import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {});
 const APP_URL = env.VITE_APP_URL;
 
-interface PageDef { id: string; label: string; icon: string; group: string; adminOnly?: boolean; chiefOnly?: boolean }
+interface PageDef { id: string; label: string; icon: string; group: string; adminOnly?: boolean; chiefOnly?: boolean; modOk?: boolean }
 const PAGES: PageDef[] = [
   { id: 'overview', label: 'Tổng quan', icon: '📊', group: '' },
   { id: 'site-articles', label: 'Bài viết và tin hội chợ', icon: '📰', group: 'Nội dung' },
@@ -29,6 +30,8 @@ const PAGES: PageDef[] = [
   { id: 'site-categories', label: 'Danh mục sản phẩm', icon: '🗂️', group: 'Sản phẩm' },
   { id: 'site-materials', label: 'Vật tư nông nghiệp', icon: '🌿', group: 'Sản phẩm' },
   { id: 'site-quotes', label: 'Yêu cầu báo giá', icon: '💬', group: 'Tiếp nhận và kiểm duyệt' },
+  { id: 'site-trade', label: 'Duyệt tin giao thương', icon: '🤝', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true, modOk: true },
+  { id: 'site-reports', label: 'Báo cáo vi phạm', icon: '🚩', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true, modOk: true },
   { id: 'site-users', label: 'Người dùng website', icon: '🙋', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true },
   { id: 'reviews', label: 'Duyệt hồ sơ nhà cung cấp', icon: '✅', group: 'Tiếp nhận và kiểm duyệt', adminOnly: true },
   { id: 'public', label: 'Vụ công khai (truy xuất)', icon: '🌐', group: 'Tiếp nhận và kiểm duyệt', adminOnly: true },
@@ -64,7 +67,8 @@ function Login() {
 function Admin({ session, roles }: { session: Session; roles: string[] }) {
   const isAdmin = roles.includes('admin');
   const isChief = isAdmin || roles.includes('chief_editor');
-  const visible = PAGES.filter((p) => (!p.adminOnly || isAdmin) && (!p.chiefOnly || isChief));
+  const isMod = roles.includes('moderator');
+  const visible = PAGES.filter((p) => (!p.adminOnly || isAdmin) && (!p.chiefOnly || isChief || (p.modOk && isMod)));
   const [page, setPage] = useState('overview');
   const go = (p: string) => setPage(visible.some((v) => v.id === p) ? p : 'overview');
   const title = PAGES.find((p) => p.id === page)?.label ?? '';
@@ -102,6 +106,8 @@ function Admin({ session, roles }: { session: Session; roles: string[] }) {
         {page === 'site-categories' && <SiteCategoriesPage roles={roles} />}
         {page === 'site-materials' && <SiteMaterialsPage roles={roles} />}
         {page === 'site-quotes' && <SiteQuotesPage />}
+        {page === 'site-trade' && (isChief || isMod) && <SiteTradePage />}
+        {page === 'site-reports' && (isChief || isMod) && <SiteReportsPage />}
         {page === 'site-users' && isChief && <SiteUsersPage />}
         {page === 'reviews' && isAdmin && <ReviewsPage />}
         {page === 'public' && isAdmin && <PublicCyclesPage />}

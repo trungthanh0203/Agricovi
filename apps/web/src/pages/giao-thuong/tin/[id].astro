@@ -1,0 +1,143 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { TRADE_KIND_LABEL } from '@agriconnect/shared';
+import { daysLeft, loadTradePosts } from '../../../lib/trade';
+
+// Phần công khai: CHỈ tóm tắt. Chi tiết tải ở trình duyệt sau khi đăng nhập (không nằm trong trang này, kể cả bản lưu đệm).
+const id = Astro.params.id ?? '';
+const t = (await loadTradePosts()).find((x) => x.id === id) ?? null;
+---
+<Base title={t ? `${t.title} — Giao thương` : 'Tin giao thương — AgriConnect'} description={t ? `${TRADE_KIND_LABEL[t.kind]} ${t.category_name ?? ''} tại ${t.province}. Đăng nhập để xem chi tiết.` : undefined} noindex={!t} cache={false}>
+  <p class="crumbs"><a href="/">Trang chủ</a> › <a href="/giao-thuong/">Giao thương</a></p>
+  <div id="app" data-id={id}>
+    {t ? (
+      <>
+        <span class={`tk ${t.kind}`}>{TRADE_KIND_LABEL[t.kind]}</span>
+        <h1>{t.title}</h1>
+        <p class="muted">{t.category_name} · 📍 {t.province} · còn {daysLeft(t.expires_at)} ngày</p>
+        <div class="panel"><p style="margin:0">🔒 <b>Đăng nhập để xem chi tiết</b>, gửi báo giá hoặc trao đổi với người đăng.</p>
+          <p><a class="btn solid" href={`/dang-nhap/?next=${encodeURIComponent('/giao-thuong/tin/' + id)}`}>Đăng nhập</a> <a class="btn outline" href={`/dang-ky/`}>Đăng ký miễn phí</a></p></div>
+      </>
+    ) : <p class="muted">Đang tải…</p>}
+  </div>
+</Base>
+
+
+<script>
+  import { TRADE_KIND_LABEL, TRADE_STATUS_LABEL } from '@agriconnect/shared';
+  import { call, friendly, loadAccount, session, type WebAccount } from '../../../lib/auth';
+  import { esc, img } from '../../../lib/db';
+
+  const app = document.getElementById('app')!;
+  const id = app.dataset.id ?? '';
+  interface Resp { id: string; status: string; price: number | null; quantity: number | null; deliver_date: string | null; note: string | null; created_at: string; name?: string; company?: string | null; conversation_id?: string | null }
+  interface Post { id: string; kind: 'buy' | 'sell'; title: string; status: string; review_note: string | null; category_name: string | null; product_name: string | null; quantity: number | null; unit: string; price_min: number | null; price_max: number | null;
+    province: string; district: string | null; when_date: string | null; quality: string[]; description: string | null; images: string[]; expires_at: string; created_at: string; expired: boolean; is_owner: boolean;
+    poster: { anonymous?: boolean; label?: string; name?: string; slug?: string; province?: string } | null; my_response: Resp | null; responses: Resp[] | null }
+  let acc: WebAccount;
+  const money = (n: number | null) => (n == null ? '' : Math.round(n).toLocaleString('vi-VN') + 'đ');
+  const day = (d: string | null) => (d ? new Date(d + (d.length === 10 ? 'T00:00:00' : '')).toLocaleDateString('vi-VN') : '');
+  const note = (cls: string, t: string) => `<p class="${cls}" role="${cls === 'err' ? 'alert' : 'status'}">${esc(t)}</p>`;
+  const RESP_LABEL: Record<string, string> = { open: 'Đang chờ', accepted: 'Đã chấp nhận', declined: 'Chưa được chọn', withdrawn: 'Đã rút' };
+
+  async function main() {
+    if (!(await session())) return; // khách: giữ phần tóm tắt dựng sẵn
+    try { acc = await loadAccount(); } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
+    await render();
+  }
+
+  async function render(msg = '') {
+    let p: Post;
+    try { p = await call<Post>('get_trade_post', { p_id: id }); } catch (e) { app.innerHTML = `${note('err', friendly(e))}<p><a href="/giao-thuong/">← Về Giao thương</a></p>`; return; }
+    const price = p.price_min != null || p.price_max != null ? [p.price_min != null ? 'từ ' + money(p.price_min) : '', p.price_max != null ? 'đến ' + money(p.price_max) : ''].filter(Boolean).join(' ') + '/' + esc(p.unit) : 'Thỏa thuận';
+    const live = p.status === 'published' && !p.expired;
+    const orgs = acc.orgs ?? [];
+    let convLink = '';
+    if (p.my_response?.status === 'accepted') {
+      try { const cs = await call<{ id: string; post_id: string }[]>('list_my_conversations'); const c = cs.find((x) => x.post_id === p.id); if (c) convLink = `<p><a class="btn solid" href="/hop-thu/?c=${esc(c.id)}">Mở hộp thư trao đổi</a></p>`; } catch { /* bỏ qua */ }
+    }
+    app.innerHTML = `${msg}
+      <span class="tk ${p.kind}">${TRADE_KIND_LABEL[p.kind]}</span> <span class="stat ${p.status === 'published' && !p.expired ? 'ok' : p.status === 'pending' ? 'warn' : 'bad'}">${esc(p.expired && p.status === 'published' ? 'Đã hết hạn' : TRADE_STATUS_LABEL[p.status] ?? p.status)}</span>
+      <h1>${esc(p.title)}</h1>
+      ${p.is_owner && p.review_note ? note('err', 'Ghi chú của kiểm duyệt: ' + p.review_note) : ''}
+      ${p.is_owner && p.status === 'pending' ? note('ok', 'Tin đang chờ kiểm duyệt, chưa hiển thị với người khác.') : ''}
+      <div class="facts">
+        <div><b>Loại sản phẩm</b>${esc(p.category_name ?? '')}${p.product_name ? ' · ' + esc(p.product_name) : ''}</div>
+        <div><b>Số lượng</b>${p.quantity != null ? esc(String(p.quantity)) + ' ' + esc(p.unit) : '—'}</div>
+        <div><b>${p.kind === 'buy' ? 'Giá mong muốn' : 'Giá bán'}</b>${price}</div>
+        <div><b>Khu vực</b>${esc([p.district, p.province].filter(Boolean).join(', '))}</div>
+        ${p.when_date ? `<div><b>${p.kind === 'buy' ? 'Cần hàng trước ngày' : 'Có hàng từ ngày'}</b>${esc(day(p.when_date))}</div>` : ''}
+        <div><b>Hạn tin</b>${esc(day(p.expires_at))}</div>
+      </div>
+      ${p.quality.length ? `<div class="chips">${p.quality.map((q) => `<span class="chip">${esc(q)}</span>`).join('')}</div>` : ''}
+      ${p.description ? `<div class="panel"><p style="white-space:pre-line;margin:0">${esc(p.description)}</p></div>` : ''}
+      ${p.images.length ? `<div class="gallery">${p.images.map((s) => (img(s) ? `<img src="${img(s)}" alt="" />` : '')).join('')}</div>` : ''}
+      <div class="panel"><b>${p.kind === 'buy' ? 'Người đăng' : 'Nhà cung cấp'}</b><br>${p.poster?.anonymous ? esc(p.poster.label ?? 'Người mua') + ' <span class="muted">(thông tin liên hệ chỉ hiện khi hai bên cùng đồng ý trong hộp thư)</span>' : p.poster?.slug ? `<a href="/co-so/${encodeURIComponent(p.poster.slug)}">${esc(p.poster.name ?? '')}</a>` : esc(p.poster?.name ?? '')}</div>
+      ${p.is_owner ? ownerBlock(p) : responderBlock(p, live, orgs, convLink)}
+      ${p.is_owner ? '' : `<p><button class="btn sm danger" id="report">Báo cáo tin này</button></p>`}
+      <p><a href="/giao-thuong/">← Về Giao thương</a></p>`;
+    bind(p);
+  }
+
+  function ownerBlock(p: Post) {
+    const rs = p.responses ?? [];
+    return `<h2>${p.kind === 'buy' ? 'Báo giá nhận được' : 'Người quan tâm'} (${rs.length})</h2>
+      ${rs.length === 0 ? '<p class="empty">Chưa có ai gửi.</p>' : rs.map((r) => `<div class="panel">
+        <b>${esc(r.name ?? 'Người dùng')}</b>${r.company ? ' · ' + esc(r.company) : ''} <span class="stat ${r.status === 'accepted' ? 'ok' : r.status === 'open' ? 'warn' : ''}">${esc(RESP_LABEL[r.status] ?? r.status)}</span><br>
+        ${r.price != null ? `Giá: <b>${esc(money(r.price))}</b> ` : ''}${r.quantity != null ? `· Số lượng: ${esc(String(r.quantity))} ` : ''}${r.deliver_date ? `· Giao: ${esc(day(r.deliver_date))}` : ''}
+        ${r.note ? `<p style="margin:.3em 0">${esc(r.note)}</p>` : ''}
+        ${r.status === 'open' ? `<label style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" data-share="${esc(r.id)}" style="width:auto" /> Đồng ý chia sẻ liên hệ của tôi khi chấp nhận</label>
+          <button class="btn sm solid" data-acc="${esc(r.id)}">Chấp nhận và trao đổi</button> <button class="btn sm" data-dec="${esc(r.id)}">Từ chối</button>` : ''}
+        ${r.conversation_id ? `<a class="btn sm solid" href="/hop-thu/?c=${esc(r.conversation_id)}">Mở hộp thư</a>` : ''}
+      </div>`).join('')}
+      ${p.status === 'published' || p.status === 'pending' ? `<p><button class="btn sm" data-ext="7">Gia hạn 7 ngày</button> <button class="btn sm" data-ext="14">14 ngày</button> <button class="btn sm" data-ext="30">30 ngày</button> <button class="btn sm danger" id="close">Đóng tin</button></p>` : ''}`;
+  }
+
+  function responderBlock(p: Post, live: boolean, orgs: NonNullable<WebAccount['orgs']>, convLink: string) {
+    if (p.my_response) {
+      const r = p.my_response;
+      return `<h2>${p.kind === 'buy' ? 'Báo giá của bạn' : 'Bạn đã quan tâm'}</h2><div class="panel"><span class="stat ${r.status === 'accepted' ? 'ok' : r.status === 'open' ? 'warn' : ''}">${esc(RESP_LABEL[r.status] ?? r.status)}</span>
+        ${r.price != null ? ` · Giá: <b>${esc(money(r.price))}</b>` : ''}${r.note ? `<p style="margin:.3em 0">${esc(r.note)}</p>` : ''}
+        ${r.status === 'open' ? '<button class="btn sm" id="withdraw">Rút lại</button>' : ''}${convLink}</div>`;
+    }
+    if (!live) return '<p class="muted">Tin này không còn nhận báo giá.</p>';
+    if (p.kind === 'buy' && orgs.length === 0) return `<div class="panel"><b>Gửi báo giá</b><p class="muted">Báo giá cho tin cần mua do chủ hoặc quản lý cơ sở thực hiện. Hãy đăng nhập bằng tài khoản ứng dụng AgriConnect của cơ sở. <a href="/danh-cho-nguoi-ban">Tìm hiểu cho người bán</a></p></div>`;
+    return `<h2>${p.kind === 'buy' ? 'Gửi báo giá' : 'Quan tâm tin này'}</h2>
+      <form id="rf" class="panel mini">
+        ${p.kind === 'buy' ? `<label>Báo giá với tư cách cơ sở<select name="org">${orgs.map((o) => `<option value="${esc(o.org_id)}">${esc(o.name)}</option>`).join('')}</select></label>` : ''}
+        <div class="formgrid">
+          <label>${p.kind === 'buy' ? 'Giá chào (đồng/' + esc(p.unit) + ')' : 'Giá bạn đề nghị (đồng/' + esc(p.unit) + ', không bắt buộc)'}<input name="price" inputmode="numeric" /></label>
+          <label>Số lượng (${esc(p.unit)})<input name="qty" inputmode="decimal" /></label>
+          <label>Ngày giao dự kiến<input name="date" type="date" /></label>
+        </div>
+        <label>Ghi chú (không ghi số điện thoại, email, đường dẫn)<textarea name="note" rows="3" maxlength="300"></textarea></label>
+        <button class="btn solid" type="submit">${p.kind === 'buy' ? 'Gửi báo giá' : 'Gửi quan tâm'}</button>
+        <p class="muted">Liên hệ trực tiếp chỉ mở khi người đăng chấp nhận và hai bên cùng đồng ý trong hộp thư.</p>
+      </form>`;
+  }
+
+  function bind(p: Post) {
+    const run = async (fn: () => Promise<unknown>, ok: string) => { try { await fn(); await render(note('ok', ok)); } catch (e) { await render(note('err', friendly(e))); } };
+    document.getElementById('report')?.addEventListener('click', async () => {
+      const r = prompt('Vì sao bạn báo cáo tin này? (ít nhất 5 ký tự)');
+      if (!r) return;
+      try { await call('report_abuse', { p_type: 'trade_post', p_id: p.id, p_reason: r }); alert('Đã gửi báo cáo. Cảm ơn bạn.'); } catch (e) { alert(friendly(e)); }
+    });
+    document.getElementById('close')?.addEventListener('click', () => { if (confirm('Đóng tin này?')) void run(() => call('close_trade_post', { p_id: p.id }), 'Đã đóng tin.'); });
+    app.querySelectorAll<HTMLElement>('[data-ext]').forEach((b) => b.addEventListener('click', () => void run(() => call('extend_trade_post', { p_id: p.id, p_days: Number(b.dataset.ext) }), 'Đã gia hạn tin.')));
+    document.getElementById('withdraw')?.addEventListener('click', () => void run(() => call('withdraw_trade_response', { p_id: p.my_response!.id }), 'Đã rút lại.'));
+    app.querySelectorAll<HTMLElement>('[data-acc]').forEach((b) => b.addEventListener('click', async () => {
+      const share = (app.querySelector(`[data-share="${b.dataset.acc}"]`) as HTMLInputElement | null)?.checked ?? false;
+      try { const c = await call<string>('decide_trade_response', { p_response: b.dataset.acc, p_accept: true, p_share: share }); location.assign('/hop-thu/?c=' + c); } catch (e) { await render(note('err', friendly(e))); }
+    }));
+    app.querySelectorAll<HTMLElement>('[data-dec]').forEach((b) => b.addEventListener('click', () => { if (confirm('Từ chối báo giá này?')) void run(() => call('decide_trade_response', { p_response: b.dataset.dec, p_accept: false, p_share: false }), 'Đã từ chối.'); }));
+    document.getElementById('rf')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = new FormData(e.target as HTMLFormElement);
+      const money = (k: string) => { const v = String(d.get(k) ?? '').replace(/[^0-9]/g, ''); return v ? Number(v) : null; };
+      const qty = (k: string) => { const v = String(d.get(k) ?? '').replace(',', '.').replace(/[^0-9.]/g, ''); return v && Number(v) > 0 ? Number(v) : null; };
+      await run(() => call('respond_trade_post', { p_post: p.id, p_price: money('price'), p_quantity: qty('qty'), p_date: d.get('date') || null, p_note: d.get('note'), p_org: d.get('org') || null }), 'Đã gửi. Người đăng sẽ nhận thông báo.');
+    });
+  }
+  void main();
+</script>

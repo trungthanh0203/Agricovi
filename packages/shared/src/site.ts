@@ -88,7 +88,6 @@ export const COMING_SOON_SECTIONS: Record<string, string> = {
   'tin-nong-nghiep': 'Tin nông nghiệp',
   'tin-xuat-khau': 'Tin xuất khẩu',
   'tin-hoi-cho': 'Tin hội chợ',
-  'giao-thuong': 'Giao thương',
   'danh-muc': 'Danh mục sản phẩm',
   'tim-kiem': 'Tìm kiếm',
   'dang-nhap': 'Đăng nhập',
@@ -257,3 +256,11 @@ export function normalizeHomeBlocks(raw: unknown): HomeBlock[] {
   for (const d of DEFAULT_HOME_BLOCKS) if (!seen.has(d.id)) out.push({ ...d });
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// Giao thương (W4): đơn vị, yêu cầu chất lượng, nhãn trạng thái
+// ---------------------------------------------------------------------------
+export const TRADE_UNITS = ['kg', 'tấn', 'quả', 'trái', 'bó', 'thùng', 'bao', 'con', 'chai', 'lít', 'cây', 'khay'] as const;
+export const TRADE_TAGS = ['VietGAP', 'Hữu cơ', 'Có truy xuất nguồn gốc', 'Loại 1', 'Đồng đều kích cỡ', 'Giao tận nơi', 'Có hóa đơn', 'Có kiểm định'] as const;
+export const TRADE_KIND_LABEL: Record<string, string> = { buy: 'Cần mua', sell: 'Cần bán' };
+export const TRADE_STATUS_LABEL: Record<string, string> = { pending: 'Chờ duyệt', published: 'Đang hiển thị', closed: 'Đã đóng', rejected: 'Chưa được duyệt', hidden: 'Đã bị ẩn' };

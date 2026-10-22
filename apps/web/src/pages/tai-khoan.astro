@@ -19,7 +19,7 @@ import Base from '../layouts/Base.astro';
   import { esc } from '../lib/db';
 
   const app = document.getElementById('app')!;
-  const TABS: [string, string][] = [['ho-so', 'Hồ sơ'], ['dia-chi', 'Địa chỉ nhận hàng'], ['yeu-thich', 'Yêu thích'], ['mat-khau', 'Mật khẩu']];
+  const TABS: [string, string][] = [['ho-so', 'Hồ sơ'], ['dia-chi', 'Địa chỉ nhận hàng'], ['yeu-thich', 'Yêu thích'], ['bao-gia', 'Yêu cầu báo giá của tôi'], ['mat-khau', 'Mật khẩu']];
   let acc: WebAccount;
 
   const tab = () => (TABS.some(([k]) => k === location.hash.slice(1)) ? location.hash.slice(1) : 'ho-so');
@@ -42,7 +42,7 @@ import Base from '../layouts/Base.astro';
       ${acc.orgs && acc.orgs.length ? `<div class="panel"><b>Bạn là chủ/quản lý cơ sở: ${acc.orgs.map((o) => esc(o.name)).join(', ')}</b><p style="margin:.3em 0"><a class="btn solid sm" href="/gian-hang/">Vào Gian hàng của tôi</a></p></div>` : ''}
       <div class="tabs">${TABS.map(([k, l]) => `<a href="#${k}" class="${k === t ? 'on' : ''}">${l}</a>`).join('')}<a href="#" id="out">Đăng xuất</a></div>
       <div id="tabbody">${inner}</div>
-      <p class="muted">Đơn hàng, tin giao thương và hộp thư đang được chuẩn bị.</p>`;
+      <p class="muted"><a href="/giao-thuong/cua-toi/">Tin giao thương của tôi</a> · <a href="/hop-thu/">Hộp thư</a> · <a href="/thong-bao/">Thông báo</a> · Đơn hàng đang được chuẩn bị.</p>`;
     document.getElementById('out')!.addEventListener('click', async (e) => { e.preventDefault(); await signOut(); location.assign('/'); });
   }
 
@@ -51,6 +51,7 @@ import Base from '../layouts/Base.astro';
     if (t === 'ho-so') return profileTab();
     if (t === 'dia-chi') return addressTab();
     if (t === 'yeu-thich') return favTab();
+    if (t === 'bao-gia') return quoteTab();
     return passwordTab();
   }
 
@@ -120,6 +121,13 @@ import Base from '../layouts/Base.astro';
       try { await call('toggle_favorite', { p_kind: kind, p_ref: b.getAttribute(attr), p_on: false }); void favTab(); } catch (x) { void favTab(note('err', friendly(x))); }
     }));
     un('data-unsup', 'supplier'); un('data-unprod', 'product');
+  }
+
+  interface Q { id: string; kind: string; target_name: string | null; quantity_note: string | null; message: string; status: string; created_at: string }
+  async function quoteTab(msg = '') {
+    let list: Q[] = [];
+    try { list = await call<Q[]>('my_sent_quotes'); } catch (e) { msg += note('err', friendly(e)); }
+    shell(`${msg}${list.length === 0 ? '<p class="empty">Bạn chưa gửi yêu cầu báo giá nào khi đã đăng nhập.</p>' : list.map((q) => `<div class="panel"><b>${esc(q.target_name ?? 'Yêu cầu chung')}</b> <span class="pill">${q.status === 'handled' ? 'Đã được xử lý' : 'Đang chờ'}</span> <span class="muted">${esc(new Date(q.created_at).toLocaleString('vi-VN'))}</span><p style="margin:.4em 0">${esc(q.message)}${q.quantity_note ? `<br><span class="muted">Số lượng: ${esc(q.quantity_note)}</span>` : ''}</p></div>`).join('')}`);
   }
 
   function passwordTab(msg = '') {

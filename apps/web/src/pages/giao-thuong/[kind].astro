@@ -1,0 +1,7 @@
+---
+import TradeList from '../../components/TradeList.astro';
+const k = Astro.params.kind;
+const kind = k === 'can-mua' ? 'buy' : k === 'can-ban' ? 'sell' : null;
+if (!kind) return Astro.redirect('/giao-thuong/', 302);
+---
+<TradeList kind={kind} />

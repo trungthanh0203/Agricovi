@@ -1,0 +1,38 @@
+---
+import Base from '../layouts/Base.astro';
+import TradeCard from './TradeCard.astro';
+import { catHref, catTree, loadCategories } from '../lib/catalog';
+import { loadTradePosts } from '../lib/trade';
+
+interface Props { kind?: 'buy' | 'sell' }
+const { kind } = Astro.props;
+const url = Astro.url;
+const q = (url.searchParams.get('q') ?? '').trim();
+const tinh = url.searchParams.get('tinh') ?? '';
+const dm = url.searchParams.get('dm') ?? '';
+const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
+
+const cats = await loadCategories();
+const { top } = catTree(cats);
+const all = await loadTradePosts();
+const base = all.filter((t) => !kind || t.kind === kind);
+const provinces = [...new Set(base.map((t) => t.province))].sort((a, b) => a.localeCompare(b, 'vi'));
+const items = base.filter((t) => (!tinh || t.province === tinh) && (!dm || t.category_id === dm) && (!q || fold(t.title + ' ' + (t.category_name ?? '')).includes(fold(q))));
+const title = kind === 'buy' ? 'Tin cần mua' : kind === 'sell' ? 'Tin cần bán' : 'Giao thương';
+const TABS: [string, string, string][] = [['', '/giao-thuong/', 'Tất cả'], ['buy', '/giao-thuong/can-mua/', 'Cần mua'], ['sell', '/giao-thuong/can-ban/', 'Cần bán']];
+---
+<Base title={`${title} — AgriConnect`} description="Người mua đăng tin cần mua, nhà cung cấp đăng tin cần bán nông sản và vật tư. Đăng nhập để xem chi tiết và trao đổi.">
+  <p class="crumbs"><a href="/">Trang chủ</a> › Giao thương</p>
+  <div class="sechead"><h1 style="margin:0">{title}</h1><a class="btn solid" href="/giao-thuong/dang-tin/">+ Đăng tin</a></div>
+  <div class="subcats">{TABS.map(([k, href, label]) => <a href={href} class={(kind ?? '') === k ? 'on' : ''}>{label}</a>)}</div>
+  <form class="filters" method="get">
+    <input name="q" value={q} placeholder="Tìm tin: dưa lưới, phân bón…" aria-label="Tìm tin" />
+    <select name="dm" aria-label="Loại sản phẩm"><option value="">Mọi loại sản phẩm</option>{top.map((c) => <option value={c.id} selected={c.id === dm}>{c.name}</option>)}</select>
+    {provinces.length > 0 && <select name="tinh" aria-label="Tỉnh/thành"><option value="">Mọi tỉnh/thành</option>{provinces.map((p) => <option selected={p === tinh}>{p}</option>)}</select>}
+    <button class="btn solid" type="submit">Lọc</button>
+  </form>
+  <p class="muted">{items.length} tin. Khách xem được danh sách; <a href="/dang-nhap/?next=/giao-thuong/">đăng nhập</a> để xem chi tiết, báo giá và trao đổi.</p>
+  {items.length === 0 && <p class="empty">Chưa có tin phù hợp. <a href="/giao-thuong/dang-tin/">Hãy là người đăng tin đầu tiên</a>.</p>}
+  <div class="pgrid">{items.map((t) => <TradeCard t={t} />)}</div>
+  <p class="muted" style="margin-top:20px">Giao dịch do hai bên thỏa thuận trực tiếp; AgriConnect chỉ kết nối và không thu hộ tiền. Hãy cảnh giác với tin có dấu hiệu lừa đảo và dùng nút "Báo cáo" trong trang chi tiết. <a href="/quy-che-hoat-dong">Quy chế hoạt động</a></p>
+</Base>

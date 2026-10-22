@@ -1,0 +1,112 @@
+---
+import Base from '../../layouts/Base.astro';
+import { TRADE_TAGS, TRADE_UNITS } from '@agriconnect/shared';
+---
+<Base title="Đăng tin giao thương — AgriConnect" noindex cache={false}>
+  <div class="prose">
+    <h1>Đăng tin giao thương</h1>
+    <div id="app"><p class="muted">Đang tải…</p></div>
+    <template id="tpl">
+      <form id="pf" class="form mini">
+        <p id="msg" class="err" role="alert" hidden></p>
+        <label>Loại tin<select name="kind" id="kind"><option value="buy">Cần mua</option></select></label>
+        <label id="orgRow" hidden>Đăng với tư cách cơ sở<select name="org" id="org"></select></label>
+        <label>Loại sản phẩm<select name="cat" id="cat" required><option value="">— Chọn —</option></select></label>
+        <label>Tên sản phẩm cụ thể (không bắt buộc)<input name="product" maxlength="60" placeholder="Ví dụ: Dưa lưới Taki" /></label>
+        <div class="formgrid">
+          <label>Số lượng<input name="qty" inputmode="decimal" required /></label>
+          <label>Đơn vị<select name="unit" required>{TRADE_UNITS.map((u) => <option>{u}</option>)}</select></label>
+          <label>Giá thấp nhất (đồng/đơn vị, không bắt buộc)<input name="pmin" inputmode="numeric" /></label>
+          <label>Giá cao nhất (không bắt buộc)<input name="pmax" inputmode="numeric" /></label>
+          <label>Tỉnh/thành<input name="province" required maxlength="60" placeholder="Ví dụ: Long An" /></label>
+          <label>Quận/huyện (không bắt buộc)<input name="district" maxlength="60" /></label>
+          <label><span id="whenLbl">Cần hàng trước ngày</span><input name="when" type="date" /></label>
+          <label>Tin hiển thị trong
+            <select name="days"><option value="7">7 ngày</option><option value="14" selected>14 ngày</option><option value="30">30 ngày</option></select>
+          </label>
+        </div>
+        <fieldset style="border:1px solid var(--line);border-radius:10px;padding:8px 12px"><legend>Yêu cầu chất lượng</legend>
+          {TRADE_TAGS.map((t) => <label style="display:inline-flex;gap:6px;align-items:center;font-weight:400;margin-right:12px"><input type="checkbox" name="tag" value={t} style="width:auto" /> {t}</label>)}
+        </fieldset>
+        <label>Mô tả ngắn (tối đa 500 ký tự; không ghi số điện thoại, email, đường dẫn)<textarea name="desc" rows="4" maxlength="500"></textarea></label>
+        <label>Ảnh minh họa (tối đa 2, tự thu nhỏ)<input type="file" id="imgs" accept="image/*" multiple /></label>
+        <div id="prev" class="gallery"></div>
+        <p class="muted">Tin được kiểm duyệt trước khi hiển thị (người đã có tin được duyệt sẽ được hiển thị ngay). Liên hệ trực tiếp chỉ mở khi hai bên cùng đồng ý trong hộp thư. <a href="/quy-che-hoat-dong" target="_blank">Quy tắc giao thương</a></p>
+        <button class="btn solid" type="submit" id="go">Đăng tin</button>
+      </form>
+    </template>
+  </div>
+</Base>
+
+<script>
+  import { auth, call, friendly, loadAccount, session, type WebAccount } from '../../lib/auth';
+  import { esc } from '../../lib/db';
+  import { smallImage } from '../../lib/image';
+
+  const app = document.getElementById('app')!;
+  let images: string[] = [];
+
+  async function main() {
+    if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent('/giao-thuong/dang-tin/')); return; }
+    let acc: WebAccount;
+    try { acc = await loadAccount(); } catch (e) { app.innerHTML = `<p class="err">${esc(friendly(e))}</p>`; return; }
+    if (acc.profile?.login_kind !== 'email' || acc.email_verified === false) {
+      app.innerHTML = `<div class="panel"><b>Cần tài khoản email đã xác nhận để đăng tin.</b><p class="muted">${acc.profile?.login_kind === 'phone' ? 'Tài khoản đăng ký bằng số điện thoại chưa xác minh nên chưa đăng tin được.' : 'Hãy mở thư xác nhận chúng tôi đã gửi tới email của bạn, rồi tải lại trang.'} <a href="/tai-khoan/">Về tài khoản</a></p></div>`;
+      return;
+    }
+    app.innerHTML = '';
+    app.appendChild((document.getElementById('tpl') as HTMLTemplateElement).content.cloneNode(true));
+    const f = document.getElementById('pf') as HTMLFormElement;
+    const kind = document.getElementById('kind') as HTMLSelectElement;
+    const orgs = acc.orgs ?? [];
+    if (orgs.length) {
+      kind.insertAdjacentHTML('beforeend', '<option value="sell">Cần bán (với tư cách cơ sở của bạn)</option>');
+      (document.getElementById('org') as HTMLSelectElement).innerHTML = orgs.map((o) => `<option value="${esc(o.org_id)}">${esc(o.name)}</option>`).join('');
+    }
+    const syncKind = () => { (document.getElementById('orgRow') as HTMLElement).hidden = kind.value !== 'sell'; document.getElementById('whenLbl')!.textContent = kind.value === 'sell' ? 'Có hàng từ ngày' : 'Cần hàng trước ngày'; };
+    kind.addEventListener('change', syncKind); syncKind();
+    if (new URLSearchParams(location.search).get('loai') === 'ban' && orgs.length) { kind.value = 'sell'; syncKind(); }
+
+    // danh mục: chỉ mục lá (hoặc mục gốc không có con), nhóm theo mục gốc
+    const { data } = await auth!.from('product_categories').select('id, parent_id, name, restricted, sort_order').eq('restricted', false).order('sort_order');
+    const cats = (data ?? []) as { id: string; parent_id: string | null; name: string }[];
+    const sel = document.getElementById('cat') as HTMLSelectElement;
+    for (const top of cats.filter((c) => !c.parent_id)) {
+      const kids = cats.filter((c) => c.parent_id === top.id);
+      if (kids.length === 0) sel.insertAdjacentHTML('beforeend', `<option value="${esc(top.id)}">${esc(top.name)}</option>`);
+      else sel.insertAdjacentHTML('beforeend', `<optgroup label="${esc(top.name)}">${kids.map((k) => `<option value="${esc(k.id)}">${esc(k.name)}</option>`).join('')}</optgroup>`);
+    }
+
+    const prev = document.getElementById('prev')!;
+    const paint = () => { prev.innerHTML = images.map((s, i) => `<figure style="margin:0"><img src="${s}" alt="" /><button type="button" class="btn" data-rm="${i}" style="padding:2px 8px">Bỏ</button></figure>`).join(''); prev.querySelectorAll<HTMLElement>('[data-rm]').forEach((b) => b.addEventListener('click', () => { images.splice(Number(b.dataset.rm), 1); paint(); })); };
+    document.getElementById('imgs')!.addEventListener('change', async (e) => {
+      const files = [...((e.target as HTMLInputElement).files ?? [])];
+      const msg = document.getElementById('msg')!;
+      msg.hidden = true;
+      for (const file of files) {
+        if (images.length >= 2) break;
+        try { images.push(await smallImage(file, 640, 100_000)); } catch (x) { msg.textContent = friendly(x); msg.hidden = false; }
+      }
+      (e.target as HTMLInputElement).value = ''; paint();
+    });
+
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const go = document.getElementById('go') as HTMLButtonElement;
+      const msg = document.getElementById('msg')!;
+      msg.hidden = true; go.disabled = true; go.textContent = 'Đang đăng…';
+      const d = new FormData(f);
+      const digits = (k: string) => { const v = String(d.get(k) ?? '').replace(/[^0-9]/g, ''); return v ? Number(v) : null; };
+      const qty = Number(String(d.get('qty') ?? '').replace(',', '.').replace(/[^0-9.]/g, '')) || null;
+      try {
+        const r = await call<{ id: string; status: string }>('create_trade_post', {
+          p_kind: d.get('kind'), p_category: d.get('cat'), p_product: d.get('product'), p_quantity: qty, p_unit: d.get('unit'), p_price_min: digits('pmin'), p_price_max: digits('pmax'),
+          p_province: d.get('province'), p_district: d.get('district'), p_when: d.get('when') || null, p_days: Number(d.get('days')), p_quality: d.getAll('tag'), p_description: d.get('desc'), p_images: images,
+          p_org: d.get('kind') === 'sell' ? d.get('org') : null,
+        });
+        location.assign(r.status === 'published' ? '/giao-thuong/tin/' + r.id : '/giao-thuong/cua-toi/?moi=1');
+      } catch (x) { msg.textContent = friendly(x); msg.hidden = false; go.disabled = false; go.textContent = 'Đăng tin'; msg.scrollIntoView({ block: 'center' }); }
+    });
+  }
+  void main();
+</script>

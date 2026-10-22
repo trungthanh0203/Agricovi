@@ -33,6 +33,8 @@ Cả hai dùng chung tài khoản Supabase (cùng email, mật khẩu) nhưng **
 | Sản phẩm | Danh mục sản phẩm | Cây danh mục (không xóa, chỉ tắt "Đang dùng") |
 | | Vật tư nông nghiệp | Nhập tay hoặc nhập từ **CSV** (có tệp mẫu; mọi dòng vào dạng Nháp) |
 | Tiếp nhận và kiểm duyệt | Yêu cầu báo giá | Hàng đợi khách gửi từ website: liên hệ lại, chuyển cho nhà cung cấp, bấm Đã xử lý hoặc Rác |
+| | **Duyệt tin giao thương** *(kiểm duyệt viên, tổng biên tập)* | Duyệt hoặc từ chối tin người dùng đăng (xem nội dung, ảnh, số tin đã được duyệt của người đăng); ẩn tin vi phạm. Người đã có tin được duyệt sẽ tự được duyệt tin sau |
+| | **Báo cáo vi phạm** *(kiểm duyệt viên, tổng biên tập)* | Xem báo cáo của người dùng; ẩn tin, khóa người đăng hoặc bỏ qua |
 | | Duyệt hồ sơ nhà cung cấp *(quản trị viên)* | Xem trước đúng như website sẽ hiện, duyệt và công khai, yêu cầu sửa, tạm ẩn |
 | | Vụ công khai (truy xuất) *(quản trị viên)* | Tạm ẩn vụ sai hoặc vi phạm |
 | Hệ thống | Người biên tập *(quản trị viên)* | Cấp vai trò cho người khác bằng email |
@@ -58,7 +60,7 @@ Cách viết nội dung bài và trang: dòng trống = đoạn mới; `## Tiêu
 | Quản trị viên nền tảng | Mọi thứ, kể cả duyệt hồ sơ, vụ công khai, cấp vai trò |
 | Tổng biên tập | Đăng/gỡ/sửa mọi nội dung, menu, thông tin chung, trang chủ, danh mục; xem nhật ký thao tác |
 | Biên tập viên | Soạn nháp và gửi duyệt bài, vật tư, trang, banner |
-| Kiểm duyệt viên | Xem nội dung nháp (duyệt hồ sơ và tin giao thương sẽ bổ sung ở các lát sau) |
+| Kiểm duyệt viên | Xem nội dung nháp; **duyệt tin giao thương và xử lý báo cáo vi phạm** (không sửa nội dung website) |
 
 ## 6. Cấp vai trò cho nhân sự
 

@@ -4,6 +4,8 @@ import { safeHref } from '@agriconnect/shared';
 import ProductCard from '../components/ProductCard.astro';
 import MaterialCard from '../components/MaterialCard.astro';
 import ArticleCard from '../components/ArticleCard.astro';
+import TradeCard from '../components/TradeCard.astro';
+import { loadTradePosts } from '../lib/trade';
 import { catHref, catTree, descendantIds, loadArticles, loadCategories, loadMaterials, loadProducts, today } from '../lib/catalog';
 import { esc, img, loadDirectory, profileCard, supplyPill, type DirRow } from '../lib/db';
 import { loadChrome } from '../lib/site';
@@ -35,6 +37,7 @@ for (const [blockId, slug] of [['trai_cay', 'trai-cay'], ['rau_cu_qua', 'rau-cu-
   if (r && r.items.length > 0) rowOf[blockId] = r;
 }
 const blocks = chrome.home.filter((b) => b.on);
+const trades = (await loadTradePosts()).slice(0, 6);
 const day = today();
 const latest = articles.filter((a) => a.channel !== 'hoi_cho' || !a.end || a.end >= day || a.publishedAt).slice(0, 4);
 let dirError = '';
@@ -98,10 +101,12 @@ try {
     b.id === 'giao_thuong' ? (
       <>
         <div class="sechead"><h2>Giao thương</h2><a href="/giao-thuong/">Xem tất cả</a></div>
-        <div class="panel soon">
-          <b>Sắp ra mắt</b>
-          <p class="muted">Người mua đăng tin cần mua, người bán đăng tin cần bán. Khách có thể xem danh sách; đăng nhập để xem chi tiết và trao đổi.</p>
-        </div>
+        {trades.length > 0 ? <div class="pgrid">{trades.map((t) => <TradeCard t={t} />)}</div> : (
+          <div class="panel soon">
+            <b>Giao thương: người mua đăng tin cần mua, nhà cung cấp đăng tin cần bán</b>
+            <p class="muted">Khách xem được danh sách; đăng nhập để xem chi tiết và trao đổi. Chưa có tin nào, hãy <a href="/giao-thuong/dang-tin/">đăng tin đầu tiên</a>.</p>
+          </div>
+        )}
       </>
     ) : b.id === 'nha_cung_cap' ? (
       <>
