@@ -24,6 +24,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.10",
     "fake-indexeddb": "^6.2.6",
-    "tsx": "^4.23.15"
+    "tsx": "^4.23.15",
+    "wrangler": "^4.151.3"
   }
 }
