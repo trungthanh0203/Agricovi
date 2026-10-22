@@ -1,0 +1,61 @@
+---
+import { DEFAULT_HEADER_NAV } from '@agriconnect/shared';
+import Base from '../layouts/Base.astro';
+import ArticleCard from './ArticleCard.astro';
+import { loadArticles, today, type Article } from '../lib/catalog';
+
+interface Props { channel: Article['channel']; section?: string }
+const { channel, section } = Astro.props;
+
+const BASE = { nong_nghiep: '/tin-nong-nghiep/', xuat_khau: '/tin-xuat-khau/', hoi_cho: '/tin-hoi-cho/' } as const;
+const base = BASE[channel];
+const nav = DEFAULT_HEADER_NAV.find((i) => i.href === base);
+const title = nav?.label ?? 'Tin tức';
+const sections = (nav?.children ?? []).map((c) => ({ slug: c.href.split('/').filter(Boolean).pop() ?? '', label: c.label }));
+const current = section ? sections.find((s) => s.slug === section) : undefined;
+if (section && !current) Astro.response.status = 404;
+
+const day = today();
+const all = (await loadArticles()).filter((a) => a.channel === channel);
+const isEnded = (a: Article) => (a.end || a.start) < day;
+const byStart = (x: Article, y: Article) => (x.start || '9999').localeCompare(y.start || '9999');
+let blocks: { heading?: string; items: Article[] }[] = [];
+if (channel === 'hoi_cho') {
+  const upcoming = all.filter((a) => !isEnded(a) || !a.start).sort(byStart);
+  const past = all.filter((a) => a.start && isEnded(a)).sort((x, y) => byStart(y, x));
+  if (section === 'sap-dien-ra') blocks = [{ items: upcoming }];
+  else if (section === 'da-dien-ra') blocks = [{ items: past }];
+  else if (section === 'lich') blocks = [{ items: [...all].sort(byStart) }];
+  else blocks = [{ heading: 'Sắp diễn ra', items: upcoming }, { heading: 'Đã diễn ra', items: past.slice(0, 8) }];
+} else {
+  blocks = [{ items: section ? all.filter((a) => a.section === section) : all }];
+}
+const heading = current ? `${title}: ${current.label}` : title;
+const total = blocks.reduce((n, b) => n + b.items.length, 0);
+---
+{!section || current ? (
+  <Base title={`${heading} — AgriConnect`} description={`${heading} trên AgriConnect.`}>
+    <p class="crumbs"><a href="/">Trang chủ</a> › {current ? <><a href={base}>{title}</a> › {current.label}</> : title}</p>
+    <h1>{heading}</h1>
+    {sections.length > 0 && (
+      <div class="subcats">
+        <a href={base} class={!current ? 'on' : ''}>Tất cả</a>
+        {sections.map((s) => <a href={`${base}${s.slug}/`} class={current?.slug === s.slug ? 'on' : ''}>{s.label}</a>)}
+      </div>
+    )}
+    {total === 0 && <p class="empty">Chưa có nội dung trong mục này. Vui lòng quay lại sau.</p>}
+    {blocks.map((b) => b.items.length > 0 && (
+      <>
+        {b.heading && <h2>{b.heading}</h2>}
+        <div class="pgrid">{b.items.map((a) => <ArticleCard a={a} />)}</div>
+      </>
+    ))}
+  </Base>
+) : (
+  <Base title="Không tìm thấy mục — AgriConnect" noindex cache={false}>
+    <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
+      <h1>Không tìm thấy mục này</h1>
+      <p><a class="btn solid" href={base}>Về {title}</a></p>
+    </div>
+  </Base>
+)}

@@ -1,0 +1,57 @@
+---
+import Base from '../../layouts/Base.astro';
+import { CERT_LABEL } from '../../lib/db';
+import { catHref, loadCategories, loadProducts, priceText } from '../../lib/catalog';
+
+const id = Astro.params.id ?? '';
+const all = await loadProducts();
+const p = all.find((x) => x.id === id) ?? null;
+const cats = await loadCategories();
+const cat = p ? cats.find((c) => c.id === p.categoryId) : undefined;
+if (!p) Astro.response.status = 404;
+const jsonLd = p ? JSON.stringify({
+  '@context': 'https://schema.org', '@type': 'Product', name: p.name, description: p.description || p.spec || undefined,
+  offers: p.priceFrom ? { '@type': 'Offer', priceCurrency: 'VND', price: p.priceFrom } : undefined,
+}).replace(/</g, '\\u003c') : '';
+---
+{p ? (
+  <Base title={`${p.name} — ${p.supplier}`} description={(p.description || p.spec || `${p.name} của ${p.supplier}`).slice(0, 200)}>
+    <script type="application/ld+json" set:html={jsonLd} />
+    <p class="crumbs"><a href="/">Trang chủ</a>{cat && <> › <a href={catHref(cat)}>{cat.name}</a></>} › {p.name}</p>
+    <div class="two">
+      <div>
+        <h1>{p.name}</h1>
+        {p.images.length > 0 && <div class="gallery">{p.images.map((src) => <img src={src} alt={p.name} />)}</div>}
+        <p class="bigprice">{priceText(p.priceFrom, p.priceNote, p.unit)}</p>
+        <p class="muted">Giá tham khảo do nhà cung cấp tự khai; giá chính thức theo báo giá.</p>
+        <div class="facts">
+          {p.unit && <div><b>Đơn vị bán</b>{p.unit}</div>}
+          {p.minOrder && <div><b>Đặt tối thiểu</b>{p.minOrder}</div>}
+          {p.season && <div><b>Mùa vụ</b>{p.season}</div>}
+          {p.spec && <div><b>Quy cách</b>{p.spec}</div>}
+          {p.supplyLabel && <div><b>Tình trạng</b>{p.supplyLabel}{p.updated ? ` (cập nhật ${new Date(p.updated).toLocaleDateString('vi-VN')})` : ''}</div>}
+        </div>
+        {p.description && <div class="panel"><p style="white-space:pre-line;margin:0">{p.description}</p></div>}
+        {p.certs.length > 0 && <div class="panel"><b>Chứng chỉ</b>{p.certs.map((c) => <p style="margin:.3em 0">🏅 {c.name} <span class="pill">{CERT_LABEL[c.status] ?? c.status}</span></p>)}</div>}
+        {p.trace && <p><a class="btn outline" href={`/truyxuat/${p.trace}`}>Xem nguồn gốc mùa vụ ({p.trace})</a></p>}
+      </div>
+      <aside>
+        <div class="panel">
+          <b>Nhà cung cấp</b>
+          <h3 style="margin:.3em 0"><a href={`/co-so/${encodeURIComponent(p.supplierSlug)}`}>{p.supplier}</a></h3>
+          {p.province && <p class="muted" style="margin:0">📍 {p.province}</p>}
+          <p><a class="btn solid" style="width:100%;text-align:center" href={`/bao-gia/?loai=product&ma=${encodeURIComponent(p.id)}`}>Yêu cầu báo giá</a></p>
+          <p><a href={`/co-so/${encodeURIComponent(p.supplierSlug)}`}>Xem hồ sơ nhà cung cấp →</a></p>
+        </div>
+      </aside>
+    </div>
+  </Base>
+) : (
+  <Base title="Không tìm thấy sản phẩm — AgriConnect" noindex cache={false}>
+    <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
+      <h1>Không tìm thấy sản phẩm</h1>
+      <p class="muted">Sản phẩm không còn hiển thị hoặc địa chỉ chưa đúng.</p>
+      <p><a class="btn solid" href="/danh-ba/">Xem nhà cung cấp</a></p>
+    </div>
+  </Base>
+)}

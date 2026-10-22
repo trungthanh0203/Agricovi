@@ -1,0 +1,29 @@
+---
+import { priceText, type ProductItem } from '../lib/catalog';
+interface Props { p: ProductItem }
+const { p } = Astro.props;
+---
+<a class="pcard" href={`/san-pham/${p.id}`}>
+  {p.image ? <img src={p.image} alt={p.name} loading="lazy" /> : <div class="ph">🥬</div>}
+  <div class="pb">
+    <div class="tags">
+      {p.supply === 'available' && <span class="hot">Đang có hàng</span>}
+      {p.trace && <span class="hot tr">Có truy xuất</span>}
+    </div>
+    <h3>{p.name}</h3>
+    <p class="u">{p.unit ? `ĐVT: ${p.unit}` : ''}</p>
+    <p class="pr">{priceText(p.priceFrom, p.priceNote, '')}</p>
+    <p class="sup">{p.supplier}{p.province ? ` · ${p.province}` : ''}</p>
+  </div>
+</a>
+<style>
+  .pcard { display: block; background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; text-decoration: none; color: inherit; }
+  .pcard:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+  .pcard img, .pcard .ph { width: 100%; height: 130px; object-fit: cover; display: grid; place-items: center; font-size: 2.2rem; background: var(--g2); }
+  .pb { padding: 10px 12px 12px; }
+  .tags { min-height: 22px; display: flex; gap: 4px; flex-wrap: wrap; }
+  .hot { background: #d92d4b; color: #fff; font-size: .72rem; padding: 1px 7px; border-radius: 3px; } .hot.tr { background: var(--g); }
+  h3 { margin: 4px 0 2px; font-size: 1rem; }
+  .u, .sup { margin: 0; font-size: .82rem; color: var(--muted); } .u { min-height: 1.2em; }
+  .pr { margin: 4px 0; color: var(--g); font-weight: 700; }
+</style>

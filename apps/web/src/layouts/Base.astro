@@ -1,12 +1,13 @@
 ---
 import { safeHref } from '@agriconnect/shared';
-import { DEFAULT_CATEGORIES } from '@agriconnect/shared';
+import { catHref, catTree, loadCategories } from '../lib/catalog';
 import { loadChrome } from '../lib/site';
 
 interface Props { title: string; description?: string; noindex?: boolean; cache?: boolean }
 const { title, description = 'Danh bạ nhà cung cấp nông sản, vật tư và truy xuất nguồn gốc mùa vụ.', noindex = false, cache = true } = Astro.props;
 
 const chrome = await loadChrome();
+const { top: topCats, kids: subCats } = catTree(await loadCategories());
 const { settings, header, about, footer } = chrome;
 const brand = settings.brand.name ?? 'AgriConnect';
 const canonical = new URL(Astro.url.pathname, Astro.url.origin).toString();
@@ -52,9 +53,12 @@ if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-max
       <div class="bar2">
         <details class="cats">
           <summary>▦ Danh mục</summary>
-          <ul>{DEFAULT_CATEGORIES.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>
+          <ul>{topCats.map((c) => (
+            <li class="hc"><a href={catHref(c)}>{c.name}{subCats.get(c.id) ? <span aria-hidden="true"> ›</span> : null}</a>
+              {subCats.get(c.id) && <ul class="hsub">{subCats.get(c.id)!.map((k) => <li><a href={catHref(k)}>{k.name}</a></li>)}</ul>}</li>
+          ))}</ul>
         </details>
-        <form class="hsearch" action="/danh-ba/" method="get" role="search">
+        <form class="hsearch" action="/tim-kiem/" method="get" role="search">
           <input name="q" placeholder="Tìm sản phẩm, vật tư, nhà cung cấp" aria-label="Tìm kiếm" />
         </form>
         <nav class="topnav" aria-label="Chuyên mục">
@@ -194,4 +198,25 @@ if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-max
     .fgrid { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 520px) { .fgrid { grid-template-columns: 1fr; } .about { display: none; } }
+</style>
+<style is:global>
+  .pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+  .crumbs { font-size: .88rem; color: var(--muted); margin: 4px 0 8px; } .crumbs a { color: var(--muted); }
+  .subcats { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 12px; }
+  .subcats a { background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; text-decoration: none; color: var(--ink); font-size: .92rem; }
+  .subcats a.on, .subcats a:hover { background: var(--g); color: #fff; border-color: var(--g); }
+  .filters label.ck { display: flex; align-items: center; gap: 6px; padding: 0 8px; }
+  .filters label.ck input { flex: none; width: auto; }
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+  @media (max-width: 820px) { .two { grid-template-columns: 1fr; } }
+  .bigprice { font-size: 1.5rem; font-weight: 700; color: var(--g); margin: .2em 0; }
+  .form label { display: block; margin: 10px 0; font-weight: 600; } .form input, .form textarea { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 10px; font: inherit; margin-top: 4px; }
+  .ok { background: #d9f2e1; color: #14632f; border-radius: 10px; padding: 12px; }
+  .hp { position: absolute; left: -9999px; }
+</style>
+<style is:global>
+  .cats .hc { position: relative; }
+  .cats .hsub { display: none; top: 0; left: 100%; margin-left: 2px; }
+  .cats .hc:hover > .hsub, .cats .hc:focus-within > .hsub { display: block; }
+  .cats li a { display: flex; justify-content: space-between; }
 </style>

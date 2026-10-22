@@ -1,0 +1,33 @@
+---
+import Base from '../layouts/Base.astro';
+import { sb } from '../lib/db';
+
+const q = (Astro.url.searchParams.get('q') ?? '').trim().slice(0, 80);
+type R = {
+  profiles: { slug: string; name: string; province: string | null }[];
+  products: { id: string; name: string; profile_name: string; province: string | null }[];
+  materials: { slug: string; name: string; brand: string | null }[];
+  articles: { slug: string; title: string; channel: string }[];
+};
+let r: R = { profiles: [], products: [], materials: [], articles: [] };
+let error = '';
+if (q.length >= 2 && sb) {
+  const { data, error: e } = await sb.rpc('site_search', { p_q: q });
+  if (e) error = 'Chưa tìm kiếm được lúc này. Vui lòng thử lại sau.'; else r = data as R;
+}
+const total = r.profiles.length + r.products.length + r.materials.length + r.articles.length;
+---
+<Base title={q ? `Tìm "${q}" — AgriConnect` : 'Tìm kiếm — AgriConnect'} noindex cache={false}>
+  <h1>Tìm kiếm</h1>
+  <form class="search" action="/tim-kiem/" method="get">
+    <input name="q" value={q} placeholder="Tìm sản phẩm, vật tư, nhà cung cấp, bài viết" aria-label="Từ khóa" />
+    <button class="btn solid" type="submit">Tìm</button>
+  </form>
+  {error && <p class="err">{error}</p>}
+  {q.length > 0 && q.length < 2 && <p class="muted">Hãy nhập ít nhất 2 ký tự.</p>}
+  {q.length >= 2 && !error && total === 0 && <p class="empty">Không tìm thấy kết quả cho "{q}".</p>}
+  {r.products.length > 0 && <><h2>Sản phẩm</h2><ul>{r.products.map((x) => <li><a href={`/san-pham/${x.id}`}>{x.name}</a> <span class="muted">— {x.profile_name}{x.province ? ` · ${x.province}` : ''}</span></li>)}</ul></>}
+  {r.materials.length > 0 && <><h2>Vật tư</h2><ul>{r.materials.map((x) => <li><a href={`/vat-tu/${x.slug}`}>{x.name}</a>{x.brand && <span class="muted"> — {x.brand}</span>}</li>)}</ul></>}
+  {r.profiles.length > 0 && <><h2>Nhà cung cấp</h2><ul>{r.profiles.map((x) => <li><a href={`/co-so/${encodeURIComponent(x.slug)}`}>{x.name}</a>{x.province && <span class="muted"> — {x.province}</span>}</li>)}</ul></>}
+  {r.articles.length > 0 && <><h2>Bài viết</h2><ul>{r.articles.map((x) => <li><a href={`/bai-viet/${x.slug}`}>{x.title}</a></li>)}</ul></>}
+</Base>

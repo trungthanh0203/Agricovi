@@ -1,0 +1,24 @@
+---
+import Base from '../../layouts/Base.astro';
+import MaterialCard from '../../components/MaterialCard.astro';
+import { catHref, catTree, loadCategories, loadMaterials } from '../../lib/catalog';
+
+const cats = await loadCategories();
+const { top, kids } = catTree(cats);
+const root = cats.find((c) => c.slug === 'vat-tu-nong-nghiep');
+const groups = [...(root ? kids.get(root.id) ?? [] : []), ...top.filter((c) => c.branch === 'phu_kien')];
+const q = (Astro.url.searchParams.get('q') ?? '').trim();
+const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
+const items = (await loadMaterials()).filter((m) => !q || fold(`${m.name} ${m.brand} ${m.summary}`).includes(fold(q)));
+---
+<Base title="Vật tư nông nghiệp — AgriConnect" description="Phân bón, dinh dưỡng, chế phẩm sinh học và phụ kiện nông nghiệp.">
+  <h1>Vật tư nông nghiệp</h1>
+  {groups.length > 0 && <div class="subcats">{groups.map((g) => <a href={catHref(g)}>{g.name}</a>)}</div>}
+  <form class="filters" method="get">
+    <input name="q" value={q} placeholder="Tìm vật tư: phân NPK, MKP…" aria-label="Tìm vật tư" />
+    <button class="btn solid" type="submit">Tìm</button>
+  </form>
+  <p class="muted">{items.length} vật tư</p>
+  {items.length === 0 && <p class="empty">Chưa có vật tư nào được đăng.</p>}
+  <div class="pgrid">{items.map((m) => <MaterialCard m={m} />)}</div>
+</Base>

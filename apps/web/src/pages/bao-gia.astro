@@ -1,0 +1,65 @@
+---
+import Base from '../layouts/Base.astro';
+import { loadDirectory, sb } from '../lib/db';
+import { loadMaterial, loadProducts } from '../lib/catalog';
+
+// Biểu mẫu yêu cầu báo giá: khách không cần tài khoản. Chống lạm dụng ở CSDL (giới hạn theo liên hệ/giờ) + ô bẫy "website".
+const KINDS = ['material', 'product', 'profile', 'general'];
+const sp = Astro.url.searchParams;
+let kind = sp.get('loai') ?? 'general';
+let ref = sp.get('ma') ?? '';
+const v = { name: '', phone: '', email: '', qty: '', msg: '' };
+let error = '';
+let done = false;
+
+if (Astro.request.method === 'POST') {
+  const f = await Astro.request.formData();
+  const g = (k: string) => String(f.get(k) ?? '').slice(0, 1200);
+  kind = g('loai'); ref = g('ma');
+  Object.assign(v, { name: g('name'), phone: g('phone'), email: g('email'), qty: g('qty'), msg: g('msg') });
+  if (g('website')) done = true; // ô bẫy: người thật không thấy ô này
+  else if (!KINDS.includes(kind)) error = 'Yêu cầu không hợp lệ.';
+  else if (!sb) error = 'Website chưa được cấu hình kết nối dữ liệu.';
+  else {
+    const { error: e } = await sb.rpc('submit_quote_request', {
+      p_kind: kind, p_target: ref || null, p_name: v.name, p_phone: v.phone || null, p_email: v.email || null, p_qty: v.qty || null, p_message: v.msg,
+    });
+    if (e) error = e.message.replace(/^[A-Z_]{4,}: /, '');
+    else done = true;
+  }
+}
+if (!KINDS.includes(kind)) kind = 'general';
+
+let target = '';
+try {
+  if (kind === 'material') target = (await loadMaterial(ref))?.name ?? '';
+  else if (kind === 'product') target = (await loadProducts()).find((p) => p.id === ref)?.name ?? '';
+  else if (kind === 'profile') target = (await loadDirectory()).rows.find((r) => r.slug === ref)?.display_name ?? '';
+} catch { /* bỏ qua: chỉ để hiển thị tên */ }
+---
+<Base title="Yêu cầu báo giá — AgriConnect" noindex cache={false}>
+  <div class="prose">
+    <h1>Yêu cầu báo giá</h1>
+    {done ? (
+      <div class="ok">
+        <p><b>Đã gửi yêu cầu.</b> Chúng tôi sẽ chuyển thông tin tới nhà cung cấp và liên hệ lại với bạn qua số điện thoại hoặc email đã nhập.</p>
+        <p><a class="btn solid" href="/">Về trang chủ</a></p>
+      </div>
+    ) : (
+      <form class="form" method="post">
+        {target && <p class="panel" style="margin:0 0 10px">Bạn đang hỏi giá: <b>{target}</b></p>}
+        {error && <p class="err" role="alert">{error}</p>}
+        <input type="hidden" name="loai" value={kind} />
+        <input type="hidden" name="ma" value={ref} />
+        <div class="hp" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off" /></label></div>
+        <label>Họ tên<input name="name" required minlength="2" maxlength="80" value={v.name} autocomplete="name" /></label>
+        <label>Số điện thoại<input name="phone" inputmode="tel" maxlength="20" value={v.phone} autocomplete="tel" /></label>
+        <label>Email (nếu không có số điện thoại)<input name="email" type="email" maxlength="120" value={v.email} autocomplete="email" /></label>
+        <label>Số lượng cần mua (không bắt buộc)<input name="qty" maxlength="120" value={v.qty} placeholder="Ví dụ: 200 kg mỗi tuần" /></label>
+        <label>Nội dung<textarea name="msg" required rows="4" maxlength="1000" placeholder="Bạn cần gì, giao ở đâu, khi nào?">{v.msg}</textarea></label>
+        <p class="muted">Thông tin của bạn chỉ dùng để nhà cung cấp liên hệ báo giá và không được công khai. Vui lòng không dán đường dẫn trong nội dung.</p>
+        <button class="btn solid" type="submit">Gửi yêu cầu</button>
+      </form>
+    )}
+  </div>
+</Base>

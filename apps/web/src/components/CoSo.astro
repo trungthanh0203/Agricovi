@@ -56,7 +56,8 @@ import Base from '../layouts/Base.astro';
       ${cycles.length ? `<h2>Mùa vụ có truy xuất nguồn gốc</h2><div class="panel">${cycles.map((v) =>
         `<p><a href="/truyxuat/${encodeURIComponent(v.code)}">${esc(v.snapshot.name ?? v.code)}</a> <span class="pill">${esc(CYCLE_STATUS[v.snapshot.status ?? ''] ?? '')}</span><br><span class="muted">${esc(v.snapshot.crop ?? '')} · mã ${esc(v.code)}</span></p>`).join('')}</div>` : ''}
       <h2>Liên hệ</h2>
-      <div class="panel">${contact || '<span class="muted">Cơ sở chưa công khai thông tin liên hệ.</span>'}</div>
+      <div class="panel">${contact || '<span class="muted">Cơ sở chưa công khai thông tin liên hệ.</span>'}
+        <p><a class="btn solid" href="/bao-gia/?loai=profile&ma=${encodeURIComponent(slug)}">Yêu cầu báo giá</a></p></div>
       <p class="muted">Hồ sơ được duyệt ngày ${fmtDate(pr.published_at)}.</p>`;
   }
 

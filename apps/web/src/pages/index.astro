@@ -1,6 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
-import { DEFAULT_CATEGORIES, safeHref } from '@agriconnect/shared';
+import { safeHref } from '@agriconnect/shared';
+import ProductCard from '../components/ProductCard.astro';
+import MaterialCard from '../components/MaterialCard.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import { catHref, catTree, descendantIds, loadArticles, loadCategories, loadMaterials, loadProducts, today } from '../lib/catalog';
 import { esc, img, loadDirectory, profileCard, supplyPill, type DirRow } from '../lib/db';
 import { loadChrome } from '../lib/site';
 
@@ -14,6 +18,20 @@ const sideDefault = [
 const sideBanners = chrome.banners.filter((b) => b.slot === 'side').slice(0, 2);
 const side = sideBanners.length ? sideBanners : sideDefault;
 
+const cats = await loadCategories();
+const { top: topCats } = catTree(cats);
+const allProducts = await loadProducts();
+const materials = (await loadMaterials()).slice(0, 4);
+const articles = await loadArticles();
+const rowFor = (slug: string) => {
+  const c = cats.find((x) => x.slug === slug);
+  if (!c) return null;
+  const ids = descendantIds(cats, c.id);
+  return { cat: c, items: allProducts.filter((p) => p.categoryId && ids.has(p.categoryId)).slice(0, 6) };
+};
+const rows = ['trai-cay', 'rau-cu-qua', 'vat-nuoi'].map(rowFor).filter((r): r is NonNullable<ReturnType<typeof rowFor>> => r !== null && r.items.length > 0);
+const day = today();
+const latest = articles.filter((a) => a.channel !== 'hoi_cho' || !a.end || a.end >= day || a.publishedAt).slice(0, 4);
 let dirError = '';
 let featured: string[] = [];
 let available: string[] = [];
@@ -42,7 +60,7 @@ try {
 <Base title={`${brand} — Kết nối nông sản`} description={chrome.settings.brand.description}>
   <section class="hero2">
     <ul class="catlist">
-      {DEFAULT_CATEGORIES.map((c) => <li><a href={c.href}>{c.label}<span aria-hidden="true">›</span></a></li>)}
+      {topCats.map((c) => <li><a href={catHref(c)}>{c.name}<span aria-hidden="true">›</span></a></li>)}
     </ul>
 
     <div class="carousel" aria-label="Banner">
@@ -85,6 +103,27 @@ try {
   <div class="sechead"><h2>Đang có hàng</h2><a href="/danh-ba/">Xem thêm</a></div>
   {!dirError && available.length === 0 && <p class="empty">Hiện chưa có sản phẩm nào báo "Đang có hàng".</p>}
   <div class="grid" set:html={available.join('')} />
+
+  {rows.map((r) => (
+    <>
+      <div class="sechead"><h2>{r.cat.name}</h2><a href={catHref(r.cat)}>Xem thêm</a></div>
+      <div class="pgrid">{r.items.map((p) => <ProductCard p={p} />)}</div>
+    </>
+  ))}
+
+  {materials.length > 0 && (
+    <>
+      <div class="sechead"><h2>Vật tư nông nghiệp</h2><a href="/vat-tu/">Xem thêm</a></div>
+      <div class="pgrid">{materials.map((m) => <MaterialCard m={m} />)}</div>
+    </>
+  )}
+
+  {latest.length > 0 && (
+    <>
+      <div class="sechead"><h2>Sự kiện, hội chợ và tin tức</h2><a href="/tin-nong-nghiep/">Xem tất cả</a></div>
+      <div class="pgrid">{latest.map((a) => <ArticleCard a={a} />)}</div>
+    </>
+  )}
 
   <div class="sechead"><h2>Kiểm tra nguồn gốc</h2></div>
   <form class="search" action="/truyxuat/" method="get">

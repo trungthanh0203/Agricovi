@@ -1,0 +1,21 @@
+---
+import { priceText, type Material } from '../lib/catalog';
+interface Props { m: Material }
+const { m } = Astro.props;
+---
+<a class="pcard" href={`/vat-tu/${m.slug}`}>
+  {m.image ? <img src={m.image} alt={m.name} loading="lazy" /> : <div class="ph">🌿</div>}
+  <div class="pb">
+    <h3>{m.name}</h3>
+    <p class="u">{m.brand}{m.brand && m.unit ? ' · ' : ''}{m.unit ? `ĐVT: ${m.unit}` : ''}</p>
+    <p class="pr">{priceText(m.priceFrom, m.priceNote, m.unit)}</p>
+    <p class="sup">Yêu cầu báo giá</p>
+  </div>
+</a>
+<style>
+  .pcard { display: block; background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; text-decoration: none; color: inherit; }
+  .pcard:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+  .pcard img, .pcard .ph { width: 100%; height: 130px; object-fit: cover; display: grid; place-items: center; font-size: 2.2rem; background: var(--g2); }
+  .pb { padding: 10px 12px 12px; } h3 { margin: 4px 0 2px; font-size: 1rem; }
+  .u, .sup { margin: 0; font-size: .82rem; color: var(--muted); } .pr { margin: 4px 0; color: var(--g); font-weight: 700; }
+</style>

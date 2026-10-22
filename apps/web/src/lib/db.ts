@@ -33,7 +33,8 @@ export interface ProfileSnap {
 }
 export interface ProductRow {
   listing_id: string; profile_id: string; supply_status: string | null; supply_updated_on: string | null;
-  snapshot: { name: string; description?: string; specification?: string; crop?: string; unit?: string; season?: string; price_note?: string; min_order?: string; trace_code?: string; images?: { src: string; caption?: string }[] };
+  snapshot: { name: string; description?: string; specification?: string; crop?: string; unit?: string; season?: string; price_note?: string; min_order?: string; trace_code?: string; images?: { src: string; caption?: string }[];
+    price_from?: number | string | null; category_id?: string | null; category_slug?: string; category_name?: string; certifications?: { name: string; status: string }[] };
 }
 export interface DirRow { profile_id: string; slug: string; display_name: string; province: string | null; district: string | null; description: string | null; is_priority: boolean }
 

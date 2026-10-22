@@ -1,0 +1,67 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import MaterialCard from '../../components/MaterialCard.astro';
+import { catHref, catTrail, catTree, descendantIds, loadCategories, loadMaterials, loadProducts } from '../../lib/catalog';
+
+const parts = (Astro.params.slug ?? '').split('/').filter(Boolean);
+const slug = parts[parts.length - 1] ?? '';
+const cats = await loadCategories();
+const cat = cats.find((c) => c.slug === slug);
+if (!cat) Astro.response.status = 404;
+
+const url = Astro.url;
+const tinh = url.searchParams.get('tinh') ?? '';
+const conHang = url.searchParams.get('con-hang') === '1';
+const q = (url.searchParams.get('q') ?? '').trim();
+const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
+
+const ids = cat ? descendantIds(cats, cat.id) : new Set<string>();
+const isMaterial = cat ? cat.branch === 'vat_tu' || cat.branch === 'phu_kien' : false;
+const { kids } = catTree(cats);
+const children = cat ? kids.get(cat.id) ?? [] : [];
+const trail = cat ? catTrail(cats, cat) : [];
+
+const all = cat && !isMaterial ? (await loadProducts()).filter((p) => p.categoryId && ids.has(p.categoryId)) : [];
+const provinces = [...new Set(all.map((p) => p.province).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
+const products = all.filter((p) => (!tinh || p.province === tinh) && (!conHang || p.supply === 'available') && (!q || fold(`${p.name} ${p.crop} ${p.supplier}`).includes(fold(q))));
+const materials = cat && isMaterial ? (await loadMaterials()).filter((m) => (m.categoryId && ids.has(m.categoryId)) && (!q || fold(`${m.name} ${m.brand} ${m.summary}`).includes(fold(q)))) : [];
+---
+{cat ? (
+  <Base title={`${cat.name} — AgriConnect`} description={cat.description || `Danh mục ${cat.name} trên AgriConnect.`}>
+    <p class="crumbs"><a href="/">Trang chủ</a>{trail.map((t) => <> › <a href={catHref(t)}>{t.name}</a></>)}</p>
+    <h1>{cat.name}</h1>
+    {cat.description && <p class="muted">{cat.description}</p>}
+    {children.length > 0 && <div class="subcats">{children.map((k) => <a href={catHref(k)}>{k.name}</a>)}</div>}
+
+    <form class="filters" method="get">
+      <input name="q" value={q} placeholder="Tìm trong danh mục" aria-label="Tìm trong danh mục" />
+      {!isMaterial && provinces.length > 0 && (
+        <select name="tinh" aria-label="Tỉnh/thành"><option value="">Tất cả tỉnh/thành</option>{provinces.map((p) => <option selected={p === tinh}>{p}</option>)}</select>
+      )}
+      {!isMaterial && <label class="ck"><input type="checkbox" name="con-hang" value="1" checked={conHang} /> Chỉ nơi đang có hàng</label>}
+      <button class="btn solid" type="submit">Lọc</button>
+    </form>
+
+    {isMaterial ? (
+      <>
+        <p class="muted">{materials.length} vật tư</p>
+        {materials.length === 0 && <p class="empty">Chưa có vật tư nào trong mục này.</p>}
+        <div class="pgrid">{materials.map((m) => <MaterialCard m={m} />)}</div>
+      </>
+    ) : (
+      <>
+        <p class="muted">{products.length} sản phẩm</p>
+        {products.length === 0 && <p class="empty">Chưa có sản phẩm nào trong mục này. <a href="/danh-ba/">Xem danh bạ nhà cung cấp</a></p>}
+        <div class="pgrid">{products.map((p) => <ProductCard p={p} />)}</div>
+      </>
+    )}
+  </Base>
+) : (
+  <Base title="Không tìm thấy danh mục — AgriConnect" noindex cache={false}>
+    <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
+      <h1>Không tìm thấy danh mục</h1>
+      <p><a class="btn solid" href="/">Về trang chủ</a></p>
+    </div>
+  </Base>
+)}

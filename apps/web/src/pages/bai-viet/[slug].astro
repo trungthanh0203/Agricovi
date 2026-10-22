@@ -1,0 +1,46 @@
+---
+import Base from '../../layouts/Base.astro';
+import { parseBody } from '@agriconnect/shared';
+import { fmtDay, loadArticle } from '../../lib/catalog';
+
+const a = await loadArticle(Astro.params.slug ?? '');
+if (!a) Astro.response.status = 404;
+const CH = { nong_nghiep: ['Tin nông nghiệp', '/tin-nong-nghiep/'], xuat_khau: ['Tin xuất khẩu', '/tin-xuat-khau/'], hoi_cho: ['Tin hội chợ', '/tin-hoi-cho/'] } as const;
+const ch = a ? CH[a.channel] : null;
+const blocks = a ? parseBody(a.body) : [];
+const jsonLd = a ? JSON.stringify(a.channel === 'hoi_cho' && a.start
+  ? { '@context': 'https://schema.org', '@type': 'Event', name: a.title, startDate: a.start, endDate: a.end || a.start, location: a.place ? { '@type': 'Place', name: a.place } : undefined, description: a.summary || undefined }
+  : { '@context': 'https://schema.org', '@type': 'Article', headline: a.title, datePublished: a.publishedAt || undefined, description: a.summary || undefined }).replace(/</g, '\\u003c') : '';
+---
+{a && ch ? (
+  <Base title={`${a.title} — AgriConnect`} description={(a.summary || a.title).slice(0, 200)}>
+    <script type="application/ld+json" set:html={jsonLd} />
+    <p class="crumbs"><a href="/">Trang chủ</a> › <a href={ch[1]}>{ch[0]}</a></p>
+    <article class="prose">
+      <h1>{a.title}</h1>
+      <p class="muted">{a.channel === 'hoi_cho' && a.start ? `Thời gian: ${fmtDay(a.start)}${a.end && a.end !== a.start ? ' – ' + fmtDay(a.end) : ''}` : fmtDay(a.publishedAt)}</p>
+      {a.channel === 'hoi_cho' && (a.place || a.organizer) && (
+        <div class="facts">
+          {a.place && <div><b>Địa điểm</b>{a.place}</div>}
+          {a.organizer && <div><b>Đơn vị tổ chức</b>{a.organizer}</div>}
+        </div>
+      )}
+      {a.image && <div class="gallery"><img src={a.image} alt="" /></div>}
+      {a.summary && <p><b>{a.summary}</b></p>}
+      {blocks.map((b) => (
+        b.t === 'h' ? <h2>{b.text}</h2>
+        : b.t === 'p' ? <p>{b.text}</p>
+        : b.t === 'ul' ? <ul>{b.items.map((i) => <li>{i}</li>)}</ul>
+        : <p><a class="btn solid" href={b.href}>{b.label}</a></p>
+      ))}
+      {a.sourceUrl && <p class="muted">Nguồn: <a href={a.sourceUrl} rel="noopener nofollow" target="_blank">{a.sourceName || a.sourceUrl}</a></p>}
+    </article>
+  </Base>
+) : (
+  <Base title="Không tìm thấy bài viết — AgriConnect" noindex cache={false}>
+    <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
+      <h1>Không tìm thấy bài viết</h1>
+      <p><a class="btn solid" href="/">Về trang chủ</a></p>
+    </div>
+  </Base>
+)}
