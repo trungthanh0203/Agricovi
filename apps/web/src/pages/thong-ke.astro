@@ -1,0 +1,67 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Thống kê gian hàng — AgriConnect" noindex cache={false}>
+  <h1>Thống kê gian hàng</h1>
+  <div id="app"><p class="muted">Đang tải…</p></div>
+</Base>
+
+<script>
+  import { ORDER_STATUS_LABEL } from '@agriconnect/shared';
+  import { call, friendly, loadAccount, session } from '../lib/auth';
+  import { esc } from '../lib/db';
+  import { fmtVnd } from '../lib/catalog';
+
+  const app = document.getElementById('app')!;
+  interface Stats {
+    days: number; orders: Record<string, number>; revenue_completed: number | string; reply_hours_median: number | string | null;
+    by_month: { month: string; orders: number; revenue: number | string }[]; top_products: { name: string; unit: string | null; quantity: number | string; amount: number | string }[];
+    quotes: { new: number; period: number }; rating: { avg: number | string | null; count: number }; favorites: number;
+  }
+  interface Org { org_id: string; org_name: string }
+  const note = (cls: string, t: string) => `<p class="${cls}" role="${cls === 'err' ? 'alert' : 'status'}">${esc(t)}</p>`;
+  let orgs: Org[] = [];
+  let org = '';
+  let days = 90;
+
+  async function main() {
+    if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent('/thong-ke/')); return; }
+    try { await loadAccount(); orgs = (await call<{ orgs: Org[] }>('my_shop')).orgs; } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
+    if (orgs.length === 0) { app.innerHTML = '<p class="empty">Tài khoản này chưa quản lý cơ sở nào.</p>'; return; }
+    org = orgs[0]!.org_id;
+    await render();
+  }
+  const kpi = (label: string, value: string, sub = '') => `<div class="panel" style="flex:1;min-width:150px;margin:0"><span class="muted">${esc(label)}</span><div style="font-size:1.6rem;font-weight:700">${value}</div>${sub ? `<span class="muted">${sub}</span>` : ''}</div>`;
+
+  async function render() {
+    let s: Stats;
+    try { s = await call<Stats>('shop_stats', { p_org: org, p_days: days }); } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
+    const total = Object.values(s.orders).reduce((a, b) => a + b, 0);
+    const done = s.orders.completed ?? 0;
+    const lost = (s.orders.cancelled ?? 0) + (s.orders.rejected ?? 0);
+    const maxM = Math.max(1, ...s.by_month.map((m) => Number(m.revenue)));
+    app.innerHTML = `<p>${orgs.length > 1 ? `<select id="org" aria-label="Cơ sở">${orgs.map((o) => `<option value="${esc(o.org_id)}"${o.org_id === org ? ' selected' : ''}>${esc(o.org_name)}</option>`).join('')}</select> ` : ''}
+      <select id="days" aria-label="Khoảng thời gian">${[30, 90, 180, 365].map((d) => `<option value="${d}"${d === days ? ' selected' : ''}>${d} ngày qua</option>`).join('')}</select></p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        ${kpi('Đơn nhận được', String(total), `${done} hoàn tất · ${lost} hủy/từ chối`)}
+        ${kpi('Doanh số đơn hoàn tất', fmtVnd(Number(s.revenue_completed)), 'theo giá đã chốt, gồm phí giao')}
+        ${kpi('Phản hồi báo giá', s.reply_hours_median != null ? Number(s.reply_hours_median).toLocaleString('vi-VN') + ' giờ' : '—', 'thời gian trung vị')}
+        ${kpi('Đánh giá', s.rating.count ? '★ ' + Number(s.rating.avg).toFixed(1) : '—', `${s.rating.count} đánh giá`)}
+        ${kpi('Yêu cầu báo giá', String(s.quotes.period), `${s.quotes.new} chưa xử lý`)}
+        ${kpi('Người lưu nhà cung cấp', String(s.favorites))}
+      </div>
+      <h2>Doanh số 6 tháng gần nhất</h2>
+      <div class="panel">${s.by_month.map((m) => `<div style="display:flex;align-items:center;gap:8px;margin:4px 0"><span style="width:70px">${esc(m.month)}</span>
+        <div style="flex:1;background:var(--g2);border-radius:6px;height:18px"><div style="width:${Math.round((Number(m.revenue) / maxM) * 100)}%;background:var(--g);height:18px;border-radius:6px"></div></div>
+        <span style="width:150px;text-align:right">${fmtVnd(Number(m.revenue))} <span class="muted">(${m.orders} đơn)</span></span></div>`).join('')}</div>
+      <h2>Sản phẩm bán chạy</h2>
+      ${s.top_products.length === 0 ? '<p class="empty">Chưa có đơn hoàn tất trong khoảng này.</p>' : `<div class="panel"><table style="width:100%"><tbody>${s.top_products.map((p) => `<tr><td>${esc(p.name)}</td><td>${Number(p.quantity).toLocaleString('vi-VN')} ${esc(p.unit ?? '')}</td><td style="text-align:right">${fmtVnd(Number(p.amount))}</td></tr>`).join('')}</tbody></table></div>`}
+      <h2>Đơn theo trạng thái</h2>
+      <div class="chips">${Object.entries(s.orders).map(([k, n]) => `<span class="chip">${esc(ORDER_STATUS_LABEL[k] ?? k)}: ${n}</span>`).join('') || '<span class="muted">Chưa có đơn.</span>'}</div>
+      <p class="muted">Số liệu tính từ đơn đặt hàng trên website. Doanh số chỉ tính đơn đã hoàn tất. Chưa thống kê lượt xem trang để bảo vệ quyền riêng tư của khách.</p>
+      <p><a href="/gian-hang/">← Về Gian hàng của tôi</a></p>`;
+    document.getElementById('org')?.addEventListener('change', (e) => { org = (e.target as HTMLSelectElement).value; void render(); });
+    document.getElementById('days')!.addEventListener('change', (e) => { days = Number((e.target as HTMLSelectElement).value); void render(); });
+  }
+  void main();
+</script>

@@ -6,7 +6,7 @@ import Base from '../layouts/Base.astro';
 </Base>
 
 <script>
-  import { CERT_LABEL, esc, fmtDate, img, link, place, sb, supplyPill, CYCLE_STATUS, type ProductRow, type ProfileSnap } from '../lib/db';
+  import { BADGE_LABEL, BADGE_LEVEL, CERT_LABEL, esc, fmtDate, img, link, place, sb, supplyPill, CYCLE_STATUS, type ProductRow, type ProfileSnap } from '../lib/db';
   const app = document.getElementById('app')!;
   // Địa chỉ dạng /co-so/<slug>; cũng nhận ?s=<slug>
   const slug = new URLSearchParams(location.search).get('s') ?? decodeURIComponent(location.pathname.split('/').filter(Boolean)[1] ?? '');
@@ -19,12 +19,14 @@ import Base from '../layouts/Base.astro';
     if (!pr) { app.innerHTML = '<p class="empty">Không tìm thấy cơ sở này, hoặc hồ sơ đang được tạm ẩn. <a href="/danh-ba/">Xem danh bạ</a></p>'; return; }
     const s = pr.snapshot as ProfileSnap;
     document.title = `${s.display_name} — AgriConnect`;
-    const [pp, cy, rv, rt] = await Promise.all([
+    const [pp, cy, rv, rt, bd] = await Promise.all([
       sb.from('public_products').select('listing_id, profile_id, supply_status, supply_updated_on, snapshot').eq('profile_id', pr.profile_id).eq('is_visible', true),
       sb.from('public_cycles').select('code, snapshot, published_at').eq('organization_id', pr.organization_id).eq('is_visible', true).order('published_at', { ascending: false }).limit(12),
       sb.from('public_reviews').select('stars, comment, reply, created_at, buyer_label').eq('profile_id', pr.profile_id).order('created_at', { ascending: false }).limit(10),
       sb.from('public_supplier_ratings').select('avg_stars, review_count').eq('profile_id', pr.profile_id).maybeSingle(),
+      sb.from('public_profile_badges').select('level, badges').eq('profile_id', pr.profile_id).maybeSingle(),
     ]);
+    const badge = bd.data as { level: number; badges: string[] } | null;
     const reviews = (rv.data ?? []) as { stars: number; comment: string | null; reply: string | null; created_at: string; buyer_label: string }[];
     const rating = rt.data as { avg_stars: number | string; review_count: number } | null;
     const starsOf = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
@@ -51,6 +53,7 @@ import Base from '../layouts/Base.astro';
     app.innerHTML = `
       <p><a href="/danh-ba/">← Danh bạ</a></p>
       <h1>${esc(s.display_name)}</h1>
+      ${badge ? `<p><span class="pill ok">✔ Mức ${esc(BADGE_LEVEL[badge.level] ?? '')}</span> ${badge.badges.map((b) => `<span class="chip" title="Tự động tính từ dữ liệu thật, không do cơ sở tự gán">${esc(BADGE_LABEL[b] ?? b)}</span>`).join(' ')}</p>` : ''}
       ${rating ? `<p><a href="#danh-gia" style="text-decoration:none"><b style="color:#b45309">★ ${Number(rating.avg_stars).toFixed(1)}</b> <span class="muted">(${rating.review_count} đánh giá từ khách đã mua)</span></a></p>` : ''}
       <p><button type="button" data-fav data-kind="supplier" data-ref="${esc(pr.profile_id)}">♡ Lưu nhà cung cấp</button></p>
       ${s.tagline ? `<p class="tag">${esc(s.tagline)}</p>` : ''}

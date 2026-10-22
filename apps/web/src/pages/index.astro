@@ -46,8 +46,8 @@ const shopsHome = (await loadShops()).slice(0, 3);
 let featured: string[] = [];
 let available: string[] = [];
 try {
-  const { rows, snaps, prods } = await loadDirectory();
-  featured = rows.slice(0, 6).map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? []));
+  const { rows, snaps, prods, badges } = await loadDirectory();
+  featured = rows.slice(0, 6).map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? [], badges.get(d.profile_id)));
   const byId = new Map<string, DirRow>(rows.map((r) => [r.profile_id, r]));
   for (const [pid, list] of prods) {
     const d = byId.get(pid);

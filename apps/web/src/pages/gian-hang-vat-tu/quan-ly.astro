@@ -94,7 +94,8 @@ import Base from '../../layouts/Base.astro';
       });
       return;
     }
-    body.innerHTML = `${s.status === 'active' ? '<p><button class="btn solid sm" id="addm">+ Thêm vật tư</button></p>' : ''}
+    const MAT_LIMIT = 10; // giai đoạn chưa thu phí: tối đa 10 vật tư mỗi gian hàng
+    body.innerHTML = `${s.status === 'active' ? (mats.length >= MAT_LIMIT ? `<p class="muted">Đã đăng đủ ${MAT_LIMIT}/${MAT_LIMIT} vật tư (giới hạn của giai đoạn này). Hãy xóa bản nháp hoặc ẩn bớt vật tư không còn bán để thêm mới.</p>` : `<p><button class="btn solid sm" id="addm">+ Thêm vật tư</button> <span class="muted">${mats.length}/${MAT_LIMIT} vật tư</span></p>`) : ''}
       ${mats.length === 0 ? '<p class="empty">Chưa có vật tư nào.</p>' : `<table class="tbl2"><thead><tr><th>Vật tư</th><th>Giá</th><th>Trạng thái</th><th></th></tr></thead><tbody>${mats.map((m) => {
         const [l, c] = MAT_ST[m.status] ?? [m.status, ''];
         return `<tr><td><b>${esc(m.name)}</b>${m.brand ? `<br><span class="muted">${esc(m.brand)}</span>` : ''}${m.review_note ? `<br><span class="muted">Ghi chú kiểm duyệt: ${esc(m.review_note)}</span>` : ''}</td>

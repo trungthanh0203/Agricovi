@@ -36,6 +36,11 @@ export interface ProductRow {
   snapshot: { name: string; description?: string; specification?: string; crop?: string; unit?: string; season?: string; price_note?: string; min_order?: string; trace_code?: string; images?: { src: string; caption?: string }[];
     price_from?: number | string | null; category_id?: string | null; category_slug?: string; category_name?: string; certifications?: { name: string; status: string }[] };
 }
+export const BADGE_LABEL: Record<string, string> = {
+  profile: 'Hồ sơ đã được kiểm duyệt', docs: 'Có giấy tờ đã được kiểm tra', trace: 'Có truy xuất nguồn gốc', deals: 'Giao dịch thực tế tốt', rating: 'Khách đánh giá cao',
+};
+export const BADGE_LEVEL: Record<number, string> = { 1: 'Cơ bản', 2: 'Tin cậy', 3: 'Rất tin cậy' };
+export interface Badge { level: number; badges: string[] }
 export interface DirRow { profile_id: string; slug: string; display_name: string; province: string | null; district: string | null; description: string | null; is_priority: boolean }
 
 export const place = (p: { province?: string | null; district?: string | null; commune?: string | null }) => [p.commune, p.district, p.province].filter(Boolean).join(', ');
@@ -46,7 +51,7 @@ export function supplyPill(status: string | null | undefined): string {
 }
 
 /** Thẻ cơ sở dùng ở trang chủ và danh bạ */
-export function profileCard(d: DirRow, snap: ProfileSnap | undefined, products: ProductRow[]): string {
+export function profileCard(d: DirRow, snap: ProfileSnap | undefined, products: ProductRow[], badge?: Badge): string {
   const cover = img(snap?.images?.[0]?.src);
   const prods = products.slice(0, 3).map((p) => `<span class="chip">${esc(p.snapshot.name)}</span>`).join('');
   return `<a class="card" href="/co-so/${encodeURIComponent(d.slug)}">
@@ -54,12 +59,13 @@ export function profileCard(d: DirRow, snap: ProfileSnap | undefined, products: 
     <div class="body">
       <h3>${esc(d.display_name)}${d.is_priority ? ' <span class="pill pri" title="Cơ sở dùng gói dịch vụ có ưu tiên hiển thị">Ưu tiên</span>' : ''}</h3>
       ${snap?.tagline ? `<p class="tag">${esc(snap.tagline)}</p>` : ''}
+      ${badge && badge.level >= 2 ? `<p><span class="pill ok" title="${esc(badge.badges.map((b) => BADGE_LABEL[b] ?? b).join(' · '))}">✔ ${esc(BADGE_LEVEL[badge.level] ?? '')}</span></p>` : ''}
       <p class="muted">📍 ${esc([d.district, d.province].filter(Boolean).join(', ') || 'Việt Nam')}</p>
       <div class="chips">${prods}</div>
     </div></a>`;
 }
 
-export async function loadDirectory(): Promise<{ rows: DirRow[]; snaps: Map<string, ProfileSnap>; prods: Map<string, ProductRow[]> }> {
+export async function loadDirectory(): Promise<{ rows: DirRow[]; snaps: Map<string, ProfileSnap>; prods: Map<string, ProductRow[]>; badges: Map<string, Badge> }> {
   if (!sb) throw new Error('Website chưa được cấu hình kết nối dữ liệu.');
   const { data: rows, error } = await sb.from('public_directory')
     .select('profile_id, slug, display_name, province, district, description, is_priority')
@@ -69,13 +75,16 @@ export async function loadDirectory(): Promise<{ rows: DirRow[]; snaps: Map<stri
   const ids = list.map((r) => r.profile_id);
   const snaps = new Map<string, ProfileSnap>();
   const prods = new Map<string, ProductRow[]>();
+  const badges = new Map<string, Badge>();
   if (ids.length > 0) {
-    const [p, q] = await Promise.all([
+    const [p, q, b] = await Promise.all([
       sb.from('public_profiles').select('profile_id, snapshot').in('profile_id', ids),
       sb.from('public_products').select('listing_id, profile_id, supply_status, supply_updated_on, snapshot').in('profile_id', ids).eq('is_visible', true),
+      sb.from('public_profile_badges').select('profile_id, level, badges').in('profile_id', ids),
     ]);
+    for (const r of (b.data ?? []) as { profile_id: string; level: number; badges: string[] }[]) badges.set(r.profile_id, { level: r.level, badges: r.badges });
     for (const r of (p.data ?? []) as { profile_id: string; snapshot: ProfileSnap }[]) snaps.set(r.profile_id, r.snapshot);
     for (const r of (q.data ?? []) as ProductRow[]) { const a = prods.get(r.profile_id) ?? []; a.push(r); prods.set(r.profile_id, a); }
   }
-  return { rows: list, snaps, prods };
+  return { rows: list, snaps, prods, badges };
 }

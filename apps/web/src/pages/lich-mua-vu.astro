@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro';
+import { loadSeason } from '../lib/catalog';
+
+// Lịch mùa vụ: các vụ ĐÃ ĐƯỢC CƠ SỞ CÔNG KHAI (đang chuẩn bị hoặc đang sản xuất), xếp theo tháng dự kiến kết thúc vụ (gần với lúc có hàng).
+const all = await loadSeason();
+const crop = (Astro.url.searchParams.get('cay') ?? '').trim();
+const prov = (Astro.url.searchParams.get('tinh') ?? '').trim();
+const crops = [...new Set(all.map((r) => r.crop).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
+const provinces = [...new Set(all.map((r) => r.province).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
+const rows = all.filter((r) => (!crop || r.crop === crop) && (!prov || r.province === prov));
+const monthOf = (d: string) => (d ? d.slice(0, 7) : '');
+const byMonth = new Map<string, typeof rows>();
+for (const r of rows) { const m = monthOf(r.end) || 'chua'; byMonth.set(m, [...(byMonth.get(m) ?? []), r]); }
+const months = [...byMonth.keys()].sort((a, b) => (a === 'chua' ? 1 : b === 'chua' ? -1 : a.localeCompare(b)));
+const label = (m: string) => (m === 'chua' ? 'Chưa có ngày dự kiến' : `Tháng ${Number(m.slice(5))}/${m.slice(0, 4)}`);
+const fd = (d: string) => (d ? new Date(d + 'T00:00:00').toLocaleDateString('vi-VN') : '—');
+const ST: Record<string, string> = { planned: 'Dự kiến', preparing: 'Đang chuẩn bị', active: 'Đang sản xuất' };
+---
+<Base title="Lịch mùa vụ — AgriConnect" description="Lịch mùa vụ từ các vụ sản xuất đã được cơ sở công khai: sản phẩm gì, ở đâu, dự kiến có hàng khi nào.">
+  <p class="crumbs"><a href="/">Trang chủ</a> › Lịch mùa vụ</p>
+  <h1>Lịch mùa vụ</h1>
+  <p class="muted">Tự động tổng hợp từ các vụ mà cơ sở đã chọn công khai. Ngày kết thúc vụ là <b>dự kiến</b> của cơ sở, có thể thay đổi theo thời tiết và sâu bệnh.</p>
+  <form method="get" class="filters" style="margin:12px 0">
+    <select name="cay" aria-label="Sản phẩm" onchange="this.form.submit()"><option value="">Tất cả sản phẩm</option>{crops.map((c) => <option value={c} selected={c === crop}>{c}</option>)}</select>
+    <select name="tinh" aria-label="Tỉnh/thành" onchange="this.form.submit()"><option value="">Tất cả tỉnh/thành</option>{provinces.map((p) => <option value={p} selected={p === prov}>{p}</option>)}</select>
+    <noscript><button class="btn solid" type="submit">Lọc</button></noscript>
+  </form>
+  {rows.length === 0 ? <p class="empty">Chưa có vụ nào được công khai{crop || prov ? ' theo bộ lọc này' : ''}.</p> : months.map((m) => (
+    <>
+      <h2>{label(m)}</h2>
+      <div class="grid">{byMonth.get(m)!.map((r) => (
+        <a class="card" href={`/truyxuat/${encodeURIComponent(r.code)}`}>
+          <div class="body">
+            <h3>{r.crop || r.name}</h3>
+            <p><span class="pill">{ST[r.status] ?? r.status}</span></p>
+            <p class="muted">{r.supplier}{r.province ? ` · 📍 ${r.province}` : ''}</p>
+            <p class="muted">Bắt đầu {fd(r.start)} · dự kiến kết thúc {fd(r.end)}</p>
+          </div>
+        </a>
+      ))}</div>
+    </>
+  ))}
+  <p class="muted">Bấm vào một vụ để xem quá trình sản xuất và truy xuất nguồn gốc. <a href="/gia-nong-san/">Giá nông sản tham khảo</a> · <a href="/giao-thuong/">Giao thương</a></p>
+</Base>

@@ -1,0 +1,46 @@
+---
+import Base from '../layouts/Base.astro';
+import { fmtVnd, loadPriceBoard } from '../lib/catalog';
+
+// Giá THAM KHẢO tổng hợp từ giá "từ" mà các nhà cung cấp tự khai trên hồ sơ đã được duyệt (chỉ sản phẩm còn bán). Không phải giá thị trường chính thức.
+const all = await loadPriceBoard();
+const prov = (Astro.url.searchParams.get('tinh') ?? '').trim();
+const provinces = [...new Set(all.map((r) => r.province).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
+const rows = all.filter((r) => !prov || r.province === prov);
+interface G { key: string; name: string; slug: string; unit: string; n: number; suppliers: number; min: number; max: number; sum: number; updated: string }
+const groups = new Map<string, G>();
+for (const r of rows) {
+  const k = r.categoryId + '|' + r.unit;
+  const g = groups.get(k) ?? { key: k, name: r.categoryName, slug: r.categorySlug, unit: r.unit, n: 0, suppliers: 0, min: Infinity, max: 0, sum: 0, updated: '' };
+  g.n += r.n; g.suppliers += r.suppliers; g.min = Math.min(g.min, r.min); g.max = Math.max(g.max, r.max); g.sum += r.avg * r.n; if (r.updated > g.updated) g.updated = r.updated;
+  groups.set(k, g);
+}
+const list = [...groups.values()].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+---
+<Base title="Giá nông sản tham khảo — AgriConnect" description="Giá tham khảo theo loại nông sản, tổng hợp từ giá các nhà cung cấp đã được duyệt trên AgriConnect.">
+  <p class="crumbs"><a href="/">Trang chủ</a> › Giá nông sản tham khảo</p>
+  <h1>Giá nông sản tham khảo</h1>
+  <p class="muted">Tổng hợp tự động từ mức giá "từ" do các nhà cung cấp trên AgriConnect tự khai cho sản phẩm còn bán. <b>Đây không phải giá thị trường chính thức</b>; giá thực tế phụ thuộc chất lượng, số lượng và thời điểm — hãy yêu cầu báo giá để có giá chính xác.</p>
+  <form method="get" class="filters" style="margin:12px 0">
+    <select name="tinh" aria-label="Tỉnh/thành" onchange="this.form.submit()"><option value="">Tất cả tỉnh/thành</option>{provinces.map((p) => <option value={p} selected={p === prov}>{p}</option>)}</select>
+    <noscript><button class="btn solid" type="submit">Lọc</button></noscript>
+  </form>
+  {list.length === 0 ? <p class="empty">Chưa có dữ liệu giá{prov ? ` tại ${prov}` : ''}. Bảng này tự cập nhật khi nhà cung cấp khai giá cho sản phẩm.</p> : (
+    <div class="panel" style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="text-align:left"><th>Loại nông sản</th><th>Đơn vị</th><th>Thấp nhất</th><th>Trung bình</th><th>Cao nhất</th><th>Số sản phẩm</th></tr></thead>
+        <tbody>{list.map((g) => (
+          <tr style="border-top:1px solid var(--line)">
+            <td><a href={`/danh-muc/${g.slug}/`}>{g.name}</a></td>
+            <td>{g.unit || '—'}</td>
+            <td>{fmtVnd(g.min)}</td>
+            <td><b>{fmtVnd(g.sum / g.n)}</b></td>
+            <td>{fmtVnd(g.max)}</td>
+            <td>{g.n} <span class="muted">({g.suppliers} nhà cung cấp)</span></td>
+          </tr>
+        ))}</tbody>
+      </table>
+    </div>
+  )}
+  <p class="muted">Có nhiều đơn vị tính khác nhau cho cùng một loại thì được tách thành các dòng riêng. <a href="/danh-ba/">Xem nhà cung cấp</a> · <a href="/lich-mua-vu/">Lịch mùa vụ</a></p>
+</Base>

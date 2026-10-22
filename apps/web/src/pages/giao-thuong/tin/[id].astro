@@ -46,6 +46,19 @@ const t = (await loadTradePosts()).find((x) => x.id === id) ?? null;
     await render();
   }
 
+  interface Match { id: string; kind: string; title: string; province: string; quantity: number | null; unit: string; price_min: number | null; price_max: number | null; score: number }
+  // Gợi ý khớp tin: tin ngược loại cùng loại sản phẩm (chỉ chủ tin thấy)
+  async function suggest(p: Post) {
+    const box = document.getElementById('sugg');
+    if (!box) return;
+    try {
+      const m = await call<Match[]>('suggest_trade_matches', { p_post: p.id });
+      if (m.length === 0) { box.innerHTML = `<div class="panel"><b>Gợi ý phù hợp</b><p class="muted" style="margin:.3em 0">Hiện chưa có tin ${p.kind === 'buy' ? 'cần bán' : 'cần mua'} cùng loại sản phẩm. Hệ thống sẽ hiện ở đây khi có.</p></div>`; return; }
+      box.innerHTML = `<div class="panel"><b>Gợi ý phù hợp với tin của bạn</b>${m.map((x) => `<p style="margin:.4em 0"><span class="tk ${esc(x.kind)}">${esc(TRADE_KIND_LABEL[x.kind] ?? x.kind)}</span> <a href="/giao-thuong/tin/${esc(x.id)}">${esc(x.title)}</a>
+        <span class="muted"> · ${x.quantity != null ? esc(String(x.quantity)) + ' ' + esc(x.unit) + ' · ' : ''}${esc(x.province)}${x.score >= 4 ? ' · <b>rất phù hợp</b> (cùng tỉnh, giá giao nhau)' : ''}</span></p>`).join('')}</div>`;
+    } catch { /* gợi ý là phần thêm: lỗi thì bỏ qua */ }
+  }
+
   async function render(msg = '') {
     let p: Post;
     try { p = await call<Post>('get_trade_post', { p_id: id }); } catch (e) { app.innerHTML = `${note('err', friendly(e))}<p><a href="/giao-thuong/">← Về Giao thương</a></p>`; return; }
@@ -75,8 +88,10 @@ const t = (await loadTradePosts()).find((x) => x.id === id) ?? null;
       <div class="panel"><b>${p.kind === 'buy' ? 'Người đăng' : 'Nhà cung cấp'}</b><br>${p.poster?.anonymous ? esc(p.poster.label ?? 'Người mua') + ' <span class="muted">(thông tin liên hệ chỉ hiện khi hai bên cùng đồng ý trong hộp thư)</span>' : p.poster?.slug ? `<a href="/co-so/${encodeURIComponent(p.poster.slug)}">${esc(p.poster.name ?? '')}</a>` : esc(p.poster?.name ?? '')}</div>
       ${p.is_owner ? ownerBlock(p) : responderBlock(p, live, orgs, convLink)}
       ${p.is_owner ? '' : `<p><button class="btn sm danger" id="report">Báo cáo tin này</button></p>`}
+      ${p.is_owner && live ? '<div id="sugg"></div>' : ''}
       <p><a href="/giao-thuong/">← Về Giao thương</a></p>`;
     bind(p);
+    if (p.is_owner && live) void suggest(p);
   }
 
   function ownerBlock(p: Post) {

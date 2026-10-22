@@ -37,7 +37,7 @@ import Base from '../layouts/Base.astro';
     document.getElementById('shops')!.innerHTML = out.map((s) => `<a class="card" href="/gian-hang-vat-tu/${encodeURIComponent(s.slug)}"><div class="ph">🧪</div><div class="body"><h3>${esc(s.name)}</h3><p><span class="pill">Gian hàng vật tư</span>${s.license_verified ? ' <span class="stat ok">Đã kiểm tra giấy phép</span>' : ''}</p><p class="muted">📍 ${esc([s.district, s.province].filter(Boolean).join(', '))}</p>${s.description ? `<p class="muted">${esc(s.description.slice(0, 90))}</p>` : ''}</div></a>`).join('');
   }
 
-  loadDirectory().then(({ rows, snaps, prods }) => {
+  loadDirectory().then(({ rows, snaps, prods, badges }) => {
     for (const p of [...new Set(rows.map((r) => r.province).filter((x): x is string => Boolean(x)))].sort((a, b) => a.localeCompare(b, 'vi'))) {
       provEl.insertAdjacentHTML('beforeend', `<option>${esc(p)}</option>`);
     }
@@ -53,7 +53,7 @@ import Base from '../layouts/Base.astro';
       });
       countEl.textContent = `${out.length} cơ sở`;
       void renderShops(q);
-      list.innerHTML = out.length ? out.map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? [])).join('') : '<p class="empty">Không tìm thấy cơ sở phù hợp.</p>';
+      list.innerHTML = out.length ? out.map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? [], badges.get(d.profile_id))).join('') : '<p class="empty">Không tìm thấy cơ sở phù hợp.</p>';
     };
     for (const el of [qEl, provEl, availEl]) el.addEventListener('input', render);
     render();

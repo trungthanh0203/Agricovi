@@ -8,7 +8,7 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 export const GET: APIRoute = async ({ url }) => {
   const origin = url.origin;
-  const paths = new Set<string>(['/', '/danh-ba/', '/vat-tu/', '/truyxuat/', '/tin-nong-nghiep/', '/tin-xuat-khau/', '/tin-hoi-cho/']);
+  const paths = new Set<string>(['/', '/danh-ba/', '/gia-nong-san/', '/lich-mua-vu/', '/vat-tu/', '/truyxuat/', '/tin-nong-nghiep/', '/tin-xuat-khau/', '/tin-hoi-cho/']);
   for (const slug of Object.keys(DEFAULT_PAGES)) paths.add(`/${slug}`);
   try {
     if (sb) {

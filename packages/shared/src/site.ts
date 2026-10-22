@@ -39,8 +39,8 @@ export const DEFAULT_HEADER_NAV: SiteNavItem[] = [
     { label: 'Tin trong nước', href: '/tin-nong-nghiep/trong-nuoc/' },
     { label: 'Kỹ thuật và kiến thức', href: '/tin-nong-nghiep/ky-thuat/' },
     { label: 'Chính sách', href: '/tin-nong-nghiep/chinh-sach/' },
-    { label: 'Giá nông sản tham khảo', href: '/tin-nong-nghiep/gia-nong-san/' },
-    { label: 'Lịch thời vụ', href: '/tin-nong-nghiep/lich-thoi-vu/' },
+    { label: 'Giá nông sản tham khảo', href: '/gia-nong-san/' },
+    { label: 'Lịch mùa vụ', href: '/lich-mua-vu/' },
   ] },
   { label: 'Tin xuất khẩu', href: '/tin-xuat-khau/', children: [
     { label: 'Thị trường', href: '/tin-xuat-khau/thi-truong/' },

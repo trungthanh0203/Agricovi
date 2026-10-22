@@ -21,7 +21,10 @@ import Base from '../layouts/Base.astro';
     start_date?: string; expected_end_date?: string; end_date?: string; template?: string; generated_at?: string;
     materials?: { name: string; category?: string; unit: string; quantity: number; first?: string; last?: string }[];
     licenses?: { name: string; issuer?: string; expires?: string }[];
+    stages?: { name: string; status: string; planned_start?: string | null; planned_end?: string | null; actual_start?: string | null; actual_end?: string | null }[];
+    harvest?: { count: number; first?: string | null; last?: string | null } | null;
   }
+  const STAGE_ST: Record<string, string> = { pending: 'Chưa tới', in_progress: 'Đang thực hiện', done: 'Đã xong' };
 
   async function main() {
     if (!sb) throw new Error('Website chưa được cấu hình kết nối dữ liệu.');
@@ -48,6 +51,7 @@ import Base from '../layouts/Base.astro';
       <h1>${esc(s.name ?? code)}</h1>
       <p><span class="pill ok">✔ Thông tin do cơ sở công khai</span> <span class="pill">Mã ${esc(code)}</span></p>
       <div class="facts">${facts.map(([k, v]) => `<div><b>${esc(k)}</b>${esc(v)}</div>`).join('')}</div>
+      ${timeline(s)}
       <h2>Phân, thuốc, vật tư đã dùng</h2>
       <div class="panel">${mats.length ? `<table><thead><tr><th>Tên</th><th>Số lượng</th><th>Thời gian dùng</th></tr></thead><tbody>${mats.map((m) =>
         `<tr><td>${esc(m.name)}${m.category ? `<br><span class="muted">${esc(m.category)}</span>` : ''}</td><td>${esc(Number(m.quantity).toLocaleString('vi-VN', { maximumFractionDigits: 2 }))} ${esc(m.unit.toLowerCase())}</td><td>${m.first ? (m.first === m.last ? fmtDate(m.first) : `${fmtDate(m.first)} – ${fmtDate(m.last)}`) : '—'}</td></tr>`).join('')}</tbody></table>`
@@ -58,5 +62,26 @@ import Base from '../layouts/Base.astro';
       <p class="muted">Thông tin chụp lúc cơ sở bấm công khai (${fmtDate(data.published_at)}, bản ${esc(data.version)}). Chi phí, doanh thu và nhật ký chi tiết không được công khai. Vật tư và giấy phép là do cơ sở tự khai, chưa được xác minh độc lập.</p>
       <h2>Tra mã khác</h2>${form}`;
   }
+  // Dòng thời gian: các giai đoạn theo thứ tự + mốc thu hoạch (chỉ ngày, không công khai sản lượng)
+  function timeline(s: Snap): string {
+    const st = s.stages ?? [];
+    const hv = s.harvest && s.harvest.count > 0 ? s.harvest : null;
+    if (st.length === 0 && !hv) return '';
+    const dates = (a?: string | null, b?: string | null) => (a ? (b ? `${fmtDate(a)} – ${fmtDate(b)}` : `từ ${fmtDate(a)}`) : '');
+    const items = st.map((x) => {
+      const real = dates(x.actual_start, x.actual_end);
+      const plan = dates(x.planned_start, x.planned_end);
+      return `<li class="tl ${esc(x.status)}"><b>${esc(x.name)}</b> <span class="pill ${x.status === 'done' ? 'ok' : ''}">${esc(STAGE_ST[x.status] ?? '')}</span><br><span class="muted">${real ? 'Thực tế: ' + esc(real) : plan ? 'Dự kiến: ' + esc(plan) : ''}</span></li>`;
+    });
+    if (hv) items.push(`<li class="tl done"><b>Thu hoạch</b> <span class="pill ok">${hv.count} lần</span><br><span class="muted">${esc(dates(hv.first, hv.last === hv.first ? null : hv.last))}</span></li>`);
+    return `<h2>Quá trình sản xuất</h2><div class="panel"><ol class="tlist">${items.join('')}</ol></div>`;
+  }
   main().catch((e) => { app.innerHTML = `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>${form}`; });
 </script>
+
+<style is:global>
+  .tlist { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 3px solid var(--line); }
+  .tl { position: relative; margin: 0 0 14px; padding-left: 14px; }
+  .tl::before { content: ''; position: absolute; left: -23px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid var(--line); }
+  .tl.done::before { background: var(--g); border-color: var(--g); } .tl.in_progress::before { border-color: var(--warn); }
+</style>

@@ -162,3 +162,22 @@ export async function loadMaterial(slug: string): Promise<Material | null> {
 
 export const fmtDay = (d: string) => (d ? new Date(d.length === 10 ? d + 'T00:00:00' : d).toLocaleDateString('vi-VN') : '');
 export const today = () => new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10); // ngày hiện tại theo giờ Việt Nam
+
+// ------------------------------------------------------------------ giá tham khảo và lịch mùa vụ (W6)
+export interface PriceRow { categoryId: string; categoryName: string; categorySlug: string; unit: string; province: string; n: number; suppliers: number; min: number; max: number; avg: number; updated: string }
+export const loadPriceBoard = (): Promise<PriceRow[]> => cached('prices', async () => {
+  if (!sb) return [];
+  const { data, error } = await sb.from('public_price_board').select('*').limit(3000);
+  if (error) return [];
+  return (data ?? []).map((r) => ({ categoryId: r.category_id as string, categoryName: r.category_name as string, categorySlug: r.category_slug as string, unit: (r.unit as string) ?? '', province: (r.province as string) ?? '',
+    n: Number(r.n_products), suppliers: Number(r.n_suppliers), min: Number(r.price_min), max: Number(r.price_max), avg: Number(r.price_avg), updated: (r.updated_on as string | null) ?? '' }));
+}, [] as PriceRow[]);
+
+export interface SeasonRow { code: string; crop: string; name: string; status: string; start: string; end: string; slug: string; supplier: string; province: string }
+export const loadSeason = (): Promise<SeasonRow[]> => cached('season', async () => {
+  if (!sb) return [];
+  const { data, error } = await sb.from('public_season_calendar').select('*').limit(1000);
+  if (error) return [];
+  return (data ?? []).map((r) => ({ code: r.code as string, crop: (r.crop as string) ?? '', name: (r.name as string) ?? '', status: (r.status as string) ?? '', start: (r.start_date as string | null) ?? '', end: (r.expected_end_date as string | null) ?? '',
+    slug: r.slug as string, supplier: (r.supplier as string) ?? '', province: (r.province as string) ?? '' }));
+}, [] as SeasonRow[]);
