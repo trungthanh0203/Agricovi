@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Đánh giá của khách — AgriConnect" noindex cache={false}>
+  <h1>Đánh giá của khách</h1>
+  <div id="app"><p class="muted">Đang tải…</p></div>
+</Base>
+
+<script>
+  import { call, friendly, loadAccount, session } from '../lib/auth';
+  import { esc } from '../lib/db';
+
+  const app = document.getElementById('app')!;
+  interface R { id: string; stars: number; comment: string | null; reply: string | null; status: string; flagged: boolean; created_at: string; order_code: string; order_id: string; supplier_name: string; buyer_name: string | null }
+  const note = (cls: string, t: string) => `<p class="${cls}" role="${cls === 'err' ? 'alert' : 'status'}">${esc(t)}</p>`;
+  const starsOf = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
+
+  async function main() {
+    if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent('/danh-gia/')); return; }
+    try { await loadAccount(); } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
+    await render();
+  }
+  async function render(msg = '') {
+    let list: R[] = [];
+    try { list = await call<R[]>('my_shop_reviews'); } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
+    app.innerHTML = `${msg}<p class="muted">Đánh giá do khách đã nhận hàng gửi. Bạn trả lời được <b>một lần</b>. Nếu đánh giá sai sự thật hoặc vi phạm, bấm "Báo không đúng" để ban kiểm duyệt xem xét (bạn không tự ẩn được).</p>
+      ${list.length === 0 ? '<p class="empty">Chưa có đánh giá nào.</p>' : list.map((r) => `<div class="panel">
+        <b style="color:#b45309">${starsOf(r.stars)}</b> ${r.status === 'hidden' ? '<span class="stat bad">Đang bị ẩn</span>' : ''}${r.flagged ? ' <span class="stat warn">Đã báo kiểm duyệt</span>' : ''}
+        <span class="muted"> ${esc(r.buyer_name ?? '')} · <a href="/don-hang/${esc(r.order_id)}">${esc(r.order_code)}</a> · ${esc(new Date(r.created_at).toLocaleDateString('vi-VN'))}</span>
+        ${r.comment ? `<p style="margin:.3em 0">${esc(r.comment)}</p>` : ''}
+        ${r.reply ? `<p class="muted" style="margin:.3em 0"><b>Bạn đã trả lời:</b> ${esc(r.reply)}</p>` : r.status === 'visible' ? `<form data-reply="${esc(r.id)}" class="form mini"><label>Trả lời (không ghi số điện thoại, email)<input name="t" maxlength="300" required /></label><button class="btn sm solid" type="submit">Gửi trả lời</button></form>` : ''}
+        ${!r.flagged && r.status === 'visible' ? `<button class="btn sm outline" data-flag="${esc(r.id)}">Báo không đúng</button>` : ''}</div>`).join('')}`;
+    app.querySelectorAll<HTMLFormElement>('form[data-reply]').forEach((f) => f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try { await call('reply_review', { p_id: f.dataset.reply, p_reply: new FormData(f).get('t') }); await render(note('ok', 'Đã gửi trả lời.')); } catch (x) { await render(note('err', friendly(x))); }
+    }));
+    app.querySelectorAll<HTMLElement>('[data-flag]').forEach((b) => b.addEventListener('click', async () => {
+      const why = prompt('Vì sao đánh giá này không đúng? (ít nhất 5 ký tự, không ghi số điện thoại/email)');
+      if (!why) return;
+      try { await call('flag_review', { p_id: b.dataset.flag, p_reason: why }); await render(note('ok', 'Đã gửi cho ban kiểm duyệt xem xét.')); } catch (x) { await render(note('err', friendly(x))); }
+    }));
+  }
+  void main();
+</script>

@@ -36,7 +36,7 @@ import Base from '../layouts/Base.astro';
     }
     const price = (l: Listing) => (l.price_from ? `Từ ${Math.round(l.price_from).toLocaleString('vi-VN')}đ` : l.price_note || 'Liên hệ báo giá');
     app.innerHTML = `<h1>Gian hàng của tôi</h1>${msg}
-      <p><a class="btn solid" href="/don-hang/?vai=ban">📦 Đơn đặt hàng nhận được</a></p>
+      <p><a class="btn solid" href="/don-hang/?vai=ban">📦 Đơn đặt hàng nhận được</a> <a class="btn outline" href="/danh-gia/">★ Đánh giá của khách</a></p>
       <p class="muted">Sửa nhanh tình trạng cung ứng (hiện ngay trên website). Sửa giá, mô tả, ảnh, chứng chỉ và gửi duyệt hồ sơ: làm trong ứng dụng${appUrl ? ` (<a href="${esc(appUrl)}" target="_blank" rel="noopener">mở ứng dụng</a>)` : ''}, mục Báo cáo → Hồ sơ website.</p>
       ${orgs.map((o) => `
         <h2>${esc(o.org_name)}</h2>

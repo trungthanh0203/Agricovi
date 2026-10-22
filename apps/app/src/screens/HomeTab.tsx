@@ -5,6 +5,7 @@ import { friendlyError } from '../lib/errors';
 import { setNoteDone } from '../lib/production';
 import { useCatalog } from '../lib/catalog';
 import { HomeStats } from '../components/HomeStats';
+import { WebInboxCard } from '../components/WebInboxCard';
 import { SyncBadge } from '../components/SyncBadge';
 import { db } from '../lib/db';
 import { todayLocal, useOnline, useRecordSync } from '../lib/hooks';
@@ -52,6 +53,8 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
   return (
     <section>
       <h1>Trang chủ</h1>
+
+      <WebInboxCard />
 
       {running.length === 0 ? (
         <div className="card">

@@ -72,10 +72,12 @@ import Base from '../../layouts/Base.astro';
       <p class="btnrow">${o.actions.map((a) => a === 'quote' ? `<button class="btn solid" data-a="quote">${o.status === 'quoted' ? 'Báo giá lại' : 'Gửi báo giá'}</button>` : a === 'payment' ? '' : `<button class="btn ${ACT[a]?.[1] ?? 'outline'}" data-a="${a}">${esc(ACT[a]?.[0] ?? a)}</button>`).join(' ')}
         ${!seller ? '<button class="btn outline" data-a="reorder">Mua lại</button>' : ''}</p>
       ${o.actions.includes('payment') ? `<div class="panel"><b>Ghi nhận thanh toán</b> <select id="pay">${Object.entries(PAYMENT_LABEL).map(([k, v]) => `<option value="${k}"${k === o.payment_status ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select> <button class="btn sm" data-a="payment">Lưu</button></div>` : ''}
+      <div id="rv"></div>
       <h3>Lịch sử đơn</h3>
       <ul class="muted" style="padding-left:1.1em">${o.events.map((e) => `<li>${esc(new Date(e.at).toLocaleString('vi-VN'))} — ${e.role === 'system' ? 'Hệ thống' : e.role === 'seller' ? 'Nhà cung cấp' : 'Người mua'}: <b>${esc(KIND[e.kind] ?? e.kind)}</b>${e.note ? ' — ' + esc(e.note) : ''}</li>`).join('')}</ul>
       <p class="muted">Đơn đặt hàng là yêu cầu mua gửi nhà cung cấp; hệ thống chưa thu tiền. Khi có tranh chấp, hãy nhắn qua <a href="/hop-thu/">Hộp thư</a> hoặc báo cho ban quản trị.</p>`;
 
+    void renderReview(o);
     const msgEl = document.getElementById('amsg')!;
     const fail = (x: unknown) => { msgEl.innerHTML = note('err', friendly(x)); };
     app.querySelectorAll<HTMLButtonElement>('[data-a]').forEach((b) => b.addEventListener('click', async () => {
@@ -99,6 +101,30 @@ import Base from '../../layouts/Base.astro';
         await render(note('ok', 'Đã cập nhật đơn.'));
       } catch (x) { fail(x); b.disabled = false; }
     }));
+  }
+  interface Rv { side: string; can_review: boolean; review: { id: string; stars: number; comment: string | null; reply: string | null; status: string; hidden_reason: string | null; flagged: boolean } | null }
+  const starsOf = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
+  async function renderReview(o: Order) {
+    const box = document.getElementById('rv');
+    if (!box || (o.status !== 'completed')) return;
+    let r: Rv;
+    try { r = await call<Rv>('get_order_review', { p_order: id }); } catch { return; }
+    if (r.review) {
+      const v = r.review;
+      box.innerHTML = `<div class="panel"><b>Đánh giá của người mua:</b> <span style="color:#b45309">${starsOf(v.stars)}</span>${v.status === 'hidden' ? ' <span class="stat bad">Đang bị ẩn</span>' : ''}${v.comment ? `<p style="margin:.3em 0">${esc(v.comment)}</p>` : ''}${v.reply ? `<p class="muted" style="margin:.3em 0"><b>Trả lời:</b> ${esc(v.reply)}</p>` : ''}${r.side === 'seller' && !v.reply && v.status === 'visible' ? '<p class="muted">Bạn trả lời đánh giá ở trang <a href="/danh-gia/">Đánh giá của khách</a>.</p>' : ''}</div>`;
+    } else if (r.can_review) {
+      box.innerHTML = `<form class="panel form mini" id="rvf"><b>Đánh giá nhà cung cấp</b> <span class="muted">(chỉ một lần, trong 30 ngày; hiện công khai với tên rút gọn)</span>
+        <label>Số sao<select name="stars"><option value="5">★★★★★ Rất hài lòng</option><option value="4">★★★★ Hài lòng</option><option value="3">★★★ Bình thường</option><option value="2">★★ Chưa hài lòng</option><option value="1">★ Rất không hài lòng</option></select></label>
+        <label>Nhận xét (không ghi số điện thoại, email; từ 2 sao trở xuống cần nêu lý do)<textarea name="comment" rows="3" maxlength="300"></textarea></label>
+        <p class="err" id="rvm" role="alert"></p><button class="btn solid" type="submit">Gửi đánh giá</button></form>`;
+      document.getElementById('rvf')!.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const d = new FormData(e.target as HTMLFormElement);
+        const btn = (e.target as HTMLElement).querySelector('button')!; btn.disabled = true;
+        try { await call('review_order', { p_order: id, p_stars: Number(d.get('stars')), p_comment: d.get('comment') }); await render(note('ok', 'Cảm ơn bạn đã đánh giá.')); }
+        catch (x) { document.getElementById('rvm')!.textContent = friendly(x); btn.disabled = false; }
+      });
+    }
   }
   void main();
 </script>

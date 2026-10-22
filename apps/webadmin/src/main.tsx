@@ -5,6 +5,7 @@ import { clean, rpc, supabase } from '@agriconnect/admin-kit';
 import { SiteAuditPage, SiteHomePage, SiteOverviewPage, SiteUsersPage } from './extras';
 import { SiteShopMaterialsPage, SiteShopsPage } from './shops';
 import { SiteReportsPage, SiteTradePage } from './trade';
+import { SiteReviewsPage } from './reviews2';
 import { PublicCyclesPage, ReviewsPage } from './reviews';
 import { SiteBannersPage, SiteMenusPage, SitePagesPage, SiteRolesPage, SiteSettingsPage } from './site';
 import { SiteArticlesPage, SiteCategoriesPage, SiteMaterialsPage, SiteQuotesPage } from './site2';
@@ -35,6 +36,7 @@ const PAGES: PageDef[] = [
   { id: 'site-shopmat', label: 'Duyệt vật tư gian hàng', icon: '🧪', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true, modOk: true },
   { id: 'site-trade', label: 'Duyệt tin giao thương', icon: '🤝', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true, modOk: true },
   { id: 'site-reports', label: 'Báo cáo vi phạm', icon: '🚩', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true, modOk: true },
+  { id: 'site-reviews', label: 'Đánh giá nhà cung cấp', icon: '★', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true, modOk: true },
   { id: 'site-users', label: 'Người dùng website', icon: '🙋', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true },
   { id: 'reviews', label: 'Duyệt hồ sơ nhà cung cấp', icon: '✅', group: 'Tiếp nhận và kiểm duyệt', adminOnly: true },
   { id: 'public', label: 'Vụ công khai (truy xuất)', icon: '🌐', group: 'Tiếp nhận và kiểm duyệt', adminOnly: true },
@@ -113,6 +115,7 @@ function Admin({ session, roles }: { session: Session; roles: string[] }) {
         {page === 'site-shopmat' && (isChief || isMod) && <SiteShopMaterialsPage />}
         {page === 'site-trade' && (isChief || isMod) && <SiteTradePage />}
         {page === 'site-reports' && (isChief || isMod) && <SiteReportsPage />}
+        {page === 'site-reviews' && (isChief || isMod) && <SiteReviewsPage />}
         {page === 'site-users' && isChief && <SiteUsersPage />}
         {page === 'reviews' && isAdmin && <ReviewsPage />}
         {page === 'public' && isAdmin && <PublicCyclesPage />}

@@ -19,10 +19,15 @@ import Base from '../layouts/Base.astro';
     if (!pr) { app.innerHTML = '<p class="empty">Không tìm thấy cơ sở này, hoặc hồ sơ đang được tạm ẩn. <a href="/danh-ba/">Xem danh bạ</a></p>'; return; }
     const s = pr.snapshot as ProfileSnap;
     document.title = `${s.display_name} — AgriConnect`;
-    const [pp, cy] = await Promise.all([
+    const [pp, cy, rv, rt] = await Promise.all([
       sb.from('public_products').select('listing_id, profile_id, supply_status, supply_updated_on, snapshot').eq('profile_id', pr.profile_id).eq('is_visible', true),
       sb.from('public_cycles').select('code, snapshot, published_at').eq('organization_id', pr.organization_id).eq('is_visible', true).order('published_at', { ascending: false }).limit(12),
+      sb.from('public_reviews').select('stars, comment, reply, created_at, buyer_label').eq('profile_id', pr.profile_id).order('created_at', { ascending: false }).limit(10),
+      sb.from('public_supplier_ratings').select('avg_stars, review_count').eq('profile_id', pr.profile_id).maybeSingle(),
     ]);
+    const reviews = (rv.data ?? []) as { stars: number; comment: string | null; reply: string | null; created_at: string; buyer_label: string }[];
+    const rating = rt.data as { avg_stars: number | string; review_count: number } | null;
+    const starsOf = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
     const prods = (pp.data ?? []) as ProductRow[];
     const cycles = (cy.data ?? []) as { code: string; snapshot: { name?: string; crop?: string; status?: string; start_date?: string }; published_at: string }[];
 
@@ -46,12 +51,14 @@ import Base from '../layouts/Base.astro';
     app.innerHTML = `
       <p><a href="/danh-ba/">← Danh bạ</a></p>
       <h1>${esc(s.display_name)}</h1>
+      ${rating ? `<p><a href="#danh-gia" style="text-decoration:none"><b style="color:#b45309">★ ${Number(rating.avg_stars).toFixed(1)}</b> <span class="muted">(${rating.review_count} đánh giá từ khách đã mua)</span></a></p>` : ''}
       <p><button type="button" data-fav data-kind="supplier" data-ref="${esc(pr.profile_id)}">♡ Lưu nhà cung cấp</button></p>
       ${s.tagline ? `<p class="tag">${esc(s.tagline)}</p>` : ''}
       ${gallery.length ? `<div class="gallery">${gallery.map((g) => `<img src="${g.src}" alt="${esc(g.cap ?? s.display_name)}" loading="lazy" />`).join('')}</div>` : ''}
       ${s.description ? `<div class="panel"><p style="white-space:pre-line;margin:0">${esc(s.description)}</p></div>` : ''}
       ${facts.length ? `<div class="facts">${facts.map(([k, v]) => `<div><b>${esc(k)}</b>${esc(v)}</div>`).join('')}</div>` : ''}
       ${prods.length ? `<h2>Sản phẩm</h2>${prods.map(productHtml).join('')}` : ''}
+      ${reviews.length ? `<h2 id="danh-gia">Đánh giá của khách đã mua</h2>${reviews.map((r) => `<div class="panel"><b style="color:#b45309">${starsOf(r.stars)}</b> <span class="muted">${esc(r.buyer_label)} · ${fmtDate(r.created_at)}</span>${r.comment ? `<p style="margin:.3em 0">${esc(r.comment)}</p>` : ''}${r.reply ? `<p class="muted" style="margin:.3em 0;border-left:3px solid var(--line);padding-left:8px"><b>Nhà cung cấp trả lời:</b> ${esc(r.reply)}</p>` : ''}</div>`).join('')}` : ''}
       ${s.certifications?.length ? `<h2>Giấy phép, chứng chỉ</h2><div class="panel">${s.certifications.map((k) =>
         `<p>🏅 <b>${esc(k.name)}</b>${k.issuer ? ' — ' + esc(k.issuer) : ''}${k.number ? ' · số ' + esc(k.number) : ''}${k.expires ? ' · hạn ' + fmtDate(k.expires) : ''}<br><span class="pill">${esc(CERT_LABEL[k.status] ?? k.status)}</span></p>`).join('')}</div>` : ''}
       ${cycles.length ? `<h2>Mùa vụ có truy xuất nguồn gốc</h2><div class="panel">${cycles.map((v) =>
