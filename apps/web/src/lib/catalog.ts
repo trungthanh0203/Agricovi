@@ -61,7 +61,7 @@ export function catTrail(cats: Cat[], c: Cat): Cat[] {
 // ------------------------------------------------------------------ sản phẩm của nhà cung cấp
 export interface ProductItem {
   id: string; name: string; unit: string; priceFrom: number | null; priceNote: string; image: string; supply: string; supplyLabel: string;
-  supplier: string; supplierSlug: string; province: string; categoryId: string | null; categorySlug: string; crop: string; trace: string;
+  supplier: string; supplierSlug: string; profileId: string; province: string; categoryId: string | null; categorySlug: string; crop: string; trace: string;
   minOrder: string; season: string; spec: string; description: string; images: string[]; certs: { name: string; status: string }[]; updated: string;
 }
 
@@ -78,7 +78,7 @@ export const loadProducts = (): Promise<ProductItem[]> => cached('products', asy
       out.push({
         id: p.listing_id, name: s.name, unit: s.unit ?? '', priceFrom: s.price_from == null ? null : Number(s.price_from), priceNote: s.price_note ?? '',
         image: images[0] ?? '', supply: p.supply_status ?? '', supplyLabel: p.supply_status ? SUPPLY_LABEL[p.supply_status] ?? '' : '',
-        supplier: d.display_name, supplierSlug: d.slug, province: d.province ?? '', categoryId: s.category_id ?? null, categorySlug: s.category_slug ?? '',
+        supplier: d.display_name, supplierSlug: d.slug, profileId: pid, province: d.province ?? '', categoryId: s.category_id ?? null, categorySlug: s.category_slug ?? '',
         crop: s.crop ?? '', trace: s.trace_code ?? '', minOrder: s.min_order ?? '', season: s.season ?? '', spec: s.specification ?? '', description: s.description ?? '',
         images, certs: (s.certifications ?? []).map((c) => ({ name: c.name, status: c.status })), updated: p.supply_updated_on ?? '',
       });

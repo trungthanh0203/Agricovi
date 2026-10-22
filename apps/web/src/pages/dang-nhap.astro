@@ -1,0 +1,36 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Đăng nhập — AgriConnect" noindex cache={false}>
+  <div class="prose">
+    <h1>Đăng nhập</h1>
+    <form id="f" class="form">
+      <p id="msg" class="err" role="alert" hidden></p>
+      <label>Email hoặc số điện thoại<input name="ident" required autocomplete="username" placeholder="email@... hoặc 09xx xxx xxx" /></label>
+      <label>Mật khẩu<input name="pw" type="password" required autocomplete="current-password" /></label>
+      <button class="btn solid" type="submit" id="go">Đăng nhập</button>
+    </form>
+    <p><a href="/quen-mat-khau/">Quên mật khẩu?</a> · Chưa có tài khoản? <a href="/dang-ky/">Đăng ký</a></p>
+    <p class="muted">Chủ cơ sở dùng tài khoản của ứng dụng AgriConnect (email). Tài khoản nhân viên (số điện thoại do chủ cơ sở tạo) chỉ dùng trong ứng dụng, không đăng nhập được website.</p>
+  </div>
+</Base>
+
+<script>
+  import { friendly, nextUrl, session, signIn } from '../lib/auth';
+  const f = document.getElementById('f') as HTMLFormElement;
+  const msg = document.getElementById('msg')!;
+  const go = document.getElementById('go') as HTMLButtonElement;
+  void session().then((s) => { if (s) location.replace(nextUrl()); });
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.hidden = true; go.disabled = true; go.textContent = 'Đang đăng nhập…';
+    const d = new FormData(f);
+    try {
+      await signIn(String(d.get('ident')), String(d.get('pw')));
+      location.assign(nextUrl());
+    } catch (x) {
+      msg.textContent = friendly(x); msg.hidden = false;
+      go.disabled = false; go.textContent = 'Đăng nhập';
+    }
+  });
+</script>

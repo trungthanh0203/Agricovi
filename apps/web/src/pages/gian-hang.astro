@@ -1,0 +1,88 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Gian hàng của tôi — AgriConnect" noindex cache={false}>
+  <div id="app"><p class="muted">Đang tải…</p></div>
+</Base>
+
+<script>
+  import { call, friendly, loadAccount, session } from '../lib/auth';
+  import { esc, fmtDate, SUPPLY_LABEL } from '../lib/db';
+
+  const app = document.getElementById('app')!;
+  const appUrl = (import.meta.env.PUBLIC_APP_URL as string | undefined) ?? '';
+  interface Listing { id: string; name: string; unit: string | null; price_from: number | null; price_note: string | null; include: boolean; supply: { status: string; expected_from: string | null; expected_to: string | null; updated_on: string } | null }
+  interface Org { org_id: string; org_name: string; profile: { id: string; display_name: string; status: string; slug: string | null } | null; quotes_new: number; listings: Listing[] }
+  interface Quote { id: string; kind: string; target_name: string | null; sender_name: string; sender_phone: string | null; sender_email: string | null; quantity_note: string | null; message: string; status: string; note: string | null; created_at: string; org_name: string | null }
+  const PROFILE_STATUS: Record<string, string> = { draft: 'Bản nháp', pending_review: 'Chờ duyệt', published: 'Đang công khai', changes_requested: 'Cần chỉnh sửa', hidden: 'Đã ẩn', withdrawn: 'Đã rút' };
+  const note = (cls: string, t: string) => `<p class="${cls}" role="${cls === 'err' ? 'alert' : 'status'}">${esc(t)}</p>`;
+
+  async function main() {
+    if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent('/gian-hang/')); return; }
+    try { await loadAccount(); } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
+    await render();
+  }
+
+  async function render(msg = '') {
+    let orgs: Org[] = [];
+    let quotes: Quote[] = [];
+    try {
+      orgs = (await call<{ orgs: Org[] }>('my_shop')).orgs;
+      quotes = await call<Quote[]>('my_quote_requests', { p_status: null });
+    } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
+    if (orgs.length === 0) {
+      app.innerHTML = `<h1>Gian hàng của tôi</h1><p class="empty">Tài khoản này chưa là chủ hoặc quản lý của cơ sở nào. Nhà vườn, hợp tác xã đăng ký và tạo cơ sở trong ứng dụng AgriConnect rồi đăng nhập website bằng cùng email. <a href="/danh-cho-nguoi-ban">Xem trang dành cho người bán</a></p>`;
+      return;
+    }
+    const price = (l: Listing) => (l.price_from ? `Từ ${Math.round(l.price_from).toLocaleString('vi-VN')}đ` : l.price_note || 'Liên hệ báo giá');
+    app.innerHTML = `<h1>Gian hàng của tôi</h1>${msg}
+      <p class="muted">Sửa nhanh tình trạng cung ứng (hiện ngay trên website). Sửa giá, mô tả, ảnh, chứng chỉ và gửi duyệt hồ sơ: làm trong ứng dụng${appUrl ? ` (<a href="${esc(appUrl)}" target="_blank" rel="noopener">mở ứng dụng</a>)` : ''}, mục Báo cáo → Hồ sơ website.</p>
+      ${orgs.map((o) => `
+        <h2>${esc(o.org_name)}</h2>
+        <div class="panel">${o.profile ? `Hồ sơ website: <b>${esc(o.profile.display_name)}</b> · ${esc(PROFILE_STATUS[o.profile.status] ?? o.profile.status)}${o.profile.slug && o.profile.status === 'published' ? ` · <a href="/co-so/${encodeURIComponent(o.profile.slug)}">Xem trên website</a>` : ''}` : 'Chưa soạn hồ sơ website trong ứng dụng.'}
+          ${o.quotes_new ? `<br><b>${o.quotes_new} yêu cầu báo giá mới</b> (xem bên dưới)` : ''}</div>
+        ${o.listings.length === 0 ? '<p class="empty">Chưa có sản phẩm cung ứng. Thêm sản phẩm trong ứng dụng.</p>' : o.listings.map((l) => `
+          <form class="panel supply" data-listing="${esc(l.id)}">
+            <b>${esc(l.name)}</b> <span class="muted">${esc(price(l))}${l.unit ? '/' + esc(l.unit) : ''}${l.include ? '' : ' · không đưa lên website'}</span><br>
+            <span class="muted">Hiện tại: ${l.supply ? esc(SUPPLY_LABEL[l.supply.status] ?? l.supply.status) + ' (cập nhật ' + esc(fmtDate(l.supply.updated_on)) + ')' : 'chưa khai báo'}</span>
+            <div class="row3">
+              <label>Tình trạng<select name="status">${Object.entries(SUPPLY_LABEL).map(([k, v]) => `<option value="${k}"${l.supply?.status === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></label>
+              <label>Có hàng từ<input type="date" name="from" value="${esc(l.supply?.expected_from ?? '')}" /></label>
+              <label>đến<input type="date" name="to" value="${esc(l.supply?.expected_to ?? '')}" /></label>
+            </div>
+            <label>Ghi chú (sản lượng, giao hàng…)<input name="note" maxlength="200" /></label>
+            <button class="btn solid sm" type="submit">Cập nhật tình trạng</button>
+          </form>`).join('')}`).join('')}
+      <h2>Yêu cầu báo giá từ khách</h2>
+      ${quotes.length === 0 ? '<p class="empty">Chưa có yêu cầu nào.</p>' : quotes.map((q) => `
+        <div class="panel ${q.status === 'new' ? 'newq' : ''}">
+          <b>${esc(q.target_name ?? 'Yêu cầu chung')}</b> <span class="pill">${q.status === 'new' ? 'Mới' : 'Đã xử lý'}</span> <span class="muted">${esc(new Date(q.created_at).toLocaleString('vi-VN'))}</span><br>
+          ${esc(q.sender_name)} · ${[q.sender_phone ? `<a href="tel:${esc(q.sender_phone)}">${esc(q.sender_phone)}</a>` : '', q.sender_email ? `<a href="mailto:${esc(q.sender_email)}">${esc(q.sender_email)}</a>` : ''].filter(Boolean).join(' · ')}
+          <p style="margin:.4em 0">${esc(q.message)}${q.quantity_note ? `<br><span class="muted">Số lượng: ${esc(q.quantity_note)}</span>` : ''}</p>
+          ${q.note ? `<p class="muted">Ghi chú: ${esc(q.note)}</p>` : ''}
+          <button class="btn sm" data-q="${esc(q.id)}" data-to="${q.status === 'new' ? 'handled' : 'new'}">${q.status === 'new' ? 'Đã liên hệ / xử lý' : 'Mở lại'}</button>
+        </div>`).join('')}
+      <p class="muted">Thông tin của khách chỉ dùng để liên hệ báo giá, không chia sẻ ra ngoài.</p>`;
+
+    app.querySelectorAll<HTMLFormElement>('form.supply').forEach((f) => f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = new FormData(f);
+      try {
+        await call('set_listing_supply', { p_listing: f.dataset.listing, p_status: d.get('status'), p_from: d.get('from') || null, p_to: d.get('to') || null, p_note: d.get('note') });
+        await render(note('ok', 'Đã cập nhật tình trạng cung ứng. Website hiển thị ngay.'));
+      } catch (x) { await render(note('err', friendly(x))); }
+    }));
+    app.querySelectorAll<HTMLElement>('[data-q]').forEach((b) => b.addEventListener('click', async () => {
+      let n: string | null = '';
+      if (b.dataset.to === 'handled') { n = prompt('Ghi chú (không bắt buộc), ví dụ: đã gọi lại, đã báo giá', ''); if (n === null) return; }
+      try { await call('set_my_quote', { p_id: b.dataset.q, p_status: b.dataset.to, p_note: n }); await render(); } catch (x) { await render(note('err', friendly(x))); }
+    }));
+  }
+  void main();
+</script>
+
+<style is:global>
+  .row3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin: 8px 0; } @media (max-width: 600px) { .row3 { grid-template-columns: 1fr; } }
+  .supply label { display: block; font-weight: 600; margin: 6px 0; } .supply input, .supply select { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 8px; font: inherit; margin-top: 3px; }
+  .newq { border-color: var(--warn); } .btn.sm { padding: 6px 12px; font-size: .9rem; }
+</style>

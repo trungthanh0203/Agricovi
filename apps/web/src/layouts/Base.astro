@@ -48,7 +48,7 @@ if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-max
           <a class="yl" href="/danh-cho-nguoi-ban">Dành cho người bán</a>
           <a class="yl" href="/danh-cho-nguoi-mua">Dành cho người mua</a>
         </nav>
-        <div class="acct"><a href="/dang-nhap/">Đăng nhập</a><span aria-hidden="true">|</span><a href="/dang-ky/">Đăng ký</a></div>
+        <div class="acct" id="acct"><a href="/dang-nhap/">Đăng nhập</a><span aria-hidden="true">|</span><a href="/dang-ky/">Đăng ký</a></div>
       </div>
       <div class="bar2">
         <details class="cats">
@@ -110,6 +110,65 @@ if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-max
       </div>
       <p class="note">Thông tin do từng cơ sở tự khai và được kiểm duyệt trước khi hiển thị. Nhãn "Tự khai báo" nghĩa là chưa được xác minh độc lập.</p>
     </footer>
+    <script>
+      // Chỉ đọc dấu hiệu đăng nhập đã lưu ở máy (không nạp thư viện đăng nhập ở mọi trang); dữ liệu thật luôn kiểm ở máy chủ.
+      function stored(): { access_token?: string; user?: { email?: string; user_metadata?: { full_name?: string } } } | null {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i) ?? '';
+          if (/^sb-.*-auth-token$/.test(k)) { try { return JSON.parse(localStorage.getItem(k) ?? 'null'); } catch { return null; } }
+        }
+        return null;
+      }
+      const s = stored();
+      const acct = document.getElementById('acct');
+      if (acct && s?.access_token && s.user) {
+        const name = s.user.user_metadata?.full_name || (s.user.email ?? '').split('@')[0] || 'Tài khoản';
+        acct.innerHTML = '';
+        const d = document.createElement('details'); d.className = 'acctm';
+        const sum = document.createElement('summary'); sum.textContent = name + ' ▾'; d.appendChild(sum);
+        const ul = document.createElement('ul');
+        for (const [label, href] of [['Tài khoản của tôi', '/tai-khoan/'], ['Yêu thích', '/tai-khoan/#yeu-thich'], ['Gian hàng của tôi', '/gian-hang/']]) {
+          const li = document.createElement('li'); const a = document.createElement('a'); a.href = href as string; a.textContent = label as string; li.appendChild(a); ul.appendChild(li);
+        }
+        const li = document.createElement('li'); const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Đăng xuất';
+        b.addEventListener('click', () => { void import('../lib/auth').then((m) => m.signOut()).then(() => location.assign('/')); });
+        li.appendChild(b); ul.appendChild(li); d.appendChild(ul); acct.appendChild(d);
+      }
+
+      // Nút yêu thích: <button data-fav data-kind="supplier|product" data-ref="..."> (trang hồ sơ và sản phẩm)
+      let favs: { suppliers: Set<string>; products: Set<string> } | null = null;
+      const paint = () => document.querySelectorAll<HTMLElement>('[data-fav]').forEach((el) => {
+        const on = !!favs && (el.dataset.kind === 'supplier' ? favs.suppliers : favs.products).has(el.dataset.ref ?? '');
+        el.textContent = on ? '♥ Đã lưu' : el.dataset.kind === 'supplier' ? '♡ Lưu nhà cung cấp' : '♡ Lưu sản phẩm';
+        el.dataset.on = on ? '1' : '';
+      });
+      async function loadFavs() {
+        if (!s?.access_token) { paint(); return; }
+        try {
+          const { call } = await import('../lib/auth');
+          const f = await call<{ suppliers: { profile_id: string }[]; products: { id: string }[] }>('list_my_favorites');
+          favs = { suppliers: new Set(f.suppliers.map((x) => x.profile_id)), products: new Set(f.products.map((x) => x.id)) };
+        } catch { favs = null; }
+        paint();
+      }
+      document.addEventListener('click', async (e) => {
+        const el = (e.target as HTMLElement).closest<HTMLElement>('[data-fav]');
+        if (!el) return;
+        e.preventDefault();
+        if (!s?.access_token) { location.assign('/dang-nhap/?next=' + encodeURIComponent(location.pathname + location.search)); return; }
+        const on = el.dataset.on !== '1';
+        try {
+          const { call } = await import('../lib/auth');
+          await call('toggle_favorite', { p_kind: el.dataset.kind, p_ref: el.dataset.ref, p_on: on });
+          if (!favs) favs = { suppliers: new Set(), products: new Set() };
+          const set = el.dataset.kind === 'supplier' ? favs.suppliers : favs.products;
+          if (on) set.add(el.dataset.ref ?? ''); else set.delete(el.dataset.ref ?? '');
+          paint();
+        } catch (x) { alert(x instanceof Error ? x.message.replace(/^[A-Z][A-Z_]{3,}: /, '') : 'Chưa lưu được.'); }
+      });
+      window.addEventListener('fav:refresh', () => void loadFavs());
+      void loadFavs();
+    </script>
   </body>
 </html>
 
@@ -219,4 +278,12 @@ if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-max
   .cats .hsub { display: none; top: 0; left: 100%; margin-left: 2px; }
   .cats .hc:hover > .hsub, .cats .hc:focus-within > .hsub { display: block; }
   .cats li a { display: flex; justify-content: space-between; }
+</style>
+<style is:global>
+  .acctm { position: relative; } .acctm summary { cursor: pointer; list-style: none; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .acctm ul { position: absolute; right: 0; top: calc(100% + 6px); min-width: 200px; margin: 0; padding: 8px 0; list-style: none; background: #fff; color: var(--ink); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.18); z-index: 30; }
+  .acctm li a, .acctm li button { display: block; width: 100%; text-align: left; padding: 8px 16px; color: var(--ink); text-decoration: none; background: none; border: 0; font: inherit; cursor: pointer; }
+  .acctm li a:hover, .acctm li button:hover { background: var(--g2); }
+  [data-fav] { cursor: pointer; border: 1px solid var(--g); background: #fff; color: var(--g); border-radius: 999px; padding: 6px 14px; font: inherit; font-weight: 600; }
+  [data-fav][data-on="1"] { background: var(--g); color: #fff; }
 </style>

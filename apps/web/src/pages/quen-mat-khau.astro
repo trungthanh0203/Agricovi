@@ -1,0 +1,37 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Quên mật khẩu — AgriConnect" noindex cache={false}>
+  <div class="prose">
+    <h1>Quên mật khẩu</h1>
+    <form id="f" class="form">
+      <p id="msg" class="err" role="alert" hidden></p>
+      <p id="done" class="ok" role="status" hidden></p>
+      <label>Email đã đăng ký<input name="email" type="email" required autocomplete="username" /></label>
+      <button class="btn solid" type="submit" id="go">Gửi liên kết đặt lại mật khẩu</button>
+    </form>
+    <p class="muted">Tài khoản đăng ký bằng số điện thoại chưa tự đặt lại được: hãy <a href="/lien-he">liên hệ quản trị</a>. Tài khoản nhân viên do chủ cơ sở đặt lại trong ứng dụng.</p>
+    <p><a href="/dang-nhap/">← Quay lại đăng nhập</a></p>
+  </div>
+</Base>
+
+<script>
+  import { auth, friendly } from '../lib/auth';
+  const f = document.getElementById('f') as HTMLFormElement;
+  const msg = document.getElementById('msg')!;
+  const done = document.getElementById('done')!;
+  const go = document.getElementById('go') as HTMLButtonElement;
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.hidden = true; done.hidden = true; go.disabled = true;
+    try {
+      if (!auth) throw new Error('Website chưa được cấu hình kết nối dữ liệu.');
+      const email = String(new FormData(f).get('email')).trim();
+      const { error } = await auth.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/tai-khoan/#mat-khau` });
+      if (error) throw error;
+      // luôn báo như nhau để không lộ email nào đã đăng ký
+      done.textContent = 'Nếu email này đã đăng ký, chúng tôi đã gửi liên kết đặt lại mật khẩu. Hãy kiểm tra hộp thư (cả mục thư rác).'; done.hidden = false;
+    } catch (x) { msg.textContent = friendly(x); msg.hidden = false; }
+    go.disabled = false;
+  });
+</script>

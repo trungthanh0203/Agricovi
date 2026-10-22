@@ -2,7 +2,7 @@ import { StrictMode, useEffect, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Session } from '@supabase/supabase-js';
 import { clean, rpc, supabase } from '@agriconnect/admin-kit';
-import { SiteAuditPage, SiteHomePage, SiteOverviewPage } from './extras';
+import { SiteAuditPage, SiteHomePage, SiteOverviewPage, SiteUsersPage } from './extras';
 import { PublicCyclesPage, ReviewsPage } from './reviews';
 import { SiteBannersPage, SiteMenusPage, SitePagesPage, SiteRolesPage, SiteSettingsPage } from './site';
 import { SiteArticlesPage, SiteCategoriesPage, SiteMaterialsPage, SiteQuotesPage } from './site2';
@@ -29,6 +29,7 @@ const PAGES: PageDef[] = [
   { id: 'site-categories', label: 'Danh mục sản phẩm', icon: '🗂️', group: 'Sản phẩm' },
   { id: 'site-materials', label: 'Vật tư nông nghiệp', icon: '🌿', group: 'Sản phẩm' },
   { id: 'site-quotes', label: 'Yêu cầu báo giá', icon: '💬', group: 'Tiếp nhận và kiểm duyệt' },
+  { id: 'site-users', label: 'Người dùng website', icon: '🙋', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true },
   { id: 'reviews', label: 'Duyệt hồ sơ nhà cung cấp', icon: '✅', group: 'Tiếp nhận và kiểm duyệt', adminOnly: true },
   { id: 'public', label: 'Vụ công khai (truy xuất)', icon: '🌐', group: 'Tiếp nhận và kiểm duyệt', adminOnly: true },
   { id: 'site-roles', label: 'Người biên tập', icon: '👥', group: 'Hệ thống', adminOnly: true },
@@ -101,6 +102,7 @@ function Admin({ session, roles }: { session: Session; roles: string[] }) {
         {page === 'site-categories' && <SiteCategoriesPage roles={roles} />}
         {page === 'site-materials' && <SiteMaterialsPage roles={roles} />}
         {page === 'site-quotes' && <SiteQuotesPage />}
+        {page === 'site-users' && isChief && <SiteUsersPage />}
         {page === 'reviews' && isAdmin && <ReviewsPage />}
         {page === 'public' && isAdmin && <PublicCyclesPage />}
         {page === 'site-roles' && isAdmin && <SiteRolesPage />}

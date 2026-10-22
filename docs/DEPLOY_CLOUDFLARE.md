@@ -175,3 +175,11 @@ Quản trị nội dung và kiểm duyệt website là một ứng dụng riêng
 Lưu ý an toàn: vì cùng địa chỉ với website công khai, quản trị website dùng khóa lưu phiên đăng nhập riêng (`agriconnect-webadmin-auth`) để không lẫn với phiên của người dùng website sau này; nên bật **Cloudflare Access** cho đường dẫn `/admin/*` (chỉ email của bạn và nhân sự biên tập vào được), lớp bảo vệ thứ hai ngoài quyền kiểm ở CSDL.
 
 Quyền: quản trị viên nền tảng (bảng `platform_admins`) luôn đủ quyền; cấp vai trò biên tập cho người khác ở **Người biên tập** (tổng biên tập, biên tập viên, kiểm duyệt viên; người đó phải có tài khoản AgriConnect đăng ký bằng email). Chưa có nội dung trong CSDL thì website dùng nội dung mặc định (`packages/shared/src/site.ts`); các trang pháp lý chỉ là khung chờ văn bản chính thức.
+
+## Tài khoản người dùng website (W3, D65)
+
+1. `npx supabase db push` (migration 0045) và triển khai hàm đăng ký bằng số điện thoại: `npx supabase functions deploy web-accounts`.
+2. Supabase → **Authentication → URL Configuration**: đặt *Site URL* = địa chỉ website (ví dụ `https://agriconnect.onstudy.workers.dev`) và thêm `https://agriconnect.onstudy.workers.dev/**` vào *Redirect URLs* (cần cho thư xác nhận email và đặt lại mật khẩu).
+3. Supabase → **Authentication → Providers → Email**: đăng ký bằng email thường bật *Confirm email*. Dịch vụ thư có sẵn của Supabase bị giới hạn số thư mỗi giờ (rất thấp), nên khi mở thật cần cấu hình SMTP riêng (**Authentication → SMTP Settings**). Khi thử nội bộ có thể tạm tắt *Confirm email* để đăng ký xong vào luôn.
+4. Tài khoản nhân viên (số điện thoại do chủ cơ sở tạo) không đăng nhập được website (CSDL chặn); chủ cơ sở đăng nhập website bằng email tài khoản app.
+5. Đăng ký bằng số điện thoại chưa xác minh OTP và chưa tự đặt lại mật khẩu được; chống lạm dụng hiện là giới hạn 200 đăng ký/giờ ở CSDL, sẽ thêm Turnstile khi có khóa.

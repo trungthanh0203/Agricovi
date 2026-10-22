@@ -90,7 +90,7 @@ const ACTION_LABEL: Record<string, string> = {
   site_role_grant: 'Cấp vai trò biên tập', site_role_revoke: 'Thu hồi vai trò biên tập', site_page_create: 'Tạo trang', site_page_update: 'Sửa trang', site_page_delete: 'Xóa trang',
   site_banner_create: 'Tạo banner', site_banner_update: 'Sửa banner', site_banner_delete: 'Xóa banner', site_menu_save: 'Sửa menu', site_setting_save: 'Sửa thông tin chung/trang chủ',
   site_category_create: 'Tạo danh mục', site_category_update: 'Sửa danh mục', site_material_create: 'Tạo vật tư', site_material_update: 'Sửa vật tư', site_material_delete: 'Xóa vật tư', site_material_import: 'Nhập vật tư hàng loạt',
-  site_article_create: 'Tạo bài viết', site_article_update: 'Sửa bài viết', site_article_delete: 'Xóa bài viết', site_quote_set: 'Xử lý yêu cầu báo giá',
+  site_article_create: 'Tạo bài viết', site_article_update: 'Sửa bài viết', site_article_delete: 'Xóa bài viết', site_quote_set: 'Xử lý yêu cầu báo giá', site_user_blocked: 'Khóa người dùng website', site_user_active: 'Mở khóa người dùng website',
 };
 interface AuditRow { id: number; at: string; actor: string | null; action: string; entity: string; entity_id: string | null }
 export function SiteAuditPage() {
@@ -102,6 +102,43 @@ export function SiteAuditPage() {
         <tbody>
           {(data ?? []).map((a) => <tr key={a.id}><td>{fmtDateTime(a.at)}</td><td>{a.actor ?? '—'}</td><td>{ACTION_LABEL[a.action] ?? a.action}</td><td><small>{a.entity}{a.entity_id ? ` · ${a.entity_id.slice(0, 8)}` : ''}</small></td></tr>)}
           {(data ?? []).length === 0 && <tr><td colSpan={4} className="muted">Chưa có thao tác nào.</td></tr>}
+        </tbody></table>
+    </>
+  );
+}
+
+// ============================================================ Người dùng website
+interface WebUser { user_id: string; full_name: string; buyer_kind: string; company: string | null; phone: string | null; login_kind: string; status: string; blocked_reason: string | null; created_at: string; email: string | null; favorites: number }
+const KIND_LABEL: Record<string, string> = { individual: 'Cá nhân', restaurant: 'Nhà hàng, bếp ăn', trader: 'Thương lái, đại lý', business: 'Doanh nghiệp', farm: 'Nhà vườn mua vật tư' };
+export function SiteUsersPage() {
+  const [q, setQ] = useState('');
+  const [applied, setApplied] = useState('');
+  const { data, error, reload } = useLoad(() => rpc<WebUser[]>('site_list_users', { p_search: applied || null, p_limit: 200 }), [applied]);
+  const [err, setErr] = useState<string | null>(null);
+  async function setStatus(u: WebUser, status: 'active' | 'blocked') {
+    setErr(null);
+    const reason = status === 'blocked' ? window.prompt('Lý do khóa tài khoản (ít nhất 5 ký tự)?') : '';
+    if (status === 'blocked' && !reason) return;
+    try { await rpc('site_set_user_status', { p_user: u.user_id, p_status: status, p_reason: reason }); reload(); } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
+  }
+  return (
+    <>
+      <p className="muted">Người mua đã đăng ký trên website (email hoặc số điện thoại). Chủ cơ sở dùng tài khoản app không nằm ở đây cho tới khi họ đăng nhập website lần đầu. Tài khoản nhân viên không dùng website. Số điện thoại chưa xác minh OTP, không coi là bằng chứng danh tính.</p>
+      <form className="toolbar" onSubmit={(e) => { e.preventDefault(); setApplied(q.trim()); }}>
+        <input placeholder="Tìm theo tên, email hoặc số điện thoại" value={q} onChange={(e) => setQ(e.target.value)} /><button className="primary">Tìm</button>
+      </form>
+      <Err e={error ?? err} />
+      <table className="list"><thead><tr><th>Người dùng</th><th>Liên hệ</th><th>Loại</th><th>Đăng ký</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+          {(data ?? []).map((u) => (
+            <tr key={u.user_id} className={u.status === 'blocked' ? 'off' : ''}>
+              <td><strong>{u.full_name}</strong>{u.company && <small>{u.company}</small>}</td>
+              <td>{u.email ?? u.phone ?? ''}<small>{u.login_kind === 'phone' ? 'Đăng nhập bằng số điện thoại' : 'Đăng nhập bằng email'} · {u.favorites} mục yêu thích</small></td>
+              <td>{KIND_LABEL[u.buyer_kind] ?? u.buyer_kind}</td><td>{fmtDateTime(u.created_at)}</td>
+              <td>{u.status === 'blocked' ? <span className="badge bad">Đã khóa</span> : <span className="badge ok">Đang dùng</span>}{u.blocked_reason && <small>{u.blocked_reason}</small>}</td>
+              <td>{u.status === 'blocked' ? <button onClick={() => void setStatus(u, 'active')}>Mở khóa</button> : <button className="danger" onClick={() => void setStatus(u, 'blocked')}>Khóa</button>}</td>
+            </tr>))}
+          {(data ?? []).length === 0 && <tr><td colSpan={6} className="muted">Chưa có người dùng nào.</td></tr>}
         </tbody></table>
     </>
   );

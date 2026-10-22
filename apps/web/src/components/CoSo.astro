@@ -46,6 +46,7 @@ import Base from '../layouts/Base.astro';
     app.innerHTML = `
       <p><a href="/danh-ba/">← Danh bạ</a></p>
       <h1>${esc(s.display_name)}</h1>
+      <p><button type="button" data-fav data-kind="supplier" data-ref="${esc(pr.profile_id)}">♡ Lưu nhà cung cấp</button></p>
       ${s.tagline ? `<p class="tag">${esc(s.tagline)}</p>` : ''}
       ${gallery.length ? `<div class="gallery">${gallery.map((g) => `<img src="${g.src}" alt="${esc(g.cap ?? s.display_name)}" loading="lazy" />`).join('')}</div>` : ''}
       ${s.description ? `<div class="panel"><p style="white-space:pre-line;margin:0">${esc(s.description)}</p></div>` : ''}
@@ -59,6 +60,7 @@ import Base from '../layouts/Base.astro';
       <div class="panel">${contact || '<span class="muted">Cơ sở chưa công khai thông tin liên hệ.</span>'}
         <p><a class="btn solid" href="/bao-gia/?loai=profile&ma=${encodeURIComponent(slug)}">Yêu cầu báo giá</a></p></div>
       <p class="muted">Hồ sơ được duyệt ngày ${fmtDate(pr.published_at)}.</p>`;
+    window.dispatchEvent(new Event('fav:refresh')); // báo cho nút yêu thích (trong Base) cập nhật trạng thái
   }
 
   function productHtml(p: ProductRow): string {

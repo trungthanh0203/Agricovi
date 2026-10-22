@@ -41,6 +41,7 @@ const jsonLd = p ? JSON.stringify({
           <h3 style="margin:.3em 0"><a href={`/co-so/${encodeURIComponent(p.supplierSlug)}`}>{p.supplier}</a></h3>
           {p.province && <p class="muted" style="margin:0">📍 {p.province}</p>}
           <p><a class="btn solid" style="width:100%;text-align:center" href={`/bao-gia/?loai=product&ma=${encodeURIComponent(p.id)}`}>Yêu cầu báo giá</a></p>
+          <p><button type="button" data-fav data-kind="product" data-ref={p.id}>♡ Lưu sản phẩm</button> <button type="button" data-fav data-kind="supplier" data-ref={p.profileId}>♡ Lưu nhà cung cấp</button></p>
           <p><a href={`/co-so/${encodeURIComponent(p.supplierSlug)}`}>Xem hồ sơ nhà cung cấp →</a></p>
         </div>
       </aside>

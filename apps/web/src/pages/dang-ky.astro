@@ -1,0 +1,67 @@
+---
+import Base from '../layouts/Base.astro';
+import { BUYER_KIND_LABEL } from '../lib/auth';
+---
+<Base title="Đăng ký người mua — AgriConnect" noindex cache={false}>
+  <div class="prose">
+    <h1>Đăng ký tài khoản người mua</h1>
+    <p class="muted">Miễn phí. Dùng để lưu nhà cung cấp, sản phẩm yêu thích và (sắp tới) đặt hàng, đăng tin cần mua. Nhà vườn, hợp tác xã muốn bán hàng hãy <a href="/danh-cho-nguoi-ban">xem trang dành cho người bán</a>.</p>
+    <form id="f" class="form">
+      <p id="msg" class="err" role="alert" hidden></p>
+      <p id="done" class="ok" role="status" hidden></p>
+      <div id="fields">
+        <label>Đăng ký bằng
+          <select name="mode" id="mode"><option value="email">Email</option><option value="phone">Số điện thoại</option></select>
+        </label>
+        <label><span id="identLabel">Email</span><input name="ident" id="ident" required autocomplete="username" /></label>
+        <label>Họ tên<input name="name" required minlength="2" maxlength="80" autocomplete="name" /></label>
+        <label>Bạn là
+          <select name="kind">{Object.entries(BUYER_KIND_LABEL).map(([k, v]) => <option value={k}>{v}</option>)}</select>
+        </label>
+        <label>Tên đơn vị (không bắt buộc)<input name="company" maxlength="120" autocomplete="organization" /></label>
+        <label>Mật khẩu (ít nhất 8 ký tự)<input name="pw" type="password" required minlength="8" maxlength="72" autocomplete="new-password" /></label>
+        <label class="ck2"><input type="checkbox" name="agree" required /> Tôi đã đọc và đồng ý với <a href="/dieu-khoan-su-dung" target="_blank">Điều khoản sử dụng</a> và <a href="/chinh-sach-bao-mat" target="_blank">Chính sách bảo mật</a>.</label>
+        <p class="muted" id="phoneNote" hidden>Đăng ký bằng số điện thoại chưa xác minh bằng mã OTP. Nếu quên mật khẩu, bạn cần liên hệ quản trị để được hỗ trợ; nên dùng email nếu có.</p>
+        <button class="btn solid" type="submit" id="go">Đăng ký</button>
+      </div>
+    </form>
+    <p>Đã có tài khoản? <a href="/dang-nhap/">Đăng nhập</a></p>
+  </div>
+</Base>
+
+<style is:global>
+  .ck2 { display: flex !important; align-items: flex-start; gap: 8px; font-weight: 400 !important; }
+  .ck2 input { width: auto !important; margin-top: 4px !important; }
+</style>
+
+<script>
+  import { friendly, register, type Reg } from '../lib/auth';
+  const f = document.getElementById('f') as HTMLFormElement;
+  const msg = document.getElementById('msg')!;
+  const done = document.getElementById('done')!;
+  const go = document.getElementById('go') as HTMLButtonElement;
+  const mode = document.getElementById('mode') as HTMLSelectElement;
+  const ident = document.getElementById('ident') as HTMLInputElement;
+  const syncMode = () => {
+    const phone = mode.value === 'phone';
+    document.getElementById('identLabel')!.textContent = phone ? 'Số điện thoại' : 'Email';
+    ident.type = phone ? 'tel' : 'email'; ident.placeholder = phone ? '09xx xxx xxx' : 'email@...';
+    document.getElementById('phoneNote')!.hidden = !phone;
+  };
+  mode.addEventListener('change', syncMode); syncMode();
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.hidden = true; go.disabled = true; go.textContent = 'Đang đăng ký…';
+    const d = new FormData(f);
+    const r: Reg = { mode: mode.value as Reg['mode'], ident: String(d.get('ident')), password: String(d.get('pw')), fullName: String(d.get('name')), kind: String(d.get('kind')), company: String(d.get('company') ?? '') };
+    try {
+      const res = await register(r);
+      if (res === 'ready') { location.assign('/tai-khoan/'); return; }
+      document.getElementById('fields')!.hidden = true;
+      done.textContent = 'Đã gửi thư xác nhận tới ' + r.ident + '. Hãy mở thư và bấm vào liên kết để hoàn tất đăng ký, rồi đăng nhập.'; done.hidden = false;
+    } catch (x) {
+      msg.textContent = friendly(x); msg.hidden = false;
+      go.disabled = false; go.textContent = 'Đăng ký';
+    }
+  });
+</script>

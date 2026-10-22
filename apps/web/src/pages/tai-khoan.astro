@@ -1,0 +1,141 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Tài khoản của tôi — AgriConnect" noindex cache={false}>
+  <div id="app"><p class="muted">Đang tải…</p></div>
+</Base>
+
+<style is:global>
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 14px; }
+  .tabs a { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: #fff; text-decoration: none; color: var(--ink); }
+  .tabs a.on { background: var(--g); color: #fff; border-color: var(--g); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } @media (max-width: 600px) { .row2 { grid-template-columns: 1fr; } }
+  .btn.sm { padding: 6px 12px; font-size: .9rem; } .btn.danger { color: #b3261e; border: 1px solid #b3261e; }
+  .addr { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+</style>
+
+<script>
+  import { auth, BUYER_KIND_LABEL, call, friendly, loadAccount, session, signOut, type WebAccount } from '../lib/auth';
+  import { esc } from '../lib/db';
+
+  const app = document.getElementById('app')!;
+  const TABS: [string, string][] = [['ho-so', 'Hồ sơ'], ['dia-chi', 'Địa chỉ nhận hàng'], ['yeu-thich', 'Yêu thích'], ['mat-khau', 'Mật khẩu']];
+  let acc: WebAccount;
+
+  const tab = () => (TABS.some(([k]) => k === location.hash.slice(1)) ? location.hash.slice(1) : 'ho-so');
+  const note = (cls: string, t: string) => `<p class="${cls}" role="${cls === 'err' ? 'alert' : 'status'}">${esc(t)}</p>`;
+
+  async function main() {
+    const s = await session();
+    if (!s) { location.replace('/dang-nhap/?next=' + encodeURIComponent('/tai-khoan/' + location.hash)); return; }
+    try { acc = await loadAccount(); } catch (e) { app.innerHTML = note('err', friendly(e)) + '<p><a href="/dang-nhap/">Đăng nhập lại</a></p>'; return; }
+    render();
+  }
+  window.addEventListener('hashchange', () => { if (acc) render(); });
+
+  function shell(inner: string) {
+    const t = tab();
+    const name = esc(acc.profile?.full_name ?? '');
+    app.innerHTML = `
+      <h1>Xin chào, ${name}</h1>
+      <p class="muted">${esc(acc.email ?? acc.profile?.phone ?? '')}${acc.profile?.login_kind === 'email' && acc.email_verified === false ? ' · <b>Email chưa xác nhận</b> (hãy mở thư xác nhận)' : ''}</p>
+      ${acc.orgs && acc.orgs.length ? `<div class="panel"><b>Bạn là chủ/quản lý cơ sở: ${acc.orgs.map((o) => esc(o.name)).join(', ')}</b><p style="margin:.3em 0"><a class="btn solid sm" href="/gian-hang/">Vào Gian hàng của tôi</a></p></div>` : ''}
+      <div class="tabs">${TABS.map(([k, l]) => `<a href="#${k}" class="${k === t ? 'on' : ''}">${l}</a>`).join('')}<a href="#" id="out">Đăng xuất</a></div>
+      <div id="tabbody">${inner}</div>
+      <p class="muted">Đơn hàng, tin giao thương và hộp thư đang được chuẩn bị.</p>`;
+    document.getElementById('out')!.addEventListener('click', async (e) => { e.preventDefault(); await signOut(); location.assign('/'); });
+  }
+
+  async function render() {
+    const t = tab();
+    if (t === 'ho-so') return profileTab();
+    if (t === 'dia-chi') return addressTab();
+    if (t === 'yeu-thich') return favTab();
+    return passwordTab();
+  }
+
+  function profileTab(msg = '') {
+    const p = acc.profile!;
+    shell(`${msg}<form id="pf" class="form">
+      <label>Họ tên<input name="name" required minlength="2" maxlength="80" value="${esc(p.full_name)}" /></label>
+      <label>Bạn là<select name="kind">${Object.entries(BUYER_KIND_LABEL).map(([k, v]) => `<option value="${k}"${k === p.buyer_kind ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></label>
+      <label>Tên đơn vị<input name="company" maxlength="120" value="${esc(p.company ?? '')}" /></label>
+      <label>Mã số thuế (nếu có)<input name="tax" maxlength="20" value="${esc(p.tax_code ?? '')}" /></label>
+      <label>Số điện thoại liên hệ<input name="phone" type="tel" maxlength="20" value="${esc(p.phone ?? '')}" /></label>
+      <button class="btn solid" type="submit">Lưu hồ sơ</button></form>`);
+    document.getElementById('pf')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = new FormData(e.target as HTMLFormElement);
+      try {
+        acc = await call<WebAccount>('update_my_buyer_profile', { p_name: d.get('name'), p_kind: d.get('kind'), p_company: d.get('company'), p_tax: d.get('tax'), p_phone: d.get('phone') });
+        profileTab(note('ok', 'Đã lưu hồ sơ.'));
+      } catch (x) { profileTab(note('err', friendly(x))); }
+    });
+  }
+
+  interface Addr { id: string; label: string; recipient: string; phone: string; province: string; district: string | null; address: string; is_default: boolean }
+  async function addressTab(msg = '', editing: Addr | null = null, adding = false) {
+    let list: Addr[] = [];
+    try { const { data, error } = await auth!.from('buyer_addresses').select('*').order('created_at'); if (error) throw error; list = (data ?? []) as Addr[]; } catch (e) { msg += note('err', friendly(e)); }
+    const form = (a: Partial<Addr>) => `<form id="af" class="form panel"><h3>${a.id ? 'Sửa địa chỉ' : 'Thêm địa chỉ'}</h3>
+      <div class="row2"><label>Tên gọi (Nhà, Cơ quan…)<input name="label" required maxlength="40" value="${esc(a.label ?? '')}" /></label>
+      <label>Người nhận<input name="recipient" required minlength="2" maxlength="80" value="${esc(a.recipient ?? '')}" /></label>
+      <label>Số điện thoại người nhận<input name="phone" type="tel" required maxlength="20" value="${esc(a.phone ?? '')}" /></label>
+      <label>Tỉnh/thành<input name="province" required maxlength="60" value="${esc(a.province ?? '')}" /></label>
+      <label>Quận/huyện<input name="district" maxlength="60" value="${esc(a.district ?? '')}" /></label>
+      <label>Địa chỉ cụ thể<input name="address" required minlength="3" maxlength="200" value="${esc(a.address ?? '')}" /></label></div>
+      <label class="ck2" style="display:flex;gap:8px;font-weight:400"><input type="checkbox" name="def" style="width:auto"${a.is_default ? ' checked' : ''} /> Đặt làm địa chỉ mặc định</label>
+      <div><button class="btn solid" type="submit">Lưu</button> <button class="btn" type="button" id="cancel">Hủy</button></div></form>`;
+    shell(`${msg}${editing ? form(editing) : adding ? form({}) : `<p><button class="btn solid sm" id="add"${list.length >= 10 ? ' disabled' : ''}>+ Thêm địa chỉ</button> <span class="muted">(tối đa 10)</span></p>`}
+      ${list.length === 0 && !adding ? '<p class="empty">Chưa có địa chỉ nào.</p>' : ''}
+      ${list.map((a) => `<div class="panel addr"><div><b>${esc(a.label)}</b>${a.is_default ? ' <span class="pill ok">Mặc định</span>' : ''}<br>${esc(a.recipient)} · ${esc(a.phone)}<br><span class="muted">${esc([a.address, a.district, a.province].filter(Boolean).join(', '))}</span></div>
+        <div><button class="btn sm" data-edit="${esc(a.id)}">Sửa</button> <button class="btn sm danger" data-del="${esc(a.id)}">Xóa</button></div></div>`).join('')}`);
+    document.getElementById('add')?.addEventListener('click', () => void addressTab('', null, true));
+    document.getElementById('cancel')?.addEventListener('click', () => void addressTab());
+    app.querySelectorAll<HTMLElement>('[data-edit]').forEach((b) => b.addEventListener('click', () => void addressTab('', list.find((x) => x.id === b.dataset.edit) ?? null)));
+    app.querySelectorAll<HTMLElement>('[data-del]').forEach((b) => b.addEventListener('click', async () => {
+      if (!confirm('Xóa địa chỉ này?')) return;
+      try { await call('delete_buyer_address', { p_id: b.dataset.del }); void addressTab(note('ok', 'Đã xóa địa chỉ.')); } catch (x) { void addressTab(note('err', friendly(x))); }
+    }));
+    document.getElementById('af')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = new FormData(e.target as HTMLFormElement);
+      try {
+        await call('save_buyer_address', { p_id: editing?.id ?? null, p_label: d.get('label'), p_recipient: d.get('recipient'), p_phone: d.get('phone'), p_province: d.get('province'), p_district: d.get('district'), p_address: d.get('address'), p_default: d.get('def') === 'on' });
+        void addressTab(note('ok', 'Đã lưu địa chỉ.'));
+      } catch (x) { void addressTab(note('err', friendly(x)), editing, !editing); }
+    });
+  }
+
+  interface Favs { suppliers: { profile_id: string; slug: string; name: string; province: string | null; tagline: string | null }[]; products: { id: string; name: string; unit: string | null; price_from: number | null; price_note: string | null; supplier: string; province: string | null }[] }
+  async function favTab(msg = '') {
+    let f: Favs = { suppliers: [], products: [] };
+    try { f = await call<Favs>('list_my_favorites'); } catch (e) { msg += note('err', friendly(e)); }
+    const price = (p: Favs['products'][number]) => (p.price_from ? `Từ ${Math.round(p.price_from).toLocaleString('vi-VN')}đ` : p.price_note || 'Liên hệ báo giá');
+    shell(`${msg}<h2>Nhà cung cấp đã lưu</h2>
+      ${f.suppliers.length === 0 ? '<p class="empty">Chưa lưu nhà cung cấp nào. Bấm "♡ Lưu nhà cung cấp" ở trang hồ sơ.</p>' : f.suppliers.map((s) => `<div class="panel addr"><div><a href="/co-so/${encodeURIComponent(s.slug)}"><b>${esc(s.name)}</b></a>${s.province ? ` <span class="muted">· ${esc(s.province)}</span>` : ''}${s.tagline ? `<br><span class="muted">${esc(s.tagline)}</span>` : ''}</div><button class="btn sm" data-unsup="${esc(s.profile_id)}">Bỏ lưu</button></div>`).join('')}
+      <h2>Sản phẩm đã lưu</h2>
+      ${f.products.length === 0 ? '<p class="empty">Chưa lưu sản phẩm nào.</p>' : f.products.map((p) => `<div class="panel addr"><div><a href="/san-pham/${esc(p.id)}"><b>${esc(p.name)}</b></a> <span class="muted">${esc(price(p))}${p.unit ? '/' + esc(p.unit) : ''}</span><br><span class="muted">${esc(p.supplier)}${p.province ? ' · ' + esc(p.province) : ''}</span></div><button class="btn sm" data-unprod="${esc(p.id)}">Bỏ lưu</button></div>`).join('')}`);
+    const un = (attr: string, kind: string) => app.querySelectorAll<HTMLElement>(`[${attr}]`).forEach((b) => b.addEventListener('click', async () => {
+      try { await call('toggle_favorite', { p_kind: kind, p_ref: b.getAttribute(attr), p_on: false }); void favTab(); } catch (x) { void favTab(note('err', friendly(x))); }
+    }));
+    un('data-unsup', 'supplier'); un('data-unprod', 'product');
+  }
+
+  function passwordTab(msg = '') {
+    shell(`${msg}<form id="pw" class="form"><label>Mật khẩu mới (ít nhất 8 ký tự)<input name="pw" type="password" required minlength="8" maxlength="72" autocomplete="new-password" /></label>
+      <label>Nhập lại mật khẩu mới<input name="pw2" type="password" required minlength="8" maxlength="72" autocomplete="new-password" /></label>
+      <button class="btn solid" type="submit">Đổi mật khẩu</button></form>`);
+    document.getElementById('pw')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = new FormData(e.target as HTMLFormElement);
+      if (d.get('pw') !== d.get('pw2')) { passwordTab(note('err', 'Hai mật khẩu chưa giống nhau.')); return; }
+      try {
+        const { error } = await auth!.auth.updateUser({ password: String(d.get('pw')) });
+        if (error) throw error;
+        passwordTab(note('ok', 'Đã đổi mật khẩu.'));
+      } catch (x) { passwordTab(note('err', friendly(x))); }
+    });
+  }
+  void main();
+</script>
