@@ -116,7 +116,7 @@ import Base from '../../layouts/Base.astro';
     let lic = '';
     body.innerHTML = `<form id="if" class="form mini panel"><h3>Thông tin gian hàng</h3><p id="ierr" class="err" role="alert" hidden></p>
       <label>Tên gian hàng<input name="name" required minlength="2" maxlength="100" value="${esc(s.name)}" /></label>
-      <div class="formgrid"><label>Tỉnh/thành<input name="province" required maxlength="60" value="${esc(s.province)}" /></label><label>Quận/huyện<input name="district" maxlength="60" value="${esc(s.district ?? '')}" /></label></div>
+      <div class="formgrid"><label>Tỉnh/thành<input name="province" required maxlength="60" value="${esc(s.province)}" /></label><label>Quận/huyện (Phường/Xã)<input name="district" maxlength="60" value="${esc(s.district ?? '')}" /></label></div>
       <label>Địa chỉ cửa hàng (chỉ hiện cho người đã đăng nhập)<input name="address" maxlength="200" value="${esc(s.address ?? '')}" /></label>
       <label>Số điện thoại (chỉ hiện cho người đã đăng nhập)<input name="phone" type="tel" maxlength="20" value="${esc(s.phone ?? '')}" /></label>
       <label>Giới thiệu ngắn<textarea name="desc" rows="3" maxlength="500">${esc(s.description ?? '')}</textarea></label>

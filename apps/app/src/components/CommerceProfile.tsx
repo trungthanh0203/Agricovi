@@ -164,7 +164,7 @@ function IntroForm({ p, onSaved }: { p: BizProfile; onSaved: () => Promise<unkno
       <label>Mô tả (ít nhất 20 ký tự)<textarea rows={5} value={f.description} onChange={set('description')} /></label>
       <div className="pair">
         <label>Tỉnh/thành<input value={f.province} onChange={set('province')} /></label>
-        <label>Quận/huyện<input value={f.district} onChange={set('district')} /></label>
+        <label>Quận/huyện (Phường/Xã)<input value={f.district} onChange={set('district')} /></label>
       </div>
       <label>Xã/phường<input value={f.commune} onChange={set('commune')} /></label>
       <label>Địa chỉ hiện công khai đến mức

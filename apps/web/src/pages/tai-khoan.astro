@@ -85,7 +85,7 @@ import Base from '../layouts/Base.astro';
       <label>Người nhận<input name="recipient" required minlength="2" maxlength="80" value="${esc(a.recipient ?? '')}" /></label>
       <label>Số điện thoại người nhận<input name="phone" type="tel" required maxlength="20" value="${esc(a.phone ?? '')}" /></label>
       <label>Tỉnh/thành<input name="province" required maxlength="60" value="${esc(a.province ?? '')}" /></label>
-      <label>Quận/huyện<input name="district" maxlength="60" value="${esc(a.district ?? '')}" /></label>
+      <label>Quận/huyện (Phường/Xã)<input name="district" maxlength="60" value="${esc(a.district ?? '')}" /></label>
       <label>Địa chỉ cụ thể<input name="address" required minlength="3" maxlength="200" value="${esc(a.address ?? '')}" /></label></div>
       <label class="ck2" style="display:flex;gap:8px;font-weight:400"><input type="checkbox" name="def" style="width:auto"${a.is_default ? ' checked' : ''} /> Đặt làm địa chỉ mặc định</label>
       <div><button class="btn solid" type="submit">Lưu</button> <button class="btn" type="button" id="cancel">Hủy</button></div></form>`;
