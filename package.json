@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "dev:app": "npm run dev -w @agriconnect/app",
+    "deploy:app": "node node_modules/wrangler/bin/wrangler.js deploy --config apps/app/wrangler.jsonc",
     "dev:admin": "npm run dev -w @agriconnect/admin",
     "dev:webadmin": "npm run dev -w @agriconnect/webadmin",
     "dev:web": "npm run dev -w @agriconnect/web",

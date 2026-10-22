@@ -41,7 +41,7 @@ Lỗi này do lệnh `npx wrangler deploy` chạy ở gốc kho mà không có t
 |---|---|
 | Root directory | để **trống** (gốc kho) |
 | Build command | `npm ci && npm run build -w @agriconnect/app` |
-| Deploy command | `npx wrangler deploy --config apps/app/wrangler.jsonc` |
+| Deploy command | `npm run deploy:app` |
 
 Lưu ý với Workers Builds:
 - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` và `NODE_VERSION=22` phải khai ở **Build variables and secrets** (biến dùng lúc build), không phải biến lúc chạy. Khai nhầm chỗ thì app build ra sẽ báo "chưa cấu hình Supabase".
@@ -183,3 +183,5 @@ Quyền: quản trị viên nền tảng (bảng `platform_admins`) luôn đủ 
 3. Supabase → **Authentication → Providers → Email**: đăng ký bằng email thường bật *Confirm email*. Dịch vụ thư có sẵn của Supabase bị giới hạn số thư mỗi giờ (rất thấp), nên khi mở thật cần cấu hình SMTP riêng (**Authentication → SMTP Settings**). Khi thử nội bộ có thể tạm tắt *Confirm email* để đăng ký xong vào luôn.
 4. Tài khoản nhân viên (số điện thoại do chủ cơ sở tạo) không đăng nhập được website (CSDL chặn); chủ cơ sở đăng nhập website bằng email tài khoản app.
 5. Đăng ký bằng số điện thoại chưa xác minh OTP và chưa tự đặt lại mật khẩu được; chống lạm dụng hiện là giới hạn 200 đăng ký/giờ ở CSDL, sẽ thêm Turnstile khi có khóa.
+
+**Lệnh deploy của app (D68):** dùng `npm run deploy:app` (script ở gốc kho gọi thẳng `node node_modules/wrangler/bin/wrangler.js deploy --config apps/app/wrangler.jsonc`, không phụ thuộc việc `npx` có tìm thấy `wrangler` hay không; `wrangler` nằm trong devDependencies ở gốc kho). Lệnh cũ `npx wrangler deploy --config apps/app/wrangler.jsonc` từng báo `wrangler: not found` trên Cloudflare sau khi dự án thêm nhiều gói.
