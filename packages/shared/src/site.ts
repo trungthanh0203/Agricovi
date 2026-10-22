@@ -233,7 +233,7 @@ export function parseBody(text: string): Block[] {
 export interface HomeBlock { id: string; on: boolean }
 export const HOME_BLOCK_LABEL: Record<string, string> = {
   giao_thuong: 'Giao thương',
-  nha_cung_cap: 'Khám phá nhà cung cấp',
+  nha_cung_cap: 'Nhà cung cấp sản phẩm',
   dang_co_hang: 'Đang có hàng',
   trai_cay: 'Trái cây',
   rau_cu_qua: 'Rau củ quả',

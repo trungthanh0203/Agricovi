@@ -1,0 +1,73 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base title="Mở gian hàng vật tư — AgriConnect" noindex cache={false}>
+  <div class="prose">
+    <h1>Mở gian hàng vật tư</h1>
+    <div id="app"><p class="muted">Đang tải…</p></div>
+    <template id="tpl">
+      <p class="muted">Dành cho đại lý, nhà phân phối vật tư nông nghiệp (phân bón, dinh dưỡng, chế phẩm sinh học, giống, phụ kiện, thiết bị). Chưa nhận thuốc bảo vệ thực vật, thuốc thú y. Gian hàng được <b>kiểm duyệt trước khi hoạt động</b>; vật tư đăng lên cũng được duyệt.</p>
+      <form id="sf" class="form mini">
+        <p id="msg" class="err" role="alert" hidden></p>
+        <label>Tên gian hàng<input name="name" required minlength="2" maxlength="100" placeholder="Ví dụ: Đại lý Phân bón Hòa Bình" /></label>
+        <div class="formgrid">
+          <label>Tỉnh/thành<input name="province" required maxlength="60" /></label>
+          <label>Quận/huyện<input name="district" maxlength="60" /></label>
+        </div>
+        <label>Địa chỉ cửa hàng (chỉ hiện cho người đã đăng nhập)<input name="address" maxlength="200" /></label>
+        <label>Số điện thoại liên hệ (chỉ hiện cho người đã đăng nhập)<input name="phone" type="tel" maxlength="20" /></label>
+        <label>Giới thiệu ngắn (không ghi số điện thoại, email, đường dẫn)<textarea name="desc" rows="3" maxlength="500"></textarea></label>
+        <fieldset style="border:1px solid var(--line);border-radius:10px;padding:8px 12px"><legend>Giấy phép kinh doanh</legend>
+          <label>Số giấy phép / mã số đăng ký kinh doanh<input name="license" required minlength="3" maxlength="60" /></label>
+          <label>Nơi cấp<input name="issuer" maxlength="120" /></label>
+          <label>Ảnh giấy phép (nên có, giúp duyệt nhanh; chỉ kiểm duyệt viên xem)<input type="file" id="lic" accept="image/*" /></label>
+          <div id="prev"></div>
+        </fieldset>
+        <p class="muted">Bằng việc gửi, bạn cam kết thông tin đúng và đồng ý <a href="/quy-che-hoat-dong" target="_blank">Quy chế hoạt động</a>. Vi phạm có thể bị ẩn vật tư hoặc tạm khóa gian hàng.</p>
+        <button class="btn solid" type="submit" id="go">Gửi đăng ký gian hàng</button>
+      </form>
+    </template>
+  </div>
+</Base>
+
+<script>
+  import { call, friendly, loadAccount, session } from '../../lib/auth';
+  import { esc } from '../../lib/db';
+  import { smallImage } from '../../lib/image';
+
+  const app = document.getElementById('app')!;
+  let license = '';
+  async function main() {
+    if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent('/gian-hang-vat-tu/mo/')); return; }
+    let acc;
+    try { acc = await loadAccount(); } catch (e) { app.innerHTML = `<p class="err">${esc(friendly(e))}</p>`; return; }
+    if (acc.material_shop) { location.replace('/gian-hang-vat-tu/quan-ly/'); return; }
+    if (acc.profile?.login_kind !== 'email' || acc.email_verified === false) {
+      app.innerHTML = `<div class="panel"><b>Cần tài khoản email đã xác nhận để mở gian hàng.</b><p class="muted">${acc.profile?.login_kind === 'phone' ? 'Tài khoản đăng ký bằng số điện thoại chưa mở được gian hàng. Hãy đăng ký thêm tài khoản bằng email.' : 'Hãy mở thư xác nhận chúng tôi đã gửi tới email của bạn, rồi tải lại trang.'}</p></div>`;
+      return;
+    }
+    app.innerHTML = '';
+    app.appendChild((document.getElementById('tpl') as HTMLTemplateElement).content.cloneNode(true));
+    const f = document.getElementById('sf') as HTMLFormElement;
+    const msg = document.getElementById('msg')!;
+    document.getElementById('lic')!.addEventListener('change', async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      msg.hidden = true;
+      try { license = await smallImage(file, 900, 120_000); document.getElementById('prev')!.innerHTML = `<img src="${license}" alt="" style="max-width:240px;border-radius:8px" />`; } catch (x) { msg.textContent = friendly(x); msg.hidden = false; }
+    });
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const go = document.getElementById('go') as HTMLButtonElement;
+      msg.hidden = true; go.disabled = true; go.textContent = 'Đang gửi…';
+      const d = new FormData(f);
+      try {
+        await call('open_material_shop', { p_name: d.get('name'), p_province: d.get('province'), p_district: d.get('district'), p_address: d.get('address'), p_description: d.get('desc'),
+          p_phone: d.get('phone'), p_license_no: d.get('license'), p_license_issuer: d.get('issuer'), p_license_image: license || null });
+        await loadAccount();
+        location.assign('/gian-hang-vat-tu/quan-ly/?moi=1');
+      } catch (x) { msg.textContent = friendly(x); msg.hidden = false; go.disabled = false; go.textContent = 'Gửi đăng ký gian hàng'; msg.scrollIntoView({ block: 'center' }); }
+    });
+  }
+  void main();
+</script>

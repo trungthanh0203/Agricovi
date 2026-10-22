@@ -1,0 +1,58 @@
+---
+import Base from '../../layouts/Base.astro';
+import MaterialCard from '../../components/MaterialCard.astro';
+import { loadMaterials, loadShops } from '../../lib/catalog';
+
+// Trang công khai của gian hàng vật tư: chỉ phần công khai (tên, giới thiệu, khu vực, vật tư đã duyệt). Điện thoại, địa chỉ chỉ hiện sau đăng nhập.
+const slug = Astro.params.slug ?? '';
+const shop = (await loadShops()).find((s) => s.slug === slug) ?? null;
+if (!shop) Astro.response.status = 404;
+const items = shop ? (await loadMaterials()).filter((m) => m.shopId === shop.id) : [];
+---
+{shop ? (
+  <Base title={`${shop.name} — Gian hàng vật tư`} description={(shop.description || `Gian hàng vật tư ${shop.name} tại ${shop.province}`).slice(0, 200)}>
+    <p class="crumbs"><a href="/">Trang chủ</a> › <a href="/vat-tu/">Vật tư</a> › {shop.name}</p>
+    <div class="two">
+      <div>
+        <h1>{shop.name}</h1>
+        <p class="muted">📍 {[shop.district, shop.province].filter(Boolean).join(', ')}{shop.verified && <> · <span class="stat ok">Đã kiểm tra giấy phép</span></>}</p>
+        {shop.description && <p style="white-space:pre-line">{shop.description}</p>}
+        <h2>Vật tư ({items.length})</h2>
+        {items.length === 0 && <p class="empty">Gian hàng chưa có vật tư nào được hiển thị.</p>}
+        <div class="pgrid">{items.map((m) => <MaterialCard m={m} />)}</div>
+      </div>
+      <aside>
+        <div class="panel">
+          <b>Liên hệ</b>
+          <div id="contact"><p class="muted">Số điện thoại và địa chỉ cửa hàng chỉ hiện cho người đã đăng nhập.</p><p><button class="btn solid" id="seeContact" data-slug={shop.slug}>Xem liên hệ</button></p></div>
+          <p class="muted">Muốn hỏi giá? Mở một vật tư của gian hàng và bấm "Yêu cầu báo giá".</p>
+          <p><button type="button" class="btn sm danger" id="repShop" data-shop={shop.id}>Báo cáo gian hàng</button></p>
+        </div>
+      </aside>
+    </div>
+  </Base>
+) : (
+  <Base title="Không tìm thấy gian hàng — AgriConnect" noindex cache={false}>
+    <div class="panel" style="max-width:640px;margin:32px auto;text-align:center"><h1>Không tìm thấy gian hàng</h1><p class="muted">Gian hàng không còn hoạt động hoặc địa chỉ chưa đúng.</p><p><a class="btn solid" href="/vat-tu/">Xem vật tư</a></p></div>
+  </Base>
+)}
+
+<script>
+  import { call, friendly, session } from '../../lib/auth';
+  import { esc } from '../../lib/db';
+  const needLogin = () => location.assign('/dang-nhap/?next=' + encodeURIComponent(location.pathname));
+  document.getElementById('seeContact')?.addEventListener('click', async (e) => {
+    if (!(await session())) { needLogin(); return; }
+    const box = document.getElementById('contact')!;
+    try {
+      const c = await call<{ phone: string | null; address: string | null; province: string; district: string | null } | null>('get_shop_contact', { p_slug: (e.currentTarget as HTMLElement).dataset.slug });
+      box.innerHTML = c ? `<p style="margin:.4em 0">${c.phone ? `📞 <a href="tel:${esc(c.phone)}">${esc(c.phone)}</a><br>` : ''}${c.address ? `📍 ${esc([c.address, c.district, c.province].filter(Boolean).join(', '))}` : ''}${!c.phone && !c.address ? '<span class="muted">Gian hàng chưa khai báo liên hệ.</span>' : ''}</p>` : '<p class="muted">Không lấy được liên hệ.</p>';
+    } catch (x) { box.innerHTML = `<p class="err">${esc(friendly(x))}</p>`; }
+  });
+  document.getElementById('repShop')?.addEventListener('click', async (e) => {
+    if (!(await session())) { needLogin(); return; }
+    const r = prompt('Vì sao bạn báo cáo gian hàng này? (ít nhất 5 ký tự)');
+    if (!r) return;
+    try { await call('report_abuse', { p_type: 'shop', p_id: (e.currentTarget as HTMLElement).dataset.shop, p_reason: r }); alert('Đã gửi báo cáo. Cảm ơn bạn.'); } catch (x) { alert(friendly(x)); }
+  });
+</script>

@@ -12,6 +12,7 @@ export interface WebAccount {
   staff: boolean; user_id?: string; email: string | null; email_verified?: boolean;
   profile: { full_name: string; buyer_kind: string; company: string | null; tax_code: string | null; phone: string | null; login_kind: string; status: string } | null;
   orgs?: { org_id: string; name: string; type: string; is_owner: boolean }[];
+  material_shop?: { id: string; name: string; slug: string; status: string } | null;
 }
 
 export const BUYER_KIND_LABEL: Record<string, string> = {
@@ -54,6 +55,7 @@ export async function loadAccount(): Promise<WebAccount> {
     throw new Error('Tài khoản nhân viên không dùng website. Hãy dùng ứng dụng AgriConnect.');
   }
   if (!acc.profile) acc = await call<WebAccount>('ensure_buyer_profile');
+  rememberShops(acc);
   return acc;
 }
 
@@ -67,12 +69,12 @@ export async function signIn(ident: string, password: string): Promise<WebAccoun
 
 export interface Reg { mode: 'email' | 'phone'; ident: string; password: string; fullName: string; kind: string; company: string }
 /** Trả về 'ready' (đã đăng nhập) hoặc 'confirm' (cần mở thư xác nhận email) */
-export async function register(r: Reg): Promise<'ready' | 'confirm'> {
+export async function register(r: Reg, redirectPath = '/tai-khoan/'): Promise<'ready' | 'confirm'> {
   if (!auth || !url || !key) throw new Error('Website chưa được cấu hình kết nối dữ liệu.');
   if (r.mode === 'email') {
     const { data, error } = await auth.auth.signUp({
       email: r.ident.trim(), password: r.password,
-      options: { data: { full_name: r.fullName.trim(), buyer_kind: r.kind, company: r.company.trim() }, emailRedirectTo: `${location.origin}/tai-khoan/` },
+      options: { data: { full_name: r.fullName.trim(), buyer_kind: r.kind, company: r.company.trim() }, emailRedirectTo: `${location.origin}${redirectPath}` },
     });
     if (error) throw error;
     if (!data.session) return 'confirm';
@@ -89,7 +91,14 @@ export async function register(r: Reg): Promise<'ready' | 'confirm'> {
   return 'ready';
 }
 
-export async function signOut(): Promise<void> { await auth?.auth.signOut(); }
+/** Ghi nhớ ở máy người dùng có gian hàng nào (chỉ để menu trên cùng quyết định hiện liên kết; quyền thật luôn kiểm ở máy chủ) */
+function rememberShops(acc: WebAccount): void {
+  try { localStorage.setItem('agriconnect-acc', JSON.stringify({ org: (acc.orgs?.length ?? 0) > 0, mat: Boolean(acc.material_shop) })); } catch { /* bỏ qua */ }
+}
+export async function signOut(): Promise<void> {
+  try { localStorage.removeItem('agriconnect-acc'); } catch { /* bỏ qua */ }
+  await auth?.auth.signOut();
+}
 export async function session(): Promise<Session | null> { return auth ? (await auth.auth.getSession()).data.session : null; }
 /** Đường dẫn quay lại sau đăng nhập: chỉ nhận đường dẫn nội bộ */
 export function nextUrl(): string {

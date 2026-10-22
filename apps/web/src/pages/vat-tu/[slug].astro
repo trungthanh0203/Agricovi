@@ -20,7 +20,7 @@ const jsonLd = m ? JSON.stringify({ '@context': 'https://schema.org', '@type': '
         <div class="facts">
           {m.brand && <div><b>Thương hiệu</b>{m.brand}</div>}
           {m.unit && <div><b>Đơn vị</b>{m.unit}</div>}
-          {m.distributor && <div><b>Nhà phân phối</b>{m.distributor}</div>}
+          {m.shopName ? <div><b>Bán bởi gian hàng</b><a href={`/gian-hang-vat-tu/${m.shopSlug}`}>{m.shopName}</a></div> : (m.distributor && <div><b>Nhà phân phối</b>{m.distributor}</div>)}
         </div>
         {m.ingredients && <div class="panel"><b>Thành phần</b><p style="white-space:pre-line;margin:.3em 0 0">{m.ingredients}</p></div>}
         {m.usage && <div class="panel"><b>Hướng dẫn sử dụng</b><p style="white-space:pre-line;margin:.3em 0 0">{m.usage}</p></div>}
@@ -31,6 +31,7 @@ const jsonLd = m ? JSON.stringify({ '@context': 'https://schema.org', '@type': '
           <p class="bigprice">{priceText(m.priceFrom, m.priceNote, m.unit)}</p>
           <p class="muted">Giá tham khảo; giá chính thức theo báo giá.</p>
           <p><a class="btn solid" style="width:100%;text-align:center" href={`/bao-gia/?loai=material&ma=${encodeURIComponent(m.slug)}`}>Yêu cầu báo giá</a></p>
+          {m.shopId && <p><button type="button" class="btn sm danger" id="rep" data-mat={m.id}>Báo cáo vật tư này</button></p>}
         </div>
       </aside>
     </div>
@@ -43,3 +44,13 @@ const jsonLd = m ? JSON.stringify({ '@context': 'https://schema.org', '@type': '
     </div>
   </Base>
 )}
+
+<script>
+  import { call, friendly, session } from '../../lib/auth';
+  document.getElementById('rep')?.addEventListener('click', async (e) => {
+    if (!(await session())) { location.assign('/dang-nhap/?next=' + encodeURIComponent(location.pathname)); return; }
+    const r = prompt('Vì sao bạn báo cáo vật tư này? (ít nhất 5 ký tự)');
+    if (!r) return;
+    try { await call('report_abuse', { p_type: 'material', p_id: (e.currentTarget as HTMLElement).dataset.mat, p_reason: r }); alert('Đã gửi báo cáo. Cảm ơn bạn.'); } catch (x) { alert(friendly(x)); }
+  });
+</script>

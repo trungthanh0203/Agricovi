@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import type { Session } from '@supabase/supabase-js';
 import { clean, rpc, supabase } from '@agriconnect/admin-kit';
 import { SiteAuditPage, SiteHomePage, SiteOverviewPage, SiteUsersPage } from './extras';
+import { SiteShopMaterialsPage, SiteShopsPage } from './shops';
 import { SiteReportsPage, SiteTradePage } from './trade';
 import { PublicCyclesPage, ReviewsPage } from './reviews';
 import { SiteBannersPage, SiteMenusPage, SitePagesPage, SiteRolesPage, SiteSettingsPage } from './site';
@@ -30,6 +31,8 @@ const PAGES: PageDef[] = [
   { id: 'site-categories', label: 'Danh mục sản phẩm', icon: '🗂️', group: 'Sản phẩm' },
   { id: 'site-materials', label: 'Vật tư nông nghiệp', icon: '🌿', group: 'Sản phẩm' },
   { id: 'site-quotes', label: 'Yêu cầu báo giá', icon: '💬', group: 'Tiếp nhận và kiểm duyệt' },
+  { id: 'site-shops', label: 'Gian hàng vật tư', icon: '🏪', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true, modOk: true },
+  { id: 'site-shopmat', label: 'Duyệt vật tư gian hàng', icon: '🧪', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true, modOk: true },
   { id: 'site-trade', label: 'Duyệt tin giao thương', icon: '🤝', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true, modOk: true },
   { id: 'site-reports', label: 'Báo cáo vi phạm', icon: '🚩', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true, modOk: true },
   { id: 'site-users', label: 'Người dùng website', icon: '🙋', group: 'Tiếp nhận và kiểm duyệt', chiefOnly: true },
@@ -106,6 +109,8 @@ function Admin({ session, roles }: { session: Session; roles: string[] }) {
         {page === 'site-categories' && <SiteCategoriesPage roles={roles} />}
         {page === 'site-materials' && <SiteMaterialsPage roles={roles} />}
         {page === 'site-quotes' && <SiteQuotesPage />}
+        {page === 'site-shops' && (isChief || isMod) && <SiteShopsPage />}
+        {page === 'site-shopmat' && (isChief || isMod) && <SiteShopMaterialsPage />}
         {page === 'site-trade' && (isChief || isMod) && <SiteTradePage />}
         {page === 'site-reports' && (isChief || isMod) && <SiteReportsPage />}
         {page === 'site-users' && isChief && <SiteUsersPage />}

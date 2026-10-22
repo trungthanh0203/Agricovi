@@ -97,20 +97,34 @@ export function priceText(priceFrom: number | null, priceNote: string, unit: str
 // ------------------------------------------------------------------ vật tư (quản trị viên nhập)
 export interface Material {
   id: string; slug: string; name: string; brand: string; summary: string; ingredients: string; usage: string; safety: string; unit: string;
-  priceFrom: number | null; priceNote: string; distributor: string; image: string; categoryId: string | null;
+  priceFrom: number | null; priceNote: string; distributor: string; image: string; categoryId: string | null; shopId: string | null; shopSlug: string; shopName: string;
 }
-const MAT_COLS = 'id, slug, name, brand, summary, ingredients, usage, safety, unit, price_from, price_note, distributor, image, category_id';
+
+/** Gian hàng vật tư đang hoạt động (phần công khai) */
+export interface Shop { id: string; slug: string; name: string; description: string; province: string; district: string; verified: boolean }
+export const loadShops = (): Promise<Shop[]> => cached('shops', async () => {
+  if (!sb) return [];
+  const { data, error } = await sb.from('public_material_shops').select('id, slug, name, description, province, district, license_verified').order('name').limit(500);
+  if (error) return [];
+  return (data ?? []).map((r) => ({ id: r.id as string, slug: r.slug as string, name: r.name as string, description: (r.description as string | null) ?? '', province: r.province as string, district: (r.district as string | null) ?? '', verified: Boolean(r.license_verified) }));
+}, [] as Shop[]);
+const MAT_COLS = 'id, slug, name, brand, summary, ingredients, usage, safety, unit, price_from, price_note, distributor, image, category_id, shop_id';
 function toMaterial(r: Record<string, unknown>): Material {
   const t = (k: string) => (typeof r[k] === 'string' ? (r[k] as string) : '');
   return { id: t('id'), slug: t('slug'), name: t('name'), brand: t('brand'), summary: t('summary'), ingredients: t('ingredients'), usage: t('usage'), safety: t('safety'), unit: t('unit'),
-    priceFrom: r.price_from == null ? null : Number(r.price_from), priceNote: t('price_note'), distributor: t('distributor'), image: img(r.image), categoryId: (r.category_id as string | null) ?? null };
+    priceFrom: r.price_from == null ? null : Number(r.price_from), priceNote: t('price_note'), distributor: t('distributor'), image: img(r.image), categoryId: (r.category_id as string | null) ?? null, shopId: (r.shop_id as string | null) ?? null, shopSlug: '', shopName: '' };
 }
 export const loadMaterials = (): Promise<Material[]> => cached('materials', async () => {
   if (!sb) return [];
   const { data, error } = await sb.from('site_materials').select(MAT_COLS).eq('status', 'published').order('sort_order').order('name').limit(500);
   if (error) return [];
-  return (data ?? []).map((r) => toMaterial(r as Record<string, unknown>));
+  const shops = new Map((await loadShops()).map((s) => [s.id, s]));
+  return (data ?? []).map((r) => withShop(toMaterial(r as Record<string, unknown>), shops));
 }, [] as Material[]);
+function withShop(m: Material, shops: Map<string, Shop>): Material {
+  const s = m.shopId ? shops.get(m.shopId) : undefined;
+  return s ? { ...m, shopSlug: s.slug, shopName: s.name } : m;
+}
 
 // ------------------------------------------------------------------ bài viết, tin hội chợ
 export interface Article {
@@ -141,7 +155,8 @@ export async function loadMaterial(slug: string): Promise<Material | null> {
   if (!sb) return null;
   try {
     const { data, error } = await sb.from('site_materials').select(MAT_COLS).eq('slug', slug).eq('status', 'published').maybeSingle();
-    return error || !data ? null : toMaterial(data as Record<string, unknown>);
+    if (error || !data) return null;
+    return withShop(toMaterial(data as Record<string, unknown>), new Map((await loadShops()).map((s) => [s.id, s])));
   } catch { return null; }
 }
 

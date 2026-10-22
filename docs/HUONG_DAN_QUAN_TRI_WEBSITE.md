@@ -33,6 +33,8 @@ Cả hai dùng chung tài khoản Supabase (cùng email, mật khẩu) nhưng **
 | Sản phẩm | Danh mục sản phẩm | Cây danh mục (không xóa, chỉ tắt "Đang dùng") |
 | | Vật tư nông nghiệp | Nhập tay hoặc nhập từ **CSV** (có tệp mẫu; mọi dòng vào dạng Nháp) |
 | Tiếp nhận và kiểm duyệt | Yêu cầu báo giá | Hàng đợi khách gửi từ website: liên hệ lại, chuyển cho nhà cung cấp, bấm Đã xử lý hoặc Rác |
+| | **Gian hàng vật tư** *(kiểm duyệt viên, tổng biên tập)* | Duyệt gian hàng người bán vật tư tự đăng ký: đối chiếu số giấy phép (và ảnh), duyệt (đánh dấu "Đã kiểm tra giấy phép" nếu đã đối chiếu), từ chối kèm lý do, tạm khóa (vật tư của gian hàng biến khỏi website), mở lại |
+| | **Duyệt vật tư gian hàng** *(kiểm duyệt viên, tổng biên tập)* | Duyệt vật tư gian hàng đăng lần đầu hoặc sửa nội dung; từ chối kèm lý do; ẩn vật tư vi phạm |
 | | **Duyệt tin giao thương** *(kiểm duyệt viên, tổng biên tập)* | Duyệt hoặc từ chối tin người dùng đăng (xem nội dung, ảnh, số tin đã được duyệt của người đăng); ẩn tin vi phạm. Người đã có tin được duyệt sẽ tự được duyệt tin sau |
 | | **Báo cáo vi phạm** *(kiểm duyệt viên, tổng biên tập)* | Xem báo cáo của người dùng; ẩn tin, khóa người đăng hoặc bỏ qua |
 | | Duyệt hồ sơ nhà cung cấp *(quản trị viên)* | Xem trước đúng như website sẽ hiện, duyệt và công khai, yêu cầu sửa, tạm ẩn |

@@ -137,7 +137,7 @@ const CSV_SAMPLE: (string | number | null)[][] = [
 export function SiteMaterialsPage({ roles }: { roles: string[] }) {
   const { data, error, reload } = useLoad(async () => {
     const [m, c] = await Promise.all([
-      supabase!.from('site_materials').select('id, category_id, slug, name, brand, summary, ingredients, usage, safety, unit, price_from, price_note, distributor, image, status, sort_order, version').order('updated_at', { ascending: false }),
+      supabase!.from('site_materials').select('id, category_id, slug, name, brand, summary, ingredients, usage, safety, unit, price_from, price_note, distributor, image, status, sort_order, version').is('shop_id', null).order('updated_at', { ascending: false }),
       supabase!.from('product_categories').select('id, slug, name, branch, parent_id').in('branch', ['vat_tu', 'phu_kien']).eq('restricted', false).order('sort_order'),
     ]);
     if (m.error) throw new Error(m.error.message);

@@ -110,7 +110,7 @@ try {
       </>
     ) : b.id === 'nha_cung_cap' ? (
       <>
-        <div class="sechead"><h2>Khám phá nhà cung cấp dành cho bạn</h2><a href="/danh-ba/">Xem tất cả</a></div>
+        <div class="sechead"><h2>Nhà cung cấp sản phẩm</h2><a href="/danh-ba/">Xem tất cả</a></div>
         {dirError && <p class="err">{dirError}</p>}
         {!dirError && featured.length === 0 && <p class="empty">Chưa có cơ sở nào được công khai.</p>}
         <div class="grid" set:html={featured.join('')} />

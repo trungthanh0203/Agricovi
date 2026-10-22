@@ -1,0 +1,164 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base title="Quản lý gian hàng vật tư — AgriConnect" noindex cache={false}>
+  <div id="app"><p class="muted">Đang tải…</p></div>
+</Base>
+
+<script>
+  import { call, friendly, loadAccount, session, auth } from '../../lib/auth';
+  import { esc } from '../../lib/db';
+  import { smallImage } from '../../lib/image';
+
+  const app = document.getElementById('app')!;
+  interface Shop { id: string; slug: string; name: string; description: string | null; province: string; district: string | null; address: string | null; phone: string | null; license_no: string; license_issuer: string | null;
+    license_verified: boolean; has_license_image: boolean; status: string; review_note: string | null }
+  interface Mat { id: string; slug: string; name: string; brand: string | null; unit: string | null; price_from: number | null; price_note: string | null; status: string; hidden_by: string | null; review_note: string | null; category_id: string | null; has_image: boolean; updated_at: string }
+  interface Quote { id: string; target_name: string | null; sender_name: string; sender_phone: string | null; sender_email: string | null; quantity_note: string | null; message: string; status: string; note: string | null; created_at: string }
+  interface Cat { id: string; parent_id: string | null; name: string }
+  const SHOP_ST: Record<string, [string, string]> = { pending: ['Chờ kiểm duyệt', 'warn'], active: ['Đang hoạt động', 'ok'], rejected: ['Chưa được duyệt', 'bad'], suspended: ['Tạm khóa', 'bad'] };
+  const MAT_ST: Record<string, [string, string]> = { draft: ['Nháp', ''], review: ['Chờ duyệt', 'warn'], published: ['Đang hiển thị', 'ok'], hidden: ['Đã ẩn', 'bad'] };
+  let tab = ['vat-tu', 'thong-tin', 'bao-gia'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'vat-tu';
+  let cats: Cat[] = [];
+  const note = (cls: string, t: string) => `<p class="${cls}" role="${cls === 'err' ? 'alert' : 'status'}">${esc(t)}</p>`;
+  const money = (n: number | null) => (n == null ? '' : Math.round(n).toLocaleString('vi-VN') + 'đ');
+
+  async function main() {
+    if (!(await session())) { location.replace('/dang-nhap/?next=' + encodeURIComponent('/gian-hang-vat-tu/quan-ly/')); return; }
+    let acc;
+    try { acc = await loadAccount(); } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
+    if (!acc.material_shop) { app.innerHTML = '<h1>Gian hàng vật tư</h1><p class="empty">Bạn chưa có gian hàng vật tư. <a class="btn solid" href="/gian-hang-vat-tu/mo/">Đăng ký gian hàng</a></p>'; return; }
+    const { data } = await auth!.from('product_categories').select('id, parent_id, name, branch, restricted, sort_order').in('branch', ['vat_tu', 'phu_kien']).eq('restricted', false).order('sort_order');
+    cats = (data ?? []) as Cat[];
+    window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['vat-tu', 'thong-tin', 'bao-gia'].includes(h)) { tab = h; void render(); } });
+    await render(new URLSearchParams(location.search).get('moi') ? note('ok', 'Đã gửi đăng ký. Kiểm duyệt viên sẽ xem xét giấy phép và thông tin gian hàng; bạn sẽ nhận thông báo khi được duyệt.') : '');
+  }
+
+  async function render(msg = '', editing: { id: string | null } | null = null) {
+    let st: { shop: Shop; materials: Mat[]; quotes_new: number };
+    try { st = await call<typeof st>('my_material_shop'); } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
+    const s = st.shop;
+    const [stLabel, stCls] = SHOP_ST[s.status] ?? [s.status, ''];
+    const banner = s.status === 'pending' ? note('ok', 'Gian hàng đang chờ kiểm duyệt. Khi được duyệt bạn mới đăng được vật tư.')
+      : s.status === 'rejected' ? note('err', 'Gian hàng chưa được duyệt' + (s.review_note ? ': ' + s.review_note : '') + '. Hãy cập nhật giấy phép ở mục Thông tin gian hàng để gửi duyệt lại.')
+      : s.status === 'suspended' ? note('err', 'Gian hàng đang bị tạm khóa' + (s.review_note ? ': ' + s.review_note : '') + '. Vật tư không hiển thị. Liên hệ quản trị để được hỗ trợ.') : '';
+    app.innerHTML = `<h1>${esc(s.name)}</h1>
+      <p><span class="stat ${stCls}">${esc(stLabel)}</span>${s.license_verified ? ' <span class="stat ok">Đã kiểm tra giấy phép</span>' : ''}${s.status === 'active' ? ` · <a href="/gian-hang-vat-tu/${encodeURIComponent(s.slug)}">Xem gian hàng trên website</a>` : ''}</p>
+      ${banner}${msg}
+      <div class="tabs"><a href="#vat-tu" class="${tab === 'vat-tu' ? 'on' : ''}">Vật tư (${st.materials.length})</a><a href="#thong-tin" class="${tab === 'thong-tin' ? 'on' : ''}">Thông tin gian hàng</a><a href="#bao-gia" class="${tab === 'bao-gia' ? 'on' : ''}">Yêu cầu báo giá${st.quotes_new ? ` (${st.quotes_new} mới)` : ''}</a></div>
+      <div id="body"></div>`;
+    const body = document.getElementById('body')!;
+    if (tab === 'vat-tu') await materialsTab(body, s, st.materials, editing);
+    else if (tab === 'thong-tin') infoTab(body, s);
+    else await quotesTab(body);
+  }
+
+  const catOptions = (sel: string | null) => cats.filter((c) => !c.parent_id).map((top) => {
+    const kids = cats.filter((c) => c.parent_id === top.id);
+    return kids.length ? `<optgroup label="${esc(top.name)}">${kids.map((k) => `<option value="${esc(k.id)}"${k.id === sel ? ' selected' : ''}>${esc(k.name)}</option>`).join('')}</optgroup>` : `<option value="${esc(top.id)}"${top.id === sel ? ' selected' : ''}>${esc(top.name)}</option>`;
+  }).join('');
+
+  async function materialsTab(body: HTMLElement, s: Shop, mats: Mat[], editing: { id: string | null } | null) {
+    if (editing) {
+      let cur: Record<string, string | number | null> = {};
+      if (editing.id) { try { cur = await call('shop_get_material', { p_id: editing.id }); } catch (e) { body.innerHTML = note('err', friendly(e)); return; } }
+      let image = (cur.image as string | null) ?? '';
+      body.innerHTML = `<form id="mf" class="form mini panel"><h3>${editing.id ? 'Sửa vật tư' : 'Thêm vật tư'}</h3><p id="merr" class="err" role="alert" hidden></p>
+        ${editing.id && cur.status === 'published' ? '<p class="muted">Vật tư đang hiển thị: sửa <b>giá, đơn vị</b> áp dụng ngay; sửa tên, mô tả, thành phần, hướng dẫn, ảnh, danh mục sẽ <b>phải duyệt lại</b> (tạm ẩn tới khi duyệt).</p>' : ''}
+        <label>Tên vật tư<input name="name" required minlength="2" maxlength="160" value="${esc(String(cur.name ?? ''))}" /></label>
+        <label>Danh mục<select name="cat" required><option value="">— Chọn —</option>${catOptions((cur.category_id as string | null) ?? null)}</select></label>
+        <div class="formgrid"><label>Thương hiệu<input name="brand" maxlength="80" value="${esc(String(cur.brand ?? ''))}" /></label><label>Đơn vị bán<input name="unit" maxlength="30" placeholder="kg, bao, chai…" value="${esc(String(cur.unit ?? ''))}" /></label>
+          <label>Giá "từ" (đồng)<input name="price" inputmode="numeric" value="${cur.price_from ? esc(String(Math.round(Number(cur.price_from)))) : ''}" /></label><label>Hoặc ghi chữ<input name="pnote" maxlength="120" placeholder="Liên hệ báo giá" value="${esc(String(cur.price_note ?? ''))}" /></label></div>
+        <label>Mô tả ngắn<input name="summary" maxlength="300" value="${esc(String(cur.summary ?? ''))}" /></label>
+        <label>Thành phần<textarea name="ingr" rows="2" maxlength="500">${esc(String(cur.ingredients ?? ''))}</textarea></label>
+        <label>Hướng dẫn sử dụng<textarea name="usage" rows="3" maxlength="1500">${esc(String(cur.usage ?? ''))}</textarea></label>
+        <label>Lưu ý an toàn<textarea name="safety" rows="2" maxlength="800">${esc(String(cur.safety ?? ''))}</textarea></label>
+        <label>Ảnh (1 ảnh, tự thu nhỏ)<input type="file" id="mimg" accept="image/*" /></label><div id="mprev">${image ? `<img src="${esc(image)}" alt="" style="max-width:160px;border-radius:8px" />` : ''}</div>
+        <p class="muted">Không ghi số điện thoại, email, đường dẫn trong nội dung. Chưa nhận thuốc bảo vệ thực vật, thuốc thú y.</p>
+        <div><button class="btn solid" type="submit" data-submit="1">Lưu và gửi duyệt</button> <button class="btn" type="submit" data-submit="">Lưu nháp</button> <button class="btn" type="button" id="mcancel">Hủy</button></div></form>`;
+      document.getElementById('mcancel')!.addEventListener('click', () => void render());
+      document.getElementById('mimg')!.addEventListener('change', async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+        try { image = await smallImage(file, 640, 90_000); document.getElementById('mprev')!.innerHTML = `<img src="${image}" alt="" style="max-width:160px;border-radius:8px" />`; } catch (x) { const m = document.getElementById('merr')!; m.textContent = friendly(x); m.hidden = false; }
+      });
+      document.getElementById('mf')!.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = e.target as HTMLFormElement; const d = new FormData(f);
+        const submit = (e as SubmitEvent).submitter?.getAttribute('data-submit') === '1';
+        const price = String(d.get('price') ?? '').replace(/[^0-9]/g, '');
+        try {
+          const r = await call<{ status: string }>('shop_save_material', { p_id: editing.id, p_category: d.get('cat') || null, p_name: d.get('name'), p_brand: d.get('brand'), p_summary: d.get('summary'), p_ingredients: d.get('ingr'),
+            p_usage: d.get('usage'), p_safety: d.get('safety'), p_unit: d.get('unit'), p_price_from: price ? Number(price) : null, p_price_note: d.get('pnote'), p_image: image || null, p_submit: submit });
+          await render(note('ok', r.status === 'review' ? 'Đã lưu và gửi duyệt. Vật tư hiển thị sau khi được duyệt.' : r.status === 'published' ? 'Đã lưu (giá/đơn vị áp dụng ngay).' : 'Đã lưu nháp.'));
+        } catch (x) { const m = document.getElementById('merr')!; m.textContent = friendly(x); m.hidden = false; m.scrollIntoView({ block: 'center' }); }
+      });
+      return;
+    }
+    body.innerHTML = `${s.status === 'active' ? '<p><button class="btn solid sm" id="addm">+ Thêm vật tư</button></p>' : ''}
+      ${mats.length === 0 ? '<p class="empty">Chưa có vật tư nào.</p>' : `<table class="tbl2"><thead><tr><th>Vật tư</th><th>Giá</th><th>Trạng thái</th><th></th></tr></thead><tbody>${mats.map((m) => {
+        const [l, c] = MAT_ST[m.status] ?? [m.status, ''];
+        return `<tr><td><b>${esc(m.name)}</b>${m.brand ? `<br><span class="muted">${esc(m.brand)}</span>` : ''}${m.review_note ? `<br><span class="muted">Ghi chú kiểm duyệt: ${esc(m.review_note)}</span>` : ''}</td>
+          <td>${esc(m.price_from ? 'Từ ' + money(m.price_from) + (m.unit ? '/' + m.unit : '') : m.price_note ?? '')}</td><td><span class="stat ${c}">${esc(l)}</span>${m.hidden_by === 'staff' ? '<br><small class="muted">Bị kiểm duyệt ẩn</small>' : ''}</td>
+          <td><button class="btn sm" data-edit="${esc(m.id)}">Sửa</button>
+            ${m.status === 'draft' ? `<button class="btn sm solid" data-act="submit" data-id="${esc(m.id)}">Gửi duyệt</button> <button class="btn sm danger" data-del="${esc(m.id)}">Xóa</button>` : ''}
+            ${m.status === 'review' ? `<button class="btn sm" data-act="withdraw" data-id="${esc(m.id)}">Rút lại</button>` : ''}
+            ${m.status === 'published' ? `<button class="btn sm" data-act="hide" data-id="${esc(m.id)}">Ẩn</button> <a class="btn sm" href="/vat-tu/${esc(m.slug)}">Xem</a>` : ''}
+            ${m.status === 'hidden' && m.hidden_by === 'owner' ? `<button class="btn sm solid" data-act="show" data-id="${esc(m.id)}">Hiện lại</button>` : ''}</td></tr>`;
+      }).join('')}</tbody></table>`}`;
+    document.getElementById('addm')?.addEventListener('click', () => void render('', { id: null }));
+    body.querySelectorAll<HTMLElement>('[data-edit]').forEach((b) => b.addEventListener('click', () => void render('', { id: b.dataset.edit ?? null })));
+    body.querySelectorAll<HTMLElement>('[data-act]').forEach((b) => b.addEventListener('click', async () => { try { await call('shop_set_material_status', { p_id: b.dataset.id, p_action: b.dataset.act }); await render(note('ok', 'Đã cập nhật.')); } catch (x) { await render(note('err', friendly(x))); } }));
+    body.querySelectorAll<HTMLElement>('[data-del]').forEach((b) => b.addEventListener('click', async () => { if (!confirm('Xóa vật tư nháp này?')) return; try { await call('shop_delete_material', { p_id: b.dataset.del }); await render(note('ok', 'Đã xóa.')); } catch (x) { await render(note('err', friendly(x))); } }));
+  }
+
+  function infoTab(body: HTMLElement, s: Shop) {
+    let lic = '';
+    body.innerHTML = `<form id="if" class="form mini panel"><h3>Thông tin gian hàng</h3><p id="ierr" class="err" role="alert" hidden></p>
+      <label>Tên gian hàng<input name="name" required minlength="2" maxlength="100" value="${esc(s.name)}" /></label>
+      <div class="formgrid"><label>Tỉnh/thành<input name="province" required maxlength="60" value="${esc(s.province)}" /></label><label>Quận/huyện<input name="district" maxlength="60" value="${esc(s.district ?? '')}" /></label></div>
+      <label>Địa chỉ cửa hàng (chỉ hiện cho người đã đăng nhập)<input name="address" maxlength="200" value="${esc(s.address ?? '')}" /></label>
+      <label>Số điện thoại (chỉ hiện cho người đã đăng nhập)<input name="phone" type="tel" maxlength="20" value="${esc(s.phone ?? '')}" /></label>
+      <label>Giới thiệu ngắn<textarea name="desc" rows="3" maxlength="500">${esc(s.description ?? '')}</textarea></label>
+      <button class="btn solid" type="submit">Lưu thông tin</button></form>
+      <form id="lf" class="form mini panel"><h3>Giấy phép kinh doanh</h3><p class="muted">Hiện tại: <b>${esc(s.license_no)}</b>${s.license_issuer ? ' · ' + esc(s.license_issuer) : ''}${s.license_verified ? ' · đã kiểm tra' : ''}. <b>Đổi giấy phép sẽ phải kiểm duyệt lại</b> (vật tư tạm không hiển thị).</p><p id="lerr" class="err" role="alert" hidden></p>
+      <label>Số giấy phép mới<input name="license" required minlength="3" maxlength="60" value="${esc(s.license_no)}" /></label><label>Nơi cấp<input name="issuer" maxlength="120" value="${esc(s.license_issuer ?? '')}" /></label>
+      <label>Ảnh giấy phép<input type="file" id="lic" accept="image/*" /></label><div id="lprev"></div>
+      <button class="btn" type="submit">Gửi giấy phép để duyệt lại</button></form>`;
+    document.getElementById('if')!.addEventListener('submit', async (e) => {
+      e.preventDefault(); const d = new FormData(e.target as HTMLFormElement);
+      try { await call('update_my_shop', { p_name: d.get('name'), p_province: d.get('province'), p_district: d.get('district'), p_address: d.get('address'), p_description: d.get('desc'), p_phone: d.get('phone') }); await render(note('ok', 'Đã lưu thông tin gian hàng.')); }
+      catch (x) { const m = document.getElementById('ierr')!; m.textContent = friendly(x); m.hidden = false; }
+    });
+    document.getElementById('lic')!.addEventListener('change', async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+      try { lic = await smallImage(file, 900, 120_000); document.getElementById('lprev')!.innerHTML = `<img src="${lic}" alt="" style="max-width:200px;border-radius:8px" />`; } catch (x) { const m = document.getElementById('lerr')!; m.textContent = friendly(x); m.hidden = false; }
+    });
+    document.getElementById('lf')!.addEventListener('submit', async (e) => {
+      e.preventDefault(); const d = new FormData(e.target as HTMLFormElement);
+      if (!confirm('Gửi giấy phép để duyệt lại? Gian hàng sẽ chờ duyệt và vật tư tạm không hiển thị.')) return;
+      try { await call('update_shop_license', { p_no: d.get('license'), p_issuer: d.get('issuer'), p_image: lic || null }); await render(note('ok', 'Đã gửi giấy phép. Gian hàng chờ kiểm duyệt lại.')); }
+      catch (x) { const m = document.getElementById('lerr')!; m.textContent = friendly(x); m.hidden = false; }
+    });
+  }
+
+  async function quotesTab(body: HTMLElement) {
+    let qs: Quote[] = [];
+    try { qs = await call<Quote[]>('my_shop_quotes', { p_status: null }); } catch (e) { body.innerHTML = note('err', friendly(e)); return; }
+    body.innerHTML = qs.length === 0 ? '<p class="empty">Chưa có yêu cầu báo giá nào.</p>' : qs.map((q) => `<div class="panel ${q.status === 'new' ? 'newq' : ''}">
+      <b>${esc(q.target_name ?? 'Yêu cầu')}</b> <span class="pill">${q.status === 'new' ? 'Mới' : 'Đã xử lý'}</span> <span class="muted">${esc(new Date(q.created_at).toLocaleString('vi-VN'))}</span><br>
+      ${esc(q.sender_name)} · ${[q.sender_phone ? `<a href="tel:${esc(q.sender_phone)}">${esc(q.sender_phone)}</a>` : '', q.sender_email ? `<a href="mailto:${esc(q.sender_email)}">${esc(q.sender_email)}</a>` : ''].filter(Boolean).join(' · ')}
+      <p style="margin:.4em 0">${esc(q.message)}${q.quantity_note ? `<br><span class="muted">Số lượng: ${esc(q.quantity_note)}</span>` : ''}</p>${q.note ? `<p class="muted">Ghi chú: ${esc(q.note)}</p>` : ''}
+      <button class="btn sm" data-q="${esc(q.id)}" data-to="${q.status === 'new' ? 'handled' : 'new'}">${q.status === 'new' ? 'Đã liên hệ / xử lý' : 'Mở lại'}</button></div>`).join('');
+    body.querySelectorAll<HTMLElement>('[data-q]').forEach((b) => b.addEventListener('click', async () => {
+      let n: string | null = '';
+      if (b.dataset.to === 'handled') { n = prompt('Ghi chú (không bắt buộc)', ''); if (n === null) return; }
+      try { await call('set_shop_quote', { p_id: b.dataset.q, p_status: b.dataset.to, p_note: n }); await render(); } catch (x) { await render(note('err', friendly(x))); }
+    }));
+  }
+  void main();
+</script>
+
+<style is:global>
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 14px; } .tabs a { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: #fff; text-decoration: none; color: var(--ink); } .tabs a.on { background: var(--g); color: #fff; border-color: var(--g); }
+  .newq { border-color: var(--warn); }
+</style>

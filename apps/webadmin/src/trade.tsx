@@ -81,14 +81,16 @@ export function SiteReportsPage() {
           {(data ?? []).map((r) => (
             <tr key={r.id}>
               <td>{fmtDateTime(r.created_at)}<small>{r.status === 'open' ? 'Chưa xử lý' : r.status === 'handled' ? 'Đã xử lý' : 'Đã bỏ qua'}</small></td>
-              <td><strong>{r.target_label ?? '(đã xóa)'}</strong><small>{r.target_type === 'trade_post' ? `Tin giao thương${r.target_status ? ' · ' + (TRADE_ST[r.target_status] ?? r.target_status) : ''}` : 'Người dùng'}</small></td>
+              <td><strong>{r.target_label ?? '(đã xóa)'}</strong><small>{({ trade_post: 'Tin giao thương', shop: 'Gian hàng vật tư', material: 'Vật tư gian hàng', user: 'Người dùng' } as Record<string, string>)[r.target_type] ?? r.target_type}{r.target_status ? ' · ' + (TRADE_ST[r.target_status] ?? r.target_status) : ''}</small></td>
               <td>{r.reason}{r.note && <small>Xử lý: {r.note}</small>}</td>
               <td>{r.reporter ?? '—'}</td>
               <td className="acts">
                 {r.status === 'open' && (
                   <>
                     {r.target_type === 'trade_post' && <button className="danger" onClick={() => void handle(r, 'handled', 'hide_post')}>Ẩn tin</button>}
-                    <button className="danger" onClick={() => void handle(r, 'handled', 'block_user')}>Khóa người đăng</button>
+                    {r.target_type === 'material' && <button className="danger" onClick={() => void handle(r, 'handled', 'hide_material')}>Ẩn vật tư</button>}
+                    {(r.target_type === 'shop' || r.target_type === 'material') && <button className="danger" onClick={() => void handle(r, 'handled', 'suspend_shop')}>Tạm khóa gian hàng</button>}
+                    <button className="danger" onClick={() => void handle(r, 'handled', 'block_user')}>Khóa chủ/người đăng</button>
                     <button onClick={() => void handle(r, 'handled', null)}>Đã xử lý</button>
                     <button onClick={() => void handle(r, 'dismissed', null)}>Bỏ qua</button>
                   </>

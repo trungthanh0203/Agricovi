@@ -127,7 +127,13 @@ if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-max
         const d = document.createElement('details'); d.className = 'acctm';
         const sum = document.createElement('summary'); sum.textContent = name + ' ▾'; d.appendChild(sum);
         const ul = document.createElement('ul');
-        for (const [label, href] of [['Tài khoản của tôi', '/tai-khoan/'], ['Yêu thích', '/tai-khoan/#yeu-thich'], ['Tin giao thương của tôi', '/giao-thuong/cua-toi/'], ['Hộp thư', '/hop-thu/'], ['Thông báo', '/thong-bao/'], ['Gian hàng của tôi', '/gian-hang/']]) {
+        let flags: { org?: boolean; mat?: boolean } = {};
+        try { flags = JSON.parse(localStorage.getItem('agriconnect-acc') ?? '{}'); } catch { /* bỏ qua */ }
+        const items: [string, string][] = [['Tài khoản của tôi', '/tai-khoan/'], ['Yêu thích', '/tai-khoan/#yeu-thich'], ['Tin giao thương của tôi', '/giao-thuong/cua-toi/'], ['Hộp thư', '/hop-thu/'], ['Thông báo', '/thong-bao/']];
+        // chỉ người có gian hàng mới thấy liên kết gian hàng (người mua thường không có)
+        if (flags.org) items.push(['Gian hàng của tôi (cơ sở sản xuất)', '/gian-hang/']);
+        if (flags.mat) items.push(['Gian hàng vật tư của tôi', '/gian-hang-vat-tu/quan-ly/']);
+        for (const [label, href] of items) {
           const li = document.createElement('li'); const a = document.createElement('a'); a.href = href as string; a.textContent = label as string; li.appendChild(a); ul.appendChild(li);
         }
         const li = document.createElement('li'); const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Đăng xuất';

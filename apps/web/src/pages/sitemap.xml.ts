@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { DEFAULT_PAGES } from '@agriconnect/shared';
-import { loadArticles, loadCategories, loadMaterials, loadProducts } from '../lib/catalog';
+import { loadArticles, loadCategories, loadMaterials, loadProducts, loadShops } from '../lib/catalog';
 import { loadDirectory, sb } from '../lib/db';
 
 // Sơ đồ trang cho công cụ tìm kiếm: trang tĩnh, danh mục, sản phẩm, vật tư, bài viết, nhà cung cấp.
@@ -19,6 +19,7 @@ export const GET: APIRoute = async ({ url }) => {
     for (const p of await loadProducts()) paths.add(`/san-pham/${p.id}`);
     for (const m of await loadMaterials()) paths.add(`/vat-tu/${m.slug}`);
     for (const a of await loadArticles()) paths.add(`/bai-viet/${a.slug}`);
+    for (const sh of await loadShops()) paths.add(`/gian-hang-vat-tu/${sh.slug}`);
     for (const d of (await loadDirectory()).rows) paths.add(`/co-so/${encodeURIComponent(d.slug)}`);
   } catch { /* trả phần đã có */ }
   const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...paths].map((p) => `  <url><loc>${esc(origin + p)}</loc></url>`).join('\n')}\n</urlset>\n`;

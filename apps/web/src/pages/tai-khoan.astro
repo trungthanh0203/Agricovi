@@ -40,6 +40,8 @@ import Base from '../layouts/Base.astro';
       <h1>Xin chào, ${name}</h1>
       <p class="muted">${esc(acc.email ?? acc.profile?.phone ?? '')}${acc.profile?.login_kind === 'email' && acc.email_verified === false ? ' · <b>Email chưa xác nhận</b> (hãy mở thư xác nhận)' : ''}</p>
       ${acc.orgs && acc.orgs.length ? `<div class="panel"><b>Bạn là chủ/quản lý cơ sở: ${acc.orgs.map((o) => esc(o.name)).join(', ')}</b><p style="margin:.3em 0"><a class="btn solid sm" href="/gian-hang/">Vào Gian hàng của tôi</a></p></div>` : ''}
+      ${acc.material_shop ? `<div class="panel"><b>Gian hàng vật tư: ${esc(acc.material_shop.name)}</b> <span class="pill">${esc(({ pending: 'Chờ duyệt', active: 'Đang hoạt động', rejected: 'Chưa được duyệt', suspended: 'Tạm khóa' } as Record<string, string>)[acc.material_shop.status] ?? acc.material_shop.status)}</span><p style="margin:.3em 0"><a class="btn solid sm" href="/gian-hang-vat-tu/quan-ly/">Quản lý gian hàng vật tư</a></p></div>` : ''}
+      ${!(acc.orgs && acc.orgs.length) && !acc.material_shop ? `<p class="ok" style="margin:8px 0">Bạn đã đăng ký tài khoản người mua hàng.</p><p class="muted">Muốn bán vật tư? <a href="/gian-hang-vat-tu/mo/">Đăng ký gian hàng vật tư</a>. Nhà vườn, hợp tác xã bán nông sản đăng ký cơ sở trong ứng dụng AgriConnect.</p>` : ''}
       <div class="tabs">${TABS.map(([k, l]) => `<a href="#${k}" class="${k === t ? 'on' : ''}">${l}</a>`).join('')}<a href="#" id="out">Đăng xuất</a></div>
       <div id="tabbody">${inner}</div>
       <p class="muted"><a href="/giao-thuong/cua-toi/">Tin giao thương của tôi</a> · <a href="/hop-thu/">Hộp thư</a> · <a href="/thong-bao/">Thông báo</a> · Đơn hàng đang được chuẩn bị.</p>`;

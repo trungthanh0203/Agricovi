@@ -7,7 +7,7 @@ import { canPublish } from './site';
 interface Overview {
   quotes_new: number; articles: { draft: number; review: number; published: number; scheduled: number }; materials: { draft: number; review: number; published: number };
   pages: { draft: number; published: number }; banners_active: number; profiles_pending: number | null; profiles_public: number; cycles_public: number; products_public: number;
-  trade_pending: number; trade_published: number; reports_open: number; users_total: number;
+  trade_pending: number; trade_published: number; reports_open: number; users_total: number; shops_pending: number; shops_active: number; shop_materials_review: number;
 }
 function Kpi({ label, value, tone, onClick, note }: { label: string; value: ReactNode; tone?: string; onClick?: () => void; note?: string }) {
   const body = <><span>{label}</span><strong>{value}</strong>{note && <small>{note}</small>}</>;
@@ -21,6 +21,8 @@ export function SiteOverviewPage({ go }: { go: (p: string) => void }) {
   const todo: { text: string; page: string }[] = [];
   if (o.quotes_new > 0) todo.push({ text: `${o.quotes_new} yêu cầu báo giá mới cần liên hệ`, page: 'site-quotes' });
   if (o.profiles_pending) todo.push({ text: `${o.profiles_pending} hồ sơ nhà cung cấp chờ duyệt`, page: 'reviews' });
+  if (o.shops_pending > 0) todo.push({ text: `${o.shops_pending} gian hàng vật tư chờ duyệt`, page: 'site-shops' });
+  if (o.shop_materials_review > 0) todo.push({ text: `${o.shop_materials_review} vật tư của gian hàng chờ duyệt`, page: 'site-shopmat' });
   if (o.trade_pending > 0) todo.push({ text: `${o.trade_pending} tin giao thương chờ duyệt`, page: 'site-trade' });
   if (o.reports_open > 0) todo.push({ text: `${o.reports_open} báo cáo vi phạm chưa xử lý`, page: 'site-reports' });
   if (o.articles.review > 0) todo.push({ text: `${o.articles.review} bài viết chờ duyệt đăng`, page: 'site-articles' });
@@ -36,6 +38,9 @@ export function SiteOverviewPage({ go }: { go: (p: string) => void }) {
       </section>
       <div className="kpis">
         <Kpi label="Yêu cầu báo giá mới" value={o.quotes_new} tone={o.quotes_new > 0 ? 'warn' : 'ok'} onClick={() => go('site-quotes')} />
+        <Kpi label="Gian hàng vật tư chờ duyệt" value={o.shops_pending} tone={o.shops_pending > 0 ? 'warn' : 'ok'} onClick={() => go('site-shops')} />
+        <Kpi label="Gian hàng vật tư đang hoạt động" value={o.shops_active} tone="info" onClick={() => go('site-shops')} />
+        <Kpi label="Vật tư gian hàng chờ duyệt" value={o.shop_materials_review} tone={o.shop_materials_review > 0 ? 'warn' : 'ok'} onClick={() => go('site-shopmat')} />
         <Kpi label="Tin giao thương chờ duyệt" value={o.trade_pending} tone={o.trade_pending > 0 ? 'warn' : 'ok'} onClick={() => go('site-trade')} />
         <Kpi label="Tin giao thương đang hiển thị" value={o.trade_published} tone="info" onClick={() => go('site-trade')} />
         <Kpi label="Báo cáo vi phạm mở" value={o.reports_open} tone={o.reports_open > 0 ? 'bad' : 'ok'} onClick={() => go('site-reports')} />
@@ -97,7 +102,7 @@ const ACTION_LABEL: Record<string, string> = {
   site_role_grant: 'Cấp vai trò biên tập', site_role_revoke: 'Thu hồi vai trò biên tập', site_page_create: 'Tạo trang', site_page_update: 'Sửa trang', site_page_delete: 'Xóa trang',
   site_banner_create: 'Tạo banner', site_banner_update: 'Sửa banner', site_banner_delete: 'Xóa banner', site_menu_save: 'Sửa menu', site_setting_save: 'Sửa thông tin chung/trang chủ',
   site_category_create: 'Tạo danh mục', site_category_update: 'Sửa danh mục', site_material_create: 'Tạo vật tư', site_material_update: 'Sửa vật tư', site_material_delete: 'Xóa vật tư', site_material_import: 'Nhập vật tư hàng loạt',
-  site_article_create: 'Tạo bài viết', site_article_update: 'Sửa bài viết', site_article_delete: 'Xóa bài viết', site_quote_set: 'Xử lý yêu cầu báo giá', site_user_blocked: 'Khóa người dùng website', site_user_active: 'Mở khóa người dùng website', site_trade_approve: 'Duyệt tin giao thương', site_trade_reject: 'Từ chối tin giao thương', site_trade_hide: 'Ẩn tin giao thương', site_trade_restore: 'Hiện lại tin giao thương', site_report_handled: 'Xử lý báo cáo vi phạm', site_report_dismissed: 'Bỏ qua báo cáo vi phạm',
+  site_article_create: 'Tạo bài viết', site_article_update: 'Sửa bài viết', site_article_delete: 'Xóa bài viết', site_quote_set: 'Xử lý yêu cầu báo giá', site_user_blocked: 'Khóa người dùng website', site_user_active: 'Mở khóa người dùng website', site_trade_approve: 'Duyệt tin giao thương', site_trade_reject: 'Từ chối tin giao thương', site_trade_hide: 'Ẩn tin giao thương', site_trade_restore: 'Hiện lại tin giao thương', site_report_handled: 'Xử lý báo cáo vi phạm', site_shop_approve: 'Duyệt gian hàng vật tư', site_shop_reject: 'Từ chối gian hàng vật tư', site_shop_suspend: 'Tạm khóa gian hàng vật tư', site_shop_restore: 'Mở lại gian hàng vật tư', site_shopmat_approve: 'Duyệt vật tư gian hàng', site_shopmat_reject: 'Từ chối vật tư gian hàng', site_shopmat_hide: 'Ẩn vật tư gian hàng', site_report_dismissed: 'Bỏ qua báo cáo vi phạm',
 };
 interface AuditRow { id: number; at: string; actor: string | null; action: string; entity: string; entity_id: string | null }
 export function SiteAuditPage() {

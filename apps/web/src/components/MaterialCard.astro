@@ -9,7 +9,7 @@ const { m } = Astro.props;
     <h3>{m.name}</h3>
     <p class="u">{m.brand}{m.brand && m.unit ? ' · ' : ''}{m.unit ? `ĐVT: ${m.unit}` : ''}</p>
     <p class="pr">{priceText(m.priceFrom, m.priceNote, m.unit)}</p>
-    <p class="sup">Yêu cầu báo giá</p>
+    <p class="sup">{m.shopName ? `Gian hàng: ${m.shopName}` : 'Yêu cầu báo giá'}</p>
   </div>
 </a>
 <style>
