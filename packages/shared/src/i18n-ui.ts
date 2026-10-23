@@ -604,6 +604,7 @@ export const EN_UI: Record<string, string> = {
   '📢 Tin nổi bật': '📢 Featured news',
   'Tin nổi bật': 'Featured news',
   'Mở trên điện thoại': 'Open on your phone',
+  'Giao dịch thành công:': 'Successful deal:',
   'Cơ quan chủ quản:': 'Managing organization:',
   'Chào mừng bạn đến với AgriConnect — kết nối nhà vườn, hợp tác xã và người mua nông sản': 'Welcome to AgriConnect — connecting growers, cooperatives and buyers of farm produce',
   'Quét mã QR trên bao bì để xem nguồn gốc nông sản': 'Scan the QR code on the packaging to see where your produce comes from',

@@ -19,4 +19,22 @@ export async function loadTradePosts(): Promise<TradeSummary[]> {
   memo = { at: Date.now() - (v.length ? 0 : 20_000), v };
   return v;
 }
+/** Kết quả giao thương mới nhất (tin đã đóng có phản hồi được chấp nhận) */
+export interface TradeResultLite { id: string; kind: 'buy' | 'sell'; title: string }
+let rmemo: { at: number; v: TradeResultLite[] } | null = null;
+export async function loadLatestResults(n = 3): Promise<TradeResultLite[]> {
+  if (rmemo && Date.now() - rmemo.at < 60_000) return rmemo.v.slice(0, n);
+  let v: TradeResultLite[] = [];
+  try {
+    if (sb) {
+      const { data, error } = await Promise.race([
+        sb.from('public_trade_results').select('id, kind, title').order('closed_at', { ascending: false }).limit(6),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 2500)),
+      ]);
+      if (!error) v = (data ?? []) as TradeResultLite[];
+    }
+  } catch { /* chưa có view (chưa chạy migration 0053) hoặc chậm: bỏ qua */ }
+  rmemo = { at: Date.now() - (v.length ? 0 : 45_000), v };
+  return v.slice(0, n);
+}
 export const daysLeft = (iso: string) => Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
