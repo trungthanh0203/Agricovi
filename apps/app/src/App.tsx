@@ -170,7 +170,7 @@ function Shell() {
       <main className="content">
         <Suspense fallback={<Loading />}>
         {tab === 'home' ? (
-          <HomeTab onLog={() => { setLogPreset(null); setOverlay('log'); }} onHistory={() => goTo('production', 'logs')} onGo={goTo} />
+          <HomeTab onGo={goTo} onOpenCycle={(id) => { setDetailId(id); setQrFirst(false); setOverlay('detail'); }} />
         ) : tab === 'production' ? (
           <ProductionTab
             section={subs.production}

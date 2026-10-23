@@ -26,7 +26,7 @@ export function WebInboxCard() {
   );
   return (
     <div className="card">
-      <strong>Việc chờ từ website</strong>
+      <strong className="band">Việc chờ từ website</strong>
       <ul style={{ margin: '6px 0', paddingLeft: '1.1em' }}>
         {link('/don-hang/?vai=ban', inbox.orders_new > 0 ? `${inbox.orders_new} đơn mới chờ báo giá` : '', inbox.orders_todo, 'đơn đặt hàng cần xử lý')}
         {link('/gian-hang/', 'khách để lại số điện thoại/email', inbox.quotes_new, 'yêu cầu báo giá mới')}

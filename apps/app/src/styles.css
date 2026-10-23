@@ -394,3 +394,12 @@ button.primary:active { transform: translateY(1px); }
 .auth button.primary { min-height: 54px; font-size: 1.05rem; }
 .auth-foot { text-align: center; color: var(--muted); font-size: .8rem; margin: 16px 16px 24px; }
 .links { justify-items: center; }
+
+/* Tiến độ vụ ở Trang chủ: trạng thái cùng dòng giai đoạn, nằm lề phải; nút nhỏ; tiêu đề khối nổi */
+.progline { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.progline > .muted { flex: 1 1 180px; min-width: 0; font-size: .9rem; }
+.progline > .pill { flex: 0 0 auto; margin-left: auto; }
+button.secondary.mini { width: auto; flex: 0 0 auto; min-height: 36px; margin: 0; padding: 0 12px; font-size: .85rem; border-width: 1.5px; }
+.band { display: block; margin: 0 -2px 8px; padding: 9px 12px; border-radius: 10px; border-left: 5px solid var(--green); color: var(--green-d); background: linear-gradient(90deg, var(--tint), transparent 135%); box-shadow: 0 1px 3px rgba(16,40,26,.12); font-weight: 700; }
+h2.sect.band { margin: 20px 0 10px; font-size: 1.05rem; }
+@media (prefers-color-scheme: dark) { .band { color: var(--green); } }

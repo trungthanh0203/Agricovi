@@ -18,7 +18,7 @@ import { authorLabel, canManageProduction, hasRole } from '../lib/roles';
 import { retryFailed } from '../lib/outbox';
 import { useTable } from '../lib/tables';
 
-export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHistory: () => void; onGo: (tab: TabId, section?: string) => void }) {
+export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: string) => void; onOpenCycle: (id: string) => void }) {
   const { active } = useOrgs();
   const sync = useRecordSync();
   const { session } = useAuth();
@@ -66,7 +66,7 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
 
       <FunctionGrid org={active} onGo={onGo} />
 
-      <CycleProgressList cycleIds={mineIds} />
+      <CycleProgressList cycleIds={mineIds} onOpenCycle={onOpenCycle} />
 
       {reminders.length > 0 && (
         <div className="card">
@@ -122,7 +122,7 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
 
       <HomeStats cycleIds={mineIds} onGo={onGo} />
 
-      <h2 className="sect">Việc đã ghi hôm nay</h2>
+      <h2 className="sect band">Việc đã ghi hôm nay</h2>
       {todayLogs.length === 0 && <p className="muted">Hôm nay chưa ghi việc nào.</p>}
       {todayLogs.map((l) => {
         const c = cycles.find((x) => x.id === l.cycle_id);
