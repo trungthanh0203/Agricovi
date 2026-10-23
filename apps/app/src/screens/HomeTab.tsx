@@ -4,6 +4,8 @@ import { friendlyError } from '../lib/errors';
 import { setNoteDone } from '../lib/production';
 import { useCatalog } from '../lib/catalog';
 import { HomeStats } from '../components/HomeStats';
+import { FunctionGrid } from '../components/FunctionGrid';
+import { useMyName } from '../lib/profile';
 import { WebInboxCard } from '../components/WebInboxCard';
 import { SyncBadge } from '../components/SyncBadge';
 import { todayLocal, useOnline, useRecordSync } from '../lib/hooks';
@@ -19,6 +21,7 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
   const sync = useRecordSync();
   const { session } = useAuth();
   const uid = session?.user.id;
+  const myName = useMyName(uid, session?.user.email ?? undefined);
   const logs = useTable('logs');
   const cycles = useTable('cycles');
   const areas = useTable('areas');
@@ -51,7 +54,13 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
 
   return (
     <section>
-      <h1>Trang chủ</h1>
+      <div className="hero">
+        <small>{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' })}</small>
+        <h1>Xin chào{myName ? `, ${myName}` : ''}</h1>
+        <p>{active.name}</p>
+      </div>
+
+      <FunctionGrid org={active} onGo={onGo} />
 
       <WebInboxCard />
 

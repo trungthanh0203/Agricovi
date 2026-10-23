@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { Fragment, lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { SYNC_STATE_LABEL_VI, type SyncState } from '@agriconnect/shared';
 import { AuthProvider, useAuth } from './lib/auth';
 import { useMyName } from './lib/profile';
@@ -8,6 +8,8 @@ import { countByState, flushOutbox } from './lib/outbox';
 import { OrgProvider, useOrgs } from './lib/orgs';
 import { supabase } from './lib/supabase';
 import { TAB_LABEL, visibleTabs, type TabId } from './lib/tabs';
+import { Drawer } from './components/Drawer';
+import { useTable } from './lib/tables';
 import { AuthScreen } from './screens/AuthScreen';
 import { CreateOrgScreen } from './screens/CreateOrgScreen';
 import type { LogPreset } from './screens/CycleDetailScreen';
@@ -28,6 +30,8 @@ const ProductionTab = lazy(() => import('./screens/ProductionTab').then((m) => (
 const ProfileTab = lazy(() => import('./screens/ProfileTab').then((m) => ({ default: m.ProfileTab })));
 const ReportsTab = lazy(() => import('./screens/ReportsTab').then((m) => ({ default: m.ReportsTab })));
 const Loading = () => <p className="center muted">Đang tải…</p>;
+
+const TAB_ICON: Record<TabId, string> = { home: '🏠', production: '🌱', reports: '📊', declare: '🧰', org: '👥', profile: '👤' };
 
 export function App() {
   if (!supabase) return <SetupNotice />;
@@ -81,6 +85,8 @@ function Shell() {
   // mục con đang chọn của từng tab (nhớ khi chuyển qua lại)
   const [subs, setSubs] = useState<Partial<Record<TabId, string>>>({});
   const [adding, setAdding] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const cyclesAll = useTable('cycles');
   const [overlay, setOverlay] = useState<null | 'log' | 'cycle' | 'logs' | 'detail'>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [qrFirst, setQrFirst] = useState(false); // vừa tạo vụ: mở sẵn mã QR
@@ -134,27 +140,24 @@ function Shell() {
 
   const waiting = counts ? counts.local_only + counts.syncing : 0;
   const attention = counts?.needs_attention ?? 0;
+  // Thanh dưới chỉ giữ việc dùng hằng ngày; Khai báo, Tổ chức, Tài khoản nằm ở menu ☰ (D74)
+  const mainTabs = tabs.filter((t) => t === 'home' || t === 'production' || t === 'reports');
+  const menuTabs = tabs.filter((t) => t === 'declare' || t === 'org' || t === 'profile');
+  const fabAt = mainTabs.length >= 3 ? 2 : 1; // nút Ghi việc nằm giữa
+  const canLog = cyclesAll.some((c) => c.status === 'active' && c.owner_org_id === active?.id);
 
   return (
     <div className="shell">
       <header className="topbar">
-        {orgs.length > 1 ? (
-          <label className="switcher">
-            <span className="sr-only">Chuyển cơ sở</span>
-            <select value={active?.id ?? ''} onChange={(e) => setActive(e.target.value)} aria-label="Chuyển cơ sở">
-              {orgs.map((o) => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
-            </select>
-          </label>
-        ) : (
+        <button className="menu-btn" onClick={() => setMenuOpen(true)} aria-label="Mở menu" aria-haspopup="dialog">
+          <span aria-hidden>☰</span>
+          {attention > 0 && <i className="menu-dot" aria-hidden />}
+        </button>
+        <div className="top-title">
           <strong className="orgname">{active?.name}</strong>
-        )}
-        <div className="who">
-          <span className="who-name" title={myName}>{myName}</span>
-          <button className="who-out" onClick={() => void signOut()} aria-label="Đăng xuất">Đăng xuất</button>
-          <span className={online ? 'net ok' : 'net off'} role="img" aria-label={online ? 'Có mạng' : 'Đang offline (mất mạng)'} title={online ? 'Có mạng' : 'Đang offline (mất mạng)'}>{online ? '🟢' : '🔴'}</span>
+          <small>{tab === 'home' ? 'Trang chủ' : TAB_LABEL[tab]}</small>
         </div>
+        <span className={online ? 'net ok' : 'net off'} role="img" aria-label={online ? 'Có mạng' : 'Đang offline (mất mạng)'} title={online ? 'Có mạng' : 'Đang offline (mất mạng)'}>{online ? '🟢' : '🔴'}</span>
       </header>
 
       {(waiting > 0 || attention > 0) && (
@@ -190,18 +193,45 @@ function Shell() {
         </Suspense>
       </main>
 
-      <nav className={tabs.length >= 6 ? 'tabs dense' : 'tabs'} aria-label="Điều hướng chính" style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
-        {tabs.map((t) => (
-          <button
-            key={t}
-            className={t === tab ? 'tab active' : 'tab'}
-            aria-current={t === tab ? 'page' : undefined}
-            onClick={() => { setTab(t); setSubs((cur) => ({ ...cur, [t]: '' })); }} // chạm tab = về menu của tab
-          >
-            {TAB_LABEL[t]}
-          </button>
+      <nav className="bnav" aria-label="Điều hướng chính">
+        {mainTabs.map((t, i) => (
+          <Fragment key={t}>
+            {i === fabAt && (
+              <button className="fab" onClick={() => { setLogPreset(null); setOverlay('log'); }} disabled={!canLog} aria-label="Ghi việc vừa làm" title={canLog ? 'Ghi việc vừa làm' : 'Chưa có vụ đang sản xuất để ghi việc'}>
+                <span aria-hidden>＋</span><small>Ghi việc</small>
+              </button>
+            )}
+            <button
+              className={t === tab ? 'btab active' : 'btab'}
+              aria-current={t === tab ? 'page' : undefined}
+              onClick={() => { setTab(t); setSubs((cur) => ({ ...cur, [t]: '' })); }} // chạm tab = về menu của tab
+            >
+              <span className="btab-ico" aria-hidden>{TAB_ICON[t]}</span>
+              {TAB_LABEL[t]}
+            </button>
+          </Fragment>
         ))}
+        {fabAt >= mainTabs.length && (
+          <button className="fab" onClick={() => { setLogPreset(null); setOverlay('log'); }} disabled={!canLog} aria-label="Ghi việc vừa làm">
+            <span aria-hidden>＋</span><small>Ghi việc</small>
+          </button>
+        )}
       </nav>
+      <Drawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        name={myName}
+        email={me?.user.email ?? ''}
+        orgs={orgs}
+        active={active}
+        onSwitchOrg={setActive}
+        tabs={menuTabs}
+        current={tab}
+        onGo={(t) => { setTab(t); setSubs((cur) => ({ ...cur, [t]: '' })); }}
+        isPlatformAdmin={isPlatformAdmin}
+        waiting={waiting}
+        onSignOut={() => void signOut()}
+      />
     </div>
   );
 }

@@ -35,7 +35,7 @@ export default defineConfig({
         short_name: 'AgriConnect',
         description: 'Quản lý sản xuất nông nghiệp',
         lang: 'vi',
-        theme_color: '#2e7d32',
+        theme_color: '#0e5e2e',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
