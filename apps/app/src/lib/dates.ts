@@ -14,6 +14,17 @@ export const addDays = (s: string, n: number): string => {
   return fmtIso(d);
 };
 
+/** Cộng n tháng; ngày không có ở tháng đích (31 → tháng 30 ngày) lùi về ngày cuối tháng */
+export const addMonths = (s: string, n: number): string => {
+  const d = parseDay(s);
+  const day = d.getDate();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + n);
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  d.setDate(Math.min(day, last));
+  return fmtIso(d);
+};
+
 /** Số ngày từ a đến b (b - a) */
 export const diffDays = (a: string, b: string): number =>
   Math.round((parseDay(b).getTime() - parseDay(a).getTime()) / 86_400_000);

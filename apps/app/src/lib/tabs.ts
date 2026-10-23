@@ -25,7 +25,7 @@ export interface Section<Id extends string = string> {
 }
 
 export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'attendance' | 'logs';
-export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'rates';
+export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'rates';
 export type OrgSection = 'members' | 'positions' | 'teams' | 'coop';
 export type ReportSection = 'expense' | 'sales' | 'summary' | 'payroll' | 'custom' | 'commerce';
 
@@ -49,6 +49,7 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
     canPerm(org.perms, 'declare') ? { id: 'templates' as const, label: 'Quy trình mẫu' } : null,
     canPerm(org.perms, 'declare') ? { id: 'worktypes' as const, label: 'Đầu việc' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư' } : null,
+    canPerm(org.perms, 'expenses') ? { id: 'partners' as const, label: 'Nhà cung ứng' } : null,
     hasRole(org.roles, 'manager') ? { id: 'rates' as const, label: 'Đơn giá công' } : null,
   ].filter((x): x is Section<DeclareSection> => x !== null);
 }

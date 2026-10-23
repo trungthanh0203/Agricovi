@@ -1,7 +1,7 @@
 # Kế hoạch G2-2 — Nhà cung ứng và công nợ phải trả (bản đề xuất, chờ chủ sản phẩm duyệt)
 
 Căn cứ: D58-3 (một bảng Đối tác có cờ, hai màn riêng), D58-4 (công nợ đơn giản: ghi lần thanh toán, tính còn nợ), D58-5 (thông tin nhà cung ứng mặc định không công khai), `PLAN_GIAI_DOAN_2_APP.md`.
-Trạng thái: **chưa làm code**.
+Trạng thái: **đã duyệt 23/10/2026** (đổi hạn mặc định thành **1 tháng sau ngày mua**, bỏ quy tắc theo ngày kết thúc vụ). **P1 và P2 đã làm xong về code**; P3 (Công nợ, thẻ Trang chủ) và P4 (báo cáo) chưa làm.
 
 ## 1. Điều chủ sản phẩm đã trả lời (23/10/2026)
 

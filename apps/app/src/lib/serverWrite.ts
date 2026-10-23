@@ -26,6 +26,8 @@ export const UPDATE_RPC: Record<string, string> = {
   harvest_records: 'update_harvest',
   expense_records: 'update_expense',
   sales_records: 'update_sale',
+  partners: 'update_partner',
+  purchase_bills: 'update_bill',
 };
 
 /** Bảng trên thiết bị ứng với bảng máy chủ */

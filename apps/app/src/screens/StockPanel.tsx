@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Collapsible } from '../components/Collapsible';
+import { PurchaseEntry } from '../components/PurchaseEntry';
 import { StockEntry } from '../components/StockEntry';
 import { Thumb } from '../components/ImagePicker';
 import { db } from '../lib/db';
@@ -16,14 +17,17 @@ import { useTable } from '../lib/tables';
 /** Kho (mục con của Sản xuất): tồn kho, lịch sử giao dịch, nhập kho, điều chỉnh. Danh mục vật tư/kho nằm ở tab Khai báo. */
 export function StockPanel() {
   const { active } = useOrgs();
-  const [mode, setMode] = useState<'list' | 'receipt' | 'adjustment'>('list');
+  const [mode, setMode] = useState<'list' | 'receipt' | 'adjustment' | 'purchase'>('list');
   if (!active) return null;
   const canWrite = canPerm(active.perms, 'inventory', 'edit');
+  // mua có hóa đơn tạo cả hóa đơn (quyền sửa Chi phí) lẫn nhập kho (quyền sửa Kho)
+  const canPurchase = canWrite && canPerm(active.perms, 'expenses', 'edit');
+  if (mode === 'purchase') return <PurchaseEntry orgId={active.id} onClose={() => setMode('list')} />;
   if (mode !== 'list') return <StockEntry orgId={active.id} mode={mode} onClose={() => setMode('list')} />;
-  return <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setMode('receipt')} onAdjust={() => setMode('adjustment')} />;
+  return <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setMode('receipt')} onAdjust={() => setMode('adjustment')} onPurchase={canPurchase ? () => setMode('purchase') : undefined} />;
 }
 
-function StockList({ orgId, canWrite, onReceipt, onAdjust }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void }) {
+function StockList({ orgId, canWrite, onReceipt, onAdjust, onPurchase }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void; onPurchase?: () => void }) {
   const materials = useLiveQuery(() => db.materials.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const locations = useLiveQuery(() => db.locations.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const units = useTable('units');
@@ -69,7 +73,8 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust }: { orgId: string; ca
     <>
       {canWrite && (
         <div className="actions">
-          <button className="primary" onClick={onReceipt}>Nhập kho</button>
+          {onPurchase && <button className="primary" onClick={onPurchase}>Mua theo hóa đơn</button>}
+          <button className={onPurchase ? 'secondary' : 'primary'} onClick={onReceipt}>Nhập kho</button>
           <button className="secondary" onClick={onAdjust}>Điều chỉnh tồn</button>
         </div>
       )}
