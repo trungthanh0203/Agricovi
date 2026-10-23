@@ -4,6 +4,7 @@ import { friendlyError } from '../lib/errors';
 import { setNoteDone } from '../lib/production';
 import { useCatalog } from '../lib/catalog';
 import { HomeStats } from '../components/HomeStats';
+import { CycleProgressList } from '../components/CycleProgressList';
 import { ShiftButton } from '../components/ShiftButton';
 import { FunctionGrid } from '../components/FunctionGrid';
 import { useMyName } from '../lib/profile';
@@ -56,42 +57,17 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
   return (
     <section>
       <div className="hero">
-        <small>{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}</small>
-        {canClock && uid && <ShiftButton orgId={active.id} uid={uid} onClick={() => onGo('production', 'attendance')} />}
+        <div className="hero-top">
+          <small>{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}</small>
+          {canClock && uid && <ShiftButton orgId={active.id} uid={uid} onClick={() => onGo('production', 'attendance')} />}
+        </div>
         <h1>Xin chào{myName ? `, ${myName}` : ''}</h1>
         <p>{active.name}</p>
       </div>
 
       <FunctionGrid org={active} onGo={onGo} />
 
-      <WebInboxCard />
-
-      {running.length === 0 ? (
-        <div className="card">
-          <p>Chưa có vụ nào đang sản xuất nên chưa ghi việc được.</p>
-          {notStarted.length > 0 && (
-            <p className="muted">Vụ đang chuẩn bị hoặc tạm dừng chỉ ghi việc được sau khi bấm "Bắt đầu sản xuất" hoặc "Tiếp tục" ở màn Sản xuất.</p>
-          )}
-          {canManage ? (
-            <button className="primary" onClick={() => (mine.length === 0 && areas.every((a) => a.organization_id !== active.id) ? onGo('declare', 'areas') : onGo('production', 'cycles'))}>
-              {mine.length === 0 ? (areas.some((a) => a.organization_id === active.id) ? 'Tạo vụ đầu tiên' : 'Thêm trang trại đầu tiên') : 'Mở màn Sản xuất'}
-            </button>
-          ) : (
-            <p className="muted">Hãy nhờ chủ cơ sở hoặc quản lý {mine.length === 0 ? 'tạo vụ trồng' : 'bắt đầu sản xuất'}.</p>
-          )}
-        </div>
-      ) : (
-        <button className="primary big" onClick={onLog}>Ghi việc vừa làm</button>
-      )}
-
-      {failed > 0 && (
-        <div className="card">
-          <p className="msg error" role="alert">Có {failed} bản ghi cần xử lý (chưa gửi được lên máy chủ).</p>
-          <button className="secondary" onClick={() => void retryFailed()}>Thử gửi lại</button>
-        </div>
-      )}
-
-      <HomeStats cycleIds={mineIds} onGo={onGo} />
+      <CycleProgressList cycleIds={mineIds} />
 
       {reminders.length > 0 && (
         <div className="card">
@@ -118,13 +94,37 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
         </div>
       )}
 
-      {running.length > 0 && (
-        <p className="muted">Đang có {running.length} vụ đang sản xuất.</p>
+      <WebInboxCard />
+
+      {running.length === 0 && (
+        <div className="card">
+          <p>Chưa có vụ nào đang sản xuất nên chưa ghi việc được.</p>
+          {notStarted.length > 0 && (
+            <p className="muted">Vụ đang chuẩn bị hoặc tạm dừng chỉ ghi việc được sau khi bấm "Bắt đầu sản xuất" hoặc "Tiếp tục" ở màn Sản xuất.</p>
+          )}
+          {canManage ? (
+            mine.length === 0 && (
+              <button className="primary" onClick={() => onGo(areas.every((a) => a.organization_id !== active.id) ? 'declare' : 'production', areas.every((a) => a.organization_id !== active.id) ? 'areas' : 'cycles')}>
+                {areas.some((a) => a.organization_id === active.id) ? 'Tạo vụ đầu tiên' : 'Thêm trang trại đầu tiên'}
+              </button>
+            )
+          ) : (
+            <p className="muted">Hãy nhờ chủ cơ sở hoặc quản lý {mine.length === 0 ? 'tạo vụ trồng' : 'bắt đầu sản xuất'}.</p>
+          )}
+        </div>
       )}
+
+      {failed > 0 && (
+        <div className="card">
+          <p className="msg error" role="alert">Có {failed} bản ghi cần xử lý (chưa gửi được lên máy chủ).</p>
+          <button className="secondary" onClick={() => void retryFailed()}>Thử gửi lại</button>
+        </div>
+      )}
+
+      <HomeStats cycleIds={mineIds} onGo={onGo} />
 
       <h2 className="sect">Việc đã ghi hôm nay</h2>
       {todayLogs.length === 0 && <p className="muted">Hôm nay chưa ghi việc nào.</p>}
-      <button className="secondary" onClick={onHistory}>Xem tất cả nhật ký</button>
       {todayLogs.map((l) => {
         const c = cycles.find((x) => x.id === l.cycle_id);
         return (

@@ -345,9 +345,12 @@ button.primary:active { transform: translateY(1px); }
 .tile-group { color: var(--muted); font-weight: 400; font-size: .72rem; }
 @media (min-width: 560px) { .tiles { grid-template-columns: repeat(4, 1fr); } }
 
-/* Nút Vào ca / Ra ca ở Trang chủ: nổi nhẹ trong thẻ lời chào */
-.shiftbtn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 42px; margin: 8px 0 4px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-weight: 700; font-size: .95rem; cursor: pointer; background: #fff; color: var(--green-d); box-shadow: 0 4px 12px rgba(0,0,0,.22), inset 0 -2px 0 rgba(0,0,0,.08); transition: transform .1s, box-shadow .1s; }
-.shiftbtn:active { transform: translateY(2px); box-shadow: 0 1px 4px rgba(0,0,0,.25); }
-.shiftbtn.out { background: #ffd84a; color: #4a3600; }
-.shift-ico { font-size: .8rem; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: rgba(22,128,67,.14); }
-.shiftbtn.out .shift-ico { background: rgba(74,54,0,.14); }
+/* Nút Vào ca / Ra ca ở Trang chủ: nhỏ, cùng dòng với ngày, lề phải */
+.hero-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; }
+.shiftbtn { display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto; min-height: 36px; margin: 0; padding: 0 14px 0 4px; border: 0; border-radius: 999px; font: inherit; font-weight: 700; font-size: .88rem; cursor: pointer; color: var(--green-d); background: linear-gradient(#fff, #eaf6ee); box-shadow: 0 3px 10px rgba(0,0,0,.25), inset 0 -2px 0 rgba(22,128,67,.18); transition: transform .1s, box-shadow .1s; }
+.shiftbtn:active { transform: translateY(2px); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.shift-ico { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: linear-gradient(135deg, #2bb673, var(--green)); box-shadow: 0 2px 5px rgba(14,94,46,.45); }
+.shiftbtn.out { color: #a3182f; background: linear-gradient(#fff, #fdecef); box-shadow: 0 3px 10px rgba(0,0,0,.25), inset 0 -2px 0 rgba(217,45,75,.2); }
+.shiftbtn.out .shift-ico { background: linear-gradient(135deg, #f0587a, #d92d4b); box-shadow: 0 2px 5px rgba(163,24,47,.5); animation: shiftpulse 1.8s ease-out infinite; }
+@keyframes shiftpulse { 0% { box-shadow: 0 0 0 0 rgba(240,88,122,.7); } 70% { box-shadow: 0 0 0 9px rgba(240,88,122,0); } 100% { box-shadow: 0 0 0 0 rgba(240,88,122,0); } }
+@media (prefers-reduced-motion: reduce) { .shiftbtn.out .shift-ico { animation: none; } }

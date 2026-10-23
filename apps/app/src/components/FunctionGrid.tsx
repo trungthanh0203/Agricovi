@@ -5,11 +5,14 @@ import type { MyOrg } from '../lib/orgs';
 
 interface Item { tab: TabId; id: string; label: string; group: string }
 
+/** Thứ tự các ô ở Trang chủ: Mùa vụ, Chấm công, Chi phí, Kho, Thu hoạch, Doanh thu, Tổng kết vụ, Nhật ký việc */
+const HOME_ORDER = ['cycles', 'attendance', 'expense', 'stock', 'harvest', 'sales', 'summary', 'logs'];
+
 /** Bỏ dấu và chữ hoa để tìm "kho" ra cả "Kho và đơn vị" */
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').toLowerCase();
 
 /**
- * Lối vào nhanh các chức năng ở Trang chủ: ô lưới Sản xuất + Báo cáo (dùng hằng ngày),
+ * Lối vào nhanh các chức năng ở Trang chủ: ô lưới các chức năng dùng hằng ngày,
  * và ô tìm chức năng (tìm trong mọi nhóm: Sản xuất, Báo cáo, Khai báo, Tổ chức). Chỉ hiện chức năng người dùng được phép.
  */
 export function FunctionGrid({ org, onGo }: { org: MyOrg; onGo: (tab: TabId, section?: string) => void }) {
@@ -25,7 +28,10 @@ export function FunctionGrid({ org, onGo }: { org: MyOrg; onGo: (tab: TabId, sec
   }, [org]);
 
   const query = fold(q.trim());
-  const shown = query ? all.filter((x) => fold(x.label).includes(query) || fold(x.group).includes(query)) : all.filter((x) => x.tab === 'production' || x.tab === 'reports');
+  // Mặc định chỉ hiện các chức năng dùng hằng ngày theo thứ tự cố định; gõ vào ô tìm thì tìm trong mọi chức năng
+  const shown = query
+    ? all.filter((x) => fold(x.label).includes(query) || fold(x.group).includes(query))
+    : HOME_ORDER.map((id) => all.find((x) => x.id === id)).filter((x): x is Item => x !== undefined);
 
   return (
     <div className="fgrid">

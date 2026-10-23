@@ -3,12 +3,11 @@ import { daysLeft, listLicenses } from '../lib/licenses';
 import { hasRole } from '../lib/roles';
 import { listAdjustments, listAttendance, listWorkers } from '../lib/work';
 import { cycleProgress } from '../lib/cycles';
-import { addDays, fmtDate } from '../lib/dates';
+import { addDays } from '../lib/dates';
 import { todayLocal, toLocalInput } from '../lib/hooks';
 import { formatQty } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
-import { syncDown } from '../lib/production';
 import { useAuth } from '../lib/auth';
 import { useTable } from '../lib/tables';
 
@@ -56,13 +55,12 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
   const sales = useTable('sales');
   const balances = useTable('balances');
   const materials = useTable('materials');
-  const [stamp, setStamp] = useState(() => new Date());
+  const [stamp] = useState(() => new Date()); // mốc để tải lại các số cần mạng khi mở Trang chủ
   const [pendingAtt, setPendingAtt] = useState(0);
   const [pendingAdj, setPendingAdj] = useState(0);
   const [openShiftAt, setOpenShiftAt] = useState<string | null>(null);
   const [licSoon, setLicSoon] = useState(0);
   const [licExpired, setLicExpired] = useState(0);
-  const [busy, setBusy] = useState(false);
 
   const today = todayLocal();
 
@@ -134,11 +132,6 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
   const canExpense = canPerm(active.perms, 'expenses');
   const canSale = canPerm(active.perms, 'sales');
 
-  async function reload() {
-    setBusy(true);
-    try { await syncDown(); setStamp(new Date()); } catch { /* offline: giữ số cũ */ } finally { setBusy(false); }
-  }
-
   return (
     <>
       <h2 className="sect">Của tôi</h2>
@@ -170,32 +163,6 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
         {canExpense && <KpiTile label="Chi phí đã ghi tháng này" value={shortMoney(stat.spent)} tone="bad" title={fullMoney(stat.spent)} note="đồng" />}
         {canSale && <KpiTile label="Doanh thu tháng này" value={shortMoney(stat.earned)} tone="ok" title={fullMoney(stat.earned)} note="đồng" />}
       </div>
-      <p className="muted">
-        Cập nhật lúc {stamp.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} · số liệu từ dữ liệu đã tải về máy{' '}
-        <button className="link inline" disabled={busy || !navigator.onLine} onClick={() => void reload()}>{busy ? 'Đang tải…' : 'Tải lại'}</button>
-      </p>
-
-      {progress.length > 0 && (
-        <>
-          <h2 className="sect">Tiến độ các vụ đang chạy</h2>
-          {progress.map(({ c, p }) => (
-            <div className="card slim" key={c.id}>
-              <div className="row">
-                <strong className="grow">{c.name || c.template_name || 'Vụ'}</strong>
-                {p.delay > 0 ? <span className="pill warn">Trễ {p.delay} ngày</span> : <span className="pill ok">Đúng tiến độ</span>}
-              </div>
-              {p.total > 0 ? (
-                <>
-                  <div className="progress" role="progressbar" aria-valuenow={p.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Tiến độ vụ"><i style={{ width: `${p.percent}%` }} /></div>
-                  <p className="muted">{p.done}/{p.total} giai đoạn{p.current ? ` · Hiện tại: ${p.current.name} (đến ${fmtDate(p.current.planned_end)})` : ' · Đã hoàn tất'}</p>
-                </>
-              ) : <p className="muted">Chưa có giai đoạn.</p>}
-            </div>
-          ))}
-          <button className="secondary" onClick={() => onGo('production', 'cycles')}>Mở màn Sản xuất</button>
-        </>
-      )}
-
       {(stockAlerts.length > 0) && (
         <div className="card alert-warn">
           <h2>Cảnh báo kho</h2>
@@ -208,7 +175,6 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
           {stockAlerts.length > 6 && <p className="muted">… và {stockAlerts.length - 6} vật tư khác (xem ở Sản xuất → Kho).</p>}
         </div>
       )}
-      {(canExpense || canSale) && <button className="link" onClick={() => onGo('reports')}>Xem báo cáo chi tiết</button>}
     </>
   );
 }
