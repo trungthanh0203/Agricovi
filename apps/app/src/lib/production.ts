@@ -37,7 +37,16 @@ export async function syncDown(): Promise<void> {
     supabase.from('cycle_notes').select(NOTE_COLUMNS).order('note_date', { ascending: false }).limit(1000),
   ]);
   for (const r of [areas, cycles, logs]) if (r.error) throw r.error;
-  await refreshCatalogCache(); // sản phẩm, loại việc và bản chỉnh của cơ sở
+  // Các phần còn lại độc lập nhau nên tải song song (trước đây tải tuần tự, chậm hơn nhiều khi mạng yếu).
+  // Vật tư/kho, thu hoạch, chi phí/doanh thu: lỗi ở đây không làm hỏng đồng bộ sản xuất.
+  const extras = Promise.all([
+    refreshCatalogCache(), // sản phẩm, loại việc và bản chỉnh của cơ sở
+    syncInventoryDown().catch((e) => console.warn('Không tải được vật tư/kho', e)),
+    syncHarvestsDown().catch((e) => console.warn('Không tải được thu hoạch', e)),
+    syncFinanceDown().catch((e) => console.warn('Không tải được chi phí/doanh thu', e)),
+  ]);
+
+  extras.catch(() => undefined); // lỗi được báo ở lệnh await cuối, tránh cảnh báo sớm
 
   await db.transaction('rw', [db.areas, db.cycles, db.logs, db.stages, db.notes], async () => {
     // giai đoạn chưa có (CSDL chưa cập nhật) thì bỏ qua, không làm hỏng phần còn lại
@@ -53,10 +62,7 @@ export async function syncDown(): Promise<void> {
     await db.cycles.bulkPut(fresh(cycles.data as CycleRow[]));
     await db.logs.bulkPut(fresh(logs.data as LogRow[]));
   });
-  // Vật tư & kho: lỗi ở đây không làm hỏng đồng bộ sản xuất ở trên
-  await syncInventoryDown().catch((e) => console.warn('Không tải được vật tư/kho', e));
-  await syncHarvestsDown().catch((e) => console.warn('Không tải được thu hoạch', e));
-  await syncFinanceDown().catch((e) => console.warn('Không tải được chi phí/doanh thu', e));
+  await extras;
 }
 
 /**

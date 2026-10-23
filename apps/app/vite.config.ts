@@ -13,6 +13,18 @@ export default defineConfig({
   // Cổng riêng để không đụng các dự án khác trên máy (5173 là mặc định của Vite, hay bị chiếm)
   server: { port: 5180, strictPort: true },
   preview: { port: 5180, strictPort: true },
+  build: {
+    rollupOptions: {
+      // Thư viện lớn ít đổi tách riêng để trình duyệt lưu đệm, lần cập nhật app chỉ tải lại phần mã của mình
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js'],
+          dexie: ['dexie', 'dexie-react-hooks'],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({

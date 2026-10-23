@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { SYNC_STATE_LABEL_VI, type SyncState } from '@agriconnect/shared';
 import { AuthProvider, useAuth } from './lib/auth';
 import { useMyName } from './lib/profile';
@@ -10,20 +10,24 @@ import { supabase } from './lib/supabase';
 import { TAB_LABEL, visibleTabs, type TabId } from './lib/tabs';
 import { AuthScreen } from './screens/AuthScreen';
 import { CreateOrgScreen } from './screens/CreateOrgScreen';
-import { CreateCycleScreen } from './screens/CreateCycleScreen';
-import { CycleDetailScreen, type LogPreset } from './screens/CycleDetailScreen';
-import { DeclareTab } from './screens/DeclareTab';
+import type { LogPreset } from './screens/CycleDetailScreen';
 import { HomeTab } from './screens/HomeTab';
-import { LogActivityScreen } from './screens/LogActivityScreen';
-import { OrgTab } from './screens/OrgTab';
-import { ProductionTab } from './screens/ProductionTab';
-import { ProfileTab } from './screens/ProfileTab';
-import { ReportsTab } from './screens/ReportsTab';
 import { syncDown } from './lib/production';
 import { SetupNotice } from './screens/SetupNotice';
 import { WelcomeScreen } from './screens/WelcomeScreen';
 import { ForcePasswordScreen } from './screens/ForcePasswordScreen';
 import { fetchStaffStatus, type StaffStatus } from './lib/staff';
+
+// Các màn ngoài Trang chủ tải khi mở lần đầu (giảm dung lượng phải tải lúc vào app); bản dựng vẫn được lưu sẵn để dùng offline
+const CreateCycleScreen = lazy(() => import('./screens/CreateCycleScreen').then((m) => ({ default: m.CreateCycleScreen })));
+const CycleDetailScreen = lazy(() => import('./screens/CycleDetailScreen').then((m) => ({ default: m.CycleDetailScreen })));
+const DeclareTab = lazy(() => import('./screens/DeclareTab').then((m) => ({ default: m.DeclareTab })));
+const LogActivityScreen = lazy(() => import('./screens/LogActivityScreen').then((m) => ({ default: m.LogActivityScreen })));
+const OrgTab = lazy(() => import('./screens/OrgTab').then((m) => ({ default: m.OrgTab })));
+const ProductionTab = lazy(() => import('./screens/ProductionTab').then((m) => ({ default: m.ProductionTab })));
+const ProfileTab = lazy(() => import('./screens/ProfileTab').then((m) => ({ default: m.ProfileTab })));
+const ReportsTab = lazy(() => import('./screens/ReportsTab').then((m) => ({ default: m.ReportsTab })));
+const Loading = () => <p className="center muted">Đang tải…</p>;
 
 export function App() {
   if (!supabase) return <SetupNotice />;
@@ -81,7 +85,11 @@ function Shell() {
   const [online, setOnline] = useState(navigator.onLine);
   const [counts, setCounts] = useState<Record<SyncState, number> | null>(null);
 
-  const refresh = useCallback(async () => setCounts(await countByState()), []);
+  // Chỉ cập nhật khi số đếm đổi thật, tránh vẽ lại cả app mỗi 3 giây
+  const refresh = useCallback(async () => {
+    const next = await countByState();
+    setCounts((cur) => (cur && (Object.keys(next) as SyncState[]).every((k) => cur[k] === next[k]) ? cur : next));
+  }, []);
 
   // Tab Khai báo, Tổ chức, Báo cáo chỉ hiện với người có quyền (xem lib/tabs.ts)
   const tabs = visibleTabs(active);
@@ -111,12 +119,12 @@ function Shell() {
   }, [refresh]);
 
   if (overlay === 'detail' && detailId) {
-    return <CycleDetailScreen cycleId={detailId} openQr={qrFirst} onClose={() => { setQrFirst(false); setOverlay(null); }} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} />;
+    return <Suspense fallback={<Loading />}><CycleDetailScreen cycleId={detailId} openQr={qrFirst} onClose={() => { setQrFirst(false); setOverlay(null); }} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} /></Suspense>;
   }
   if (overlay === 'log') {
-    return <LogActivityScreen preset={logPreset} onClose={() => { setOverlay(logPreset && detailId ? 'detail' : null); setLogPreset(null); }} />;
+    return <Suspense fallback={<Loading />}><LogActivityScreen preset={logPreset} onClose={() => { setOverlay(logPreset && detailId ? 'detail' : null); setLogPreset(null); }} /></Suspense>;
   }
-  if (overlay === 'cycle') return <CreateCycleScreen onDone={(id) => { setDetailId(id); setQrFirst(true); setOverlay('detail'); setTab('production'); }} onCancel={() => setOverlay(null)} />;
+  if (overlay === 'cycle') return <Suspense fallback={<Loading />}><CreateCycleScreen onDone={(id) => { setDetailId(id); setQrFirst(true); setOverlay('detail'); setTab('production'); }} onCancel={() => setOverlay(null)} /></Suspense>;
   if (adding) {
     return <CreateOrgScreen onDone={() => { setAdding(false); setTab('home'); }} onCancel={() => setAdding(false)} />;
   }
@@ -154,6 +162,7 @@ function Shell() {
       )}
 
       <main className="content">
+        <Suspense fallback={<Loading />}>
         {tab === 'home' ? (
           <HomeTab onLog={() => { setLogPreset(null); setOverlay('log'); }} onHistory={() => goTo('production', 'logs')} onGo={goTo} />
         ) : tab === 'production' ? (
@@ -175,6 +184,7 @@ function Shell() {
         ) : (
           <ProfileTab onAddOrg={() => setAdding(true)} isPlatformAdmin={isPlatformAdmin} />
         )}
+        </Suspense>
       </main>
 
       <nav className={tabs.length >= 6 ? 'tabs dense' : 'tabs'} aria-label="Điều hướng chính" style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
