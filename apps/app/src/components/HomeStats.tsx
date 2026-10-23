@@ -13,6 +13,7 @@ import { useTable } from '../lib/tables';
 import { fetchPayables, fetchReceivables, summarizePayables } from '../lib/partners';
 
 const HomeTrend = lazy(() => import('./HomeTrend')); // biểu đồ tải lười, không làm nặng gói đầu
+const HomeWeekly = lazy(() => import('./HomeWeekly'));
 
 type Tone = 'ok' | 'warn' | 'bad' | 'info' | 'neutral';
 
@@ -176,6 +177,7 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
         {canExpense && <KpiTile label="Chi phí đã ghi tháng này" value={shortMoney(stat.spent)} tone="bad" title={fullMoney(stat.spent)} note="đồng" />}
         {canSale && <KpiTile label="Doanh thu tháng này" value={shortMoney(stat.earned)} tone="ok" title={fullMoney(stat.earned)} note="đồng" />}
       </div>
+      {hasRole(active.roles, 'manager') && <Suspense fallback={null}><HomeWeekly orgId={active.id} onOpen={() => onGo('reports', 'weekly')} /></Suspense>}
       {(canExpense || canSale || canHarvest) && <Suspense fallback={null}><HomeTrend orgId={active.id} /></Suspense>}
       {(stockAlerts.length > 0) && (
         <div className="card alert-warn">

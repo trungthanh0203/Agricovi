@@ -27,7 +27,7 @@ export interface Section<Id extends string = string> {
 export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'attendance' | 'logs';
 export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'customers' | 'rates';
 export type OrgSection = 'members' | 'positions' | 'teams' | 'coop';
-export type ReportSection = 'expense' | 'payables' | 'sales' | 'summary' | 'payroll' | 'custom' | 'website' | 'commerce';
+export type ReportSection = 'expense' | 'payables' | 'sales' | 'summary' | 'weekly' | 'payroll' | 'custom' | 'website' | 'commerce';
 
 export function productionSections(org: MyOrg | null): Section<ProductionSection>[] {
   if (!org) return [];
@@ -74,6 +74,7 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
     hasRole(org.roles, 'manager') ? { id: 'payroll' as const, label: 'Tiền công' } : null,
     canPerm(org.perms, 'sales') ? { id: 'sales' as const, label: 'Doanh thu' } : null,
     canPerm(org.perms, 'summary') ? { id: 'summary' as const, label: 'Tổng kết vụ' } : null,
+    hasRole(org.roles, 'manager') ? { id: 'weekly' as const, label: 'Báo cáo tuần' } : null,
     REPORT_TYPES.some((t) => t.allowed(org.perms, org.roles)) ? { id: 'custom' as const, label: 'Theo nhu cầu' } : null,
     hasRole(org.roles, 'manager', 'profile_editor') ? { id: 'website' as const, label: 'Đơn khách từ website' } : null,
     hasRole(org.roles, 'manager', 'profile_editor') ? { id: 'commerce' as const, label: 'Hồ sơ website' } : null, // luôn để cuối

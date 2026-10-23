@@ -5,7 +5,7 @@ export const SECTION_ICONS: Record<string, string> = {
   cycles: '🌱', logs: '📒', harvest: '🧺', stock: '📦', attendance: '⏱',
   areas: '🏡', partners: '🚚', customers: '🛒', website: '📬', payables: '💳', crops: '🌾', worktypes: '🧰', templates: '📋', materials: '🧪', places: '🏬', rates: '💵',
   commerce: '🌐', members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
-  expense: '💸', sales: '💰', summary: '📊', payroll: '🧾', custom: '🔎',
+  expense: '💸', sales: '💰', summary: '📊', weekly: '🗓️', payroll: '🧾', custom: '🔎',
 };
 
 /**
