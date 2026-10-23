@@ -1,7 +1,7 @@
 # Kế hoạch G2-5 — Khách tiềm năng, đơn đặt hàng từ website và ghi doanh thu (bản đề xuất, chờ chủ sản phẩm duyệt)
 
 Căn cứ: D58-6 (yêu cầu từ website tự vào "Khách tiềm năng"), D66–D70 (website đã có Giao thương, đơn đặt hàng, báo giá, đánh giá, lịch mùa vụ, huy hiệu), D76–D77 (nhà cung ứng, khách hàng, công nợ), `PLAN_GIAI_DOAN_2_APP.md`.
-Trạng thái: **chưa làm code**.
+Trạng thái: **đã duyệt 23/10/2026** (7 điểm đồng ý; tên mục đổi thành **"Đơn khách từ website"**). **R1–R5 đã làm xong về code** (migration 0058–0060). Còn thử tay trên máy thật.
 
 ## 1. Hiện trạng đã kiểm tra trong mã
 
@@ -18,7 +18,7 @@ Người bán xử lý yêu cầu và đơn từ website **ngay trong app**, bi�
 
 ## 3. Màn hình
 
-Một mục mới **Báo cáo → "Đơn & khách từ website"** (đặt trước "Hồ sơ website" luôn ở cuối), có hai tab:
+Một mục mới **Báo cáo → "Đơn khách từ website"** (đặt trước "Hồ sơ website" luôn ở cuối), có hai tab:
 
 1. **Khách tiềm năng** (yêu cầu báo giá từ website):
    - Danh sách (mới nhất trước): tên, điện thoại/email, sản phẩm quan tâm, số lượng ghi chú, nội dung, thời gian, trạng thái mới/đã xử lý.
@@ -77,7 +77,7 @@ Phụ thuộc: G2-4 đã xong (khách hàng, công nợ); các hàm website đã
 ## 9. Cần bạn xác nhận
 
 1. **Xử lý đơn và báo giá ngay trong app** (không phải mở website)?
-2. Mục mới nằm ở **Báo cáo → "Đơn & khách từ website"**, đặt trước "Hồ sơ website" (luôn cuối)?
+2. Mục mới nằm ở **Báo cáo → "Đơn khách từ website"**, đặt trước "Hồ sơ website" (luôn cuối)?
 3. **Phí giao hàng không cộng vào doanh thu** theo mặc định (người dùng tích nếu muốn cộng)?
 4. **Thêm vào khách hàng** chỉ khi người bán bấm nút (không tự tạo hàng loạt); email lưu trong ghi chú vì bảng khách chưa có cột email?
 5. Ai được **ghi doanh thu từ đơn**: người có quyền sửa Doanh thu (chủ, Kho & chi phí); quản lý chỉ xử lý đơn nhưng không ghi doanh thu, trừ khi chủ cấp quyền?

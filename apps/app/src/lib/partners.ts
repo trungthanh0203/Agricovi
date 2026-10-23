@@ -429,3 +429,10 @@ export async function voidSaleCredit(s: { sale_id: string; version: number }, re
   requireOnline('hủy lần bán');
   return updateVersioned<Record<string, unknown>>('sales_records', s.sale_id, s.version, { voided_at: new Date().toISOString(), void_reason: reason });
 }
+
+/** Ẩn danh khách theo yêu cầu xóa dữ liệu: xóa dữ liệu cá nhân, giữ số tiền và công nợ (không hoàn tác) */
+export async function anonymizeCustomer(id: string, reason: string): Promise<void> {
+  requireOnline('ẩn danh khách hàng');
+  const { error } = await client().rpc('anonymize_partner', { p_id: id, p_reason: reason });
+  if (error) throw new Error(error.message);
+}

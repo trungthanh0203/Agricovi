@@ -415,3 +415,7 @@ h2.sect.band { margin: 20px 0 10px; font-size: 1.05rem; }
 .voice-live em { font-weight: 400; color: var(--muted); }
 .voice-note { margin: 0; font-size: .8rem; }
 .voicenote .btnrow { margin: 0; }
+
+/* Danh sách đơn từ website: cả thẻ là một nút bấm */
+button.ordercard { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+button.ordercard:active { background: var(--tint); }

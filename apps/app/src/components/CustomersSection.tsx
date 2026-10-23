@@ -3,7 +3,7 @@ import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import {
-  CUSTOMER_KIND_LABEL, createCustomer, listAllPartners, listCustomers, updateCustomer, type Customer, type CustomerInput, type CustomerKind,
+  CUSTOMER_KIND_LABEL, anonymizeCustomer, createCustomer, listAllPartners, listCustomers, updateCustomer, type Customer, type CustomerInput, type CustomerKind,
 } from '../lib/partners';
 import { canPerm } from '../lib/permissions';
 
@@ -107,7 +107,15 @@ export function CustomersSection() {
                     <>
                       <button className="icon" disabled={busy || !online} aria-label={`Sửa ${p.name}`} onClick={() => { setAdding(false); setEditing(p.id); }}>✎</button>{' '}
                       <button className="icon" disabled={busy || !online} aria-label={p.is_active ? `Dừng ${p.name}` : `Dùng lại ${p.name}`}
-                        onClick={() => void run(() => updateCustomer(p, { is_active: !p.is_active }))}>{p.is_active ? '⏸' : '▶'}</button>
+                        onClick={() => void run(() => updateCustomer(p, { is_active: !p.is_active }))}>{p.is_active ? '⏸' : '▶'}</button>{' '}
+                      <button className="icon" disabled={busy || !online} aria-label={`Ẩn danh ${p.name}`} title="Ẩn danh theo yêu cầu xóa dữ liệu"
+                        onClick={() => {
+                          if (!window.confirm(`Ẩn danh "${p.name}"?
+
+Tên, điện thoại, địa chỉ, ghi chú sẽ bị xóa và KHÔNG khôi phục được. Số tiền và công nợ vẫn được giữ.`)) return;
+                          const r = window.prompt('Lý do ẩn danh (ví dụ: khách yêu cầu xóa dữ liệu):');
+                          if (r && r.trim().length >= 3) void run(() => anonymizeCustomer(p.id, r.trim()));
+                        }}>🕶</button>
                     </>
                   )}
                 </td>

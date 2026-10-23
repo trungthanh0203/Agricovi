@@ -93,7 +93,7 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
         </div>
       )}
 
-      <WebInboxCard />
+      <WebInboxCard onGo={onGo} />
 
       <h2 className="sect band">Việc đã ghi hôm nay</h2>
       {todayLogs.length === 0 && <p className="muted">Hôm nay chưa ghi việc nào.</p>}
