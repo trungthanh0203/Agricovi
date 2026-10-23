@@ -403,3 +403,6 @@ button.secondary.mini { width: auto; flex: 0 0 auto; min-height: 36px; margin: 0
 .band { display: block; margin: 0 -2px 8px; padding: 9px 12px; border-radius: 10px; border-left: 5px solid var(--green); color: var(--green-d); background: linear-gradient(90deg, var(--tint), transparent 135%); box-shadow: 0 1px 3px rgba(16,40,26,.12); font-weight: 700; }
 h2.sect.band { margin: 20px 0 10px; font-size: 1.05rem; }
 @media (prefers-color-scheme: dark) { .band { color: var(--green); } }
+
+/* Các màn Chi tiết vụ, Ghi việc, Tạo vụ nằm trong khung chính: bỏ kiểu thẻ riêng của màn đăng nhập */
+.content > .auth, .content .auth.wide { margin: 0 0 12px; padding: 0; max-width: none; background: none; border: 0; box-shadow: none; }

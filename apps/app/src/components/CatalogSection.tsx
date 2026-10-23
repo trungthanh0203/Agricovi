@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type MaterialRow } from '../lib/db';
-import { addDefaultMaterials, type MaterialExt } from '../lib/inventory';
+import { type MaterialExt } from '../lib/inventory';
 import { ImagePicker, Thumb } from './ImagePicker';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
@@ -98,12 +98,6 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
       )}
 
       <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả vật tư đã dừng</label>
-      {canWrite && (
-        <button className="secondary" disabled={busy || !online}
-          onClick={() => void run(async () => { const n = await addDefaultMaterials(orgId); setError(n > 0 ? null : 'Đã có đủ vật tư mẫu rồi.'); })}>
-          Thêm vật tư mẫu còn thiếu (phân bón thông dụng)
-        </button>
-      )}
       <p className="muted">⏸ dừng (không chọn được cho giao dịch mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Vật tư đã có lịch sử thì không xóa được, chỉ dừng.</p>
       </>)}
 

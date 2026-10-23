@@ -128,13 +128,17 @@ function Shell() {
     };
   }, [refresh]);
 
-  if (overlay === 'detail' && detailId) {
-    return <Suspense fallback={<Loading />}><CycleDetailScreen cycleId={detailId} openQr={qrFirst} openCalendar={detailOpts.calendar} notice={detailOpts.notice} onClose={() => { setQrFirst(false); setDetailOpts({}); setOverlay(null); }} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} /></Suspense>;
-  }
-  if (overlay === 'log') {
-    return <Suspense fallback={<Loading />}><LogActivityScreen preset={logPreset} onClose={() => { setOverlay(logPreset && detailId ? 'detail' : null); setLogPreset(null); }} /></Suspense>;
-  }
-  if (overlay === 'cycle') return <Suspense fallback={<Loading />}><CreateCycleScreen onDone={(id) => { setDetailId(id); setQrFirst(true); setOverlay('detail'); setTab('production'); }} onCancel={() => setOverlay(null)} /></Suspense>;
+  // Các màn Chi tiết vụ, Ghi việc, Tạo vụ hiện BÊN TRONG khung (thanh trên + thanh dưới), chạm tab nào là rời màn đó ngay
+  const overlayEl =
+    overlay === 'detail' && detailId ? (
+      <CycleDetailScreen cycleId={detailId} openQr={qrFirst} openCalendar={detailOpts.calendar} notice={detailOpts.notice} onClose={() => { setQrFirst(false); setDetailOpts({}); setOverlay(null); }} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} />
+    ) : overlay === 'log' ? (
+      <LogActivityScreen preset={logPreset} onClose={() => { setOverlay(logPreset && detailId ? 'detail' : null); setLogPreset(null); }} />
+    ) : overlay === 'cycle' ? (
+      <CreateCycleScreen onDone={(id) => { setDetailId(id); setQrFirst(true); setOverlay('detail'); setTab('production'); }} onCancel={() => setOverlay(null)} />
+    ) : null;
+  const closeOverlay = () => { setOverlay(null); setLogPreset(null); setQrFirst(false); setDetailOpts({}); };
+
   if (adding) {
     return <CreateOrgScreen onDone={() => { setAdding(false); setTab('home'); }} onCancel={() => setAdding(false)} />;
   }
@@ -170,7 +174,7 @@ function Shell() {
 
       <main className="content">
         <Suspense fallback={<Loading />}>
-        {tab === 'home' ? (
+        {overlayEl ? overlayEl : tab === 'home' ? (
           <HomeTab onGo={goTo} onOpenCycle={(id) => { setDetailId(id); setQrFirst(false); setDetailOpts({}); setOverlay('detail'); }} />
         ) : tab === 'production' ? (
           <ProductionTab
@@ -206,7 +210,7 @@ function Shell() {
             <button
               className={t === tab ? 'btab active' : 'btab'}
               aria-current={t === tab ? 'page' : undefined}
-              onClick={() => { setTab(t); setSubs((cur) => ({ ...cur, [t]: '' })); }} // chạm tab = về menu của tab
+              onClick={() => { closeOverlay(); setTab(t); setSubs((cur) => ({ ...cur, [t]: '' })); }} // chạm tab = về menu của tab
             >
               <span className="btab-ico" aria-hidden>{TAB_ICON[t]}</span>
               {TAB_LABEL[t]}
@@ -229,7 +233,7 @@ function Shell() {
         onSwitchOrg={setActive}
         tabs={menuTabs}
         current={tab}
-        onGo={(t) => { setTab(t); setSubs((cur) => ({ ...cur, [t]: '' })); }}
+        onGo={(t) => { closeOverlay(); setTab(t); setSubs((cur) => ({ ...cur, [t]: '' })); }}
         isPlatformAdmin={isPlatformAdmin}
         waiting={waiting}
         onSignOut={() => void signOut()}

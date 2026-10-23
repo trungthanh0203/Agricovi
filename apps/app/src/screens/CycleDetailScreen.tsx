@@ -54,7 +54,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
     return m;
   }, [logs]);
 
-  if (!cycle) return <main className="auth"><button className="link" onClick={onClose}>← Quay lại</button><p className="muted">Đang tải vụ…</p></main>;
+  if (!cycle) return <div className="auth"><button className="link" onClick={onClose}>← Quay lại</button><p className="muted">Đang tải vụ…</p></div>;
 
   const canManage = canManageProduction(active?.roles) || Boolean(active?.canManageStages);
   const isActive = cycle.status === 'active';
@@ -71,7 +71,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
   const lastEnd = stages.reduce<string>((m, s) => (s.planned_end && s.planned_end > m ? s.planned_end : m), cycle.start_date ?? today);
 
   return (
-    <main className="auth wide">
+    <div className="auth wide">
       <button className="link" onClick={onClose}>← Quay lại</button>
       {notice && noticeOpen && (
         <div className="msg ok" role="status">
@@ -212,7 +212,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
       {isActive && (
         <button className="secondary" onClick={() => onLog({ cycleId, stageId: prog.current?.status === 'in_progress' ? prog.current.id : null })}>Ghi việc cho vụ này</button>
       )}
-    </main>
+    </div>
   );
 }
 

@@ -141,7 +141,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   if (savedId) {
     const s = sync.get(savedId);
     return (
-      <main className="auth">
+      <div className="auth">
         <h1>Đã ghi</h1>
         <p className="msg ok" role="status">
           {s && s.state !== 'synced' ? SYNC_STATE_LABEL_VI.local_only : SYNC_STATE_LABEL_VI.synced}
@@ -158,12 +158,12 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
         )}
         <button className="primary" onClick={again}>Ghi việc khác</button>
         <button className="secondary" onClick={onClose}>Xong</button>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="auth">
+    <div className="auth">
       <h1>Ghi việc vừa làm</h1>
 
       {options.length === 0 ? (
@@ -274,7 +274,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
           </div>
         </form>
       )}
-    </main>
+    </div>
   );
 }
 

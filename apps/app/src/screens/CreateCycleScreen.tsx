@@ -114,7 +114,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   }
 
   return (
-    <main className="auth">
+    <div className="auth">
       <h1>Tạo vụ mới</h1>
       <p className="muted">Cơ sở: {active.name}</p>
 
@@ -212,6 +212,6 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           </div>
         </form>
       )}
-    </main>
+    </div>
   );
 }

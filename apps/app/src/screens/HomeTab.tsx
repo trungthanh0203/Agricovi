@@ -95,6 +95,28 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
 
       <WebInboxCard />
 
+      <h2 className="sect band">Việc đã ghi hôm nay</h2>
+      {todayLogs.length === 0 && <p className="muted">Hôm nay chưa ghi việc nào.</p>}
+      {todayLogs.map((l) => {
+        const c = cycles.find((x) => x.id === l.cycle_id);
+        return (
+          <div className="card slim" key={l.id}>
+            <div className="row">
+              <strong>
+                {workTypes.find((w) => w.id === l.work_type_id)?.name ?? 'Việc'}
+                {(authorLabel(l.author_name, l.author_roles) || (uid && l.created_by === uid ? 'Bạn' : '')) ? ` - ${authorLabel(l.author_name, l.author_roles) || 'Bạn'}` : ''}
+              </strong>
+              <span className="muted">{new Date(l.performed_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            <p className="muted">
+              {c ? `${cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? ''} · ${areas.find((a) => a.id === c.area_id)?.name ?? ''}` : ''}
+              {l.note ? ` — ${l.note}` : ''}
+            </p>
+            <SyncBadge sync={sync.get(l.id)} />
+          </div>
+        );
+      })}
+
       {running.length === 0 && (
         <div className="card">
           <p>Chưa có vụ nào đang sản xuất nên chưa ghi việc được.</p>
@@ -122,27 +144,6 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
 
       <HomeStats cycleIds={mineIds} onGo={onGo} />
 
-      <h2 className="sect band">Việc đã ghi hôm nay</h2>
-      {todayLogs.length === 0 && <p className="muted">Hôm nay chưa ghi việc nào.</p>}
-      {todayLogs.map((l) => {
-        const c = cycles.find((x) => x.id === l.cycle_id);
-        return (
-          <div className="card slim" key={l.id}>
-            <div className="row">
-              <strong>
-                {workTypes.find((w) => w.id === l.work_type_id)?.name ?? 'Việc'}
-                {(authorLabel(l.author_name, l.author_roles) || (uid && l.created_by === uid ? 'Bạn' : '')) ? ` - ${authorLabel(l.author_name, l.author_roles) || 'Bạn'}` : ''}
-              </strong>
-              <span className="muted">{new Date(l.performed_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-            <p className="muted">
-              {c ? `${cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? ''} · ${areas.find((a) => a.id === c.area_id)?.name ?? ''}` : ''}
-              {l.note ? ` — ${l.note}` : ''}
-            </p>
-            <SyncBadge sync={sync.get(l.id)} />
-          </div>
-        );
-      })}
     </section>
   );
 }

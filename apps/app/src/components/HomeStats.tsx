@@ -95,13 +95,9 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
 
   const stat = useMemo(() => {
     const day = (iso: string) => toLocalInput(new Date(iso)).slice(0, 10);
-    const week = addDays(today, -6);
     const month = today.slice(0, 7);
     const mine = logs.filter((l) => !l.voided_at && l.cycle_id && cycleIds.has(l.cycle_id));
-    const myLogs = mine.filter((l) => l.created_by === uid || l.performed_by === uid);
     return {
-      myToday: myLogs.filter((l) => day(l.performed_at) === today).length,
-      myWeek: myLogs.filter((l) => day(l.performed_at) >= week).length,
       orgToday: mine.filter((l) => day(l.performed_at) === today).length,
       harvestKg: harvests.filter((h) => !h.voided_at && cycleIds.has(h.cycle_id) && day(h.harvested_at).startsWith(month))
         .reduce((s, h) => s + Number(h.quantity) - Number(h.loss_quantity ?? 0), 0),
@@ -134,15 +130,9 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
 
   return (
     <>
-      <h2 className="sect">Của tôi</h2>
-      <div className="kpis">
-        <KpiTile label="Việc tôi ghi hôm nay" value={String(stat.myToday)} tone={stat.myToday > 0 ? 'ok' : 'neutral'} note={stat.myToday > 0 ? 'đã ghi' : 'chưa ghi việc nào'} />
-        <KpiTile label="Việc tôi ghi 7 ngày qua" value={String(stat.myWeek)} tone="info" />
-      </div>
-
       {(canConfirmAtt || openShiftAt || licSoon + licExpired > 0) && (
         <>
-          <h2 className="sect">Cần làm</h2>
+          <h2 className="sect">Tôi cần làm</h2>
           <div className="kpis">
             {openShiftAt && <KpiTile label="Bạn đang trong ca" value={new Date(openShiftAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} tone="info" note="bấm để Ra ca" onClick={() => onGo('production', 'attendance')} />}
             {canConfirmAtt && <KpiTile label="Chờ xác nhận chấm công" value={String(pendingAtt)} tone={pendingAtt > 0 ? 'warn' : 'ok'} note={pendingAtt > 0 ? 'bấm để xem và xác nhận' : 'đã xong'} onClick={() => onGo('production', 'attendance')} />}
