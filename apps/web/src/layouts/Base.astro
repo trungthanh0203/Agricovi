@@ -368,3 +368,73 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
 <style is:global>
   .bell { text-decoration: none; margin-right: 8px; } .bell.has { background: #d92d4b; color: #fff !important; border-radius: 999px; padding: 1px 9px; font-size: .85rem; }
 </style>
+
+<style is:global>
+  /* ===== Giao diện v2 (D72): đường bao rõ ràng, thẻ nổi, danh sách cuộn có mũi tên, màu nhấn ===== */
+  :root { --g: #168043; --g-d: #0e5e2e; --g2: #e6f4eb; --line: #d6e3da; --bg: #f2f7f3; --yl: #ffd84a; --shadow: 0 1px 2px rgba(16,40,26,.05), 0 6px 18px rgba(16,40,26,.07); --lift: 0 10px 26px rgba(16,40,26,.16); }
+  body { background: linear-gradient(#e9f3ec, var(--bg) 280px) no-repeat, var(--bg); }
+  :focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; border-radius: 6px; }
+  h1, h2, h3 { letter-spacing: -.01em; }
+  main { padding-top: 18px; }
+
+  .site-head { box-shadow: 0 2px 10px rgba(16,40,26,.08); }
+  .bar1 { background: linear-gradient(90deg, var(--g-d), var(--g)); }
+  .logo { font-size: 1.2rem; letter-spacing: -.02em; border-radius: 0 0 14px 0; }
+  .about summary { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.7); border-radius: 999px; }
+  .bar2 { border-bottom: 1px solid var(--line); }
+  .hsearch input { background: #fff; border: 1.5px solid var(--line); transition: border-color .15s, box-shadow .15s; }
+  .hsearch input:focus { outline: 0; border-color: var(--g); box-shadow: 0 0 0 3px rgba(22,128,67,.18); }
+  .ni > a { border-radius: 8px; transition: background .15s, color .15s; } .ni > a:hover, .ni:focus-within > a { background: var(--g2); color: var(--g-d); }
+  .ni + .ni > a { border-left: 0; }
+  .sub, .about ul, .cats ul { border: 1px solid var(--line); }
+  .cart { background: var(--g2); color: var(--g-d); border-radius: 999px; padding: 7px 14px; transition: background .15s; } .cart:hover { background: #cfe9d8; }
+  .bell.has { background: #fff3cd; border-radius: 999px; padding: 2px 8px; }
+
+  .btn { border-radius: 12px; box-shadow: 0 1px 2px rgba(16,40,26,.1); transition: transform .12s, box-shadow .15s, background .15s; }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(16,40,26,.18); }
+  .btn.solid { background: linear-gradient(180deg, #1a9150, var(--g)); } .btn.solid:hover { background: linear-gradient(180deg, var(--g), var(--g-d)); }
+  .btn.outline { background: #fff; } .btn.outline:hover { background: var(--g2); }
+
+  .panel { box-shadow: var(--shadow); border-radius: 16px; }
+  .card { box-shadow: var(--shadow); transition: transform .18s, box-shadow .18s; border-radius: 16px; }
+  .card:hover { transform: translateY(-3px); box-shadow: var(--lift); }
+  .card .cover, .card .ph { transition: transform .35s; } .card:hover .cover { transform: scale(1.04); } .card { overflow: hidden; }
+  .chip { background: var(--g2); font-weight: 500; } .pill { font-weight: 500; }
+  .pill.ok { background: #d3efdc; }
+  .facts div { border: 1px solid #d3e8da; }
+  .gallery img { box-shadow: var(--shadow); }
+  .empty { background: #fff; border: 1px dashed var(--line); border-radius: 14px; }
+  .crumbs { font-weight: 500; }
+
+  /* Danh sách dạng lưới (trang danh mục, kết quả…): có khung bao quanh */
+  .pgrid, .grid { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); }
+  .sec .pgrid, .sec .grid { background: none; border: 0; padding: 0; box-shadow: none; border-radius: 0; }
+
+  /* Khối nội dung có đường bao */
+  .sec { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 16px 18px 20px; margin: 18px 0; box-shadow: var(--shadow); }
+  .sec-h { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .sec-h h2 { margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; }
+  .sec-h .bar { width: 5px; height: 1.5em; background: linear-gradient(var(--g), #7bc67e); border-radius: 4px; }
+  .sec-h .ico { font-size: 1.3rem; }
+  .sec-more { white-space: nowrap; font-weight: 600; font-size: .9rem; text-decoration: none; background: var(--g2); color: var(--g-d); border-radius: 999px; padding: 6px 14px; transition: background .15s, color .15s; }
+  .sec-more:hover { background: var(--g); color: #fff; }
+
+  /* Danh sách cuộn ngang + nút mũi tên trái/phải */
+  .railwrap { position: relative; }
+  .rail { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; padding: 4px 2px 12px; scrollbar-width: thin; scrollbar-color: #b9d6c3 transparent; outline-offset: -2px; }
+  .rail > * { flex: 0 0 var(--w, 230px); scroll-snap-align: start; min-width: 0; }
+  .railwrap.full .rail { padding: 0; gap: 0; }
+  .railwrap.full .rail > * { flex: 0 0 100%; }
+  .rbtn { position: absolute; top: calc(50% - 6px); transform: translateY(-50%); z-index: 5; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); background: #fff; color: var(--g-d); font-size: 1.7rem; line-height: 1; cursor: pointer; display: grid; place-items: center; box-shadow: 0 4px 14px rgba(16,40,26,.25); transition: background .15s, color .15s, transform .15s, opacity .15s; padding: 0 0 3px; }
+  .rbtn:hover { background: var(--g); color: #fff; transform: translateY(-50%) scale(1.08); }
+  .rbtn.prev { left: -14px; } .rbtn.next { right: -14px; }
+  .railwrap.full .rbtn.prev { left: 10px; } .railwrap.full .rbtn.next { right: 10px; }
+  .railwrap[data-start="1"] .rbtn.prev, .railwrap[data-end="1"] .rbtn.next, .railwrap[data-noscroll="1"] .rbtn { opacity: 0; pointer-events: none; }
+  @media (hover: none) { .rbtn { display: none; } }
+  .rail:focus-visible { outline: 3px solid #f59e0b; }
+
+  .site-foot { background: linear-gradient(#143d27, #0e2d1c); color: #c9dccf; margin-top: 36px; border-top: 4px solid var(--yl); }
+  .site-foot b { color: #fff; } .site-foot a { color: #c9dccf; } .site-foot a:hover { color: var(--yl); }
+  .site-foot .btn { color: #2a2200; background: var(--yl); }
+  .fbottom { border-top-color: rgba(255,255,255,.18); }
+</style>

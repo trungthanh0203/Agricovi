@@ -1,0 +1,12 @@
+---
+// Khối nội dung có đường bao, tiêu đề có vạch nhấn và liên kết "Xem tất cả" (dùng cho từng danh sách ở trang chủ)
+interface Props { title: string; href?: string; more?: string; icon?: string; id?: string }
+const { title, href, more = 'Xem tất cả', icon, id } = Astro.props;
+---
+<section class="sec" id={id}>
+  <div class="sec-h">
+    <h2><span class="bar" aria-hidden="true"></span>{icon && <span class="ico" aria-hidden="true">{icon}</span>}{title}</h2>
+    {href && <a class="sec-more" href={href}>{more}<span aria-hidden="true"> →</span></a>}
+  </div>
+  <slot />
+</section>

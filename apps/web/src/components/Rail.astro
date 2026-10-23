@@ -1,0 +1,35 @@
+---
+// Danh sách cuộn ngang có hai nút mũi tên trái/phải (nút tự ẩn khi không còn gì để cuộn). Phần tử con trực tiếp là các thẻ.
+interface Props { w?: number; full?: boolean; class?: string }
+const { w = 230, full = false, class: cls = '' } = Astro.props;
+---
+<div class={`railwrap ${full ? 'full' : ''} ${cls}`} style={`--w:${w}px`} data-start="1">
+  <button type="button" class="rbtn prev" aria-label="Trước"><span aria-hidden="true">‹</span></button>
+  <div class="rail" tabindex="0"><slot /></div>
+  <button type="button" class="rbtn next" aria-label="Sau"><span aria-hidden="true">›</span></button>
+</div>
+<script>
+  // Một bộ điều khiển dùng chung cho mọi danh sách cuộn; trang dựng thêm danh sách bằng mã gọi window.initRails()
+  function setup(wrap: HTMLElement) {
+    if (wrap.dataset.ready) return;
+    wrap.dataset.ready = '1';
+    const rail = wrap.querySelector<HTMLElement>('.rail')!;
+    const sync = () => {
+      const max = rail.scrollWidth - rail.clientWidth;
+      wrap.dataset.start = rail.scrollLeft <= 4 ? '1' : '';
+      wrap.dataset.end = rail.scrollLeft >= max - 4 ? '1' : '';
+      wrap.dataset.noscroll = max <= 4 ? '1' : '';
+    };
+    const go = (dir: number) => rail.scrollBy({ left: dir * Math.max(rail.clientWidth * 0.85, 200), behavior: 'smooth' });
+    wrap.querySelector('.prev')!.addEventListener('click', () => go(-1));
+    wrap.querySelector('.next')!.addEventListener('click', () => go(1));
+    rail.addEventListener('scroll', sync, { passive: true });
+    rail.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') go(1); else if (e.key === 'ArrowLeft') go(-1); });
+    new ResizeObserver(sync).observe(rail);
+    new MutationObserver(sync).observe(rail, { childList: true });
+    sync();
+  }
+  function init() { document.querySelectorAll<HTMLElement>('.railwrap').forEach(setup); }
+  (window as unknown as { initRails: () => void }).initRails = init;
+  init();
+</script>

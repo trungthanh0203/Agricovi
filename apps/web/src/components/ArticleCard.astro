@@ -13,8 +13,8 @@ const date = a.channel === 'hoi_cho' && a.start ? fmtDay(a.start) + (a.end && a.
   </div>
 </a>
 <style>
-  .acard { display: block; background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; text-decoration: none; color: inherit; }
-  .acard:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+  .acard { display: block; background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; text-decoration: none; color: inherit;  box-shadow: var(--shadow); transition: transform .18s, box-shadow .18s; height: 100%;}
+  .acard:hover { box-shadow: var(--lift); transform: translateY(-3px); }
   .acard img, .acard .ph { width: 100%; height: 130px; object-fit: cover; display: grid; place-items: center; font-size: 2.2rem; background: var(--g2); }
   .ab { padding: 10px 12px 12px; } h3 { margin: 0 0 4px; font-size: 1rem; line-height: 1.3; }
   .m { margin: 2px 0; font-size: .82rem; color: var(--muted); }

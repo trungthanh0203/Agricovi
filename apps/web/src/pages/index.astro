@@ -6,6 +6,8 @@ import MaterialCard from '../components/MaterialCard.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import TradeCard from '../components/TradeCard.astro';
 import ShopCard from '../components/ShopCard.astro';
+import Section from '../components/Section.astro';
+import Rail from '../components/Rail.astro';
 import { loadTradePosts } from '../lib/trade';
 import { catHref, catTree, descendantIds, loadArticles, loadCategories, loadMaterials, loadProducts, loadShops, today } from '../lib/catalog';
 import { esc, img, loadDirectory, profileCard, supplyPill, type DirRow } from '../lib/db';
@@ -23,15 +25,18 @@ const sideBanners = chrome.banners.filter((b) => b.slot === 'side').slice(0, 2);
 const side = sideBanners.length ? sideBanners : sideDefault;
 
 const cats = await loadCategories();
-const { top: topCats } = catTree(cats);
+const { top: topCats, kids } = catTree(cats);
+const CAT_ICON: Record<string, string> = {
+  'rau-cu-qua': '🥬', 'trai-cay': '🍊', 'vat-nuoi': '🐄', 'gao-nong-san-kho': '🌾', giong: '🌱', 'vat-tu-nong-nghiep': '🧪', 'phu-kien-thiet-bi': '🧰',
+};
 const allProducts = await loadProducts();
-const materials = (await loadMaterials()).slice(0, 4);
+const materials = (await loadMaterials()).slice(0, 10);
 const articles = (await loadArticles()).map((a) => localizeArticle(a, Astro.locals.tr));
 const rowFor = (slug: string) => {
   const c = cats.find((x) => x.slug === slug);
   if (!c) return null;
   const ids = descendantIds(cats, c.id);
-  return { cat: c, items: allProducts.filter((p) => p.categoryId && ids.has(p.categoryId)).slice(0, 6) };
+  return { cat: c, items: allProducts.filter((p) => p.categoryId && ids.has(p.categoryId)).slice(0, 12) };
 };
 const rowOf: Record<string, NonNullable<ReturnType<typeof rowFor>>> = {};
 for (const [blockId, slug] of [['trai_cay', 'trai-cay'], ['rau_cu_qua', 'rau-cu-qua'], ['vat_nuoi', 'vat-nuoi']] as const) {
@@ -39,16 +44,16 @@ for (const [blockId, slug] of [['trai_cay', 'trai-cay'], ['rau_cu_qua', 'rau-cu-
   if (r && r.items.length > 0) rowOf[blockId] = r;
 }
 const blocks = chrome.home.filter((b) => b.on);
-const trades = (await loadTradePosts()).slice(0, 6);
+const trades = (await loadTradePosts()).slice(0, 10);
 const day = today();
-const latest = articles.filter((a) => a.channel !== 'hoi_cho' || !a.end || a.end >= day || a.publishedAt).slice(0, 4);
+const latest = articles.filter((a) => a.channel !== 'hoi_cho' || !a.end || a.end >= day || a.publishedAt).slice(0, 10);
 let dirError = '';
-const shopsHome = (await loadShops()).slice(0, 3);
+const shopsHome = (await loadShops()).slice(0, 6);
 let featured: string[] = [];
 let available: string[] = [];
 try {
   const { rows, snaps, prods, badges } = await loadDirectory();
-  featured = rows.slice(0, 6).map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? [], badges.get(d.profile_id)));
+  featured = rows.slice(0, 12).map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? [], badges.get(d.profile_id)));
   const byId = new Map<string, DirRow>(rows.map((r) => [r.profile_id, r]));
   for (const [pid, list] of prods) {
     const d = byId.get(pid);
@@ -63,23 +68,44 @@ try {
         <p class="muted">${esc([p.snapshot.price_note, p.snapshot.min_order && 'tối thiểu ' + p.snapshot.min_order].filter(Boolean).join(' · '))}</p></div></a>`);
     }
   }
-  available = available.slice(0, 8);
+  available = available.slice(0, 14);
 } catch (e) {
   dirError = e instanceof Error ? e.message : String(e);
 }
 ---
 <Base title={`${brand} — Kết nối nông sản`} description={chrome.settings.brand.description}>
   <section class="hero2">
-    <ul class="catlist">
-      {topCats.map((c) => <li><a href={catHref(c)}>{c.name}<span aria-hidden="true">›</span></a></li>)}
-    </ul>
+    <nav class="catbox" aria-label="Danh mục sản phẩm">
+      <div class="cathead">☰ Danh mục sản phẩm</div>
+      <ul class="catlist">
+        {topCats.map((c) => (
+          <li>
+            <a href={catHref(c)}><span class="ci" aria-hidden="true">{CAT_ICON[c.slug] ?? '📦'}</span><span class="cn">{c.name}</span><span class="car" aria-hidden="true">›</span></a>
+            {(kids.get(c.id)?.length ?? 0) > 0 && (
+              <div class="fly">
+                <div class="fly-h"><b>{c.name}</b><a href={catHref(c)}>Xem tất cả<span aria-hidden="true"> →</span></a></div>
+                <ul class="fly-list">
+                  {kids.get(c.id)!.map((k) => (
+                    <li>
+                      <a href={catHref(k)}>{k.name}</a>
+                      {(kids.get(k.id)?.length ?? 0) > 0 && <div class="fly-sub">{kids.get(k.id)!.slice(0, 5).map((g) => <a href={catHref(g)}>{g.name}</a>)}</div>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
 
-    <div class="carousel" aria-label="Banner">
+    <Rail full class="herorail">
       {hero.length === 0 && (
         <div class="slide fallback">
+          <span class="kicker">AgriConnect</span>
           <h1>Tìm nơi trồng, sản phẩm và nguồn gốc nông sản</h1>
           <p>Danh bạ nhà cung cấp đã được kiểm duyệt, tình trạng cung ứng cập nhật thường xuyên và truy xuất nguồn gốc từng mùa vụ.</p>
-          <a class="btn" href="/danh-ba/">Xem nhà cung cấp</a>
+          <div class="ctas"><a class="btn cta1" href="/danh-ba/">Xem nhà cung cấp</a><a class="btn cta2" href="/giao-thuong/">Giao thương</a></div>
         </div>
       )}
       {hero.map((b) => (
@@ -88,7 +114,7 @@ try {
           <span class="cap"><b>{b.title}</b>{b.subtitle && <small>{b.subtitle}</small>}</span>
         </a>
       ))}
-    </div>
+    </Rail>
 
     <div class="sidebans">
       {side.map((b) => (
@@ -100,54 +126,58 @@ try {
     </div>
   </section>
 
+  <ul class="trust">
+    <li><span aria-hidden="true">🛡️</span><div><b>Nhà cung cấp được kiểm duyệt</b><small>Hồ sơ duyệt trước khi hiển thị</small></div></li>
+    <li><span aria-hidden="true">🔎</span><div><b>Truy xuất nguồn gốc</b><small>Quét mã QR xem quá trình sản xuất</small></div></li>
+    <li><span aria-hidden="true">🤝</span><div><b>Giao thương an toàn</b><small>Chặn lộ liên hệ, báo cáo vi phạm</small></div></li>
+    <li><span aria-hidden="true">🌐</span><div><b>Tiếng Việt và tiếng Anh</b><small>Dành cho cả người mua trong và ngoài nước</small></div></li>
+  </ul>
+
   {blocks.map((b) => (
     b.id === 'giao_thuong' ? (
-      <>
-        <div class="sechead"><h2>Giao thương</h2><a href="/giao-thuong/">Xem tất cả</a></div>
-        {trades.length > 0 ? <div class="pgrid">{trades.map((t) => <TradeCard t={t} />)}</div> : (
-          <div class="panel soon">
+      <Section title="Giao thương" icon="🤝" href="/giao-thuong/">
+        {trades.length > 0 ? <Rail w={270}>{trades.map((t) => <TradeCard t={t} />)}</Rail> : (
+          <div class="soon">
             <b>Giao thương: người mua đăng tin cần mua, nhà cung cấp đăng tin cần bán</b>
             <p class="muted">Khách xem được danh sách; đăng nhập để xem chi tiết và trao đổi. Chưa có tin nào, hãy <a href="/giao-thuong/dang-tin/">đăng tin đầu tiên</a>.</p>
           </div>
         )}
-      </>
+      </Section>
     ) : b.id === 'nha_cung_cap' ? (
-      <>
-        <div class="sechead"><h2>Nhà cung cấp sản phẩm</h2><a href="/danh-ba/">Xem tất cả</a></div>
+      <Section title="Nhà cung cấp sản phẩm" icon="🏡" href="/danh-ba/">
         {dirError && <p class="err">{dirError}</p>}
-        {!dirError && featured.length === 0 && <p class="empty">Chưa có cơ sở nào được công khai.</p>}
-        <div class="grid" set:html={featured.join('')} />
-        {shopsHome.length > 0 && <div class="grid" style="margin-top:14px">{shopsHome.map((s) => <ShopCard s={s} />)}</div>}
-      </>
+        {!dirError && featured.length === 0 && shopsHome.length === 0 && <p class="empty">Chưa có cơ sở nào được công khai.</p>}
+        {(featured.length > 0 || shopsHome.length > 0) && (
+          <Rail w={260}>
+            <Fragment set:html={featured.join('')} />
+            {shopsHome.map((s) => <ShopCard s={s} />)}
+          </Rail>
+        )}
+      </Section>
     ) : b.id === 'dang_co_hang' ? (
-      <>
-        <div class="sechead"><h2>Đang có hàng</h2><a href="/danh-ba/">Xem thêm</a></div>
+      <Section title="Đang có hàng" icon="✅" href="/danh-ba/" more="Xem thêm">
         {!dirError && available.length === 0 && <p class="empty">Hiện chưa có sản phẩm nào báo "Đang có hàng".</p>}
-        <div class="grid" set:html={available.join('')} />
-      </>
+        {available.length > 0 && <Rail w={250}><Fragment set:html={available.join('')} /></Rail>}
+      </Section>
     ) : rowOf[b.id] ? (
-      <>
-        <div class="sechead"><h2>{rowOf[b.id]!.cat.name}</h2><a href={catHref(rowOf[b.id]!.cat)}>Xem thêm</a></div>
-        <div class="pgrid">{rowOf[b.id]!.items.map((p) => <ProductCard p={p} />)}</div>
-      </>
+      <Section title={rowOf[b.id]!.cat.name} icon={CAT_ICON[rowOf[b.id]!.cat.slug] ?? '📦'} href={catHref(rowOf[b.id]!.cat)} more="Xem thêm">
+        <Rail w={200}>{rowOf[b.id]!.items.map((p) => <ProductCard p={p} />)}</Rail>
+      </Section>
     ) : b.id === 'vat_tu' && materials.length > 0 ? (
-      <>
-        <div class="sechead"><h2>Vật tư nông nghiệp</h2><a href="/vat-tu/">Xem thêm</a></div>
-        <div class="pgrid">{materials.map((m) => <MaterialCard m={m} />)}</div>
-      </>
+      <Section title="Vật tư nông nghiệp" icon="🧪" href="/vat-tu/" more="Xem thêm">
+        <Rail w={200}>{materials.map((m) => <MaterialCard m={m} />)}</Rail>
+      </Section>
     ) : b.id === 'tin' && latest.length > 0 ? (
-      <>
-        <div class="sechead"><h2>Sự kiện, hội chợ và tin tức</h2><a href="/tin-nong-nghiep/">Xem tất cả</a></div>
-        <div class="pgrid">{latest.map((a) => <ArticleCard a={a} />)}</div>
-      </>
+      <Section title="Sự kiện, hội chợ và tin tức" icon="📰" href="/tin-nong-nghiep/">
+        <Rail w={260}>{latest.map((a) => <ArticleCard a={a} />)}</Rail>
+      </Section>
     ) : b.id === 'truy_xuat' ? (
-      <>
-        <div class="sechead"><h2>Kiểm tra nguồn gốc</h2></div>
+      <Section title="Kiểm tra nguồn gốc" icon="🔎">
         <form class="search" action="/truyxuat/" method="get">
           <input name="ma" placeholder="Nhập mã vụ in trên bao bì, ví dụ VU-1A2B3C4D" aria-label="Mã vụ" />
           <button class="btn solid" type="submit">Truy xuất</button>
         </form>
-      </>
+      </Section>
     ) : b.id === 'cta' ? (
       <section class="cta">
         <div><h2 style="margin:0">Bạn là nhà vườn hay hợp tác xã?</h2><p style="margin:.3em 0 0">Ghi chép sản xuất, truy xuất nguồn gốc và giới thiệu sản phẩm đến người mua. Dùng thử miễn phí.</p></div>
@@ -158,25 +188,53 @@ try {
 </Base>
 
 <style is:global>
-  .hero2 { display: grid; grid-template-columns: 210px minmax(0, 1fr) 240px; gap: 14px; margin-bottom: 8px; }
-  .catlist { list-style: none; margin: 0; padding: 0; background: #fff; border: 1px solid var(--line); border-radius: 14px; align-self: start; }
-  .catlist a { display: flex; justify-content: space-between; padding: 11px 14px; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
-  .catlist li:last-child a { border-bottom: 0; } .catlist a:hover { background: var(--g2); color: var(--g); }
-  .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 16px; background: var(--g2); min-height: 280px; scrollbar-width: thin; }
-  .slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; display: block; text-decoration: none; color: inherit; min-height: 280px; }
-  .slide img { width: 100%; height: 100%; min-height: 280px; object-fit: cover; display: block; }
-  .slide .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 18px; color: #fff; background: rgba(0,0,0,.45); display: flex; flex-direction: column; }
-  .slide.fallback { background: linear-gradient(135deg, var(--g), #3c9d5d); color: #fff; padding: 28px 24px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 8px; }
-  .slide.fallback h1 { margin: 0; font-size: 1.7rem; } .slide.fallback p { margin: 0 0 8px; opacity: .95; }
+  .hero2 { position: relative; display: grid; grid-template-columns: 230px minmax(0, 1fr) 250px; gap: 14px; margin-bottom: 14px; }
+  .catbox { background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); align-self: start; position: relative; z-index: 12; }
+  .cathead { background: linear-gradient(90deg, var(--g-d), var(--g)); color: #fff; font-weight: 700; padding: 11px 14px; border-radius: 15px 15px 0 0; }
+  .catlist { list-style: none; margin: 0; padding: 4px 0; }
+  .catlist > li > a { display: flex; align-items: center; gap: 10px; padding: 10px 14px; color: var(--ink); text-decoration: none; font-weight: 500; }
+  .catlist .ci { width: 24px; text-align: center; font-size: 1.15rem; } .catlist .cn { flex: 1; } .catlist .car { color: var(--muted); }
+  .catlist > li:hover > a, .catlist > li:focus-within > a { background: var(--g2); color: var(--g-d); }
+  .catlist > li:hover .car { color: var(--g); }
+  /* Menu con hiện bên phải khi trỏ chuột (hoặc dùng bàn phím) */
+  .catlist > li { position: static; }
+  .fly { display: none; position: absolute; left: calc(100% - 2px); top: 0; min-height: 100%; width: min(640px, 62vw); background: #fff; border: 1px solid var(--line); border-radius: 0 16px 16px 0; box-shadow: 12px 10px 30px rgba(16,40,26,.18); padding: 16px 20px 18px; z-index: 30; }
+  .catlist > li:hover > .fly, .catlist > li:focus-within > .fly { display: block; }
+  .fly-h { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--g2); padding-bottom: 8px; margin-bottom: 10px; }
+  .fly-h b { font-size: 1.1rem; color: var(--g-d); } .fly-h a { font-size: .9rem; font-weight: 600; text-decoration: none; }
+  .fly-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px 18px; }
+  .fly-list > li > a { font-weight: 600; color: var(--ink); text-decoration: none; display: block; padding: 4px 0; }
+  .fly-list > li > a:hover { color: var(--g); }
+  .fly-sub { display: flex; flex-direction: column; gap: 2px; padding-left: 10px; border-left: 2px solid var(--g2); }
+  .fly-sub a { font-size: .88rem; color: var(--muted); text-decoration: none; } .fly-sub a:hover { color: var(--g); text-decoration: underline; }
+
+  .hero2 > * { min-width: 0; }
+  .herorail { border-radius: 16px; box-shadow: var(--shadow); min-height: 300px; }
+  .herorail .rail { border-radius: 16px; min-height: 300px; background: var(--g2); }
+  .slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; display: block; text-decoration: none; color: inherit; min-height: 300px; }
+  .slide img { width: 100%; height: 100%; min-height: 300px; object-fit: cover; display: block; }
+  .slide .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 22px 18px; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.65)); display: flex; flex-direction: column; font-size: 1.15rem; }
+  .slide .cap small { font-size: .9rem; opacity: .95; }
+  .slide.fallback { background: radial-gradient(circle at 85% 20%, rgba(255,255,255,.18) 0 90px, transparent 91px), radial-gradient(circle at 95% 90%, rgba(255,216,74,.35) 0 120px, transparent 121px), linear-gradient(135deg, #0f5f2f, #1e9650); color: #fff; padding: 34px 32px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 10px; }
+  .slide.fallback .kicker { background: rgba(255,255,255,.18); border-radius: 999px; padding: 3px 12px; font-size: .8rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .slide.fallback h1 { margin: 0; font-size: 2rem; line-height: 1.2; max-width: 520px; } .slide.fallback p { margin: 0 0 8px; opacity: .95; max-width: 520px; }
+  .ctas { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn.cta1 { background: var(--yl); color: #2a2200; } .btn.cta2 { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,.85); padding: 10px 16px; }
   .sidebans { display: grid; gap: 14px; grid-template-rows: 1fr 1fr; }
-  .sideban { position: relative; display: flex; align-items: flex-end; background: var(--g2); border-radius: 14px; overflow: hidden; text-decoration: none; color: var(--ink); min-height: 132px; padding: 12px 14px; }
+  .sideban { position: relative; display: flex; align-items: flex-end; background: linear-gradient(135deg, #fff, var(--g2)); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; text-decoration: none; color: var(--ink); min-height: 143px; padding: 14px 16px; box-shadow: var(--shadow); transition: transform .18s, box-shadow .18s; }
+  .sideban:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(16,40,26,.16); }
   .sideban img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .sideban span { position: relative; display: flex; flex-direction: column; } .sideban small { color: var(--muted); }
-  .sideban img + span { color: #fff; background: rgba(0,0,0,.45); padding: 6px 10px; border-radius: 8px; } .sideban img + span small { color: #fff; }
-  .sechead { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; }
-  .sechead a { font-size: .9rem; }
-  .soon { background: #fff8e6; border-color: #f3dfa7; } .soon p { margin: .3em 0 0; }
-  .cta { margin-top: 28px; background: var(--g); color: #fff; border-radius: 16px; padding: 20px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-  .cta p { opacity: .95; }
-  @media (max-width: 900px) { .hero2 { grid-template-columns: 1fr; } .catlist { display: flex; overflow-x: auto; } .catlist li { flex: 0 0 auto; } .catlist a { border-bottom: 0; border-right: 1px solid var(--line); gap: 8px; } .sidebans { grid-template-columns: 1fr 1fr; grid-template-rows: none; } }
+  .sideban span { position: relative; display: flex; flex-direction: column; font-size: 1.05rem; } .sideban small { color: var(--muted); }
+  .sideban img + span { color: #fff; background: rgba(0,0,0,.5); padding: 6px 10px; border-radius: 8px; } .sideban img + span small { color: #fff; }
+
+  .trust { list-style: none; margin: 0 0 18px; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+  .trust li { display: flex; gap: 12px; align-items: center; padding: 14px 16px; } .trust li + li { border-left: 1px solid var(--line); }
+  .trust li > span { font-size: 1.7rem; } .trust b { display: block; font-size: .95rem; } .trust small { color: var(--muted); font-size: .8rem; }
+  .soon { background: #fff8e6; border: 1px solid #f3dfa7; border-radius: 12px; padding: 14px; } .soon p { margin: .3em 0 0; }
+  .cta { margin-top: 28px; background: radial-gradient(circle at 90% 20%, rgba(255,255,255,.15) 0 80px, transparent 81px), linear-gradient(135deg, #0f5f2f, #1e9650); color: #fff; border-radius: 18px; padding: 26px 28px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; box-shadow: var(--shadow); }
+  .cta p { opacity: .95; } .cta .btn { background: var(--yl); color: #2a2200; }
+  @media (max-width: 1000px) { .hero2 { grid-template-columns: minmax(0, 1fr); } .fly { display: none !important; } .catbox { border-radius: 14px; }
+    .catlist { display: flex; overflow-x: auto; padding: 6px; gap: 6px; } .catlist > li > a { white-space: nowrap; border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; } .catlist .car { display: none; } .cathead { display: none; }
+    .sidebans { grid-template-columns: 1fr 1fr; grid-template-rows: auto; } .trust { grid-template-columns: 1fr 1fr; } .trust li:nth-child(3) { border-left: 0; } .trust li:nth-child(n+3) { border-top: 1px solid var(--line); } }
+  @media (max-width: 560px) { .sidebans { grid-template-columns: 1fr; } .trust { grid-template-columns: 1fr; } .trust li + li { border-left: 0; border-top: 1px solid var(--line); } .slide.fallback h1 { font-size: 1.5rem; } }
 </style>
