@@ -60,6 +60,13 @@ function readJson<T>(key: string): T | null {
     return null;
   }
 }
+/** Danh sách cơ sở đã lưu trên máy lần trước (có đọc được cả bản lưu kiểu cũ) */
+function readCachedOrgs(uid: string): MyOrg[] {
+  return (readJson<Array<Omit<MyOrg, 'perms'> & { role?: MemberRole; perms?: EffectivePerms }>>(cacheKey(uid)) ?? []).map((o) => {
+    const roles = o.roles ?? (o.role ? [o.role] : []);
+    return { ...o, roles, perms: o.perms ?? effectivePerms(roles, null) };
+  });
+}
 function writeStore(key: string, value: string) {
   try {
     localStorage.setItem(key, value);
@@ -84,18 +91,28 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     }
     setLoading(true);
     const saved = readJson<string>(activeKey(uid));
+    // Vào app ngay bằng danh sách đã lưu lần trước, bản mới từ máy chủ sẽ thay vào khi tải xong (không bắt người dùng chờ mạng)
+    const cachedFirst = readCachedOrgs(uid);
+    if (cachedFirst.length > 0) {
+      setOrgs((cur) => (cur.length > 0 ? cur : cachedFirst));
+      setActiveId((cur) => pickActive(cachedFirst, cur ?? saved));
+    }
     try {
       if (!supabase || !navigator.onLine) throw new Error('offline');
-      const { data, error } = await supabase
-        .from('organization_memberships')
-        .select('roles, permissions, position_ids, organizations ( id, type, name )')
-        .eq('status', 'active')
-        // CHỈ dòng của chính mình: các dòng thành viên khác cùng cơ sở không phải "cơ sở của tôi"
-        // và mang vai trò của người khác (lỗi cũ: nhân viên bị hiện giao diện của chủ).
-        .eq('user_id', uid);
+      // hai truy vấn không phụ thuộc nhau nên gửi cùng lúc
+      const [memRes, posRes] = await Promise.all([
+        supabase
+          .from('organization_memberships')
+          .select('roles, permissions, position_ids, organizations ( id, type, name )')
+          .eq('status', 'active')
+          // CHỈ dòng của chính mình: các dòng thành viên khác cùng cơ sở không phải "cơ sở của tôi"
+          // và mang vai trò của người khác (lỗi cũ: nhân viên bị hiện giao diện của chủ).
+          .eq('user_id', uid),
+        // chức vụ đang hoạt động của các cơ sở tôi thuộc (lỗi/thiếu bảng thì coi như chưa có chức vụ nào)
+        supabase.from('org_positions').select('id, organization_id, name, perms, work_type_ids, can_manage_stages, base_role, is_builtin').eq('is_active', true),
+      ]);
+      const { data, error } = memRes;
       if (error) throw error;
-      // chức vụ đang hoạt động của các cơ sở tôi thuộc (lỗi/thiếu bảng thì coi như chưa có chức vụ nào)
-      const posRes = await supabase.from('org_positions').select('id, organization_id, name, perms, work_type_ids, can_manage_stages, base_role, is_builtin').eq('is_active', true);
       const allPos = (posRes.error ? [] : (posRes.data ?? [])) as PositionRow[];
       const list: MyOrg[] = (data ?? []).flatMap((row) => {
         const o = row.organizations as unknown as { id: string; type: OrgType; name: string } | null;
@@ -125,10 +142,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       setActiveId((cur) => pickActive(list, cur ?? saved));
     } catch {
       // Offline hoặc lỗi mạng: dùng danh sách đã lưu lần trước để vẫn làm việc được
-      const cached = (readJson<Array<Omit<MyOrg, 'perms'> & { role?: MemberRole; perms?: EffectivePerms }>>(cacheKey(uid)) ?? []).map((o) => {
-        const roles = o.roles ?? (o.role ? [o.role] : []);
-        return { ...o, roles, perms: o.perms ?? effectivePerms(roles, null) };
-      });
+      const cached = readCachedOrgs(uid);
       setOrgs(cached);
       setStale(true);
       setActiveId((cur) => pickActive(cached, cur ?? saved));

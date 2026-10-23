@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCatalog } from '../lib/catalog';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
-import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import { formatMoney } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { countPendingForSummary, downloadCsv, fetchCycleSummary, getCachedSummary } from '../lib/summary';
 import { buildSummaryCsv, canCompare, summaryNotes, vnNumber, type CycleSummary } from '../lib/summaryReport';
+import { useTable } from '../lib/tables';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 
@@ -17,10 +16,10 @@ const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
  */
 export function SummarySection() {
   const { active } = useOrgs();
-  const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
-  const areas = useLiveQuery(() => db.areas.toArray(), [], []);
+  const cycles = useTable('cycles');
+  const areas = useTable('areas');
   const { cropTypes } = useCatalog();
-  const outbox = useLiveQuery(() => db.outbox.toArray(), [], []);
+  const outbox = useTable('outbox');
 
   // chỉ vụ do cơ sở này sở hữu (quyền xem tổng kết theo chủ vụ)
   const own = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id), [cycles, active]);

@@ -11,6 +11,7 @@ import {
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { authorLabel } from '../lib/roles';
+import { useTable } from '../lib/tables';
 
 /** Kho (mục con của Sản xuất): tồn kho, lịch sử giao dịch, nhập kho, điều chỉnh. Danh mục vật tư/kho nằm ở tab Khai báo. */
 export function StockPanel() {
@@ -25,7 +26,7 @@ export function StockPanel() {
 function StockList({ orgId, canWrite, onReceipt, onAdjust }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void }) {
   const materials = useLiveQuery(() => db.materials.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const locations = useLiveQuery(() => db.locations.where('organization_id').equals(orgId).toArray(), [orgId], []);
-  const units = useLiveQuery(() => db.units.toArray(), [], []);
+  const units = useTable('units');
   const balances = useLiveQuery(() => db.balances.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const outbox = useLiveQuery(() => db.outbox.where('table').equals('inventory_transactions').toArray(), [], []);
   const pending = useMemo(() => pendingDeltas(outbox), [outbox]);

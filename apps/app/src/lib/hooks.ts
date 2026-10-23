@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import type { SyncState } from '@agriconnect/shared';
-import { db } from './db';
+import { useTable } from './tables';
 
 export interface RecordSync {
   state: SyncState;
@@ -12,7 +11,7 @@ const RANK: Record<SyncState, number> = { synced: 0, local_only: 1, syncing: 2, 
 
 /** Trạng thái đồng bộ theo id bản ghi, tự cập nhật khi hàng đợi thay đổi. Bản ghi không có trong hàng đợi = đã có trên máy chủ. */
 export function useRecordSync(): Map<string, RecordSync> {
-  const items = useLiveQuery(() => db.outbox.toArray(), [], []);
+  const items = useTable('outbox');
   return useMemo(() => {
     const map = new Map<string, RecordSync>();
     for (const it of items) {

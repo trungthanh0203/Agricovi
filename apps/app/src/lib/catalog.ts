@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type CropTypeRow, type FieldDef, type WorkTypeRow } from './db';
 import { useOrgs } from './orgs';
+import { useTable } from './tables';
 
 /**
  * Sản phẩm và loại việc HIỆU LỰC cho một cơ sở: mục dùng chung + mục của chính cơ sở, áp bản chỉnh của cơ sở
@@ -38,8 +38,8 @@ export function effectiveWorkTypes(rows: WorkTypeRow[], orgId: string | undefine
 /** Danh mục hiệu lực của cơ sở đang chọn, cập nhật theo bản lưu trên máy (dùng được offline) */
 export function useCatalog() {
   const { active } = useOrgs();
-  const crops = useLiveQuery(() => db.cropTypes.toArray(), [], []);
-  const types = useLiveQuery(() => db.workTypes.toArray(), [], []);
+  const crops = useTable('cropTypes');
+  const types = useTable('workTypes');
   return useMemo(
     () => ({ cropTypes: effectiveCrops(crops, active?.id), workTypes: effectiveWorkTypes(types, active?.id) }),
     [crops, types, active?.id],

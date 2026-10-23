@@ -1,6 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { Collapsible } from './Collapsible';
 import { useAuth } from '../lib/auth';
@@ -11,6 +10,7 @@ import { todayLocal, useOnline } from '../lib/hooks';
 import { formatMoney, formatQty, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
+import { useTable } from '../lib/tables';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 
@@ -19,9 +19,9 @@ export function SalesSection() {
   const { session } = useAuth();
   const { active } = useOrgs();
   const online = useOnline();
-  const sales = useLiveQuery(() => db.sales.toArray(), [], []);
-  const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
-  const areas = useLiveQuery(() => db.areas.toArray(), [], []);
+  const sales = useTable('sales');
+  const cycles = useTable('cycles');
+  const areas = useTable('areas');
   const { cropTypes } = useCatalog();
 
   const [mode, setMode] = useState<{ kind: 'list' } | { kind: 'new' } | { kind: 'edit'; id: string }>({ kind: 'list' });
@@ -161,7 +161,7 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
   onClose: () => void;
 }) {
   const online = useOnline();
-  const allCycles = useLiveQuery(() => db.cycles.toArray(), [], []);
+  const allCycles = useTable('cycles');
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
   const ordered = [...cycles].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active'));
 

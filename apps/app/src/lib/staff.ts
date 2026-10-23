@@ -23,6 +23,16 @@ export const WORK_MODE_LABEL: Record<WorkMode, string> = {
 
 const cacheKey = (uid: string) => `agriconnect.staff.${uid}`;
 
+/** Trạng thái nhân viên đã lưu lần trước (undefined = chưa lưu lần nào) */
+export function readCachedStaffStatus(uid: string): StaffStatus | null | undefined {
+  try {
+    const raw = localStorage.getItem(cacheKey(uid));
+    return raw === null ? undefined : (JSON.parse(raw) as StaffStatus | null);
+  } catch {
+    return undefined;
+  }
+}
+
 export async function fetchStaffStatus(uid: string): Promise<StaffStatus | null> {
   try {
     if (!supabase || !navigator.onLine) throw new Error('offline');

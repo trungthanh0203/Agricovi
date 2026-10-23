@@ -1,6 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
 import { Collapsible } from './Collapsible';
 import { SyncBadge } from './SyncBadge';
@@ -15,6 +14,7 @@ import { formatQty, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { canManageProduction } from '../lib/roles';
+import { useTable } from '../lib/tables';
 
 const OWN_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // khớp chính sách harvest_update_own ở máy chủ
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
@@ -25,9 +25,9 @@ export function HarvestSection() {
   const { active } = useOrgs();
   const sync = useRecordSync();
   const online = useOnline();
-  const harvests = useLiveQuery(() => db.harvests.toArray(), [], []);
-  const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
-  const areas = useLiveQuery(() => db.areas.toArray(), [], []);
+  const harvests = useTable('harvests');
+  const cycles = useTable('cycles');
+  const areas = useTable('areas');
   const { cropTypes } = useCatalog();
 
   const [mode, setMode] = useState<{ kind: 'list' } | { kind: 'new' } | { kind: 'edit'; id: string }>({ kind: 'list' });
@@ -184,7 +184,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
 }) {
   const sync = useRecordSync();
   const online = useOnline();
-  const allCycles = useLiveQuery(() => db.cycles.toArray(), [], []);
+  const allCycles = useTable('cycles');
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
   // vụ đang chạy lên đầu danh sách
   const ordered = [...cycles].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active'));

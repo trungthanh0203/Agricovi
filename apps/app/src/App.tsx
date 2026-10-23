@@ -16,7 +16,7 @@ import { syncDown } from './lib/production';
 import { SetupNotice } from './screens/SetupNotice';
 import { WelcomeScreen } from './screens/WelcomeScreen';
 import { ForcePasswordScreen } from './screens/ForcePasswordScreen';
-import { fetchStaffStatus, type StaffStatus } from './lib/staff';
+import { fetchStaffStatus, readCachedStaffStatus, type StaffStatus } from './lib/staff';
 
 // Các màn ngoài Trang chủ tải khi mở lần đầu (giảm dung lượng phải tải lúc vào app); bản dựng vẫn được lưu sẵn để dùng offline
 const CreateCycleScreen = lazy(() => import('./screens/CreateCycleScreen').then((m) => ({ default: m.CreateCycleScreen })));
@@ -50,6 +50,9 @@ function Gate() {
 
   const loadStaff = useCallback(async () => {
     if (!uid) return setStaff(undefined);
+    // Có trạng thái đã lưu thì vào ngay, bản mới từ máy chủ cập nhật sau (máy chủ vẫn chặn dữ liệu nếu chưa đổi mật khẩu tạm)
+    const cached = readCachedStaffStatus(uid);
+    if (cached !== undefined) setStaff((cur) => (cur === undefined ? cached : cur));
     setStaff(await fetchStaffStatus(uid));
   }, [uid]);
   useEffect(() => { void loadStaff(); }, [loadStaff]);

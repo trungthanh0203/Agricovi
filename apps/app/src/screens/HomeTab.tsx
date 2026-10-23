@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { addDays, diffDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { setNoteDone } from '../lib/production';
@@ -7,23 +6,23 @@ import { useCatalog } from '../lib/catalog';
 import { HomeStats } from '../components/HomeStats';
 import { WebInboxCard } from '../components/WebInboxCard';
 import { SyncBadge } from '../components/SyncBadge';
-import { db } from '../lib/db';
 import { todayLocal, useOnline, useRecordSync } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import type { TabId } from '../lib/tabs';
 import { useAuth } from '../lib/auth';
 import { authorLabel, canManageProduction, hasRole } from '../lib/roles';
 import { retryFailed } from '../lib/outbox';
+import { useTable } from '../lib/tables';
 
 export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHistory: () => void; onGo: (tab: TabId, section?: string) => void }) {
   const { active } = useOrgs();
   const sync = useRecordSync();
   const { session } = useAuth();
   const uid = session?.user.id;
-  const logs = useLiveQuery(() => db.logs.toArray(), [], []);
-  const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
-  const areas = useLiveQuery(() => db.areas.toArray(), [], []);
-  const notes = useLiveQuery(() => db.notes.toArray(), [], []);
+  const logs = useTable('logs');
+  const cycles = useTable('cycles');
+  const areas = useTable('areas');
+  const notes = useTable('notes');
   const online = useOnline();
   const [noteError, setNoteError] = useState<string | null>(null);
   const { workTypes, cropTypes } = useCatalog();

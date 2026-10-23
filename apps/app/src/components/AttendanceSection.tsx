@@ -14,6 +14,7 @@ import {
   ensureMyWorker, listOutputs, listWorkers, OUTPUT_STATUS_LABEL, recalledMyWorker, recordOutput, recordShift, rejectAttendance, rememberMyWorker, requestAdjustment,
   type AdjustmentRequest, type AttendanceRow, type OutputRow, type WorkerLite,
 } from '../lib/work';
+import { useTable } from '../lib/tables';
 
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
@@ -36,7 +37,7 @@ export function AttendanceSection() {
   const [adjFor, setAdjFor] = useState<string | null>(null);
   const [adjs, setAdjs] = useState<AdjustmentRequest[]>([]);
   const localShift = useLiveQuery(async () => (active ? (await db.localShifts.where('org').equals(active.id).toArray())[0] ?? null : null), [active?.id], null);
-  const cycles = useLiveQuery(() => db.cycles.toArray(), [], []).filter((c) => c.status === 'active' && c.owner_org_id === active?.id);
+  const cycles = useTable('cycles').filter((c) => c.status === 'active' && c.owner_org_id === active?.id);
   const recalled = active && uid ? recalledMyWorker(active.id, uid) : null;
 
   const orgId = active?.id;

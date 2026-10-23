@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { ImagePicker, Thumb } from './ImagePicker';
 import { db, type AreaRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
@@ -7,6 +6,7 @@ import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { createArea, updateArea, type FarmInput } from '../lib/production';
 import { canPerm } from '../lib/permissions';
+import { useTable } from '../lib/tables';
 
 const fmtSize = (a: AreaRow) => (a.area_size != null ? `${a.area_size.toLocaleString('vi-VN')} ${a.area_unit === 'ha' ? 'ha' : 'm²'}` : '');
 
@@ -17,7 +17,7 @@ const fmtSize = (a: AreaRow) => (a.area_size != null ? `${a.area_size.toLocaleSt
 export function AreasSection() {
   const { active } = useOrgs();
   const online = useOnline();
-  const areas = useLiveQuery(() => db.areas.toArray(), [], []);
+  const areas = useTable('areas');
   const [showOff, setShowOff] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);

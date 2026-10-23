@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useCatalog } from '../lib/catalog';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
 import { StockPanel } from './StockPanel';
 import { LogsScreen } from './LogsScreen';
 import { AttendanceSection } from '../components/AttendanceSection';
 import { HarvestSection } from '../components/HarvestSection';
 import { pickSection, SubTabs } from '../components/SubTabs';
-import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { cycleProgress } from '../lib/cycles';
@@ -20,6 +18,7 @@ import { canManageProduction, isOwner } from '../lib/roles';
 import { deleteCycle, editCycle, fetchQuotaContexts, setCycleStatus, type QuotaContext } from '../lib/production';
 import type { CycleRow } from '../lib/db';
 import { productionSections, type ProductionSection, type TabId } from '../lib/tabs';
+import { useTable } from '../lib/tables';
 
 interface Props {
   section?: string;
@@ -36,7 +35,7 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
   const { active } = useOrgs();
   const items = productionSections(active);
   const current = pickSection(items, section);
-  const cyclesAll = useLiveQuery(() => db.cycles.toArray(), [], []);
+  const cyclesAll = useTable('cycles');
   const hasActive = cyclesAll.some((c) => c.status === 'active' && c.owner_org_id === active?.id);
 
   return (
@@ -101,9 +100,9 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const { active } = useOrgs();
   const online = useOnline();
   const [actionError, setActionError] = useState<string | null>(null);
-  const areas = useLiveQuery(() => db.areas.toArray(), [], []);
-  const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
-  const allStages = useLiveQuery(() => db.stages.toArray(), [], []);
+  const areas = useTable('areas');
+  const cycles = useTable('cycles');
+  const allStages = useTable('stages');
   const today = todayLocal();
   const { cropTypes } = useCatalog();
   const [contexts, setContexts] = useState<QuotaContext[]>([]);

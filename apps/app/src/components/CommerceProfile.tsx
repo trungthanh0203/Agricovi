@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { Collapsible } from './Collapsible';
 import { ImagePicker } from './ImagePicker';
 import { useCatalog } from '../lib/catalog';
@@ -9,12 +8,12 @@ import {
   saveListing, saveProfile, SCOPE_LABEL, submitForReview, SUPPLY_LABEL, setCertPublic, updateImage,
   listSiteCategories, type SiteCategory, type BizProfile, type CertRow, type Consent, type ImageRow, type Listing, type ListingForm, type Preview, type ProfileForm, type SupplyRow, type SupplyStatus,
 } from '../lib/commerce';
-import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { listLicenses, type LicenseRow } from '../lib/licenses';
 import type { MyOrg } from '../lib/orgs';
 import { isOwner } from '../lib/roles';
+import { useTable } from '../lib/tables';
 
 /**
  * Hồ sơ website (D55): giới thiệu cơ sở, liên hệ, hình ảnh, sản phẩm cung ứng, chứng chỉ; chủ đồng ý công khai rồi gửi duyệt.
@@ -304,7 +303,7 @@ function ProductsBlock({ org, profileId, owner, onChanged }: { org: MyOrg; profi
 
 function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: string; initial: Listing | null; busy: boolean; onSave: (f: ListingForm) => Promise<boolean>; onClose: () => void }) {
   const { cropTypes } = useCatalog();
-  const cycles = useLiveQuery(() => db.cycles.toArray(), [], []).filter((c) => c.owner_org_id === orgId);
+  const cycles = useTable('cycles').filter((c) => c.owner_org_id === orgId);
   const [f, setF] = useState({
     name: initial?.name ?? '', description: initial?.description ?? '', specification: initial?.specification ?? '', unit: initial?.unit ?? '', season: initial?.season ?? '',
     price_note: initial?.price_note ?? '', min_order: initial?.min_order ?? '', cycle_id: initial?.cycle_id ?? '', crop_type_id: initial?.crop_type_id ?? '', include: initial?.include_in_publication ?? true,

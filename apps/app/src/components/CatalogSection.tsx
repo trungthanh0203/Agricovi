@@ -8,6 +8,7 @@ import { useOnline } from '../lib/hooks';
 import {
   createLocation, createMaterial, createUnit, formatQty, parseNumber, updateLocation, updateMaterial,
 } from '../lib/inventory';
+import { useTable } from '../lib/tables';
 
 /**
  * Danh mục vật tư, kho, đơn vị riêng: các bảng gọn, thêm nhanh một dòng, đổi tên, dừng/dùng lại.
@@ -17,7 +18,7 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
   const online = useOnline();
   const materials = useLiveQuery(() => db.materials.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const locations = useLiveQuery(() => db.locations.where('organization_id').equals(orgId).toArray(), [orgId], []);
-  const units = useLiveQuery(() => db.units.toArray(), [], []);
+  const units = useTable('units');
   const orgUnits = units.filter((u) => u.organization_id === orgId);
   const allUnits = [...units].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const unitName = (id: string) => units.find((u) => u.id === id)?.name ?? '';

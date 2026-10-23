@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { Collapsible } from './Collapsible';
 import { KpiTile } from './HomeStats';
 import { useAuth } from '../lib/auth';
 import { addDays } from '../lib/dates';
-import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
@@ -13,6 +11,7 @@ import {
   type ReportParams, type ReportResult, type ReportType, type SavedReport,
 } from '../lib/reports';
 import { downloadCsv } from '../lib/summary';
+import { useTable } from '../lib/tables';
 
 const monthStart = (d: string) => `${d.slice(0, 7)}-01`;
 const prevMonth = (d: string) => { const x = new Date(`${monthStart(d)}T00:00:00`); x.setMonth(x.getMonth() - 1); return x.toLocaleDateString('en-CA'); };
@@ -26,7 +25,7 @@ export function ReportBuilder() {
   const { session } = useAuth();
   const online = useOnline();
   const uid = session?.user.id;
-  const cycles = useLiveQuery(() => db.cycles.toArray(), [], []).filter((c) => c.owner_org_id === active?.id);
+  const cycles = useTable('cycles').filter((c) => c.owner_org_id === active?.id);
   const types = useMemo(() => REPORT_TYPES.filter((t) => t.allowed(active?.perms, active?.roles)), [active]);
   const today = todayLocal();
 

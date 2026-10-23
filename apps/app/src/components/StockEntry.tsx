@@ -4,6 +4,7 @@ import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { parseNumber, recordTransaction } from '../lib/inventory';
+import { useTable } from '../lib/tables';
 
 const LAST_LOCATION_KEY = 'agriconnect.lastLocation';
 
@@ -12,7 +13,7 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
   const online = useOnline();
   const materials = useLiveQuery(() => db.materials.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const locations = useLiveQuery(() => db.locations.where('organization_id').equals(orgId).toArray(), [orgId], []);
-  const units = useLiveQuery(() => db.units.toArray(), [], []);
+  const units = useTable('units');
 
   const mats = materials.filter((m) => m.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const locs = locations.filter((l) => l.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));

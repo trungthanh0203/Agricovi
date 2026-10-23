@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { useCatalog } from '../lib/catalog';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { SyncBadge } from '../components/SyncBadge';
 import { useAuth } from '../lib/auth';
@@ -11,6 +10,7 @@ import { useOrgs } from '../lib/orgs';
 import { authorLabel, canManageProduction } from '../lib/roles';
 import { loadOlderLogs, voidLog } from '../lib/production';
 import { EditLogScreen } from './EditLogScreen';
+import { useTable } from '../lib/tables';
 
 const PAGE = 30;
 const OWN_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // khớp chính sách logs_update_own ở máy chủ
@@ -29,9 +29,9 @@ export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedde
   const { active } = useOrgs();
   const sync = useRecordSync();
   const online = useOnline();
-  const logs = useLiveQuery(() => db.logs.toArray(), [], []);
-  const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
-  const areas = useLiveQuery(() => db.areas.toArray(), [], []);
+  const logs = useTable('logs');
+  const cycles = useTable('cycles');
+  const areas = useTable('areas');
   const { workTypes, cropTypes } = useCatalog();
 
   const [cycleId, setCycleId] = useState('');

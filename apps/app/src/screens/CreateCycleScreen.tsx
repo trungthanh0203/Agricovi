@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { createCycle, fetchQuotaContexts, type QuotaContext } from '../lib/production';
 import { addDays, fmtDate } from '../lib/dates';
 import { listTemplates, loadTemplate, type StageRow, type TemplateRow } from '../lib/templates';
+import { useTable } from '../lib/tables';
 
 /**
  * Tạo vụ mới (P2): BẮT BUỘC chọn quy trình mẫu của cơ sở sở hữu vụ. Giai đoạn và ngày kế hoạch của vụ
@@ -15,7 +14,7 @@ import { listTemplates, loadTemplate, type StageRow, type TemplateRow } from '..
  */
 export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: string) => void; onCancel: () => void }) {
   const { active } = useOrgs();
-  const areas = useLiveQuery(() => db.areas.toArray(), [], []);
+  const areas = useTable('areas');
   const { cropTypes } = useCatalog();
 
   const myAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false); // trang trại đã dừng không tạo vụ mới

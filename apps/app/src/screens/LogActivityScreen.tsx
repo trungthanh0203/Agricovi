@@ -10,6 +10,7 @@ import { formatQty, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { logActivity } from '../lib/production';
 import { hasRole } from '../lib/roles';
+import { useTable } from '../lib/tables';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 const LAST_LOCATION_KEY = 'agriconnect.lastLocation'; // dùng chung với màn nhập kho
@@ -23,8 +24,8 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const { workTypes: effWorkTypes, cropTypes } = useCatalog();
   // chức vụ có thể giới hạn loại việc được ghi (D44); máy chủ cũng ép lại
   const workTypes = effWorkTypes.filter((w) => w.is_active && (!active?.allowedWorkTypes || active.allowedWorkTypes.includes(w.id)));
-  const cycles = useLiveQuery(() => db.cycles.toArray(), [], []);
-  const areas = useLiveQuery(() => db.areas.toArray(), [], []);
+  const cycles = useTable('cycles');
+  const areas = useTable('areas');
 
   const areaName = (id: string) => areas.find((a) => a.id === id)?.name ?? '—';
   const cropName = (id: string) => cropTypes.find((c) => c.id === id)?.name ?? '—';
@@ -72,7 +73,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const locations = useLiveQuery(
     () => (active ? db.locations.where('organization_id').equals(active.id).toArray() : []), [active?.id], [],
   ).filter((l) => l.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-  const units = useLiveQuery(() => db.units.toArray(), [], []);
+  const units = useTable('units');
   const [usedOpen, setUsedOpen] = useState(false);
   const [used, setUsed] = useState<{ materialId: string; qty: string }[]>([]);
   const [locationId, setLocationId] = useState('');
