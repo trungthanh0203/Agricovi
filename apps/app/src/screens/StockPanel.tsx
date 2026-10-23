@@ -129,6 +129,7 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust, onPurchase }: { orgId
           <p className="muted">
             {new Date(h.txn_date).toLocaleDateString('vi-VN')} · {locName(h.location_id)}
             {h.unit_cost != null ? ` · giá ${formatMoney(h.unit_cost)}` : h.txn_type === 'receipt' ? ' · chưa ghi giá' : ''}
+            {h.purchase_bills?.partners?.name ? ` · mua của ${h.purchase_bills.partners.name}${h.purchase_bills.invoice_no ? ` (HĐ ${h.purchase_bills.invoice_no})` : ''}` : ''}
             {h.activity_log_id ? ' · dùng khi ghi việc' : ''}
             {h.reason ? ` — ${h.reason}` : ''}
           </p>

@@ -8,7 +8,7 @@ import type { MemberRole } from '@agriconnect/shared';
  * Báo cáo đã lưu chỉ lưu loại + bộ lọc, mở lại luôn chạy mới.
  */
 
-export type ReportType = 'expenses' | 'sales' | 'harvest' | 'stock' | 'labor' | 'cycles';
+export type ReportType = 'expenses' | 'sales' | 'harvest' | 'stock' | 'labor' | 'cycles' | 'purchases';
 
 export interface ReportTypeInfo {
   id: ReportType;
@@ -21,6 +21,9 @@ export interface ReportTypeInfo {
 export const REPORT_TYPES: ReportTypeInfo[] = [
   { id: 'expenses', label: 'Chi phí', hint: 'Chi phí đã ghi (không cộng tiền mua vật tư vì đã tính khi dùng)',
     groups: [{ id: 'category', label: 'Theo nhóm chi phí' }, { id: 'month', label: 'Theo tháng' }, { id: 'day', label: 'Theo ngày' }, { id: 'cycle', label: 'Theo vụ' }, { id: 'kind', label: 'Theo loại khoản (thực chi, ước tính…)' }],
+    allowed: (p) => canPerm(p, 'expenses') },
+  { id: 'purchases', label: 'Mua hàng theo nhà cung ứng', hint: 'Số hóa đơn, tổng tiền, đã trả, còn nợ (không tính hóa đơn đã hủy)',
+    groups: [{ id: 'partner', label: 'Theo nhà cung ứng' }, { id: 'month', label: 'Theo tháng' }, { id: 'material', label: 'Theo vật tư' }],
     allowed: (p) => canPerm(p, 'expenses') },
   { id: 'sales', label: 'Doanh thu bán hàng', hint: 'Số lượng và tiền bán',
     groups: [{ id: 'month', label: 'Theo tháng' }, { id: 'day', label: 'Theo ngày' }, { id: 'cycle', label: 'Theo vụ' }],

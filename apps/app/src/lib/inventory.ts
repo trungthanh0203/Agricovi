@@ -109,17 +109,19 @@ export interface TxnHistoryRow {
   author_name: string | null;
   author_roles: string[] | null;
   created_at: string;
+  /** Hóa đơn mua và nhà cung ứng (chỉ có khi người xem có quyền xem Chi phí) */
+  purchase_bills?: { invoice_no: string | null; partners: { name: string } | null } | null;
 }
 
 export async function fetchRecentTransactions(orgId: string, limit = 30): Promise<TxnHistoryRow[]> {
   const { data, error } = await client()
     .from('inventory_transactions')
-    .select('id, location_id, material_id, txn_type, quantity_delta, unit_cost, txn_date, reason, activity_log_id, author_name, author_roles, created_at')
+    .select('id, location_id, material_id, txn_type, quantity_delta, unit_cost, txn_date, reason, activity_log_id, author_name, author_roles, created_at, purchase_bills(invoice_no, partners(name))')
     .eq('organization_id', orgId)
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return ((data ?? []) as TxnHistoryRow[]).map((r) => ({ ...r, quantity_delta: Number(r.quantity_delta) }));
+  return ((data ?? []) as unknown as TxnHistoryRow[]).map((r) => ({ ...r, quantity_delta: Number(r.quantity_delta) }));
 }
 
 // --- danh mục (cần mạng) ---

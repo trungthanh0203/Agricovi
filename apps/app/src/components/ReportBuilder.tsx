@@ -114,12 +114,14 @@ export function ReportBuilder() {
             <label>Từ ngày<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
             <label>Đến ngày<input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
           </div>
-          <label>Vụ (không bắt buộc)
-            <select value={cycleId} onChange={(e) => setCycleId(e.target.value)}>
-              <option value="">— Tất cả các vụ —</option>
-              {cycles.map((c) => <option key={c.id} value={c.id}>{c.name || c.template_name || 'Vụ'}</option>)}
-            </select>
-          </label>
+          {info.id !== 'purchases' && (
+            <label>Vụ (không bắt buộc)
+              <select value={cycleId} onChange={(e) => setCycleId(e.target.value)}>
+                <option value="">— Tất cả các vụ —</option>
+                {cycles.map((c) => <option key={c.id} value={c.id}>{c.name || c.template_name || 'Vụ'}</option>)}
+              </select>
+            </label>
+          )}
           <button className="primary" disabled={busy || !online} onClick={() => void run(info.id, params())}>{busy ? 'Đang tính…' : 'Xem báo cáo'}</button>
         </div>
       </div>
