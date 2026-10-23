@@ -438,3 +438,51 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
   .site-foot .btn { color: #2a2200; background: var(--yl); }
   .fbottom { border-top-color: rgba(255,255,255,.18); }
 </style>
+
+<style is:global>
+  /* ===== Đầu trang và chân trang v3 (D72) ===== */
+  body { font-family: "Segoe UI Variable Text", "Segoe UI", "SF Pro Text", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  h1, h2, h3, .logo, .ni > a, .cathead { font-family: "Segoe UI Variable Display", "Segoe UI Semibold", "SF Pro Display", "Trebuchet MS", Roboto, Arial, sans-serif; }
+
+  .bar1 { background: radial-gradient(circle at 12% -40%, rgba(255,255,255,.22) 0 120px, transparent 121px), radial-gradient(circle at 88% 160%, rgba(255,216,74,.35) 0 110px, transparent 111px), linear-gradient(100deg, #0a4a24 0%, #138045 55%, #1e9650 100%); min-height: 46px; }
+  .logo { font-size: 1.45rem; font-weight: 800; letter-spacing: -.03em; background: #fff; color: var(--g-d) !important; box-shadow: 0 3px 10px rgba(0,0,0,.2); }
+  .logo::before { content: "🌿"; margin-right: 6px; }
+  .mid { gap: 14px; }
+  .yl { background: rgba(255,216,74,.16); border: 1px solid rgba(255,216,74,.55); border-radius: 999px; padding: 5px 16px; font-weight: 700; transition: background .15s, color .15s; }
+  .yl:hover { background: var(--yl); color: #2a2200 !important; }
+
+  .bar2 { background: linear-gradient(180deg, #ffffff, #f0f8f2); border-bottom: 3px solid var(--g); padding-top: 10px; padding-bottom: 10px; }
+  .cats summary { background: var(--g-d); color: #fff; border-radius: 10px; padding: 9px 14px; font-weight: 700; box-shadow: 0 2px 6px rgba(14,94,46,.35); }
+  .topnav { gap: 8px; }
+  .ni > a { font-size: 1rem; font-weight: 700; letter-spacing: .01em; padding: 9px 16px; border-radius: 999px; color: #14301f; position: relative; }
+  .ni > a::after { content: ""; position: absolute; left: 16px; right: 16px; bottom: 3px; height: 3px; border-radius: 3px; background: var(--g); transform: scaleX(0); transition: transform .2s; }
+  .ni > a:hover, .ni:focus-within > a { background: var(--g2); color: var(--g-d); }
+  .ni > a:hover::after, .ni:focus-within > a::after { transform: scaleX(1); }
+  .ni:first-child > a { background: #fff3cd; } .ni:nth-child(2) > a { background: #e3f3ff; } .ni:nth-child(3) > a { background: #fde6ef; } .ni:nth-child(4) > a { background: #e5f6e8; }
+  .ni:first-child > a::before { content: "📰 "; } .ni:nth-child(2) > a::before { content: "🚢 "; } .ni:nth-child(3) > a::before { content: "🎪 "; } .ni:nth-child(4) > a::before { content: "🤝 "; }
+  .ni > a:hover { filter: brightness(.97); }
+
+  /* Menu danh mục bung ra: 2 cột */
+  .fly { width: min(480px, 60vw); }
+  .fly-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* Chân trang: từng phần một tông màu riêng */
+  .site-foot { background: #0d2a1a; padding: 28px 16px 14px; }
+  .fgrid { gap: 14px; }
+  .fgrid > div { border-radius: 14px; padding: 16px 18px; border: 1px solid rgba(255,255,255,.10); }
+  .fgrid > div:nth-child(1) { background: linear-gradient(160deg, #1e9650, #0f5f2f); color: #eaf7ee; }
+  .fgrid > div:nth-child(2) { background: #14402a; }
+  .fgrid > div:nth-child(3) { background: #1a3a4a; }
+  .fgrid > div:nth-child(4) { background: #3a3320; }
+  .fgrid > div:nth-child(5) { background: #2b2145; }
+  .fgrid > div:last-child { background: linear-gradient(160deg, #f7c52a, #e8a30c); color: #2a2200; }
+  .fgrid > div:last-child b, .fgrid > div:last-child p { color: #2a2200; }
+  .fgrid > div:last-child .btn { background: #0f5f2f; color: #fff; }
+  .site-foot .fgrid b { font-size: 1rem; padding-bottom: 8px; margin-bottom: 10px; border-bottom: 2px solid rgba(255,255,255,.28); }
+  .fgrid > div:last-child b { border-bottom-color: rgba(42,34,0,.35); }
+  .site-foot .fgrid a { color: #dbeadf; } .fgrid > div:last-child a { color: #2a2200; }
+  .fbottom { background: rgba(0,0,0,.28); border: 0; border-radius: 12px; padding: 12px 16px; margin-top: 16px; }
+  .site-foot .note { color: #9fb8a8; }
+  @media (max-width: 960px) { .fgrid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 520px) { .fgrid { grid-template-columns: 1fr; } .ni:first-child > a::before, .ni:nth-child(n) > a::before { content: none; } }
+</style>
