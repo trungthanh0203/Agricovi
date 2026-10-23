@@ -6,7 +6,7 @@ import { createDb, asAnon, expectError } from './harness.mjs';
 // (và nhớ rằng mọi thứ trong danh sách ai cũng đọc/gọi được qua API công khai). Hàm mới mặc định phải `revoke … from public, anon`.
 const TABLES = [
   'product_categories', 'public_cycles', 'public_directory', 'public_material_shops', 'public_price_board', 'public_products', 'public_products_lite', 'public_profile_badges',
-  'public_profiles', 'public_profiles_lite', 'public_reviews', 'public_season_calendar', 'public_supplier_ratings', 'public_trade_posts', 'site_articles', 'site_banners',
+  'public_profiles', 'public_profiles_lite', 'public_reviews', 'public_season_calendar', 'public_supplier_ratings', 'public_trade_posts', 'public_trade_results', 'public_trade_stats', 'site_articles', 'site_banners',
   'site_materials', 'site_menus', 'site_pages', 'site_settings', 'site_translations',
 ];
 const FUNCS = [

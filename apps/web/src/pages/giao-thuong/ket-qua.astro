@@ -1,0 +1,54 @@
+---
+import Base from '../../layouts/Base.astro';
+import { sb } from '../../lib/db';
+
+// Kết quả giao thương: tin đã đóng và có báo giá/quan tâm được chấp nhận (không lộ người tham gia, giá hay nội dung trao đổi).
+interface Result { id: string; kind: 'buy' | 'sell'; title: string; category_name: string | null; province: string; quantity: number | null; unit: string; closed_at: string }
+let results: Result[] = [];
+let stats = { deals_total: 0, deals_30d: 0, orders_completed: 0, active_posts: 0 };
+try {
+  if (sb) {
+    const [r, s] = await Promise.all([
+      sb.from('public_trade_results').select('id, kind, title, category_name, province, quantity, unit, closed_at').order('closed_at', { ascending: false }).limit(60),
+      sb.from('public_trade_stats').select('*').maybeSingle(),
+    ]);
+    if (!r.error) results = (r.data ?? []) as Result[];
+    if (!s.error && s.data) stats = s.data as typeof stats;
+  }
+} catch { /* bảng chưa có (chưa chạy migration 0053): hiện trang rỗng */ }
+const fd = (d: string) => new Date(d).toLocaleDateString('vi-VN');
+---
+<Base title="Kết quả giao thương — AgriConnect" description="Những giao dịch đã thành công trên AgriConnect: loại hàng, số lượng, khu vực.">
+  <p class="crumbs"><a href="/">Trang chủ</a> › <a href="/giao-thuong/">Giao thương</a> › Kết quả giao thương</p>
+  <h1>Kết quả giao thương</h1>
+  <p class="muted">Các tin đã đóng sau khi người đăng chấp nhận một báo giá hoặc lời quan tâm. Để bảo vệ người tham gia, trang này không hiện tên, giá hay nội dung trao đổi.</p>
+  <ul class="stats4">
+    <li><b>{stats.deals_total}</b><span>Giao dịch thành công</span></li>
+    <li><b>{stats.deals_30d}</b><span>Trong 30 ngày qua</span></li>
+    <li><b>{stats.orders_completed}</b><span>Đơn đặt hàng hoàn tất</span></li>
+    <li><b>{stats.active_posts}</b><span>Tin đang hiển thị</span></li>
+  </ul>
+  <section class="sec">
+    <div class="sec-h"><h2><span class="bar" aria-hidden="true"></span><span class="ico" aria-hidden="true">✅</span>Giao dịch gần đây</h2><a class="sec-more" href="/giao-thuong/dang-tin/">Đăng tin<span aria-hidden="true"> →</span></a></div>
+    {results.length === 0 ? <p class="empty">Chưa có giao dịch nào được ghi nhận. Hãy là người đăng tin đầu tiên.</p> : (
+      <div class="pgrid">{results.map((r) => (
+        <div class="rcard">
+          <span class={`tk ${r.kind}`}>{r.kind === 'buy' ? 'Cần mua' : 'Cần bán'}</span> <span class="stat ok">Đã thành công</span>
+          <h3>{r.title}</h3>
+          <p class="muted">{r.category_name ?? ''} · 📍 {r.province}</p>
+          <p class="muted">Đóng ngày {fd(r.closed_at)}</p>
+        </div>
+      ))}</div>
+    )}
+  </section>
+</Base>
+
+<style is:global>
+  .stats4 { list-style: none; margin: 14px 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stats4 li { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; box-shadow: var(--shadow); border-top: 4px solid var(--g); }
+  .stats4 b { display: block; font-size: 1.9rem; color: var(--g-d); line-height: 1.1; } .stats4 span { color: var(--muted); font-size: .88rem; }
+  .rcard { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .rcard h3 { margin: 6px 0 4px; font-size: 1rem; line-height: 1.3; } .rcard p { margin: 2px 0; font-size: .85rem; }
+  .tk { display: inline-block; font-size: .75rem; padding: 1px 9px; border-radius: 999px; font-weight: 600; } .tk.buy { background: #e3f4e8; color: #0e5a30; } .tk.sell { background: #fff1d6; color: #7a4b00; }
+  @media (max-width: 700px) { .stats4 { grid-template-columns: 1fr 1fr; } }
+</style>

@@ -55,6 +55,9 @@ export const DEFAULT_HEADER_NAV: SiteNavItem[] = [
   { label: 'Giao thương', href: '/giao-thuong/', children: [
     { label: 'Tin cần mua', href: '/giao-thuong/can-mua/' },
     { label: 'Tin cần bán', href: '/giao-thuong/can-ban/' },
+    { label: 'Dành cho người bán', href: '/danh-cho-nguoi-ban' },
+    { label: 'Dành cho người mua', href: '/danh-cho-nguoi-mua' },
+    { label: 'Kết quả giao thương', href: '/giao-thuong/ket-qua/' },
   ] },
 ];
 

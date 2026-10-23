@@ -1,6 +1,7 @@
 ---
 import { safeHref } from '@agriconnect/shared';
-import { catHref, catTree, loadCategories } from '../lib/catalog';
+import { catHref, catTree, loadArticles, loadCategories } from '../lib/catalog';
+import { localizeArticle } from '../lib/translations';
 import { loadChrome } from '../lib/site';
 
 interface Props { title: string; description?: string; noindex?: boolean; cache?: boolean }
@@ -10,6 +11,21 @@ const chrome = await loadChrome();
 const { top: topCats, kids: subCats } = catTree(await loadCategories());
 const { settings, header, about, footer } = chrome;
 const brand = settings.brand.name ?? 'AgriConnect';
+// Menu Giao thương luôn có: Dành cho người bán / người mua và (cuối cùng) Kết quả giao thương, dù quản trị đã lưu menu riêng
+const TRADE_EXTRA = [{ label: 'Dành cho người bán', href: '/danh-cho-nguoi-ban' }, { label: 'Dành cho người mua', href: '/danh-cho-nguoi-mua' }, { label: 'Kết quả giao thương', href: '/giao-thuong/ket-qua/' }];
+const nav = header.map((it) => (/^\/giao-thuong\/?$/.test(it.href)
+  ? { ...it, trade: true, children: [...(it.children ?? []).filter((c) => !TRADE_EXTRA.some((x) => x.href === c.href)), ...TRADE_EXTRA] }
+  : { ...it, trade: false }));
+// Dòng chữ chạy ở đầu trang: các bài mới nhất (tin nông nghiệp, xuất khẩu, hội chợ); chưa có bài thì hiện lời chào
+const latestNews = (await loadArticles()).slice(0, 6).map((a) => localizeArticle(a, Astro.locals.tr));
+const tick = latestNews.length > 0
+  ? latestNews.map((a) => ({ text: a.title, href: `/bai-viet/${a.slug}` }))
+  : [
+    { text: 'Chào mừng bạn đến với AgriConnect — kết nối nhà vườn, hợp tác xã và người mua nông sản', href: '/gioi-thieu' },
+    { text: 'Quét mã QR trên bao bì để xem nguồn gốc nông sản', href: '/truyxuat/' },
+    { text: 'Đăng tin cần mua, cần bán miễn phí tại mục Giao thương', href: '/giao-thuong/' },
+  ];
+const SOC_ICON: Record<string, string> = { Facebook: '📘', 'Zalo OA': '💬', YouTube: '▶️', TikTok: '🎵' };
 // Song ngữ (middleware): /en/… là bản tiếng Anh của cùng trang
 const lang: 'vi' | 'en' = Astro.locals.lang ?? 'vi';
 const pathVi = Astro.locals.pathVi ?? Astro.url.pathname;
@@ -56,10 +72,10 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
           <summary>Tìm hiểu về {brand}</summary>
           <ul>{about.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
         </details>
-        <nav class="mid" aria-label="Dành cho">
-          <a class="yl" href="/danh-cho-nguoi-ban">Dành cho người bán</a>
-          <a class="yl" href="/danh-cho-nguoi-mua">Dành cho người mua</a>
-        </nav>
+        <div class="ticker" aria-label="Tin nổi bật">
+          <span class="tk-label">📢 Tin nổi bật</span>
+          <div class="tk-view"><div class="tk-track">{[...tick, ...tick].map((t, i) => <a href={t.href} aria-hidden={i >= tick.length ? 'true' : undefined} tabindex={i >= tick.length ? -1 : undefined}>{t.text}</a>)}</div></div>
+        </div>
         <div class="langsw" role="group" aria-label="Language / Ngôn ngữ"><a href={withLang('vi')} data-lang="vi" aria-current={lang === 'vi' ? 'true' : undefined} lang="vi">VI</a><a href={withLang('en')} data-lang="en" aria-current={lang === 'en' ? 'true' : undefined} lang="en">EN</a></div>
         <div class="acct" id="acct"><a href="/dang-nhap/">Đăng nhập</a><span aria-hidden="true">|</span><a href="/dang-ky/">Đăng ký</a></div>
       </div>
@@ -75,8 +91,8 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
           <input name="q" placeholder="Tìm sản phẩm, vật tư, nhà cung cấp" aria-label="Tìm kiếm" />
         </form>
         <nav class="topnav" aria-label="Chuyên mục">
-          {header.map((it) => (
-            <div class="ni">
+          {nav.map((it) => (
+            <div class={it.trade ? 'ni trade' : 'ni'}>
               <a href={it.href}>{it.label}</a>
               {it.children && <ul class="sub">{it.children.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>}
             </div>
@@ -89,39 +105,41 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
     <main><slot /></main>
 
     <footer class="site-foot">
-      <div class="fgrid">
-        <div class="fabout">
-          <b>{brand}</b>
-          <p>{settings.brand.description}</p>
-          {settings.legal.registration && <p class="reg"><b>Chứng nhận đăng ký</b><br />{settings.legal.registration}</p>}
-        </div>
-        {footer.map((col) => (
-          <div>
-            <b>{col.title}</b>
-            <ul>{col.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+      <div class="fwrap">
+        <div class="fgrid">
+          <div class="fabout">
+            <a class="flogo" href="/">🌿 {brand}</a>
+            {settings.brand.tagline && <p class="ftag">{settings.brand.tagline}</p>}
+            <p>{settings.brand.description}</p>
+            {settings.legal.registration && <div class="reg"><b>Chứng nhận đăng ký</b><span class="regbadge">✔ Đã đăng ký</span><p>{settings.legal.registration}</p></div>}
           </div>
-        ))}
-        <div>
-          <b>Thông tin liên hệ</b>
-          <ul>
-            {settings.contact.hotline && <li>Hotline: {settings.contact.hotline}</li>}
-            {settings.contact.email && <li>Email: {settings.contact.email}</li>}
-            {settings.contact.address && <li>{settings.contact.address}</li>}
-            {!settings.contact.hotline && !settings.contact.email && !settings.contact.address && <li class="muted">Đang cập nhật</li>}
-          </ul>
-          {social.length > 0 && <><b>Mạng xã hội</b><ul class="soc">{social.map((s) => <li><a href={s.href} rel="noopener nofollow" target="_blank">{s.label}</a></li>)}</ul></>}
+          {footer.map((col) => (
+            <div class="fcol">
+              <b>{col.title}</b>
+              <ul>{col.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+            </div>
+          ))}
+          <div class="fcol fcontact">
+            <b>Thông tin liên hệ</b>
+            <ul>
+              {settings.contact.hotline && <li>📞 Hotline: {settings.contact.hotline}</li>}
+              {settings.contact.email && <li>✉️ Email: {settings.contact.email}</li>}
+              {settings.contact.address && <li>📍 {settings.contact.address}</li>}
+              {!settings.contact.hotline && !settings.contact.email && !settings.contact.address && <li class="muted">Đang cập nhật</li>}
+            </ul>
+            {social.length > 0 && <><b>Mạng xã hội</b><ul class="soc">{social.map((s) => <li><a href={s.href} rel="noopener nofollow" target="_blank">{SOC_ICON[s.label] ?? '🔗'} {s.label}</a></li>)}</ul></>}
+            <b>Dùng trên điện thoại</b>
+            <p>Nhà vườn và hợp tác xã cài ứng dụng {brand} lên màn hình chính để ghi chép mọi lúc, kể cả khi mất mạng.</p>
+            {safeHref(appUrl) && <a class="appbtn" href={safeHref(appUrl)}><span aria-hidden="true">📱</span><span><small>Mở trên điện thoại</small><b>{brand}</b></span></a>}
+          </div>
         </div>
-        <div>
-          <b>Dùng trên điện thoại</b>
-          <p>Nhà vườn và hợp tác xã cài ứng dụng {brand} lên màn hình chính để ghi chép mọi lúc, kể cả khi mất mạng.</p>
-          {safeHref(appUrl) && <a class="btn solid" href={safeHref(appUrl)}>Mở ứng dụng</a>}
+        {settings.contact.operator && <p class="fowner"><b>Cơ quan chủ quản:</b> {settings.contact.operator}</p>}
+        <div class="fbottom">
+          <span>{settings.legal.copyright ?? `© ${year} ${settings.contact.operator ?? brand}`}</span>
+          <span class="plinks"><a href="/chinh-sach-bao-mat">Chính sách bảo mật</a><a href="/dieu-khoan-su-dung">Điều khoản sử dụng</a><a href="/quy-che-hoat-dong">Quy chế hoạt động</a></span>
         </div>
+        <p class="note">Thông tin do từng cơ sở tự khai và được kiểm duyệt trước khi hiển thị. Nhãn "Tự khai báo" nghĩa là chưa được xác minh độc lập.</p>
       </div>
-      <div class="fbottom">
-        <span>{settings.legal.copyright ?? `© ${year} ${settings.contact.operator ?? brand}`}</span>
-        <span class="plinks"><a href="/chinh-sach-bao-mat">Chính sách bảo mật</a><a href="/dieu-khoan-su-dung">Điều khoản sử dụng</a><a href="/quy-che-hoat-dong">Quy chế hoạt động</a></span>
-      </div>
-      <p class="note">Thông tin do từng cơ sở tự khai và được kiểm duyệt trước khi hiển thị. Nhãn "Tự khai báo" nghĩa là chưa được xác minh độc lập.</p>
     </footer>
     <script>
       // Ngôn ngữ: nhớ lựa chọn ở máy; bản tiếng Anh dịch cả nội dung chèn bằng mã sau khi trang tải (từ điển nạp riêng, chỉ khi cần)
@@ -485,4 +503,54 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
   .site-foot .note { color: #9fb8a8; }
   @media (max-width: 960px) { .fgrid { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 520px) { .fgrid { grid-template-columns: 1fr; } .ni:first-child > a::before, .ni:nth-child(n) > a::before { content: none; } }
+</style>
+
+<style is:global>
+  /* ===== Đầu trang và chân trang v4 (D73) ===== */
+  .ticker { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; margin: 0 6px; }
+  .tk-label { white-space: nowrap; background: var(--yl); color: #2a2200; font-weight: 800; font-size: .8rem; border-radius: 999px; padding: 4px 12px; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+  .tk-view { overflow: hidden; flex: 1; min-width: 0; -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+  .tk-track { display: inline-flex; gap: 56px; white-space: nowrap; padding-right: 56px; animation: tkmove 70s linear infinite; }
+  .tk-track:hover, .tk-track:focus-within { animation-play-state: paused; }
+  .tk-track a { color: #fff !important; font-weight: 500; text-decoration: none; } .tk-track a::before { content: "◆"; color: var(--yl); margin-right: 10px; font-size: .7rem; } .tk-track a:hover { text-decoration: underline; }
+  @keyframes tkmove { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .tk-track { animation: none; } .tk-view { overflow-x: auto; } }
+
+  .ni:nth-child(n) > a { background: var(--g2); color: #14301f; } .ni:nth-child(n) > a::before { content: none; }
+  .ni.trade > a { background: linear-gradient(135deg, #ffe27a, #ffc83d); color: #3a2a00; box-shadow: 0 2px 8px rgba(245,158,11,.45); }
+  .ni.trade > a::before { content: "🤝 "; }
+  .ni.trade > a::after { background: #7a4b00; }
+  .ni:nth-child(n) > a:hover, .ni:nth-child(n):focus-within > a { background: #cfe9d8; }
+  .ni.trade > a:hover, .ni.trade:focus-within > a { background: linear-gradient(135deg, #ffd24a, #ffb300); }
+  .ni.trade .sub { min-width: 250px; } .ni.trade .sub li:last-child a { border-top: 1px solid var(--line); margin-top: 4px; font-weight: 700; color: var(--g-d); }
+
+  /* Chân trang: nền sáng có đồi xanh, cột thoáng, nút ứng dụng */
+  .site-foot { position: relative; background: linear-gradient(#f4fbf6, #e3f3e8 55%, #cfe9d6); color: #2c3e33; margin-top: 40px; padding: 38px 16px 18px; border-top: 0; overflow: hidden; }
+  .site-foot::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 300px; z-index: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' preserveAspectRatio='none'%3E%3Cpath fill='%23b9ddc3' d='M0 120 Q260 30 520 110 T1040 90 T1440 60 V300 H0Z'/%3E%3Cpath fill='%2391cda2' d='M0 190 Q320 100 660 175 T1240 150 T1440 140 V300 H0Z'/%3E%3Cpath fill='%235fb67b' d='M0 250 Q380 180 760 240 T1440 215 V300 H0Z'/%3E%3C/svg%3E") bottom / 100% 100% no-repeat; }
+  .fwrap { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; }
+  .site-foot .fgrid { max-width: none; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; gap: 28px; }
+  .fgrid > div:nth-child(n), .fgrid > div:last-child { background: none; border: 0; padding: 0; color: inherit; border-radius: 0; }
+  .flogo { display: inline-block; font-size: 1.7rem; font-weight: 800; letter-spacing: -.03em; color: var(--g-d) !important; text-decoration: none; margin-bottom: 4px; }
+  .ftag { font-weight: 700; color: #1c2a22; margin: 2px 0 8px !important; }
+  .site-foot p { color: #3e5246; line-height: 1.55; }
+  .site-foot .fgrid b { display: block; color: #14301f; font-size: 1rem; margin-bottom: 12px; padding: 0 0 8px; border: 0; position: relative; }
+  .site-foot .fgrid b::after { content: ""; position: absolute; left: 0; bottom: 0; width: 34px; height: 3px; border-radius: 3px; background: var(--g); }
+  .fgrid > .fcontact > b:not(:first-child) { margin-top: 18px; }
+  .site-foot .fgrid ul { list-style: none; margin: 0; padding: 0; }
+  .site-foot .fgrid li { margin: 0; }
+  .site-foot .fgrid .fcol:not(.fcontact) li a { display: block; padding: 6px 0; color: #34493c; text-decoration: none; transition: color .15s, transform .15s; }
+  .site-foot .fgrid .fcol:not(.fcontact) li a::before { content: "›"; color: var(--g); margin-right: 8px; font-weight: 700; }
+  .site-foot .fgrid a:hover { color: var(--g-d); text-decoration: none; transform: translateX(2px); }
+  .fcontact li { padding: 4px 0; color: #34493c; }
+  .soc { display: grid !important; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
+  .soc a { display: inline-block; padding: 4px 0; color: #34493c; text-decoration: none; font-weight: 500; }
+  .reg { margin-top: 14px; } .regbadge { display: inline-block; background: #d92d2d; color: #fff; font-weight: 700; font-size: .78rem; border-radius: 6px; padding: 3px 10px; margin-bottom: 6px; }
+  .appbtn { display: inline-flex; align-items: center; gap: 10px; background: #1c2a22; color: #fff !important; border-radius: 12px; padding: 9px 16px; text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,.25); transition: transform .15s; }
+  .appbtn:hover { transform: translateY(-2px); color: #fff !important; } .appbtn > span:first-child { font-size: 1.6rem; } .appbtn small { display: block; font-size: .68rem; opacity: .85; } .appbtn b { display: block !important; color: #fff !important; margin: 0 !important; padding: 0 !important; font-size: 1.05rem !important; } .appbtn b::after { display: none !important; }
+  .fowner { margin: 34px 0 6px; font-size: .85rem; color: #14301f !important; background: rgba(255,255,255,.7); border-radius: 10px; padding: 8px 14px; display: inline-block; }
+  .site-foot .fbottom { background: rgba(255,255,255,.88); color: #34493c; border: 1px solid rgba(255,255,255,.9); border-radius: 14px; padding: 12px 18px; margin-top: 12px; box-shadow: 0 4px 14px rgba(16,40,26,.12); }
+  .site-foot .fbottom a { color: #34493c; } .site-foot .fbottom a:hover { color: var(--g-d); text-decoration: underline; transform: none; }
+  .site-foot .note { color: #1f3a2a; background: rgba(255,255,255,.6); border-radius: 10px; padding: 6px 12px; margin-top: 10px; display: inline-block; }
+  @media (max-width: 960px) { .site-foot .fgrid { grid-template-columns: 1fr 1fr; } .ticker { order: 5; flex-basis: 100%; margin: 0 0 4px 14px; } }
+  @media (max-width: 520px) { .site-foot .fgrid { grid-template-columns: 1fr; } .tk-label { display: none; } }
 </style>
