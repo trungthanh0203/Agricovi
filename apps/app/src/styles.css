@@ -344,3 +344,10 @@ button.primary:active { transform: translateY(1px); }
 @media (prefers-color-scheme: dark) { .tile:nth-child(3n+2) .tile-ico { background: #2f2a16; } .tile:nth-child(3n) .tile-ico { background: #16242f; } }
 .tile-group { color: var(--muted); font-weight: 400; font-size: .72rem; }
 @media (min-width: 560px) { .tiles { grid-template-columns: repeat(4, 1fr); } }
+
+/* Nút Vào ca / Ra ca ở Trang chủ: nổi nhẹ trong thẻ lời chào */
+.shiftbtn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 42px; margin: 8px 0 4px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-weight: 700; font-size: .95rem; cursor: pointer; background: #fff; color: var(--green-d); box-shadow: 0 4px 12px rgba(0,0,0,.22), inset 0 -2px 0 rgba(0,0,0,.08); transition: transform .1s, box-shadow .1s; }
+.shiftbtn:active { transform: translateY(2px); box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+.shiftbtn.out { background: #ffd84a; color: #4a3600; }
+.shift-ico { font-size: .8rem; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: rgba(22,128,67,.14); }
+.shiftbtn.out .shift-ico { background: rgba(74,54,0,.14); }

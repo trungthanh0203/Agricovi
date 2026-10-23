@@ -4,6 +4,7 @@ import { friendlyError } from '../lib/errors';
 import { setNoteDone } from '../lib/production';
 import { useCatalog } from '../lib/catalog';
 import { HomeStats } from '../components/HomeStats';
+import { ShiftButton } from '../components/ShiftButton';
 import { FunctionGrid } from '../components/FunctionGrid';
 import { useMyName } from '../lib/profile';
 import { WebInboxCard } from '../components/WebInboxCard';
@@ -55,7 +56,8 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
   return (
     <section>
       <div className="hero">
-        <small>{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' })}</small>
+        <small>{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}</small>
+        {canClock && uid && <ShiftButton orgId={active.id} uid={uid} onClick={() => onGo('production', 'attendance')} />}
         <h1>Xin chào{myName ? `, ${myName}` : ''}</h1>
         <p>{active.name}</p>
       </div>
@@ -79,10 +81,7 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
           )}
         </div>
       ) : (
-        <div className="pair">
-          <button className="primary big" onClick={onLog}>Ghi việc vừa làm</button>
-          {canClock && <button className="secondary big" onClick={() => onGo('production', 'attendance')}>⏱ Vào ca / Ra ca</button>}
-        </div>
+        <button className="primary big" onClick={onLog}>Ghi việc vừa làm</button>
       )}
 
       {failed > 0 && (

@@ -40,7 +40,7 @@ export function StaffCreateForm({
     if (needTeam && !teamId) {
       return setError(
         teamsWithLeader.length === 0
-          ? 'Kiểu này cần chọn một tổ. Hãy tạo tổ ở mục Tổ lao động trước.'
+          ? 'Kiểu này cần chọn một tổ. Hãy tạo tổ ở mục Phòng / Tổ trước.'
           : 'Hãy chọn một tổ lao động.',
       );
     }
@@ -82,12 +82,12 @@ export function StaffCreateForm({
           </select>
         </label>
         <label>
-          Tổ lao động{needTeam ? ' (bắt buộc)' : ' (không bắt buộc)'}
+          Phòng / Tổ{needTeam ? ' (bắt buộc)' : ' (không bắt buộc)'}
           <select value={teamId} onChange={(e) => setTeamId(e.target.value)}>
             <option value="">— Không chọn —</option>
             {teamsWithLeader.map((t) => <option key={t.id} value={t.id}>{t.name} · {t.leader_worker_id ? `tổ trưởng ${leaderName(t)}` : 'chưa có tổ trưởng'}</option>)}
           </select>
-          {teamsWithLeader.length === 0 && <small>Chưa có tổ nào. Hãy tạo ở mục Tổ lao động.</small>}
+          {teamsWithLeader.length === 0 && <small>Chưa có tổ nào. Hãy tạo ở mục Phòng / Tổ.</small>}
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
         <button type="submit" className="secondary" disabled={busy}>{busy ? 'Đang tạo…' : 'Tạo tài khoản'}</button>

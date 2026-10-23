@@ -87,7 +87,7 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
 
       {work && (work.teamName || work.leadsTeams.length > 0 || work.mode) && (
         <Collapsible title="Công việc của tôi" summary={work.teamName ?? (work.leadsTeams.length > 0 ? `Tổ trưởng ${work.leadsTeams.join(', ')}` : undefined)}>
-          {work.teamName && <p>Tổ lao động: <strong>{work.teamName}</strong></p>}
+          {work.teamName && <p>Phòng / Tổ: <strong>{work.teamName}</strong></p>}
           {work.leadsTeams.length > 0 && <p>Tổ tôi phụ trách (tổ trưởng): <strong>{work.leadsTeams.join(', ')}</strong></p>}
           {work.mode && <p className="muted">Cách tính công: {WORK_MODE_LABEL[work.mode as WorkMode] ?? work.mode}</p>}
         </Collapsible>

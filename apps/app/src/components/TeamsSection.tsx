@@ -9,7 +9,7 @@ import {
 } from '../lib/teams';
 
 /**
- * Tổ lao động và tổ trưởng. Tổ trưởng là CHỈ ĐỊNH theo tổ (một nhân viên có tài khoản), không phải vai trò cấp cơ sở.
+ * Phòng / Tổ và tổ trưởng. Tổ trưởng là CHỈ ĐỊNH theo tổ (một nhân viên có tài khoản), không phải vai trò cấp cơ sở.
  * Người không có điện thoại chỉ là hồ sơ do tổ trưởng chấm hộ, bắt buộc thuộc tổ có tổ trưởng.
  */
 export function TeamsSection({ org }: { org: MyOrg }) {
@@ -80,7 +80,7 @@ export function TeamsSection({ org }: { org: MyOrg }) {
 
   return (
     <>
-      <h2 className="sect">Tổ lao động{orphans.length > 0 ? ` (${orphans.length} người cần xử lý)` : teams.length > 0 ? ` (${teams.length} tổ)` : ''}</h2>
+      <h2 className="sect">Phòng / Tổ{orphans.length > 0 ? ` (${orphans.length} người cần xử lý)` : teams.length > 0 ? ` (${teams.length} tổ)` : ''}</h2>
       <p className="muted">Tổ trưởng chấm công và ghi sản lượng hộ người trong tổ. Công của chính tổ trưởng do quản lý hoặc chủ xác nhận.</p>
       {!navigator.onLine && <p className="msg warn">Cần có mạng để quản lý tổ.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
@@ -157,7 +157,7 @@ export function TeamsSection({ org }: { org: MyOrg }) {
           </select>
         </label>
         <label>
-          Tổ lao động
+          Phòng / Tổ
           <select value={wTeam} onChange={(e) => setWTeam(e.target.value)}>
             <option value="">— Chọn tổ —</option>
             {teams.map((t) => <option key={t.id} value={t.id}>{t.name}{t.leader_worker_id ? '' : ' · chưa có tổ trưởng'}</option>)}

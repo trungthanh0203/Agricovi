@@ -35,15 +35,10 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
   const { active } = useOrgs();
   const items = productionSections(active);
   const current = pickSection(items, section);
-  const cyclesAll = useTable('cycles');
-  const hasActive = cyclesAll.some((c) => c.status === 'active' && c.owner_org_id === active?.id);
 
   return (
     <section>
-      <div className="row">
-        <h1 className="grow">Sản xuất</h1>
-        <button className="primary head-btn" onClick={onLog} disabled={!hasActive}>Ghi việc vừa làm</button>
-      </div>
+      <h1>Sản xuất</h1>
       <SubTabs items={items} value={current} onChange={onSection} onBack={() => onSection('' as ProductionSection)} label="Sản xuất" />
       {current === 'harvest' ? (
         <HarvestSection />
