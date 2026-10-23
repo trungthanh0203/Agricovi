@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type FieldDef } from '../lib/db';
+import { VoiceNote } from '../components/VoiceNote';
 import { friendlyError } from '../lib/errors';
 import { toLocalInput, useOnline } from '../lib/hooks';
 import { editLog } from '../lib/production';
@@ -26,6 +27,7 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!noteV.trim()) return setError('Hãy nhập "Nội dung việc": gõ chữ hoặc bấm Nói để đọc nội dung đã làm.');
     for (const f of schema) {
       const raw = valuesV[f.key];
       if (f.type === 'number' && raw && Number.isNaN(Number(raw))) return setError(`"${f.label}" phải là số.`);
@@ -68,10 +70,7 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
             )}
           </label>
         ))}
-        <label>
-          Ghi chú
-          <input value={noteV} onChange={(e) => setNote(e.target.value)} />
-        </label>
+        <VoiceNote label="Nội dung việc (bắt buộc)" value={noteV} onChange={setNote} />
         {error && <p className="msg error" role="alert">{error}</p>}
         {!online && <p className="msg warn">Đang offline. Sửa nhật ký cần có mạng; hãy kết nối mạng rồi bấm Lưu thay đổi.</p>}
         <div className="btnrow">

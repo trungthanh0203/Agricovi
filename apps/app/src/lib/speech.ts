@@ -29,12 +29,29 @@ const ERRORS: Record<string, string> = {
 };
 
 /**
- * Nói vào máy, chuyển thành chữ tiếng Việt bằng nhận dạng có sẵn của trình duyệt/điện thoại (G2-6, V1).
- * `onText` nhận từng đoạn chữ đã nhận dạng xong. Không ghi âm, không lưu gì.
+ * Gộp các đoạn nhận dạng thành MỘT câu. Trên Android (Chrome/Samsung) mỗi lần cập nhật có thể trả về cả câu đang nói lẫn các bản
+ * lặp lại cộng dồn của nó ("mạng", "mạng có", "mạng có vấn đề"…); nếu cứ nối tiếp sẽ bị lặp chữ, nên đoạn sau bắt đầu bằng đoạn trước thì thay thế đoạn trước.
  */
-export function useSpeech(onText: (text: string) => void) {
+export function mergeTranscript(parts: string[]): string {
+  const out: string[] = [];
+  for (const raw of parts) {
+    const t = raw.trim();
+    if (!t) continue;
+    const last = out[out.length - 1];
+    if (last !== undefined && (t === last || t.startsWith(last))) out[out.length - 1] = t;
+    else if (last !== undefined && last.startsWith(t)) continue;
+    else out.push(t);
+  }
+  return out.join(' ');
+}
+
+/**
+ * Nói vào máy, chuyển thành chữ tiếng Việt bằng nhận dạng có sẵn của trình duyệt/điện thoại (G2-6, V1).
+ * `onText(câu)` nhận TOÀN BỘ câu đã nghe được trong lượt này (mỗi lần cập nhật là một bản đầy đủ, người gọi thay chứ không nối thêm).
+ * Mỗi lượt nghe một câu; muốn nói tiếp thì bấm Nói lại. Không ghi âm, không lưu gì.
+ */
+export function useSpeech(onText: (sentence: string) => void) {
   const [listening, setListening] = useState(false);
-  const [interim, setInterim] = useState('');
   const [error, setError] = useState<string | null>(null);
   const rec = useRef<Recognition | null>(null);
   const cb = useRef(onText);
@@ -48,25 +65,21 @@ export function useSpeech(onText: (text: string) => void) {
     rec.current?.abort();
     const r = new C();
     r.lang = 'vi-VN';
-    r.continuous = true;
+    r.continuous = false; // chế độ liên tục trên Android làm lặp chữ rất nhiều
     r.interimResults = true;
     r.onresult = (e) => {
-      let live = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const res = e.results[i]!;
-        const t = res[0]?.transcript ?? '';
-        if (res.isFinal) { if (t.trim()) cb.current(t.trim()); } else live += t;
-      }
-      setInterim(live);
+      const parts: string[] = [];
+      for (let i = 0; i < e.results.length; i++) parts.push(e.results[i]![0]?.transcript ?? '');
+      const sentence = mergeTranscript(parts);
+      if (sentence) cb.current(sentence);
     };
     r.onerror = (e) => { if (e.error !== 'aborted') setError(ERRORS[e.error] ?? 'Không nhận dạng được giọng nói. Hãy thử lại hoặc gõ chữ.'); };
-    r.onend = () => { setListening(false); setInterim(''); if (rec.current === r) rec.current = null; };
+    r.onend = () => { setListening(false); if (rec.current === r) rec.current = null; };
     setError(null);
-    setInterim('');
     rec.current = r;
     try { r.start(); setListening(true); } catch { setError('Không bật được micro. Hãy thử lại.'); rec.current = null; }
   }, []);
 
   useEffect(() => () => { rec.current?.abort(); }, []);
-  return { listening, interim, error, start, stop, supported: speechSupported() };
+  return { listening, error, start, stop, supported: speechSupported() };
 }
