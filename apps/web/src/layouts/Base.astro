@@ -12,8 +12,8 @@ const chrome = await loadChrome();
 const { top: topCats, kids: subCats } = catTree(await loadCategories());
 const { settings, header, about, footer } = chrome;
 const brand = settings.brand.name ?? 'AgriConnect';
-// Menu Giao thương luôn có: Dành cho người bán / người mua và (cuối cùng) Kết quả giao thương, dù quản trị đã lưu menu riêng
-const TRADE_EXTRA = [{ label: 'Dành cho người bán', href: '/danh-cho-nguoi-ban' }, { label: 'Dành cho người mua', href: '/danh-cho-nguoi-mua' }, { label: 'Kết quả giao thương', href: '/giao-thuong/ket-qua/' }];
+// Menu Giao thương luôn có: Cho người bán / người mua và (cuối cùng) Kết quả giao thương, dù quản trị đã lưu menu riêng
+const TRADE_EXTRA = [{ label: 'Cho người bán', href: '/danh-cho-nguoi-ban' }, { label: 'Cho người mua', href: '/danh-cho-nguoi-mua' }, { label: 'Kết quả giao thương', href: '/giao-thuong/ket-qua/' }];
 const nav = header.map((it) => (/^\/giao-thuong\/?$/.test(it.href)
   ? { ...it, trade: true, children: [...(it.children ?? []).filter((c) => !TRADE_EXTRA.some((x) => x.href === c.href)), ...TRADE_EXTRA] }
   : { ...it, trade: false }));
@@ -486,7 +486,6 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
   .ni > a:hover { filter: brightness(.97); }
 
   /* Menu danh mục bung ra: 2 cột */
-  .fly { width: min(480px, 60vw); }
   .fly-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   /* Chân trang: từng phần một tông màu riêng */

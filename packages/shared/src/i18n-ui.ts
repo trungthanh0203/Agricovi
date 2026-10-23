@@ -619,4 +619,6 @@ export const EN_UI: Record<string, string> = {
   'Nhật ký, kho, chi phí, chấm công': 'Logs, stock, costs, time tracking',
   'Hồ sơ website và mã QR từng vụ': 'Website profile and a QR code for every season',
   'Bắt đầu miễn phí': 'Start for free',
+  'Cho người bán': 'For sellers',
+  'Cho người mua': 'For buyers',
 };
