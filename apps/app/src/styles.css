@@ -354,3 +354,14 @@ button.primary:active { transform: translateY(1px); }
 .shiftbtn.out .shift-ico { background: linear-gradient(135deg, #f0587a, #d92d4b); box-shadow: 0 2px 5px rgba(163,24,47,.5); animation: shiftpulse 1.8s ease-out infinite; }
 @keyframes shiftpulse { 0% { box-shadow: 0 0 0 0 rgba(240,88,122,.7); } 70% { box-shadow: 0 0 0 9px rgba(240,88,122,0); } 100% { box-shadow: 0 0 0 0 rgba(240,88,122,0); } }
 @media (prefers-reduced-motion: reduce) { .shiftbtn.out .shift-ico { animation: none; } }
+
+/* Khối chào ở Trang chủ: nền xanh nhiều lớp, họa tiết lá và nắng */
+.hero { position: relative; overflow: hidden; padding: 16px 16px 12px; background:
+  radial-gradient(circle at 92% 12%, rgba(255,216,74,.55) 0, rgba(255,216,74,0) 34%),
+  radial-gradient(circle at 78% 120%, rgba(255,255,255,.22) 0, rgba(255,255,255,0) 46%),
+  linear-gradient(120deg, var(--green-d) 0%, var(--green) 62%, #38a66a 100%); }
+.hero::before { content: '🌿'; position: absolute; right: 14px; top: 4px; font-size: 3.4rem; opacity: .22; transform: rotate(18deg); pointer-events: none; }
+.hero::after { content: '🌾'; position: absolute; right: 64px; bottom: -10px; font-size: 3rem; opacity: .16; transform: rotate(-12deg); pointer-events: none; }
+.hero h1 { position: relative; margin: 0 0 8px; font-size: 1.45rem; max-width: calc(100% - 52px); }
+.hero-top { position: relative; }
+.hero small { font-weight: 600; opacity: .95; }

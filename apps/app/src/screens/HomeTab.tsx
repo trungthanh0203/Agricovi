@@ -57,12 +57,11 @@ export function HomeTab({ onLog, onHistory, onGo }: { onLog: () => void; onHisto
   return (
     <section>
       <div className="hero">
+        <h1>Xin chào{myName ? `, ${myName}` : ''}</h1>
         <div className="hero-top">
           <small>{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}</small>
           {canClock && uid && <ShiftButton orgId={active.id} uid={uid} onClick={() => onGo('production', 'attendance')} />}
         </div>
-        <h1>Xin chào{myName ? `, ${myName}` : ''}</h1>
-        <p>{active.name}</p>
       </div>
 
       <FunctionGrid org={active} onGo={onGo} />
