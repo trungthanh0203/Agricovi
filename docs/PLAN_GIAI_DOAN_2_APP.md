@@ -46,7 +46,7 @@ Nguyên tắc sắp xếp: **việc nền và rủi ro trước, việc phụ th
 | **G2-4** | *(đang làm; kế hoạch `PLAN_G2_4_KHACH_HANG.md`)* **Đối tác – khách hàng**: màn Khách hàng; gắn vào doanh thu; **công nợ phải thu**; báo cáo | L | G2-2 (dùng chung bảng Đối tác) | Dữ liệu cá nhân: mặc định riêng tư, quản trị nền tảng không đọc, cho ẩn số điện thoại |
 | **G2-5** | *(kế hoạch `PLAN_G2_5_DON_KHACH_WEBSITE.md`)* **Khách tiềm năng** từ website (tự vào danh sách, có thông báo quyền riêng tư) → báo giá → đơn bán | L | G2-4; phần website đã xong | Nối với đơn đặt hàng/báo giá có sẵn (D68), không làm lại luồng website |
 | **G2-6** | **Giọng nói**: nhận dạng có sẵn của thiết bị cho ghi chú/mô tả; tách trường ở máy chủ cho Ghi việc và Thu hoạch | M–L | Không | **Bắt đầu đo thực địa sớm, song song** (không tốn nhiều công); chưa dùng dịch vụ trả phí khi chưa có số đo; xin đồng ý ở lần đầu |
-| **G2-7** | **Thông báo đẩy** (công chờ xác nhận, nhắc việc theo ngày, công nợ đến hạn), **biểu đồ** trong báo cáo, **báo cáo định kỳ** | L | 1.1 Giao việc; G2-2/G2-4 cho công nợ | Web Push cần PWA đã cài; iPhone hạn chế hơn Android |
+| **G2-7** | *(kế hoạch `PLAN_G2_7_THONG_BAO_BIEU_DO_GIAO_VIEC.md`)* **Thông báo đẩy** (công chờ xác nhận, nhắc việc theo ngày, công nợ đến hạn), **biểu đồ** trong báo cáo, **báo cáo định kỳ** | L | 1.1 Giao việc; G2-2/G2-4 cho công nợ | Web Push cần PWA đã cài; iPhone hạn chế hơn Android |
 | **G2-8** | **Hộ rời HTX / chuyển quyền chủ hộ** (xuất dữ liệu, xử lý vụ đang chạy, hạn mức con), **thanh toán trực tuyến**, tách người duyệt hồ sơ khỏi quản trị viên | L | Quyết định pháp lý, cổng thanh toán | A1, A2, A42 |
 
 ## 5. Chạy song song (nhóm C — chuẩn bị pilot)
