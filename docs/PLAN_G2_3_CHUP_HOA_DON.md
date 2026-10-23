@@ -99,3 +99,25 @@ Phụ thuộc: S1 cần `db push`; S2 cần S0 xong và phải deploy hàm (bạ
 5. **Tối đa 3 ảnh** cho một hóa đơn: đồng ý?
 6. **Đồng ý gửi ảnh cho Anthropic**: bạn có chấp nhận về mặt chính sách không, và muốn dòng thông báo/đồng ý trong app viết thế nào?
 7. Khi nào bạn tạo được khóa API Anthropic và đặt mức chi tối đa (lát S0)?
+
+## 10. Phụ lục: các phương án đọc ảnh KHÔNG mất phí (tra cứu 23/10/2026)
+
+Chủ sản phẩm muốn tìm phương án miễn phí thay cho Claude. Lưu ý chung: các công cụ OCR thuần chỉ trả về **chữ thô**; việc tách thành nhà cung ứng, dòng hàng, số lượng, đơn giá phải do **bộ phân tích tự viết** (quy tắc, dễ sai với bố cục hóa đơn khác nhau). Mô hình hiểu hình ảnh (AI) trả thẳng dữ liệu có cấu trúc nên ít công viết hơn. "Miễn phí" vì vậy đổi chi phí tiền thành chi phí công sức và độ chính xác.
+
+| # | Phương án | Chi phí | Chạy ở đâu | Tiếng Việt / chất lượng | Công sức làm | Ghi chú |
+|---|---|---|---|---|---|---|
+| 1 | **Cloudflare Workers AI** (mô hình đọc ảnh `llama-3.2-11b-vision-instruct`) | Miễn phí tới 10.000 "neuron"/ngày (khoảng 100–150 lần đọc/ngày theo ước tính của tôi), hết hạn mức thì báo lỗi, vượt thì chỉ tính tiền nếu bật gói trả phí | Máy chủ Cloudflare (cùng nơi đặt website, không cần khóa bên ngoài) | Chưa kiểm chứng với hóa đơn tiếng Việt; thường kém Claude về dấu và bảng | Vừa (hàm máy chủ + khuôn JSON, dùng lại phần điền sẵn của S3) | Giá niêm yết 0,049 USD/triệu token vào, 0,676 USD/triệu token ra; cách tính tiền cho ảnh chưa được tài liệu nói rõ; có thể phải chấp nhận giấy phép của Meta một lần |
+| 2 | **Tesseract.js** (OCR chạy ngay trên điện thoại, dữ liệu tiếng Việt `vie`) | Miễn phí hẳn | Trên điện thoại, **không gửi ảnh đi đâu**, dùng được cả khi mất mạng (nếu lưu sẵn dữ liệu ngôn ngữ) | Tốt với chữ in phông thông thường; yếu với giấy nhiệt, ảnh chụp nghiêng, chữ viết tay | Lớn (cần tiền xử lý ảnh và bộ phân tích bảng tự viết) | Tải thêm vài MB lần đầu; máy yếu đọc mất vài chục giây; chữ thô, không hiểu ngữ nghĩa |
+| 3 | **PaddleOCR (PP-OCRv5) chạy bằng ONNX trong trình duyệt** (PaddleOCR.js và các bản đóng gói cộng đồng) | Miễn phí hẳn | Trên điện thoại | Thường chính xác hơn Tesseract với ảnh chụp; **chưa xác nhận có mô hình tiếng Việt dùng được trong trình duyệt**, cần thử | Lớn (như phương án 2) và nặng hơn (mô hình hàng chục MB) | Cần chạy thử trên vài điện thoại thật để biết tốc độ và dung lượng |
+| 4 | **Dùng nhận dạng chữ có sẵn của điện thoại** (Google Lens / "Văn bản trực tiếp" của iPhone): chụp, giữ chữ để sao chép, **dán vào ô trong app** | Miễn phí hẳn, không cần hạ tầng | Trên điện thoại, do hệ điều hành làm | Rất tốt với tiếng Việt (công nghệ của chính hãng) | Nhỏ đến vừa (chỉ cần ô dán chữ + bộ phân tích) | Người dùng thêm vài thao tác chạm; dán được cả chữ từ Zalo, email; bộ phân tích dùng lại được cho mọi phương án khác |
+
+Đã cân nhắc nhưng **không đề xuất**:
+- **Google Cloud Vision** (OCR rất tốt, có tiếng Việt): miễn phí 1.000 lần/tháng, sau đó khoảng 1,5 USD/1.000 lần (khoảng 40 đồng/lần); phải có tài khoản thanh toán có thẻ. Chỉ là OCR chữ thô. Là lựa chọn "gần như miễn phí" nếu bạn chấp nhận gắn thẻ.
+- **Gemini API gói miễn phí**: miễn phí nhưng Google nêu nội dung gói miễn phí **được dùng để cải thiện sản phẩm của họ**, hạn mức thấp và hay đổi; không hợp với hóa đơn có giá nhập và thông tin nhà cung ứng.
+- **OCR.space gói miễn phí**: 25.000 lần/tháng và 500 lần/ngày mỗi IP theo các nguồn, tệp tối đa 1 MB, máy chủ ở Mỹ, **chưa xác nhận hỗ trợ tiếng Việt**; chỉ trả chữ thô.
+
+**Đề xuất (làm từng bước, đo rồi mới quyết):**
+1. **Bước 1 — Phương án 4** trước vì chắc chắn chạy trên mọi điện thoại, không tốn tiền, không cần hạ tầng: màn "Mua theo hóa đơn" có nút **Dán chữ từ hóa đơn**; bộ phân tích tách nhà cung ứng, số hóa đơn, ngày, dòng hàng, tổng tiền rồi điền nháp. Bộ phân tích này là phần dùng chung cho mọi phương án sau.
+2. **Bước 2 — Phương án 1** làm thử bằng 20–30 hóa đơn thật, so với Claude Haiku làm mức chuẩn (tốn vài nghìn đồng cho cả đợt thử). Nếu đạt ngưỡng chấp nhận được thì dùng Cloudflare Workers AI làm đường đọc ảnh tự động miễn phí.
+3. **Bước 3 (nếu cần dùng khi mất mạng)** — thử phương án 3 hoặc 2 trên máy thật.
+4. Claude Haiku 5.5 giữ làm đường dự phòng trả phí khi bạn thấy chất lượng quan trọng hơn: mỗi lần đọc chỉ khoảng vài chục đồng (xem mục 4), tức 1.000 lần đọc khoảng vài chục nghìn đồng.
