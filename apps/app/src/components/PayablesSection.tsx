@@ -12,7 +12,7 @@ import {
 } from '../lib/partners';
 import { canPerm } from '../lib/permissions';
 
-const pillClass = (s: PayableBill['status']) => (s === 'overdue' ? 'pill err' : s === 'due_soon' ? 'pill warn' : s === 'paid' ? 'pill ok' : 'pill');
+export const pillClass = (s: PayableBill['status']) => (s === 'overdue' ? 'pill err' : s === 'due_soon' ? 'pill warn' : s === 'paid' ? 'pill ok' : 'pill');
 
 /**
  * Công nợ phải trả (G2-2, P3): tổng nợ, hóa đơn quá hạn/sắp đến hạn, theo từng nhà cung ứng. Trả tiền cho một hóa đơn hoặc cho cả nhà cung ứng
@@ -171,7 +171,9 @@ function BillCard({ bill: b, canEdit, busy, onPay, onEdit, onVoid, onVoidPayment
 }
 
 /** Biểu mẫu trả tiền: số tiền (mặc định = số còn nợ), ngày trả, hình thức, ghi chú */
-function PayForm({ label, hint, max, busy, onSave }: { label: string; hint?: string; max: number; busy: boolean; onSave: (i: PayInput) => Promise<boolean> }) {
+export function PayForm({ label, hint, max, busy, onSave, amountLabel = 'Số tiền trả (đ)', dateLabel = 'Ngày trả', submitLabel = 'Ghi trả tiền' }: {
+  label: string; hint?: string; max: number; busy: boolean; onSave: (i: PayInput) => Promise<boolean>; amountLabel?: string; dateLabel?: string; submitLabel?: string;
+}) {
   const [amount, setAmount] = useState(String(max));
   const [date, setDate] = useState(todayLocal());
   const [method, setMethod] = useState<'cash' | 'transfer'>('cash');
@@ -183,8 +185,8 @@ function PayForm({ label, hint, max, busy, onSave }: { label: string; hint?: str
       <strong>{label}</strong>
       {hint && <small className="muted">{hint}</small>}
       <div className="pair">
-        <label>Số tiền trả (đ)<input value={amount} inputMode="numeric" onChange={(e) => setAmount(e.target.value)} /></label>
-        <label>Ngày trả<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
+        <label>{amountLabel}<input value={amount} inputMode="numeric" onChange={(e) => setAmount(e.target.value)} /></label>
+        <label>{dateLabel}<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
       </div>
       <label>Hình thức
         <select value={method} onChange={(e) => setMethod(e.target.value as 'cash' | 'transfer')}>
@@ -202,7 +204,7 @@ function PayForm({ label, hint, max, busy, onSave }: { label: string; hint?: str
           if (bad) return setErr(bad);
           setErr(null);
           void onSave(i).then((ok) => { if (ok) setOpKey(crypto.randomUUID()); });
-        }}>Ghi trả tiền</button>
+        }}>{submitLabel}</button>
       </div>
     </div>
   );

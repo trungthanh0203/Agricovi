@@ -114,7 +114,7 @@ export function ReportBuilder() {
             <label>Từ ngày<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
             <label>Đến ngày<input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
           </div>
-          {info.id !== 'purchases' && (
+          {info.id !== 'purchases' && info.id !== 'customers' && (
             <label>Vụ (không bắt buộc)
               <select value={cycleId} onChange={(e) => setCycleId(e.target.value)}>
                 <option value="">— Tất cả các vụ —</option>

@@ -1,7 +1,8 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { Collapsible } from './Collapsible';
+import { CustomerForm } from './CustomersSection';
 import { useAuth } from '../lib/auth';
 import { db, type SaleRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
@@ -9,6 +10,9 @@ import { editSale, recordSale, validateSale, voidSale } from '../lib/finance';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { formatMoney, formatQty, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
+import { createCustomer, listCustomers, recordSaleWithCustomer, validateSaleCredit, type Customer } from '../lib/partners';
+import { fmtDate } from '../lib/dates';
+import { putLocal } from '../lib/serverWrite';
 import { canPerm } from '../lib/permissions';
 import { useTable } from '../lib/tables';
 
@@ -170,6 +174,23 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const [qty, setQty] = useState(editing ? String(editing.quantity) : '');
   const [amount, setAmount] = useState(editing ? String(editing.amount) : '');
   const [buyer, setBuyer] = useState(editing?.buyer_note ?? '');
+  // Khách hàng và công nợ phải thu (G2-4): chỉ khi ghi lần bán mới
+  const { active } = useOrgs();
+  const orgId = active?.id;
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [partnerId, setPartnerId] = useState('');
+  const [quickAdd, setQuickAdd] = useState(false);
+  const [invoice, setInvoice] = useState('');
+  const [collectMode, setCollectMode] = useState<'full' | 'none' | 'part'>('full');
+  const [partText, setPartText] = useState('');
+  const [method, setMethod] = useState<'cash' | 'transfer'>('cash');
+  const [due, setDue] = useState(''); // hạn thu tiền do người dùng tự nhập
+  const [saved, setSaved] = useState<{ customer: string; amount: number; collected: number; due: string | null } | null>(null);
+  const reloadCustomers = useCallback(async () => {
+    if (!orgId || editing || !navigator.onLine) return;
+    try { setCustomers((await listCustomers(orgId)).filter((c) => c.is_active)); } catch { /* không có quyền hoặc máy chủ chưa cập nhật: bán như thường, không chọn khách */ }
+  }, [orgId, editing]);
+  useEffect(() => { void reloadCustomers(); }, [reloadCustomers]);
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [draftId, setDraftId] = useState(() => crypto.randomUUID());
@@ -194,6 +215,22 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
         onClose();
         return;
       }
+      if (partnerId) {
+        const partName = customers.find((c) => c.id === partnerId)?.name ?? '';
+        const part = parseNumber(partText);
+        const collected = collectMode === 'full' ? a! : collectMode === 'none' ? 0 : part === null || Number.isNaN(part) ? NaN : part;
+        const credit = {
+          id: draftId, orgId: cycle.owner_org_id, cycleId: cycle.id, date, quantity: q!, amount: a!, buyerNote: buyer.trim() || partName, partnerId,
+          invoiceNo: invoice, dueDate: due || null, collected, method,
+        };
+        const badCredit = validateSaleCredit(credit, todayLocal());
+        if (badCredit) { setError(badCredit); return; }
+        const row = await recordSaleWithCustomer(credit);
+        await putLocal('sales_records', row);
+        setSaved({ customer: partName, amount: a!, collected, due: due || null });
+        setSavedId(draftId);
+        return;
+      }
       setSavedId(await recordSale({ id: draftId, cycle, date, quantity: q!, amount: a!, buyerNote: buyer, userId }));
     } catch (err) {
       setError(friendlyError(err));
@@ -208,6 +245,11 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
     setQty('');
     setAmount('');
     setBuyer('');
+    setInvoice('');
+    setCollectMode('full');
+    setPartText('');
+    setDue('');
+    setSaved(null);
     setError(null);
   }
 
@@ -216,6 +258,9 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
       <section>
         <h1>Đã ghi bán hàng</h1>
         <p className="msg ok" role="status">Đã lưu lên máy chủ.</p>
+        {saved && (saved.amount - saved.collected > 0
+          ? <p className="msg warn" role="status">{saved.customer} còn nợ {formatMoney(saved.amount - saved.collected)}{saved.due ? `, hạn thu ${fmtDate(saved.due)}` : ''}. Xem ở Báo cáo → Công nợ → Phải thu.</p>
+          : <p className="msg ok" role="status">{saved.customer} đã thanh toán đủ.</p>)}
         <button className="primary" onClick={again}>Ghi thêm lần bán</button>
         <button className="secondary" onClick={onClose}>Xong</button>
       </section>
@@ -253,6 +298,55 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
           Người mua, ghi chú (không bắt buộc)
           <input value={buyer} onChange={(e) => setBuyer(e.target.value)} />
         </label>
+        {!editing && (customers.length > 0 || quickAdd) && (
+          <fieldset className="roles">
+            <legend>Khách hàng và công nợ (không bắt buộc)</legend>
+            <label>
+              Khách hàng
+              <select value={partnerId} onChange={(e) => setPartnerId(e.target.value)}>
+                <option value="">— Bán lẻ, không ghi khách (thu tiền ngay) —</option>
+                {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </label>
+            {!quickAdd && <button type="button" className="link" onClick={() => setQuickAdd(true)}>+ Thêm khách hàng mới</button>}
+            {quickAdd && orgId && (
+              <CustomerForm title="Thêm khách hàng" busy={busy || !online} onClose={() => setQuickAdd(false)}
+                onSave={async (f) => {
+                  try { const nid = await createCustomer(orgId, f); await reloadCustomers(); setPartnerId(nid); setQuickAdd(false); } catch (err) { setError(friendlyError(err)); }
+                }} />
+            )}
+            {partnerId && (
+              <>
+                <label>Số phiếu bán (nếu có)<input value={invoice} maxLength={60} onChange={(e) => setInvoice(e.target.value)} /></label>
+                <div className="pair">
+                  <button type="button" className={collectMode === 'full' ? 'primary' : 'secondary'} onClick={() => setCollectMode('full')}>Thu đủ ngay</button>
+                  <button type="button" className={collectMode === 'none' ? 'primary' : 'secondary'} onClick={() => setCollectMode('none')}>Chưa thu (nợ)</button>
+                </div>
+                <button type="button" className={collectMode === 'part' ? 'primary' : 'secondary'} onClick={() => setCollectMode('part')}>Thu một phần</button>
+                {collectMode === 'part' && <label>Đã thu (đ)<input value={partText} inputMode="numeric" onChange={(e) => setPartText(e.target.value)} /></label>}
+                {collectMode !== 'none' && (
+                  <label>Hình thức thu
+                    <select value={method} onChange={(e) => setMethod(e.target.value as 'cash' | 'transfer')}>
+                      <option value="cash">Tiền mặt</option>
+                      <option value="transfer">Chuyển khoản</option>
+                    </select>
+                  </label>
+                )}
+                {(() => {
+                  const part = parseNumber(partText);
+                  const got = collectMode === 'full' ? (a ?? 0) : collectMode === 'none' ? 0 : part === null || Number.isNaN(part) ? 0 : part;
+                  const owed = Math.max(0, (a ?? 0) - got);
+                  return <p className={owed > 0 ? 'msg warn' : 'msg ok'} role="status">{owed > 0 ? `Khách còn nợ: ${formatMoney(owed)}` : 'Khách đã thanh toán đủ, không còn nợ.'}</p>;
+                })()}
+                <label>
+                  Hạn thu tiền (bạn nhập)
+                  <input type="date" value={due} min={date} onChange={(e) => setDue(e.target.value)} />
+                  <small>Ngày khách phải trả hết nợ; để trống nếu không có hạn (app sẽ không nhắc quá hạn).</small>
+                </label>
+              </>
+            )}
+          </fieldset>
+        )}
         {error && <p className="msg error" role="alert">{error}</p>}
         {!online && <p className="msg warn">Đang offline. Cần có mạng để lưu; hãy kết nối mạng rồi bấm Lưu.</p>}
         <div className="btnrow">

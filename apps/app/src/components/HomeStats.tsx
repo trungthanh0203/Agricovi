@@ -10,7 +10,7 @@ import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { useAuth } from '../lib/auth';
 import { useTable } from '../lib/tables';
-import { fetchPayables, summarizePayables } from '../lib/partners';
+import { fetchPayables, fetchReceivables, summarizePayables } from '../lib/partners';
 
 type Tone = 'ok' | 'warn' | 'bad' | 'info' | 'neutral';
 
@@ -63,6 +63,7 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
   const [licSoon, setLicSoon] = useState(0);
   const [licExpired, setLicExpired] = useState(0);
   const [debt, setDebt] = useState<ReturnType<typeof summarizePayables> | null>(null);
+  const [recv, setRecv] = useState<ReturnType<typeof summarizePayables> | null>(null);
 
   const today = todayLocal();
 
@@ -89,6 +90,13 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
         try {
           const p = summarizePayables(await fetchPayables(orgId, true));
           if (alive) setDebt(p);
+        } catch { /* bỏ qua */ }
+      }
+      // khoản phải thu từ khách quá hạn / sắp đến hạn (chỉ người có quyền xem Doanh thu; lỗi thì bỏ qua)
+      if (canPerm(active?.perms, 'sales')) {
+        try {
+          const rows = await fetchReceivables(orgId, true);
+          if (alive) setRecv(summarizePayables(rows.map((r) => ({ ...r, bill_id: r.sale_id, paid: r.collected })) as never));
         } catch { /* bỏ qua */ }
       }
       try {
@@ -139,7 +147,7 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
 
   return (
     <>
-      {(canConfirmAtt || openShiftAt || licSoon + licExpired > 0 || (debt !== null && debt.overdueCount + debt.soonCount > 0)) && (
+      {(canConfirmAtt || openShiftAt || licSoon + licExpired > 0 || (debt !== null && debt.overdueCount + debt.soonCount > 0) || (recv !== null && recv.overdueCount + recv.soonCount > 0)) && (
         <>
           <h2 className="sect">Tôi cần làm</h2>
           <div className="kpis">
@@ -148,6 +156,8 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
             {isAdminRole && pendingAdj > 0 && <KpiTile label="Yêu cầu sửa công" value={String(pendingAdj)} tone="warn" note="chờ duyệt" onClick={() => onGo('production', 'attendance')} />}
             {debt !== null && debt.overdueCount > 0 && <KpiTile label="Hóa đơn mua quá hạn" value={String(debt.overdueCount)} tone="bad" note={`${shortMoney(debt.overdueAmount)} đồng`} onClick={() => onGo('reports', 'payables')} />}
             {debt !== null && debt.soonCount > 0 && <KpiTile label="Hóa đơn mua sắp đến hạn" value={String(debt.soonCount)} tone="warn" note={`${shortMoney(debt.soonAmount)} đồng · trong 7 ngày`} onClick={() => onGo('reports', 'payables')} />}
+            {recv !== null && recv.overdueCount > 0 && <KpiTile label="Khoản phải thu quá hạn" value={String(recv.overdueCount)} tone="bad" note={`${shortMoney(recv.overdueAmount)} đồng`} onClick={() => onGo('reports', 'payables')} />}
+            {recv !== null && recv.soonCount > 0 && <KpiTile label="Khoản phải thu sắp đến hạn" value={String(recv.soonCount)} tone="warn" note={`${shortMoney(recv.soonAmount)} đồng · trong 7 ngày`} onClick={() => onGo('reports', 'payables')} />}
             {licExpired > 0 && <KpiTile label="Giấy phép đã hết hạn" value={String(licExpired)} tone="bad" note="xem ở Tài khoản" onClick={() => onGo('profile')} />}
             {licSoon > 0 && <KpiTile label="Giấy phép sắp hết hạn" value={String(licSoon)} tone="warn" note="trong 30 ngày" onClick={() => onGo('profile')} />}
           </div>

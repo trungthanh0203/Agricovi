@@ -1,7 +1,7 @@
 # Kế hoạch G2-4 — Khách hàng và công nợ phải thu (bản đề xuất, chờ chủ sản phẩm duyệt)
 
 Căn cứ: D58-3 (một bảng Đối tác có cờ, hai màn riêng), D58-4 (công nợ đơn giản), D76 (G2-2 đã làm nhà cung ứng và công nợ phải trả), `PLAN_GIAI_DOAN_2_APP.md`. G2-3 (chụp hóa đơn) tạm hoãn theo quyết định 23/10/2026.
-Trạng thái: **đã duyệt 23/10/2026** (6 điểm đồng ý; hạn thu tiền do người dùng nhập). Đang làm Q1, Q2. Cách làm **đối xứng với G2-2** để dùng lại tối đa phần đã chạy ổn; các quyết định tương tự G2-2 được lấy làm mặc định, chủ sản phẩm chỉ cần sửa chỗ nào không hợp.
+Trạng thái: **đã duyệt 23/10/2026** (6 điểm đồng ý; hạn thu tiền do người dùng nhập). **Q1–Q4 đã làm xong về code** (migration 0057; Khai báo → Khách hàng; ghi bán có khách trong Doanh thu; Công nợ hai tab; thẻ Trang chủ; báo cáo theo khách). Còn thử tay trên máy thật. Cách làm **đối xứng với G2-2** để dùng lại tối đa phần đã chạy ổn; các quyết định tương tự G2-2 được lấy làm mặc định, chủ sản phẩm chỉ cần sửa chỗ nào không hợp.
 
 ## 1. Mô hình dữ liệu (đề xuất)
 
