@@ -621,4 +621,5 @@ export const EN_UI: Record<string, string> = {
   'Bắt đầu miễn phí': 'Start for free',
   'Cho người bán': 'For sellers',
   'Cho người mua': 'For buyers',
+  'Hội chợ': 'Trade fairs',
 };

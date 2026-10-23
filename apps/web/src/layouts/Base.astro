@@ -16,7 +16,15 @@ const brand = settings.brand.name ?? 'AgriConnect';
 const TRADE_EXTRA = [{ label: 'Cho người bán', href: '/danh-cho-nguoi-ban' }, { label: 'Cho người mua', href: '/danh-cho-nguoi-mua' }, { label: 'Kết quả giao thương', href: '/giao-thuong/ket-qua/' }];
 const nav = header.map((it) => (/^\/giao-thuong\/?$/.test(it.href)
   ? { ...it, trade: true, children: [...(it.children ?? []).filter((c) => !TRADE_EXTRA.some((x) => x.href === c.href)), ...TRADE_EXTRA] }
-  : { ...it, trade: false }));
+  : /^\/tin-hoi-cho\/?$/.test(it.href) ? { ...it, label: 'Hội chợ', trade: false, fair: true }
+  : { ...it, trade: false, fair: false }));
+// Hội chợ đứng ngay sau Giao thương
+const fairIdx = nav.findIndex((x) => x.fair);
+if (fairIdx >= 0) {
+  const [fair] = nav.splice(fairIdx, 1);
+  const tradeIdx = nav.findIndex((x) => x.trade);
+  nav.splice(tradeIdx >= 0 ? tradeIdx + 1 : nav.length, 0, fair!);
+}
 // Dòng chữ chạy ở đầu trang: các bài mới nhất (tin nông nghiệp, xuất khẩu, hội chợ); chưa có bài thì hiện lời chào
 const buyNow = (await loadTradePosts()).filter((t) => t.kind === 'buy').slice(0, 3);
 const doneNow = await loadLatestResults(3);
@@ -78,7 +86,7 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
         </details>
         <nav class="topnav" aria-label="Chuyên mục">
           {nav.map((it) => (
-            <div class={it.trade ? 'ni trade' : 'ni'}>
+            <div class={it.trade ? 'ni trade' : it.fair ? 'ni fair' : 'ni'}>
               <a href={it.href}>{it.label}</a>
               {it.children && <ul class="sub">{it.children.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>}
             </div>
@@ -580,4 +588,15 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
     .bar2 .ticker { order: 5; flex-basis: 100%; margin: 0; }
     .acct { margin-left: auto; }
   }
+</style>
+
+<style is:global>
+  /* Menu đầu trang v6 (D74): Tin = xanh dương nhạt; Giao thương và Hội chợ = tím nhạt có biểu tượng */
+  .bar1 .ni:not(.trade):not(.fair) > a { background: #e3f3ff; color: #0b3a66; }
+  .bar1 .ni:not(.trade):not(.fair) > a:hover, .bar1 .ni:not(.trade):not(.fair):focus-within > a { background: #cde7fb; color: #08305a; }
+  .bar1 .ni:not(.trade):not(.fair) > a::after { background: #1d6fb8; }
+  .bar1 .ni.fair > a { background: linear-gradient(135deg, #efe7ff, #d8c8fb); color: #3b1d7a; box-shadow: 0 2px 8px rgba(124,77,214,.3); }
+  .bar1 .ni.fair > a::before { content: "🎪 "; }
+  .bar1 .ni.fair > a::after { background: #6d3fc9; }
+  .bar1 .ni.fair > a:hover, .bar1 .ni.fair:focus-within > a { background: linear-gradient(135deg, #e3d6ff, #c9b3f7); color: #3b1d7a; }
 </style>
