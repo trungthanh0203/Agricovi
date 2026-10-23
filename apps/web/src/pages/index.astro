@@ -105,7 +105,11 @@ try {
           <span class="kicker">AgriConnect</span>
           <h1>Tìm nơi trồng, sản phẩm và nguồn gốc nông sản</h1>
           <p>Danh bạ nhà cung cấp đã được kiểm duyệt, tình trạng cung ứng cập nhật thường xuyên và truy xuất nguồn gốc từng mùa vụ.</p>
-          <div class="ctas"><a class="btn cta1" href="/danh-ba/">Xem nhà cung cấp</a><a class="btn cta2" href="/giao-thuong/">Giao thương</a></div>
+          <div class="ctas"><a class="btn cta1" href="/danh-ba/">Xem nhà cung cấp</a></div>
+          <div class="herotrade">
+            <a class="btn cta3" href="/giao-thuong/">🤝 Giao thương</a>
+            <p>Đăng tin cần mua, cần bán và trao đổi trực tiếp với người mua, nhà cung cấp đã đăng ký. Liên hệ chỉ mở khi hai bên cùng đồng ý.</p>
+          </div>
         </div>
       )}
       {hero.map((b) => (
@@ -236,6 +240,8 @@ try {
   .slide.fallback .kicker { background: rgba(255,255,255,.18); border-radius: 999px; padding: 3px 12px; font-size: .8rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
   .slide.fallback h1 { margin: 0; font-size: 2rem; line-height: 1.2; max-width: 520px; } .slide.fallback p { margin: 0 0 8px; opacity: .95; max-width: 520px; }
   .ctas { display: flex; gap: 10px; flex-wrap: wrap; }
+  .herotrade { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 6px; } .herotrade p { margin: 0; font-size: .88rem; max-width: 520px; line-height: 1.4; opacity: .95; }
+  .btn.cta3 { background: linear-gradient(135deg, #efe7ff, #d8c8fb); color: #3b1d7a; box-shadow: 0 3px 10px rgba(124,77,214,.4); } .btn.cta3:hover { background: linear-gradient(135deg, #e3d6ff, #c9b3f7); }
   .btn.cta1 { background: var(--yl); color: #2a2200; } .btn.cta2 { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,.85); padding: 10px 16px; }
   .sidebans { display: grid; gap: 14px; grid-template-rows: 1fr 1fr; }
   .promo { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 4px; border-radius: 16px; padding: 14px 16px; text-decoration: none; color: #fff; box-shadow: var(--shadow); transition: transform .18s, box-shadow .18s; }

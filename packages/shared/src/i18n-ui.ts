@@ -622,4 +622,6 @@ export const EN_UI: Record<string, string> = {
   'Cho người bán': 'For sellers',
   'Cho người mua': 'For buyers',
   'Hội chợ': 'Trade fairs',
+  '🤝 Giao thương': '🤝 Trade',
+  'Đăng tin cần mua, cần bán và trao đổi trực tiếp với người mua, nhà cung cấp đã đăng ký. Liên hệ chỉ mở khi hai bên cùng đồng ý.': 'Post what you want to buy or sell and talk directly with registered buyers and suppliers. Contact details open only when both sides agree.',
 };

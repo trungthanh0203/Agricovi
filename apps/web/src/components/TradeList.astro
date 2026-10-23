@@ -23,7 +23,7 @@ const TABS: [string, string, string][] = [['', '/giao-thuong/', 'Tất cả'], [
 ---
 <Base title={`${title} — AgriConnect`} description="Người mua đăng tin cần mua, nhà cung cấp đăng tin cần bán nông sản và vật tư. Đăng nhập để xem chi tiết và trao đổi.">
   <p class="crumbs"><a href="/">Trang chủ</a> › Giao thương</p>
-  <div class="sechead"><h1 style="margin:0">{title}</h1><a class="btn solid" href="/giao-thuong/dang-tin/">+ Đăng tin</a></div>
+  <div class="pagehead"><h1>{title}</h1><a class="btn solid" href="/giao-thuong/dang-tin/">+ Đăng tin</a></div>
   <div class="subcats">{TABS.map(([k, href, label]) => <a href={href} class={(kind ?? '') === k ? 'on' : ''}>{label}</a>)}</div>
   <form class="filters" method="get">
     <input name="q" value={q} placeholder="Tìm tin: dưa lưới, phân bón…" aria-label="Tìm tin" />
@@ -36,3 +36,8 @@ const TABS: [string, string, string][] = [['', '/giao-thuong/', 'Tất cả'], [
   <div class="pgrid">{items.map((t) => <TradeCard t={t} />)}</div>
   <p class="muted" style="margin-top:20px">Giao dịch do hai bên thỏa thuận trực tiếp; AgriConnect chỉ kết nối và không thu hộ tiền. Hãy cảnh giác với tin có dấu hiệu lừa đảo và dùng nút "Báo cáo" trong trang chi tiết. <a href="/quy-che-hoat-dong">Quy chế hoạt động</a></p>
 </Base>
+
+<style is:global>
+  .pagehead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 4px; }
+  .pagehead h1 { margin: 0; }
+</style>
