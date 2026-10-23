@@ -7,3 +7,5 @@ Phần website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`.
 - Sau đó: chấm công + tiền công (bước E; schema 0004, quyền 0015), trang admin (gói/thanh toán/xếp hạng), website, pilot.
 - Chưa làm: bộ mẫu dưa lưới (cần số liệu khảo sát), màn xem/sửa khu trồng, giao diện chấm công.
 - Hạ tầng: GitHub + Supabase + Cloudflare Pages; domain chưa mua (`login_email_domain` đang là `agricovi.com` tạm — phải là tên miền của chủ sản phẩm, xem cảnh báo trong `docs/DECISIONS.md`).
+
+- **Giai đoạn 2 (23/10/2026)**: giao diện v2 (D74) xong; tối ưu hiệu năng đợt 1 xong; Ghi việc/Sửa nhật ký có ô **Nội dung việc** bắt buộc nhập bằng gõ hoặc giọng nói (G2-6 rút gọn); **G2-1 kho ảnh xong về code** (D75, migration 0054, `docs/HUONG_DAN_G2_1_ANH.md`; cần xác nhận đã `db push` 0054 và chuyển ảnh cũ). Tiếp theo: **G2-2 nhà cung ứng + công nợ phải trả** (kế hoạch ở `PLAN_GIAI_DOAN_2_APP.md`). Chủ sản phẩm đã quyết: bỏ mẫu dưa lưới, hoãn pilot/tên miền/thời tiết/ép Ra ca ở CSDL.
