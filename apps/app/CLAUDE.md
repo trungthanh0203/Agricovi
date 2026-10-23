@@ -4,7 +4,7 @@ Chat này chỉ làm **APP**: app PWA quản lý cơ sở và trang quản trị
 
 ## Đọc khi cần (đừng đọc hết)
 - Quyết định: `docs/DECISIONS_APP.md` (D10, D14–D56); chung: `docs/DECISIONS_CHUNG.md`.
-- Trạng thái và việc kế tiếp: `docs/STATUS_APP.md`.
+- Trạng thái và việc kế tiếp: `docs/STATUS_APP.md`. Lộ trình Giai đoạn 2: `docs/PLAN_GIAI_DOAN_2_APP.md` (làm theo thứ tự trong đó).
 - Quyền/vai trò: `docs/ROLES.md`. Bố cục tab: `docs/PLAN_BO_CUC_MOI.md`. Số liệu/dashboard: `docs/DESIGN_DASHBOARD.md`. Thử tay: `docs/HUONG_DAN_THU.md`.
 
 ## Ranh giới
