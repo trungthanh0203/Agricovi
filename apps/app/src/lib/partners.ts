@@ -1,4 +1,3 @@
-import { addMonths } from './dates';
 import { syncInventoryDown } from './inventory';
 import { insertRow, requireOnline, updateVersioned } from './serverWrite';
 import { supabase } from './supabase';
@@ -107,9 +106,6 @@ export interface PurchaseInput {
 /** Tổng tiền các dòng (mỗi dòng làm tròn tới đồng) */
 export const linesTotal = (lines: { quantity: number; unitCost: number }[]): number =>
   lines.reduce((s, l) => s + Math.round(l.quantity * l.unitCost), 0);
-
-/** Hạn thanh toán mặc định: 1 tháng sau ngày mua (quyết định 23/10/2026) */
-export const defaultDueDate = (billDate: string): string => addMonths(billDate, 1);
 
 /** Kiểm tra trước khi gửi; trả về câu báo lỗi hoặc null */
 export function validatePurchase(i: PurchaseInput, today: string): string | null {

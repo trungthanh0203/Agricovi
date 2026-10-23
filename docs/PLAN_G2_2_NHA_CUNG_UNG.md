@@ -1,7 +1,7 @@
 # Kế hoạch G2-2 — Nhà cung ứng và công nợ phải trả (bản đề xuất, chờ chủ sản phẩm duyệt)
 
 Căn cứ: D58-3 (một bảng Đối tác có cờ, hai màn riêng), D58-4 (công nợ đơn giản: ghi lần thanh toán, tính còn nợ), D58-5 (thông tin nhà cung ứng mặc định không công khai), `PLAN_GIAI_DOAN_2_APP.md`.
-Trạng thái: **đã duyệt 23/10/2026** (đổi hạn mặc định thành **1 tháng sau ngày mua**, bỏ quy tắc theo ngày kết thúc vụ). **P1–P4 đã làm xong về code** (P3: Báo cáo → Công nợ, trả tiền, thẻ ở Trang chủ; P4: báo cáo "Mua hàng theo nhà cung ứng" trong Báo cáo theo nhu cầu, migration 0056, và hiện nhà cung ứng trong lịch sử nhập kho). **G2-2 hoàn tất về code**; còn thử tay trên máy thật.
+Trạng thái: **đã duyệt 23/10/2026** (hạn thanh toán **do người dùng tự nhập**, không có mặc định; trước đó đã đổi từ "ngày kết thúc vụ" sang "1 tháng" rồi sang "tự nhập"). **P1–P4 đã làm xong về code** (P3: Báo cáo → Công nợ, trả tiền, thẻ ở Trang chủ; P4: báo cáo "Mua hàng theo nhà cung ứng" trong Báo cáo theo nhu cầu, migration 0056, và hiện nhà cung ứng trong lịch sử nhập kho). **G2-2 hoàn tất về code**; còn thử tay trên máy thật.
 
 ## 1. Điều chủ sản phẩm đã trả lời (23/10/2026)
 

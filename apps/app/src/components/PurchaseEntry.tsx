@@ -5,7 +5,7 @@ import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { formatMoney, formatQty, parseNumber } from '../lib/inventory';
 import {
-  createSupplier, defaultDueDate, linesTotal, listSuppliers, recordPurchase, validatePurchase, type Partner, type PurchaseInput,
+  createSupplier, linesTotal, listSuppliers, recordPurchase, validatePurchase, type Partner, type PurchaseInput,
 } from '../lib/partners';
 import { useTable } from '../lib/tables';
 
@@ -31,8 +31,7 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
   const [quickAdd, setQuickAdd] = useState(false);
   const [invoice, setInvoice] = useState('');
   const [billDate, setBillDate] = useState(todayLocal());
-  const [due, setDue] = useState(() => defaultDueDate(todayLocal()));
-  const [dueTouched, setDueTouched] = useState(false);
+  const [due, setDue] = useState(''); // hạn trả nợ do người dùng tự nhập (không có giá trị mặc định)
   const [locationId, setLocationId] = useState('');
   const [lines, setLines] = useState<DraftLine[]>(() => [newLine()]);
   const [totalText, setTotalText] = useState<string | null>(null); // null = tự cộng từ các dòng
@@ -62,10 +61,7 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
   const paid = (() => { const n = parseNumber(paidText); return n === null || Number.isNaN(n) ? 0 : n; })();
   const owed = Math.max(0, total - paid);
 
-  function changeBillDate(v: string) {
-    setBillDate(v);
-    if (!dueTouched && v) setDue(defaultDueDate(v)); // hạn mặc định = 1 tháng sau ngày mua, trừ khi người dùng đã tự sửa
-  }
+  const changeBillDate = (v: string) => setBillDate(v);
   const setLine = (key: string, patch: Partial<DraftLine>) => setLines((s) => s.map((l) => (l.key === key ? { ...l, ...patch } : l)));
 
   async function onSubmit(e: FormEvent) {
@@ -100,8 +96,7 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
     setNote('');
     setError(null);
     setBillDate(todayLocal());
-    setDue(defaultDueDate(todayLocal()));
-    setDueTouched(false);
+    setDue('');
   }
 
   if (saved) {
@@ -227,9 +222,9 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
         <p className={owed > 0 ? 'msg warn' : 'msg ok'} role="status">{owed > 0 ? `Còn nợ nhà cung ứng: ${formatMoney(owed)}` : 'Đã trả đủ, không còn nợ.'}</p>
 
         <label>
-          Hạn thanh toán
-          <input type="date" value={due} min={billDate} onChange={(e) => { setDue(e.target.value); setDueTouched(true); }} />
-          <small>Mặc định 1 tháng sau ngày mua; có thể sửa hoặc để trống nếu không có hạn.</small>
+          Hạn thanh toán (bạn nhập)
+          <input type="date" value={due} min={billDate} onChange={(e) => setDue(e.target.value)} />
+          <small>{owed > 0 && !due ? 'Còn nợ mà chưa nhập hạn: app sẽ không nhắc quá hạn cho hóa đơn này.' : 'Ngày phải trả hết nợ cho nhà cung ứng; để trống nếu không có hạn.'}</small>
         </label>
         <label>Ghi chú<input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} /></label>
 
