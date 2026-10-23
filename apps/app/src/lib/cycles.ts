@@ -14,6 +14,12 @@ export function currentStage(stages: StageRow[]): StageRow | null {
   return sorted.find((s) => s.status === 'in_progress') ?? sorted.find((s) => s.status === 'pending') ?? null;
 }
 
+/** Giai đoạn của một ngày: giai đoạn chưa xong có kế hoạch bao trùm ngày đó; không có thì giai đoạn hiện tại */
+export function stageForDay(stages: StageRow[], day: string): StageRow | null {
+  const sorted = [...stages].sort((a, b) => a.seq - b.seq);
+  return sorted.find((s) => s.status !== 'done' && s.planned_start && s.planned_end && s.planned_start <= day && day <= s.planned_end) ?? currentStage(stages);
+}
+
 /** Số ngày trễ so với kế hoạch (0 = đúng hạn). Giai đoạn xong: so ngày xong thực tế; còn lại: so với hôm nay. */
 export function stageDelayDays(s: StageRow, today: string): number {
   if (s.status === 'done') return s.actual_end && s.planned_end ? Math.max(0, diffDays(s.planned_end, s.actual_end)) : 0;

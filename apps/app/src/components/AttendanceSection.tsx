@@ -9,6 +9,7 @@ import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { hasRole } from '../lib/roles';
+import { stageForDay } from '../lib/cycles';
 import {
   ATT_STATUS_LABEL, clockIn, clockOut, clockOutLocal, confirmAttendance, confirmOutput, decideAdjustment, fmtMinutes, listAdjustments, listAttendance,
   ensureMyWorker, listOutputs, listWorkers, OUTPUT_STATUS_LABEL, recalledMyWorker, recordOutput, recordShift, rejectAttendance, rememberMyWorker, requestAdjustment,
@@ -22,7 +23,7 @@ const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: 
  * Chấm công và sản lượng (D42): vào/ra ca của chính mình; tổ trưởng/quản lý chấm hộ và ghi sản lượng; xác nhận công.
  * Cần mạng (chấm công offline sẽ làm sau). Máy chủ kiểm quyền; người không có hồ sơ lao động chỉ xem được phần được phép.
  */
-export function AttendanceSection() {
+export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id: string, opts?: { calendar?: boolean; notice?: string }) => void; onLogFor?: (cycleId: string | null) => void }) {
   const { active } = useOrgs();
   const { session } = useAuth();
   const online = useOnline();
@@ -37,6 +38,8 @@ export function AttendanceSection() {
   const [adjFor, setAdjFor] = useState<string | null>(null);
   const [adjs, setAdjs] = useState<AdjustmentRequest[]>([]);
   const localShift = useLiveQuery(async () => (active ? (await db.localShifts.where('org').equals(active.id).toArray())[0] ?? null : null), [active?.id], null);
+  const logs = useTable('logs');
+  const [needLog, setNeedLog] = useState(false);
   const cycles = useTable('cycles').filter((c) => c.status === 'active' && c.owner_org_id === active?.id);
   const recalled = active && uid ? recalledMyWorker(active.id, uid) : null;
 
@@ -67,6 +70,43 @@ export function AttendanceSection() {
 
   const openShift = useMemo(() => att.find((a) => a.worker_id === me?.id && !a.ended_at && a.status !== 'rejected') ?? null, [att, me?.id]);
 
+
+  /** Từ lúc vào ca đến giờ, tôi đã ghi việc nào chưa (tính cả bản ghi còn chờ gửi trên máy). Có chọn vụ thì chỉ tính việc của vụ đó. */
+  function hasLoggedSince(startIso: string): boolean {
+    return logs.some((l) => !l.voided_at && (l.created_by === uid || l.performed_by === uid) && new Date(l.performed_at).getTime() >= new Date(startIso).getTime() && (!cycleId || l.cycle_id === cycleId));
+  }
+
+  /** Vào ca; nếu có chọn vụ thì báo giai đoạn của hôm nay và chuyển tới Lịch của vụ đó */
+  async function startShift() {
+    if (!active) return;
+    setBusy(true);
+    setError(null);
+    setNeedLog(false);
+    try {
+      await clockIn(active.id, me?.id ?? recalled, cycleId || null);
+      await load();
+      if (cycleId && onOpenCycle) {
+        const st = await db.stages.where('cycle_id').equals(cycleId).toArray();
+        const today = todayLocal();
+        const stage = stageForDay(st, today);
+        const cyc = cycles.find((c) => c.id === cycleId);
+        const name = cyc?.name || cyc?.template_name || 'Vụ';
+        const when = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        const what = stage
+          ? `Hôm nay vụ "${name}" đang ở giai đoạn "${stage.name}"${stage.planned_start && stage.planned_end ? ` (${fmtDate(stage.planned_start)} – ${fmtDate(stage.planned_end)})` : ''}. Hãy làm việc theo giai đoạn này.`
+          : `Vụ "${name}" hiện chưa có giai đoạn nào cho hôm nay.`;
+        onOpenCycle(cycleId, { calendar: true, notice: `Bạn đã vào ca lúc ${when}. ${what}` });
+      }
+    } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+  }
+
+  /** Ra ca: bắt buộc đã ghi việc đã làm trong ca (chỉ kiểm khi cơ sở có vụ đang sản xuất để ghi) */
+  async function endShift(startIso: string, doOut: () => Promise<unknown>) {
+    if (cycles.length > 0 && !hasLoggedSince(startIso)) { setNeedLog(true); return; }
+    setNeedLog(false);
+    await run(doOut);
+  }
+
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
     setError(null);
@@ -81,6 +121,13 @@ export function AttendanceSection() {
     <>
       {!online && <p className="msg warn" role="status">Đang offline: chấm công cần có mạng. Hãy kết nối mạng rồi thử lại.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
+      {needLog && (
+        <div className="card alert-warn" role="alert">
+          <strong>Chưa thể Ra ca</strong>
+          <p>Bạn chưa ghi công việc nào đã làm trong ca này{cycleId ? ' cho vụ đã chọn' : ''}. Hãy ghi công việc hôm nay vào hệ thống rồi quay lại bấm Ra ca.</p>
+          {onLogFor && <button className="primary" onClick={() => onLogFor(cycleId || cycles[0]?.id || null)}>Ghi việc vừa làm</button>}
+        </div>
+      )}
 
       {me || recalled ? (
         <div className="card">
@@ -98,7 +145,7 @@ export function AttendanceSection() {
               <p>Bạn vào ca lúc <strong>{hhmm(localShift.started_at)}</strong> (lưu trên máy{online ? '' : ', đang mất mạng'}).</p>
               <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
               <button className="primary" disabled={busy}
-                onClick={() => void run(() => clockOutLocal(localShift, Math.max(0, parseInt(brk || '0', 10) || 0), cycleId || null))}>Ra ca</button>
+                onClick={() => void endShift(localShift.started_at, () => clockOutLocal(localShift, Math.max(0, parseInt(brk || '0', 10) || 0), cycleId || null))}>Ra ca</button>
               <p className="muted">Ca sẽ được gửi lên khi có mạng, rồi chờ tổ trưởng hoặc quản lý xác nhận.</p>
             </>
           ) : openShift ? (
@@ -106,10 +153,10 @@ export function AttendanceSection() {
               <p>Bạn vào ca lúc <strong>{hhmm(openShift.started_at)}</strong> ngày {fmtDate(openShift.work_date)}{openShift.start_lat != null ? ' · đã ghi vị trí' : ''}.</p>
               <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
               <button className="primary" disabled={busy || !online}
-                onClick={() => void run(() => clockOut(openShift.id, Math.max(0, parseInt(brk || '0', 10) || 0), cycleId || null))}>Ra ca</button>
+                onClick={() => void endShift(openShift.started_at, () => clockOut(openShift.id, Math.max(0, parseInt(brk || '0', 10) || 0), cycleId || null))}>Ra ca</button>
             </>
           ) : (
-            <button className="primary" disabled={busy} onClick={() => void run(() => clockIn(active.id, me?.id ?? recalled, cycleId || null))}>Vào ca</button>
+            <button className="primary" disabled={busy} onClick={() => void startShift()}>Vào ca</button>
           )}
           <p className="muted">Vị trí chỉ được ghi lúc bạn bấm Vào ca/Ra ca (nếu bạn cho phép), không theo dõi liên tục. Công được xác nhận trước khi tính tiền.</p>
         </div>

@@ -26,7 +26,7 @@ export interface LogPreset { cycleId: string; workTypeId?: string | null; stageI
  * Người quản lý bấm Bắt đầu / Hoàn thành, sửa/thêm/xóa giai đoạn của vụ này; mọi người ghi việc thẳng vào giai đoạn đang làm
  * và thêm ghi chú cho từng ngày ở dạng lịch (hiện nhắc ở Trang chủ).
  */
-export function CycleDetailScreen({ cycleId, onClose, onLog, openQr }: { cycleId: string; onClose: () => void; onLog: (p: LogPreset) => void; openQr?: boolean }) {
+export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalendar, notice }: { cycleId: string; onClose: () => void; onLog: (p: LogPreset) => void; openQr?: boolean; openCalendar?: boolean; notice?: string | null }) {
   const { active } = useOrgs();
   const { session } = useAuth();
   const online = useOnline();
@@ -36,7 +36,8 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr }: { cycleId
   const notes = useLiveQuery(() => db.notes.where('cycle_id').equals(cycleId).toArray(), [cycleId], []);
   const area = useLiveQuery(async () => (cycle ? db.areas.get(cycle.area_id) : undefined), [cycle?.area_id]);
   const { cropTypes, workTypes } = useCatalog();
-  const [view, setView] = useState<'list' | 'calendar'>('list');
+  const [view, setView] = useState<'list' | 'calendar'>(openCalendar ? 'calendar' : 'list');
+  const [noticeOpen, setNoticeOpen] = useState(Boolean(notice));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -72,6 +73,12 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr }: { cycleId
   return (
     <main className="auth wide">
       <button className="link" onClick={onClose}>← Quay lại</button>
+      {notice && noticeOpen && (
+        <div className="msg ok" role="status">
+          <p style={{ margin: 0 }}>{notice}</p>
+          <button className="link" onClick={() => setNoticeOpen(false)}>Đã hiểu</button>
+        </div>
+      )}
       <div className="row">
         <h1 className="grow">{cycle.name || crop}</h1>
         <span className="pill">{CYCLE_STATUS_LABEL_VI[cycle.status]}</span>

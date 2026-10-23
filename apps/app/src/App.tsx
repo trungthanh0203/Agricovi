@@ -90,6 +90,7 @@ function Shell() {
   const [overlay, setOverlay] = useState<null | 'log' | 'cycle' | 'logs' | 'detail'>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [qrFirst, setQrFirst] = useState(false); // vừa tạo vụ: mở sẵn mã QR
+  const [detailOpts, setDetailOpts] = useState<{ calendar?: boolean; notice?: string }>({}); // vừa vào ca: mở thẳng Lịch kèm thông báo giai đoạn hôm nay
   const [logPreset, setLogPreset] = useState<LogPreset | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
   const [counts, setCounts] = useState<Record<SyncState, number> | null>(null);
@@ -128,7 +129,7 @@ function Shell() {
   }, [refresh]);
 
   if (overlay === 'detail' && detailId) {
-    return <Suspense fallback={<Loading />}><CycleDetailScreen cycleId={detailId} openQr={qrFirst} onClose={() => { setQrFirst(false); setOverlay(null); }} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} /></Suspense>;
+    return <Suspense fallback={<Loading />}><CycleDetailScreen cycleId={detailId} openQr={qrFirst} openCalendar={detailOpts.calendar} notice={detailOpts.notice} onClose={() => { setQrFirst(false); setDetailOpts({}); setOverlay(null); }} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} /></Suspense>;
   }
   if (overlay === 'log') {
     return <Suspense fallback={<Loading />}><LogActivityScreen preset={logPreset} onClose={() => { setOverlay(logPreset && detailId ? 'detail' : null); setLogPreset(null); }} /></Suspense>;
@@ -170,7 +171,7 @@ function Shell() {
       <main className="content">
         <Suspense fallback={<Loading />}>
         {tab === 'home' ? (
-          <HomeTab onGo={goTo} onOpenCycle={(id) => { setDetailId(id); setQrFirst(false); setOverlay('detail'); }} />
+          <HomeTab onGo={goTo} onOpenCycle={(id) => { setDetailId(id); setQrFirst(false); setDetailOpts({}); setOverlay('detail'); }} />
         ) : tab === 'production' ? (
           <ProductionTab
             section={subs.production}
@@ -178,7 +179,8 @@ function Shell() {
             onLog={() => { setLogPreset(null); setOverlay('log'); }}
             onHistory={() => goTo('production', 'logs')}
             onCreateCycle={() => setOverlay('cycle')}
-            onOpenCycle={(id) => { setDetailId(id); setQrFirst(false); setOverlay('detail'); }}
+            onOpenCycle={(id, opts) => { setDetailId(id); setQrFirst(false); setDetailOpts(opts ?? {}); setOverlay('detail'); }}
+            onLogFor={(cycleId) => { if (cycleId) setDetailId(cycleId); setLogPreset(cycleId ? { cycleId } : null); setOverlay('log'); }}
             onGo={goTo}
           />
         ) : tab === 'declare' ? (

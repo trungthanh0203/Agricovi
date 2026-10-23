@@ -24,14 +24,15 @@ interface Props {
   section?: string;
   onSection: (s: ProductionSection) => void;
   onCreateCycle: () => void;
-  onOpenCycle: (id: string) => void;
+  onOpenCycle: (id: string, opts?: { calendar?: boolean; notice?: string }) => void;
+  onLogFor: (cycleId: string | null) => void;
   onLog: () => void;
   onHistory: () => void;
   onGo: (tab: TabId, section?: string) => void;
 }
 
 /** Tab Sản xuất: Mùa vụ (trạng thái các vụ, ghi việc), Thu hoạch, Kho. Trang trại và danh mục nằm ở tab Khai báo. */
-export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Props) {
+export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, onLogFor, onLog, onHistory, onGo }: Props) {
   const { active } = useOrgs();
   const items = productionSections(active);
   const current = pickSection(items, section);
@@ -45,11 +46,11 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
       ) : current === 'stock' ? (
         <StockPanel />
       ) : current === 'attendance' ? (
-        <AttendanceSection />
+        <AttendanceSection onOpenCycle={onOpenCycle} onLogFor={onLogFor} />
       ) : current === 'logs' ? (
         <LogsScreen embedded onClose={() => onSection('' as ProductionSection)} />
       ) : current === 'cycles' ? (
-        <CyclesPanel onCreateCycle={onCreateCycle} onOpenCycle={onOpenCycle} onLog={onLog} onHistory={onHistory} onGo={onGo} />
+        <CyclesPanel onCreateCycle={onCreateCycle} onOpenCycle={(id) => onOpenCycle(id)} onLog={onLog} onHistory={onHistory} onGo={onGo} />
       ) : null}
     </section>
   );
