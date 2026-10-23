@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Collapsible } from '../components/Collapsible';
 import { InvitationsPanel } from '../components/InvitationsPanel';
 import { LicensesSection, licenseStatus } from '../components/LicensesSection';
+import { MigrateImages } from '../components/MigrateImages';
 import { PlanCard } from '../components/PlanCard';
 import { QrCard } from '../components/QrCard';
 import { useAuth } from '../lib/auth';
@@ -114,6 +115,12 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
       {active && (
         <Collapsible title="Giấy phép, chứng chỉ" summary={licenses.length > 0 ? `${licenses.length} giấy${soon > 0 ? ` · ${soon} cần chú ý` : ''}` : 'chưa có'} warn={soon > 0}>
           <LicensesSection orgId={active.id} canEdit={hasRole(active.roles, 'manager')} onLoaded={setLicenses} />
+        </Collapsible>
+      )}
+
+      {active && isOwner(active.roles) && (
+        <Collapsible title="Kho ảnh" summary="chuyển ảnh cũ sang kho ảnh mới">
+          <MigrateImages orgId={active.id} />
         </Collapsible>
       )}
 

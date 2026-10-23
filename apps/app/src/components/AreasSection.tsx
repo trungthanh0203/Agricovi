@@ -111,7 +111,7 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
           </label>
         </div>
         <label>Đặc điểm<textarea rows={3} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Loại đất/ao/chuồng, nguồn nước, nhà màng…" /></label>
-        <ImagePicker value={image} onChange={setImage} />
+        <ImagePicker value={image} onChange={setImage} store="areas" />
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {

@@ -47,6 +47,9 @@ export interface NoteRow {
   created_at?: string;
 }
 
+/** Ảnh đã tải từ kho ảnh, giữ trên máy để xem offline (G2-1). key = "<đường dẫn>|t" (ảnh nhỏ) hoặc "|f" (đầy đủ) */
+export interface MediaRow { key: string; blob: Blob; at: number }
+
 /** Ca chấm công bắt đầu khi KHÔNG có mạng: giữ trên máy tới khi ra ca rồi gửi một lần qua hàng đợi (D43) */
 export interface LocalShift {
   id: string;
@@ -266,6 +269,7 @@ export class LocalDb extends Dexie {
   stages!: Table<StageRow, string>;
   notes!: Table<NoteRow, string>;
   localShifts!: Table<LocalShift, string>;
+  media!: Table<MediaRow, string>;
 
   constructor(name = 'agriconnect') {
     super(name);
@@ -354,6 +358,10 @@ export class LocalDb extends Dexie {
     this.version(10).stores({
       outbox: 'id, state, table, createdAt',
       localShifts: 'id, org',
+    });
+    // v11 (G2-1): ảnh tải từ kho ảnh giữ trên máy
+    this.version(11).stores({
+      media: 'key, at',
     });
   }
 }

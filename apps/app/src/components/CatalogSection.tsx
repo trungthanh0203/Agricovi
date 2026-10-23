@@ -196,7 +196,7 @@ function MaterialEditor({ m, busy, onSave, onClose }: {
       <div className="inline-form">
         <label>Tên<input value={name} onChange={(e) => setName(e.target.value)} /></label>
         <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} /></label>
-        <ImagePicker value={ext.image} onChange={(v) => setExt((x) => ({ ...x, image: v }))} />
+        <ImagePicker value={ext.image} onChange={(v) => setExt((x) => ({ ...x, image: v }))} store="materials" />
         <label>Thương hiệu / xuất xứ<input value={ext.brand} onChange={setE('brand')} /></label>
         <label>Nhóm (phân bón, thuốc BVTV, giống…)<input value={cat} onChange={(e) => setCat(e.target.value)} /></label>
         <label>Báo "sắp hết" khi tồn ≤ (để trống nếu không báo)<input value={thr} inputMode="decimal" onChange={(e) => setThr(e.target.value)} /></label>

@@ -120,7 +120,7 @@ function ProductForm({ title, initial, busy, onSave, onReset, onClose }: {
           </select>
         </label>
         <label>Mô tả<textarea rows={3} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Giống, đặc điểm, thời gian sinh trưởng…" /></label>
-        <ImagePicker value={image} onChange={setImage} />
+        <ImagePicker value={image} onChange={setImage} store="crops" />
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {

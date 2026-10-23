@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ImagePicker, Thumb } from './ImagePicker';
+import { ImagePicker, Img, Thumb } from './ImagePicker';
 import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
@@ -73,7 +73,7 @@ export function LicensesSection({ orgId, canEdit, onLoaded }: { orgId: string; c
       </table>
       {rows.some((l) => l.image) && (
         <details className="fold inline"><summary><span className="fold-title">Xem hình ảnh giấy tờ</span></summary>
-          <div className="fold-body">{rows.filter((l) => l.image).map((l) => <figure key={l.id} className="licfig"><img src={l.image!} alt={l.name} /><figcaption>{l.name}</figcaption></figure>)}</div>
+          <div className="fold-body">{rows.filter((l) => l.image).map((l) => <figure key={l.id} className="licfig"><Img value={l.image} size="f" alt={l.name} /><figcaption>{l.name}</figcaption></figure>)}</div>
         </details>
       )}
     </>
@@ -104,7 +104,7 @@ function LicenseForm({ initial, busy, onSave, onClose }: {
           <label>Ngày cấp<input type="date" value={issued} onChange={(e) => setIssued(e.target.value)} /></label>
           <label>Hạn (để trống nếu không thời hạn)<input type="date" value={expires} onChange={(e) => setExpires(e.target.value)} /></label>
         </div>
-        <ImagePicker value={image} onChange={setImage} label="Hình ảnh giấy tờ" />
+        <ImagePicker value={image} onChange={setImage} label="Hình ảnh giấy tờ" store="licenses" />
         <label>Ghi chú<input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} /></label>
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
