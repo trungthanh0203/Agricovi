@@ -406,3 +406,12 @@ h2.sect.band { margin: 20px 0 10px; font-size: 1.05rem; }
 
 /* Các màn Chi tiết vụ, Ghi việc, Tạo vụ nằm trong khung chính: bỏ kiểu thẻ riêng của màn đăng nhập */
 .content > .auth, .content .auth.wide { margin: 0 0 12px; padding: 0; max-width: none; background: none; border: 0; box-shadow: none; }
+
+/* Ô Nội dung việc có giọng nói (G2-6) */
+.voicenote { display: grid; gap: 8px; }
+.voicenote textarea { font: inherit; min-height: 84px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--field); color: var(--fg); resize: vertical; }
+.voicenote textarea:focus { outline: 0; border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,128,67,.18); }
+.voice-live { margin: 0; color: var(--green); font-weight: 600; }
+.voice-live em { font-weight: 400; color: var(--muted); }
+.voice-note { margin: 0; font-size: .8rem; }
+.voicenote .btnrow { margin: 0; }

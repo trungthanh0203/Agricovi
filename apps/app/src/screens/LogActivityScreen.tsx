@@ -11,6 +11,7 @@ import { useOrgs } from '../lib/orgs';
 import { logActivity } from '../lib/production';
 import { hasRole } from '../lib/roles';
 import { useTable } from '../lib/tables';
+import { VoiceNote } from '../components/VoiceNote';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 const LAST_LOCATION_KEY = 'agriconnect.lastLocation'; // dùng chung với màn nhập kho
@@ -89,6 +90,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!workType || !cycle || !session) return;
+    if (!note.trim()) return setError('Hãy nhập "Nội dung việc": gõ chữ hoặc bấm Nói để đọc nội dung đã làm.');
     for (const f of workType.field_schema) {
       const raw = values[f.key];
       if (f.type === 'number' && raw && Number.isNaN(Number(raw))) return setError(`"${f.label}" phải là số.`);
@@ -261,10 +263,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
             </fieldset>
           )}
 
-          <label>
-            Ghi chú (không bắt buộc)
-            <input value={note} onChange={(e) => setNote(e.target.value)} />
-          </label>
+          <VoiceNote label="Nội dung việc (bắt buộc)" value={note} onChange={setNote} />
 
           {error && <p className="msg error" role="alert">{error}</p>}
           {!navigator.onLine && <p className="msg warn">Đang offline. Bản ghi sẽ được lưu trên điện thoại và gửi sau.</p>}

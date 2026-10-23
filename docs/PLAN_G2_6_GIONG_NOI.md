@@ -1,7 +1,7 @@
 # Kế hoạch G2-6 — Nhập liệu bằng giọng nói (bản đề xuất, chờ chủ sản phẩm duyệt)
 
 Căn cứ: D58-1 (bắt đầu bằng nhận dạng có sẵn của thiết bị, đo thực địa rồi mới xét dịch vụ trả phí), D24 (offline chỉ cho ghi mới việc hằng ngày), `PLAN_GIAI_DOAN_2_APP.md` mục G2-6.
-Trạng thái: **chưa làm code**.
+Trạng thái: **thu hẹp phạm vi theo quyết định 23/10/2026**: chỉ làm màn **Ghi việc**, ô "Ghi chú" đổi thành **"Nội dung việc" (bắt buộc)**, gõ chữ hoặc bấm 🎤 Nói, có nút **Xóa & đọc lại**. **Đã làm xong** (V1 rút gọn). Các tầng 2–3, đo thực địa, Thu hoạch: **chưa làm, để sau**.
 
 ## 1. Mục tiêu và nguyên tắc
 
