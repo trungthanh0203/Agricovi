@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { daysLeft, listLicenses } from '../lib/licenses';
 import { hasRole } from '../lib/roles';
 import { listAdjustments, listAttendance, listWorkers } from '../lib/work';
@@ -11,6 +11,8 @@ import { canPerm } from '../lib/permissions';
 import { useAuth } from '../lib/auth';
 import { useTable } from '../lib/tables';
 import { fetchPayables, fetchReceivables, summarizePayables } from '../lib/partners';
+
+const HomeTrend = lazy(() => import('./HomeTrend')); // biểu đồ tải lười, không làm nặng gói đầu
 
 type Tone = 'ok' | 'warn' | 'bad' | 'info' | 'neutral';
 
@@ -174,6 +176,7 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
         {canExpense && <KpiTile label="Chi phí đã ghi tháng này" value={shortMoney(stat.spent)} tone="bad" title={fullMoney(stat.spent)} note="đồng" />}
         {canSale && <KpiTile label="Doanh thu tháng này" value={shortMoney(stat.earned)} tone="ok" title={fullMoney(stat.earned)} note="đồng" />}
       </div>
+      {(canExpense || canSale || canHarvest) && <Suspense fallback={null}><HomeTrend orgId={active.id} /></Suspense>}
       {(stockAlerts.length > 0) && (
         <div className="card alert-warn">
           <h2>Cảnh báo kho</h2>

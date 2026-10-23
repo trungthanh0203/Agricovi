@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { KpiTile } from './HomeStats';
+import { ReportChart } from './ReportChart';
 import { useAuth } from '../lib/auth';
 import { addDays } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
@@ -36,6 +37,7 @@ export function ReportBuilder() {
   const [to, setTo] = useState(today);
   const [cycleId, setCycleId] = useState('');
   const [result, setResult] = useState<ReportResult | null>(null);
+  const [view, setView] = useState<'chart' | 'table'>('chart'); // mở đầu bằng biểu đồ (câu trả lời trước, chi tiết sau)
   const [saved, setSaved] = useState<SavedReport[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -137,20 +139,27 @@ export function ReportBuilder() {
               ))}
             </div>
           )}
-          <div className="scrollx">
-            <table className="grid">
-              <thead><tr>{result.columns.map((c) => <th key={c.key} className={c.kind === 'text' ? '' : 'num'}>{c.label}</th>)}</tr></thead>
-              <tbody>
-                {result.rows.length === 0 && <tr><td colSpan={result.columns.length} className="muted">Không có số liệu trong khoảng này.</td></tr>}
-                {result.rows.map((row, i) => (
-                  <tr key={i}>{result.columns.map((c) => <td key={c.key} className={c.kind === 'text' ? '' : 'num'}>{fmtCell(row[c.key], c.kind)}</td>)}</tr>
-                ))}
-                {result.rows.length > 0 && Object.keys(tot).length > 0 && (
-                  <tr><td><strong>Tổng</strong></td>{result.columns.slice(1).map((c) => <td key={c.key} className="num"><strong>{c.sum ? fmtCell(tot[c.key], c.kind) : ''}</strong></td>)}</tr>
-                )}
-              </tbody>
-            </table>
+          <div className="chips" role="tablist" aria-label="Cách xem báo cáo">
+            <button role="tab" aria-selected={view === 'chart'} className={view === 'chart' ? 'chip active' : 'chip'} onClick={() => setView('chart')}>Biểu đồ</button>
+            <button role="tab" aria-selected={view === 'table'} className={view === 'table' ? 'chip active' : 'chip'} onClick={() => setView('table')}>Bảng</button>
           </div>
+          {view === 'chart' && <ReportChart result={result} />}
+          {view === 'table' && (
+            <div className="scrollx">
+              <table className="grid">
+                <thead><tr>{result.columns.map((c) => <th key={c.key} className={c.kind === 'text' ? '' : 'num'}>{c.label}</th>)}</tr></thead>
+                <tbody>
+                  {result.rows.length === 0 && <tr><td colSpan={result.columns.length} className="muted">Không có số liệu trong khoảng này.</td></tr>}
+                  {result.rows.map((row, i) => (
+                    <tr key={i}>{result.columns.map((c) => <td key={c.key} className={c.kind === 'text' ? '' : 'num'}>{fmtCell(row[c.key], c.kind)}</td>)}</tr>
+                  ))}
+                  {result.rows.length > 0 && Object.keys(tot).length > 0 && (
+                    <tr><td><strong>Tổng</strong></td>{result.columns.slice(1).map((c) => <td key={c.key} className="num"><strong>{c.sum ? fmtCell(tot[c.key], c.kind) : ''}</strong></td>)}</tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
           <div className="btnrow">
             <button className="secondary" onClick={() => downloadCsv(`bao-cao-${result.type}-${result.from}_${result.to}.csv`, buildReportCsv(result, active.name))}>Xuất CSV</button>
             <button className="secondary" disabled={!online} onClick={() => setSaving(!saving)}>Lưu báo cáo này</button>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
+import { ChartCard, DonutChart, HBarList } from './charts';
 import { friendlyError } from '../lib/errors';
 import { formatMoney } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
@@ -88,6 +89,15 @@ export function SummarySection() {
 
   const notes = summary ? summaryNotes(summary, pending) : [];
   const compare = summary ? canCompare(summary) : false;
+  // các khoản cấu thành tổng chi phí (cho vòng cơ cấu): cộng lại đúng bằng tổng chi phí đã ghi
+  const costParts = summary ? [
+    { label: 'Thực chi không phải vật tư', value: summary.cash_paid_other },
+    { label: 'Vật tư đã dùng (từ kho)', value: summary.material_used_cost },
+    { label: 'Vật tư đã dùng (ghi tay)', value: summary.material_used_manual },
+    { label: 'Phân bổ / ước tính', value: summary.allocated_or_estimated },
+    { label: 'Nhân công (kỳ đã khóa)', value: summary.labor_cost ?? 0 },
+    { label: 'Nhân công (dự tính)', value: summary.labor_estimated ?? 0 },
+  ].filter((p) => p.value > 0) : [];
 
   return (
     <>
@@ -140,6 +150,13 @@ export function SummarySection() {
             </p>
           </div>
 
+          {summary.total_cost > 0 && (
+            <ChartCard title="Cơ cấu chi phí đã ghi" subtitle="Tổng = các khoản ở trên cộng lại" footer="Tiền mua vật tư không cộng vào tổng vì đã tính khi dùng."
+              table={{ columns: ['Khoản', 'Số tiền'], rows: costParts.map((p) => [p.label, formatMoney(p.value)]) }}>
+              <DonutChart items={costParts} format={formatMoney} centerLabel="Tổng chi phí" ariaLabel="Cơ cấu chi phí của vụ" />
+            </ChartCard>
+          )}
+
           <div className="card">
             <h2>Sản lượng và doanh thu</h2>
             <Row k="Tổng thu hoạch" v={`${vnNumber(summary.harvested_gross_qty)} kg`} />
@@ -163,6 +180,10 @@ export function SummarySection() {
               <span>Doanh thu trừ chi phí đã ghi</span>
               <strong>{compare ? formatMoney(summary.revenue_recorded - summary.total_cost) : 'Chưa đủ dữ liệu'}</strong>
             </div>
+            {(summary.revenue_recorded > 0 || summary.total_cost > 0) && (
+              <HBarList ariaLabel="So sánh doanh thu và chi phí đã ghi" format={formatMoney}
+                items={[{ label: 'Doanh thu đã ghi', value: summary.revenue_recorded, tone: 'ok' }, { label: 'Chi phí đã ghi', value: summary.total_cost, tone: 'bad' }]} />
+            )}
             <p className="muted">Đây là chênh lệch theo số đã ghi, chưa phải lợi nhuận chính thức.</p>
           </div>
         </>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
+import { ChartCard, ProportionBar } from './charts';
 import { KpiTile, shortMoney } from './HomeStats';
 import { PayForm, pillClass } from './PayablesSection';
 import { fmtDate } from '../lib/dates';
@@ -49,6 +50,11 @@ export function ReceivablesSection() {
   const canEdit = canPerm(active.perms, 'sales', 'edit');
   // dùng lại bộ tổng hợp của công nợ phải trả (cùng dạng: còn lại, trạng thái)
   const sum = summarizePayables((rows ?? []).map((r) => ({ ...r, bill_id: r.sale_id, paid: r.collected })) as never);
+  const aging = [
+    { label: 'Quá hạn', value: sum.overdueAmount, tone: 'bad' },
+    { label: 'Sắp đến hạn (7 ngày)', value: sum.soonAmount, tone: 'warn' },
+    { label: 'Còn hạn hoặc không có hạn', value: Math.max(0, sum.owed - sum.overdueAmount - sum.soonAmount), tone: 'ok' },
+  ];
 
   async function act(fn: () => Promise<unknown>, done: string): Promise<boolean> {
     setBusy(true);
@@ -69,6 +75,13 @@ export function ReceivablesSection() {
         <KpiTile label="Sắp đến hạn (7 ngày)" value={String(sum.soonCount)} tone={sum.soonCount > 0 ? 'warn' : 'ok'} note={sum.soonCount > 0 ? `${shortMoney(sum.soonAmount)} đồng` : 'không có'} />
       </div>
 
+
+      {(rows ?? []).some((r) => r.remaining > 0) && (
+        <ChartCard title="Tuổi nợ" subtitle="Số tiền còn lại theo tình trạng hạn" footer="Lần bán chưa nhập hạn được tính là còn hạn."
+          table={{ columns: ['Tình trạng', 'Số tiền'], rows: aging.map((a) => [a.label, formatMoney(a.value)]) }}>
+          <ProportionBar segments={aging} format={formatMoney} ariaLabel="Tuổi nợ" />
+        </ChartCard>
+      )}
       {rows === null && !error && <p className="muted">{online ? 'Đang tải…' : 'Chưa tải được vì đang offline.'}</p>}
       {rows !== null && groups.length === 0 && (
         <div className="card">

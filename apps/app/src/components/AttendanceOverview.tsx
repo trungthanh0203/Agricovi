@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
+import { ChartCard, HBarList } from './charts';
 import { KpiTile } from './HomeStats';
 import { addDays, fmtDate } from '../lib/dates';
 import { todayLocal } from '../lib/hooks';
@@ -40,6 +41,16 @@ export function AttendanceOverview({ orgId, workers, att, isAdmin }: { orgId: st
     }
     return m;
   }, [att]);
+  // giờ công đã xác nhận trong tháng theo từng người (biểu đồ xếp hạng)
+  const byPerson = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of att) {
+      if (a.status !== 'confirmed' || !a.work_date.startsWith(month)) continue;
+      m.set(a.worker_id, (m.get(a.worker_id) ?? 0) + (a.approved_minutes ?? 0));
+    }
+    return [...m.entries()].map(([id, mins]) => ({ label: workers.find((w) => w.id === id)?.full_name ?? '—', value: Math.round(mins / 6) / 10 })).filter((x) => x.value > 0)
+      .sort((a, b) => b.value - a.value).slice(0, 8);
+  }, [att, month, workers]);
   const people = workers.filter((w) => w.status === 'active' && att.some((a) => a.worker_id === w.id));
   const nameOf = (id: string) => workers.find((w) => w.id === id)?.full_name ?? '—';
 
@@ -52,6 +63,13 @@ export function AttendanceOverview({ orgId, workers, att, isAdmin }: { orgId: st
         <KpiTile label="Đã xác nhận (tháng)" value={`${s.percent}%`} tone="info" note={`${s.monthEnded} ca đã kết thúc`} />
       </div>
       <div className="progress" role="progressbar" aria-valuenow={s.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Tỉ lệ công đã xác nhận"><i style={{ width: `${s.percent}%` }} /></div>
+
+      {byPerson.length > 0 && (
+        <ChartCard title="Giờ công tháng này theo người" subtitle="Chỉ tính công đã xác nhận" footer="Xem theo phòng/tổ: Báo cáo → Theo nhu cầu → Giờ công và tiền công → Theo phòng / tổ."
+          table={{ columns: ['Người', 'Giờ công'], rows: byPerson.map((p) => [p.label, `${p.value.toLocaleString('vi-VN')} giờ`]) }}>
+          <HBarList items={byPerson} tone="info" format={(n) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} giờ`} ariaLabel="Giờ công theo người" />
+        </ChartCard>
+      )}
 
       {(s.stale.length > 0 || s.pending.length > 0 || orphans.length > 0) && (
         <div className="card alert-warn">

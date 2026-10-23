@@ -38,7 +38,7 @@ export const REPORT_TYPES: ReportTypeInfo[] = [
     groups: [{ id: 'material', label: 'Theo vật tư' }, { id: 'month', label: 'Theo tháng' }, { id: 'location', label: 'Theo kho' }],
     allowed: (p) => canPerm(p, 'inventory') },
   { id: 'labor', label: 'Giờ công và tiền công', hint: 'Giờ công đã xác nhận và tiền công đã tính',
-    groups: [{ id: 'worker', label: 'Theo người' }, { id: 'month', label: 'Theo tháng' }, { id: 'cycle', label: 'Theo vụ' }],
+    groups: [{ id: 'worker', label: 'Theo người' }, { id: 'team', label: 'Theo phòng / tổ' }, { id: 'month', label: 'Theo tháng' }, { id: 'cycle', label: 'Theo vụ' }],
     allowed: (_p, r) => hasRole(r, 'manager') },
   { id: 'cycles', label: 'Tổng hợp theo vụ', hint: 'Mỗi vụ một dòng: chi phí, thu hoạch, doanh thu, giá thành',
     groups: [], allowed: (p) => canPerm(p, 'summary') },

@@ -1,7 +1,7 @@
 # Kế hoạch G2-7 — Giao việc, thông báo đẩy, biểu đồ (và báo cáo định kỳ) (bản đề xuất, chờ chủ sản phẩm duyệt)
 
 Căn cứ: D40 (giao việc, "việc được giao" ở Tài khoản), D58-7 (thông báo đẩy ưu tiên: công chờ xác nhận, nhắc việc theo ngày, công nợ đến hạn), D35 (nhắc việc theo ghi chú ngày), D41/D48 (số liệu Trang chủ, báo cáo theo nhu cầu), D76–D78 (công nợ, đơn website), `PLAN_GIAI_DOAN_2_APP.md`.
-Trạng thái: **chưa làm code**.
+Trạng thái: **phần BIỂU ĐỒ (C1, C2, C3) đã làm xong về code ngày 23/10/2026** (chủ sản phẩm chọn làm trước; D79, migration 0061). Giao việc (T1–T2), thông báo (N1–N4) **chưa làm**, chờ duyệt mục 8.
 
 Ba việc độc lập nhau về kỹ thuật nhưng **liên kết về giá trị**: giao việc và công nợ/đơn tạo ra "việc cần nhắc", thông báo đẩy là cách nhắc, biểu đồ là cách nhìn nhanh số liệu. Vì vậy chia thành các lát nhỏ có thể làm, thử và dùng độc lập (mục 6).
 

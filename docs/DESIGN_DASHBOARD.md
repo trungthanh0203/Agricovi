@@ -42,6 +42,8 @@ Mọi màn hình số liệu mới và mọi lần nâng cấp màn cũ **phải
 11. **Vẽ bằng SVG nhỏ tự viết** trong `apps/app/src/components/charts/` (không thêm thư viện biểu đồ nặng; chạy được offline, theo giao diện sáng/tối). Bộ khởi đầu: `KpiTile`, `StatusChip`, `ProgressBar`, `Donut`, `Bars`, `Sparkline`, `TopList`.
 12. Kiểm tra trên khung điện thoại 375px; không cuộn ngang trang (bảng rộng thì cuộn ngang bên trong bảng).
 
+> **Đã làm (23/10/2026, D79):** bộ biểu đồ SVG ở `apps/app/src/components/charts/` (`XYChart` cột/đường, `DonutChart`, `HBarList`, `ProportionBar`, `ChartCard`) và phần tính thuần `lib/chartMath.ts`, `lib/reportChart.ts` (có kiểm thử `supabase/tests/charts_logic.test.mjs`). Đã áp dụng cho Báo cáo theo nhu cầu, Trang chủ (xu hướng 6 tháng), Tổng kết vụ, Công nợ, Chấm công. Còn lại trong bảng dưới: Sản xuất (thẻ vụ), Thu hoạch/Chi phí/Doanh thu theo màn riêng, Tồn kho, HTX, Admin.
+
 ## 4. Kế hoạch nâng cấp (làm dần, theo thứ tự đề xuất)
 
 | Màn | Nâng cấp theo tài liệu này |
