@@ -21,7 +21,7 @@ Nguyên tắc sắp xếp: **việc nền và rủi ro trước, việc phụ th
 | 0.1 | `db push` các migration chưa đẩy (0016 → 0053, theo đúng thứ tự) và deploy lại Edge Function `staff-accounts`, `web-accounts` | Chủ sản phẩm | `STATUS_*` đang ghi nhiều mục "chưa db push"; nên đẩy từng nhóm rồi thử, không đẩy một lần |
 | 0.2 | Thử tay trên điện thoại thật theo `HUONG_DAN_THU.md` + giao diện v2 (menu ☰, Vào/Ra ca, Ghi việc, offline) | Chủ sản phẩm | Ghi lỗi gửi lại để sửa |
 | 0.3 | Sửa lỗi phát hiện ở 0.2 | Claude | Gộp theo đợt |
-| 0.4 | Tên miền thật, `login_email_domain`, môi trường chính thức, sao lưu Supabase | Chủ sản phẩm | Mục 7.7 kế hoạch cũ; chặn pilot |
+| 0.4 | ~~Tên miền thật~~ **Hoãn tới sau khi xong Giai đoạn 2** (quyết định 23/10/2026): mua một tên miền dùng chung cho website và app (xem mục 7); trong lúc làm vẫn dùng tên miền tạm. Sao lưu Supabase vẫn nên có khi bắt đầu dùng dữ liệu thật | Chủ sản phẩm | `login_email_domain` đổi cùng lúc |
 | 0.5 | Cập nhật `STATUS_APP.md` cho đúng thực tế sau 0.1 | Claude | Chỉ khi xong mốc |
 
 ## 3. Lát 1 — Hoàn thiện lõi đang dùng hằng ngày (nhỏ, rủi ro thấp, giá trị cao)
@@ -31,10 +31,10 @@ Nguyên tắc sắp xếp: **việc nền và rủi ro trước, việc phụ th
 | 1.1 | **Giao việc**: giao đầu việc cho người/tổ, hiện ở khối "Tôi cần làm" trên Trang chủ và ở Tài khoản (D40) | M | Migration mới `..._app_*`, quyền theo mục; nền cho thông báo đẩy ở lát 6 |
 | 1.2 | **Hiệu năng giai đoạn 2**: lọc truy vấn theo cơ sở/kỳ ngay lúc đọc; tải gia tăng thay vì tải lại toàn bộ danh mục (cột `updated_at`); số liệu Trang chủ tính ở máy chủ theo kỳ đầy đủ (D41) | M | Cần migration; làm khi dữ liệu thật lớn lên, hoặc cùng đợt 1.1 |
 | 1.3 | **Làm mới thủ công** (kéo xuống để tải lại) thay cho dòng "Tải lại" đã bỏ khỏi Trang chủ | S | Chỉ giao diện |
-| 1.4 | **Ra ca ép ở CSDL** (hiện chỉ kiểm ở giao diện) | S | Tùy chọn, cần quyết định; nguy cơ chặn nhầm ca ghi lúc mất mạng |
+| 1.4 | ~~Ra ca ép ở CSDL~~ | — | **Chưa cần** (quyết định 23/10/2026); hiện chỉ kiểm ở giao diện |
 | 1.5 | **Hàng rào vị trí chấm công**: ngưỡng độ chính xác GPS, thử trong nhà màng/vườn (A36, E3-S19) | S–M | Cần thử thực địa trước |
-| 1.6 | **Bộ mẫu quy trình dưa lưới** (D3) | S | Cần số liệu khảo sát từ chủ sản phẩm; không có thì chưa làm được |
-| 1.7 | Thẻ **thời tiết** ở Trang chủ (ảnh tham khảo) | S–M | Tùy chọn; cần chọn nguồn dữ liệu thời tiết và vị trí trang trại |
+| 1.6 | ~~Bộ mẫu quy trình dưa lưới~~ | — | **Bỏ khỏi lộ trình**: quy trình mẫu đã làm động cho mọi loại hình (D31, D34) |
+| 1.7 | ~~Thẻ thời tiết~~ | — | **Chưa cần** (quyết định 23/10/2026) |
 
 ## 4. Các lát chính (theo thứ tự đã chốt ở D58, có bổ sung phụ thuộc)
 
@@ -51,21 +51,22 @@ Nguyên tắc sắp xếp: **việc nền và rủi ro trước, việc phụ th
 
 ## 5. Chạy song song (nhóm C — chuẩn bị pilot)
 
-Không phụ thuộc lát nào, nên bắt đầu sớm vì có độ trễ ngoài tầm Claude: hồ sơ pháp lý dữ liệu cá nhân (vị trí, tiền công, khách hàng), điều khoản và chính sách riêng tư; kiểm thử khả dụng; chọn 3–5 cơ sở và 1–2 HTX thử có hỗ trợ tại chỗ; đo chỉ số sử dụng. Mốc hợp lý để vào pilot: **sau Lát 0 + Lát 1**, các lát G2 còn lại làm trong lúc pilot chạy.
+Không phụ thuộc lát nào, nên bắt đầu sớm vì có độ trễ ngoài tầm Claude: hồ sơ pháp lý dữ liệu cá nhân (vị trí, tiền công, khách hàng), điều khoản và chính sách riêng tư; kiểm thử khả dụng; chọn 3–5 cơ sở và 1–2 HTX thử có hỗ trợ tại chỗ; đo chỉ số sử dụng. Thời điểm vào pilot: **chưa chốt, để sau** (23/10/2026: sau Lát 1 là chưa đủ). Tạm thời làm tiếp các lát G2 theo thứ tự.
 
 ## 6. Thứ tự đề xuất, tóm gọn
 
-`Lát 0 (chốt nền)` → `Lát 1 (lõi hằng ngày)` → **vào pilot** → `G2-1 ảnh` → `G2-2 nhà cung ứng` → `G2-3 chụp hóa đơn` → `G2-4 khách hàng` → `G2-5 khách tiềm năng` → `G2-6 giọng nói` → `G2-7 thông báo đẩy` → `G2-8 hoàn thiện`.
+`Lát 0 (chốt nền)` → `Lát 1 (lõi hằng ngày)` → `G2-1 ảnh` → `G2-2 nhà cung ứng` → `G2-3 chụp hóa đơn` → `G2-4 khách hàng` → `G2-5 khách tiềm năng` → `G2-6 giọng nói` → `G2-7 thông báo đẩy` → `G2-8 hoàn thiện`.
 
 Lý do: nhà cung ứng trước chụp hóa đơn vì ảnh hóa đơn cần danh bạ để đối chiếu; hạ tầng ảnh trước vì chứng từ là ảnh; Đối tác dựng một lần ở G2-2 rồi G2-4 dùng lại; thông báo đẩy sau vì cần có việc để nhắc (giao việc, công nợ).
 
-## 7. Điểm cần chủ sản phẩm quyết (đề xuất trong ngoặc)
+## 7. Đã quyết (23/10/2026)
 
-1. Có vào pilot sau Lát 1, hay chờ hết G2-4? (Vào sau Lát 1 để có phản hồi sớm.)
-2. Ra ca có ép ở CSDL không? (Chưa; thêm khi pilot cho thấy bị lách.)
-3. Thẻ thời tiết có làm không, dùng nguồn nào? (Hoãn tới sau pilot.)
-4. Mục quyền Đối tác: tách riêng hay gộp vào Kho và Chi phí? (Tách riêng `partners`, mặc định chủ và Kho & chi phí.)
-5. Số liệu khảo sát để dựng bộ mẫu dưa lưới: khi nào có? (Không có thì bỏ 1.6 khỏi lộ trình.)
+1. Pilot: để sau, chưa chốt thời điểm.
+2. Ép Ra ca ở CSDL: chưa cần.
+3. Thẻ thời tiết: chưa cần.
+4. Mục quyền Đối tác: chưa cần quyết ngay; quyết khi bắt đầu G2-2.
+5. Bộ mẫu dưa lưới: bỏ.
+6. Tên miền: mua sau khi xong Giai đoạn 2; **một tên miền dùng chung cho cả website và app** (tên miền gốc cho website, tên miền phụ `app.` cho ứng dụng, `/quan-tri/` và `/admin/` giữ như hiện có). Khi đổi: cập nhật `login_email_domain`, địa chỉ cho phép đăng nhập trong Supabase Auth, `VITE_PUBLIC_SITE_URL`, gắn tên miền vào hai dự án Cloudflare.
 
 ## 8. Quy ước làm việc cho giai đoạn này
 
