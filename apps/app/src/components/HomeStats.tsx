@@ -10,6 +10,7 @@ import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { useAuth } from '../lib/auth';
 import { useTable } from '../lib/tables';
+import { fetchPayables, summarizePayables } from '../lib/partners';
 
 type Tone = 'ok' | 'warn' | 'bad' | 'info' | 'neutral';
 
@@ -61,6 +62,7 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
   const [openShiftAt, setOpenShiftAt] = useState<string | null>(null);
   const [licSoon, setLicSoon] = useState(0);
   const [licExpired, setLicExpired] = useState(0);
+  const [debt, setDebt] = useState<ReturnType<typeof summarizePayables> | null>(null);
 
   const today = todayLocal();
 
@@ -82,6 +84,13 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
         const adj = await listAdjustments(orgId);
         if (alive) setPendingAdj(adj.filter((x) => x.status === 'pending').length);
       } catch { /* bỏ qua */ }
+      // hóa đơn mua quá hạn / sắp đến hạn (chỉ người có quyền xem Chi phí; lỗi thì bỏ qua)
+      if (canPerm(active?.perms, 'expenses')) {
+        try {
+          const p = summarizePayables(await fetchPayables(orgId, true));
+          if (alive) setDebt(p);
+        } catch { /* bỏ qua */ }
+      }
       try {
         const lic = await listLicenses(orgId);
         if (alive) {
@@ -130,13 +139,15 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
 
   return (
     <>
-      {(canConfirmAtt || openShiftAt || licSoon + licExpired > 0) && (
+      {(canConfirmAtt || openShiftAt || licSoon + licExpired > 0 || (debt !== null && debt.overdueCount + debt.soonCount > 0)) && (
         <>
           <h2 className="sect">Tôi cần làm</h2>
           <div className="kpis">
             {openShiftAt && <KpiTile label="Bạn đang trong ca" value={new Date(openShiftAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} tone="info" note="bấm để Ra ca" onClick={() => onGo('production', 'attendance')} />}
             {canConfirmAtt && <KpiTile label="Chờ xác nhận chấm công" value={String(pendingAtt)} tone={pendingAtt > 0 ? 'warn' : 'ok'} note={pendingAtt > 0 ? 'bấm để xem và xác nhận' : 'đã xong'} onClick={() => onGo('production', 'attendance')} />}
             {isAdminRole && pendingAdj > 0 && <KpiTile label="Yêu cầu sửa công" value={String(pendingAdj)} tone="warn" note="chờ duyệt" onClick={() => onGo('production', 'attendance')} />}
+            {debt !== null && debt.overdueCount > 0 && <KpiTile label="Hóa đơn mua quá hạn" value={String(debt.overdueCount)} tone="bad" note={`${shortMoney(debt.overdueAmount)} đồng`} onClick={() => onGo('reports', 'payables')} />}
+            {debt !== null && debt.soonCount > 0 && <KpiTile label="Hóa đơn mua sắp đến hạn" value={String(debt.soonCount)} tone="warn" note={`${shortMoney(debt.soonAmount)} đồng · trong 7 ngày`} onClick={() => onGo('reports', 'payables')} />}
             {licExpired > 0 && <KpiTile label="Giấy phép đã hết hạn" value={String(licExpired)} tone="bad" note="xem ở Tài khoản" onClick={() => onGo('profile')} />}
             {licSoon > 0 && <KpiTile label="Giấy phép sắp hết hạn" value={String(licSoon)} tone="warn" note="trong 30 ngày" onClick={() => onGo('profile')} />}
           </div>

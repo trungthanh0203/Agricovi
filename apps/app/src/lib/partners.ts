@@ -148,3 +148,107 @@ export async function recordPurchase(i: PurchaseInput): Promise<void> {
   if (error) throw new Error(error.message);
   await syncInventoryDown().catch(() => undefined); // tồn kho mới
 }
+
+// ---------------------------------------------------------------------------
+// Công nợ phải trả (P3)
+// ---------------------------------------------------------------------------
+
+export type PayableStatus = 'overdue' | 'due_soon' | 'ok' | 'paid';
+
+export interface PayableBill {
+  bill_id: string;
+  partner_id: string;
+  partner_name: string;
+  invoice_no: string | null;
+  bill_date: string;
+  due_date: string | null;
+  total_amount: number;
+  paid: number;
+  remaining: number;
+  status: PayableStatus;
+  version: number;
+}
+
+export const PAYABLE_STATUS_LABEL: Record<PayableStatus, string> = {
+  overdue: 'Quá hạn', due_soon: 'Sắp đến hạn', ok: 'Còn hạn', paid: 'Đã trả đủ',
+};
+
+/** Công nợ của cơ sở: mỗi hóa đơn chưa hủy kèm đã trả, còn nợ, tình trạng hạn. `onlyOpen` = chỉ hóa đơn còn nợ. */
+export async function fetchPayables(orgId: string, onlyOpen = true): Promise<PayableBill[]> {
+  const { data, error } = await client().rpc('get_payables', { p_org: orgId, p_only_open: onlyOpen });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as PayableBill[]).map((b) => ({ ...b, total_amount: Number(b.total_amount), paid: Number(b.paid), remaining: Number(b.remaining) }));
+}
+
+export interface BillPayment {
+  id: string;
+  bill_id: string;
+  paid_on: string;
+  amount: number;
+  method: 'cash' | 'transfer';
+  note: string | null;
+  voided_at: string | null;
+  void_reason: string | null;
+}
+
+export async function listBillPayments(billId: string): Promise<BillPayment[]> {
+  const { data, error } = await client().from('bill_payments').select('id, bill_id, paid_on, amount, method, note, voided_at, void_reason')
+    .eq('bill_id', billId).order('paid_on').order('created_at');
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as BillPayment[]).map((p) => ({ ...p, amount: Number(p.amount) }));
+}
+
+export interface PayInput { amount: number; paidOn: string; method: 'cash' | 'transfer'; note: string; /** mã lần ghi tạo sẵn: bấm lặp không ghi hai lần */ opId?: string }
+
+export function validatePay(i: PayInput, maxAmount: number, today: string): string | null {
+  if (!Number.isInteger(i.amount) || i.amount <= 0) return 'Số tiền trả phải là số tiền (đồng) lớn hơn 0, không có phần lẻ.';
+  if (i.amount > maxAmount) return `Số tiền trả vượt số còn nợ (còn nợ ${maxAmount.toLocaleString('vi-VN')} đ).`;
+  if (i.paidOn > today) return 'Ngày trả không được sau ngày hôm nay.';
+  return null;
+}
+
+/** Trả tiền một hóa đơn (mã lần trả tạo sẵn: bấm lặp không ghi hai lần) */
+export async function payBill(billId: string, i: PayInput, id: string = i.opId ?? crypto.randomUUID()): Promise<void> {
+  requireOnline('ghi lần trả tiền');
+  const { error } = await client().rpc('pay_bill', { p_id: id, p_bill: billId, p_amount: i.amount, p_paid_on: i.paidOn, p_method: i.method, p_note: i.note.trim() || null });
+  if (error) throw new Error(error.message);
+}
+
+/** Trả cho nhà cung ứng: máy chủ tự trừ vào các hóa đơn cũ nhất trước */
+export async function payPartner(partnerId: string, i: PayInput, opId: string = i.opId ?? crypto.randomUUID()): Promise<void> {
+  requireOnline('ghi lần trả tiền');
+  const { error } = await client().rpc('pay_partner', { p_op_id: opId, p_partner: partnerId, p_amount: i.amount, p_paid_on: i.paidOn, p_method: i.method, p_note: i.note.trim() || null });
+  if (error) throw new Error(error.message);
+}
+
+export async function voidPayment(paymentId: string, reason: string): Promise<void> {
+  requireOnline('hủy lần trả tiền');
+  const { error } = await client().rpc('void_bill_payment', { p_id: paymentId, p_reason: reason });
+  if (error) throw new Error(error.message);
+}
+
+/** Sửa số hóa đơn, hạn thanh toán, ghi chú (không sửa được tổng tiền, ngày mua, dòng hàng) */
+export async function editBill(b: { bill_id: string; version: number }, changes: { invoice_no?: string; due_date?: string | null; note?: string }): Promise<void> {
+  requireOnline('sửa hóa đơn');
+  const patch: Record<string, unknown> = { ...changes };
+  if ('due_date' in changes) patch.due_date = changes.due_date || null; // chuỗi rỗng = bỏ hạn
+  await updateVersioned('purchase_bills', b.bill_id, b.version, patch);
+}
+
+/** Hủy hóa đơn (kèm lý do). Không đảo kho: hàng đã nhập vẫn nằm trong kho, muốn bỏ thì điều chỉnh tồn. */
+export async function voidBill(b: { bill_id: string; version: number }, reason: string): Promise<void> {
+  requireOnline('hủy hóa đơn');
+  await updateVersioned('purchase_bills', b.bill_id, b.version, { voided_at: new Date().toISOString(), void_reason: reason });
+}
+
+/** Tổng hợp nợ để hiện thẻ nhắc: quá hạn và sắp đến hạn */
+export function summarizePayables(rows: PayableBill[]): { owed: number; overdueCount: number; overdueAmount: number; soonCount: number; soonAmount: number } {
+  let owed = 0, overdueCount = 0, overdueAmount = 0, soonCount = 0, soonAmount = 0;
+  for (const b of rows) {
+    if (b.remaining <= 0) continue;
+    owed += b.remaining;
+    if (b.status === 'overdue') { overdueCount++; overdueAmount += b.remaining; }
+    else if (b.status === 'due_soon') { soonCount++; soonAmount += b.remaining; }
+  }
+  return { owed, overdueCount, overdueAmount, soonCount, soonAmount };
+}
