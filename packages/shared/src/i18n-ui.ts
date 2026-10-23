@@ -612,4 +612,11 @@ export const EN_UI: Record<string, string> = {
   'Chưa có giao dịch nào được ghi nhận. Hãy là người đăng tin đầu tiên.': 'No deals have been recorded yet. Be the first to post a listing.',
   'Các tin đã đóng sau khi người đăng chấp nhận một báo giá hoặc lời quan tâm. Để bảo vệ người tham gia, trang này không hiện tên, giá hay nội dung trao đổi.': 'Listings closed after the poster accepted a quote or expression of interest. To protect participants, this page does not show names, prices or conversations.',
   'Những giao dịch đã thành công trên AgriConnect: loại hàng, số lượng, khu vực.': 'Successful deals on AgriConnect: product type, quantity and region.',
+  'Tìm nguồn nông sản uy tín, xem rõ nguồn gốc': 'Find trusted produce sources with clear origin',
+  'Tìm nhà cung cấp đã kiểm duyệt': 'Find reviewed suppliers',
+  'Truy xuất nguồn gốc bằng mã QR': 'Trace origin with a QR code',
+  'Quản lý sản xuất và đưa sản phẩm đến nhiều người mua': 'Manage production and reach more buyers',
+  'Nhật ký, kho, chi phí, chấm công': 'Logs, stock, costs, time tracking',
+  'Hồ sơ website và mã QR từng vụ': 'Website profile and a QR code for every season',
+  'Bắt đầu miễn phí': 'Start for free',
 };

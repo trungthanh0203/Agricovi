@@ -76,12 +76,16 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
           <summary>Tìm hiểu về {brand}</summary>
           <ul>{about.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
         </details>
-        <div class="ticker" aria-label="Tin nổi bật">
-          <span class="tk-label" aria-hidden="true">📢</span>
-          <div class="tk-view"><div class="tk-track">{[...tick, ...tick].map((t, i) => <a href={t.href} aria-hidden={i >= tick.length ? 'true' : undefined} tabindex={i >= tick.length ? -1 : undefined}>{t.text}</a>)}</div></div>
-        </div>
-        <div class="langsw" role="group" aria-label="Language / Ngôn ngữ"><a href={withLang('vi')} data-lang="vi" aria-current={lang === 'vi' ? 'true' : undefined} lang="vi">VI</a><a href={withLang('en')} data-lang="en" aria-current={lang === 'en' ? 'true' : undefined} lang="en">EN</a></div>
+        <nav class="topnav" aria-label="Chuyên mục">
+          {nav.map((it) => (
+            <div class={it.trade ? 'ni trade' : 'ni'}>
+              <a href={it.href}>{it.label}</a>
+              {it.children && <ul class="sub">{it.children.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>}
+            </div>
+          ))}
+        </nav>
         <div class="acct" id="acct"><a href="/dang-nhap/">Đăng nhập</a><span aria-hidden="true">|</span><a href="/dang-ky/">Đăng ký</a></div>
+        <div class="langsw" role="group" aria-label="Language / Ngôn ngữ"><a href={withLang('vi')} data-lang="vi" aria-current={lang === 'vi' ? 'true' : undefined} lang="vi">VI</a><a href={withLang('en')} data-lang="en" aria-current={lang === 'en' ? 'true' : undefined} lang="en">EN</a></div>
       </div>
       <div class="bar2">
         <details class="cats">
@@ -94,14 +98,10 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
         <form class="hsearch" action="/tim-kiem/" method="get" role="search">
           <input name="q" placeholder="Tìm sản phẩm, vật tư, nhà cung cấp" aria-label="Tìm kiếm" />
         </form>
-        <nav class="topnav" aria-label="Chuyên mục">
-          {nav.map((it) => (
-            <div class={it.trade ? 'ni trade' : 'ni'}>
-              <a href={it.href}>{it.label}</a>
-              {it.children && <ul class="sub">{it.children.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>}
-            </div>
-          ))}
-        </nav>
+        <div class="ticker" aria-label="Tin nổi bật">
+          <span class="tk-label" aria-hidden="true">📢</span>
+          <div class="tk-view"><div class="tk-track">{[...tick, ...tick].map((t, i) => <a href={t.href} aria-hidden={i >= tick.length ? 'true' : undefined} tabindex={i >= tick.length ? -1 : undefined}>{t.text}</a>)}</div></div>
+        </div>
         <a class="cart" href="/gio-hang/" id="cartLink">🛒 Giỏ hàng</a>
       </div>
     </header>
@@ -558,4 +558,27 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
   .site-foot .note { color: #1f3a2a; background: rgba(255,255,255,.6); border-radius: 10px; padding: 6px 12px; margin-top: 10px; display: inline-block; }
   @media (max-width: 1100px) { .site-foot .fgrid { grid-template-columns: 1fr 1fr 1fr; } } @media (max-width: 960px) { .site-foot .fgrid { grid-template-columns: 1fr 1fr; } .ticker { order: 5; flex-basis: 100%; margin: 0 0 4px 14px; } }
   @media (max-width: 520px) { .site-foot .fgrid { grid-template-columns: 1fr; } }
+</style>
+
+<style is:global>
+  /* ===== Đầu trang v5 (D74): menu tin trên thanh xanh, chữ chạy xuống thanh dưới, ngôn ngữ sau cùng ===== */
+  .bar1 .topnav { flex: 1; margin: 0 6px; gap: 6px; }
+  .bar1 .ni:nth-child(n) > a { background: rgba(255,255,255,.14); color: #fff; padding: 7px 14px; font-size: .95rem; }
+  .bar1 .ni:nth-child(n) > a::after { background: var(--yl); left: 14px; right: 14px; bottom: 2px; }
+  .bar1 .ni:nth-child(n) > a:hover, .bar1 .ni:nth-child(n):focus-within > a { background: #fff; color: var(--g-d); }
+  .bar1 .ni.trade > a { background: linear-gradient(135deg, #efe7ff, #d8c8fb); color: #3b1d7a; }
+  .bar1 .ni.trade > a:hover, .bar1 .ni.trade:focus-within > a { background: linear-gradient(135deg, #e3d6ff, #c9b3f7); color: #3b1d7a; }
+  .bar1 .sub { top: calc(100% + 4px); }
+  .langsw { margin-left: 0; }
+  .acct { margin-left: 0; }
+  .bar2 .ticker { margin: 0 4px; }
+  .bar2 .tk-track a { color: var(--ink) !important; } .bar2 .tk-track a::before { color: var(--g); }
+  .tk-label { background: #efe7ff; color: #3b1d7a; box-shadow: none; }
+  .cart { background: linear-gradient(135deg, #efe7ff, #d8c8fb); color: #3b1d7a; box-shadow: 0 2px 8px rgba(124,77,214,.25); margin-left: 0; }
+  .cart:hover { background: linear-gradient(135deg, #e3d6ff, #c9b3f7); }
+  @media (max-width: 960px) {
+    .bar1 .topnav { order: 4; width: 100%; flex-basis: 100%; margin: 0; overflow-x: auto; padding-bottom: 6px; }
+    .bar2 .ticker { order: 5; flex-basis: 100%; margin: 0; }
+    .acct { margin-left: auto; }
+  }
 </style>

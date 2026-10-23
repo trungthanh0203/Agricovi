@@ -117,12 +117,29 @@ try {
     </Rail>
 
     <div class="sidebans">
-      {side.map((b) => (
+      {sideBanners.length > 0 ? side.map((b) => (
         <a class="sideban" href={safeHref(b.link) || '#'}>
           {b.image && <img src={b.image} alt="" />}
           <span><b>{b.title}</b>{b.subtitle && <small>{b.subtitle}</small>}</span>
         </a>
-      ))}
+      )) : (
+        <>
+          <a class="promo buyer" href="/danh-cho-nguoi-mua">
+            <span class="pico" aria-hidden="true">🛒</span>
+            <b class="pt">Dành cho người mua</b>
+            <small class="ps">Tìm nguồn nông sản uy tín, xem rõ nguồn gốc</small>
+            <ul><li>Tìm nhà cung cấp đã kiểm duyệt</li><li>Truy xuất nguồn gốc bằng mã QR</li></ul>
+            <span class="pgo">Tìm nhà cung cấp<span aria-hidden="true"> →</span></span>
+          </a>
+          <a class="promo seller" href="/danh-cho-nguoi-ban">
+            <span class="pico" aria-hidden="true">🌾</span>
+            <b class="pt">Dành cho người bán</b>
+            <small class="ps">Quản lý sản xuất và đưa sản phẩm đến nhiều người mua</small>
+            <ul><li>Nhật ký, kho, chi phí, chấm công</li><li>Hồ sơ website và mã QR từng vụ</li></ul>
+            <span class="pgo">Bắt đầu miễn phí<span aria-hidden="true"> →</span></span>
+          </a>
+        </>
+      )}
     </div>
   </section>
 
@@ -221,6 +238,14 @@ try {
   .ctas { display: flex; gap: 10px; flex-wrap: wrap; }
   .btn.cta1 { background: var(--yl); color: #2a2200; } .btn.cta2 { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,.85); padding: 10px 16px; }
   .sidebans { display: grid; gap: 14px; grid-template-rows: 1fr 1fr; }
+  .promo { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 4px; border-radius: 16px; padding: 14px 16px; text-decoration: none; color: #fff; box-shadow: var(--shadow); transition: transform .18s, box-shadow .18s; }
+  .promo:hover { transform: translateY(-3px); box-shadow: var(--lift); }
+  .promo.buyer { background: radial-gradient(circle at 100% 0, rgba(255,255,255,.22) 0 70px, transparent 71px), linear-gradient(135deg, #1d6fb8, #2aa6a0); }
+  .promo.seller { background: radial-gradient(circle at 100% 0, rgba(255,255,255,.22) 0 70px, transparent 71px), linear-gradient(135deg, #d9830f, #8fb92b); }
+  .promo .pico { position: absolute; right: 12px; top: 8px; font-size: 2.3rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,.25)); }
+  .promo .pt { font-size: 1.15rem; padding-right: 48px; } .promo .ps { font-size: .84rem; opacity: .95; padding-right: 20px; line-height: 1.35; }
+  .promo ul { list-style: none; margin: 4px 0 0; padding: 0; font-size: .82rem; } .promo li::before { content: "✓ "; font-weight: 700; color: #fff7c2; }
+  .promo .pgo { margin-top: auto; align-self: flex-start; background: #fff; color: #14301f; font-weight: 700; font-size: .85rem; border-radius: 999px; padding: 5px 14px; }
   .sideban { position: relative; display: flex; align-items: flex-end; background: linear-gradient(135deg, #fff, var(--g2)); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; text-decoration: none; color: var(--ink); min-height: 143px; padding: 14px 16px; box-shadow: var(--shadow); transition: transform .18s, box-shadow .18s; }
   .sideban:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(16,40,26,.16); }
   .sideban img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
