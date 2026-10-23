@@ -365,3 +365,32 @@ button.primary:active { transform: translateY(1px); }
 .hero h1 { position: relative; margin: 0 0 8px; font-size: 1.45rem; max-width: calc(100% - 52px); }
 .hero-top { position: relative; }
 .hero small { font-weight: 600; opacity: .95; }
+
+/* ===== Đăng nhập / đăng ký và các màn đầu tiên (D74) ===== */
+.authpage { min-height: 100dvh; background: var(--bg); }
+.auth-hero { position: relative; overflow: hidden; text-align: center; color: #fff; padding: calc(36px + env(safe-area-inset-top)) 20px 64px; background:
+  radial-gradient(circle at 85% 10%, rgba(255,216,74,.5) 0, rgba(255,216,74,0) 32%),
+  radial-gradient(circle at 10% 110%, rgba(255,255,255,.2) 0, rgba(255,255,255,0) 45%),
+  linear-gradient(150deg, var(--green-d) 0%, var(--green) 65%, #38a66a 100%); }
+.auth-hero::before { content: '🌿'; position: absolute; left: 12px; top: 18px; font-size: 3.6rem; opacity: .2; transform: rotate(-20deg); }
+.auth-hero::after { content: '🌾'; position: absolute; right: 10px; bottom: 6px; font-size: 3.6rem; opacity: .18; transform: rotate(14deg); }
+.auth-logo { width: 72px; height: 72px; margin: 0 auto 10px; display: grid; place-items: center; font-size: 2.3rem; border-radius: 22px; background: #fff; box-shadow: 0 8px 22px rgba(0,0,0,.25); }
+.auth-hero h1 { position: relative; margin: 0; font-size: 1.8rem; letter-spacing: -.02em; }
+.auth-hero p { position: relative; margin: 6px 0 0; opacity: .92; font-size: .95rem; }
+.auth { background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); margin: 20px auto; padding: 20px 18px; }
+.auth-card { position: relative; margin: -40px 16px 0; max-width: 460px; }
+@media (min-width: 520px) { .auth-card { margin-left: auto; margin-right: auto; } }
+.auth-card h2 { margin: 0 0 6px; }
+.auth-hint { margin: 8px 0 0; font-size: .85rem; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--tint); border-radius: 12px; }
+.seg button { min-height: 44px; border: 0; border-radius: 9px; background: none; font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; }
+.seg button.on { background: var(--card); color: var(--green); box-shadow: 0 1px 4px rgba(16,40,26,.15); }
+.auth-card form { margin-top: 14px; }
+.auth input:not([type='radio']), .auth select { min-height: 50px; border-radius: 12px; border-width: 1.5px; }
+.auth input:focus, .auth select:focus { outline: 0; border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,128,67,.18); }
+.pwfield { position: relative; display: block; }
+.pwfield input { width: 100%; padding-right: 52px; }
+.pwtoggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border: 0; background: none; font-size: 1.2rem; cursor: pointer; }
+.auth button.primary { min-height: 54px; font-size: 1.05rem; }
+.auth-foot { text-align: center; color: var(--muted); font-size: .8rem; margin: 16px 16px 24px; }
+.links { justify-items: center; }
