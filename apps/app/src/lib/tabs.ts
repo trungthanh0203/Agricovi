@@ -8,7 +8,7 @@ import { canManageProduction, hasRole } from './roles';
  * mỗi tab có các mục con. Hiện/ẩn theo quyền chỉ là giao diện; máy chủ luôn kiểm tra lại.
  * Khai báo và Tổ chức tạm theo vai trò; sẽ chuyển sang quyền theo mục khi làm chức vụ (kế hoạch P3).
  */
-export type TabId = 'home' | 'production' | 'declare' | 'org' | 'reports' | 'profile';
+export type TabId = 'home' | 'production' | 'declare' | 'org' | 'reports' | 'guide' | 'profile';
 
 export const TAB_LABEL: Record<TabId, string> = {
   home: 'Trang chủ',
@@ -16,6 +16,7 @@ export const TAB_LABEL: Record<TabId, string> = {
   declare: 'Khai báo',
   org: 'Tổ chức',
   reports: 'Báo cáo',
+  guide: 'Hướng dẫn sử dụng',
   profile: 'Tài khoản',
 };
 
@@ -87,7 +88,7 @@ export function visibleTabs(org: MyOrg | null): TabId[] {
   const tabs: TabId[] = ['home'];
   if (orgSections(org).length > 0) tabs.push('org');
   if (declareSections(org).length > 0) tabs.push('declare');
-  tabs.push('production');
+  tabs.push('guide', 'production'); // Hướng dẫn nằm trong menu ☰, ngay sau Khai báo
   if (reportSections(org).length > 0) tabs.push('reports');
   tabs.push('profile');
   return tabs;

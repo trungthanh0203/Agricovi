@@ -1,12 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { shareSystem } from '../lib/shareApp';
 import { ADMIN_URL } from '../lib/platformAdmin';
 import { TAB_LABEL, type TabId } from '../lib/tabs';
 import type { MyOrg } from '../lib/orgs';
 
-const TAB_ICON: Partial<Record<TabId, string>> = { declare: '🧰', org: '👥', profile: '👤', reports: '📊' };
+const TAB_ICON: Partial<Record<TabId, string>> = { declare: '🧰', org: '👥', guide: '📖', profile: '👤', reports: '📊' };
 const TAB_HINT: Partial<Record<TabId, string>> = {
   declare: 'Trang trại, sản phẩm, quy trình, vật tư',
   org: 'Nhân sự, vai trò, tổ lao động',
+  guide: 'Giới thiệu, hướng dẫn hộ, HTX, công ty',
   profile: 'Thông tin cá nhân, mã QR, giấy phép',
 };
 
@@ -30,8 +32,9 @@ interface Props {
 
 /** Menu bên trái (mở bằng nút ☰ ở thanh trên): thông tin người dùng, chuyển cơ sở, các chức năng ít dùng hằng ngày, đăng xuất. */
 export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, tabs, current, onGo, isPlatformAdmin, waiting, onSignOut }: Props) {
+  const [shareNote, setShareNote] = useState('');
   useEffect(() => {
-    if (!open) return;
+    if (!open) { setShareNote(''); return; }
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -74,6 +77,12 @@ export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, 
                 <span className="menu-go" aria-hidden>›</span>
               </button>
             ))}
+            <button className="drawer-item" onClick={() => void shareSystem().then((m) => { if (m) setShareNote(m); else onClose(); })}>
+              <span className="drawer-ico" aria-hidden>📤</span>
+              <span className="grow"><strong>Chia sẻ hệ thống</strong><small className="muted">Gửi lời giới thiệu app cho người khác</small></span>
+              <span className="menu-go" aria-hidden>›</span>
+            </button>
+            {shareNote && <p className="muted" role="status" style={{ padding: '0 16px' }}>{shareNote}</p>}
             {isPlatformAdmin && (
               <a className="drawer-item" href={ADMIN_URL}>
                 <span className="drawer-ico" aria-hidden>🔒</span>

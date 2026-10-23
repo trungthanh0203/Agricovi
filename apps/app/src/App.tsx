@@ -28,10 +28,11 @@ const LogActivityScreen = lazy(() => import('./screens/LogActivityScreen').then(
 const OrgTab = lazy(() => import('./screens/OrgTab').then((m) => ({ default: m.OrgTab })));
 const ProductionTab = lazy(() => import('./screens/ProductionTab').then((m) => ({ default: m.ProductionTab })));
 const ProfileTab = lazy(() => import('./screens/ProfileTab').then((m) => ({ default: m.ProfileTab })));
+const GuideTab = lazy(() => import('./screens/GuideTab').then((m) => ({ default: m.GuideTab })));
 const ReportsTab = lazy(() => import('./screens/ReportsTab').then((m) => ({ default: m.ReportsTab })));
 const Loading = () => <p className="center muted">Đang tải…</p>;
 
-const TAB_ICON: Record<TabId, string> = { home: '🏠', production: '🌱', reports: '📊', declare: '🧰', org: '👥', profile: '👤' };
+const TAB_ICON: Record<TabId, string> = { home: '🏠', production: '🌱', reports: '📊', declare: '🧰', org: '👥', guide: '📖', profile: '👤' };
 
 export function App() {
   if (!supabase) return <SetupNotice />;
@@ -147,7 +148,7 @@ function Shell() {
   const attention = counts?.needs_attention ?? 0;
   // Thanh dưới chỉ giữ việc dùng hằng ngày; Khai báo, Tổ chức, Tài khoản nằm ở menu ☰ (D74)
   const mainTabs = tabs.filter((t) => t === 'home' || t === 'production' || t === 'reports');
-  const menuTabs = tabs.filter((t) => t === 'declare' || t === 'org' || t === 'profile');
+  const menuTabs = tabs.filter((t) => t === 'declare' || t === 'org' || t === 'guide' || t === 'profile');
   const fabAt = mainTabs.length >= 3 ? 2 : 1; // nút Ghi việc nằm giữa
   const canLog = cyclesAll.some((c) => c.status === 'active' && c.owner_org_id === active?.id);
 
@@ -191,6 +192,8 @@ function Shell() {
           <DeclareTab section={subs.declare} onSection={setSub('declare')} />
         ) : tab === 'org' ? (
           <OrgTab section={subs.org} onSection={setSub('org')} />
+        ) : tab === 'guide' ? (
+          <GuideTab section={subs.guide} onSection={setSub('guide')} onGo={(t, s) => { closeOverlay(); goTo(t, s); }} />
         ) : tab === 'reports' ? (
           <ReportsTab section={subs.reports} onSection={setSub('reports')} />
         ) : (
