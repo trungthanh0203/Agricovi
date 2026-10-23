@@ -121,3 +121,27 @@ Chủ sản phẩm muốn tìm phương án miễn phí thay cho Claude. Lưu ý
 2. **Bước 2 — Phương án 1** làm thử bằng 20–30 hóa đơn thật, so với Claude Haiku làm mức chuẩn (tốn vài nghìn đồng cho cả đợt thử). Nếu đạt ngưỡng chấp nhận được thì dùng Cloudflare Workers AI làm đường đọc ảnh tự động miễn phí.
 3. **Bước 3 (nếu cần dùng khi mất mạng)** — thử phương án 3 hoặc 2 trên máy thật.
 4. Claude Haiku 5.5 giữ làm đường dự phòng trả phí khi bạn thấy chất lượng quan trọng hơn: mỗi lần đọc chỉ khoảng vài chục đồng (xem mục 4), tức 1.000 lần đọc khoảng vài chục nghìn đồng.
+
+## 11. Quyết định 23/10/2026: THỬ NGHIỆM TRƯỚC, rồi mới quyết có làm hay không
+
+Chủ sản phẩm lưu ý hóa đơn có **rất nhiều loại và mẫu khác nhau**, không ổn định vài mẫu. Hệ quả cho kế hoạch:
+
+- **Bỏ ý định viết bộ phân tích bằng quy tắc** cho phần dòng hàng (bước 1 ở mục 10 không còn là đề xuất). Quy tắc chỉ chạy tốt khi số mẫu ít; với hàng chục mẫu, mỗi mẫu mới lại sai và phải sửa thêm, không bao giờ "đủ". Chỉ phần đầu hóa đơn (số hóa đơn, ngày, tổng cộng) là có dạng khá cố định, nhưng riêng chúng không đủ giá trị.
+- Cách duy nhất tổng quát hóa được qua nhiều mẫu là **mô hình AI hiểu văn bản/hình ảnh**. Có ba đường để thử, đều miễn phí hoặc gần như miễn phí:
+  - **A. Claude Haiku 5.5 đọc ảnh** (mức chuẩn để so sánh, tốn vài nghìn đồng cho cả đợt thử).
+  - **B. Cloudflare Workers AI đọc ảnh** (miễn phí trong hạn mức ngày).
+  - **C. Google Lens/Văn bản trực tiếp của điện thoại đọc chữ, dán vào app, rồi mô hình văn bản của Cloudflare tách dòng hàng** (miễn phí; OCR của Google rất tốt với tiếng Việt, mô hình chỉ còn việc hiểu bố cục chữ).
+- **Chưa viết code của app.** Làm trước một **đợt thử nghiệm ngoài app** (tập lệnh chạy trên máy tính, không đụng CSDL và không đưa ảnh vào kho ảnh): 20–30 hóa đơn thật đủ loại (hóa đơn điện tử, phiếu bán hàng giấy nhiệt, viết tay, ảnh chụp nghiêng, ảnh chụp màn hình Zalo…). Tập lệnh cho ra một **trang so sánh**: ảnh bên trái, các trường đã đọc bên phải; người thử tích ô nào đọc sai; trang tự tính tỉ lệ đúng theo từng đường A, B, C.
+- **Ngưỡng quyết định (đề xuất, chỉnh được):**
+  - Đường nào đạt **≥ 90%** ở các trường đầu hóa đơn (nhà cung ứng, số hóa đơn, ngày, tổng tiền) **và ≥ 80%** số dòng hàng đúng hoàn toàn không cần sửa, **và** không có lỗi số tiền/số lượng nằm "im lặng" mà trang so sánh không đánh dấu được → làm tiếp bằng đường đó (ưu tiên đường miễn phí nếu đạt).
+  - Chỉ có đường Claude đạt → báo chủ sản phẩm quyết định có dùng phương án trả phí (rất rẻ) hay không.
+  - Không đường nào đạt → **dừng G2-3, giữ nhập tay**, và làm các việc làm nhập tay nhanh hơn (mục 12).
+- Rủi ro khi thử: chỉ mất công thu thập ảnh và tích kết quả (khoảng 1–2 giờ của chủ sản phẩm). Không ảnh hưởng hệ thống đang chạy.
+
+## 12. Phương án dự phòng giá trị cao: làm nhập tay nhanh hơn (không cần OCR)
+
+Làm được ngay, chắc chắn đúng, bất kể kết quả thử nghiệm:
+- **Nhớ giá lần mua gần nhất** theo cặp nhà cung ứng + vật tư: chọn vật tư là điền sẵn đơn giá gần nhất (sửa được), hiện "lần trước 20.000 đ".
+- **Sao chép hóa đơn lần trước** của cùng nhà cung ứng (các dòng hàng giống nhau, chỉ sửa số lượng).
+- Danh sách vật tư **hay mua** của nhà cung ứng đó lên đầu khi chọn.
+- Nhập nhanh số lượng/đơn giá bằng bàn phím số, tự chuyển ô; hiện cảnh báo giá bất thường so với lần trước (lệch trên 30%).
