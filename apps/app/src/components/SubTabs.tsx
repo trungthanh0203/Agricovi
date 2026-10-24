@@ -3,7 +3,7 @@ import type { Section } from '../lib/tabs';
 /** Biểu tượng cho từng mục */
 export const SECTION_ICONS: Record<string, string> = {
   cycles: '🌱', logs: '📒', harvest: '🧺', stock: '📦', attendance: '⏱',
-  areas: '🏡', partners: '🚚', customers: '🛒', website: '📬', payables: '💳', crops: '🌾', worktypes: '🧰', templates: '📋', materials: '🧪', places: '🏬', rates: '💵',
+  areas: '🏡', partners: '🚚', customers: '🛒', website: '📬', payables: '💳', crops: '🌾', worktypes: '🧰', templates: '📋', materials: '🧪', places: '🏬',
   commerce: '🌐', members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
   intro: '📖', household: '🌾', company: '🏢',
   expense: '💸', sales: '💰', summary: '📊', weekly: '🗓️', payroll: '🧾', custom: '🔎',

@@ -503,3 +503,8 @@ button.ordercard:active { background: var(--tint); }
 .gflow-node:active { border-color: var(--green); }
 .gflow-ico { font-size: 22px; line-height: 1; }
 .guide-steps > li { scroll-margin-top: 70px; }
+
+/* Nhân sự: dòng người bấm được để mở hồ sơ */
+button.member-btn { width: 100%; text-align: left; font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; align-items: center; }
+button.member-btn .sub { display: block; }
+.member-profile { display: grid; gap: 4px; }

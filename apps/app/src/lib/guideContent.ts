@@ -215,7 +215,7 @@ export const GUIDES: Guide[] = [
         details: [
           'Tổ chức → Nhân sự: tạo tài khoản cho người làm bằng số điện thoại, chọn chức vụ. Lần đầu họ phải đổi mật khẩu tạm.',
           'Tổ chức → Phòng / Tổ: chia người vào tổ, chọn tổ trưởng.',
-          'Khai báo → Đơn giá công: đặt giá theo giờ hoặc theo sản lượng.',
+          'Tổ chức → Nhân sự → bấm vào người → Trả công: đặt đơn giá theo giờ riêng cho từng người.',
           'Sản xuất → Chấm công: xác nhận ca công; Báo cáo → Tiền công: tính lương theo kỳ rồi khóa kỳ.',
         ],
         go: { tab: 'org', section: 'members', label: 'Mở Nhân sự' },
@@ -349,7 +349,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Chấm công và tiền công cho nhiều người',
         details: [
-          'Đặt đơn giá công, xác nhận công theo tổ, tính lương theo kỳ và khóa kỳ khi đã chốt.',
+          'Đặt đơn giá theo giờ cho từng người (hồ sơ nhân sự), xác nhận công theo tổ, tính lương theo kỳ và khóa kỳ khi đã chốt.',
           'Báo cáo giờ công theo người và theo phòng/tổ.',
         ],
         go: { tab: 'production', section: 'attendance', label: 'Mở Chấm công' },

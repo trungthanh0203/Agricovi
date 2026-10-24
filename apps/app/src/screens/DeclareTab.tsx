@@ -3,7 +3,6 @@ import { CatalogSection } from '../components/CatalogSection';
 import { canPerm } from '../lib/permissions';
 import { CustomersSection } from '../components/CustomersSection';
 import { PartnersSection } from '../components/PartnersSection';
-import { RatesSection } from '../components/RatesSection';
 import { CropsSection } from '../components/CropsSection';
 import { TemplatesSection } from '../components/TemplatesSection';
 import { WorkTypesSection } from '../components/WorkTypesSection';
@@ -31,8 +30,6 @@ export function DeclareTab({ section, onSection }: { section?: string; onSection
         <PartnersSection />
       ) : current === 'customers' ? (
         <CustomersSection />
-      ) : current === 'rates' ? (
-        <RatesSection />
       ) : current === 'crops' ? (
         <CropsSection />
       ) : current === 'worktypes' ? (

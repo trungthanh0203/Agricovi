@@ -142,7 +142,7 @@ function PeriodView({ period, workers, isOwner: owner, onBack, onChanged }: {
           Đã tính {result.lines} dòng cho {result.workers} người.
           {result.missing_rate_hours > 0 && ` Có ${result.missing_rate_hours} ca công chưa có đơn giá giờ.`}
           {result.missing_rate_output > 0 && ` Có ${result.missing_rate_output} mục sản lượng chưa có đơn giá.`}
-          {result.missing_rate_hours + result.missing_rate_output > 0 && ' Hãy nhờ chủ thêm đơn giá ở Khai báo → Đơn giá công, rồi tính lại.'}
+          {result.missing_rate_hours + result.missing_rate_output > 0 && ' Hãy nhờ chủ thêm đơn giá ở Tổ chức → Nhân sự (bấm vào người → Trả công), rồi tính lại.'}
         </div>
       )}
 
