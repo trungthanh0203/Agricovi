@@ -215,8 +215,8 @@ export const GUIDES: Guide[] = [
         details: [
           'Tổ chức → Nhân sự: tạo tài khoản cho người làm bằng số điện thoại, chọn chức vụ. Lần đầu họ phải đổi mật khẩu tạm.',
           'Tổ chức → Phòng / Tổ: chia người vào tổ, chọn tổ trưởng.',
-          'Tổ chức → Nhân sự → bấm vào người → Trả công: đặt đơn giá theo giờ riêng cho từng người.',
-          'Sản xuất → Chấm công: xác nhận ca công; Báo cáo → Tiền công: tính lương theo kỳ rồi khóa kỳ.',
+          'Tổ chức → Nhân sự → bấm vào người → Trả công: đặt cách trả riêng cho từng người, theo giờ làm (đồng/giờ) hoặc lương cố định theo tháng.',
+          'Sản xuất → Chấm công: xác nhận ca công. Báo cáo → Tiền công: tính lương theo kỳ, nhập thưởng, phạt, tạm ứng (có lý do), rồi chủ khóa kỳ. Nhân viên xem phiếu lương của mình ở Tài khoản.',
         ],
         go: { tab: 'org', section: 'members', label: 'Mở Nhân sự' },
       },

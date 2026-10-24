@@ -11,9 +11,9 @@ import { useOrgs } from '../lib/orgs';
 import { hasRole } from '../lib/roles';
 import { stageForDay } from '../lib/cycles';
 import {
-  ATT_STATUS_LABEL, clockIn, clockOut, clockOutLocal, confirmAttendance, confirmOutput, decideAdjustment, fmtMinutes, listAdjustments, listAttendance,
-  ensureMyWorker, listOutputs, listWorkers, OUTPUT_STATUS_LABEL, recalledMyWorker, recordOutput, recordShift, rejectAttendance, rememberMyWorker, requestAdjustment,
-  type AdjustmentRequest, type AttendanceRow, type OutputRow, type WorkerLite,
+  ATT_STATUS_LABEL, clockIn, clockOut, clockOutLocal, confirmAttendance, decideAdjustment, fmtMinutes, listAdjustments, listAttendance,
+  ensureMyWorker, listWorkers, recalledMyWorker, recordShift, rejectAttendance, rememberMyWorker, requestAdjustment,
+  type AdjustmentRequest, type AttendanceRow, type WorkerLite,
 } from '../lib/work';
 import { useTable } from '../lib/tables';
 
@@ -30,7 +30,6 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
   const uid = session?.user.id;
   const [workers, setWorkers] = useState<WorkerLite[]>([]);
   const [att, setAtt] = useState<AttendanceRow[]>([]);
-  const [outs, setOuts] = useState<OutputRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [brk, setBrk] = useState('0');
@@ -60,8 +59,8 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
         await ensureMyWorker(orgId).catch(() => undefined);
         w = await listWorkers(orgId);
       }
-      const [a, o, aj] = await Promise.all([listAttendance(orgId, from), listOutputs(orgId, from), listAdjustments(orgId).catch(() => [])]);
-      setWorkers(w); setAtt(a); setOuts(o); setAdjs(aj);
+      const [a, aj] = await Promise.all([listAttendance(orgId, from), listAdjustments(orgId).catch(() => [])]);
+      setWorkers(w); setAtt(a); setAdjs(aj);
       const mine = w.find((x) => x.user_id === uid);
       if (mine && uid) rememberMyWorker(orgId, uid, mine.id);
     } catch (e) { setError(friendlyError(e)); }
@@ -171,9 +170,6 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
           <Collapsible inline title="＋ Chấm công hộ" summary="nhập ca đã làm của người khác">
             <ShiftForm workers={canRecordFor} cycles={cycles} att={att} busy={busy || !online} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
           </Collapsible>
-          <Collapsible inline title="＋ Ghi sản lượng" summary="khối lượng đã làm của người khác">
-            <OutputForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onSave={(w, d, q, u, n, c) => run(() => recordOutput(w, d, q, u, n, c))} />
-          </Collapsible>
         </>
       )}
 
@@ -238,28 +234,7 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
         </>
       )}
 
-      {outs.length > 0 && (
-        <>
-          <h2 className="sect">Sản lượng gần đây ({outs.length})</h2>
-          <table className="grid">
-            <thead><tr><th>Người · ngày</th><th className="num">Sản lượng</th><th></th></tr></thead>
-            <tbody>
-              {outs.map((o) => (
-                <tr key={o.id}>
-                  <td>{nameOf(o.worker_id)}<span className="sub">{fmtDate(o.work_date)}{o.note ? ` · ${o.note}` : ''}</span></td>
-                  <td className="num">{o.quantity.toLocaleString('vi-VN')} {o.unit}<span className={o.status === 'confirmed' || o.status === 'approved' ? 'pill ok' : 'pill warn'}>{OUTPUT_STATUS_LABEL[o.status]}</span></td>
-                  <td className="act">
-                    {o.status === 'draft' && canConfirm(o) && (
-                      <button className="icon" disabled={busy || !online} aria-label="Xác nhận sản lượng" onClick={() => void run(() => confirmOutput(o.id))}>✔</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
-      )}
-      <p className="muted">✔ xác nhận, ✕ từ chối (cần lý do). Chỉ công và sản lượng đã xác nhận mới được tính tiền.</p>
+      <p className="muted">✔ xác nhận, ✕ từ chối (cần lý do). Chỉ công đã xác nhận mới được tính tiền.</p>
     </>
   );
 }
@@ -317,41 +292,6 @@ function ShiftForm({ workers, cycles, att, busy, onSave }: { workers: WorkerLite
       {err && <p className="msg error" role="alert">{err}</p>}
       {ok && <p className="msg ok" role="status">{ok}</p>}
       <button type="submit" className="secondary" disabled={busy}>Lưu công</button>
-    </form>
-  );
-}
-
-function OutputForm({ workers, cycles, busy, onSave }: { workers: WorkerLite[]; cycles: CycleOpt[]; busy: boolean; onSave: (w: string, d: string, q: number, u: string, n: string, c: string | null) => Promise<unknown> }) {
-  const [cyc, setCyc] = useState('');
-  const [w, setW] = useState(workers[0]?.id ?? '');
-  const [date, setDate] = useState(todayLocal());
-  const [qty, setQty] = useState('');
-  const [unit, setUnit] = useState('kg');
-  const [note, setNote] = useState('');
-  const [err, setErr] = useState<string | null>(null);
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    const q = Number(qty.replace(',', '.'));
-    if (!w) return setErr('Hãy chọn người.');
-    if (!qty.trim() || Number.isNaN(q) || q <= 0) return setErr('Sản lượng phải là số lớn hơn 0.');
-    if (!unit.trim()) return setErr('Hãy nhập đơn vị (kg, giỏ, cây…).');
-    setErr(null);
-    void onSave(w, date, q, unit, note, cyc || null).then(() => { setQty(''); setNote(''); }).catch(() => undefined);
-  }
-  return (
-    <form className="inline-form" onSubmit={submit} noValidate>
-      <label>Người lao động
-        <select value={w || workers[0]?.id} onChange={(e) => setW(e.target.value)}>{workers.map((x) => <option key={x.id} value={x.id}>{x.full_name}</option>)}</select>
-      </label>
-      <label>Ngày<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
-      <div className="pair">
-        <label>Sản lượng<input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} /></label>
-        <label>Đơn vị<input value={unit} onChange={(e) => setUnit(e.target.value)} /></label>
-      </div>
-      <CycleSelect cycles={cycles} value={cyc} onChange={setCyc} />
-      <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
-      {err && <p className="msg error" role="alert">{err}</p>}
-      <button type="submit" className="secondary" disabled={busy}>Lưu sản lượng</button>
     </form>
   );
 }

@@ -126,7 +126,7 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
         ) : <p className="muted">Người này chưa có hồ sơ lao động (hồ sơ được tạo khi người đó chấm công lần đầu).</p>}
       </Collapsible>
 
-      <Collapsible title="Trả công" summary="đơn giá theo giờ">
+      <Collapsible title="Trả công" summary="theo giờ hoặc lương tháng">
         <MemberPay orgId={org.id} workerId={worker?.id ?? null} />
       </Collapsible>
     </div>

@@ -133,7 +133,7 @@ test('ngoại lệ GPS: tạo bản ghi ngoại lệ vẫn được, chuyển ch
 
 async function payrollSetup(w) {
   const { db, owner, wA } = w;
-  await db.query(`insert into work_rates (id,organization_id,rate_type,amount,valid_from) values ('d0000000-0000-4000-8000-000000000001',$1,'hour',25000,current_date - 30)`, [ORG]);
+  await db.query(`insert into work_rates (id,organization_id,rate_type,worker_id,amount,valid_from) values ('d0000000-0000-4000-8000-000000000001',$1,'hour',$2,25000,current_date - 30)`, [ORG, wA]);
   await db.query(`insert into attendance_records (id,organization_id,worker_id,work_date,started_at,ended_at,source,status,approved_minutes)
      values ('c0000000-0000-4000-8000-000000000030',$1,$2,current_date - 2,now() - interval '2 days',now() - interval '2 days' + interval '8 hours','admin','confirmed',480)`, [ORG, wA]);
   const period = 'e0000000-0000-4000-8000-000000000001';

@@ -7,13 +7,14 @@ import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { isOwner } from '../lib/roles';
 import {
-  addAdjustment, ADJ_KIND_LABEL, buildPayrollCsv, computePayroll, createPeriod, fmtVnd, listPeriods, listWorkers, loadStatements, lockPayroll,
+  addAdjustment, ADJ_KIND_LABEL, buildPayrollCsv, computePayroll, createPeriod, deleteAdjustment, fmtVnd, listPeriods, listWorkers, loadStatements, lockPayroll,
   PERIOD_STATUS_LABEL, unlockPayroll, type AdjustmentRow, type LineRow, type PayrollResult, type PeriodRow, type StatementRow, type WorkerLite,
 } from '../lib/work';
 
 /**
- * Tiền công theo kỳ (D42): tạo kỳ → "Tính tiền công" từ công và sản lượng ĐÃ XÁC NHẬN → thêm thưởng/khấu trừ/tạm ứng →
- * chủ khóa kỳ (chốt số). Mỗi dòng ghi rõ cách tính. Thiếu đơn giá thì báo, không tự tính 0.
+ * Tiền công theo kỳ (D42, D86): tạo kỳ → "Tính tiền công" từ công ĐÃ XÁC NHẬN (theo giờ) và lương cố định theo tháng của từng người →
+ * thêm thưởng / phạt / tạm ứng (có lý do) → chủ khóa kỳ (chốt số). Thực nhận = công + lương tháng + thưởng − phạt − tạm ứng.
+ * Mỗi dòng ghi rõ cách tính. Thiếu đơn giá thì báo, không tự tính 0.
  */
 export function PayrollSection() {
   const { active } = useOrgs();
@@ -75,7 +76,7 @@ export function PayrollSection() {
           ))}
         </tbody>
       </table>
-      <p className="muted">Quy trình: chấm công và ghi sản lượng → tổ trưởng/quản lý xác nhận → đặt đơn giá (chủ) → tính tiền công → chủ khóa kỳ.</p>
+      <p className="muted">Quy trình: chấm công → tổ trưởng/quản lý xác nhận → chủ đặt cách trả công cho từng người (hồ sơ nhân sự) → tính tiền công → nhập thưởng/phạt/tạm ứng nếu có → chủ khóa kỳ.</p>
     </>
   );
 }
@@ -138,28 +139,32 @@ function PeriodView({ period, workers, isOwner: owner, onBack, onChanged }: {
 
       {error && <p className="msg error" role="alert">{error}</p>}
       {result && (
-        <div className={result.missing_rate_hours + result.missing_rate_output > 0 ? 'msg warn' : 'msg ok'} role="status">
-          Đã tính {result.lines} dòng cho {result.workers} người.
-          {result.missing_rate_hours > 0 && ` Có ${result.missing_rate_hours} ca công chưa có đơn giá giờ.`}
-          {result.missing_rate_output > 0 && ` Có ${result.missing_rate_output} mục sản lượng chưa có đơn giá.`}
-          {result.missing_rate_hours + result.missing_rate_output > 0 && ' Hãy nhờ chủ thêm đơn giá ở Tổ chức → Nhân sự (bấm vào người → Trả công), rồi tính lại.'}
+        <div className={result.missing_rate_hours > 0 ? 'msg warn' : 'msg ok'} role="status">
+          Đã tính {result.lines} dòng cho {result.workers} người{result.salary_lines ? ` (có ${result.salary_lines} dòng lương cố định)` : ''}.
+          {result.missing_rate_hours > 0 && ` Có ${result.missing_rate_hours} ca công chưa có cách trả công. Hãy nhờ chủ đặt ở Tổ chức → Nhân sự (bấm vào người → Trả công), rồi tính lại.`}
         </div>
       )}
 
-      {(data?.statements ?? []).length === 0 && <p className="muted">Chưa có bảng lương. Bấm "Tính tiền công" (chỉ công và sản lượng đã xác nhận, có đơn giá mới được tính).</p>}
+      {(data?.statements ?? []).length === 0 && <p className="muted">Chưa có bảng lương. Bấm "Tính tiền công" (chỉ công đã xác nhận và người đã có cách trả công mới được tính).</p>}
       {(data?.statements ?? []).map((s) => {
         const lines = data!.lines.filter((l) => l.statement_id === s.id);
         const adj = data!.adjustments.filter((a) => a.worker_id === s.worker_id);
         return (
           <Collapsible key={s.id} title={nameOf(s.worker_id)} summary={fmtVnd(locked ? s.total_approved ?? s.total_estimated : s.total_estimated)}>
             {lines.map((l) => <p key={l.id} className="muted">{l.explanation} = <strong>{fmtVnd(l.amount)}</strong></p>)}
-            {adj.map((a) => <p key={a.id} className="muted">{ADJ_KIND_LABEL[a.kind]}: {a.kind === 'bonus' ? '+' : '−'}{fmtVnd(a.amount)} — {a.reason}</p>)}
+            {adj.map((a) => (
+              <p key={a.id} className="muted">{ADJ_KIND_LABEL[a.kind]}: {a.kind === 'bonus' ? '+' : '−'}{fmtVnd(a.amount)} — {a.reason}
+                {!locked && owner && <> <button className="link inline" disabled={busy || !online} onClick={() => { if (window.confirm('Xóa khoản này? Sau đó bấm Tính tiền công lại.')) void run(() => deleteAdjustment(a.id)); }}>Xóa</button></>}
+              </p>
+            ))}
+            <p><strong>Thực nhận: {fmtVnd(locked ? s.total_approved ?? s.total_estimated : s.total_estimated)}</strong>
+              <span className="sub">= công và lương {fmtVnd(lines.reduce((t, l) => t + l.amount, 0))}{adj.some((a) => a.kind === 'bonus') ? ` + thưởng ${fmtVnd(adj.filter((a) => a.kind === 'bonus').reduce((t, a) => t + a.amount, 0))}` : ''}{adj.some((a) => a.kind === 'deduction') ? ` − phạt ${fmtVnd(adj.filter((a) => a.kind === 'deduction').reduce((t, a) => t + a.amount, 0))}` : ''}{adj.some((a) => a.kind === 'advance') ? ` − tạm ứng ${fmtVnd(adj.filter((a) => a.kind === 'advance').reduce((t, a) => t + a.amount, 0))}` : ''}</span></p>
           </Collapsible>
         );
       })}
 
       {!locked && (
-        <Collapsible inline title="＋ Thưởng / khấu trừ / tạm ứng" summary="điều chỉnh tiền của một người">
+        <Collapsible inline title="＋ Thưởng / phạt / tạm ứng" summary="điều chỉnh tiền của một người">
           <form className="inline-form" noValidate onSubmit={(e) => {
             e.preventDefault();
             const a = Number(adjAmt.replace(/[.,\s]/g, ''));
@@ -174,7 +179,10 @@ function PeriodView({ period, workers, isOwner: owner, onBack, onChanged }: {
               <label>Số tiền (đồng)<input value={adjAmt} inputMode="numeric" onChange={(e) => setAdjAmt(e.target.value)} /></label>
             </div>
             <label>Lý do<input value={adjReason} onChange={(e) => setAdjReason(e.target.value)} /></label>
-            <button type="submit" className="secondary" disabled={busy || !online}>Thêm (rồi bấm Tính tiền công lại)</button>
+            <div className="btnrow">
+              <button type="submit" className="primary" disabled={busy || !online}>Thêm (rồi bấm Tính tiền công lại)</button>
+              <button type="button" className="secondary" onClick={() => { setAdjAmt(''); setAdjReason(''); setError(null); }}>Hủy</button>
+            </div>
           </form>
         </Collapsible>
       )}

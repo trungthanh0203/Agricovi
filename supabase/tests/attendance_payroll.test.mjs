@@ -72,30 +72,25 @@ test('tính tiền công: thiếu đơn giá thì báo; đơn giá cụ thể nh
   let r = await comp();
   assert.deepEqual([r.lines, r.missing_rate_hours], [0, 1]); // thiếu đơn giá: báo, không tính 0
 
-  assert.match(await expectError(asUser(db, wk, `insert into work_rates (organization_id,rate_type,amount,valid_from) values ($1,'hour',30000,'2020-01-01')`, [org])), /row-level security/); // D83: người có quyền Tiền công (quản lý được cấp) ghi được giá; nhân viên thì không
-  await asUser(db, owner, `insert into work_rates (organization_id,rate_type,amount,valid_from) values ($1,'hour',30000,'2020-01-01')`, [org]);
+  assert.match(await expectError(asUser(db, wk, `insert into work_rates (organization_id,rate_type,worker_id,amount,valid_from) values ($1,'hour',$2,30000,'2020-01-01')`, [org, ww])), /row-level security/); // D83: người có quyền Tiền công (quản lý được cấp) ghi được giá; nhân viên thì không
+  await asUser(db, owner, `insert into work_rates (organization_id,rate_type,worker_id,amount,valid_from) values ($1,'hour',$2,30000,'2020-01-01')`, [org, ww]);
   r = await comp();
   assert.deepEqual([r.lines, r.total], [1, 105000]); // 3,5 giờ × 30.000
 
-  // đơn giá của tổ đè đơn giá chung
-  await asUser(db, owner, `insert into work_rates (organization_id,rate_type,team_id,amount,valid_from) values ($1,'hour',$2,40000,'2020-01-01')`, [org, team]);
-  assert.equal((await comp()).total, 140000);
-
-  // sản lượng: nháp chưa tính, xác nhận mới tính
-  await asUser(db, leader, `select * from record_output($1,$2,current_date - 1,null,null,10,'kg')`, [id(40), ww]);
-  assert.equal((await comp()).lines, 1);
-  await asUser(db, leader, `select * from confirm_output($1)`, [id(40)]);
-  assert.equal((await comp()).missing_rate_output, 1);
-  await asUser(db, owner, `insert into work_rates (organization_id,rate_type,unit,amount,valid_from) values ($1,'quantity','kg',2000,'2020-01-01')`, [org]);
+  // D86: đổi giá = dòng mới có ngày hiệu lực mới (giá riêng của người); không còn giá chung theo tổ/cơ sở, không còn sản lượng
+  await asUser(db, owner, `insert into work_rates (organization_id,rate_type,worker_id,amount,valid_from) values ($1,'hour',$2,40000,current_date - 30)`, [org, ww]);
+  assert.equal((await comp()).total, 140000); // dòng mới hơn thắng: 3,5 giờ × 40.000
+  assert.match(await expectError(asUser(db, owner, `insert into work_rates (organization_id,rate_type,team_id,amount,valid_from) values ($1,'hour',$2,40000,'2020-01-01')`, [org, team])), /work_rates_person_only|check/);
+  assert.match(await expectError(asUser(db, owner, `insert into work_rates (organization_id,rate_type,worker_id,unit,amount,valid_from) values ($1,'quantity',$2,'kg',2000,'2020-01-01')`, [org, ww])), /invalid input value|work_rates_person_only|check/);
   r = await comp();
-  assert.deepEqual([r.lines, r.total], [2, 160000]);
+  assert.deepEqual([r.lines, r.total], [1, 140000]);
 
   await asUser(db, mgr, `insert into pay_adjustments (organization_id,worker_id,period_id,kind,amount,reason) values ($1,$2,$3,'bonus',5000,'Thưởng chuyên cần'), ($1,$2,$3,'advance',20000,'Tạm ứng')`, [org, ww, per]);
   r = await comp();
-  assert.equal(r.total, 145000); // 160.000 + 5.000 − 20.000
+  assert.equal(r.total, 125000); // 140.000 + 5.000 − 20.000
 
   const lines = (await db.query(`select line_type, amount::float a, explanation, rate_amount::float ra from pay_statement_lines order by line_type`)).rows;
-  assert.deepEqual(lines.map((l) => [l.line_type, l.a, l.ra]), [['hours', 140000, 40000], ['output', 20000, 2000]]);
+  assert.deepEqual(lines.map((l) => [l.line_type, l.a, l.ra]), [['hours', 140000, 40000]]);
   assert.match(lines[0].explanation, /3\.5 giờ/);
 
   // chỉ người lao động đó và quản lý thấy bảng; tổ trưởng không thấy tiền công của người khác
@@ -107,7 +102,7 @@ test('khóa kỳ: chỉ chủ; sau khóa không tính lại, không sửa công;
   const { db, owner, mgr, leader, org, ww } = await setup();
   await asUser(db, leader, shiftSql, [id(50), ww]);
   await asUser(db, leader, `select * from confirm_attendance($1)`, [id(50)]);
-  await asUser(db, owner, `insert into work_rates (organization_id,rate_type,amount,valid_from) values ($1,'hour',30000,'2020-01-01')`, [org]);
+  await asUser(db, owner, `insert into work_rates (organization_id,rate_type,worker_id,amount,valid_from) values ($1,'hour',$2,30000,'2020-01-01')`, [org, ww]);
   await db.query(`update organization_memberships set permissions = '{"payroll":"edit"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý cần được cấp quyền Tiền công
   const per = (await asUser(db, mgr, `insert into payroll_periods (id,organization_id,start_date,end_date) values ($1,$2,current_date - 6, current_date) returning id`, [id(60), org])).rows[0].id;
   await asUser(db, mgr, `select compute_payroll($1)`, [per]);

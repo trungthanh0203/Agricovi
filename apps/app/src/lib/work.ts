@@ -31,14 +31,14 @@ export interface OutputRow {
   note: string | null; source: string;
 }
 export interface RateRow {
-  id: string; rate_type: 'hour' | 'quantity'; worker_id: string | null; team_id: string | null; work_type_id: string | null;
+  id: string; rate_type: 'hour' | 'month' | 'quantity'; worker_id: string | null; team_id: string | null; work_type_id: string | null;
   unit: string | null; amount: number; valid_from: string; valid_to: string | null; is_active: boolean;
 }
 export interface PeriodRow { id: string; organization_id: string; start_date: string; end_date: string; status: 'draft' | 'pending_confirmation' | 'reviewed' | 'pending_approval' | 'locked' }
 export interface StatementRow { id: string; period_id: string; worker_id: string; total_estimated: number; total_approved: number | null }
-export interface LineRow { id: string; statement_id: string; line_type: 'hours' | 'output'; quantity: number; unit: string; rate_amount: number; amount: number; explanation: string }
+export interface LineRow { id: string; statement_id: string; line_type: 'hours' | 'output' | 'salary'; quantity: number; unit: string; rate_amount: number; amount: number; explanation: string }
 export interface AdjustmentRow { id: string; worker_id: string; period_id: string | null; kind: 'bonus' | 'deduction' | 'advance'; amount: number; reason: string }
-export interface PayrollResult { lines: number; missing_rate_hours: number; missing_rate_output: number; total: number; workers: number }
+export interface PayrollResult { lines: number; salary_lines?: number; missing_rate_hours: number; missing_rate_output: number; total: number; workers: number }
 
 export const ATT_STATUS_LABEL: Record<AttendanceRow['status'], string> = {
   open: 'Đang trong ca', needs_confirmation: 'Chờ xác nhận', confirmed: 'Đã xác nhận', rejected: 'Đã từ chối',
@@ -49,7 +49,7 @@ export const OUTPUT_STATUS_LABEL: Record<OutputRow['status'], string> = {
 export const PERIOD_STATUS_LABEL: Record<PeriodRow['status'], string> = {
   draft: 'Đang soạn', pending_confirmation: 'Chờ xác nhận', reviewed: 'Đã rà soát', pending_approval: 'Chờ duyệt', locked: 'Đã khóa',
 };
-export const ADJ_KIND_LABEL: Record<AdjustmentRow['kind'], string> = { bonus: 'Thưởng/cộng thêm', deduction: 'Khấu trừ', advance: 'Tạm ứng' };
+export const ADJ_KIND_LABEL: Record<AdjustmentRow['kind'], string> = { bonus: 'Thưởng', deduction: 'Phạt / khấu trừ', advance: 'Tạm ứng' };
 
 const num = <T extends object>(rows: T[] | null, keys: (keyof T)[]): T[] =>
   (rows ?? []).map((r) => {
@@ -221,7 +221,7 @@ export async function listRates(orgId: string): Promise<RateRow[]> {
     .eq('organization_id', orgId).order('valid_from', { ascending: false }));
   return num((rows ?? []) as RateRow[], ['amount']);
 }
-export async function addRate(orgId: string, r: { type: 'hour' | 'quantity'; workerId: string | null; teamId: string | null; unit: string | null; amount: number; validFrom: string }): Promise<void> {
+export async function addRate(orgId: string, r: { type: 'hour' | 'month' | 'quantity'; workerId: string | null; teamId: string | null; unit: string | null; amount: number; validFrom: string }): Promise<void> {
   needOnline('thêm đơn giá');
   await ok(client().from('work_rates').insert({
     organization_id: orgId, rate_type: r.type, worker_id: r.workerId, team_id: r.teamId, unit: r.type === 'quantity' ? r.unit : null,
@@ -299,3 +299,9 @@ export function buildPayrollCsv(period: { start_date: string; end_date: string; 
 
 export const fmtMinutes = (m: number | null) => (m == null ? '—' : `${Math.floor(m / 60)} giờ ${String(m % 60).padStart(2, '0')} phút`);
 export const fmtVnd = (n: number) => `${Math.round(n).toLocaleString('vi-VN')} đ`;
+
+/** Xóa một khoản thưởng/phạt/tạm ứng (chỉ khi kỳ chưa khóa; máy chủ chặn nếu đã khóa) */
+export async function deleteAdjustment(id: string): Promise<void> {
+  needOnline('xóa khoản điều chỉnh');
+  await ok(client().from('pay_adjustments').delete().eq('id', id));
+}

@@ -3,6 +3,7 @@ import { Collapsible } from '../components/Collapsible';
 import { InvitationsPanel } from '../components/InvitationsPanel';
 import { LicensesSection, licenseStatus } from '../components/LicensesSection';
 import { MigrateImages } from '../components/MigrateImages';
+import { MyPayslip } from '../components/MyPayslip';
 import { PlanCard } from '../components/PlanCard';
 import { QrCard } from '../components/QrCard';
 import { useAuth } from '../lib/auth';
@@ -96,13 +97,8 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
 
       {pay.length > 0 && (
         <Collapsible title="Tiền công của tôi" summary={`${pay.length} kỳ`}>
-          {pay.slice(0, 6).map((p) => (
-            <div className="row member" key={p.periodId}>
-              <span>{fmtDate(p.start)} – {fmtDate(p.end)}</span>
-              <span><strong>{fmtVnd(p.total)}</strong> <span className={p.approved ? 'pill ok' : 'pill warn'}>{p.approved ? 'Đã chốt' : 'Dự tính'}</span></span>
-            </div>
-          ))}
-          <p className="muted">Số "Dự tính" có thể đổi đến khi chủ cơ sở khóa kỳ.</p>
+          {work?.workerId && pay.slice(0, 6).map((p) => <MyPayslip key={p.periodId} pay={p} workerId={work.workerId!} />)}
+          <p className="muted">Bấm vào kỳ để xem phiếu lương chi tiết. Số "Dự tính" có thể đổi đến khi chủ cơ sở khóa kỳ.</p>
         </Collapsible>
       )}
 

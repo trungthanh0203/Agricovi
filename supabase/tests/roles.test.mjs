@@ -61,7 +61,8 @@ test('kho: quản lý và nhân viên ghi được "xuất dùng", không ghi đ
 
 test('đơn giá lương: chỉ chủ đặt; quản lý và Kho & chi phí chỉ xem', async () => {
   const { db, org, u } = await setup();
-  const rate = (user) => asUser(db, user, `insert into work_rates (organization_id,rate_type,amount,valid_from) values ($1,'hour',25000,current_date)`, [org]);
+  const wid = (await db.query(`insert into worker_profiles (organization_id, full_name) values ($1,'Người A') returning id`, [org])).rows[0].id;
+  const rate = (user) => asUser(db, user, `insert into work_rates (organization_id,rate_type,worker_id,amount,valid_from) values ($1,'hour',$2,25000,current_date)`, [org, wid]);
   await rate(u.owner);
   assert.match(await expectError(rate(u.mgr)), /row-level security/);
   assert.match(await expectError(rate(u.fin)), /row-level security/);
