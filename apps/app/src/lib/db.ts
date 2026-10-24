@@ -28,6 +28,9 @@ export interface CycleRow {
   /** Tên riêng của vụ (không bắt buộc) */
   name?: string | null;
   expected_end_date?: string | null;
+  /** Kế hoạch của vụ (D93): sản lượng dự kiến (kg) và ngân sách dự kiến (đồng) */
+  target_yield_kg?: number | null;
+  budget_amount?: number | null;
   /** Quy trình mẫu vụ được tạo theo (bản chụp lúc tạo, P2) */
   template_id?: string | null;
   template_name?: string | null;

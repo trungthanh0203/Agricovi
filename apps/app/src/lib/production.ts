@@ -10,7 +10,7 @@ import { insertAndCache, requireOnline, updateAndCache } from './serverWrite';
 import { supabase } from './supabase';
 
 const CYCLE_COLUMNS =
-  'id, owner_org_id, area_id, crop_type_id, status, start_date, expected_end_date, note, version, created_at, name, template_id, template_name, template_version';
+  'id, owner_org_id, area_id, crop_type_id, status, start_date, expected_end_date, note, version, created_at, name, template_id, template_name, template_version, target_yield_kg, budget_amount';
 const STAGE_COLUMNS =
   'id, cycle_id, name, seq, work_type_id, duration_days, planned_start, planned_end, actual_start, actual_end, status, note';
 
@@ -145,6 +145,9 @@ export interface NewCycle {
   status: Extract<CycleStatus, 'preparing' | 'active'>;
   startDate: string | null;
   name?: string;
+  /** Kế hoạch (không bắt buộc, D93) */
+  targetYield?: number | null;
+  budget?: number | null;
 }
 
 /** Tạo vụ theo quy trình mẫu (cần mạng): máy chủ kiểm hạn mức, sao chép giai đoạn và tính ngày kế hoạch */
@@ -157,8 +160,18 @@ export async function createCycle(c: NewCycle): Promise<string> {
     p_start: c.startDate, p_status: c.status, p_name: c.name?.trim() || null,
   });
   if (error) throw new Error(error.message);
+  if ((c.targetYield ?? null) !== null || (c.budget ?? null) !== null) await setCyclePlan(id, c.targetYield ?? null, c.budget ?? null).catch(() => undefined);
   await refreshCycle(id);
   return id;
+}
+
+/** Đặt sản lượng dự kiến (kg) và ngân sách dự kiến (đồng) của vụ; null = bỏ (cần mạng, người quản lý vụ) */
+export async function setCyclePlan(cycleId: string, targetYield: number | null, budget: number | null): Promise<void> {
+  requireOnline('đặt kế hoạch vụ');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { error } = await supabase.rpc('set_cycle_plan', { p_cycle: cycleId, p_target_yield: targetYield, p_budget: budget });
+  if (error) throw new Error(error.message);
+  await refreshCycle(cycleId);
 }
 
 /** Tải lại một vụ cùng giai đoạn của nó từ máy chủ vào bộ nhớ trên máy */

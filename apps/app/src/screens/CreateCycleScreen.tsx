@@ -25,6 +25,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const [name, setName] = useState('');
   const [startNow, setStartNow] = useState(true);
   const [startDate, setStartDate] = useState(todayLocal());
+  const [targetYield, setTargetYield] = useState('');
+  const [budget, setBudget] = useState('');
   const [contexts, setContexts] = useState<QuotaContext[] | null>(null);
   const [ownerId, setOwnerId] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +106,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
         status: startNow ? 'active' : 'preparing',
         startDate: startDate || null,
         name,
+        targetYield: targetYield.trim() ? Number(targetYield.replace(/[.,\s]/g, '')) : null,
+        budget: budget.trim() ? Number(budget.replace(/[.,\s]/g, '')) : null,
       });
       onDone(newId); // mở chi tiết vụ kèm mã QR vừa tạo
     } catch (err) {
@@ -189,6 +193,11 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
             Ngày bắt đầu
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </label>
+
+          <div className="pair">
+            <label>Sản lượng dự kiến (kg)<input value={targetYield} inputMode="numeric" onChange={(e) => setTargetYield(e.target.value)} placeholder="Không bắt buộc" /></label>
+            <label>Ngân sách dự kiến (đồng)<input value={budget} inputMode="numeric" onChange={(e) => setBudget(e.target.value)} placeholder="Không bắt buộc" /></label>
+          </div>
 
           {plan.length > 0 && (
             <div className="card slim">

@@ -12,11 +12,14 @@ import { todayLocal, useOnline } from '../lib/hooks';
 import { cycleProgress } from '../lib/cycles';
 import { cycleCode } from '../lib/qr';
 import { CycleQr } from '../components/CycleQr';
+import { CycleStatsStrip } from '../components/CycleStatsStrip';
+import { cachedCycleStats, fetchCycleStats, type CycleStats } from '../lib/cycleStats';
+import { hasAnyStat } from '../lib/cycleStatsLogic';
 import { PublishCycle } from '../components/PublishCycle';
 import { fmtDate } from '../lib/dates';
 import { useOrgs } from '../lib/orgs';
 import { canManageProduction, isOwner } from '../lib/roles';
-import { deleteCycle, editCycle, fetchQuotaContexts, setCycleStatus, type QuotaContext } from '../lib/production';
+import { deleteCycle, editCycle, fetchQuotaContexts, setCyclePlan, setCycleStatus, type QuotaContext } from '../lib/production';
 import type { CycleRow } from '../lib/db';
 import { productionSections, type ProductionSection, type TabId } from '../lib/tabs';
 import { useTable } from '../lib/tables';
@@ -70,11 +73,13 @@ const GROUPS: { id: CycleGroup; label: string; statuses: CycleStatus[] }[] = [
 /** Sửa nhanh thông tin vụ: tên, ngày bắt đầu, ghi chú */
 function CycleEditForm({ cycle, busy, onSave, onClose }: {
   cycle: CycleRow; busy: boolean;
-  onSave: (v: { name: string; start_date: string | null; note: string }) => Promise<void>; onClose: () => void;
+  onSave: (v: { name: string; start_date: string | null; note: string; targetYield: number | null; budget: number | null }) => Promise<void>; onClose: () => void;
 }) {
   const [name, setName] = useState(cycle.name ?? '');
   const [start, setStart] = useState(cycle.start_date ?? '');
   const [note, setNote] = useState(cycle.note ?? '');
+  const [target, setTarget] = useState(cycle.target_yield_kg != null ? String(cycle.target_yield_kg) : '');
+  const [budget, setBudget] = useState(cycle.budget_amount != null ? String(cycle.budget_amount) : '');
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   return (
@@ -82,12 +87,19 @@ function CycleEditForm({ cycle, busy, onSave, onClose }: {
       <label>Tên vụ<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
       <label>Ngày bắt đầu<input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></label>
       <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
+      <div className="pair">
+        <label>Sản lượng dự kiến (kg)<input value={target} inputMode="numeric" onChange={(e) => setTarget(e.target.value)} placeholder="Không bắt buộc" /></label>
+        <label>Ngân sách dự kiến (đồng)<input value={budget} inputMode="numeric" onChange={(e) => setBudget(e.target.value)} placeholder="Không bắt buộc" /></label>
+      </div>
       {err && <p className="msg error" role="alert">{err}</p>}
       <div className="btnrow">
         <button className="primary" disabled={busy || saving} onClick={() => {
           setSaving(true);
           setErr(null);
-          onSave({ name, start_date: start || null, note }).catch((e) => setErr(friendlyError(e))).finally(() => setSaving(false));
+          const num = (v: string) => (v.trim() ? Number(v.replace(/[.,\s]/g, '')) : null);
+          const t = num(target), b = num(budget);
+          if ((t !== null && Number.isNaN(t)) || (b !== null && Number.isNaN(b))) { setSaving(false); return setErr('Sản lượng và ngân sách dự kiến phải là số.'); }
+          onSave({ name, start_date: start || null, note, targetYield: t, budget: b }).catch((e) => setErr(friendlyError(e))).finally(() => setSaving(false));
         }}>Lưu thay đổi</button>
         <button type="button" className="secondary" onClick={onClose}>Hủy</button>
       </div>
@@ -109,6 +121,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const [editId, setEditId] = useState<string | null>(null);
   const [qrId, setQrId] = useState<string | null>(null);
   const [pubId, setPubId] = useState<string | null>(null);
+  const [stats, setStats] = useState<CycleStats | null>(() => (active ? cachedCycleStats(active.id) : null));
 
   const canManage = canManageProduction(active?.roles);
 
@@ -118,6 +131,18 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
     fetchQuotaContexts(active.id).then(setContexts).catch(() => setContexts([]));
   }, [active, canManage]);
 
+  // số liệu tóm tắt của các vụ (máy chủ tính, theo quyền); mất mạng thì dùng bản đã lưu
+  const cyclesKey = cycles.map((c) => `${c.id}:${c.version}:${c.status}`).join(',');
+  useEffect(() => {
+    if (!active) return;
+    setStats(cachedCycleStats(active.id));
+    if (!navigator.onLine) return;
+    let alive = true;
+    fetchCycleStats(active.id).then((s) => { if (alive) setStats(s); }).catch(() => undefined);
+    return () => { alive = false; };
+  }, [active?.id, cyclesKey, online]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const statById = useMemo(() => new Map((stats?.cycles ?? []).map((s) => [s.cycle_id, s])), [stats]);
   const areaById = useMemo(() => new Map(areas.map((a) => [a.id, a])), [areas]);
   const cropName = (id: string) => cropTypes.find((c) => c.id === id)?.name ?? '—';
 
@@ -202,6 +227,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
                 </p>
               </>
             )}
+            {hasAnyStat(statById.get(c.id)) && <CycleStatsStrip s={statById.get(c.id)!} />}
             <div className="actions">
               <button className="secondary" onClick={() => onOpenCycle(c.id)}>Quy trình &amp; Lịch</button>
               <button className="secondary" aria-expanded={qrId === c.id} onClick={() => setQrId(qrId === c.id ? null : c.id)}>{qrId === c.id ? 'Ẩn mã QR' : 'Mã QR của vụ'}</button>
@@ -213,7 +239,11 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
             {qrId === c.id && <CycleQr cycleId={c.id} label={c.name || cropName(c.crop_type_id)} />}
             {editId === c.id && (
               <CycleEditForm cycle={c} busy={!online} onClose={() => setEditId(null)}
-                onSave={async (v) => { await editCycle(c.id, v); setEditId(null); }} />
+                onSave={async (v) => {
+                  await editCycle(c.id, { name: v.name, start_date: v.start_date, note: v.note });
+                  if (v.targetYield !== (c.target_yield_kg ?? null) || v.budget !== (c.budget_amount ?? null)) await setCyclePlan(c.id, v.targetYield, v.budget);
+                  setEditId(null);
+                }} />
             )}
             {canManage && (
               <div className="actions">

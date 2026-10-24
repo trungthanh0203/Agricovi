@@ -534,3 +534,15 @@ button.range-btn:disabled { opacity: .35; cursor: default; }
 
 /* Mã vụ cạnh tên vụ */
 .mono-code { font-family: ui-monospace, Consolas, monospace; font-weight: 600; font-size: .85em; letter-spacing: .04em; color: var(--muted); }
+
+/* Dòng thống kê của vụ (D93) */
+.cycle-stats { margin: 8px 0; }
+.mini-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.mini-kpi { background: var(--tint); border-radius: 10px; padding: 6px 4px; text-align: center; border-top: 3px solid var(--c-neutral, var(--line)); min-width: 0; }
+.mini-kpi span { display: block; font-size: .72rem; color: var(--muted); }
+.mini-kpi strong { display: block; font-size: .92rem; overflow-wrap: anywhere; }
+.mini-kpi.bad { border-top-color: var(--c-bad); } .mini-kpi.ok { border-top-color: var(--c-ok); } .mini-kpi.info { border-top-color: var(--c-info); }
+.plan-line { margin: 8px 0 2px; font-size: .85rem; }
+.plan-line .progress { margin-top: 3px; }
+.stat-row { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: .9rem; border-bottom: 1px dashed var(--line); }
+.stat-row span { color: var(--muted); }
