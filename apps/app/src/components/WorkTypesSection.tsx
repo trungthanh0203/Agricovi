@@ -91,16 +91,17 @@ export function WorkTypesSection() {
 
   /** Áp dụng bộ mẫu: đặt trường cho từng loại việc theo gói (việc có sẵn thì thành "bản chỉnh" của cơ sở, việc riêng thì sửa trực tiếp) */
   async function applyPack(pack: FieldPack) {
-    const { steps, missing } = planPackApply(pack, workTypes);
-    if (steps.length === 0) throw new Error('Chưa tải được danh sách việc để áp dụng bộ mẫu. Hãy kết nối mạng rồi thử lại.');
+    const { steps, missing, creates } = planPackApply(pack, workTypes);
+    if (steps.length + creates.length === 0) throw new Error('Chưa tải được danh sách việc để áp dụng bộ mẫu. Hãy kết nối mạng rồi thử lại.');
     const lost = steps.reduce((n, s) => n + s.replaces, 0);
-    const text = `Áp dụng bộ mẫu "${pack.name}" cho ${steps.length} việc: ${steps.map((s) => s.name).join(', ')}.` +
+    const text = `Áp dụng bộ mẫu "${pack.name}": ${[...steps.map((s) => s.name), ...creates.map((c) => `${c.name} (việc mới)`)].join(', ')}.` +
       (lost > 0 ? ` Có ${lost} trường tự thêm trước đây sẽ bị thay (nhật ký cũ vẫn giữ nguyên số liệu).` : '') + (missing.length ? ` Không tìm thấy việc: ${missing.join(', ')}.` : '') + ' Tiếp tục?';
     if (!window.confirm(text)) return;
     for (const s of steps) {
       if (s.shared) await saveOverride(org, 'work_type', s.id, { field_schema: s.fields });
       else await updateWorkType(s.id, { field_schema: s.fields });
     }
+    for (const c of creates) await createWorkType(org, c.name, c.fields, c.description);
   }
 
   async function save(t: EffWorkType) {

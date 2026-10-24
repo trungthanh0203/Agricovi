@@ -22,7 +22,7 @@ Sau đợt 1, một hộ trồng dưa nhà màng dùng app để:
 |---|---|---|---|
 | **T0** | Khảo sát 2 hộ dưa (mục 4), thu mẫu sổ ghi chép và quy trình thật | nhỏ, làm đầu tiên | Quyết định các trường nhập |
 | **T1** | **Diện tích, giống, mật độ của vụ và năng suất theo diện tích** | vừa | Làm sớm: nhanh, thấy ngay giá trị |
-| **T2** | **Phân bón, thuốc BVTV, thời gian cách ly** | vừa | Cốt lõi của VietGAP |
+| **T2** | **Phân bón, thuốc BVTV, thời gian cách ly** | vừa | Cốt lõi của VietGAP. **Đã làm theo hướng form động (D96)** |
 | **T3** | **Sự cố và xử lý** (dịch bệnh, hao hụt, thiên tai, khiếu nại) | vừa | Kèm hành động khắc phục. **Đã làm (D95)** |
 | **T4** | **Chỉ số theo dõi nhà màng** (nhập nhanh, biểu đồ, ngưỡng) | vừa đến lớn | Xây trên trường của loại việc |
 | **T5** | **Sổ nhật ký sản xuất** in theo mẫu (PDF/Excel) và **kiểm tra độ đầy đủ hồ sơ** | vừa | Cần mẫu thật từ T0 |

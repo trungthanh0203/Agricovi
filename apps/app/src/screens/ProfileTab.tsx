@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Collapsible } from '../components/Collapsible';
+import { DemoDataCard } from '../components/DemoDataCard';
 import { InvitationsPanel } from '../components/InvitationsPanel';
 import { LicensesSection, licenseStatus } from '../components/LicensesSection';
 import { MigrateImages } from '../components/MigrateImages';
@@ -103,6 +104,12 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
       {active && isOwner(active.roles) && (
         <Collapsible title="Kho ảnh" summary="chuyển ảnh cũ sang kho ảnh mới">
           <MigrateImages orgId={active.id} />
+        </Collapsible>
+      )}
+
+      {active && isOwner(active.roles) && (
+        <Collapsible title="Dữ liệu mẫu để thử" summary="dưa lưới nhà màng, có chữ [MẪU]">
+          <DemoDataCard orgId={active.id} />
         </Collapsible>
       )}
 
