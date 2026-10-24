@@ -94,3 +94,13 @@ Hiện dữ liệu trong hệ thống chỉ là dữ liệu thử nên việc ch
 2. Quản lý **không** thấy Chi phí/Doanh thu/Tổng kết/Báo cáo tuần mặc định: đồng ý không? (Báo cáo tuần sẽ chỉ hiện phần quản lý được xem.)
 3. Có thêm cách trả **lương cố định theo tháng** không?
 4. Đồng ý "Mẫu quyền" làm trước, "Phạm vi theo trang trại/tổ" để sau?
+
+---
+
+## 9. Cập nhật sau phản hồi của chủ sản phẩm (24/10/2026)
+
+1. **Bỏ hẳn các vai trò Kho & chi phí, Biên tập hồ sơ, Quản lý HTX.** Chỉ còn 3 vai trò. Phần quyền tương ứng chuyển thành **chức vụ gợi ý** tạo sẵn cho cơ sở (chủ sửa, xóa được): "Thủ kho và kế toán" (Kho, Chi phí, Doanh thu), "Biên tập hồ sơ" (Hồ sơ website), "Quản lý hợp tác xã" (Hộ thành viên, chỉ ở cơ sở loại HTX).
+2. **"Mẫu quyền" đổi tên thành "Chức vụ"** (đúng tên cũ D44). Chức vụ do chủ tạo riêng cho cơ sở của mình ở **Tổ chức → Chức vụ**, gồm: tên, các quyền theo mục (Không/Xem/Sửa), loại việc được ghi (nếu muốn giới hạn), có được bắt đầu/hoàn thành giai đoạn không. Gán ở hồ sơ từng người, thẻ "Vai trò và chức vụ": chọn **một vai trò** (Quản lý hoặc Nhân viên) và **một hoặc nhiều chức vụ**. Quyền hiệu lực = quyền của vai trò + quyền của các chức vụ (lấy mức cao nhất); chủ cấp riêng cho người đó thì đè lên tất cả. Chức vụ không đổi vai trò chính của người.
+3. **Bỏ trả công theo sản lượng.** Chỉ còn **theo giờ** hoặc **lương cố định theo tháng** (một người có thể có cả hai dòng với ngày hiệu lực khác nhau). Màn nhập sản lượng công ẩn đi; dữ liệu cũ giữ nguyên.
+4. **Quản lý xem được Báo cáo tuần.** Phần tiền (chi phí, doanh thu, nợ) chỉ hiện khi quản lý được cấp quyền mục đó; các phần còn lại (việc đã ghi, thu hoạch, giờ công, vụ trễ, công chờ xác nhận) luôn hiện.
+5. **Người làm chỉ thấy trang trại được giao; một người làm được nhiều trang trại.** Đây là "Phạm vi theo trang trại" — chuyển từ "làm sau" sang **làm cùng lát V1/V2**. Mỗi thành viên có danh sách trang trại được giao (mặc định: tất cả; chủ luôn thấy tất cả). Với nhân viên và quản lý có giới hạn: chỉ thấy và ghi vụ, nhật ký, thu hoạch, chấm công thuộc các trang trại đó; dữ liệu toàn cơ sở (Kho, Chi phí, Doanh thu, Khách hàng, Khai báo, Nhân sự) không chia theo trang trại và vẫn theo quyền mục. Thực thi ở CSDL (chính sách xem/ghi theo trang trại của vụ), không chỉ ở giao diện.
