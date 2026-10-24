@@ -40,6 +40,8 @@ export interface NewHarvest {
   lossQuantity: number | null;
   note: string;
   userId: string;
+  /** Lý do thu trong thời gian cách ly (D96) */
+  withdrawalReason?: string;
 }
 
 export async function recordHarvest(h: NewHarvest): Promise<string> {
@@ -55,6 +57,7 @@ export async function recordHarvest(h: NewHarvest): Promise<string> {
     unit: HARVEST_UNIT,
     loss_quantity: h.lossQuantity,
     note: h.note.trim() || null,
+    ...(h.withdrawalReason?.trim() ? { withdrawal_reason: h.withdrawalReason.trim() } : {}),
   };
   await db.transaction('rw', db.harvests, db.outbox, async () => {
     await db.harvests.put({ ...row, version: 1, created_by: h.userId, received_at: new Date().toISOString() });

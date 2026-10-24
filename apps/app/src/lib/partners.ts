@@ -319,6 +319,8 @@ export interface SaleCreditInput {
   dueDate: string | null;
   collected: number;
   method: 'cash' | 'transfer';
+  /** Lý do bán trong thời gian cách ly (D96) */
+  withdrawalReason?: string;
 }
 
 export function validateSaleCredit(i: SaleCreditInput, today: string): string | null {
@@ -339,6 +341,7 @@ export async function recordSaleWithCustomer(i: SaleCreditInput): Promise<Record
     p_id: i.id, p_org: i.orgId, p_cycle: i.cycleId, p_date: i.date, p_qty: i.quantity, p_amount: i.amount,
     p_buyer_note: i.buyerNote.trim() || null, p_partner: i.partnerId, p_invoice: i.invoiceNo.trim() || null,
     p_due: i.dueDate || null, p_paid: i.collected, p_method: i.method,
+    ...(i.withdrawalReason?.trim() ? { p_withdrawal_reason: i.withdrawalReason.trim() } : {}),
   });
   if (error) throw new Error(error.message);
   return data as Record<string, unknown>;

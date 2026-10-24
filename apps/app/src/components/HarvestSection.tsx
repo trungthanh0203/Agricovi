@@ -2,6 +2,8 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
 import { Collapsible } from './Collapsible';
+import { WithdrawalNotice, useWithdrawalBlocked } from './WithdrawalNotice';
+import { validReason } from '../lib/withdrawalLogic';
 import { SyncBadge } from './SyncBadge';
 import { useAuth } from '../lib/auth';
 import { db, type HarvestRow } from '../lib/db';
@@ -195,10 +197,13 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const [qty, setQty] = useState(editing ? String(editing.quantity) : '');
   const [loss, setLoss] = useState(editing?.loss_quantity ? String(editing.loss_quantity) : '');
   const [note, setNote] = useState(editing?.note ?? '');
+  const [wReason, setWReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
 
   const effCycleId = editing ? editing.cycle_id : cycleId || (ordered.find((c) => c.id === remembered)?.id ?? ordered[0]?.id ?? '');
+  const whenDay = toLocalInput(new Date(when)).slice(0, 10);
+  const inWithdrawal = useWithdrawalBlocked(effCycleId, whenDay);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -208,6 +213,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
     if (bad) return setError(bad);
     const cycle = allCycles.find((c) => c.id === effCycleId);
     if (!cycle) return setError('Hãy chọn vụ trồng.');
+    if (inWithdrawal && !editing && !validReason(wReason)) return setError('Vụ còn trong thời gian cách ly: hãy ghi lý do vẫn thu hoạch vào ngày này (ít nhất 3 ký tự), hoặc đổi sang ngày đã hết cách ly.');
     setError(null);
     try {
       if (editing) {
@@ -215,7 +221,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
         onClose();
         return;
       }
-      const id = await recordHarvest({ cycle, harvestedAt: new Date(when).toISOString(), grade, quantity: q!, lossQuantity: l, note, userId });
+      const id = await recordHarvest({ cycle, harvestedAt: new Date(when).toISOString(), grade, quantity: q!, lossQuantity: l, note, userId, withdrawalReason: inWithdrawal ? wReason : undefined });
       try { localStorage.setItem(LAST_CYCLE_KEY, cycle.id); } catch { /* bỏ qua */ }
       setSavedId(id);
     } catch (err) {
@@ -228,6 +234,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
     setQty('');
     setLoss('');
     setNote('');
+    setWReason('');
     setError(null);
     setWhen(toLocalInput(new Date()));
   }
@@ -264,6 +271,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
           Thời điểm thu
           <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
         </label>
+        <WithdrawalNotice cycleId={effCycleId} date={whenDay} reason={wReason} onReason={setWReason} />
         <label>
           Số lượng thu (kg)
           <input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} />

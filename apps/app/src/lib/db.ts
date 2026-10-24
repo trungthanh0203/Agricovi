@@ -97,6 +97,13 @@ export interface IncidentActionRow {
   created_by: string;
 }
 
+/** Thời gian cách ly của vụ do máy chủ tính (D96) */
+export interface WithdrawalRow {
+  cycle_id: string;
+  safe_date: string;
+  items: { material: string; used_on: string; days: number; safe_on: string }[];
+}
+
 /** Ảnh đã tải từ kho ảnh, giữ trên máy để xem offline (G2-1). key = "<đường dẫn>|t" (ảnh nhỏ) hoặc "|f" (đầy đủ) */
 export interface MediaRow { key: string; blob: Blob; at: number }
 
@@ -328,6 +335,7 @@ export class LocalDb extends Dexie {
   stages!: Table<StageRow, string>;
   notes!: Table<NoteRow, string>;
   incidents!: Table<IncidentRow, string>;
+  withdrawals!: Table<WithdrawalRow, string>;
   incidentActions!: Table<IncidentActionRow, string>;
   localShifts!: Table<LocalShift, string>;
   media!: Table<MediaRow, string>;
@@ -428,6 +436,10 @@ export class LocalDb extends Dexie {
     this.version(12).stores({
       incidents: 'id, cycle_id, status',
       incidentActions: 'id, incident_id, cycle_id',
+    });
+    // v13 (D96): thời gian cách ly của vụ
+    this.version(13).stores({
+      withdrawals: 'cycle_id',
     });
   }
 }

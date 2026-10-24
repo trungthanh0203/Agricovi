@@ -137,6 +137,8 @@ export interface NewSale {
   amount: number;
   buyerNote: string;
   userId: string;
+  /** Lý do bán trong thời gian cách ly (D96) */
+  withdrawalReason?: string;
 }
 
 export async function recordSale(s: NewSale): Promise<string> {
@@ -150,6 +152,7 @@ export async function recordSale(s: NewSale): Promise<string> {
     unit: 'kg',
     amount: s.amount,
     buyer_note: s.buyerNote.trim() || null,
+    ...(s.withdrawalReason?.trim() ? { withdrawal_reason: s.withdrawalReason.trim() } : {}),
   };
   await insertAndCache(
     'sales_records', { ...row, source: 'online', created_by: s.userId },

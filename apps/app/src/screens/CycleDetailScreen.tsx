@@ -5,6 +5,8 @@ import { CycleCalendar } from '../components/CycleCalendar';
 import { Collapsible } from '../components/Collapsible';
 import { CycleQr } from '../components/CycleQr';
 import { IncidentsSection } from '../components/IncidentsSection';
+import { useTable } from '../lib/tables';
+import { withdrawalMessage } from '../lib/withdrawalLogic';
 import { PublishCycle } from '../components/PublishCycle';
 import { cycleCode } from '../lib/qr';
 import { useCatalog } from '../lib/catalog';
@@ -37,6 +39,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
   const notes = useLiveQuery(() => db.notes.where('cycle_id').equals(cycleId).toArray(), [cycleId], []);
   const area = useLiveQuery(async () => (cycle ? db.areas.get(cycle.area_id) : undefined), [cycle?.area_id]);
   const { cropTypes, workTypes } = useCatalog();
+  const withdrawals = useTable('withdrawals');
   const [view, setView] = useState<'list' | 'calendar'>(openCalendar ? 'calendar' : 'list');
   const [noticeOpen, setNoticeOpen] = useState(Boolean(notice));
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +103,15 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
       <Collapsible title="Mã QR của vụ" summary="tên vụ, nơi trồng, thời gian, vật tư đã dùng" defaultOpen={openQr}>
         <CycleQr cycleId={cycleId} label={cycle.name || crop} />
       </Collapsible>
+
+      {(() => {
+        const w = withdrawals.find((x) => x.cycle_id === cycleId);
+        if (!w) return null;
+        const msg = withdrawalMessage(w.items, today);
+        return msg
+          ? <p className="msg warn" role="status">{msg}</p>
+          : <p className="muted">Thuốc/phân đã dùng đều đã hết thời gian cách ly (mới nhất {w.safe_date.split('-').reverse().join('/')}).</p>;
+      })()}
 
       {active && <IncidentsSection cycleId={cycleId} orgId={active.id} stages={stages} canManage={canManage} userId={session?.user.id} online={online} today={today} />}
 

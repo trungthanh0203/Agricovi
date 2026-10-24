@@ -15,7 +15,7 @@ export async function purgeCachesIfUserChanged(uid: string): Promise<boolean> {
   if (last && last !== uid) {
     await Promise.all([
       db.areas, db.cycles, db.logs, db.workTypes, db.cropTypes, db.units, db.materials, db.locations,
-      db.balances, db.harvests, db.expenses, db.sales, db.summaries, db.stages, db.notes, db.incidents, db.incidentActions, db.localShifts, db.media,
+      db.balances, db.harvests, db.expenses, db.sales, db.summaries, db.stages, db.notes, db.incidents, db.incidentActions, db.withdrawals, db.localShifts, db.media,
     ].map((t) => t.clear()));
     purged = true;
   }

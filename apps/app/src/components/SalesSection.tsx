@@ -7,6 +7,8 @@ import { useAuth } from '../lib/auth';
 import { db, type SaleRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import { editSale, recordSale, validateSale, voidSale } from '../lib/finance';
+import { WithdrawalNotice, useWithdrawalBlocked } from './WithdrawalNotice';
+import { validReason } from '../lib/withdrawalLogic';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { formatMoney, formatQty, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
@@ -174,6 +176,7 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const [qty, setQty] = useState(editing ? String(editing.quantity) : '');
   const [amount, setAmount] = useState(editing ? String(editing.amount) : '');
   const [buyer, setBuyer] = useState(editing?.buyer_note ?? '');
+  const [wReason, setWReason] = useState('');
   // Khách hàng và công nợ phải thu (G2-4): chỉ khi ghi lần bán mới
   const { active } = useOrgs();
   const orgId = active?.id;
@@ -199,6 +202,7 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const effCycle = editing ? editing.cycle_id : cycleId || (ordered.find((c) => c.id === remembered)?.id ?? ordered[0]?.id ?? '');
   const q = parseNumber(qty);
   const a = parseNumber(amount);
+  const inWithdrawal = useWithdrawalBlocked(effCycle, date);
   const perKg = q && q > 0 && a !== null && !Number.isNaN(a) ? Math.round(a / q) : null;
 
   async function onSubmit(e: FormEvent) {
@@ -207,6 +211,7 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
     if (bad) return setError(bad);
     const cycle = allCycles.find((c) => c.id === effCycle);
     if (!cycle) return setError('Hãy chọn vụ trồng.');
+    if (inWithdrawal && !editing && !validReason(wReason)) return setError('Vụ còn trong thời gian cách ly: hãy ghi lý do vẫn bán vào ngày này (ít nhất 3 ký tự), hoặc đổi sang ngày đã hết cách ly.');
     setError(null);
     setBusy(true);
     try {
@@ -221,7 +226,7 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
         const collected = collectMode === 'full' ? a! : collectMode === 'none' ? 0 : part === null || Number.isNaN(part) ? NaN : part;
         const credit = {
           id: draftId, orgId: cycle.owner_org_id, cycleId: cycle.id, date, quantity: q!, amount: a!, buyerNote: buyer.trim() || partName, partnerId,
-          invoiceNo: invoice, dueDate: due || null, collected, method,
+          invoiceNo: invoice, dueDate: due || null, collected, method, withdrawalReason: inWithdrawal ? wReason : undefined,
         };
         const badCredit = validateSaleCredit(credit, todayLocal());
         if (badCredit) { setError(badCredit); return; }
@@ -231,7 +236,7 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
         setSavedId(draftId);
         return;
       }
-      setSavedId(await recordSale({ id: draftId, cycle, date, quantity: q!, amount: a!, buyerNote: buyer, userId }));
+      setSavedId(await recordSale({ id: draftId, cycle, date, quantity: q!, amount: a!, buyerNote: buyer, userId, withdrawalReason: inWithdrawal ? wReason : undefined }));
     } catch (err) {
       setError(friendlyError(err));
     } finally {
@@ -250,6 +255,7 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
     setPartText('');
     setDue('');
     setSaved(null);
+    setWReason('');
     setError(null);
   }
 
@@ -285,6 +291,7 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
           Ngày bán
           <input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} />
         </label>
+        <WithdrawalNotice cycleId={effCycle} date={date} reason={wReason} onReason={setWReason} />
         <label>
           Số lượng bán (kg)
           <input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} />

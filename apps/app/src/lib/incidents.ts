@@ -1,4 +1,4 @@
-import { db, type IncidentActionRow, type IncidentRow } from './db';
+import { db, type IncidentActionRow, type IncidentRow, type WithdrawalRow } from './db';
 import { requireOnline } from './serverWrite';
 import { supabase } from './supabase';
 
@@ -23,6 +23,15 @@ export async function syncIncidentsDown(): Promise<void> {
   ]);
   if (!inc.error) { await db.incidents.clear(); await db.incidents.bulkPut(((inc.data ?? []) as Record<string, unknown>[]).map(fixIncident)); }
   if (!act.error) { await db.incidentActions.clear(); await db.incidentActions.bulkPut((act.data ?? []) as IncidentActionRow[]); }
+}
+
+/** Tải thời gian cách ly của các vụ (D96); chưa có bảng thì bỏ qua */
+export async function syncWithdrawalsDown(): Promise<void> {
+  if (!supabase || !navigator.onLine) return;
+  const { data, error } = await supabase.from('cycle_withdrawal').select('cycle_id, safe_date, items');
+  if (error) return;
+  await db.withdrawals.clear();
+  await db.withdrawals.bulkPut((data ?? []) as WithdrawalRow[]);
 }
 
 async function call<T>(fn: string, args: Record<string, unknown>, what: string): Promise<T> {
