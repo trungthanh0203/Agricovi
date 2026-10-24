@@ -9,8 +9,11 @@ import { enqueue, flushOutbox } from './outbox';
 import { insertAndCache, requireOnline, updateAndCache } from './serverWrite';
 import { supabase } from './supabase';
 
-const CYCLE_COLUMNS =
-  'id, owner_org_id, area_id, crop_type_id, status, start_date, expected_end_date, note, version, created_at, name, template_id, template_name, template_version, target_yield_kg, budget_amount';
+const CYCLE_COLUMNS_BASE =
+  'id, owner_org_id, area_id, crop_type_id, status, start_date, expected_end_date, note, version, created_at, name, template_id, template_name, template_version';
+// cột kế hoạch (D93) chỉ có sau khi CSDL được cập nhật; chưa cập nhật thì tải bản không có để KHÔNG làm hỏng đồng bộ cả danh sách vụ
+const CYCLE_COLUMNS = `${CYCLE_COLUMNS_BASE}, target_yield_kg, budget_amount`;
+const missingPlanColumns = (e: { message?: string; code?: string } | null) => !!e && (e.code === '42703' || /target_yield_kg|budget_amount|column/i.test(e.message ?? ''));
 const STAGE_COLUMNS =
   'id, cycle_id, name, seq, work_type_id, duration_days, planned_start, planned_end, actual_start, actual_end, status, note';
 
@@ -36,7 +39,9 @@ export async function syncDown(): Promise<void> {
     supabase.from('production_stages').select(STAGE_COLUMNS),
     supabase.from('cycle_notes').select(NOTE_COLUMNS).order('note_date', { ascending: false }).limit(1000),
   ]);
-  for (const r of [areas, cycles, logs]) if (r.error) throw r.error;
+  let cyclesRes: { data: unknown; error: { message?: string; code?: string } | null } = cycles;
+  if (cycles.error && missingPlanColumns(cycles.error)) cyclesRes = await supabase.from('production_cycles').select(CYCLE_COLUMNS_BASE);
+  for (const r of [areas, cyclesRes, logs]) if (r.error) throw r.error;
   // Các phần còn lại độc lập nhau nên tải song song (trước đây tải tuần tự, chậm hơn nhiều khi mạng yếu).
   // Vật tư/kho, thu hoạch, chi phí/doanh thu: lỗi ở đây không làm hỏng đồng bộ sản xuất.
   const extras = Promise.all([
@@ -59,7 +64,7 @@ export async function syncDown(): Promise<void> {
       await db.notes.bulkPut((notes.data ?? []) as NoteRow[]);
     }
     await db.areas.bulkPut(fresh(areas.data as AreaRow[]));
-    await db.cycles.bulkPut(fresh(cycles.data as CycleRow[]));
+    await db.cycles.bulkPut(fresh(cyclesRes.data as CycleRow[]));
     await db.logs.bulkPut(fresh(logs.data as LogRow[]));
   });
   await extras;
@@ -177,10 +182,11 @@ export async function setCyclePlan(cycleId: string, targetYield: number | null, 
 /** Tải lại một vụ cùng giai đoạn của nó từ máy chủ vào bộ nhớ trên máy */
 export async function refreshCycle(id: string): Promise<void> {
   if (!supabase) return;
-  const [cy, st] = await Promise.all([
+  let [cy, st] = await Promise.all([
     supabase.from('production_cycles').select(CYCLE_COLUMNS).eq('id', id).maybeSingle(),
     supabase.from('production_stages').select(STAGE_COLUMNS).eq('cycle_id', id),
   ]);
+  if (cy.error && missingPlanColumns(cy.error)) cy = (await supabase.from('production_cycles').select(CYCLE_COLUMNS_BASE).eq('id', id).maybeSingle()) as typeof cy;
   if (cy.error) throw new Error(cy.error.message);
   if (cy.data) await db.cycles.put(cy.data as unknown as CycleRow);
   if (!st.error) {
