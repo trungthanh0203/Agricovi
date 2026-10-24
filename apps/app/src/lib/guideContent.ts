@@ -15,8 +15,13 @@ export interface GuideStep {
   go?: { tab: TabId; section?: string; label: string };
 }
 
+/** Sơ đồ: các chặng xếp từ trên xuống, trong chặng là các ô nối nhau bằng mũi tên; bấm ô để mở bước tương ứng */
+export interface FlowNode { icon: string; label: string; step: number }
+export interface FlowPhase { title: string; tone: 'info' | 'ok' | 'warn' | 'neutral'; nodes: FlowNode[] }
+
 export interface Guide {
   id: GuideId;
+  flow: FlowPhase[];
   label: string;
   icon: string;
   intro: string;
@@ -30,6 +35,11 @@ export const GUIDES: Guide[] = [
     id: 'intro',
     label: 'Giới thiệu hệ thống',
     icon: '📖',
+    flow: [
+      { title: 'Một vòng đời mùa vụ', tone: 'ok', nodes: [{ icon: '🧰', label: 'Khai báo', step: 1 }, { icon: '🌱', label: 'Tạo vụ', step: 1 }, { icon: '📒', label: 'Ghi việc mỗi ngày', step: 1 }, { icon: '🧺', label: 'Thu hoạch và bán', step: 1 }, { icon: '📊', label: 'Tổng kết', step: 1 }] },
+      { title: 'Dùng hằng ngày', tone: 'info', nodes: [{ icon: '🧭', label: 'Thanh dưới và menu ☰', step: 2 }, { icon: '📶', label: 'Mất mạng vẫn ghi', step: 3 }, { icon: '🛡️', label: 'Ai làm được gì', step: 4 }] },
+      { title: 'Yên tâm và cài đặt', tone: 'neutral', nodes: [{ icon: '🔒', label: 'Dữ liệu riêng tư', step: 5 }, { icon: '📲', label: 'Cài lên điện thoại', step: 6 }] },
+    ],
     intro: 'AgriConnect là app giúp bạn ghi chép và quản lý nuôi trồng ngay trên điện thoại, thay cho sổ tay. Đọc nhanh 7 ý dưới đây, bấm vào từng ý để xem thêm.',
     steps: [
       {
@@ -102,6 +112,13 @@ export const GUIDES: Guide[] = [
     id: 'household',
     label: 'Hướng dẫn Hộ nuôi trồng',
     icon: '🌾',
+    flow: [
+      { title: 'Làm một lần đầu', tone: 'info', nodes: [{ icon: '📝', label: 'Đăng ký', step: 0 }, { icon: '🏡', label: 'Trang trại', step: 1 }, { icon: '🌾', label: 'Sản phẩm', step: 2 }, { icon: '📦', label: 'Kho và vật tư', step: 3 }, { icon: '📋', label: 'Quy trình mẫu', step: 4 }] },
+      { title: 'Mỗi vụ', tone: 'ok', nodes: [{ icon: '📥', label: 'Nhập kho', step: 5 }, { icon: '🌱', label: 'Tạo vụ', step: 6 }] },
+      { title: 'Mỗi ngày', tone: 'ok', nodes: [{ icon: '⏱', label: 'Vào ca → Ghi việc → Ra ca', step: 7 }] },
+      { title: 'Khi có thu và chi', tone: 'warn', nodes: [{ icon: '🧺', label: 'Thu hoạch và bán', step: 8 }, { icon: '💳', label: 'Chi phí và công nợ', step: 9 }] },
+      { title: 'Quản lý và kết quả', tone: 'neutral', nodes: [{ icon: '👥', label: 'Người làm, chấm công', step: 10 }, { icon: '📊', label: 'Kết quả và website', step: 11 }] },
+    ],
     intro: 'Làm lần lượt từ bước 1 đến bước 12. Bước 1–5 chỉ làm một lần đầu; từ bước 6 là việc lặp lại mỗi vụ, mỗi ngày.',
     steps: [
       {
@@ -218,6 +235,11 @@ export const GUIDES: Guide[] = [
     id: 'coop',
     label: 'Hướng dẫn Hợp tác xã',
     icon: '🤝',
+    flow: [
+      { title: 'Thiết lập', tone: 'info', nodes: [{ icon: '🏛️', label: 'Tạo cơ sở HTX', step: 0 }, { icon: '🤝', label: 'Mời hộ thành viên', step: 1 }, { icon: '📋', label: 'Khai báo chung', step: 2 }] },
+      { title: 'Vận hành', tone: 'ok', nodes: [{ icon: '🌱', label: 'Theo dõi vụ và sản lượng', step: 3 }, { icon: '👥', label: 'Nhân sự, chấm công', step: 4 }] },
+      { title: 'Công khai', tone: 'neutral', nodes: [{ icon: '🌐', label: 'Giấy phép, QR, website', step: 5 }] },
+    ],
     intro: 'Hợp tác xã dùng các bước như hộ (xem Hướng dẫn Hộ nuôi trồng) và thêm phần quản lý hộ thành viên dưới đây.',
     steps: [
       {
@@ -274,6 +296,11 @@ export const GUIDES: Guide[] = [
     id: 'company',
     label: 'Hướng dẫn Công ty',
     icon: '🏢',
+    flow: [
+      { title: 'Thiết lập tổ chức', tone: 'info', nodes: [{ icon: '🏢', label: 'Tạo cơ sở', step: 0 }, { icon: '🧑‍🤝‍🧑', label: 'Phòng / Tổ', step: 1 }, { icon: '🛡️', label: 'Phân quyền', step: 2 }] },
+      { title: 'Sản xuất và tiền', tone: 'ok', nodes: [{ icon: '🏡', label: 'Nhiều trang trại, nhiều vụ', step: 3 }, { icon: '💳', label: 'Nhà cung ứng, khách, nợ', step: 4 }, { icon: '⏱', label: 'Chấm công, tiền công', step: 5 }] },
+      { title: 'Công khai và bán', tone: 'neutral', nodes: [{ icon: '🌐', label: 'Giấy phép, QR, đơn website', step: 6 }] },
+    ],
     intro: 'Công ty có nhiều người và nhiều bộ phận nên cần chia quyền cẩn thận. Các thao tác khác giống Hướng dẫn Hộ nuôi trồng.',
     steps: [
       {
