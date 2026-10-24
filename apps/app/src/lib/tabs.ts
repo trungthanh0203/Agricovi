@@ -25,10 +25,10 @@ export interface Section<Id extends string = string> {
   label: string;
 }
 
-export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'attendance' | 'logs';
+export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'expense' | 'attendance' | 'logs';
 export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'customers';
 export type OrgSection = 'members' | 'positions' | 'teams' | 'coop';
-export type ReportSection = 'expense' | 'payables' | 'sales' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce';
+export type ReportSection = 'payables' | 'sales' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce';
 
 export function productionSections(org: MyOrg | null): Section<ProductionSection>[] {
   if (!org) return [];
@@ -37,6 +37,7 @@ export function productionSections(org: MyOrg | null): Section<ProductionSection
     hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,
     canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'stock' as const, label: 'Kho' } : null,
+    canPerm(org.perms, 'expenses') ? { id: 'expense' as const, label: 'Chi phí' } : null, // ghi chi phí hằng ngày: cùng nhóm với Thu hoạch, Kho (D92)
     { id: 'logs' as const, label: 'Nhật ký việc' }, // luôn để cuối
   ].filter((x): x is Section<ProductionSection> => x !== null);
 }
@@ -69,7 +70,6 @@ export function orgSections(org: MyOrg | null): Section<OrgSection>[] {
 export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
   if (!org) return [];
   return [
-    canPerm(org.perms, 'expenses') ? { id: 'expense' as const, label: 'Chi phí' } : null,
     canPerm(org.perms, 'expenses') || canPerm(org.perms, 'sales') ? { id: 'payables' as const, label: 'Công nợ' } : null,
     { id: 'paybook' as const, label: 'Bảng lương' }, // mọi người xem của mình; chủ/người có quyền Tiền công xem cả cơ sở
     canPerm(org.perms, 'sales') ? { id: 'sales' as const, label: 'Doanh thu' } : null,

@@ -204,11 +204,11 @@ export const GUIDES: Guide[] = [
       {
         title: 'Chi phí và công nợ',
         details: [
-          'Báo cáo → Chi phí: ghi các khoản chi theo 6 nhóm (vật tư, nhân công, nhiên liệu…).',
+          'Sản xuất → Chi phí: ghi các khoản chi theo 6 nhóm (vật tư, nhân công, nhiên liệu…).',
           'Mua vật tư chưa trả hết tiền: ghi số hóa đơn và hạn trả (bạn tự nhập), app nhắc khi sắp hoặc đã quá hạn.',
           'Công nợ: xem tổng nợ phải trả và phải thu, tuổi nợ, ghi lần trả/thu tiếp theo.',
         ],
-        go: { tab: 'reports', section: 'expense', label: 'Mở Chi phí' },
+        go: { tab: 'production', section: 'expense', label: 'Mở Chi phí' },
       },
       {
         title: 'Mời người làm, chấm công, tiền công',

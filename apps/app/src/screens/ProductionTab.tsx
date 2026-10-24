@@ -4,6 +4,7 @@ import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
 import { StockPanel } from './StockPanel';
 import { LogsScreen } from './LogsScreen';
 import { AttendanceSection } from '../components/AttendanceSection';
+import { ExpenseSection } from '../components/ExpenseSection';
 import { HarvestSection } from '../components/HarvestSection';
 import { pickSection, SubTabs } from '../components/SubTabs';
 import { friendlyError } from '../lib/errors';
@@ -45,6 +46,8 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
         <HarvestSection />
       ) : current === 'stock' ? (
         <StockPanel />
+      ) : current === 'expense' ? (
+        <ExpenseSection />
       ) : current === 'attendance' ? (
         <AttendanceSection onOpenCycle={onOpenCycle} onLogFor={onLogFor} />
       ) : current === 'logs' ? (
@@ -180,7 +183,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
         return (
           <div className="card slim" key={c.id}>
             <div className="row">
-              <strong>{c.name || cropName(c.crop_type_id)}</strong>
+              <strong>{c.name || cropName(c.crop_type_id)} - <span className="mono-code">{cycleCode(c.id)}</span></strong>
               <span className="pill">{CYCLE_STATUS_LABEL_VI[c.status]}</span>
             </div>
             <p className="muted">
@@ -199,7 +202,6 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
                 </p>
               </>
             )}
-            <p className="muted">Mã vụ: <strong>{cycleCode(c.id)}</strong></p>
             <div className="actions">
               <button className="secondary" onClick={() => onOpenCycle(c.id)}>Quy trình &amp; Lịch</button>
               <button className="secondary" aria-expanded={qrId === c.id} onClick={() => setQrId(qrId === c.id ? null : c.id)}>{qrId === c.id ? 'Ẩn mã QR' : 'Mã QR của vụ'}</button>

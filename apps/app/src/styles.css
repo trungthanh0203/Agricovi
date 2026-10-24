@@ -531,3 +531,6 @@ button.member-btn .sub { display: block; }
 .range-mid p { margin: 2px 0 0; font-size: .85rem; }
 button.range-btn { flex: none; width: 44px; height: 44px; font-size: 1.6rem; line-height: 1; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--green); cursor: pointer; }
 button.range-btn:disabled { opacity: .35; cursor: default; }
+
+/* Mã vụ cạnh tên vụ */
+.mono-code { font-family: ui-monospace, Consolas, monospace; font-weight: 600; font-size: .85em; letter-spacing: .04em; color: var(--muted); }

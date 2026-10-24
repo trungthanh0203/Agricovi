@@ -1,5 +1,4 @@
 import { CommerceProfile } from '../components/CommerceProfile';
-import { ExpenseSection } from '../components/ExpenseSection';
 import { ReportBuilder } from '../components/ReportBuilder';
 import { DebtsSection } from '../components/DebtsSection';
 import { WebSiteSection } from '../components/WebSiteSection';
@@ -25,7 +24,7 @@ export function ReportsTab({ section, onSection, onGo }: { section?: string; onS
     <section>
       <h1>Báo cáo</h1>
       <SubTabs items={items} value={current} onChange={onSection} onBack={() => onSection('' as ReportSection)} label="Báo cáo" />
-      {current === 'website' ? <WebSiteSection /> : current === 'payables' ? <DebtsSection /> : current === 'sales' ? <SalesSection /> : current === 'summary' ? <SummarySection /> : current === 'weekly' ? <WeeklyReport onSection={onSection} /> : current === 'paybook' ? <PayrollBook onGo={onGo} /> : current === 'custom' ? <ReportBuilder /> : current === 'commerce' ? <CommerceProfile org={active} /> : current === 'expense' ? <ExpenseSection /> : null}
+      {current === 'website' ? <WebSiteSection /> : current === 'payables' ? <DebtsSection /> : current === 'sales' ? <SalesSection /> : current === 'summary' ? <SummarySection /> : current === 'weekly' ? <WeeklyReport onSection={onSection} /> : current === 'paybook' ? <PayrollBook onGo={onGo} /> : current === 'custom' ? <ReportBuilder /> : current === 'commerce' ? <CommerceProfile org={active} /> : null}
     </section>
   );
 }
