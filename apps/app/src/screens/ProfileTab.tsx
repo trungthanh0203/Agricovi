@@ -14,7 +14,7 @@ import { useOrgs } from '../lib/orgs';
 import { PERM_LEVEL_LABEL, PERM_MODULE_LABEL, PERM_MODULES } from '../lib/permissions';
 import { changeMyPassword, fetchDisplayName, fetchMyWork, renameOrg, saveDisplayName, type MyWork } from '../lib/profile';
 import { buildAccountQr } from '../lib/qr';
-import { hasRole, isOwner, roleSummary } from '../lib/roles';
+import { isOwner, roleSummary } from '../lib/roles';
 import { fetchStaffStatus, WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
 import { fetchMyPay, fmtVnd, type MyPay } from '../lib/work';
 
@@ -106,7 +106,7 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
         </Collapsible>
       )}
 
-      {active && hasRole(active.roles, 'manager') && (
+      {active && isOwner(active.roles) && (
         <Collapsible title="Gói dịch vụ">
           <PlanCard />
         </Collapsible>
@@ -114,7 +114,7 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
 
       {active && (
         <Collapsible title="Giấy phép, chứng chỉ" summary={licenses.length > 0 ? `${licenses.length} giấy${soon > 0 ? ` · ${soon} cần chú ý` : ''}` : 'chưa có'} warn={soon > 0}>
-          <LicensesSection orgId={active.id} canEdit={hasRole(active.roles, 'manager')} onLoaded={setLicenses} />
+          <LicensesSection orgId={active.id} canEdit={isOwner(active.roles)} onLoaded={setLicenses} />
         </Collapsible>
       )}
 

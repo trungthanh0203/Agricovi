@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { MemberRole, OrgType } from '@agriconnect/shared';
 import { useAuth } from './auth';
 import { effectivePerms, type EffectivePerms, type PermOverrides } from './permissions';
+import { saveRoleLabels } from './roles';
 import { supabase } from './supabase';
 
 export interface MyOrg {
@@ -100,7 +101,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     try {
       if (!supabase || !navigator.onLine) throw new Error('offline');
       // hai truy vấn không phụ thuộc nhau nên gửi cùng lúc
-      const [memRes, posRes] = await Promise.all([
+      const [memRes, posRes, labelRes] = await Promise.all([
         supabase
           .from('organization_memberships')
           .select('roles, permissions, position_ids, organizations ( id, type, name )')
@@ -110,9 +111,12 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           .eq('user_id', uid),
         // chức vụ đang hoạt động của các cơ sở tôi thuộc (lỗi/thiếu bảng thì coi như chưa có chức vụ nào)
         supabase.from('org_positions').select('id, organization_id, name, perms, work_type_ids, can_manage_stages, base_role, is_builtin').eq('is_active', true),
+        // tên vai trò do quản trị nền tảng đặt (D82)
+        supabase.from('platform_role_labels').select('role, name'),
       ]);
       const { data, error } = memRes;
       if (error) throw error;
+      if (!labelRes.error && labelRes.data) saveRoleLabels(Object.fromEntries((labelRes.data as { role: string; name: string }[]).map((r) => [r.role, r.name])));
       const allPos = (posRes.error ? [] : (posRes.data ?? [])) as PositionRow[];
       const list: MyOrg[] = (data ?? []).flatMap((row) => {
         const o = row.organizations as unknown as { id: string; type: OrgType; name: string } | null;

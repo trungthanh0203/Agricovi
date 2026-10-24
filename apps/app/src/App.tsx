@@ -148,7 +148,7 @@ function Shell() {
   const attention = counts?.needs_attention ?? 0;
   // Thanh dưới chỉ giữ việc dùng hằng ngày; Khai báo, Tổ chức, Tài khoản nằm ở menu ☰ (D74)
   const mainTabs = tabs.filter((t) => t === 'home' || t === 'production' || t === 'reports');
-  const menuTabs = tabs.filter((t) => t === 'declare' || t === 'org' || t === 'guide' || t === 'profile');
+  const menuTabs = (['profile', 'org', 'declare', 'guide'] as TabId[]).filter((t) => tabs.includes(t)); // Tài khoản lên đầu menu ☰
   const fabAt = mainTabs.length >= 3 ? 2 : 1; // nút Ghi việc nằm giữa
   const canLog = cyclesAll.some((c) => c.status === 'active' && c.owner_org_id === active?.id);
 

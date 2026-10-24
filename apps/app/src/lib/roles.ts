@@ -27,7 +27,7 @@ export const ROLE_LABEL: Record<string, string> = {
 /** "Quản lý, Kho & chi phí" - owner hiển thị kèm ghi chú đã bao gồm mọi vai trò */
 export function roleSummary(roles: readonly MemberRole[] | undefined): string {
   if (!roles || roles.length === 0) return '—';
-  if (roles.includes('owner')) return 'Chủ cơ sở (gồm mọi vai trò)';
+  if (roles.includes('owner')) return `${ROLE_LABEL.owner} (gồm mọi vai trò)`;
   return roles.map((r) => ROLE_LABEL[r] ?? r).join(', ');
 }
 
@@ -46,3 +46,17 @@ export function authorLabel(name?: string | null, roles?: readonly string[] | nu
   if (name && r) return `${name} (${r})`;
   return name ?? (r ? `(${r})` : '');
 }
+
+const LABEL_KEY = 'agriconnect.roleLabels';
+/** Ghi đè tên vai trò theo tên do quản trị nền tảng đặt (D82). Gọi lúc mở app (bản đã lưu) và mỗi lần tải cơ sở từ máy chủ. */
+export function applyRoleLabels(labels: Record<string, string>): void {
+  for (const [k, v] of Object.entries(labels)) if (v && v.trim()) ROLE_LABEL[k] = v.trim();
+}
+export function loadCachedRoleLabels(): void {
+  try { const raw = localStorage.getItem(LABEL_KEY); if (raw) applyRoleLabels(JSON.parse(raw) as Record<string, string>); } catch { /* bỏ qua */ }
+}
+export function saveRoleLabels(labels: Record<string, string>): void {
+  applyRoleLabels(labels);
+  try { localStorage.setItem(LABEL_KEY, JSON.stringify(labels)); } catch { /* bỏ qua */ }
+}
+loadCachedRoleLabels();

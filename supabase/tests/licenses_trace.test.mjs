@@ -14,17 +14,20 @@ async function setup() {
   return { db, owner, mgr, wk, other, org };
 }
 
-test('giấy phép, chứng chỉ: mọi thành viên xem, chỉ chủ/quản lý ghi, người ngoài không thấy, hạn không trước ngày cấp', async () => {
+test('giấy phép, chứng chỉ: mọi thành viên xem, chỉ chủ ghi, người ngoài không thấy, hạn không trước ngày cấp', async () => {
   const { db, owner, mgr, wk, other, org } = await setup();
   const ins = (u, n, issued, exp) => asUser(db, u, `insert into org_licenses (organization_id,name,issuer,number,issued_date,expires_date,image) values ($1,$2,'Sở NN','VG-01',$3,$4,'data:image/jpeg;base64,AAAA')`, [org, n, issued, exp]);
   await ins(owner, 'Chứng nhận VietGAP', '2026-01-01', '2029-01-01');
-  await ins(mgr, 'Giấy phép kinh doanh', null, null);
+  await ins(owner, 'Giấy phép kinh doanh', null, null);
+  assert.match(await expectError(ins(mgr, 'Quản lý tự thêm', null, null)), /row-level security/);
   assert.match(await expectError(ins(wk, 'Tự thêm', '2026-01-01', '2027-01-01')), /row-level security/);
   assert.match(await expectError(ins(owner, 'Sai ngày', '2026-05-01', '2026-01-01')), /check/i);
   assert.equal((await asUser(db, wk, `select count(*)::int n from org_licenses`)).rows[0].n, 2);
   assert.equal((await asUser(db, other, `select count(*)::int n from org_licenses`)).rows[0].n, 0);
   assert.equal((await asUser(db, wk, `delete from org_licenses returning id`)).rows.length, 0);
-  await asUser(db, mgr, `update org_licenses set expires_date='2030-01-01' where name='Chứng nhận VietGAP'`);
+  assert.equal((await asUser(db, mgr, `update org_licenses set expires_date='2030-01-01' where name='Chứng nhận VietGAP' returning id`)).rows.length, 0);
+  assert.equal((await asUser(db, mgr, `delete from org_licenses returning id`)).rows.length, 0);
+  await asUser(db, owner, `update org_licenses set expires_date='2030-01-01' where name='Chứng nhận VietGAP'`);
 });
 
 test('truy xuất vụ: tên, nơi trồng, thời gian, vật tư đã dùng (trừ phần đã đảo khi hủy nhật ký); người ngoài bị chặn', async () => {

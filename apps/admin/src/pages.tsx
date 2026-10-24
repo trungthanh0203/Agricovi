@@ -334,7 +334,7 @@ export function SettingsPage() {
 interface AuditRow { id: number; at: string; actor: string | null; org: string | null; action: string; entity: string; entity_id: string | null; before: unknown; after: unknown; reason: string | null }
 const ACTION_LABEL: Record<string, string> = {
   record_payment: 'Ghi nhận thanh toán', set_plan: 'Đổi gói / đặt hạn', suspend_org: 'Tạm khóa cơ sở', unsuspend_org: 'Mở khóa cơ sở', create_plan: 'Tạo gói', update_plan: 'Sửa gói',
-  set_setting: 'Sửa cấu hình', hide_public_cycle: 'Tạm ẩn vụ công khai', unhide_public_cycle: 'Cho phép vụ công khai lại', unlock: 'Mở khóa kỳ lương',
+  set_setting: 'Sửa cấu hình', set_role_label: 'Đổi tên vai trò', hide_public_cycle: 'Tạm ẩn vụ công khai', unhide_public_cycle: 'Cho phép vụ công khai lại', unlock: 'Mở khóa kỳ lương',
 };
 export function AuditPage() {
   const [onlyAdmin, setOnlyAdmin] = useState(true);
@@ -350,6 +350,52 @@ export function AuditPage() {
             <td>{fmtDateTime(r.at)}</td><td>{r.actor ?? '—'}</td><td>{ACTION_LABEL[r.action] ?? `${r.action} ${r.entity}`}</td><td>{r.org ?? '—'}</td>
             <td>{r.reason ?? ''}{r.after ? <small>{JSON.stringify(r.after).slice(0, 140)}</small> : null}</td>
           </tr>))}</tbody></table>
+    </>
+  );
+}
+
+// ============================================================ Tên vai trò
+const ROLE_ORDER: { role: string; note: string }[] = [
+  { role: 'owner', note: 'Người sở hữu cơ sở (có mọi quyền)' },
+  { role: 'manager', note: 'Điều hành sản xuất, nhân sự, chấm công' },
+  { role: 'worker', note: 'Ghi nhật ký, thu hoạch, chấm công' },
+  { role: 'inventory_finance', note: 'Kho, chi phí, doanh thu' },
+  { role: 'cooperative_manager', note: 'Quản lý hộ thành viên (chỉ có ở hợp tác xã)' },
+  { role: 'profile_editor', note: 'Soạn hồ sơ giới thiệu trên website' },
+];
+export function RolesPage() {
+  const { data, error, reload } = useLoad(async () => {
+    const { data: rows, error: e } = await supabase!.from('platform_role_labels').select('role, name');
+    if (e) throw new Error(e.message);
+    return Object.fromEntries((rows ?? []).map((r) => [r.role as string, r.name as string]));
+  });
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => { if (data) setDraft(data); }, [data]);
+  async function save(role: string) {
+    setErr(null); setMsg(null);
+    try {
+      const name = (draft[role] ?? '').trim();
+      if (name === data?.[role]) { setMsg('Tên chưa thay đổi.'); return; }
+      if (!window.confirm(`Đổi tên vai trò này thành "${name}"?\n\nTất cả cơ sở sẽ hiện tên mới ngay. Quyền của vai trò không đổi.`)) return;
+      const n = await rpc<number>('admin_set_role_label', { p_role: role, p_name: name, p_reason: null });
+      setMsg(`Đã đổi tên. ${n} cơ sở đã cập nhật; người dùng thấy tên mới khi mở lại app.`);
+      reload();
+    } catch (e) { setErr(clean(e instanceof Error ? e.message : String(e))); }
+  }
+  return (
+    <>
+      <p className="muted">Đổi tên hiển thị của các vai trò có sẵn. Đổi một lần là áp dụng cho mọi cơ sở (cả cơ sở tạo sau). Chỉ đổi tên, không đổi quyền.</p>
+      <Err e={error ?? err} />{msg && <p className="msg ok" role="status">{msg}</p>}
+      {ROLE_ORDER.map((r) => (
+        <section className="card" key={r.role}>
+          <h2>{data?.[r.role] ?? r.role}</h2>
+          <p className="muted">{r.note}</p>
+          <input value={draft[r.role] ?? ''} maxLength={40} onChange={(e) => setDraft({ ...draft, [r.role]: e.target.value })} aria-label={`Tên mới của vai trò ${data?.[r.role] ?? r.role}`} />
+          <div><button className="primary" onClick={() => void save(r.role)}>Lưu</button></div>
+        </section>
+      ))}
     </>
   );
 }
