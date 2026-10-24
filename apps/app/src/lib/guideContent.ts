@@ -179,6 +179,7 @@ export const GUIDES: Guide[] = [
         title: 'Tạo vụ theo quy trình mẫu',
         details: [
           'Vào Sản xuất → Mùa vụ, bấm + Tạo vụ mới: chọn trang trại, sản phẩm, quy trình mẫu và ngày bắt đầu.',
+          'Có thể nhập Giống, Diện tích trồng (m², ha, sào hoặc công), Số cây, nguồn giống, số lô giống, ngày gieo/trồng: app tự tính mật độ, năng suất, chi phí và lãi trên 1.000 m² (hoặc trên sào/công/ha bạn chọn).',
           'Có thể nhập Sản lượng dự kiến (kg) và Ngân sách dự kiến (đồng) để so với thực tế (không bắt buộc; sửa sau ở Sửa vụ).',
           'Chọn "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước, bắt đầu chạy sau. App lập lịch các giai đoạn theo quy trình mẫu.',
           'Mỗi vụ có một mã (hiện sau tên vụ, ví dụ "Dưa vụ 1 - AB12CD34") dùng cho mã QR truy xuất.',
@@ -191,7 +192,7 @@ export const GUIDES: Guide[] = [
           'Bấm "Bắt đầu sản xuất" khi vụ thật sự chạy: ngày bắt đầu thành ngày thực tế và lịch các giai đoạn tự dời theo.',
           'Bắt đầu hoặc hoàn thành một giai đoạn sớm/trễ so với kế hoạch, hoặc sửa ngày kết thúc của một giai đoạn: các giai đoạn phía sau tự dời theo số ngày lệch (giai đoạn đang chạy hay đã xong không bị đổi).',
           'Bấm Quy trình & Lịch để xem hôm nay cần làm gì; có thể ghi chú theo ngày và được nhắc ở Trang chủ.',
-          'Mỗi thẻ vụ có dòng số liệu: Chi phí · Thu hoạch · Doanh thu · Lãi/Lỗ tạm tính, và thanh so với ngân sách, sản lượng dự kiến. Bấm "Xem thêm số liệu" để xem chi phí chia theo vật tư/tiền công/khác, hao hụt, còn tồn, giá thành mỗi kg, ngày chạy, giờ công, tiền khách còn nợ.',
+          'Mỗi thẻ vụ có dòng số liệu: Chi phí · Thu hoạch · Doanh thu · Lãi/Lỗ tạm tính, và thanh so với ngân sách, sản lượng dự kiến. Có diện tích thì hiện thêm Năng suất trên diện tích. Bấm "Xem thêm số liệu" để xem chi phí chia theo vật tư/tiền công/khác, hao hụt, còn tồn, giá thành mỗi kg, ngày chạy, giờ công, tiền khách còn nợ.',
           'Chỉ hiện số bạn có quyền xem (tiền cần quyền Tổng kết vụ).',
         ],
         tip: 'Muốn so với kế hoạch: bấm Sửa vụ để nhập sản lượng và ngân sách dự kiến.',

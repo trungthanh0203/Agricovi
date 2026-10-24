@@ -31,6 +31,14 @@ export interface CycleRow {
   /** Kế hoạch của vụ (D93): sản lượng dự kiến (kg) và ngân sách dự kiến (đồng) */
   target_yield_kg?: number | null;
   budget_amount?: number | null;
+  /** Giống và diện tích (D94): diện tích trồng theo m², số cây, giống, nguồn giống, số lô giống, ngày gieo/trồng */
+  planted_area_m2?: number | null;
+  plant_count?: number | null;
+  variety_name?: string | null;
+  seed_source?: string | null;
+  seed_lot?: string | null;
+  sowing_date?: string | null;
+  planting_date?: string | null;
   /** Quy trình mẫu vụ được tạo theo (bản chụp lúc tạo, P2) */
   template_id?: string | null;
   template_name?: string | null;

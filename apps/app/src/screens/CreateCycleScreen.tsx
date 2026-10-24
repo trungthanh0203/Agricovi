@@ -3,6 +3,7 @@ import { useCatalog } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
+import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
 import { createCycle, fetchQuotaContexts, type QuotaContext } from '../lib/production';
 import { addDays, fmtDate } from '../lib/dates';
 import { listTemplates, loadTemplate, type StageRow, type TemplateRow } from '../lib/templates';
@@ -26,6 +27,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const [startNow, setStartNow] = useState(true);
   const [startDate, setStartDate] = useState(todayLocal());
   const [targetYield, setTargetYield] = useState('');
+  const [cropInfo, setCropInfo] = useState<CropInfoForm>(() => cropInfoToForm(null));
   const [budget, setBudget] = useState('');
   const [contexts, setContexts] = useState<QuotaContext[] | null>(null);
   const [ownerId, setOwnerId] = useState('');
@@ -97,6 +99,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           : 'Gói đã hết hạn nên chưa tạo được vụ đang sản xuất. Hãy gia hạn, hoặc chọn "Chưa bắt đầu".',
       );
     }
+    const cropInfoResult = formToCropInfo(cropInfo);
+    if ('error' in cropInfoResult) return setError(cropInfoResult.error);
     setBusy(true);
     try {
       const newId = await createCycle({
@@ -106,6 +110,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
         status: startNow ? 'active' : 'preparing',
         startDate: startDate || null,
         name,
+        info: cropInfoResult.info,
         targetYield: targetYield.trim() ? Number(targetYield.replace(/[.,\s]/g, '')) : null,
         budget: budget.trim() ? Number(budget.replace(/[.,\s]/g, '')) : null,
       });
@@ -193,6 +198,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
             Ngày bắt đầu
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </label>
+
+          <CycleInfoFields value={cropInfo} onChange={setCropInfo} />
 
           <div className="pair">
             <label>Sản lượng dự kiến (kg)<input value={targetYield} inputMode="numeric" onChange={(e) => setTargetYield(e.target.value)} placeholder="Không bắt buộc" /></label>

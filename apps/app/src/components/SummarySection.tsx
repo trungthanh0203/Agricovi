@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCatalog } from '../lib/catalog';
+import { AREA_UNITS, fmtArea, getAreaUnit } from '../lib/areaUnits';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { ChartCard, DonutChart, HBarList } from './charts';
 import { friendlyError } from '../lib/errors';
@@ -34,6 +35,13 @@ export function SummarySection() {
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
   const [picked, setPicked] = useState('');
   const cycleId = picked || (ordered.find((c) => c.id === remembered)?.id ?? ordered[0]?.id ?? '');
+  // diện tích và năng suất (D94): theo đơn vị người dùng chọn (m² thì tính trên 1.000 m²)
+  const cycleRow = cycles.find((c) => c.id === cycleId) ?? null;
+  const areaM2 = cycleRow?.planted_area_m2 ?? null;
+  const areaUnit = getAreaUnit();
+  const unitDef = AREA_UNITS.find((u) => u.id === areaUnit) ?? AREA_UNITS[0]!;
+  const f = unitDef.id === 'm2' ? 1 : unitDef.m2 / 1000;
+  const perLabel = unitDef.id === 'm2' ? '1.000 m²' : unitDef.short;
 
   const [summary, setSummary] = useState<CycleSummary | null>(null);
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
@@ -165,6 +173,20 @@ export function SummarySection() {
             <Row k="Đã bán" v={`${vnNumber(summary.sold_qty)} kg`} />
             <Row k="Doanh thu đã ghi" v={formatMoney(summary.revenue_recorded)} />
           </div>
+
+          {areaM2 ? (
+            <div className="card">
+              <h2>Diện tích và năng suất</h2>
+              <Row k="Diện tích trồng" v={fmtArea(areaM2, areaUnit)} />
+              {cycleRow?.plant_count ? <Row k="Số cây" v={`${cycleRow.plant_count.toLocaleString('vi-VN')} (${Math.round((cycleRow.plant_count / areaM2) * 1000).toLocaleString('vi-VN')} cây/1.000 m²)`} /> : null}
+              {cycleRow?.variety_name ? <Row k="Giống" v={cycleRow.variety_name} /> : null}
+              <Row k={`Năng suất (kg / ${perLabel})`} v={vnNumber((summary.harvested_net_qty / areaM2) * 1000 * f)} />
+              <Row k={`Chi phí đã ghi / ${perLabel}`} v={formatMoney(Math.round((summary.total_cost / areaM2) * 1000 * f))} />
+              <Row k={`Doanh thu đã ghi / ${perLabel}`} v={formatMoney(Math.round((summary.revenue_recorded / areaM2) * 1000 * f))} />
+              {compare && <Row k={summary.revenue_recorded - summary.total_cost >= 0 ? `Lãi / ${perLabel}` : `Lỗ / ${perLabel}`} v={formatMoney(Math.abs(Math.round(((summary.revenue_recorded - summary.total_cost) / areaM2) * 1000 * f)))} />}
+              {cycleRow?.plant_count ? <Row k="Thu hoạch mỗi cây" v={`${vnNumber(summary.harvested_net_qty / cycleRow.plant_count)} kg`} /> : null}
+            </div>
+          ) : null}
 
           <div className="card">
             <h2>Giá thành mỗi kg</h2>

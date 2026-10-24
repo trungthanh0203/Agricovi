@@ -13,13 +13,15 @@ import { cycleProgress } from '../lib/cycles';
 import { cycleCode } from '../lib/qr';
 import { CycleQr } from '../components/CycleQr';
 import { CycleStatsStrip } from '../components/CycleStatsStrip';
+import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
+import { fmtArea, getAreaUnit } from '../lib/areaUnits';
 import { cachedCycleStats, fetchCycleStats, type CycleStats } from '../lib/cycleStats';
 import { hasAnyStat } from '../lib/cycleStatsLogic';
 import { PublishCycle } from '../components/PublishCycle';
 import { fmtDate } from '../lib/dates';
 import { useOrgs } from '../lib/orgs';
 import { canManageProduction, isOwner } from '../lib/roles';
-import { deleteCycle, editCycle, fetchQuotaContexts, setCyclePlan, setCycleStatus, type QuotaContext } from '../lib/production';
+import { deleteCycle, editCycle, fetchQuotaContexts, setCycleInfo, setCyclePlan, setCycleStatus, type CropInfo, type QuotaContext } from '../lib/production';
 import type { CycleRow } from '../lib/db';
 import { productionSections, type ProductionSection, type TabId } from '../lib/tabs';
 import { useTable } from '../lib/tables';
@@ -73,13 +75,14 @@ const GROUPS: { id: CycleGroup; label: string; statuses: CycleStatus[] }[] = [
 /** Sửa nhanh thông tin vụ: tên, ngày bắt đầu, ghi chú */
 function CycleEditForm({ cycle, busy, onSave, onClose }: {
   cycle: CycleRow; busy: boolean;
-  onSave: (v: { name: string; start_date: string | null; note: string; targetYield: number | null; budget: number | null }) => Promise<void>; onClose: () => void;
+  onSave: (v: { name: string; start_date: string | null; note: string; targetYield: number | null; budget: number | null; info: CropInfo }) => Promise<void>; onClose: () => void;
 }) {
   const [name, setName] = useState(cycle.name ?? '');
   const [start, setStart] = useState(cycle.start_date ?? '');
   const [note, setNote] = useState(cycle.note ?? '');
   const [target, setTarget] = useState(cycle.target_yield_kg != null ? String(cycle.target_yield_kg) : '');
   const [budget, setBudget] = useState(cycle.budget_amount != null ? String(cycle.budget_amount) : '');
+  const [info, setInfo] = useState<CropInfoForm>(() => cropInfoToForm(cycle));
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   return (
@@ -87,6 +90,7 @@ function CycleEditForm({ cycle, busy, onSave, onClose }: {
       <label>Tên vụ<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
       <label>Ngày bắt đầu<input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></label>
       <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
+      <CycleInfoFields value={info} onChange={setInfo} />
       <div className="pair">
         <label>Sản lượng dự kiến (kg)<input value={target} inputMode="numeric" onChange={(e) => setTarget(e.target.value)} placeholder="Không bắt buộc" /></label>
         <label>Ngân sách dự kiến (đồng)<input value={budget} inputMode="numeric" onChange={(e) => setBudget(e.target.value)} placeholder="Không bắt buộc" /></label>
@@ -99,7 +103,9 @@ function CycleEditForm({ cycle, busy, onSave, onClose }: {
           const num = (v: string) => (v.trim() ? Number(v.replace(/[.,\s]/g, '')) : null);
           const t = num(target), b = num(budget);
           if ((t !== null && Number.isNaN(t)) || (b !== null && Number.isNaN(b))) { setSaving(false); return setErr('Sản lượng và ngân sách dự kiến phải là số.'); }
-          onSave({ name, start_date: start || null, note, targetYield: t, budget: b }).catch((e) => setErr(friendlyError(e))).finally(() => setSaving(false));
+          const ci = formToCropInfo(info);
+          if ('error' in ci) { setSaving(false); return setErr(ci.error); }
+          onSave({ name, start_date: start || null, note, targetYield: t, budget: b, info: ci.info }).catch((e) => setErr(friendlyError(e))).finally(() => setSaving(false));
         }}>Lưu thay đổi</button>
         <button type="button" className="secondary" onClick={onClose}>Hủy</button>
       </div>
@@ -216,6 +222,9 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
               {c.start_date && ` · Bắt đầu ${new Date(c.start_date).toLocaleDateString('vi-VN')}`}
             </p>
             {c.name && <p className="muted">Sản phẩm: {cropName(c.crop_type_id)}</p>}
+            {(c.planted_area_m2 || c.variety_name || c.plant_count) && (
+              <p className="muted">{[c.planted_area_m2 ? `Diện tích ${fmtArea(c.planted_area_m2, getAreaUnit())}` : '', c.plant_count ? `${c.plant_count.toLocaleString('vi-VN')} cây` : '', c.variety_name ? `Giống: ${c.variety_name}` : ''].filter(Boolean).join(' · ')}</p>
+            )}
             {owner && <p className="muted">Ghi theo: {owner}</p>}
             {prog.total > 0 && (
               <>
@@ -242,6 +251,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
                 onSave={async (v) => {
                   await editCycle(c.id, { name: v.name, start_date: v.start_date, note: v.note });
                   if (v.targetYield !== (c.target_yield_kg ?? null) || v.budget !== (c.budget_amount ?? null)) await setCyclePlan(c.id, v.targetYield, v.budget);
+                  await setCycleInfo(c.id, v.info);
                   setEditId(null);
                 }} />
             )}

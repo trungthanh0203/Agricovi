@@ -9,6 +9,9 @@ export interface CycleStat {
   cost_total: number | null; cost_material: number | null; cost_labor: number | null; cost_other: number | null;
   revenue: number | null; profit: number | null; sold: number | null; unsold: number | null; avg_price: number | null; cost_per_kg: number | null; profit_per_kg: number | null;
   receivable: number | null;
+  /** Diện tích và năng suất (D94) */
+  area_m2: number | null; plant_count: number | null; variety: string | null; density_per_1000m2: number | null; yield_per_1000m2: number | null; kg_per_plant: number | null;
+  cost_per_1000m2: number | null; revenue_per_1000m2: number | null; profit_per_1000m2: number | null;
   missing_cost: boolean | null; has_estimate: boolean | null; missing_harvest: boolean | null; missing_revenue: boolean | null;
 }
 

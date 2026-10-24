@@ -1,6 +1,7 @@
 import { Collapsible } from './Collapsible';
 import { ProportionBar } from './charts';
 import { shortMoney } from './HomeStats';
+import { AREA_UNITS, fmtArea, getAreaUnit } from '../lib/areaUnits';
 import { budgetTone, pctOf, statWarnings, type CycleStat } from '../lib/cycleStatsLogic';
 
 const money = (n: number) => `${Math.round(n).toLocaleString('vi-VN')} đ`;
@@ -34,6 +35,11 @@ export function CycleStatsStrip({ s }: { s: CycleStat }) {
   const budgetPct = pctOf(s.cost_total, s.budget_amount);
   const yieldPct = pctOf(s.harvest_net, s.target_yield_kg);
   const warns = statWarnings(s);
+  // năng suất theo diện tích: đơn vị người dùng chọn (m² thì tính trên 1.000 m²)
+  const unitId = getAreaUnit();
+  const unit = AREA_UNITS.find((u) => u.id === unitId) ?? AREA_UNITS[0]!;
+  const f = unit.id === 'm2' ? 1 : unit.m2 / 1000;
+  const perLabel = unit.id === 'm2' ? '1.000 m²' : unit.short;
   const lossPct = s.harvest_gross && s.harvest_gross > 0 && s.harvest_loss !== null ? Math.round((s.harvest_loss / s.harvest_gross) * 1000) / 10 : null;
   return (
     <div className="cycle-stats">
@@ -43,6 +49,7 @@ export function CycleStatsStrip({ s }: { s: CycleStat }) {
         {s.revenue !== null && <Tile label="Doanh thu" value={shortMoney(s.revenue)} tone="ok" title={money(s.revenue)} />}
         {s.profit !== null && <Tile label={s.profit >= 0 ? 'Lãi tạm tính' : 'Lỗ tạm tính'} value={shortMoney(Math.abs(s.profit))} tone={s.profit >= 0 ? 'ok' : 'bad'} title={money(s.profit)} />}
       </div>
+      {s.yield_per_1000m2 !== null && <p className="muted yield-line">Năng suất: <strong>{kg(s.yield_per_1000m2 * f)}/{perLabel}</strong>{s.area_m2 !== null ? ` · diện tích ${fmtArea(s.area_m2, unitId)}` : ''}</p>}
       {budgetPct !== null && s.budget_amount !== null && s.cost_total !== null && <Plan label="Ngân sách đã dùng" pct={budgetPct} text={`${shortMoney(s.cost_total)} / ${shortMoney(s.budget_amount)}`} />}
       {yieldPct !== null && s.target_yield_kg !== null && s.harvest_net !== null && <Plan label="Sản lượng so với dự kiến" pct={yieldPct} text={`${kg(s.harvest_net)} / ${kg(s.target_yield_kg)}`} />}
       <Collapsible inline title="Xem thêm số liệu" summary={warns.length > 0 ? `${warns.length} lưu ý` : undefined} warn={warns.length > 0}>
@@ -70,6 +77,19 @@ export function CycleStatsStrip({ s }: { s: CycleStat }) {
             <h3 className="sub">Hiệu quả</h3>
             {s.cost_per_kg !== null && <Row label="Giá thành mỗi kg" value={`${money(s.cost_per_kg)}/kg`} />}
             {s.profit_per_kg !== null && <Row label={s.profit_per_kg >= 0 ? 'Lãi mỗi kg' : 'Lỗ mỗi kg'} value={`${money(Math.abs(s.profit_per_kg))}/kg`} />}
+          </>
+        )}
+        {s.area_m2 !== null && (
+          <>
+            <h3 className="sub">Diện tích và năng suất</h3>
+            <Row label="Diện tích trồng" value={fmtArea(s.area_m2, unitId)} />
+            {s.plant_count !== null && <Row label="Số cây" value={`${s.plant_count.toLocaleString('vi-VN')}${s.density_per_1000m2 !== null ? ` (${s.density_per_1000m2.toLocaleString('vi-VN')} cây/1.000 m²)` : ''}`} />}
+            {s.variety && <Row label="Giống" value={s.variety} />}
+            {s.yield_per_1000m2 !== null && <Row label={`Năng suất / ${perLabel}`} value={kg(s.yield_per_1000m2 * f)} />}
+            {s.kg_per_plant !== null && <Row label="Thu hoạch mỗi cây" value={kg(s.kg_per_plant)} />}
+            {s.cost_per_1000m2 !== null && <Row label={`Chi phí / ${perLabel}`} value={money(s.cost_per_1000m2 * f)} />}
+            {s.revenue_per_1000m2 !== null && <Row label={`Doanh thu / ${perLabel}`} value={money(s.revenue_per_1000m2 * f)} />}
+            {s.profit_per_1000m2 !== null && <Row label={s.profit_per_1000m2 >= 0 ? `Lãi / ${perLabel}` : `Lỗ / ${perLabel}`} value={money(Math.abs(s.profit_per_1000m2 * f))} />}
           </>
         )}
         {s.labor_hours !== null && (

@@ -12,8 +12,8 @@ import { supabase } from './supabase';
 const CYCLE_COLUMNS_BASE =
   'id, owner_org_id, area_id, crop_type_id, status, start_date, expected_end_date, note, version, created_at, name, template_id, template_name, template_version';
 // cột kế hoạch (D93) chỉ có sau khi CSDL được cập nhật; chưa cập nhật thì tải bản không có để KHÔNG làm hỏng đồng bộ cả danh sách vụ
-const CYCLE_COLUMNS = `${CYCLE_COLUMNS_BASE}, target_yield_kg, budget_amount`;
-const missingPlanColumns = (e: { message?: string; code?: string } | null) => !!e && (e.code === '42703' || /target_yield_kg|budget_amount|column/i.test(e.message ?? ''));
+const CYCLE_COLUMNS = `${CYCLE_COLUMNS_BASE}, target_yield_kg, budget_amount, planted_area_m2, plant_count, variety_name, seed_source, seed_lot, sowing_date, planting_date`;
+const missingPlanColumns = (e: { message?: string; code?: string } | null) => !!e && (e.code === '42703' || /target_yield_kg|budget_amount|planted_area|variety_name|column/i.test(e.message ?? ''));
 const STAGE_COLUMNS =
   'id, cycle_id, name, seq, work_type_id, duration_days, planned_start, planned_end, actual_start, actual_end, status, note';
 
@@ -155,6 +155,25 @@ export interface NewCycle {
   /** Kế hoạch (không bắt buộc, D93) */
   targetYield?: number | null;
   budget?: number | null;
+  /** Giống và diện tích (không bắt buộc, D94) */
+  info?: CropInfo | null;
+}
+
+/** Giống và diện tích của vụ; diện tích theo m² (D94) */
+export interface CropInfo {
+  areaM2: number | null; plants: number | null; variety: string; seedSource: string; seedLot: string; sowingDate: string | null; plantingDate: string | null;
+}
+
+/** Đặt thông tin giống và diện tích của vụ (cần mạng, người quản lý vụ); trống = bỏ */
+export async function setCycleInfo(cycleId: string, i: CropInfo): Promise<void> {
+  requireOnline('lưu thông tin giống và diện tích');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { error } = await supabase.rpc('set_cycle_info', {
+    p_cycle: cycleId, p_area_m2: i.areaM2, p_plants: i.plants, p_variety: i.variety, p_seed_source: i.seedSource, p_seed_lot: i.seedLot,
+    p_sowing: i.sowingDate, p_planting: i.plantingDate,
+  });
+  if (error) throw new Error(error.message);
+  await refreshCycle(cycleId);
 }
 
 /** Tạo vụ theo quy trình mẫu (cần mạng): máy chủ kiểm hạn mức, sao chép giai đoạn và tính ngày kế hoạch */
@@ -168,6 +187,9 @@ export async function createCycle(c: NewCycle): Promise<string> {
   });
   if (error) throw new Error(error.message);
   if ((c.targetYield ?? null) !== null || (c.budget ?? null) !== null) await setCyclePlan(id, c.targetYield ?? null, c.budget ?? null).catch(() => undefined);
+  if (c.info && (c.info.areaM2 !== null || c.info.plants !== null || c.info.variety.trim() || c.info.seedSource.trim() || c.info.seedLot.trim() || c.info.sowingDate || c.info.plantingDate)) {
+    await setCycleInfo(id, c.info).catch(() => undefined);
+  }
   await refreshCycle(id);
   return id;
 }
