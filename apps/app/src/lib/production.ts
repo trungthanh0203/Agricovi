@@ -181,6 +181,7 @@ export async function editCycle(cycleId: string, c: { name?: string; start_date?
   const cur = await db.cycles.get(cycleId);
   if (!cur) return;
   await updateAndCache('production_cycles', cycleId, cur.version, { ...c }, 'sửa vụ');
+  if (c.start_date !== undefined) await refreshCycle(cycleId).catch(() => undefined); // đổi ngày bắt đầu thì lịch các giai đoạn dời theo (máy chủ)
 }
 
 /** Xóa vụ (cần mạng). Chỉ xóa được vụ chưa có dữ liệu; máy chủ từ chối nếu đã có nhật ký, thu hoạch, chi phí… */
@@ -258,6 +259,9 @@ export async function advanceStage(stageId: string, action: 'start' | 'complete'
   if (error) throw new Error(error.message);
   const row = data as unknown as StageRow | null;
   if (row) await db.stages.put({ ...(await db.stages.get(stageId)), ...row });
+  // bắt đầu/hoàn thành lệch kế hoạch thì các giai đoạn sau (và ngày dự kiến xong của vụ) dời theo
+  const cyc = row?.cycle_id ?? (await db.stages.get(stageId))?.cycle_id;
+  if (cyc) await refreshCycle(cyc).catch(() => undefined);
 }
 
 /** Đổi trạng thái vụ (cần mạng): kèm phiên bản đã thấy, người khác đổi trước thì báo và tải lại. */
@@ -265,6 +269,8 @@ export async function setCycleStatus(cycleId: string, status: CycleStatus): Prom
   const cur = await db.cycles.get(cycleId);
   if (!cur) return;
   await updateAndCache('production_cycles', cycleId, cur.version, { status }, 'đổi trạng thái vụ');
+  // bắt đầu chạy vụ: máy chủ đặt ngày bắt đầu = hôm nay và dời lịch các giai đoạn theo; tải lại để thấy ngay
+  if (status === 'active') await refreshCycle(cycleId).catch(() => undefined);
 }
 
 /** Vật tư đã dùng khi làm việc: mỗi dòng thành một giao dịch xuất kho gắn với nhật ký (FR-INV-003) */
