@@ -14,7 +14,7 @@ export interface PositionRow {
   work_type_ids: string[] | null;
   can_manage_stages: boolean;
   is_active: boolean;
-  /** Vai trò nền (quyền thao tác gốc); vai trò có sẵn có is_builtin = true */
+  /** Vai trò của chức vụ: Nhân viên (worker) hoặc Quản lý (manager) — D84 */
   base_role: MemberRole;
   is_builtin: boolean;
 }
@@ -42,21 +42,21 @@ export async function savePosition(
   orgId: string, id: string | null,
   f: { name: string; description: string; perms: PermOverrides; workTypeIds: string[] | null; canManageStages: boolean; isActive?: boolean; baseRole?: MemberRole },
 ): Promise<void> {
-  needOnline('lưu vai trò');
+  needOnline('lưu chức vụ');
   await ok(client().rpc('save_position', {
     p_org: orgId, p_id: id, p_name: f.name, p_description: f.description, p_perms: f.perms,
     p_work_type_ids: f.workTypeIds, p_can_manage_stages: f.canManageStages, p_active: f.isActive ?? true, p_base_role: f.baseRole ?? 'worker',
   }));
 }
 
-/** Thêm lại các vai trò có sẵn đã xóa (không đụng vai trò đã có) */
+/** Thêm lại các chức vụ có sẵn đã xóa (không đụng chức vụ đã có) */
 export async function addBuiltinRoles(orgId: string): Promise<number> {
-  needOnline('thêm vai trò có sẵn');
+  needOnline('thêm chức vụ có sẵn');
   return Number(await ok(client().rpc('add_builtin_roles', { p_org: orgId })));
 }
 
 export async function deletePosition(id: string): Promise<void> {
-  needOnline('xóa vai trò');
+  needOnline('xóa chức vụ');
   await ok(client().rpc('delete_position', { p_id: id }));
 }
 
@@ -69,4 +69,16 @@ export async function listMemberPositions(orgId: string): Promise<Map<string, st
 export async function setMemberPositions(orgId: string, userId: string, ids: string[]): Promise<void> {
   needOnline('gán chức vụ');
   await ok(client().rpc('set_member_positions', { p_org: orgId, p_user: userId, p_positions: ids }));
+}
+
+/** Gán chức vụ cho một người (mỗi người đúng một chức vụ); vai trò của người đổi theo chức vụ (D84) */
+export async function setMemberPosition(orgId: string, userId: string, positionId: string): Promise<void> {
+  needOnline('gán chức vụ');
+  await ok(client().rpc('set_member_position', { p_org: orgId, p_user: userId, p_position: positionId }));
+}
+
+/** Mời bằng email kèm chức vụ */
+export async function inviteMemberPosition(orgId: string, email: string, positionId: string): Promise<string> {
+  needOnline('mời thành viên');
+  return String(await ok(client().rpc('invite_member_position', { p_org: orgId, p_email: email, p_position: positionId })));
 }

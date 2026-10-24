@@ -6,8 +6,8 @@ import {
   createStaffAccount, isLeaderMode, resetStaffPassword, WORK_MODE_LABEL, type StaffCredentials, type WorkMode,
 } from '../lib/staff';
 import type { TeamRow, WorkerRow } from '../lib/teams';
-import { RolePicker } from './RolePicker';
-import { setMemberPositions } from '../lib/positions';
+import { PositionPicker } from './PositionPicker';
+import { setMemberPosition } from '../lib/positions';
 
 /**
  * Chủ cơ sở tạo tài khoản nhân viên đăng nhập bằng số điện thoại; hệ thống sinh mật khẩu tạm ngẫu nhiên, hiện MỘT lần.
@@ -19,7 +19,7 @@ export function StaffCreateForm({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [roles, setRoles] = useState<MemberRole[]>(['worker']);
-  const [posIds, setPosIds] = useState<string[]>([]);
+  const [posId, setPosId] = useState('');
   const [mode, setMode] = useState<WorkMode>('self_hourly');
   const [teamId, setTeamId] = useState('');
   const [busy, setBusy] = useState(false);
@@ -36,7 +36,7 @@ export function StaffCreateForm({
     setError(null);
     if (name.trim().length < 2) return setError('Hãy nhập họ tên nhân viên.');
     if (!phone.trim()) return setError('Hãy nhập số điện thoại của nhân viên.');
-    if (roles.length === 0) return setError('Hãy chọn ít nhất một vai trò.');
+    if (!posId) return setError('Hãy chọn chức vụ cho nhân viên.');
     if (needTeam && !teamId) {
       return setError(
         teamsWithLeader.length === 0
@@ -50,7 +50,7 @@ export function StaffCreateForm({
       const res = await createStaffAccount({
         organization_id: org.id, full_name: name, phone, roles, work_mode: mode, team_id: needTeam || teamId ? teamId || null : null,
       });
-      if (posIds.length > 0 && res.user_id) await setMemberPositions(org.id, res.user_id, posIds); // vai trò riêng
+      if (posId && res.user_id) await setMemberPosition(org.id, res.user_id, posId); // chức vụ quyết định vai trò và quyền
       setCreds(res);
       setName('');
       setPhone('');
@@ -74,7 +74,7 @@ export function StaffCreateForm({
           Số điện thoại
           <input type="tel" inputMode="tel" autoComplete="off" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0912345678" />
         </label>
-        <RolePicker orgType={org.type} orgId={org.id} value={roles} onChange={setRoles} positionIds={posIds} onPositionsChange={setPosIds} />
+        <PositionPicker orgId={org.id} value={posId} onChange={(id, role) => { setPosId(id); setRoles([role]); }} />
         <label>
           Kiểu phân hệ
           <select value={mode} onChange={(e) => setMode(e.target.value as WorkMode)}>

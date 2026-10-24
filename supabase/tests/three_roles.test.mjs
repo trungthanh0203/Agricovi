@@ -22,11 +22,11 @@ async function setup(type = 'household') {
 const count = async (db, u, tbl) => (await asUser(db, u, `select count(*)::int n from ${tbl}`)).rows[0].n;
 const pos = async (db, org, name) => (await db.query(`select id from org_positions where organization_id=$1 and name=$2`, [org, name])).rows[0]?.id;
 
-test('cơ sở mới: 2 vai trò có sẵn (Quản lý, Nhân viên) + chức vụ gợi ý; HTX có thêm Quản lý hợp tác xã', async () => {
+test('cơ sở mới: chức vụ có sẵn Quản lý (vai trò quản lý), Nhân viên + gợi ý; HTX có thêm Quản lý hợp tác xã', async () => {
   const c = await setup();
-  const rows = (await c.db.query(`select name, is_builtin from org_positions where organization_id=$1 order by is_builtin desc, name`, [c.org])).rows;
-  assert.deepEqual(rows.map((r) => r.name), ['Nhân viên', 'Quản lý', 'Biên tập hồ sơ', 'Thủ kho và kế toán']);
-  assert.deepEqual(rows.map((r) => r.is_builtin), [true, true, false, false]);
+  const rows = (await c.db.query(`select name, base_role::text b, is_builtin from org_positions where organization_id=$1 order by name`, [c.org])).rows;
+  assert.deepEqual(rows.map((r) => [r.name, r.b]), [['Biên tập hồ sơ', 'worker'], ['Nhân viên', 'worker'], ['Quản lý', 'manager'], ['Thủ kho và kế toán', 'worker']]);
+  assert.ok(rows.every((r) => r.is_builtin === false)); // D84: tất cả đều là chức vụ thường, sửa/xóa được
   const h = await setup('cooperative');
   assert.ok(await pos(h.db, h.org, 'Quản lý hợp tác xã'));
 });
@@ -71,9 +71,11 @@ test('hồ sơ website và hộ thành viên theo quyền riêng, không theo va
   const f = async (u) => (await asUser(c.db, u, `select can_edit_profile($1) p, has_perm($1,'coop','edit') c`, [c.org])).rows[0];
   assert.deepEqual(await f(c.mgr), { p: false, c: false });
   assert.deepEqual(await f(c.owner), { p: true, c: true });
-  await asUser(c.db, c.owner, `select set_member_positions($1,$2,array[$3,$4]::uuid[])`, [c.org, c.wk, await pos(c.db, c.org, 'Biên tập hồ sơ'), await pos(c.db, c.org, 'Quản lý hợp tác xã')]);
-  assert.deepEqual(await f(c.wk), { p: true, c: true });
+  await asUser(c.db, c.owner, `select set_member_position($1,$2,$3)`, [c.org, c.wk, await pos(c.db, c.org, 'Biên tập hồ sơ')]);
+  assert.deepEqual(await f(c.wk), { p: true, c: false });
   assert.match(await expectError(asUser(c.db, c.mgr, `select invite_household($1,'a@b.vn')`, [c.org])), /FORBIDDEN/);
-  assert.ok((await asUser(c.db, c.wk, `select invite_household($1,'a@b.vn') i`, [c.org])).rows[0].i);
+  await asUser(c.db, c.owner, `select set_member_position($1,$2,$3)`, [c.org, c.mgr, await pos(c.db, c.org, 'Quản lý hợp tác xã')]);
+  assert.deepEqual(await f(c.mgr), { p: false, c: true });
+  assert.ok((await asUser(c.db, c.mgr, `select invite_household($1,'a@b.vn') i`, [c.org])).rows[0].i);
   assert.equal((await c.db.query(`select count(*)::int n from website_staff_ids($1)`, [c.org])).rows[0].n, 2); // chủ + người có quyền website
 });

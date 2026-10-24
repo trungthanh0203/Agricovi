@@ -13,7 +13,7 @@ async function setup() {
   await db.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['manager']::member_role[])`, [org, mgr]);
   return { db, admin, owner, mgr, owner2, org, org2 };
 }
-const names = async (db, org, role) => (await db.query(`select name from org_positions where organization_id=$1 and is_builtin and base_role=$2`, [org, role])).rows[0]?.name;
+const names = async (db, org, role) => (await db.query(`select name from org_positions where organization_id=$1 and base_role=$2 and name in ('Quản lý','Nhân viên','Điều hành viên')`, [org, role])).rows[0]?.name;
 
 test('đổi tên vai trò có sẵn: mọi cơ sở đổi theo, cơ sở mới dùng tên mới, có nhật ký; người khác không đổi được', async () => {
   const c = await setup();

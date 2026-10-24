@@ -87,7 +87,7 @@ export const GUIDES: Guide[] = [
           'Chủ cơ sở: làm được mọi việc, cấp quyền, đặt lương và giá công, xem gói dịch vụ và giấy phép.',
           'Quản lý: điều hành sản xuất hằng ngày (tạo vụ, sửa nhật ký, xác nhận chấm công), xem Kho và danh sách nhân sự, xem Báo cáo tuần (phần tiền chỉ hiện khi được cấp quyền).',
           'Nhân viên: ghi việc, thu hoạch, chấm công của mình và xem tiền công của mình.',
-          'Cần thêm quyền? Chủ cấp riêng từng mục cho từng người (Kho, Chi phí, Doanh thu, Tiền công, Hồ sơ website…) hoặc tạo CHỨC VỤ (ví dụ Thủ kho và kế toán) rồi gán. Mục nào không có quyền thì không hiện.',
+          'Chức vụ: chủ tạo chức vụ cho cơ sở (ví dụ Thủ kho và kế toán, Tổ trưởng vườn). Mỗi chức vụ có MỘT vai trò (mặc định Nhân viên; chọn Quản lý thì chọn thêm quyền). Mỗi người giữ đúng một chức vụ, chọn ở mục Nhân sự; vai trò và quyền của người theo chức vụ. Mục nào không có quyền thì không hiện.',
           'Chủ có thể giao mỗi người một hay nhiều trang trại; người đó chỉ thấy và ghi việc ở các trang trại được giao.',
         ],
         go: { tab: 'org', section: 'members', label: 'Mở Nhân sự' },
@@ -213,7 +213,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Mời người làm, chấm công, tiền công',
         details: [
-          'Tổ chức → Nhân sự: tạo tài khoản cho người làm bằng số điện thoại, chọn vai trò. Lần đầu họ phải đổi mật khẩu tạm.',
+          'Tổ chức → Nhân sự: tạo tài khoản cho người làm bằng số điện thoại, chọn chức vụ. Lần đầu họ phải đổi mật khẩu tạm.',
           'Tổ chức → Phòng / Tổ: chia người vào tổ, chọn tổ trưởng.',
           'Khai báo → Đơn giá công: đặt giá theo giờ hoặc theo sản lượng.',
           'Sản xuất → Chấm công: xác nhận ca công; Báo cáo → Tiền công: tính lương theo kỳ rồi khóa kỳ.',
@@ -315,14 +315,14 @@ export const GUIDES: Guide[] = [
         title: 'Chia phòng / tổ và đặt chức vụ',
         details: [
           'Tổ chức → Phòng / Tổ: lập phòng ban, tổ sản xuất, chọn tổ trưởng.',
-          'Tổ chức → Chức vụ: đặt tên chức vụ riêng của công ty (ví dụ Thủ kho, Kế toán) và chọn quyền cho chức vụ đó.',
+          'Tổ chức → Chức vụ: đặt tên chức vụ riêng của công ty (ví dụ Thủ kho, Kế toán), chọn vai trò (Nhân viên hoặc Quản lý) và quyền thêm cho chức vụ đó.',
         ],
         go: { tab: 'org', section: 'teams', label: 'Mở Phòng / Tổ' },
       },
       {
         title: 'Phân quyền theo từng mục',
         details: [
-          'Chủ cấp riêng cho từng người, hoặc gán chức vụ: xem hoặc sửa các mục Kho, Thu hoạch, Chi phí, Doanh thu, Tổng kết, Khai báo, Tiền công, Hồ sơ website.',
+          'Quyền theo từng chức vụ: xem hoặc sửa các mục Kho, Thu hoạch, Chi phí, Doanh thu, Tổng kết, Khai báo, Tiền công, Hồ sơ website. Cần ngoại lệ cho một người thì chủ cấp riêng thêm hoặc bớt.',
           'Giao trang trại cho từng người (một người làm được nhiều trang trại): họ chỉ thấy và ghi việc ở trang trại được giao.',
           'Người nào không có quyền mục nào thì mục đó biến mất trên màn hình của họ, và máy chủ cũng chặn.',
           'Có thể tạm dừng một thành viên khi họ nghỉ làm mà không mất dữ liệu cũ.',

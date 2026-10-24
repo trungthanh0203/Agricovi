@@ -15,8 +15,8 @@ import { MemberPermissions } from './MemberPermissions';
 import { updateStaffProfile } from '../lib/staff';
 import { fetchMemberAreas, setMemberSuspended } from '../lib/members';
 import { MemberAreas } from './MemberAreas';
-import { listMemberPositions, listPositions, setMemberPositions, type PositionRow } from '../lib/positions';
-import { RolePicker } from './RolePicker';
+import { inviteMemberPosition, listMemberPositions, listPositions, setMemberPosition, type PositionRow } from '../lib/positions';
+import { PositionPicker } from './PositionPicker';
 import { CredentialsCard, ResetPasswordButton, StaffCreateForm } from './StaffAccountsSection';
 
 /**
@@ -33,10 +33,9 @@ export function MembersSection({ org }: { org: MyOrg }) {
   const [infoPhone, setInfoPhone] = useState('');
   const [workers, setWorkers] = useState<WorkerRow[]>([]);
   const [email, setEmail] = useState('');
-  const [inviteRoles, setInviteRoles] = useState<MemberRole[]>(['worker']);
+  const [invitePos, setInvitePos] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
-  const [editRoles, setEditRoles] = useState<MemberRole[]>([]);
-  const [editPos, setEditPos] = useState<string[]>([]);
+  const [editPos, setEditPos] = useState('');
   const [held, setHeld] = useState<Map<string, string[]>>(new Map());
   const [catalog, setCatalog] = useState<PositionRow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -88,18 +87,17 @@ export function MembersSection({ org }: { org: MyOrg }) {
   function onInvite(e: FormEvent) {
     e.preventDefault();
     if (!email.includes('@')) return setError('Hãy nhập email của người cần mời.');
-    if (inviteRoles.length === 0) return setError('Hãy chọn ít nhất một vai trò.');
+    if (!invitePos) return setError('Hãy chọn chức vụ cho người được mời.');
     void run(async () => {
-      await inviteMember(org.id, email, inviteRoles);
+      await inviteMemberPosition(org.id, email, invitePos);
       setEmail('');
     }, 'Đã tạo lời mời. Hãy bảo người đó đăng ký hoặc đăng nhập bằng đúng email này, họ sẽ thấy lời mời.');
   }
 
   function saveRoles(userId: string) {
-    if (editRoles.length === 0) return setError('Hãy chọn ít nhất một vai trò.');
+    if (!editPos) return setError('Hãy chọn chức vụ.');
     void run(async () => {
-      await setMemberRoles(org.id, userId, editRoles);
-      await setMemberPositions(org.id, userId, editPos); // vai trò riêng (tự cộng vai trò nền)
+      await setMemberPosition(org.id, userId, editPos); // chức vụ quyết định vai trò và quyền
       setEditing(null);
     });
   }
@@ -149,7 +147,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
               </div>
               {isOwner && !owner && !suspended && editing !== m.user_id && (
                 <div className="rowbtns">
-                  <button className="secondary" disabled={busy} onClick={() => { setEditing(m.user_id); setEditRoles(m.roles.filter((r) => r !== 'owner')); setEditPos(held.get(m.user_id) ?? []); setError(null); }}>Đổi vai trò</button>
+                  <button className="secondary" disabled={busy} onClick={() => { setEditing(m.user_id); setEditPos((held.get(m.user_id) ?? [])[0] ?? ''); setError(null); }}>Đổi vai trò</button>
                   {m.is_staff && <ResetPasswordButton org={org} userId={m.user_id} onDone={(c) => { setCreds(c); void load(); }} />}
                 </div>
               )}
@@ -186,7 +184,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
             )}
             {isOwner && editing === m.user_id && (
               <div className="inline-form">
-                <RolePicker orgType={org.type} orgId={org.id} value={editRoles} onChange={setEditRoles} positionIds={editPos} onPositionsChange={setEditPos} disabled={busy} />
+                <PositionPicker orgId={org.id} value={editPos} onChange={(id) => setEditPos(id)} disabled={busy} />
                 <div className="btnrow">
                   <button className="primary" disabled={busy} onClick={() => saveRoles(m.user_id)}>Lưu</button>
                   <button type="button" className="secondary" onClick={() => setEditing(null)}>Hủy</button>
@@ -218,7 +216,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
             Email người được mời
             <input type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </label>
-          <RolePicker orgType={org.type} orgId={org.id} value={inviteRoles} onChange={setInviteRoles} />
+          <PositionPicker orgId={org.id} value={invitePos} onChange={(id) => setInvitePos(id)} />
           <button type="submit" className="secondary" disabled={busy}>Gửi lời mời</button>
         </form>
         </Collapsible>

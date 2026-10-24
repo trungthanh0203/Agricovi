@@ -48,11 +48,14 @@ test('chức vụ: chỉ chủ tạo/sửa/xóa/gán; quyền hiệu lực = h�
   await save(db, owner, org, { id: pos, active: false });
   assert.equal(await lvl(tech, 'declare'), 0);
   assert.match(await expectError(asUser(db, owner, `select set_member_positions($1,$2,$3::uuid[])`, [org, tech, [pos]])), /INVALID_POSITION/);
-  // xóa chức vụ gỡ khỏi người giữ
+  // D84: xóa chức vụ đang có người giữ bị chặn; chuyển người đó sang chức vụ khác rồi mới xóa được
   await save(db, owner, org, { id: pos, active: true });
   await asUser(db, owner, `select set_member_positions($1,$2,$3::uuid[])`, [org, tech, [pos]]);
+  assert.match(await expectError(asUser(db, owner, `select delete_position($1)`, [pos])), /IN_USE/);
+  const base = (await db.query(`select id from org_positions where organization_id=$1 and name='Nhân viên'`, [org])).rows[0].id;
+  await asUser(db, owner, `select set_member_position($1,$2,$3)`, [org, tech, base]);
   await asUser(db, owner, `select delete_position($1)`, [pos]);
-  assert.deepEqual((await db.query(`select position_ids from organization_memberships where user_id=$1`, [tech])).rows[0].position_ids, []);
+  assert.deepEqual((await db.query(`select position_ids from organization_memberships where user_id=$1`, [tech])).rows[0].position_ids, [base]);
 });
 
 test('quyền Khai báo theo chức vụ: người được cấp tạo được sản phẩm/mẫu/trang trại; người khác không', async () => {
@@ -80,7 +83,7 @@ test('hạn chế loại việc: chức vụ giới hạn thì chỉ ghi đượ
   await log(mgr, 5, 'spraying'); // quản lý luôn được
   // thêm một chức vụ không giới hạn thì được mọi loại
   const free = (await save(db, owner, org, { name: 'Tổng hợp', perms: {} })).rows[0].id;
-  await asUser(db, owner, `select set_member_positions($1,$2,$3::uuid[])`, [org, tech, [pos, free]]);
+  await asUser(db, owner, `select set_member_positions($1,$2,$3::uuid[])`, [org, tech, [free]]); // D84: mỗi người một chức vụ
   await log(tech, 6, 'spraying');
   assert.match(await expectError(save(db, owner, org, { name: 'Sai', perms: {}, wts: ['00000000-0000-4000-8000-0000000000aa'] })), /INVALID_WORK_TYPE/);
 });
@@ -96,7 +99,7 @@ test('quản lý giai đoạn theo chức vụ: được bắt đầu/sửa giai
   assert.match(await expectError(asUser(db, wk, `select advance_stage($1,'complete',null)`, [st])), /FORBIDDEN/);
 });
 
-test('chủ và nhân viên có hồ sơ lao động tự tạo để chấm công; người chỉ Kho & chi phí thì không', async () => {
+test('chủ và nhân viên có hồ sơ lao động tự tạo để chấm công; vai trò cũ Kho & chi phí (dữ liệu cũ) thì không', async () => {
   const { db, owner, wk, org } = await setup();
   const w1 = (await asUser(db, owner, `select ensure_my_worker($1) id`, [org])).rows[0].id;
   assert.equal((await asUser(db, owner, `select ensure_my_worker($1) id`, [org])).rows[0].id, w1); // lặp không tạo thêm
