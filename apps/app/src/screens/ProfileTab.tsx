@@ -3,7 +3,6 @@ import { Collapsible } from '../components/Collapsible';
 import { InvitationsPanel } from '../components/InvitationsPanel';
 import { LicensesSection, licenseStatus } from '../components/LicensesSection';
 import { MigrateImages } from '../components/MigrateImages';
-import { MyPayslip } from '../components/MyPayslip';
 import { PlanCard } from '../components/PlanCard';
 import { QrCard } from '../components/QrCard';
 import { useAuth } from '../lib/auth';
@@ -17,7 +16,6 @@ import { changeMyPassword, fetchDisplayName, fetchMyWork, renameOrg, saveDisplay
 import { buildAccountQr } from '../lib/qr';
 import { isOwner, roleSummary } from '../lib/roles';
 import { fetchStaffStatus, WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
-import { fetchMyPay, fmtVnd, type MyPay } from '../lib/work';
 
 /**
  * Tab Tài khoản (D40, D50): mọi phần đều THU GỌN được — tài khoản (tên hiển thị, đổi mật khẩu), "Tôi được làm gì", công việc,
@@ -30,7 +28,6 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
   const [staffName, setStaffName] = useState<string | null>(null);
   const [display, setDisplay] = useState<string | null>(null);
   const [work, setWork] = useState<MyWork | null>(null);
-  const [pay, setPay] = useState<MyPay[]>([]);
   const [licenses, setLicenses] = useState<LicenseRow[]>([]);
   const uid = session?.user.id;
 
@@ -42,10 +39,6 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
   useEffect(() => {
     if (uid && active) void fetchMyWork(uid, active.id).then(setWork).catch(() => setWork(null));
   }, [uid, active]);
-  useEffect(() => {
-    if (work?.workerId) void fetchMyPay(work.workerId).then(setPay).catch(() => setPay([]));
-    else setPay([]);
-  }, [work?.workerId]);
 
   const ownsOrg = orgs.some((o) => isOwner(o.roles));
   const email = session?.user.email ?? '';
@@ -92,13 +85,6 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
           {work.teamName && <p>Phòng / Tổ: <strong>{work.teamName}</strong></p>}
           {work.leadsTeams.length > 0 && <p>Tổ tôi phụ trách (tổ trưởng): <strong>{work.leadsTeams.join(', ')}</strong></p>}
           {work.mode && <p className="muted">Cách tính công: {WORK_MODE_LABEL[work.mode as WorkMode] ?? work.mode}</p>}
-        </Collapsible>
-      )}
-
-      {pay.length > 0 && (
-        <Collapsible title="Tiền công của tôi" summary={`${pay.length} kỳ`}>
-          {work?.workerId && pay.slice(0, 6).map((p) => <MyPayslip key={p.periodId} pay={p} workerId={work.workerId!} />)}
-          <p className="muted">Bấm vào kỳ để xem phiếu lương chi tiết. Số "Dự tính" có thể đổi đến khi chủ cơ sở khóa kỳ.</p>
         </Collapsible>
       )}
 
