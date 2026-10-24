@@ -11,7 +11,7 @@ import {
 import type { TabId } from '../lib/tabs';
 import { PaySettleBar } from './PaySettleBar';
 import {
-  buildPayBookCsv, groupByTeam, hoursText, PAY_STATUS_LABEL, rangeOf, shiftAnchor, sumRows,
+  buildPayBookCsv, buildPayslipText, groupByTeam, hoursText, PAY_STATUS_LABEL, personState, rangeOf, shiftAnchor, sumRows,
   type PayDetail, type PayItem, type PayOverview, type PayRow, type RangeMode,
 } from '../lib/payBookLogic';
 import { downloadCsv } from '../lib/summary';
@@ -44,6 +44,7 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [fromCache, setFromCache] = useState(false);
+  const [onlyTodo, setOnlyTodo] = useState(false); // lọc "Cần xử lý"
   const [tick, setTick] = useState(0); // tăng lên để tải lại sau khi chốt lương / nhập thưởng phạt
   const [settle, setSettle] = useState<SettleState | null>(null);
 
@@ -127,7 +128,7 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
         {settle && <PaySettleBar orgId={orgId} state={settle} onChanged={refreshAll} onGo={onGo} />}
         {canSeeAll && pick && <button className="link" onClick={() => setView('all')}>← Danh sách tất cả</button>}
         {!pick && <p className="muted">{rows.length === 0 ? 'Chưa có hồ sơ chấm công nên chưa có bảng lương. Hồ sơ được tạo khi bạn chấm công lần đầu.' : 'Hãy chọn một người để xem.'}</p>}
-        {person && <PersonView row={person} detail={detail} range={range} adjust={settle && settle.can_edit && settle.status !== 'locked' && !settle.overlap_legacy ? { orgId, month: range.from, onChanged: refreshAll } : null} />}
+        {person && <PersonView row={person} detail={detail} range={range} orgName={active.name} label={range.label} adjust={settle && settle.can_edit && settle.status !== 'locked' && !settle.overlap_legacy ? { orgId, month: range.from, onChanged: refreshAll } : null} />}
         {person && <Suspense fallback={null}><PayCharts orgId={orgId} worker={canSeeAll ? person.worker_id : null} items={detail?.items ?? null} from={range.from} to={range.to} /></Suspense>}
       </>
     );
@@ -135,13 +136,18 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
 
   // ---------------------------------------------------------------- tất cả / theo tổ
   const csv = () => downloadCsv(`bang-luong-${range.from}_${range.to}.csv`, buildPayBookCsv(rows, range));
-  const line = (r: PayRow) => (
-    <button key={r.worker_id} className="member row member-btn" onClick={() => open(r.worker_id)}>
-      <span className="grow"><strong>{r.name}</strong><span className="sub">{hoursText(r.hours)} · {r.days} ngày{r.no_rate_days > 0 ? ' · thiếu cách trả công' : ''}{r.pending_hours > 0 ? ` · chờ xác nhận ${hoursText(r.pending_hours)}` : ''}</span></span>
-      <span className="num"><strong>{fmtVnd(r.net)}</strong></span>
-      <span className="menu-go" aria-hidden>›</span>
-    </button>
-  );
+  const line = (r: PayRow) => {
+    const ps = personState(r);
+    return (
+      <button key={r.worker_id} className="member row member-btn" onClick={() => open(r.worker_id)}>
+        <span className="grow"><strong>{r.name}</strong><span className="sub">{hoursText(r.hours)} · {r.days} ngày{ps.reasons.length > 0 ? ` · ${ps.reasons.join(' · ')}` : ''}</span></span>
+        <span className="num"><strong>{fmtVnd(r.net)}</strong><span className={ps.cls === 'ok' ? 'pill ok' : ps.cls === 'warn' ? 'pill warn' : 'pill'}>{ps.label}</span></span>
+        <span className="menu-go" aria-hidden>›</span>
+      </button>
+    );
+  };
+  const todoCount = rows.filter((r) => personState(r).needs).length;
+  const shownRows = onlyTodo ? rows.filter((r) => personState(r).needs) : rows;
   const total = sumRows(rows);
   return (
     <>
@@ -157,21 +163,37 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
         </div>
       )}
       {rows.length > 0 && <Suspense fallback={null}><PayCharts orgId={orgId} worker={null} items={null} from={range.from} to={range.to} /></Suspense>}
-      {view === 'team' ? groupByTeam(rows).map((g) => (
+      {rows.length > 0 && (
+        <div className="chips" role="tablist" aria-label="Lọc danh sách">
+          <button role="tab" aria-selected={!onlyTodo} className={!onlyTodo ? 'chip active' : 'chip'} onClick={() => setOnlyTodo(false)}>Tất cả ({rows.length})</button>
+          <button role="tab" aria-selected={onlyTodo} className={onlyTodo ? 'chip active' : 'chip'} onClick={() => setOnlyTodo(true)}>Cần xử lý ({todoCount})</button>
+        </div>
+      )}
+      {onlyTodo && shownRows.length === 0 && <p className="muted">Không có ai cần xử lý.</p>}
+      {view === 'team' ? groupByTeam(shownRows).map((g) => (
         <Collapsible key={g.team} title={g.team} summary={`${g.rows.length} người · ${hoursText(g.total.hours)} · ${fmtVnd(g.total.net)}`}>
           {g.rows.map(line)}
         </Collapsible>
-      )) : rows.map(line)}
+      )) : shownRows.map(line)}
       {rows.length > 0 && <button className="secondary" onClick={csv}>Xuất CSV</button>}
       {ov && <p className="muted">Tính lúc {stamp(ov.generated_at)}. Số "ước tính" theo đơn giá hiện hành; chốt khi chủ khóa kỳ lương. Chủ chốt lương ngay ở đầu trang khi xem một tháng.</p>}
     </>
   );
 }
 
-function PersonView({ row, detail, range, adjust }: {
-  row: PayRow; detail: PayDetail | null; range: { from: string; to: string }; adjust: { orgId: string; month: string; onChanged: () => void } | null;
+function PersonView({ row, detail, range, adjust, orgName, label }: {
+  row: PayRow; detail: PayDetail | null; range: { from: string; to: string }; orgName: string; label: string; adjust: { orgId: string; month: string; onChanged: () => void } | null;
 }) {
   const [form, setForm] = useState<{ id: string | null; kind: 'bonus' | 'deduction' | 'advance'; amount: string; reason: string } | null>(null);
+  const [shareNote, setShareNote] = useState('');
+  const share = async () => {
+    const text = buildPayslipText(row, detail?.items ?? [], label, orgName);
+    try {
+      if (navigator.share) { await navigator.share({ text }); return; }
+      await navigator.clipboard.writeText(text);
+      setShareNote('Đã chép phiếu lương, dán vào Zalo hoặc tin nhắn để gửi.');
+    } catch { /* người dùng đóng hộp chia sẻ */ }
+  };
   const [aBusy, setABusy] = useState(false);
   const [aError, setAError] = useState<string | null>(null);
   const save = async () => {
@@ -268,6 +290,8 @@ function PersonView({ row, detail, range, adjust }: {
           </div>
         ))}
       </Collapsible>
+      <button type="button" className="secondary" onClick={() => void share()}>Chia sẻ phiếu lương</button>
+      {shareNote && <p className="muted" role="status">{shareNote}</p>}
       <p className="muted">{fmtDate(range.from)} – {fmtDate(range.to)}. "Ước tính" theo đơn giá hiện hành, có thể đổi tới khi chủ tính và khóa kỳ lương.{detail ? ` Tính lúc ${stamp(detail.generated_at)}.` : ''}</p>
     </>
   );

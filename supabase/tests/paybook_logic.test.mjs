@@ -32,3 +32,23 @@ test('gom theo tổ: tổ theo tên, "Chưa có tổ" cuối, có tổng từng 
   assert.match(csv, /"Tổng"/);
   assert.equal(hoursText(3.5), '3,5 giờ');
 });
+
+test('trạng thái từng người và phiếu lương dạng chữ', async () => {
+  const { personState, buildPayslipText } = await import('../../apps/app/src/lib/payBookLogic.ts');
+  const base = row('An', 'Tổ A', 8, 240000);
+  assert.deepEqual(personState({ ...base, n_estimate: 2, n_calculated: 0, n_locked: 0, n_open: 0, no_rate_days: 0, pending_hours: 0 }), { label: 'Chưa tính', cls: 'warn', needs: false, reasons: [] });
+  const calc = personState({ ...base, n_estimate: 0, n_calculated: 3, n_locked: 0, n_open: 1, no_rate_days: 1, pending_hours: 2 });
+  assert.deepEqual([calc.label, calc.needs, calc.reasons.length], ['Đã tính', true, 3]);
+  assert.equal(personState({ ...base, n_estimate: 0, n_calculated: 0, n_locked: 4, n_open: 0, no_rate_days: 0, pending_hours: 0 }).label, 'Đã chốt');
+  assert.equal(personState({ ...base, n_estimate: 0, n_calculated: 0, n_locked: 0, n_open: 0, no_rate_days: 0, pending_hours: 0 }).label, 'Chưa có số liệu');
+  const r = { ...base, hours: 3.5, days: 2, hourly: 105000, salary: 5000000, bonus: 300000, deduction: 100000, advance: 500000, net: 4805000, net_locked: 0 };
+  const items = [{ kind: 'bonus', amount: 300000, label: 'Chuyên cần' }, { kind: 'advance', amount: -500000, label: 'Tạm ứng giữa tháng' }, { kind: 'hours', amount: 105000, label: null }];
+  const t = buildPayslipText(r, items, 'Tháng 9/2026', 'Hộ A');
+  assert.match(t, /^PHIẾU LƯƠNG THÁNG 9\/2026 · Hộ A/);
+  assert.match(t, /Lương cố định: 5\.000\.000 đ/);
+  assert.match(t, /Thưởng: \+300\.000 đ \(Chuyên cần\)/);
+  assert.match(t, /Tạm ứng: −500\.000 đ \(Tạm ứng giữa tháng\)/);
+  assert.match(t, /THỰC NHẬN: 4\.805\.000 đ/);
+  assert.match(t, /dự tính/);
+  assert.doesNotMatch(t, /undefined|NaN|null/);
+});

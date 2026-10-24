@@ -32,6 +32,7 @@ test('ước tính trước khi tính lương khớp với kết quả "Tính ti
   const est = row(await overview(c, c.a), c.wa);
   assert.deepEqual([est.hours, est.days, Number(est.hourly), Number(est.salary), Number(est.net)], [3.5, 2, 105000, 5000000, 5105000]);
   assert.equal(Number(est.net_locked), 0);
+  assert.deepEqual([est.n_estimate, est.n_calculated, est.n_locked], [3, 0, 0]); // 2 ca công + 1 lương tháng, chưa vào kỳ
   const d1 = (await asUser(c.db, c.a, `select get_pay_detail($1,$2,$3,$4) r`, [c.org, c.wa, FROM, TO])).rows[0].r;
   assert.ok(d1.items.filter((i) => i.kind === 'hours').every((i) => i.status === 'estimate'));
   // tạo kỳ, tính lương: tổng khớp ước tính
@@ -41,9 +42,11 @@ test('ước tính trước khi tính lương khớp với kết quả "Tính ti
   assert.equal(Number(calc.net), Number((await c.db.query(`select total_estimated t from worker_pay_statements where worker_id=$1`, [c.wa])).rows[0].t));
   assert.equal(Number(calc.net), Number(est.net));
   assert.equal(Number(calc.net_locked), 0);
+  assert.deepEqual([calc.n_estimate, calc.n_calculated, calc.n_locked], [0, 3, 0]);
   await asUser(c.db, c.owner, `select lock_payroll($1)`, [per]);
   const locked = row(await overview(c, c.a), c.wa);
   assert.equal(Number(locked.net_locked), Number(est.net));
+  assert.deepEqual([locked.n_estimate, locked.n_calculated, locked.n_locked], [0, 0, 3]);
   const d2 = (await asUser(c.db, c.a, `select get_pay_detail($1,$2,$3,$4) r`, [c.org, c.wa, FROM, TO])).rows[0].r;
   assert.ok(d2.items.every((i) => i.status === 'locked'));
 });

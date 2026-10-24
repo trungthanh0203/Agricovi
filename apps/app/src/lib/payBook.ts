@@ -9,6 +9,7 @@ const normRow = (r: Record<string, unknown>): PayRow => ({
   team_id: (r.team_id as string | null) ?? null, team_name: (r.team_name as string | null) ?? null,
   hours: num(r.hours), pending_hours: num(r.pending_hours), days: num(r.days), hourly: num(r.hourly), salary: num(r.salary), bonus: num(r.bonus),
   deduction: num(r.deduction), advance: num(r.advance), net: num(r.net), net_locked: num(r.net_locked), no_rate_days: num(r.no_rate_days),
+  n_locked: num(r.n_locked), n_calculated: num(r.n_calculated), n_estimate: num(r.n_estimate), n_open: num(r.n_open),
 });
 
 const cacheKey = (k: string) => `agriconnect.paybook.${k}`;

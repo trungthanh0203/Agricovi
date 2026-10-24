@@ -9,6 +9,8 @@ export interface PayRow {
   worker_id: string; name: string; user_id: string | null; status: string; team_id: string | null; team_name: string | null;
   hours: number; pending_hours: number; days: number; hourly: number; salary: number; bonus: number; deduction: number; advance: number;
   net: number; net_locked: number; no_rate_days: number;
+  /** số khoản theo trạng thái (đã chốt / đã tính / ước tính / đang trong ca) */
+  n_locked: number; n_calculated: number; n_estimate: number; n_open: number;
 }
 export interface PayOverview { from: string; to: string; generated_at: string; can_see_all: boolean; workers: PayRow[] }
 
@@ -63,6 +65,7 @@ export function sumRows(rs: PayRow[], name = 'Tổng'): PayRow {
     worker_id: '', name, user_id: null, status: 'active', team_id: null, team_name: null,
     hours: Math.round(s('hours') * 100) / 100, pending_hours: Math.round(s('pending_hours') * 100) / 100, days: s('days'), hourly: s('hourly'), salary: s('salary'),
     bonus: s('bonus'), deduction: s('deduction'), advance: s('advance'), net: s('net'), net_locked: s('net_locked'), no_rate_days: s('no_rate_days'),
+    n_locked: s('n_locked'), n_calculated: s('n_calculated'), n_estimate: s('n_estimate'), n_open: s('n_open'),
   };
 }
 
@@ -77,4 +80,30 @@ export function buildPayBookCsv(rows: PayRow[], range: { from: string; to: strin
     lines.push([r.name, r.team_name ?? '', r.hours, r.days, r.hourly, r.salary, r.bonus, r.deduction, r.advance, r.net, r.net_locked].map((v) => (typeof v === 'number' ? v : q(v))).join(','));
   }
   return '﻿' + lines.join('\n');
+}
+
+/** Trạng thái của một người trong tháng và những việc cần xử lý (chấm trạng thái ở danh sách, bộ lọc "Cần xử lý") */
+export function personState(r: PayRow): { label: string; cls: 'ok' | 'warn' | 'plain'; needs: boolean; reasons: string[] } {
+  const reasons: string[] = [];
+  if (r.no_rate_days > 0) reasons.push('thiếu cách trả công');
+  if (r.pending_hours > 0) reasons.push(`chờ xác nhận ${hoursText(r.pending_hours)}`);
+  if (r.n_open > 0) reasons.push('đang trong ca');
+  const label = r.n_estimate > 0 ? 'Chưa tính' : r.n_calculated > 0 ? 'Đã tính' : r.n_locked > 0 ? 'Đã chốt' : 'Chưa có số liệu';
+  const cls = label === 'Đã chốt' ? 'ok' : label === 'Chưa có số liệu' ? 'plain' : 'warn';
+  return { label, cls, needs: reasons.length > 0, reasons };
+}
+
+/** Phiếu lương một người dạng chữ để gửi qua Zalo/tin nhắn (không kèm từng ngày công; có các khoản và lý do) */
+export function buildPayslipText(r: PayRow, items: PayItem[], rangeLabel: string, orgName: string): string {
+  const money = (n: number) => `${Math.round(n).toLocaleString('vi-VN')} đ`;
+  const L: string[] = [`PHIẾU LƯƠNG ${rangeLabel.toUpperCase()} · ${orgName}`, `Người: ${r.name}${r.team_name ? ` (${r.team_name})` : ''}`];
+  L.push(`• Giờ công: ${hoursText(r.hours)} (${r.days} ngày)`);
+  if (r.hourly) L.push(`• Tiền công theo giờ: ${money(r.hourly)}`);
+  if (r.salary) L.push(`• Lương cố định: ${money(r.salary)}`);
+  const adj = items.filter((i) => i.kind === 'bonus' || i.kind === 'deduction' || i.kind === 'advance');
+  for (const a of adj) L.push(`• ${a.kind === 'bonus' ? 'Thưởng' : a.kind === 'deduction' ? 'Phạt/khấu trừ' : 'Tạm ứng'}: ${a.amount < 0 ? '−' : '+'}${money(Math.abs(a.amount))}${a.label ? ` (${a.label})` : ''}`);
+  L.push(`THỰC NHẬN: ${money(r.net)}`);
+  const open = r.net - r.net_locked;
+  L.push(open > 0.5 ? `(Đã chốt ${money(r.net_locked)}; phần còn lại là dự tính, có thể đổi tới khi chủ khóa kỳ lương.)` : '(Số liệu đã chốt.)');
+  return L.join('\n');
 }
