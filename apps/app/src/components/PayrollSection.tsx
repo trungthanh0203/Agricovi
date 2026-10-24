@@ -54,6 +54,7 @@ export function PayrollSection() {
     <>
       {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Tính tiền công cần có mạng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
+      <p className="muted">Mục này để <strong>chốt lương</strong>: tạo kỳ → bấm Tính tiền công → thêm thưởng/phạt/tạm ứng → Khóa kỳ. Muốn chỉ xem lương và công của từng người hoặc cả cơ sở (kể cả số ước tính), vào Báo cáo → Bảng lương.</p>
       <Collapsible inline title="＋ Tạo kỳ trả công" summary="ví dụ tháng này">
         <form className="inline-form" onSubmit={onCreate} noValidate>
           <div className="pair">

@@ -16,7 +16,7 @@ import { ADJ_KIND_LABEL, fmtVnd } from '../lib/work';
 const PayCharts = lazy(() => import('./PayCharts')); // biểu đồ tải lười
 
 const MODES: { id: RangeMode; label: string }[] = [
-  { id: 'month', label: 'Tháng' }, { id: 'quarter', label: 'Quý' }, { id: 'year', label: 'Năm' }, { id: 'recent', label: '24 tháng' },
+  { id: 'month', label: 'Tháng' }, { id: 'quarter', label: 'Quý' }, { id: 'year', label: 'Năm' },
 ];
 const time = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '…');
 const stamp = (iso: string) => (iso ? new Date(iso).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '');
@@ -79,12 +79,11 @@ export function PayrollBook() {
       <div className="chips" role="tablist" aria-label="Kỳ xem">
         {MODES.map((m) => <button key={m.id} role="tab" aria-selected={mode === m.id} className={mode === m.id ? 'chip active' : 'chip'} onClick={() => setMode(m.id)}>{m.label}</button>)}
       </div>
-      <div className="btnrow">
-        <button type="button" className="secondary" onClick={() => setAnchor(shiftAnchor(mode, anchor, -1))} aria-label="Kỳ trước">‹</button>
-        <button type="button" className="secondary" onClick={() => setAnchor(shiftAnchor(mode, anchor, 1))} disabled={range.to >= todayLocal()} aria-label="Kỳ sau">›</button>
+      <div className="range-nav">
+        <button type="button" className="range-btn" onClick={() => setAnchor(shiftAnchor(mode, anchor, -1))} aria-label="Kỳ trước">‹</button>
+        <div className="range-mid"><h2>{range.label}</h2><p className="muted">{fmtDate(range.from)} – {fmtDate(range.to)}</p></div>
+        <button type="button" className="range-btn" onClick={() => setAnchor(shiftAnchor(mode, anchor, 1))} disabled={range.to >= todayLocal()} aria-label="Kỳ sau">›</button>
       </div>
-      <h2 style={{ marginTop: 8 }}>{range.label}</h2>
-      <p className="muted">{fmtDate(range.from)} – {fmtDate(range.to)}</p>
       {canSeeAll && (
         <div className="chips" role="tablist" aria-label="Xem theo">
           {([['all', 'Tất cả'], ['team', 'Phòng / Tổ'], ['person', 'Một người']] as const).map(([id, label]) => (
@@ -148,7 +147,7 @@ export function PayrollBook() {
         </Collapsible>
       )) : rows.map(line)}
       {rows.length > 0 && <button className="secondary" onClick={csv}>Xuất CSV</button>}
-      {ov && <p className="muted">Tính lúc {stamp(ov.generated_at)}. Số "ước tính" theo đơn giá hiện hành; chốt khi chủ khóa kỳ lương.</p>}
+      {ov && <p className="muted">Tính lúc {stamp(ov.generated_at)}. Số "ước tính" theo đơn giá hiện hành; chốt khi chủ khóa kỳ lương. Muốn chốt lương: vào Báo cáo → Tính lương. Mục này chỉ để xem.</p>}
     </>
   );
 }

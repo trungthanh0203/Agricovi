@@ -523,3 +523,11 @@ button.member-btn .sub { display: block; }
 .sect-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .sect-row .sect { margin: 0; }
 .sect-row .chip { flex: none; }
+
+/* Chọn kỳ xem: nút lùi/tiến hai bên nhãn thời gian */
+.range-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0; }
+.range-mid { text-align: center; flex: 1; min-width: 0; }
+.range-mid h2 { margin: 0; font-size: 1.1rem; }
+.range-mid p { margin: 2px 0 0; font-size: .85rem; }
+button.range-btn { flex: none; width: 44px; height: 44px; font-size: 1.6rem; line-height: 1; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--green); cursor: pointer; }
+button.range-btn:disabled { opacity: .35; cursor: default; }

@@ -163,15 +163,13 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
         <p className="muted">Bạn chưa có hồ sơ lao động ở cơ sở này nên không tự chấm công được{canRecordFor.length > 0 ? ', nhưng có thể chấm công hộ người trong tổ' : ''}.</p>
       )}
 
-      {canRecordFor.length > 0 && <AttendanceOverview orgId={active.id} workers={workers} att={att} isAdmin={isAdmin} />}
-
       {canRecordFor.length > 0 && (
-        <>
-          <Collapsible inline title="＋ Chấm công hộ" summary="nhập ca đã làm của người khác">
-            <ShiftForm workers={canRecordFor} cycles={cycles} att={att} busy={busy || !online} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
-          </Collapsible>
-        </>
+        <Collapsible inline title="＋ Chấm công hộ" summary="nhập ca đã làm của người khác">
+          <ShiftForm workers={canRecordFor} cycles={cycles} att={att} busy={busy || !online} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
+        </Collapsible>
       )}
+
+      {canRecordFor.length > 0 && <AttendanceOverview orgId={active.id} workers={workers} att={att} isAdmin={isAdmin} />}
 
       <h2 className="sect">Công gần đây ({recent.length})</h2>
       <table className="grid">
