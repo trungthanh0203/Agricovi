@@ -3,8 +3,8 @@ import { SECTION_ICONS } from './SubTabs';
 import { declareSections, orgSections, productionSections, reportSections, type TabId } from '../lib/tabs';
 import type { MyOrg } from '../lib/orgs';
 
-/** Thứ tự các ô ở Trang chủ: Mùa vụ, Chấm công, Chi phí, Kho, Thu hoạch, Doanh thu, Tổng kết vụ, Nhật ký việc */
-const HOME_ORDER = ['cycles', 'attendance', 'expense', 'stock', 'harvest', 'sales', 'summary', 'logs'];
+/** 6 ô ở Trang chủ: Mùa vụ, Chấm công, Chi phí, Kho, Nhật ký việc, Theo nhu cầu */
+const HOME_ORDER = ['cycles', 'attendance', 'expense', 'stock', 'logs', 'custom'];
 
 interface Item { tab: TabId; id: string; label: string }
 

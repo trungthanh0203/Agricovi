@@ -53,17 +53,20 @@ export function MemberPay({ orgId, workerId }: { orgId: string; workerId: string
       <p>{curHour ? <>Theo giờ: <strong>{fmtVnd(curHour.amount)}/giờ</strong> (từ {fmt(curHour.valid_from)}{curHour.valid_to ? ` đến ${fmt(curHour.valid_to)}` : ', chưa hết hạn'})</> : <span className="muted">Chưa có đơn giá theo giờ.</span>}</p>
       <p>{curMonth ? <>Lương cố định: <strong>{fmtVnd(curMonth.amount)}/tháng</strong> (từ {fmt(curMonth.valid_from)}{curMonth.valid_to ? ` đến ${fmt(curMonth.valid_to)}` : ', chưa hết hạn'})</> : <span className="muted">Chưa có lương cố định theo tháng.</span>}</p>
       {!curHour && !curMonth && <p className="msg warn">Chưa có cách trả công nào: công của người này chưa tính được tiền.</p>}
-      <label>Thêm hoặc đổi cách trả
-        <select value={kind} onChange={(e) => setKind(e.target.value as 'hour' | 'month')}>
-          <option value="hour">Theo giờ làm (đồng/giờ)</option>
-          <option value="month">Lương cố định theo tháng (đồng/tháng)</option>
-        </select>
-      </label>
       <div className="pair">
+        <label>Thêm hoặc đổi cách trả
+          <select value={kind} onChange={(e) => setKind(e.target.value as 'hour' | 'month')}>
+            <option value="hour">Theo giờ làm</option>
+            <option value="month">Lương cố định tháng</option>
+          </select>
+        </label>
         <label>{kind === 'hour' ? 'Đơn giá (đồng/giờ)' : 'Lương (đồng/tháng)'}<input value={amount} inputMode="numeric" onChange={(e) => setAmount(e.target.value)} /></label>
-        <label>Có hiệu lực từ ngày<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
       </div>
-      <label>Hết hiệu lực vào ngày (không bắt buộc)<input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} /><small>Để trống nếu chưa biết ngày kết thúc. Khi thêm dòng mới, dòng cũ cùng loại tự kết thúc vào hôm trước ngày bắt đầu của dòng mới.</small></label>
+      <div className="pair">
+        <label>Có hiệu lực từ ngày<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label>Hết hiệu lực vào ngày<input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} /></label>
+      </div>
+      <p className="muted">Ngày hết hiệu lực không bắt buộc. Khi thêm dòng mới, dòng cũ cùng loại tự kết thúc vào hôm trước ngày bắt đầu của dòng mới.</p>
       <div className="btnrow">
         <button type="button" className="primary" disabled={busy || !online} onClick={submit}>Lưu đơn giá</button>
         <button type="button" className="secondary" onClick={() => { setAmount(''); setFrom(todayLocal()); setTo(''); setError(null); }}>Hủy</button>

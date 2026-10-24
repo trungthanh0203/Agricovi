@@ -159,7 +159,10 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
 
       {!online && canManage && <p className="msg warn" role="status">Đang offline: tạo vụ và đổi trạng thái cần có mạng.</p>}
       {actionError && <p className="msg error" role="alert">{actionError}</p>}
-      <h2 className="sect">Vụ trồng ({myCycles.length})</h2>
+      <div className="sect-row">
+        <h2 className="sect">Vụ trồng ({myCycles.length})</h2>
+        {canManage && hasAreas && <button className="chip add" onClick={onCreateCycle} disabled={!online}>+ Tạo vụ mới</button>}
+      </div>
       {myCycles.length === 0 && <p className="muted">Chưa có vụ trồng nào.</p>}
       {(myCycles.length > 0 || (canManage && hasAreas)) && (
         <div className="chips" role="tablist" aria-label="Nhóm vụ theo trạng thái">
@@ -168,9 +171,6 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
               {g.label} ({inGroup(g.id).length})
             </button>
           ))}
-          {canManage && hasAreas && (
-            <button className="chip add" onClick={onCreateCycle} disabled={!online}>+ Tạo vụ mới</button>
-          )}
         </div>
       )}
       {myCycles.length > 0 && shown.length === 0 && <p className="muted">Không có vụ nào ở nhóm này.</p>}

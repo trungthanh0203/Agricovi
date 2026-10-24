@@ -516,3 +516,10 @@ button.member-btn .sub { display: block; }
 .inline-form select { text-overflow: ellipsis; }
 .inline-form textarea { font-family: inherit; min-height: 48px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--field); line-height: 1.35; resize: none; overflow: hidden; display: block; }
 .inline-form .pair > label { min-width: 0; }
+
+/* Danh sách tùy chọn dài chia 2 cột; hàng tiêu đề + nút cùng dòng */
+.cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; }
+.cols2 label.check { min-width: 0; font-size: .9rem; }
+.sect-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sect-row .sect { margin: 0; }
+.sect-row .chip { flex: none; }

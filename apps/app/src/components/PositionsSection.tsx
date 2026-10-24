@@ -154,9 +154,13 @@ function RoleForm({ initial, busy, onSave, onClose }: {
           <legend>Loại việc được ghi nhật ký</legend>
           <label className="check"><input type="radio" checked={!limited} onChange={() => setLimited(false)} /> Mọi loại việc</label>
           <label className="check"><input type="radio" checked={limited} onChange={() => setLimited(true)} /> Chỉ những việc được chọn</label>
-          {limited && workTypes.filter((w) => w.is_active).map((w) => (
-            <label className="check" key={w.id}><input type="checkbox" checked={wts.includes(w.id)} onChange={() => toggleWt(w.id)} /> {w.name}</label>
-          ))}
+          {limited && (
+            <div className="cols2">
+              {workTypes.filter((w) => w.is_active).map((w) => (
+                <label className="check" key={w.id}><input type="checkbox" checked={wts.includes(w.id)} onChange={() => toggleWt(w.id)} /> {w.name}</label>
+              ))}
+            </div>
+          )}
         </fieldset>
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">

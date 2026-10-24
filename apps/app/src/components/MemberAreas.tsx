@@ -13,7 +13,7 @@ export function AreaChoice({ orgId, value, onChange }: { orgId: string; value: s
     <>
       <label className="check"><input type="radio" checked={all} onChange={() => onChange(null)} /> Tất cả trang trại</label>
       <label className="check"><input type="radio" checked={!all} onChange={() => onChange(picked)} /> Chỉ những trang trại được chọn</label>
-      {!all && areas.map((a) => <label className="check" key={a.id}><input type="checkbox" checked={picked.includes(a.id)} onChange={() => toggle(a.id)} /> {a.name}</label>)}
+      {!all && <div className="cols2">{areas.map((a) => <label className="check" key={a.id}><input type="checkbox" checked={picked.includes(a.id)} onChange={() => toggle(a.id)} /> {a.name}</label>)}</div>}
       {!all && areas.length === 0 && <p className="muted">Chưa có trang trại nào. Khai báo trang trại trước.</p>}
     </>
   );
@@ -48,9 +48,9 @@ export function MemberAreas({ orgId, userId, initial, onSaved }: { orgId: string
     <div className="inline-form">
       <label className="check"><input type="radio" checked={all} onChange={() => setAll(true)} /> Tất cả trang trại</label>
       <label className="check"><input type="radio" checked={!all} onChange={() => setAll(false)} /> Chỉ những trang trại được chọn</label>
-      {!all && areas.map((a) => (
+      {!all && <div className="cols2">{areas.map((a) => (
         <label className="check" key={a.id}><input type="checkbox" checked={picked.includes(a.id)} onChange={() => toggle(a.id)} /> {a.name}</label>
-      ))}
+      ))}</div>}
       {!all && areas.length === 0 && <p className="muted">Chưa có trang trại nào. Khai báo trang trại trước.</p>}
       {msg && <p className={msg.ok ? 'msg ok' : 'msg error'} role="status">{msg.text}</p>}
       <div className="btnrow">
