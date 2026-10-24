@@ -195,7 +195,7 @@ function Shell() {
         ) : tab === 'guide' ? (
           <GuideTab section={subs.guide} onSection={setSub('guide')} onGo={(t, s) => { closeOverlay(); goTo(t, s); }} />
         ) : tab === 'reports' ? (
-          <ReportsTab section={subs.reports} onSection={setSub('reports')} />
+          <ReportsTab section={subs.reports} onSection={setSub('reports')} onGo={goTo} />
         ) : (
           <ProfileTab onAddOrg={() => setAdding(true)} isPlatformAdmin={isPlatformAdmin} />
         )}

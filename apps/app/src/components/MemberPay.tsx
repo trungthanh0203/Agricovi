@@ -7,7 +7,7 @@ import { addRate, fmtVnd, listRates, setRateActive, setRateEnd, type RateRow } f
 /**
  * Trả công của MỘT người (D86): đặt riêng cho người này, không còn giá chung theo tổ hoặc cơ sở. Hai cách: THEO GIỜ (đồng/giờ) hoặc
  * LƯƠNG CỐ ĐỊNH THEO THÁNG (đồng/tháng); có thể có cả hai. Mỗi dòng có ngày hiệu lực; đổi = thêm dòng mới (kỳ lương đã khóa không đổi).
- * Chỉ chủ cơ sở (hoặc người được cấp quyền Tiền công) đặt. Thưởng, phạt, tạm ứng nhập ở Báo cáo → Tiền công khi tính lương.
+ * Chỉ chủ cơ sở (hoặc người được cấp quyền Tiền công) đặt. Thưởng, phạt, tạm ứng nhập ở Báo cáo → Bảng lương (chi tiết từng người).
  */
 export function MemberPay({ orgId, workerId }: { orgId: string; workerId: string | null }) {
   const online = useOnline();

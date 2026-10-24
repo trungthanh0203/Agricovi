@@ -61,8 +61,12 @@ test('yêu cầu sửa công: người lao động đề nghị, quản lý duy�
   await db.query(`update organization_memberships set permissions = '{"payroll":"edit"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý cần được cấp quyền Tiền công
   const per = (await asUser(db, mgr, `insert into payroll_periods (id,organization_id,start_date,end_date) values ($1,$2,current_date - 6, current_date) returning id`, [id(30), org])).rows[0].id;
   await asUser(db, mgr, `select compute_payroll($1)`, [per]);
+  // D89: còn yêu cầu sửa công chờ duyệt thì chưa khóa được kỳ
+  assert.match(await expectError(asUser(db, owner, `select lock_payroll($1)`, [per])), /BLOCKED/);
+  await db.query(`update attendance_adjustments set status='rejected' where id=$1`, [req2.id]);
   await asUser(db, owner, `select lock_payroll($1)`, [per]);
-  assert.match(await expectError(asUser(db, mgr, `select * from decide_attendance_adjustment($1, true)`, [req2.id])), /PERIOD_LOCKED/);
+  const req3 = (await db.query(`insert into attendance_adjustments (organization_id,attendance_id,requested_by,problem_type,proposed,reason) values ($1,$2,$3,'sai giờ','{"break_minutes":10}'::jsonb,'Yêu cầu sau khóa') returning id`, [org, id(20), wk])).rows[0].id;
+  assert.match(await expectError(asUser(db, mgr, `select * from decide_attendance_adjustment($1, true)`, [req3])), /PERIOD_LOCKED/);
 });
 
 test('tổng kết vụ có nhân công: kỳ chưa khóa là dự tính, kỳ đã khóa là đã duyệt; vào tổng chi phí', async () => {

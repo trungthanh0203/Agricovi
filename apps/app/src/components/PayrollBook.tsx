@@ -5,7 +5,11 @@ import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
-import { cachedDetail, cachedOverview, fetchPayDetail, fetchPayOverview } from '../lib/payBook';
+import {
+  addPayAdjustment, cachedDetail, cachedOverview, deletePayAdjustment, fetchPayDetail, fetchPayOverview, fetchSettleState, updatePayAdjustment, type SettleState,
+} from '../lib/payBook';
+import type { TabId } from '../lib/tabs';
+import { PaySettleBar } from './PaySettleBar';
 import {
   buildPayBookCsv, groupByTeam, hoursText, PAY_STATUS_LABEL, rangeOf, shiftAnchor, sumRows,
   type PayDetail, type PayItem, type PayOverview, type PayRow, type RangeMode,
@@ -26,7 +30,7 @@ const pillOf = (s: PayItem['status']) => (s === 'locked' ? 'pill ok' : s === 'es
  * Bảng lương (D87): mỗi người xem lương và công của CHÍNH MÌNH (tổng thực nhận, giờ công, từng ngày vào ca/ra ca, lương cố định, thưởng/phạt/tạm ứng).
  * Chủ và người có quyền Tiền công chọn xem một người, tất cả, hoặc theo phòng/tổ. Số "ước tính" tính theo đơn giá hiện hành, có thể đổi tới khi chủ tính và khóa kỳ.
  */
-export function PayrollBook() {
+export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) => void }) {
   const { active } = useOrgs();
   const online = useOnline();
   const orgId = active?.id ?? '';
@@ -40,6 +44,8 @@ export function PayrollBook() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [fromCache, setFromCache] = useState(false);
+  const [tick, setTick] = useState(0); // tăng lên để tải lại sau khi chốt lương / nhập thưởng phạt
+  const [settle, setSettle] = useState<SettleState | null>(null);
 
   const loadOverview = useCallback(async () => {
     if (!orgId) return;
@@ -52,6 +58,14 @@ export function PayrollBook() {
   useEffect(() => { void loadOverview(); }, [loadOverview, online]);
 
   const canSeeAll = ov?.can_see_all ?? false;
+  const refreshAll = () => { setTick((t) => t + 1); void loadOverview(); };
+  useEffect(() => {
+    setSettle(null);
+    if (!orgId || !canSeeAll || mode !== 'month' || !online) return;
+    let alive = true;
+    fetchSettleState(orgId, range.from).then((s) => { if (alive) setSettle(s); }).catch(() => undefined);
+    return () => { alive = false; };
+  }, [orgId, canSeeAll, mode, range.from, online, tick]);
   useEffect(() => {
     if (!ov || view !== null) return;
     if (ov.can_see_all) setView('all');
@@ -67,7 +81,7 @@ export function PayrollBook() {
     let alive = true;
     fetchPayDetail(orgId, pick, range.from, range.to).then((d) => { if (alive) setDetail(d); }).catch((e) => { if (alive) { setError(friendlyError(e)); if (cached) setDetail(cached); } });
     return () => { alive = false; };
-  }, [orgId, view, pick, range.from, range.to, online]);
+  }, [orgId, view, pick, range.from, range.to, online, tick]);
 
   if (!active) return null;
   const rows = ov?.workers ?? [];
@@ -110,9 +124,10 @@ export function PayrollBook() {
     return (
       <>
         {header}
+        {settle && <PaySettleBar orgId={orgId} state={settle} onChanged={refreshAll} onGo={onGo} />}
         {canSeeAll && pick && <button className="link" onClick={() => setView('all')}>← Danh sách tất cả</button>}
         {!pick && <p className="muted">{rows.length === 0 ? 'Chưa có hồ sơ chấm công nên chưa có bảng lương. Hồ sơ được tạo khi bạn chấm công lần đầu.' : 'Hãy chọn một người để xem.'}</p>}
-        {person && <PersonView row={person} detail={detail} range={range} />}
+        {person && <PersonView row={person} detail={detail} range={range} adjust={settle && settle.can_edit && settle.status !== 'locked' && !settle.overlap_legacy ? { orgId, month: range.from, onChanged: refreshAll } : null} />}
         {person && <Suspense fallback={null}><PayCharts orgId={orgId} worker={canSeeAll ? person.worker_id : null} items={detail?.items ?? null} from={range.from} to={range.to} /></Suspense>}
       </>
     );
@@ -131,6 +146,7 @@ export function PayrollBook() {
   return (
     <>
       {header}
+      {settle && <PaySettleBar orgId={orgId} state={settle} onChanged={refreshAll} onGo={onGo} />}
       {rows.length === 0 && <p className="muted">{busy ? 'Đang tải…' : 'Chưa có người nào.'}</p>}
       {rows.length > 0 && (
         <div className="kpis">
@@ -147,12 +163,35 @@ export function PayrollBook() {
         </Collapsible>
       )) : rows.map(line)}
       {rows.length > 0 && <button className="secondary" onClick={csv}>Xuất CSV</button>}
-      {ov && <p className="muted">Tính lúc {stamp(ov.generated_at)}. Số "ước tính" theo đơn giá hiện hành; chốt khi chủ khóa kỳ lương. Muốn chốt lương: vào Báo cáo → Tính lương. Mục này chỉ để xem.</p>}
+      {ov && <p className="muted">Tính lúc {stamp(ov.generated_at)}. Số "ước tính" theo đơn giá hiện hành; chốt khi chủ khóa kỳ lương. Chủ chốt lương ngay ở đầu trang khi xem một tháng.</p>}
     </>
   );
 }
 
-function PersonView({ row, detail, range }: { row: PayRow; detail: PayDetail | null; range: { from: string; to: string } }) {
+function PersonView({ row, detail, range, adjust }: {
+  row: PayRow; detail: PayDetail | null; range: { from: string; to: string }; adjust: { orgId: string; month: string; onChanged: () => void } | null;
+}) {
+  const [form, setForm] = useState<{ id: string | null; kind: 'bonus' | 'deduction' | 'advance'; amount: string; reason: string } | null>(null);
+  const [aBusy, setABusy] = useState(false);
+  const [aError, setAError] = useState<string | null>(null);
+  const save = async () => {
+    if (!adjust || !form) return;
+    const a = Number(form.amount.replace(/[.,\s]/g, ''));
+    if (!form.amount.trim() || Number.isNaN(a) || a <= 0) return setAError('Số tiền phải lớn hơn 0.');
+    if (form.reason.trim().length < 3) return setAError('Hãy ghi lý do.');
+    setABusy(true); setAError(null);
+    try {
+      if (form.id) await updatePayAdjustment(form.id, form.kind, a, form.reason); else await addPayAdjustment(adjust.orgId, row.worker_id, adjust.month, form.kind, a, form.reason);
+      setForm(null); adjust.onChanged();
+    } catch (e) { setAError(friendlyError(e)); }
+    setABusy(false);
+  };
+  const remove = async (id: string) => {
+    if (!adjust || !window.confirm('Xóa khoản này? Bảng lương sẽ tự tính lại.')) return;
+    setABusy(true); setAError(null);
+    try { await deletePayAdjustment(id); adjust.onChanged(); } catch (e) { setAError(friendlyError(e)); }
+    setABusy(false);
+  };
   const open = row.net - row.net_locked;
   const items = detail?.items ?? [];
   const days = items.filter((i) => i.kind === 'hours' || i.kind === 'pending' || i.kind === 'open' || i.kind === 'rejected');
@@ -187,12 +226,44 @@ function PersonView({ row, detail, range }: { row: PayRow; detail: PayDetail | n
         <p className="muted">Công sai? Vào Sản xuất → Chấm công, chọn ngày đó và bấm đề nghị sửa công.</p>
       </Collapsible>
 
-      <Collapsible title="Lương cố định, thưởng, phạt, tạm ứng" summary={`${others.length} khoản`} defaultOpen={others.length > 0}>
+      <Collapsible title="Lương cố định, thưởng, phạt, tạm ứng" summary={`${others.length} khoản`} defaultOpen={others.length > 0 || !!adjust}>
+        {adjust && !form && (
+          <div className="chips">
+            {(['bonus', 'deduction', 'advance'] as const).map((k) => (
+              <button key={k} type="button" className="chip add" onClick={() => { setAError(null); setForm({ id: null, kind: k, amount: '', reason: '' }); }}>＋ {k === 'bonus' ? 'Thưởng' : k === 'deduction' ? 'Phạt' : 'Tạm ứng'}</button>
+            ))}
+          </div>
+        )}
+        {adjust && form && (
+          <div className="inline-form">
+            <div className="pair">
+              <label>Loại
+                <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as 'bonus' | 'deduction' | 'advance' })}>
+                  <option value="bonus">Thưởng</option><option value="deduction">Phạt / khấu trừ</option><option value="advance">Tạm ứng</option>
+                </select>
+              </label>
+              <label>Số tiền (đồng)<input value={form.amount} inputMode="numeric" onChange={(e) => setForm({ ...form, amount: e.target.value })} /></label>
+            </div>
+            <label>Lý do<input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} /></label>
+            {aError && <p className="msg error" role="alert">{aError}</p>}
+            <div className="btnrow">
+              <button type="button" className="primary" disabled={aBusy} onClick={() => void save()}>{form.id ? 'Lưu thay đổi' : 'Thêm và tính lại'}</button>
+              <button type="button" className="secondary" onClick={() => { setForm(null); setAError(null); }}>Hủy</button>
+            </div>
+          </div>
+        )}
+        {aError && !form && <p className="msg error" role="alert">{aError}</p>}
         {detail && others.length === 0 && <p className="muted">Không có khoản nào trong kỳ này.</p>}
         {others.map((i, n) => (
           <div className="row member" key={`${i.id ?? n}`}>
             <span className="grow"><strong>{i.kind === 'salary' ? `Lương cố định tháng ${i.label ?? ''}` : ADJ_KIND_LABEL[i.kind as 'bonus' | 'deduction' | 'advance']}</strong>
-              <span className="sub">{i.kind === 'salary' ? '' : `${fmtDate(i.date)} — ${i.label ?? ''}`}</span></span>
+              <span className="sub">{i.kind === 'salary' ? '' : `${fmtDate(i.date)} — ${i.label ?? ''}`}</span>
+              {adjust && i.id && i.kind !== 'salary' && (
+                <span className="sub">
+                  <button type="button" className="link inline" disabled={aBusy} onClick={() => { setAError(null); setForm({ id: i.id, kind: i.kind as 'bonus' | 'deduction' | 'advance', amount: String(Math.abs(i.amount)), reason: i.label ?? '' }); }}>Sửa</button>
+                  <button type="button" className="link inline" disabled={aBusy} onClick={() => void remove(i.id!)}>Xóa</button>
+                </span>
+              )}</span>
             <span className="num"><strong>{i.amount < 0 ? '−' : '+'}{fmtVnd(Math.abs(i.amount))}</strong><span className={pillOf(i.status)}>{PAY_STATUS_LABEL[i.status]}</span></span>
           </div>
         ))}

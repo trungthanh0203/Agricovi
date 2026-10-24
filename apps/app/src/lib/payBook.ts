@@ -60,3 +60,32 @@ export async function fetchPaySeries(orgId: string, worker: string | null = null
   if (months === 6) save(`s.${orgId}.${worker ?? ''}`, r);
   return r;
 }
+
+// ---------------------------------------------------------------- chốt lương ngay trong Bảng lương (D89)
+export interface SettleState {
+  month: string; from: string; to: string; period_id: string | null; status: string; overlap_legacy: boolean; can_edit: boolean; is_owner: boolean;
+  blockers: {
+    pending_attendance: number; open_shifts: number; pending_requests: number; uncomputed: number; blocked: boolean; messages: string[];
+    missing_rate: { worker_id: string; name: string; days: number }[];
+  };
+}
+
+async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  if (!navigator.onLine) throw new Error('OFFLINE: Cần có mạng để thực hiện. Hãy kết nối mạng rồi thử lại.');
+  const { data, error } = await supabase.rpc(fn, args);
+  if (error) throw new Error(error.message);
+  return data as T;
+}
+
+/** Trạng thái chốt lương của một tháng (kỳ, việc còn dang dở); cần quyền xem Tiền công */
+export const fetchSettleState = (orgId: string, month: string) => rpc<SettleState>('get_pay_settle_state', { p_org: orgId, p_month: month });
+/** Tính lương cả tháng (tạo kỳ nếu chưa có) */
+export const settleMonth = (orgId: string, month: string) => rpc<{ period_id: string; lines: number; missing_rate_hours: number; workers: number; total: number }>('settle_month', { p_org: orgId, p_month: month });
+export const lockPeriod = (periodId: string) => rpc<void>('lock_payroll', { p_period: periodId });
+export const unlockPeriod = (periodId: string, reason: string) => rpc<void>('unlock_payroll', { p_period: periodId, p_reason: reason });
+export const addPayAdjustment = (orgId: string, worker: string, month: string, kind: 'bonus' | 'deduction' | 'advance', amount: number, reason: string) =>
+  rpc<unknown>('add_pay_adjustment', { p_org: orgId, p_worker: worker, p_month: month, p_kind: kind, p_amount: amount, p_reason: reason });
+export const updatePayAdjustment = (id: string, kind: 'bonus' | 'deduction' | 'advance', amount: number, reason: string) =>
+  rpc<unknown>('update_pay_adjustment', { p_id: id, p_kind: kind, p_amount: amount, p_reason: reason });
+export const deletePayAdjustment = (id: string) => rpc<unknown>('delete_pay_adjustment', { p_id: id });
