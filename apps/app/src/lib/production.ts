@@ -3,6 +3,7 @@ import { db, type AreaRow, type CycleRow, type LogRow, type NoteRow, type StageR
 import { syncFinanceDown } from './finance';
 import { refreshCatalogCache } from './templates';
 import { syncHarvestsDown } from './harvest';
+import { syncIncidentsDown } from './incidents';
 import { toLocalInput } from './hooks';
 import { syncInventoryDown } from './inventory';
 import { enqueue, flushOutbox } from './outbox';
@@ -50,6 +51,7 @@ export async function syncDown(): Promise<void> {
     syncInventoryDown().catch((e) => console.warn('Không tải được vật tư/kho', e)),
     syncHarvestsDown().catch((e) => console.warn('Không tải được thu hoạch', e)),
     syncFinanceDown().catch((e) => console.warn('Không tải được chi phí/doanh thu', e)),
+    syncIncidentsDown().catch((e) => console.warn('Không tải được sự cố', e)),
   ]);
 
   extras.catch(() => undefined); // lỗi được báo ở lệnh await cuối, tránh cảnh báo sớm

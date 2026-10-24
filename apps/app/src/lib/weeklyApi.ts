@@ -33,7 +33,7 @@ export async function fetchWeekly(orgId: string, weekStart: string | null = null
     })),
     attention: {
       overdue_payables: pair(a.overdue_payables), overdue_receivables: pair(a.overdue_receivables), low_stock: numOrNull(a.low_stock),
-      late_cycles: Number(a.late_cycles ?? 0), pending_attendance: Number(a.pending_attendance ?? 0), web_orders_waiting: numOrNull(a.web_orders_waiting),
+      late_cycles: Number(a.late_cycles ?? 0), open_incidents: Number(a.open_incidents ?? 0), overdue_actions: Number(a.overdue_actions ?? 0), pending_attendance: Number(a.pending_attendance ?? 0), web_orders_waiting: numOrNull(a.web_orders_waiting),
     },
     generated_at: String(d.generated_at ?? ''),
   };

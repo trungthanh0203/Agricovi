@@ -49,6 +49,7 @@ export function CycleStatsStrip({ s }: { s: CycleStat }) {
         {s.revenue !== null && <Tile label="Doanh thu" value={shortMoney(s.revenue)} tone="ok" title={money(s.revenue)} />}
         {s.profit !== null && <Tile label={s.profit >= 0 ? 'Lãi tạm tính' : 'Lỗ tạm tính'} value={shortMoney(Math.abs(s.profit))} tone={s.profit >= 0 ? 'ok' : 'bad'} title={money(s.profit)} />}
       </div>
+      {(s.open_incidents ?? 0) > 0 && <p className="yield-line"><span className="pill warn">Sự cố</span> {s.open_incidents} đang mở{(s.overdue_actions ?? 0) > 0 ? `, ${s.overdue_actions} việc khắc phục quá hạn` : ''}</p>}
       {s.yield_per_1000m2 !== null && <p className="muted yield-line">Năng suất: <strong>{kg(s.yield_per_1000m2 * f)}/{perLabel}</strong>{s.area_m2 !== null ? ` · diện tích ${fmtArea(s.area_m2, unitId)}` : ''}</p>}
       {budgetPct !== null && s.budget_amount !== null && s.cost_total !== null && <Plan label="Ngân sách đã dùng" pct={budgetPct} text={`${shortMoney(s.cost_total)} / ${shortMoney(s.budget_amount)}`} />}
       {yieldPct !== null && s.target_yield_kg !== null && s.harvest_net !== null && <Plan label="Sản lượng so với dự kiến" pct={yieldPct} text={`${kg(s.harvest_net)} / ${kg(s.target_yield_kg)}`} />}

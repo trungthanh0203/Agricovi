@@ -27,6 +27,7 @@ export async function fetchCycleStats(orgId: string): Promise<CycleStats> {
       sold: N(x.sold), unsold: N(x.unsold), avg_price: N(x.avg_price), cost_per_kg: N(x.cost_per_kg), profit_per_kg: N(x.profit_per_kg), receivable: N(x.receivable),
       area_m2: N(x.area_m2), plant_count: N(x.plant_count), variety: (x.variety as string | null) ?? null, density_per_1000m2: N(x.density_per_1000m2), yield_per_1000m2: N(x.yield_per_1000m2),
       kg_per_plant: N(x.kg_per_plant), cost_per_1000m2: N(x.cost_per_1000m2), revenue_per_1000m2: N(x.revenue_per_1000m2), profit_per_1000m2: N(x.profit_per_1000m2),
+      open_incidents: N(x.open_incidents), overdue_actions: N(x.overdue_actions),
       missing_cost: B(x.missing_cost), has_estimate: B(x.has_estimate), missing_harvest: B(x.missing_harvest), missing_revenue: B(x.missing_revenue),
     })),
   };

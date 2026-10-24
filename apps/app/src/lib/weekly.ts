@@ -23,6 +23,9 @@ export interface Attention {
   overdue_receivables: { count: number; amount: number } | null;
   low_stock: number | null;
   late_cycles: number;
+  /** Sự cố đang mở và việc khắc phục quá hạn (D95) */
+  open_incidents: number;
+  overdue_actions: number;
   pending_attendance: number;
   web_orders_waiting: number | null;
 }
@@ -113,6 +116,7 @@ export function buildWeeklyText(r: WeeklyReport, orgName: string): string {
   if (a.overdue_receivables && a.overdue_receivables.count > 0) todo.push(`${a.overdue_receivables.count} khoản phải thu quá hạn (${money(a.overdue_receivables.amount)})`);
   if (a.low_stock) todo.push(`${a.low_stock} vật tư sắp hết`);
   if (a.late_cycles > 0) todo.push(`${a.late_cycles} vụ trễ tiến độ`);
+  if (a.open_incidents > 0) todo.push(`${a.open_incidents} sự cố đang mở${a.overdue_actions > 0 ? `, ${a.overdue_actions} việc khắc phục quá hạn` : ''}`);
   if (a.pending_attendance > 0) todo.push(`${a.pending_attendance} ca công chờ xác nhận`);
   if (a.web_orders_waiting) todo.push(`${a.web_orders_waiting} đơn website chờ báo giá`);
   if (todo.length > 0) { L.push('Cần chú ý:'); for (const t of todo) L.push(`  - ${t}`); }
@@ -122,6 +126,6 @@ export function buildWeeklyText(r: WeeklyReport, orgName: string): string {
 
 /** Có điểm cần chú ý nào không (để hiện chấm ở Trang chủ) */
 export function attentionCount(a: Attention): number {
-  return (a.overdue_payables?.count ? 1 : 0) + (a.overdue_receivables?.count ? 1 : 0) + (a.low_stock ? 1 : 0) + (a.late_cycles > 0 ? 1 : 0)
+  return (a.overdue_payables?.count ? 1 : 0) + (a.overdue_receivables?.count ? 1 : 0) + (a.low_stock ? 1 : 0) + (a.late_cycles > 0 ? 1 : 0) + (a.open_incidents > 0 ? 1 : 0)
     + (a.pending_attendance > 0 ? 1 : 0) + (a.web_orders_waiting ? 1 : 0);
 }

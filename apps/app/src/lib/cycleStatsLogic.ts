@@ -12,6 +12,8 @@ export interface CycleStat {
   /** Diện tích và năng suất (D94) */
   area_m2: number | null; plant_count: number | null; variety: string | null; density_per_1000m2: number | null; yield_per_1000m2: number | null; kg_per_plant: number | null;
   cost_per_1000m2: number | null; revenue_per_1000m2: number | null; profit_per_1000m2: number | null;
+  /** Sự cố đang mở và việc khắc phục quá hạn (D95) */
+  open_incidents: number | null; overdue_actions: number | null;
   missing_cost: boolean | null; has_estimate: boolean | null; missing_harvest: boolean | null; missing_revenue: boolean | null;
 }
 

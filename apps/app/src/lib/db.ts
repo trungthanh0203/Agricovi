@@ -58,6 +58,45 @@ export interface NoteRow {
   created_at?: string;
 }
 
+/** Sự cố của vụ (D95) */
+export interface IncidentRow {
+  id: string;
+  cycle_id: string;
+  organization_id: string;
+  kind: 'pest' | 'loss' | 'weather' | 'complaint' | 'other';
+  incident_date: string;
+  stage_id: string | null;
+  severity: 'low' | 'medium' | 'high';
+  description: string;
+  loss_quantity: number | null;
+  loss_amount: number | null;
+  image: string | null;
+  status: 'open' | 'closed';
+  closed_at: string | null;
+  close_note: string | null;
+  voided_at: string | null;
+  void_reason: string | null;
+  version: number;
+  created_by: string;
+  author_name?: string | null;
+  created_at?: string;
+}
+
+/** Việc khắc phục của sự cố */
+export interface IncidentActionRow {
+  id: string;
+  incident_id: string;
+  cycle_id: string;
+  organization_id: string;
+  content: string;
+  assignee_id: string | null;
+  assignee_name: string | null;
+  due_date: string | null;
+  done: boolean;
+  done_at: string | null;
+  created_by: string;
+}
+
 /** Ảnh đã tải từ kho ảnh, giữ trên máy để xem offline (G2-1). key = "<đường dẫn>|t" (ảnh nhỏ) hoặc "|f" (đầy đủ) */
 export interface MediaRow { key: string; blob: Blob; at: number }
 
@@ -279,6 +318,8 @@ export class LocalDb extends Dexie {
   summaries!: Table<SummaryRow, string>;
   stages!: Table<StageRow, string>;
   notes!: Table<NoteRow, string>;
+  incidents!: Table<IncidentRow, string>;
+  incidentActions!: Table<IncidentActionRow, string>;
   localShifts!: Table<LocalShift, string>;
   media!: Table<MediaRow, string>;
 
@@ -373,6 +414,11 @@ export class LocalDb extends Dexie {
     // v11 (G2-1): ảnh tải từ kho ảnh giữ trên máy
     this.version(11).stores({
       media: 'key, at',
+    });
+    // v12 (D95): sự cố và việc khắc phục của vụ
+    this.version(12).stores({
+      incidents: 'id, cycle_id, status',
+      incidentActions: 'id, incident_id, cycle_id',
     });
   }
 }

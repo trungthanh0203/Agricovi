@@ -4,6 +4,7 @@ import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { CycleCalendar } from '../components/CycleCalendar';
 import { Collapsible } from '../components/Collapsible';
 import { CycleQr } from '../components/CycleQr';
+import { IncidentsSection } from '../components/IncidentsSection';
 import { PublishCycle } from '../components/PublishCycle';
 import { cycleCode } from '../lib/qr';
 import { useCatalog } from '../lib/catalog';
@@ -99,6 +100,8 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
       <Collapsible title="Mã QR của vụ" summary="tên vụ, nơi trồng, thời gian, vật tư đã dùng" defaultOpen={openQr}>
         <CycleQr cycleId={cycleId} label={cycle.name || crop} />
       </Collapsible>
+
+      {active && <IncidentsSection cycleId={cycleId} orgId={active.id} stages={stages} canManage={canManage} userId={session?.user.id} online={online} today={today} />}
 
       {prog.total > 0 ? (
         <div className="card slim">

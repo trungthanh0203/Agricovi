@@ -17,6 +17,8 @@ import { useAuth } from '../lib/auth';
 import { authorLabel, canManageProduction, hasRole } from '../lib/roles';
 import { retryFailed } from '../lib/outbox';
 import { useTable } from '../lib/tables';
+import { setIncidentActionDone } from '../lib/incidents';
+import { dueActions } from '../lib/incidentsLogic';
 
 export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: string) => void; onOpenCycle: (id: string) => void }) {
   const { active } = useOrgs();
@@ -28,6 +30,8 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
   const cycles = useTable('cycles');
   const areas = useTable('areas');
   const notes = useTable('notes');
+  const incidents = useTable('incidents');
+  const incidentActions = useTable('incidentActions');
   const online = useOnline();
   const [noteError, setNoteError] = useState<string | null>(null);
   const { workTypes, cropTypes } = useCatalog();
@@ -52,6 +56,8 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
   const reminders = notes
     .filter((n) => !n.done && mineIds.has(n.cycle_id) && n.note_date <= limit)
     .sort((a, b) => a.note_date.localeCompare(b.note_date));
+  // việc khắc phục sự cố (D95): người quản lý thấy mọi việc đến hạn của vụ trong cơ sở, nhân viên chỉ thấy việc được giao cho mình
+  const actionReminders = dueActions(incidentActions.filter((a) => mineIds.has(a.cycle_id) && (canManage || a.assignee_id === uid)), incidents, limit);
   const failed = [...sync.values()].filter((s) => s.state === 'needs_attention').length;
 
   return (
@@ -68,10 +74,28 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
 
       <CycleProgressList cycleIds={mineIds} onOpenCycle={onOpenCycle} />
 
-      {reminders.length > 0 && (
+      {reminders.length + actionReminders.length > 0 && (
         <div className="card">
-          <h2>Nhắc việc ({reminders.length})</h2>
+          <h2>Nhắc việc ({reminders.length + actionReminders.length})</h2>
           {noteError && <p className="msg error" role="alert">{noteError}</p>}
+          {actionReminders.map((a) => {
+            const c = cycles.find((x) => x.id === a.cycle_id);
+            const d = diffDays(todayIso, a.due_date!);
+            const when = d < 0 ? `Quá hạn ${-d} ngày` : d === 0 ? 'Hôm nay' : d === 1 ? 'Ngày mai' : `Còn ${d} ngày`;
+            return (
+              <div className="note-row" key={a.id}>
+                <label className="check">
+                  <input type="checkbox" checked={false} disabled={!online} aria-label={`Đánh dấu xong: ${a.content}`}
+                    onChange={() => { setNoteError(null); setIncidentActionDone(a.id, true).catch((e) => setNoteError(friendlyError(e))); }} />
+                  <span>
+                    Khắc phục sự cố: {a.content}
+                    <small className="muted"> — {c?.name || cropTypes.find((t) => t.id === c?.crop_type_id)?.name || 'Vụ'} · {a.assignee_name ?? 'chưa giao ai'} · {fmtDate(a.due_date!)}</small>
+                  </span>
+                </label>
+                <span className={d < 0 ? 'pill err' : d === 0 ? 'pill warn' : 'pill'}>{when}</span>
+              </div>
+            );
+          })}
           {reminders.map((n) => {
             const c = cycles.find((x) => x.id === n.cycle_id);
             const d = diffDays(todayIso, n.note_date);

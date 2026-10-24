@@ -124,6 +124,7 @@ export function WeeklyReport({ onSection }: { onSection: (s: ReportSection) => v
         )}
         {!!a.low_stock && <p><span className="pill warn">Kho</span> {a.low_stock} vật tư sắp hết hoặc đã hết</p>}
         {a.late_cycles > 0 && <p><span className="pill warn">Tiến độ</span> {a.late_cycles} vụ trễ tiến độ</p>}
+        {a.open_incidents > 0 && <p><span className="pill warn">Sự cố</span> {a.open_incidents} sự cố đang mở{a.overdue_actions > 0 ? `, ${a.overdue_actions} việc khắc phục quá hạn` : ''}</p>}
         {a.pending_attendance > 0 && <p><span className="pill warn">Chấm công</span> {a.pending_attendance} ca công chờ xác nhận</p>}
         {!!a.web_orders_waiting && (
           <p><span className="pill warn">Website</span> {a.web_orders_waiting} đơn chờ báo giá <button type="button" className="link inline" onClick={() => onSection('website')}>Xem đơn</button></p>
