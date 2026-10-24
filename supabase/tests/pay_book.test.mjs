@@ -94,3 +94,22 @@ test('lương tháng chưa tới không ước tính; tháng đã qua có ước
   const future = (await asUser(c.db, c.a, `select get_pay_overview($1,'2027-01-01','2027-01-31',null) r`, [c.org])).rows[0].r;
   assert.equal(Number(row(future, c.wa).salary), 0);
 });
+
+test('chuỗi theo tháng cho biểu đồ: đủ các tháng, thực nhận và giờ công đúng; quyền như bảng lương', async () => {
+  const c = await setup();
+  await rate(c, c.wa, 'hour', 30000);
+  const now = (await c.db.query(`select to_char(vn_today(), 'YYYY-MM') m, to_char(vn_today() - interval '1 month', 'YYYY-MM') p, (vn_today() - 2)::text d`)).rows[0];
+  await att(c, c.wa, 1, now.d, 120);
+  await att(c, c.wb, 2, now.d, 60);
+  const ser = async (u, w = null, n = 6) => (await asUser(c.db, u, `select get_pay_series($1,$2,$3) r`, [c.org, w, n])).rows[0].r;
+  const mine = await ser(c.a);
+  assert.equal(mine.months.length, 6);
+  assert.equal(mine.months[5].month, now.m);
+  assert.equal(mine.months[4].month, now.p);
+  assert.deepEqual([mine.months[5].hours, Number(mine.months[5].net)], [2, 60000]); // chỉ của mình
+  assert.equal(Number(mine.months[0].net), 0);
+  const all = await ser(c.owner); // chủ: cả cơ sở
+  assert.deepEqual([all.can_see_all, all.months[5].hours], [true, 3]);
+  assert.match(await expectError(asUser(c.db, c.a, `select get_pay_series($1,$2,6)`, [c.org, c.wb])), /FORBIDDEN/);
+  assert.equal((await ser(c.owner, null, 100)).months.length, 24); // tối đa 24 tháng
+});

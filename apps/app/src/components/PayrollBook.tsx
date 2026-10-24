@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { KpiTile, shortMoney } from './HomeStats';
 import { fmtDate } from '../lib/dates';
@@ -12,6 +12,8 @@ import {
 } from '../lib/payBookLogic';
 import { downloadCsv } from '../lib/summary';
 import { ADJ_KIND_LABEL, fmtVnd } from '../lib/work';
+
+const PayCharts = lazy(() => import('./PayCharts')); // biểu đồ tải lười
 
 const MODES: { id: RangeMode; label: string }[] = [
   { id: 'month', label: 'Tháng' }, { id: 'quarter', label: 'Quý' }, { id: 'year', label: 'Năm' }, { id: 'recent', label: '24 tháng' },
@@ -112,6 +114,7 @@ export function PayrollBook() {
         {canSeeAll && pick && <button className="link" onClick={() => setView('all')}>← Danh sách tất cả</button>}
         {!pick && <p className="muted">{rows.length === 0 ? 'Chưa có hồ sơ chấm công nên chưa có bảng lương. Hồ sơ được tạo khi bạn chấm công lần đầu.' : 'Hãy chọn một người để xem.'}</p>}
         {person && <PersonView row={person} detail={detail} range={range} />}
+        {person && <Suspense fallback={null}><PayCharts orgId={orgId} worker={canSeeAll ? person.worker_id : null} items={detail?.items ?? null} from={range.from} to={range.to} /></Suspense>}
       </>
     );
   }
@@ -138,6 +141,7 @@ export function PayrollBook() {
           <KpiTile label="Thưởng − phạt − tạm ứng" value={shortMoney(total.bonus - total.deduction - total.advance)} tone={total.bonus - total.deduction - total.advance < 0 ? 'warn' : 'ok'} />
         </div>
       )}
+      {rows.length > 0 && <Suspense fallback={null}><PayCharts orgId={orgId} worker={null} items={null} from={range.from} to={range.to} /></Suspense>}
       {view === 'team' ? groupByTeam(rows).map((g) => (
         <Collapsible key={g.team} title={g.team} summary={`${g.rows.length} người · ${hoursText(g.total.hours)} · ${fmtVnd(g.total.net)}`}>
           {g.rows.map(line)}

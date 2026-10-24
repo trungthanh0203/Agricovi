@@ -14,6 +14,7 @@ import { fetchPayables, fetchReceivables, summarizePayables } from '../lib/partn
 
 const HomeTrend = lazy(() => import('./HomeTrend')); // biểu đồ tải lười, không làm nặng gói đầu
 const HomeWeekly = lazy(() => import('./HomeWeekly'));
+const HomePay = lazy(() => import('./HomePay'));
 
 type Tone = 'ok' | 'warn' | 'bad' | 'info' | 'neutral';
 
@@ -166,6 +167,8 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
           </div>
         </>
       )}
+
+      <Suspense fallback={null}><HomePay orgId={active.id} onOpen={() => onGo('reports', 'paybook')} /></Suspense>
 
       <h2 className="sect">Của cơ sở</h2>
       <div className="kpis">

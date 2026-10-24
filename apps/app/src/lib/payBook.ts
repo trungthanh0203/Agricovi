@@ -42,3 +42,21 @@ export async function fetchPayDetail(orgId: string, worker: string, from: string
   save(`d.${orgId}.${worker}.${from}.${to}`, r);
   return r;
 }
+
+export interface PaySeries { generated_at: string; can_see_all: boolean; months: { month: string; net: number; net_locked: number; hours: number }[] }
+
+export const cachedSeries = (orgId: string, worker: string | null) => read<PaySeries>(`s.${orgId}.${worker ?? ''}`);
+
+/** Thực nhận và giờ công theo tháng (mặc định 6 tháng gần nhất) cho biểu đồ; worker = null: chính mình (hoặc cả cơ sở nếu có quyền Tiền công) */
+export async function fetchPaySeries(orgId: string, worker: string | null = null, months = 6): Promise<PaySeries> {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { data, error } = await supabase.rpc('get_pay_series', { p_org: orgId, p_worker: worker, p_months: months });
+  if (error) throw new Error(error.message);
+  const d = data as Record<string, unknown>;
+  const r: PaySeries = {
+    generated_at: String(d.generated_at ?? ''), can_see_all: Boolean(d.can_see_all),
+    months: ((d.months ?? []) as Record<string, unknown>[]).map((m) => ({ month: String(m.month), net: num(m.net), net_locked: num(m.net_locked), hours: num(m.hours) })),
+  };
+  if (months === 6) save(`s.${orgId}.${worker ?? ''}`, r);
+  return r;
+}
