@@ -17,17 +17,17 @@ const save = (db, u, org, row, over = {}) => asUser(db, u, `select save_position
   [org, row.id ?? null, over.name ?? row.name, over.desc ?? row.description, JSON.stringify(over.perms ?? row.perms), over.wts ?? row.work_type_ids ?? null,
     over.stages ?? row.can_manage_stages ?? false, true, over.base ?? row.base_role ?? 'worker']);
 
-test('mỗi cơ sở có sẵn các vai trò có sẵn với quyền đúng mặc định cũ; cơ sở mới cũng được tạo', async () => {
+test('mỗi cơ sở có sẵn 2 vai trò có sẵn (Quản lý, Nhân viên) với quyền tối thiểu (D83); cơ sở mới cũng được tạo', async () => {
   const { db, org, mgr, wk } = await setup();
   const rows = (await db.query(`select base_role::text b, name, perms from org_positions where organization_id=$1 and is_builtin order by base_role`, [org])).rows;
-  assert.deepEqual(rows.map((r) => r.b).sort(), ['inventory_finance', 'manager', 'profile_editor', 'worker']); // hộ: không có Quản lý HTX
+  assert.deepEqual(rows.map((r) => r.b).sort(), ['manager', 'worker']);
   assert.equal(rows.find((r) => r.b === 'manager').perms.inventory, 'view');
-  assert.equal(rows.find((r) => r.b === 'inventory_finance').perms.expenses, 'edit');
+  assert.equal(rows.find((r) => r.b === 'manager').perms.expenses, 'none');
   assert.equal(await lvl(db, mgr, org, 'inventory'), 1);
   assert.equal(await lvl(db, wk, org, 'harvest'), 2);
   const coop = await addUser(db, 9);
   const co = (await asUser(db, coop, `select create_organization('cooperative','HTX') id`)).rows[0].id;
-  assert.ok(await roleRow(db, co, 'cooperative_manager'));
+  assert.ok((await db.query(`select 1 from org_positions where organization_id=$1 and name='Quản lý hợp tác xã' and not is_builtin`, [co])).rows.length === 1);
 });
 
 test('sửa vai trò có sẵn: quyền đổi theo ngay cho người giữ; không đổi được tên; chỉ chủ', async () => {
@@ -51,24 +51,24 @@ test('sửa vai trò có sẵn: quyền đổi theo ngay cho người giữ; kh�
 
 test('xóa vai trò có sẵn: chặn khi còn người giữ; xóa được khi không ai giữ; thêm lại được', async () => {
   const { db, owner, org, wk } = await setup();
-  const pe = await roleRow(db, org, 'profile_editor');
-  await asUser(db, owner, `select delete_position($1)`, [pe.id]); // chưa ai giữ
-  assert.equal(await roleRow(db, org, 'profile_editor'), undefined);
   const worker = await roleRow(db, org, 'worker');
   assert.match(await expectError(asUser(db, owner, `select delete_position($1)`, [worker.id])), /IN_USE/);
+  await db.query(`delete from organization_memberships where user_id=$1`, [wk]);
+  await asUser(db, owner, `select delete_position($1)`, [worker.id]); // không còn ai giữ
+  assert.equal(await roleRow(db, org, 'worker'), undefined);
   assert.equal((await asUser(db, owner, `select add_builtin_roles($1) n`, [org])).rows[0].n, 1);
-  assert.ok(await roleRow(db, org, 'profile_editor'));
+  assert.ok(await roleRow(db, org, 'worker'));
   assert.match(await expectError(asUser(db, wk, `select add_builtin_roles($1)`, [org])), /FORBIDDEN/);
 });
 
-test('vai trò tự tạo dựa trên vai trò nền: gán thì tự cộng vai trò nền; sửa/xóa như thường', async () => {
+test('chức vụ tự tạo: gán thì cộng quyền nhưng KHÔNG đổi vai trò chính; sửa/xóa như thường', async () => {
   const { db, owner, org } = await setup();
   const tech = await addUser(db, 7);
-  await db.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['profile_editor']::member_role[])`, [org, tech]);
+  await db.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['worker']::member_role[])`, [org, tech]);
   const id = (await save(db, owner, org, { perms: { declare: 'edit' }, name: 'Kỹ thuật viên', description: 'KT' }, { base: 'worker' })).rows[0].id;
   await asUser(db, owner, `select set_member_positions($1,$2,$3::uuid[])`, [org, tech, [id]]);
   const r = (await db.query(`select roles::text[] r from organization_memberships where user_id=$1`, [tech])).rows[0].r;
-  assert.deepEqual(r.sort(), ['profile_editor', 'worker']);
+  assert.deepEqual(r, ['worker']); // vai trò chính giữ nguyên
   assert.equal(await lvl(db, tech, org, 'declare'), 2);
   const builtin = await roleRow(db, org, 'worker');
   assert.match(await expectError(asUser(db, owner, `select set_member_positions($1,$2,$3::uuid[])`, [org, tech, [builtin.id]])), /INVALID_POSITION/); // có sẵn gán qua vai trò, không qua đây

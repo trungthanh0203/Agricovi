@@ -65,13 +65,14 @@ test('tính tiền công: thiếu đơn giá thì báo; đơn giá cụ thể nh
   const { db, owner, mgr, leader, wk, org, ww, team } = await setup();
   await asUser(db, leader, shiftSql, [id(20), ww]);
   await asUser(db, leader, `select * from confirm_attendance($1)`, [id(20)]);
+  await db.query(`update organization_memberships set permissions = '{"payroll":"edit"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý cần được cấp quyền Tiền công
   const per = (await asUser(db, mgr, `insert into payroll_periods (id,organization_id,start_date,end_date) values ($1,$2,current_date - 6, current_date) returning id`, [id(30), org])).rows[0].id;
   const comp = async () => (await asUser(db, mgr, `select compute_payroll($1) r`, [per])).rows[0].r;
 
   let r = await comp();
   assert.deepEqual([r.lines, r.missing_rate_hours], [0, 1]); // thiếu đơn giá: báo, không tính 0
 
-  assert.match(await expectError(asUser(db, mgr, `insert into work_rates (organization_id,rate_type,amount,valid_from) values ($1,'hour',30000,'2020-01-01')`, [org])), /row-level security/);
+  assert.match(await expectError(asUser(db, wk, `insert into work_rates (organization_id,rate_type,amount,valid_from) values ($1,'hour',30000,'2020-01-01')`, [org])), /row-level security/); // D83: người có quyền Tiền công (quản lý được cấp) ghi được giá; nhân viên thì không
   await asUser(db, owner, `insert into work_rates (organization_id,rate_type,amount,valid_from) values ($1,'hour',30000,'2020-01-01')`, [org]);
   r = await comp();
   assert.deepEqual([r.lines, r.total], [1, 105000]); // 3,5 giờ × 30.000
@@ -107,6 +108,7 @@ test('khóa kỳ: chỉ chủ; sau khóa không tính lại, không sửa công;
   await asUser(db, leader, shiftSql, [id(50), ww]);
   await asUser(db, leader, `select * from confirm_attendance($1)`, [id(50)]);
   await asUser(db, owner, `insert into work_rates (organization_id,rate_type,amount,valid_from) values ($1,'hour',30000,'2020-01-01')`, [org]);
+  await db.query(`update organization_memberships set permissions = '{"payroll":"edit"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý cần được cấp quyền Tiền công
   const per = (await asUser(db, mgr, `insert into payroll_periods (id,organization_id,start_date,end_date) values ($1,$2,current_date - 6, current_date) returning id`, [id(60), org])).rows[0].id;
   await asUser(db, mgr, `select compute_payroll($1)`, [per]);
 

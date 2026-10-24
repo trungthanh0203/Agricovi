@@ -82,7 +82,7 @@ test('xung đột: người khác đã sửa trước -> báo câu dễ hiểu, 
 test('không đủ quyền: lỗi từ máy chủ được giữ nguyên để báo ngay (không cất vào hàng đợi)', async () => {
   const { pg, mgr, fin, org } = await setup();
   await insertRow('expense_records', { id: EX, organization_id: org, cycle_id: CYC, category: 'utility', kind: 'cash_paid', amount: 1000, expense_date: '2026-10-19', source: 'online', created_by: fin }, client(pg, fin));
-  await assert.rejects(updateVersioned('expense_records', EX, 1, { amount: 1 }, client(pg, mgr)), /FORBIDDEN/); // quản lý chỉ xem
+  await assert.rejects(updateVersioned('expense_records', EX, 1, { amount: 1 }, client(pg, mgr)), /FORBIDDEN|NOT_FOUND/); // quản lý không xem chi phí (D83)
   assert.equal((await updateVersioned('expense_records', EX, 1, { amount: 2000 }, client(pg, fin))).version, 2);
   await assert.rejects(updateVersioned('bang_khong_ton_tai', EX, 1, {}, client(pg, fin)), /chưa hỗ trợ sửa/);
 });
@@ -107,8 +107,9 @@ test('tạo vụ vượt hạn mức: máy chủ từ chối ngay với thông b
   await insertRow('production_cycles', { ...mk('30000000-0000-4000-8000-0000000000e4', 'preparing'), crop_type_id: crop }, c);
 });
 
-test('thêm khu trồng: chủ/quản lý được, nhân viên bị từ chối', async () => {
-  const { pg, mgr, worker, org } = await setup();
-  await insertRow('production_areas', { id: '20000000-0000-4000-8000-0000000000e9', organization_id: org, name: 'N2' }, client(pg, mgr));
+test('thêm khu trồng: chủ được; quản lý và nhân viên mặc định bị từ chối (D83)', async () => {
+  const { pg, mgr, worker, owner, org } = await setup();
+  await insertRow('production_areas', { id: '20000000-0000-4000-8000-0000000000e9', organization_id: org, name: 'N2' }, client(pg, owner));
+  await assert.rejects(insertRow('production_areas', { id: '20000000-0000-4000-8000-0000000000eb', organization_id: org, name: 'N4' }, client(pg, mgr)), /row-level security/);
   await assert.rejects(insertRow('production_areas', { id: '20000000-0000-4000-8000-0000000000ea', organization_id: org, name: 'N3' }, client(pg, worker)), /row-level security/);
 });

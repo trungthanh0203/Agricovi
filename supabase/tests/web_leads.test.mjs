@@ -80,7 +80,7 @@ test('quyền: cần xử lý được website VÀ sửa được Doanh thu; ng�
   await expectError(link(db, fin, org, q), /FORBIDDEN|Chỉ chủ, quản lý/);
   await expectError(link(db, stranger, org, q), /FORBIDDEN/);
   // quản lý được cấp quyền sửa Doanh thu thì làm được
-  await asUser(db, owner, `select set_member_permissions($1,$2,$3::jsonb)`, [org, mgr, JSON.stringify({ sales: 'edit' })]);
+  await asUser(db, owner, `select set_member_permissions($1,$2,$3::jsonb)`, [org, mgr, JSON.stringify({ sales: 'edit', website: 'edit' })]); // D83: quản lý cần cả quyền website
   assert.equal((await link(db, mgr, org, q)).created, true);
   // yêu cầu của cơ sở khác
   const org2 = (await asUser(db, stranger, `select create_organization('household','Hộ B') id`)).rows[0].id;
@@ -89,6 +89,7 @@ test('quyền: cần xử lý được website VÀ sửa được Doanh thu; ng�
 
 test('bảng liên kết: người xem Doanh thu đọc được, không ghi trực tiếp được', async () => {
   const { db, org, owner, mgr } = await setup();
+  await db.query(`update organization_memberships set permissions = '{"sales":"view"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý xem Doanh thu khi được chủ cấp
   const q = await quote(db, org, 5, { phone: '0900000003' });
   const r = await link(db, owner, org, q);
   assert.equal((await asUser(db, mgr, `select partner_id from web_lead_links where quote_id = $1`, [q])).rows[0].partner_id, r.partner_id);

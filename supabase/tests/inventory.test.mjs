@@ -115,7 +115,7 @@ test('chi phí: Kho & chi phí sửa có phiên bản; quản lý chỉ xem (FOR
   const { db, org, fin, mgr, w1, owner } = await setup();
   await insExpense(db, fin, org);
   const call = (u, ver, op, ch) => asUser(db, u, `select * from update_expense($1,$2,$3,$4::jsonb)`, [EX, ver, OP(op), JSON.stringify(ch)]);
-  assert.match(await expectError(call(mgr, 1, 1, { amount: 1 })), /FORBIDDEN/);
+  assert.match(await expectError(call(mgr, 1, 1, { amount: 1 })), /FORBIDDEN|NOT_FOUND/);
   assert.match(await expectError(call(w1, 1, 2, { amount: 1 })), /NOT_FOUND/);
   const r = (await call(fin, 1, 3, { amount: 2500, note: 'điện tháng 10' })).rows[0];
   assert.equal(r.version, 2);
@@ -137,7 +137,7 @@ test('doanh thu: chỉ Kho & chi phí/chủ ghi và sửa; đơn vị kg; sửa 
   assert.match(await expectError(ins(w1)), /row-level security/);
   await ins(fin);
   const call = (u, ver, op, ch) => asUser(db, u, `select * from update_sale($1,$2,$3,$4::jsonb)`, [SL, ver, OP(op), JSON.stringify(ch)]);
-  assert.match(await expectError(call(mgr, 1, 1, { amount: 1 })), /FORBIDDEN/);
+  assert.match(await expectError(call(mgr, 1, 1, { amount: 1 })), /FORBIDDEN|NOT_FOUND/);
   assert.equal((await call(fin, 1, 2, { amount: 2100000 })).rows[0].version, 2);
   assert.match(await expectError(call(fin, 1, 3, { amount: 1 })), /CONFLICT/);
   assert.match(await expectError(asUser(db, fin, `update sales_records set unit = 'thùng' where id = $1`, [SL])), /sales_unit_kg|check/);
@@ -216,6 +216,7 @@ test('giá vốn bình quân gia quyền; thiếu giá thì báo thiếu, không
 
 test('tổng kết vụ: kiểm quyền, số liệu đúng, giá thành/kg chỉ khi đủ dữ liệu, giao dịch bị đảo không tính', async () => {
   const { db, org, fin, w1, mgr, owner, outsider } = await setup();
+  await db.query(`update organization_memberships set permissions = '{"summary":"view","expenses":"view","sales":"view"}'::jsonb where user_id=$1`, [mgr]); // D83
   const summary = async (u) => (await asUser(db, u, `select get_cycle_summary($1) s`, [CYC])).rows[0].s;
 
   // quyền

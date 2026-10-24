@@ -52,7 +52,7 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'partners' as const, label: 'Nhà cung ứng' } : null,
     canPerm(org.perms, 'sales') ? { id: 'customers' as const, label: 'Khách hàng' } : null,
-    hasRole(org.roles, 'manager') ? { id: 'rates' as const, label: 'Đơn giá công' } : null,
+    canPerm(org.perms, 'payroll') ? { id: 'rates' as const, label: 'Đơn giá công' } : null,
   ].filter((x): x is Section<DeclareSection> => x !== null);
 }
 
@@ -61,9 +61,9 @@ export function orgSections(org: MyOrg | null): Section<OrgSection>[] {
   const manager = hasRole(org.roles, 'manager');
   return [
     manager ? { id: 'teams' as const, label: 'Phòng / Tổ' } : null,
-    hasRole(org.roles, 'owner') ? { id: 'positions' as const, label: 'Vai trò' } : null,
+    hasRole(org.roles, 'owner') ? { id: 'positions' as const, label: 'Chức vụ' } : null,
     manager ? { id: 'members' as const, label: 'Nhân sự' } : null,
-    hasRole(org.roles, 'cooperative_manager', 'manager') ? { id: 'coop' as const, label: org.type === 'cooperative' ? 'Hộ thành viên' : 'Hợp tác xã' } : null,
+    canPerm(org.perms, 'coop') ? { id: 'coop' as const, label: org.type === 'cooperative' ? 'Hộ thành viên' : 'Hợp tác xã' } : null,
   ].filter((x): x is Section<OrgSection> => x !== null);
 }
 
@@ -72,13 +72,13 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
   return [
     canPerm(org.perms, 'expenses') ? { id: 'expense' as const, label: 'Chi phí' } : null,
     canPerm(org.perms, 'expenses') || canPerm(org.perms, 'sales') ? { id: 'payables' as const, label: 'Công nợ' } : null,
-    hasRole(org.roles, 'manager') ? { id: 'payroll' as const, label: 'Tiền công' } : null,
+    canPerm(org.perms, 'payroll') ? { id: 'payroll' as const, label: 'Tiền công' } : null,
     canPerm(org.perms, 'sales') ? { id: 'sales' as const, label: 'Doanh thu' } : null,
     canPerm(org.perms, 'summary') ? { id: 'summary' as const, label: 'Tổng kết vụ' } : null,
     hasRole(org.roles, 'manager') ? { id: 'weekly' as const, label: 'Báo cáo tuần' } : null,
     REPORT_TYPES.some((t) => t.allowed(org.perms, org.roles)) ? { id: 'custom' as const, label: 'Theo nhu cầu' } : null,
-    hasRole(org.roles, 'manager', 'profile_editor') ? { id: 'website' as const, label: 'Đơn khách từ website' } : null,
-    hasRole(org.roles, 'manager', 'profile_editor') ? { id: 'commerce' as const, label: 'Hồ sơ website' } : null, // luôn để cuối
+    canPerm(org.perms, 'website') ? { id: 'website' as const, label: 'Đơn khách từ website' } : null,
+    canPerm(org.perms, 'website') ? { id: 'commerce' as const, label: 'Hồ sơ website' } : null, // luôn để cuối
   ].filter((x): x is Section<ReportSection> => x !== null);
 }
 

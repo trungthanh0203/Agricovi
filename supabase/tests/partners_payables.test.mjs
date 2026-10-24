@@ -44,6 +44,7 @@ const stock = async (db, mat) => Number((await db.query(`select coalesce(sum(qua
 
 test('quyền gộp với Chi phí: chủ ghi; quản lý chỉ xem; nhân viên và người ngoài không thấy; khách chưa đăng nhập không thấy', async () => {
   const { db, org, owner, mgr, worker, fin, stranger } = await setup();
+  await db.query(`update organization_memberships set permissions = '{"expenses":"view"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý xem chi phí khi được chủ cấp
   await newPartner(db, owner, org, 1);
   await newPartner(db, fin, org, 2); // Kho & chi phí ghi được
   assert.equal((await asUser(db, mgr, `select id from partners`)).rows.length, 2); // quản lý xem được
@@ -197,6 +198,7 @@ test('cô lập cơ sở: không dùng đối tác của cơ sở khác; ngườ
 
 test('người chỉ có quyền Chi phí (không có quyền Kho) không tự nhập kho qua hóa đơn; quản lý chỉ xem công nợ', async () => {
   const { db, org, owner, mgr } = await setup();
+  await db.query(`update organization_memberships set permissions = '{"expenses":"view"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý xem chi phí khi được chủ cấp
   await newPartner(db, owner, org, 1);
   await buy(db, owner, org, { invoice: 'Y' });
   assert.equal((await payables(db, mgr, org)).length, 1); // quản lý xem được công nợ (quyền xem Chi phí)

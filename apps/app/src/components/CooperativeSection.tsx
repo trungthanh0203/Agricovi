@@ -7,7 +7,8 @@ import {
   type CoopHousehold, type MyCooperative, type PendingInvite,
 } from '../lib/members';
 import { useOrgs, type MyOrg } from '../lib/orgs';
-import { hasRole, isOwner } from '../lib/roles';
+import { canPerm } from '../lib/permissions';
+import { isOwner } from '../lib/roles';
 
 /** HTX: quản lý các hộ thành viên. Cùng một khối dùng cho HTX (danh sách hộ) và cho Hộ (HTX mình thuộc). */
 export function CooperativeSection({ org }: { org: MyOrg }) {
@@ -37,7 +38,7 @@ function useRunner(reload: () => Promise<void>) {
 
 function ForCooperative({ org }: { org: MyOrg }) {
   const { refresh, setActive } = useOrgs();
-  const canManage = hasRole(org.roles, 'cooperative_manager');
+  const canManage = canPerm(org.perms, 'coop', 'edit');
   const [households, setHouseholds] = useState<CoopHousehold[]>([]);
   const [invites, setInvites] = useState<PendingInvite[]>([]);
   const [email, setEmail] = useState('');

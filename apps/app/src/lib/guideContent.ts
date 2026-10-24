@@ -83,11 +83,12 @@ export const GUIDES: Guide[] = [
       {
         title: 'Ai làm được gì (vai trò và quyền)',
         details: [
-          'Chủ cơ sở: làm được mọi việc và cấp quyền cho người khác.',
-          'Quản lý: điều hành sản xuất, nhân sự, chấm công, xem báo cáo.',
-          'Nhân viên: ghi việc, thu hoạch, chấm công của mình.',
-          'Kho và chi phí: nhập xuất kho, ghi chi phí, doanh thu.',
-          'Chủ có thể cấp thêm hoặc rút bớt quyền từng mục (Kho, Thu hoạch, Chi phí, Doanh thu, Tổng kết) cho từng người. Mục nào không có quyền thì không hiện.',
+          'Chỉ có 3 vai trò: Chủ cơ sở, Quản lý, Nhân viên.',
+          'Chủ cơ sở: làm được mọi việc, cấp quyền, đặt lương và giá công, xem gói dịch vụ và giấy phép.',
+          'Quản lý: điều hành sản xuất hằng ngày (tạo vụ, sửa nhật ký, xác nhận chấm công), xem Kho và danh sách nhân sự, xem Báo cáo tuần (phần tiền chỉ hiện khi được cấp quyền).',
+          'Nhân viên: ghi việc, thu hoạch, chấm công của mình và xem tiền công của mình.',
+          'Cần thêm quyền? Chủ cấp riêng từng mục cho từng người (Kho, Chi phí, Doanh thu, Tiền công, Hồ sơ website…) hoặc tạo CHỨC VỤ (ví dụ Thủ kho và kế toán) rồi gán. Mục nào không có quyền thì không hiện.',
+          'Chủ có thể giao mỗi người một hay nhiều trang trại; người đó chỉ thấy và ghi việc ở các trang trại được giao.',
         ],
         go: { tab: 'org', section: 'members', label: 'Mở Nhân sự' },
       },
@@ -246,7 +247,7 @@ export const GUIDES: Guide[] = [
         title: 'Tạo cơ sở loại Hợp tác xã',
         details: [
           'Khi tạo cơ sở, chọn loại "Hợp tác xã" và đặt tên.',
-          'Chủ là người đại diện; có thể thêm Quản lý hợp tác xã để điều hành thay.',
+          'Chủ là người đại diện; có thể gán chức vụ Quản lý hợp tác xã cho một quản lý để mời và theo dõi hộ thành viên.',
         ],
       },
       {
@@ -277,10 +278,10 @@ export const GUIDES: Guide[] = [
       {
         title: 'Nhân sự, chấm công và tiền công của hợp tác xã',
         details: [
-          'Chia phòng/tổ, đặt chức vụ và quyền theo mục cho từng người (Tổ chức → Vai trò).',
+          'Chia phòng/tổ, đặt chức vụ và quyền theo mục cho từng người (Tổ chức → Chức vụ).',
           'Chấm công, xác nhận công và tính tiền công giống như hộ.',
         ],
-        go: { tab: 'org', section: 'positions', label: 'Mở Vai trò' },
+        go: { tab: 'org', section: 'positions', label: 'Mở Chức vụ' },
       },
       {
         title: 'Giấy phép, truy xuất và hồ sơ trên website',
@@ -307,21 +308,22 @@ export const GUIDES: Guide[] = [
         title: 'Tạo cơ sở và đặt người phụ trách',
         details: [
           'Tạo cơ sở, đặt tên công ty. Chủ cơ sở là người có toàn quyền.',
-          'Thêm Quản lý để điều hành hằng ngày; thêm Hồ sơ viên nếu cần người chỉ lo hồ sơ website.',
+          'Thêm Quản lý để điều hành hằng ngày; nếu cần người chỉ lo hồ sơ website, gán chức vụ Biên tập hồ sơ cho một nhân viên.',
         ],
       },
       {
         title: 'Chia phòng / tổ và đặt chức vụ',
         details: [
           'Tổ chức → Phòng / Tổ: lập phòng ban, tổ sản xuất, chọn tổ trưởng.',
-          'Tổ chức → Vai trò: đặt tên chức vụ riêng của công ty và chọn quyền cho chức vụ đó.',
+          'Tổ chức → Chức vụ: đặt tên chức vụ riêng của công ty (ví dụ Thủ kho, Kế toán) và chọn quyền cho chức vụ đó.',
         ],
         go: { tab: 'org', section: 'teams', label: 'Mở Phòng / Tổ' },
       },
       {
         title: 'Phân quyền theo từng mục',
         details: [
-          'Chủ cấp riêng cho từng người: xem hoặc sửa các mục Kho, Thu hoạch, Chi phí, Doanh thu, Tổng kết, Khai báo.',
+          'Chủ cấp riêng cho từng người, hoặc gán chức vụ: xem hoặc sửa các mục Kho, Thu hoạch, Chi phí, Doanh thu, Tổng kết, Khai báo, Tiền công, Hồ sơ website.',
+          'Giao trang trại cho từng người (một người làm được nhiều trang trại): họ chỉ thấy và ghi việc ở trang trại được giao.',
           'Người nào không có quyền mục nào thì mục đó biến mất trên màn hình của họ, và máy chủ cũng chặn.',
           'Có thể tạm dừng một thành viên khi họ nghỉ làm mà không mất dữ liệu cũ.',
         ],

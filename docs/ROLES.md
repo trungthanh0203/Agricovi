@@ -1,5 +1,7 @@
 # Vai trò và quyền (đã chốt, quyết định D16–D18)
 
+> **CẬP NHẬT D83 (24/10/2026): từ nay chỉ còn 3 vai trò — Chủ cơ sở, Quản lý, Nhân viên.** Các vai trò Kho & chi phí, Biên tập hồ sơ, Quản lý HTX đã bỏ; quyền tương ứng cấp riêng hoặc qua **chức vụ**. Quyền mặc định của Quản lý/Nhân viên ở mức tối thiểu, thêm quyền mục Tiền công (payroll), Hồ sơ website (website), Hộ thành viên (coop), và giao **trang trại** cho từng người. Bảng bên dưới là bản cũ (D16–D18), xem `PLAN_VAI_TRO_NHAN_SU.md` và D83 trong `DECISIONS_APP.md` cho quy tắc hiện hành.
+
 Nguồn sự thật là CSDL (RLS, hàm, trigger trong `supabase/migrations`, kiểm thử trong `supabase/tests/roles.test.mjs`).
 Giao diện chỉ ẩn/hiện nút theo quy tắc này; máy chủ luôn kiểm tra lại.
 

@@ -97,7 +97,7 @@ test('quyền: cần xử lý được website VÀ sửa được Doanh thu', as
   const oid = await order(c, 1);
   await expectError(sell(c, c.mgr, oid, id('9', 1)), /FORBIDDEN|quyền sửa mục Doanh thu/); // quản lý xử lý được website, chỉ xem Doanh thu
   await expectError(sell(c, c.stranger, oid, id('9', 1)), /FORBIDDEN/);
-  await asUser(c.db, c.owner, `select set_member_permissions($1,$2,$3::jsonb)`, [c.org, c.mgr, JSON.stringify({ sales: 'edit' })]);
+  await asUser(c.db, c.owner, `select set_member_permissions($1,$2,$3::jsonb)`, [c.org, c.mgr, JSON.stringify({ sales: 'edit', website: 'edit' })]); // D83: quản lý cần cả quyền website
   assert.equal((await sell(c, c.mgr, oid, id('9', 1))).rows.length, 1);
   assert.equal((await asUser(c.db, c.stranger, `select count(*)::int n from web_order_sales`)).rows[0].n, 0);
 });

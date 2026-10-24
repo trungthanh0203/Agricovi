@@ -67,7 +67,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const [savedItems, setSavedItems] = useState<{ materialId: string; quantity: number }[]>([]);
 
   // Vật tư đã dùng (FR-INV-003): chỉ vai trò được ghi xuất dùng; chọn từ danh mục đã tải về nên dùng được offline
-  const canIssue = hasRole(active?.roles, 'manager', 'worker', 'inventory_finance');
+  const canIssue = hasRole(active?.roles, 'manager', 'worker');
   const materials = useLiveQuery(
     () => (active ? db.materials.where('organization_id').equals(active.id).toArray() : []), [active?.id], [],
   ).filter((m) => m.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));

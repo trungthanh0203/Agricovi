@@ -66,6 +66,7 @@ test('doanh thu, thu hoạch, vật tư, nhân công, tổng hợp theo vụ', a
 
 test('quyền theo loại báo cáo: theo mục D27 và vai trò', async () => {
   const { db, owner, mgr, wk, fin, other, org } = await setup();
+  await db.query(`update organization_memberships set permissions = '{"expenses":"view","sales":"view"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý xem chi phí/doanh thu khi được chủ cấp
   for (const t of ['expenses', 'sales', 'stock', 'labor', 'cycles']) assert.match(await expectError(run(db, wk, org, t)), /FORBIDDEN/);
   await run(db, wk, org, 'harvest'); // nhân viên ghi/xem thu hoạch theo mặc định
   await run(db, mgr, org, 'expenses');

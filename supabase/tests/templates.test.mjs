@@ -16,6 +16,7 @@ async function setup() {
   const org = (await asUser(db, owner, `select create_organization('household','Hộ A') id`)).rows[0].id;
   const org2 = (await asUser(db, owner2, `select create_organization('household','Hộ B') id`)).rows[0].id;
   await db.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['manager']::member_role[]),($1,$3,array['worker']::member_role[])`, [org, mgr, worker]);
+  await db.query(`update organization_memberships set permissions = '{"declare":"edit"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý cần được chủ cấp quyền Khai báo
   return { db, org, org2, owner, mgr, worker, owner2 };
 }
 const melon = `(select id from crop_types where organization_id is null and code='melon')`;

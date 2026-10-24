@@ -65,6 +65,7 @@ test('theo tháng và theo vật tư; lần trả đã hủy không tính vào �
 
 test('quyền: quản lý xem được (Chi phí xem), nhân viên bị từ chối; loại báo cáo cũ vẫn chạy', async () => {
   const { db, org, owner, mgr, worker } = await setup();
+  await db.query(`update organization_memberships set permissions = '{"expenses":"view","sales":"view"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý xem chi phí/doanh thu khi được chủ cấp
   await buy(db, owner, org, 1, 1, 'A1', 200000, lines(1, MAT1, 10, 20000));
   assert.equal((await report(db, mgr, org, 'purchases')).rows.length, 1);
   await expectError(report(db, worker, org, 'purchases'), /FORBIDDEN|quyền xem/);

@@ -13,7 +13,8 @@ import { Collapsible } from './Collapsible';
 import type { PermOverrides } from '../lib/permissions';
 import { MemberPermissions } from './MemberPermissions';
 import { updateStaffProfile } from '../lib/staff';
-import { setMemberSuspended } from '../lib/members';
+import { fetchMemberAreas, setMemberSuspended } from '../lib/members';
+import { MemberAreas } from './MemberAreas';
 import { listMemberPositions, listPositions, setMemberPositions, type PositionRow } from '../lib/positions';
 import { RolePicker } from './RolePicker';
 import { CredentialsCard, ResetPasswordButton, StaffCreateForm } from './StaffAccountsSection';
@@ -43,6 +44,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
   const [busy, setBusy] = useState(false);
   const [creds, setCreds] = useState<StaffCredentials | null>(null);
   const [overrides, setOverrides] = useState<Record<string, PermOverrides>>({});
+  const [areaMap, setAreaMap] = useState<Record<string, string[] | null>>({});
 
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
@@ -52,6 +54,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
         ownerOf(org.roles) ? fetchPermissionOverrides(org.id) : Promise.resolve({} as Record<string, PermOverrides>),
       ]);
       setOverrides(ov);
+      if (ownerOf(org.roles)) setAreaMap(await fetchMemberAreas(org.id).catch(() => ({} as Record<string, string[] | null>)));
       if (ownerOf(org.roles)) {
         const [h, cat] = await Promise.all([listMemberPositions(org.id).catch(() => new Map<string, string[]>()), listPositions(org.id).catch(() => [] as PositionRow[])]);
         setHeld(h); setCatalog(cat);
@@ -157,6 +160,11 @@ export function MembersSection({ org }: { org: MyOrg }) {
               <Collapsible inline highlight title="Phân quyền chức năng" summary={Object.keys(overrides[m.user_id] ?? {}).length > 0 ? 'Đã cấp riêng' : 'Theo vai trò'}>
                 <MemberPermissions key={JSON.stringify(overrides[m.user_id] ?? {})} orgId={org.id} userId={m.user_id} roles={m.roles}
                   overrides={overrides[m.user_id] ?? {}} onSaved={() => void load()} />
+              </Collapsible>
+            )}
+            {isOwner && !owner && !suspended && (
+              <Collapsible inline title="Trang trại được giao" summary={areaMap[m.user_id] ? `${areaMap[m.user_id]!.length} trang trại` : 'Tất cả trang trại'}>
+                <MemberAreas key={JSON.stringify(areaMap[m.user_id] ?? null)} orgId={org.id} userId={m.user_id} initial={areaMap[m.user_id] ?? null} onSaved={() => void load()} />
               </Collapsible>
             )}
             {isOwner && editInfo === m.user_id && (

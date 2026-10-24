@@ -120,3 +120,15 @@ export async function fetchPermissionOverrides(orgId: string): Promise<Record<st
 /** Chủ cấp quyền theo mục cho một người; bảng rỗng = trở về mặc định theo vai trò */
 export const setMemberPermissions = (orgId: string, userId: string, perms: PermOverrides) =>
   rpc<void>('set_member_permissions', { p_org: orgId, p_user: userId, p_permissions: perms });
+
+/** Trang trại được giao cho từng người (khóa là mã người dùng; null = tất cả). Chỉ chủ và quản lý đọc được. */
+export async function fetchMemberAreas(orgId: string): Promise<Record<string, string[] | null>> {
+  if (!supabase) return {};
+  const { data, error } = await supabase.from('organization_memberships').select('user_id, area_ids').eq('organization_id', orgId);
+  if (error) throw new Error(error.message);
+  return Object.fromEntries((data ?? []).map((r) => [r.user_id as string, (r.area_ids as string[] | null) ?? null]));
+}
+
+/** Chủ giao trang trại cho một người; null hoặc rỗng = tất cả trang trại (D83) */
+export const setMemberAreas = (orgId: string, userId: string, areaIds: string[] | null) =>
+  rpc<void>('set_member_areas', { p_org: orgId, p_user: userId, p_area_ids: areaIds && areaIds.length > 0 ? areaIds : null });

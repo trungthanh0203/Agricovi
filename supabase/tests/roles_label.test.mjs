@@ -24,7 +24,7 @@ test('đổi tên vai trò có sẵn: mọi cơ sở đổi theo, cơ sở mới
   assert.equal(n, 2);
   assert.equal(await names(c.db, c.org, 'manager'), 'Điều hành viên');
   assert.equal(await names(c.db, c.org2, 'manager'), 'Điều hành viên');
-  assert.equal(await names(c.db, c.org, 'worker'), 'Nhân viên sản xuất'); // vai trò khác giữ nguyên
+  assert.equal(await names(c.db, c.org, 'worker'), 'Nhân viên'); // vai trò khác giữ nguyên (D83: tên mới của Nhân viên)
   const owner3 = await addUser(c.db, 5);
   const org3 = (await asUser(c.db, owner3, `select create_organization('household','Hộ C') id`)).rows[0].id;
   assert.equal(await names(c.db, org3, 'manager'), 'Điều hành viên');

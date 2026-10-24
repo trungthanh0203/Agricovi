@@ -53,8 +53,13 @@ test('quyền theo mục: mục không có quyền xem trả null; không có qu
   assert.equal(s.cost, null);
   assert.ok(Array.isArray(s.revenue));
   assert.equal(s.harvest_kg.length, 6); // nhân viên mặc định xem được Thu hoạch
-  const m = await series(db, mgr, org); // quản lý xem được Chi phí, Doanh thu, Thu hoạch
-  assert.ok(Array.isArray(m.cost) && Array.isArray(m.revenue));
+  const m = await series(db, mgr, org); // D83: quản lý mặc định chỉ xem Thu hoạch
+  assert.equal(m.cost, null);
+  assert.equal(m.revenue, null);
+  assert.ok(Array.isArray(m.harvest_kg));
+  await asUser(db, owner, `select set_member_permissions($1,$2,$3::jsonb)`, [org, mgr, JSON.stringify({ expenses: 'view', sales: 'view' })]);
+  const m2 = await series(db, mgr, org);
+  assert.ok(Array.isArray(m2.cost) && Array.isArray(m2.revenue));
   await asUser(db, owner, `select set_member_permissions($1,$2,$3::jsonb)`, [org, worker, JSON.stringify({ harvest: 'none', sales: 'none', expenses: 'none' })]);
   await expectError(series(db, worker, org), /FORBIDDEN|quyền/);
   await expectError(series(db, stranger, org), /FORBIDDEN|quyền/);

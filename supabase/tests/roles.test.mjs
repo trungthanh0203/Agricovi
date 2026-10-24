@@ -38,8 +38,8 @@ test('chi phí/doanh thu: ghi là việc của chủ và Kho & chi phí; quản 
   await expense(db, u.workerFin, org, 'e0000000-0000-4000-8000-000000000003'); // nhân viên kiêm kho & chi phí
   assert.match(await expectError(expense(db, u.mgr, org, 'e0000000-0000-4000-8000-000000000004')), /row-level security/);
   assert.match(await expectError(expense(db, u.worker, org, 'e0000000-0000-4000-8000-000000000005')), /row-level security/);
-  // quản lý xem được; nhân viên thường không
-  assert.equal((await asUser(db, u.mgr, `select count(*)::int n from expense_records`)).rows[0].n, 3);
+  // D83: quản lý mặc định KHÔNG xem chi phí; nhân viên thường cũng không
+  assert.equal((await asUser(db, u.mgr, `select count(*)::int n from expense_records`)).rows[0].n, 0);
   assert.equal((await asUser(db, u.worker, `select count(*)::int n from expense_records`)).rows[0].n, 0);
 });
 
@@ -65,14 +65,16 @@ test('đơn giá lương: chỉ chủ đặt; quản lý và Kho & chi phí ch�
   await rate(u.owner);
   assert.match(await expectError(rate(u.mgr)), /row-level security/);
   assert.match(await expectError(rate(u.fin)), /row-level security/);
-  assert.equal((await asUser(db, u.mgr, `select count(*)::int n from work_rates`)).rows[0].n, 1);
-  assert.equal((await asUser(db, u.fin, `select count(*)::int n from work_rates`)).rows[0].n, 1);
+  // D83: giá công thuộc quyền Tiền công (mặc định chỉ chủ)
+  assert.equal((await asUser(db, u.mgr, `select count(*)::int n from work_rates`)).rows[0].n, 0);
+  assert.equal((await asUser(db, u.fin, `select count(*)::int n from work_rates`)).rows[0].n, 0);
   assert.equal((await asUser(db, u.worker, `select count(*)::int n from work_rates`)).rows[0].n, 0);
 });
 
 test('kỳ lương: quản lý lập và rà soát được, nhưng CHỈ chủ duyệt/khóa/mở khóa', async () => {
   const { db, org, u } = await setup();
   const period = 'f0000000-0000-4000-8000-000000000001';
+  await db.query(`update organization_memberships set permissions = '{"payroll":"edit"}'::jsonb where user_id=$1`, [u.mgr]); // D83
   await asUser(db, u.mgr, `insert into payroll_periods (id,organization_id,start_date,end_date) values ($1,$2,current_date-10,current_date)`, [period, org]);
   await asUser(db, u.mgr, `update payroll_periods set status='reviewed' where id=$1`, [period]);
   await asUser(db, u.mgr, `update payroll_periods set status='pending_approval' where id=$1`, [period]);
@@ -121,7 +123,7 @@ test('người KHÔNG có tài khoản: chỉ kiểu phân hệ do tổ trưởn
 test('tạo tài khoản nhân viên kiểu "tổ trưởng chấm" bắt buộc chọn tổ có tổ trưởng; kiêm nhiều vai trò', async () => {
   const { db, org, u, team } = await teamSetup();
   const noLeaderTeam = (await asUser(db, u.mgr, `select create_team($1,'Tổ trống',null) id`, [org])).rows[0].id;
-  const fin = async (n, phone, mode, t, roles = '{worker,inventory_finance}') => {
+  const fin = async (n, phone, mode, t, roles = '{worker,manager}') => {
     const pre = (await db.query(`select * from staff_precheck($1,$2,$3,$4::member_role[])`, [u.owner, org, phone, roles])).rows[0];
     await db.query(`insert into auth.users (id,instance_id,aud,role,email,encrypted_password) values ($1,$1,'authenticated','authenticated',$2,'h')`, [uid(n), pre.auth_email]);
     return db.query(`select staff_finalize($1,$2,$3,$4,$5,'NV',$6::member_role[],$7,$8)`, [u.owner, org, uid(n), pre.phone, pre.auth_email, roles, mode, t]);
@@ -130,7 +132,7 @@ test('tạo tài khoản nhân viên kiểu "tổ trưởng chấm" bắt buộc
   await fin(61, '0922222222', 'leader_output', noLeaderTeam); // tổ chưa có tổ trưởng vẫn chọn được (D38)
   await fin(62, '0933333333', 'leader_hourly', team);
   const roles = (await db.query(`select roles::text[] roles from organization_memberships where user_id=$1`, [uid(62)])).rows[0].roles;
-  assert.deepEqual(roles, ['worker', 'inventory_finance']);
+  assert.deepEqual(roles, ['manager', 'worker']);
   const inTeam = (await db.query(`select count(*)::int n from worker_team_memberships m join worker_profiles w on w.id=m.worker_id where w.user_id=$1 and m.team_id=$2 and m.valid_to is null`, [uid(62), team])).rows[0].n;
   assert.equal(inTeam, 1);
 });

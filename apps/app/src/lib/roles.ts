@@ -13,12 +13,13 @@ export const isOwner = (roles: readonly MemberRole[] | undefined) => !!roles?.in
 
 /** Chủ, quản lý (và quản lý HTX) tạo trang trại/vụ, sửa mọi nhật ký */
 export const canManageProduction = (roles: readonly MemberRole[] | undefined) =>
-  hasRole(roles, 'manager', 'cooperative_manager');
+  hasRole(roles, 'manager');
 
 export const ROLE_LABEL: Record<string, string> = {
   owner: 'Chủ cơ sở',
   manager: 'Quản lý',
-  worker: 'Nhân viên sản xuất',
+  worker: 'Nhân viên',
+  // vai trò cũ (D83), chỉ còn để đọc bản ghi cũ
   inventory_finance: 'Kho & chi phí',
   cooperative_manager: 'Quản lý HTX',
   profile_editor: 'Biên tập hồ sơ',
@@ -33,8 +34,8 @@ export function roleSummary(roles: readonly MemberRole[] | undefined): string {
 
 /** Vai trò có thể gán, tùy loại cơ sở. Chủ cơ sở không gán được. */
 export function assignableRoles(orgType: 'household' | 'cooperative'): MemberRole[] {
-  const base: MemberRole[] = ['manager', 'worker', 'inventory_finance', 'profile_editor'];
-  return orgType === 'cooperative' ? ['cooperative_manager', ...base] : base;
+  void orgType;
+  return ['manager', 'worker']; // chỉ 3 vai trò (D83); quyền thêm cấp riêng hoặc qua chức vụ
 }
 
 /**

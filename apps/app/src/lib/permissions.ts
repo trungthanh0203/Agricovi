@@ -4,12 +4,12 @@ import type { MemberRole } from '@agriconnect/shared';
  * Quyền theo mục do chủ cơ sở cấp (quyết định D27). Phải khớp hàm `role_default_perm` và `perm_level` ở CSDL
  * (kiểm thử đối chiếu trong supabase/tests/perms.test.mjs). Giao diện chỉ ẩn/hiện; máy chủ luôn kiểm tra lại.
  */
-export type PermModule = 'inventory' | 'harvest' | 'expenses' | 'sales' | 'summary' | 'declare';
+export type PermModule = 'inventory' | 'harvest' | 'expenses' | 'sales' | 'summary' | 'declare' | 'website' | 'coop' | 'payroll';
 export type PermLevel = 'none' | 'view' | 'edit';
 export type PermOverrides = Partial<Record<PermModule, PermLevel>>;
 export type EffectivePerms = Record<PermModule, PermLevel>;
 
-export const PERM_MODULES: PermModule[] = ['inventory', 'harvest', 'expenses', 'sales', 'summary', 'declare'];
+export const PERM_MODULES: PermModule[] = ['inventory', 'harvest', 'expenses', 'sales', 'summary', 'declare', 'payroll', 'website', 'coop'];
 
 export const PERM_MODULE_LABEL: Record<PermModule, string> = {
   inventory: 'Kho (tồn kho, nhập kho, danh mục vật tư)',
@@ -18,6 +18,9 @@ export const PERM_MODULE_LABEL: Record<PermModule, string> = {
   sales: 'Doanh thu bán hàng',
   summary: 'Tổng kết vụ',
   declare: 'Khai báo (sản phẩm, việc, quy trình mẫu, trang trại)',
+  payroll: 'Tiền công (lương, giá công, thưởng/phạt)',
+  website: 'Hồ sơ website và đơn khách',
+  coop: 'Hộ thành viên (hợp tác xã)',
 };
 
 export const PERM_LEVEL_LABEL: Record<PermLevel, string> = {
@@ -36,13 +39,19 @@ export function defaultPerm(roles: readonly MemberRole[], module: PermModule): P
       return has(roles, 'owner', 'inventory_finance') ? 'edit' : has(roles, 'manager') ? 'view' : 'none';
     case 'expenses':
     case 'sales':
-      return has(roles, 'owner', 'inventory_finance') ? 'edit' : has(roles, 'manager', 'cooperative_manager') ? 'view' : 'none';
+      return has(roles, 'owner', 'inventory_finance') ? 'edit' : has(roles, 'cooperative_manager') ? 'view' : 'none';
     case 'summary':
-      return has(roles, 'owner', 'manager', 'inventory_finance', 'cooperative_manager') ? 'view' : 'none';
+      return has(roles, 'owner', 'inventory_finance', 'cooperative_manager') ? 'view' : 'none';
     case 'harvest':
       return has(roles, 'owner', 'manager', 'worker', 'inventory_finance', 'cooperative_manager') ? 'edit' : 'none';
     case 'declare':
-      return has(roles, 'owner', 'manager', 'cooperative_manager') ? 'edit' : 'none';
+      return has(roles, 'owner', 'cooperative_manager') ? 'edit' : has(roles, 'manager') ? 'view' : 'none';
+    case 'website':
+      return has(roles, 'owner', 'profile_editor') ? 'edit' : 'none';
+    case 'coop':
+      return has(roles, 'owner', 'cooperative_manager') ? 'edit' : 'none';
+    case 'payroll':
+      return has(roles, 'owner') ? 'edit' : 'none';
   }
 }
 

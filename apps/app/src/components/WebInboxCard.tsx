@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
-import { hasRole } from '../lib/roles';
+import { canPerm } from '../lib/permissions';
 import { supabase } from '../lib/supabase';
 
 interface Inbox { orders_new: number; orders_todo: number; quotes_new: number; reviews_unreplied: number }
@@ -11,7 +11,7 @@ export function WebInboxCard({ onGo }: { onGo?: (tab: 'reports', section?: strin
   const { active } = useOrgs();
   const online = useOnline();
   const [inbox, setInbox] = useState<Inbox | null>(null);
-  const allowed = !!active && hasRole(active.roles, 'manager', 'profile_editor');
+  const allowed = !!active && canPerm(active.perms, 'website');
   const orgId = active?.id;
   useEffect(() => {
     if (!allowed || !online || !supabase || !orgId) { setInbox(null); return; }

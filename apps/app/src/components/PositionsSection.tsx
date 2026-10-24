@@ -57,10 +57,10 @@ export function PositionsSection({ org }: { org: MyOrg }) {
 
   return (
     <>
-      {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Tạo, sửa và gán vai trò cần có mạng.</p>}
+      {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Tạo, sửa và gán chức vụ cần có mạng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
-      {!editing && <button className="secondary" disabled={!online} onClick={() => setEditing('new')}>+ Thêm vai trò</button>}
+      {!editing && <button className="secondary" disabled={!online} onClick={() => setEditing('new')}>+ Thêm chức vụ</button>}
       {!editing && missing.length > 0 && (
         <button className="link" disabled={busy || !online} onClick={() => void run(() => addBuiltinRoles(org.id)).catch(() => undefined)}>
           Thêm lại vai trò có sẵn đã xóa ({missing.map((r) => ROLE_LABEL[r]).join(', ')})
@@ -72,9 +72,9 @@ export function PositionsSection({ org }: { org: MyOrg }) {
       )}
 
       <table className="grid">
-        <thead><tr><th>Vai trò ({positions.length})</th><th className="num">Người</th><th></th></tr></thead>
+        <thead><tr><th>Vai trò và chức vụ ({positions.length})</th><th className="num">Người</th><th></th></tr></thead>
         <tbody>
-          {sorted.length === 0 && <tr><td colSpan={3} className="muted">{online ? 'Chưa có vai trò nào. Bấm "+ Thêm vai trò".' : 'Cần mạng để tải danh sách.'}</td></tr>}
+          {sorted.length === 0 && <tr><td colSpan={3} className="muted">{online ? 'Chưa có chức vụ nào. Bấm "+ Thêm chức vụ".' : 'Cần mạng để tải danh sách.'}</td></tr>}
           {sorted.map((p) => (
             <tr key={p.id} className={p.is_active ? '' : 'off'}>
               <td>
@@ -105,7 +105,7 @@ export function PositionsSection({ org }: { org: MyOrg }) {
 
       {custom.length > 0 && people.length > 0 && (
         <>
-          <h2 className="sect">Gán vai trò riêng cho người</h2>
+          <h2 className="sect">Gán chức vụ cho người</h2>
           {people.map((m) => {
             const mine = held.get(m.user_id) ?? [];
             return (
@@ -127,7 +127,7 @@ export function PositionsSection({ org }: { org: MyOrg }) {
           })}
         </>
       )}
-      <p className="muted">Vai trò có sẵn gán ở mục Nhân sự (Đổi vai trò). Quyền của một người là mức cao nhất giữa các vai trò họ giữ; phần chủ cấp riêng ở Nhân sự đè lên. Vai trò chọn "chỉ những việc được chọn" thì người giữ chỉ ghi được các loại việc đó (quản lý và chủ luôn ghi mọi loại). Vai trò riêng "dựa trên" một vai trò có sẵn để giữ các thao tác gốc của vai trò đó.</p>
+      <p className="muted">Chỉ có 3 vai trò: Chủ cơ sở, Quản lý, Nhân viên (gán ở mục Nhân sự). Chức vụ là bộ quyền thêm do bạn tự đặt tên, gán cho từng người; chức vụ không đổi vai trò chính. Quyền của một người là mức cao nhất giữa vai trò và các chức vụ họ giữ; phần chủ cấp riêng ở Nhân sự đè lên. Chức vụ chọn "chỉ những việc được chọn" thì người giữ chỉ ghi được các loại việc đó.</p>
     </>
   );
 }
@@ -141,7 +141,7 @@ function RoleForm({ initial, orgType, busy, onSave, onClose }: {
   const builtin = Boolean(initial?.is_builtin);
   const [name, setName] = useState(initial?.name ?? '');
   const [desc, setDesc] = useState(initial?.description ?? '');
-  const [base, setBase] = useState<MemberRole>(initial?.base_role ?? 'worker');
+  const base: MemberRole = initial?.base_role ?? 'worker'; // chức vụ không đổi vai trò chính (D83)
   const [perms, setPerms] = useState<PermOverrides>(initial?.perms ?? {});
   const [limited, setLimited] = useState(initial ? initial.work_type_ids !== null : false);
   const [wts, setWts] = useState<string[]>(initial?.work_type_ids ?? []);
@@ -150,18 +150,10 @@ function RoleForm({ initial, orgType, busy, onSave, onClose }: {
   const toggleWt = (id: string) => setWts((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   return (
     <div className="card">
-      <h2>{initial ? `Sửa vai trò: ${initial.name}` : 'Thêm vai trò'}</h2>
+      <h2>{initial ? `Sửa: ${initial.name}` : 'Thêm chức vụ'}</h2>
       <div className="inline-form">
-        <label>Tên vai trò<input value={name} maxLength={60} disabled={builtin} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Kỹ thuật viên" />{builtin && <small>Tên vai trò có sẵn giữ nguyên.</small>}</label>
+        <label>Tên chức vụ<input value={name} maxLength={60} disabled={builtin} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Kỹ thuật viên" />{builtin && <small>Tên vai trò có sẵn giữ nguyên (quản trị nền tảng đổi tên chung).</small>}</label>
         <label>Mô tả (người này làm được gì)<input value={desc} maxLength={300} onChange={(e) => setDesc(e.target.value)} /></label>
-        {!builtin && (
-          <label>Dựa trên vai trò
-            <select value={base} onChange={(e) => setBase(e.target.value as MemberRole)}>
-              {assignableRoles(orgType).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
-            </select>
-            <small>Người giữ vai trò này tự có thêm vai trò nền để dùng các thao tác gốc (ví dụ ghi nhật ký).</small>
-          </label>
-        )}
         <fieldset className="roles">
           <legend>Quyền theo mục</legend>
           {PERM_MODULES.map((m: PermModule) => (
@@ -186,7 +178,7 @@ function RoleForm({ initial, orgType, busy, onSave, onClose }: {
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {
-            if (name.trim().length < 2) return setErr('Tên vai trò cần ít nhất 2 ký tự.');
+            if (name.trim().length < 2) return setErr('Tên chức vụ cần ít nhất 2 ký tự.');
             if (limited && wts.length === 0) return setErr('Hãy chọn ít nhất một loại việc, hoặc chọn "Mọi loại việc".');
             setErr(null);
             const clean: PermOverrides = {};

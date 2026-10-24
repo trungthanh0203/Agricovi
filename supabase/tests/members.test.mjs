@@ -27,18 +27,18 @@ test('mời thành viên: chỉ chủ mời; chấp nhận bằng đúng email; 
   assert.match(await expectError(asUser(db, owner, `select invite_member($1,'x@y.vn',${R('cooperative_manager')})`, [O])), /INVALID_ROLE/);
   assert.match(await expectError(asUser(db, owner, `select invite_member($1,'x@y.vn','{}'::member_role[])`, [O])), /INVALID_ROLE/);
 
-  // nhân viên kiêm Kho & chi phí (trùng được bỏ; thứ tự theo khai báo của kiểu: worker trước inventory_finance)
-  const inv = (await asUser(db, owner, `select invite_member($1,'  U2@Test.local ',${R('inventory_finance', 'worker', 'worker')}) id`, [O])).rows[0].id;
+  // trùng vai trò được bỏ
+  const inv = (await asUser(db, owner, `select invite_member($1,'  U2@Test.local ',${R('worker', 'worker')}) id`, [O])).rows[0].id;
   assert.match(await expectError(asUser(db, owner, `select invite_member($1,'u2@test.local',${R('manager')})`, [O])), /ALREADY_INVITED/);
 
   assert.equal((await asUser(db, other, `select count(*)::int n from my_invitations()`)).rows[0].n, 0);
   assert.match(await expectError(asUser(db, other, `select accept_invitation($1)`, [inv])), /FORBIDDEN/);
 
   const mine = (await asUser(db, worker, `select roles::text[] roles, org_name from my_invitations()`)).rows;
-  assert.deepEqual(mine, [{ roles: ['worker', 'inventory_finance'], org_name: 'Hộ A' }]);
+  assert.deepEqual(mine, [{ roles: ['worker'], org_name: 'Hộ A' }]);
 
   await asUser(db, worker, `select accept_invitation($1)`, [inv]);
-  assert.deepEqual(await rolesOf(db, worker, O, worker), ['worker', 'inventory_finance']);
+  assert.deepEqual(await rolesOf(db, worker, O, worker), ['worker']);
   assert.match(await expectError(asUser(db, worker, `select accept_invitation($1)`, [inv])), /FORBIDDEN/);
   assert.match(await expectError(asUser(db, owner, `select invite_member($1,'u2@test.local',${R('manager')})`, [O])), /ALREADY_MEMBER/);
   // người lao động không đọc được danh sách thành viên kèm email, không mời được
@@ -56,15 +56,15 @@ test('đổi nhiều vai trò, gỡ thành viên: không đụng chủ cơ sở;
   const inv = (await asUser(db, owner, `select invite_member($1,'u2@test.local',${R('worker')}) id`, [O])).rows[0].id;
   await asUser(db, w, `select accept_invitation($1)`, [inv]);
 
-  await asUser(db, owner, `select set_member_roles($1,$2,${R('inventory_finance', 'manager')})`, [O, w]);
-  assert.deepEqual(await rolesOf(db, w, O, w), ['manager', 'inventory_finance']);
+  await asUser(db, owner, `select set_member_roles($1,$2,${R('worker', 'manager')})`, [O, w]);
+  assert.deepEqual(await rolesOf(db, w, O, w), ['manager', 'worker']);
   assert.match(await expectError(asUser(db, owner, `select set_member_roles($1,$2,${R('worker')})`, [O, owner])), /INVALID_ROLE/);
   assert.match(await expectError(asUser(db, owner, `select set_member_roles($1,$2,${R('owner')})`, [O, w])), /INVALID_ROLE/);
   assert.match(await expectError(asUser(db, owner, `select remove_member($1,$2)`, [O, owner])), /INVALID_ROLE/);
   assert.match(await expectError(asUser(db, w, `select set_member_roles($1,$2,${R('worker')})`, [O, w])), /FORBIDDEN/);
 
   const list = (await asUser(db, owner, `select roles::text[] roles from list_org_members($1)`, [O])).rows;
-  assert.deepEqual(list.map((r) => r.roles), [['owner'], ['manager', 'inventory_finance']]);
+  assert.deepEqual(list.map((r) => r.roles), [['owner'], ['manager', 'worker']]);
 
   await asUser(db, owner, `select remove_member($1,$2)`, [O, w]);
   assert.equal((await asUser(db, w, `select count(*)::int n from organizations`)).rows[0].n, 0);
@@ -88,22 +88,24 @@ test('chủ bao gồm mọi vai trò (chủ kiêm quản lý, kiêm kho & chi ph
 
   // người không phải chủ chỉ có đúng vai trò được gán
   const w = await addUser(db, 3);
-  const inv = (await asUser(db, boss, `select invite_member($1,'u3@test.local',${R('worker', 'inventory_finance')}) id`, [C])).rows[0].id;
+  const inv = (await asUser(db, boss, `select invite_member($1,'u3@test.local',${R('worker', 'manager')}) id`, [C])).rows[0].id;
   await asUser(db, w, `select accept_invitation($1)`, [inv]);
   const has = async (r) => (await asUser(db, w, `select has_org_role($1, ${R(r)}) ok`, [C])).rows[0].ok;
   assert.equal(await has('worker'), true);
-  assert.equal(await has('inventory_finance'), true);
-  assert.equal(await has('manager'), false);
+  assert.equal(await has('manager'), true);
+  assert.equal(await has('cooperative_manager'), false);
   assert.equal(await has('owner'), false);
 });
 
-test('tổ trưởng kiêm Quản lý HTX: có cả quyền theo tổ và quyền cấp HTX', async () => {
+test('tổ trưởng giữ chức vụ Quản lý hợp tác xã: có cả quyền theo tổ và quyền cấp HTX', async () => {
   const db = await createDb();
   const boss = await addUser(db, 1);
   const lead = await addUser(db, 2); // u2@test.local
   const C = await org(db, boss, 'cooperative', 'HTX');
-  const inv = (await asUser(db, boss, `select invite_member($1,'u2@test.local',${R('worker', 'cooperative_manager')}) id`, [C])).rows[0].id;
+  const inv = (await asUser(db, boss, `select invite_member($1,'u2@test.local',${R('worker')}) id`, [C])).rows[0].id;
   await asUser(db, lead, `select accept_invitation($1)`, [inv]);
+  const posId = (await db.query(`select id from org_positions where organization_id=$1 and name='Quản lý hợp tác xã'`, [C])).rows[0].id;
+  await asUser(db, boss, `select set_member_positions($1,$2,array[$3]::uuid[])`, [C, lead, posId]); // D83: quyền HTX qua chức vụ
   // gọi được hàm dành cho quản lý HTX
   assert.deepEqual((await asUser(db, lead, `select name from list_coop_households($1)`, [C])).rows, []);
   const prof = (await db.query(`insert into worker_profiles (organization_id, user_id, full_name) values ($1,$2,'Hải') returning id`, [C, lead])).rows[0].id;

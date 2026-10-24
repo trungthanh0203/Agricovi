@@ -77,7 +77,12 @@ test('quyền: chỉ chủ và quản lý; chỉ số không có quyền xem tr�
   await expectError(weekly(c.db, c.worker, c.org), /FORBIDDEN|Chỉ chủ và quản lý/);
   await expectError(weekly(c.db, c.fin, c.org), /FORBIDDEN|Chỉ chủ và quản lý/); // Kho & chi phí không phải quản lý
   const m = await weekly(c.db, c.mgr, c.org);
-  assert.equal(Number(m.cur.cost), 1000000); // quản lý xem được Chi phí, Doanh thu, Thu hoạch (mức xem)
+  assert.equal(m.cur.cost, null); // D83: quản lý xem được báo cáo tuần nhưng phần tiền chỉ hiện khi được cấp quyền
+  assert.equal(m.cur.revenue, null);
+  assert.equal(m.cur.logs, 2);
+  assert.equal(Number(m.cur.harvest_kg), 95);
+  await asUser(c.db, c.owner, `select set_member_permissions($1,$2,$3::jsonb)`, [c.org, c.mgr, JSON.stringify({ expenses: 'view', sales: 'view' })]);
+  assert.equal(Number((await weekly(c.db, c.mgr, c.org)).cur.cost), 1000000);
   await asUser(c.db, c.owner, `select set_member_permissions($1,$2,$3::jsonb)`, [c.org, c.mgr, JSON.stringify({ expenses: 'none', sales: 'none' })]);
   const limited = await weekly(c.db, c.mgr, c.org);
   assert.equal(limited.cur.cost, null);

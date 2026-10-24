@@ -172,6 +172,7 @@ test('tình trạng hạn: quá hạn, sắp đến hạn, còn hạn, không nh
 
 test('báo cáo doanh thu theo khách: đã thu/còn thu; bán lẻ coi như thu đủ; lần thu đã hủy không tính; quyền theo Doanh thu', async () => {
   const { db, org, owner, mgr, worker } = await setup();
+  await db.query(`update organization_memberships set permissions = '{"expenses":"view","sales":"view"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý xem chi phí/doanh thu khi được chủ cấp
   await sell(db, owner, org, { sale: 1, partner: 1, amount: 1000000, qty: 100, paid: 600000 });
   await sell(db, owner, org, { sale: 2, partner: 2, amount: 500000, qty: 50, paid: 500000 });
   await sell(db, owner, org, { sale: 3, partner: null, amount: 200000, qty: 20 });

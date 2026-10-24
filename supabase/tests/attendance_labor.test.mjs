@@ -58,6 +58,7 @@ test('yêu cầu sửa công: người lao động đề nghị, quản lý duy�
   // kỳ đã khóa: không sửa công được
   const req2 = (await asUser(db, wk, `select * from request_attendance_adjustment($1, jsonb_build_object('break_minutes', 30), 'Có nghỉ trưa')`, [id(20)])).rows[0];
   await asUser(db, owner, `insert into work_rates (organization_id,rate_type,amount,valid_from) values ($1,'hour',30000,'2020-01-01')`, [org]);
+  await db.query(`update organization_memberships set permissions = '{"payroll":"edit"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý cần được cấp quyền Tiền công
   const per = (await asUser(db, mgr, `insert into payroll_periods (id,organization_id,start_date,end_date) values ($1,$2,current_date - 6, current_date) returning id`, [id(30), org])).rows[0].id;
   await asUser(db, mgr, `select compute_payroll($1)`, [per]);
   await asUser(db, owner, `select lock_payroll($1)`, [per]);
@@ -71,6 +72,7 @@ test('tổng kết vụ có nhân công: kỳ chưa khóa là dự tính, kỳ �
   await asUser(db, mgr, `select * from record_shift($1,$2,now() - interval '1 day', now() - interval '1 day' + interval '2 hours', 0, null)`, [id(41), ww]); // không gắn vụ
   await asUser(db, mgr, `select * from confirm_attendance($1)`, [id(41)]);
   await asUser(db, owner, `insert into work_rates (organization_id,rate_type,amount,valid_from) values ($1,'hour',30000,'2020-01-01')`, [org]);
+  await db.query(`update organization_memberships set permissions = '{"payroll":"edit"}'::jsonb where user_id=$1`, [mgr]); // D83: quản lý cần được cấp quyền Tiền công
   const per = (await asUser(db, mgr, `insert into payroll_periods (id,organization_id,start_date,end_date) values ($1,$2,current_date - 6, current_date) returning id`, [id(50), org])).rows[0].id;
   await asUser(db, mgr, `select compute_payroll($1)`, [per]);
   let s = (await asUser(db, owner, `select get_cycle_summary($1) s`, [cyc])).rows[0].s;

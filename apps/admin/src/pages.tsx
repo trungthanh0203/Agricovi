@@ -357,11 +357,8 @@ export function AuditPage() {
 // ============================================================ Tên vai trò
 const ROLE_ORDER: { role: string; note: string }[] = [
   { role: 'owner', note: 'Người sở hữu cơ sở (có mọi quyền)' },
-  { role: 'manager', note: 'Điều hành sản xuất, nhân sự, chấm công' },
-  { role: 'worker', note: 'Ghi nhật ký, thu hoạch, chấm công' },
-  { role: 'inventory_finance', note: 'Kho, chi phí, doanh thu' },
-  { role: 'cooperative_manager', note: 'Quản lý hộ thành viên (chỉ có ở hợp tác xã)' },
-  { role: 'profile_editor', note: 'Soạn hồ sơ giới thiệu trên website' },
+  { role: 'manager', note: 'Điều hành sản xuất hằng ngày; quyền tối thiểu, chủ cấp thêm' },
+  { role: 'worker', note: 'Ghi nhật ký, thu hoạch, chấm công của mình' },
 ];
 export function RolesPage() {
   const { data, error, reload } = useLoad(async () => {

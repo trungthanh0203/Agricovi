@@ -56,10 +56,10 @@ test('mặc định theo vai trò khớp hàm giao diện (permissions.ts) cho m
   for (const m of PERM_MODULES) assert.equal((await asUser(db, owner, `select perm_level($1,$2) l`, [org, m])).rows[0].l, 2);
 });
 
-test('mặc định giữ nguyên hành vi cũ: quản lý chỉ xem chi phí/doanh thu/tồn; Kho & chi phí nhập liệu; nhân viên chỉ ghi thu hoạch', async () => {
+test('mặc định (D83): quản lý chỉ xem tồn kho, không thấy chi phí/doanh thu; Kho & chi phí (vai trò cũ) nhập liệu; nhân viên chỉ ghi thu hoạch', async () => {
   const { db, org, mgr, worker, fin } = await setup();
   await insExpense(db, fin, org, 1);
-  assert.equal(await count(db, mgr, `select count(*)::int n from expense_records`), 1);
+  assert.equal(await count(db, mgr, `select count(*)::int n from expense_records`), 0);
   assert.match(await expectError(insExpense(db, mgr, org, 2)), /row-level security/);
   assert.equal(await count(db, worker, `select count(*)::int n from expense_records`), 0);
   await insReceipt(db, fin, org, 3);
@@ -98,8 +98,8 @@ test('chủ rút bớt quyền: Kho & chi phí chỉ còn xem kho; quản lý b�
   assert.equal(await count(db, mgr, `select count(*)::int n from expense_records`), 0);
   assert.equal(await count(db, mgr, `select count(*)::int n from inventory_balances`), 0);
   assert.match(await expectError(asUser(db, mgr, `select get_cycle_summary($1)`, [CYC])), /FORBIDDEN/);
-  // trả về mặc định: gửi bảng rỗng
-  await grant(db, owner, org, mgr, {});
+  // chủ cấp lại quyền xem chi phí cho quản lý
+  await grant(db, owner, org, mgr, { expenses: 'view' });
   assert.equal(await count(db, mgr, `select count(*)::int n from expense_records`), 2);
 });
 
