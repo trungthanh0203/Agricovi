@@ -94,6 +94,7 @@ function Shell() {
   const [detailOpts, setDetailOpts] = useState<{ calendar?: boolean; notice?: string }>({}); // vừa vào ca: mở thẳng Lịch kèm thông báo giai đoạn hôm nay
   const [logPreset, setLogPreset] = useState<LogPreset | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
+  const [syncError, setSyncError] = useState<string | null>(null); // lỗi tải dữ liệu từ máy chủ (hiện ở đầu màn hình để biết nguyên nhân)
   const [counts, setCounts] = useState<Record<SyncState, number> | null>(null);
 
   // Chỉ cập nhật khi số đếm đổi thật, tránh vẽ lại cả app mỗi 3 giây
@@ -112,7 +113,7 @@ function Shell() {
   }, []);
 
   useEffect(() => {
-    const sync = () => void syncDown().catch(() => undefined).finally(() => void refresh());
+    const sync = () => void syncDown().then(() => setSyncError(null)).catch((e) => setSyncError(e instanceof Error ? e.message : String(e))).finally(() => void refresh());
     const on = () => {
       setOnline(true);
       sync();
@@ -165,6 +166,13 @@ function Shell() {
         </div>
         <span className={online ? 'net ok' : 'net off'} role="img" aria-label={online ? 'Có mạng' : 'Đang offline (mất mạng)'} title={online ? 'Có mạng' : 'Đang offline (mất mạng)'}>{online ? '🟢' : '🔴'}</span>
       </header>
+
+      {syncError && online && (
+        <div className="notice" role="alert">
+          <div>Chưa tải được dữ liệu từ máy chủ: {syncError}</div>
+          <button className="link" onClick={() => void syncDown().then(() => setSyncError(null)).catch((e) => setSyncError(e instanceof Error ? e.message : String(e)))}>Thử lại</button>
+        </div>
+      )}
 
       {(waiting > 0 || attention > 0) && (
         <div className="notice" role="status">

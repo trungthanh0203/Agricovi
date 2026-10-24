@@ -25,7 +25,7 @@ const LOG_COLUMNS =
 /** Tải dữ liệu về thiết bị để dùng offline. Không ghi đè bản ghi đang chờ gửi hoặc đang xung đột. */
 export async function syncDown(): Promise<void> {
   if (!supabase || !navigator.onLine) return;
-  await flushOutbox(); // gửi phần còn chờ trước để dữ liệu nhìn thấy khớp máy chủ
+  await flushOutbox().catch((e) => console.warn('Chưa gửi hết phần chờ', e)); // gửi phần còn chờ trước để dữ liệu nhìn thấy khớp máy chủ
 
   const pendingIds = new Set(
     (await db.outbox.where('state').notEqual('synced').toArray()).map((i) => i.payload.id as string),
@@ -41,7 +41,8 @@ export async function syncDown(): Promise<void> {
   ]);
   let cyclesRes: { data: unknown; error: { message?: string; code?: string } | null } = cycles;
   if (cycles.error && missingPlanColumns(cycles.error)) cyclesRes = await supabase.from('production_cycles').select(CYCLE_COLUMNS_BASE);
-  for (const r of [areas, cyclesRes, logs]) if (r.error) throw r.error;
+  // mỗi bảng độc lập: bảng nào tải được thì vẫn ghi vào máy, lỗi của bảng khác chỉ báo ở cuối (không để một bảng lỗi làm mất cả danh sách vụ)
+  const firstErr = [areas, cyclesRes, logs].find((r) => r.error)?.error ?? null;
   // Các phần còn lại độc lập nhau nên tải song song (trước đây tải tuần tự, chậm hơn nhiều khi mạng yếu).
   // Vật tư/kho, thu hoạch, chi phí/doanh thu: lỗi ở đây không làm hỏng đồng bộ sản xuất.
   const extras = Promise.all([
@@ -63,11 +64,12 @@ export async function syncDown(): Promise<void> {
       await db.notes.clear();
       await db.notes.bulkPut((notes.data ?? []) as NoteRow[]);
     }
-    await db.areas.bulkPut(fresh(areas.data as AreaRow[]));
-    await db.cycles.bulkPut(fresh(cyclesRes.data as CycleRow[]));
-    await db.logs.bulkPut(fresh(logs.data as LogRow[]));
+    if (!areas.error) await db.areas.bulkPut(fresh(areas.data as AreaRow[]));
+    if (!cyclesRes.error) await db.cycles.bulkPut(fresh(cyclesRes.data as CycleRow[]));
+    if (!logs.error) await db.logs.bulkPut(fresh(logs.data as LogRow[]));
   });
   await extras;
+  if (firstErr) throw new Error(firstErr.message ?? 'Không tải được dữ liệu sản xuất');
 }
 
 /**
