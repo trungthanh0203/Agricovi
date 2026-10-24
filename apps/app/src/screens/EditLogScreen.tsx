@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type FieldDef } from '../lib/db';
+import { DynamicField } from '../components/DynamicField';
+import { fieldsToData, initialValues, validateFields } from '../lib/fieldsLogic';
 import { VoiceNote } from '../components/VoiceNote';
 import { friendlyError } from '../lib/errors';
 import { toLocalInput, useOnline } from '../lib/hooks';
@@ -22,22 +24,15 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
   const schema: FieldDef[] = workType?.field_schema ?? [];
 
   const whenV = when ?? toLocalInput(new Date(log.performed_at));
-  const valuesV = values ?? Object.fromEntries(schema.map((f) => [f.key, log.data[f.key] === undefined ? '' : String(log.data[f.key])]));
+  const valuesV = values ?? initialValues(schema, log.data);
   const noteV = note ?? log.note ?? '';
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!noteV.trim()) return setError('Hãy nhập "Nội dung việc": gõ chữ hoặc bấm Nói để đọc nội dung đã làm.');
-    for (const f of schema) {
-      const raw = valuesV[f.key];
-      if (f.type === 'number' && raw && Number.isNaN(Number(raw))) return setError(`"${f.label}" phải là số.`);
-    }
-    const data: Record<string, unknown> = { ...log!.data };
-    for (const f of schema) {
-      const raw = valuesV[f.key];
-      if (raw === undefined || raw === '') delete data[f.key];
-      else data[f.key] = f.type === 'number' ? Number(raw) : raw;
-    }
+    const bad = validateFields(schema, valuesV);
+    if (bad) return setError(bad);
+    const data = fieldsToData(schema, valuesV, log!.data);
     setError(null);
     try {
       await editLog(logId, { performedAt: new Date(whenV).toISOString(), data, note: noteV });
@@ -57,18 +52,7 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
           <input type="datetime-local" value={whenV} onChange={(e) => setWhen(e.target.value)} />
         </label>
         {schema.map((f) => (
-          <label key={f.key}>
-            {f.label}
-            {f.type === 'select' && f.options?.length ? (
-              <select value={valuesV[f.key] ?? ''} onChange={(e) => setValues({ ...valuesV, [f.key]: e.target.value })}>
-                <option value="">— Chọn —</option>
-                {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
-            ) : (
-              <input value={valuesV[f.key] ?? ''} inputMode={f.type === 'number' ? 'decimal' : undefined}
-                onChange={(e) => setValues({ ...valuesV, [f.key]: e.target.value })} />
-            )}
-          </label>
+          <DynamicField key={f.key} def={f} value={valuesV[f.key] ?? ''} onChange={(v) => setValues({ ...valuesV, [f.key]: v })} />
         ))}
         <VoiceNote label="Nội dung việc (bắt buộc)" value={noteV} onChange={setNote} />
         {error && <p className="msg error" role="alert">{error}</p>}

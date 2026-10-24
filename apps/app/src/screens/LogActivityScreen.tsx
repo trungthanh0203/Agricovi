@@ -3,7 +3,9 @@ import { useCatalog } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
 import { SyncBadge } from '../components/SyncBadge';
-import { db, type FieldDef } from '../lib/db';
+import { db } from '../lib/db';
+import { DynamicField } from '../components/DynamicField';
+import { fieldsToData, initialValues, validateFields } from '../lib/fieldsLogic';
 import { toLocalInput, useRecordSync } from '../lib/hooks';
 import { useAuth } from '../lib/auth';
 import { formatQty, parseNumber } from '../lib/inventory';
@@ -91,15 +93,10 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
     e.preventDefault();
     if (!workType || !cycle || !session) return;
     if (!note.trim()) return setError('Hãy nhập "Nội dung việc": gõ chữ hoặc bấm Nói để đọc nội dung đã làm.');
-    for (const f of workType.field_schema) {
-      const raw = values[f.key];
-      if (f.type === 'number' && raw && Number.isNaN(Number(raw))) return setError(`"${f.label}" phải là số.`);
-    }
-    const data: Record<string, unknown> = {};
-    for (const f of workType.field_schema) {
-      const raw = values[f.key];
-      if (raw !== undefined && raw !== '') data[f.key] = f.type === 'number' ? Number(raw) : raw;
-    }
+    const merged = { ...initialValues(workType.field_schema), ...values };
+    const bad = validateFields(workType.field_schema, merged);
+    if (bad) return setError(bad);
+    const data = fieldsToData(workType.field_schema, merged);
     // dòng vật tư: bỏ dòng trống hoàn toàn; dòng đã nhập dở thì báo để người dùng sửa, không âm thầm bỏ
     const items: { materialId: string; quantity: number }[] = [];
     for (const row of used) {
@@ -220,7 +217,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
           </label>
 
           {workType.field_schema.map((f) => (
-            <Field key={f.key} def={f} value={values[f.key] ?? ''} onChange={(v) => setValues((s) => ({ ...s, [f.key]: v }))} />
+            <DynamicField key={f.key} def={f} value={values[f.key] ?? initialValues([f])[f.key] ?? ''} onChange={(v) => setValues((s) => ({ ...s, [f.key]: v }))} />
           ))}
 
           {canIssue && (
@@ -274,25 +271,5 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
         </form>
       )}
     </div>
-  );
-}
-
-function Field({ def, value, onChange }: { def: FieldDef; value: string; onChange: (v: string) => void }) {
-  if (def.type === 'select' && def.options?.length) {
-    return (
-      <label>
-        {def.label}
-        <select value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">— Chọn —</option>
-          {def.options.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
-      </label>
-    );
-  }
-  return (
-    <label>
-      {def.label}
-      <input value={value} inputMode={def.type === 'number' ? 'decimal' : undefined} onChange={(e) => onChange(e.target.value)} />
-    </label>
   );
 }

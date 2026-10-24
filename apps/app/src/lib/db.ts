@@ -150,11 +150,20 @@ export interface WorkTypeRow {
   ov?: Record<string, CatalogOverride>;
 }
 
+/** Một trường của form động (D96). Chỉ `key`, `label`, `type` là bắt buộc; nhật ký cũ không có các thuộc tính mới vẫn hiển thị bình thường. */
 export interface FieldDef {
   key: string;
   label: string;
-  type: 'number' | 'text' | 'select';
+  type: 'number' | 'text' | 'select' | 'multiselect' | 'date' | 'bool';
   options?: string[];
+  required?: boolean;
+  unit?: string;
+  min?: number;
+  max?: number;
+  /** Gợi ý mờ trong ô nhập */
+  hint?: string;
+  /** Giá trị điền sẵn khi ghi mới */
+  default?: string;
 }
 
 export interface CropTypeRow {

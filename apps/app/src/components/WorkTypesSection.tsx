@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import type { FieldDef } from '../lib/db';
+import { checkSchemaDraft, FIELD_TYPES, FIELD_TYPE_LABEL } from '../lib/fieldsLogic';
 import { useCatalog, type EffWorkType } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
@@ -7,11 +8,10 @@ import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { clearOverride, createWorkType, newFieldKey, refreshCatalogCache, saveOverride, updateWorkType } from '../lib/templates';
 
-const TYPE_LABEL: Record<FieldDef['type'], string> = { number: 'Số', text: 'Chữ', select: 'Chọn trong danh sách' };
-
-/** Nhập các trường dữ liệu của một loại việc (ví dụ "Độ Brix" kiểu Số). Khóa trường giữ nguyên khi sửa nhãn. */
+/** Nhập các trường dữ liệu của một loại việc (form động, D96). Khóa trường giữ nguyên khi sửa nhãn để nhật ký cũ vẫn hiện đúng. */
 function FieldsEditor({ fields, onChange }: { fields: FieldDef[]; onChange: (f: FieldDef[]) => void }) {
   const set = (i: number, patch: Partial<FieldDef>) => onChange(fields.map((f, j) => (j === i ? { ...f, ...patch } : f)));
+  const numOrUndef = (v: string) => { const n = Number(v.replace(',', '.')); return v.trim() === '' || Number.isNaN(n) ? undefined : n; };
   return (
     <fieldset className="roles">
       <legend>Thông tin cần ghi khi làm việc này</legend>
@@ -19,11 +19,21 @@ function FieldsEditor({ fields, onChange }: { fields: FieldDef[]; onChange: (f: 
         <div className="quickadd" key={f.key}>
           <input value={f.label} onChange={(e) => set(i, { label: e.target.value })} placeholder="Tên trường, ví dụ: Độ Brix" aria-label="Tên trường" />
           <select value={f.type} onChange={(e) => set(i, { type: e.target.value as FieldDef['type'] })} aria-label="Kiểu">
-            {(Object.keys(TYPE_LABEL) as FieldDef['type'][]).map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
+            {FIELD_TYPES.map((t) => <option key={t} value={t}>{FIELD_TYPE_LABEL[t]}</option>)}
           </select>
-          {f.type === 'select' && (
+          {(f.type === 'select' || f.type === 'multiselect') && (
             <input value={(f.options ?? []).join(', ')} aria-label="Các lựa chọn" placeholder="Lựa chọn, cách nhau bằng dấu phẩy"
               onChange={(e) => set(i, { options: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) })} />
+          )}
+          <label className="check"><input type="checkbox" checked={!!f.required} onChange={(e) => set(i, { required: e.target.checked || undefined })} /><span>Bắt buộc ghi</span></label>
+          {(f.type === 'number' || f.type === 'text') && (
+            <input value={f.unit ?? ''} maxLength={20} onChange={(e) => set(i, { unit: e.target.value || undefined })} placeholder="Đơn vị (ml, lít, kg…)" aria-label="Đơn vị" />
+          )}
+          {f.type === 'number' && (
+            <div className="pair">
+              <input value={f.min ?? ''} inputMode="decimal" onChange={(e) => set(i, { min: numOrUndef(e.target.value) })} placeholder="Nhỏ nhất" aria-label="Giá trị nhỏ nhất" />
+              <input value={f.max ?? ''} inputMode="decimal" onChange={(e) => set(i, { max: numOrUndef(e.target.value) })} placeholder="Lớn nhất" aria-label="Giá trị lớn nhất" />
+            </div>
           )}
           <button type="button" className="icon" aria-label="Xóa trường" onClick={() => onChange(fields.filter((_, j) => j !== i))}>✕</button>
         </div>
@@ -79,7 +89,8 @@ export function WorkTypesSection() {
 
   async function save(t: EffWorkType) {
     const f = cleanFields(editFields);
-    if (f.some((x) => x.type === 'select' && (x.options ?? []).length === 0)) throw new Error('Trường "Chọn trong danh sách" cần có ít nhất một lựa chọn.');
+    const bad = checkSchemaDraft(f);
+    if (bad) throw new Error(bad);
     if (editName.trim().length < 2) throw new Error('Tên việc cần ít nhất 2 ký tự.');
     if (t.shared) {
       await saveOverride(org, 'work_type', t.id, {

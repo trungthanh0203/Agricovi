@@ -10,17 +10,14 @@ import { useOrgs } from '../lib/orgs';
 import { authorLabel, canManageProduction } from '../lib/roles';
 import { loadOlderLogs, voidLog } from '../lib/production';
 import { EditLogScreen } from './EditLogScreen';
+import { summarizeFields } from '../lib/fieldsLogic';
 import { useTable } from '../lib/tables';
 
 const PAGE = 30;
 const OWN_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // khớp chính sách logs_update_own ở máy chủ
 
 function summarize(wt: WorkTypeRow | undefined, data: Record<string, unknown>): string {
-  if (!wt) return '';
-  return wt.field_schema
-    .filter((f) => data[f.key] !== undefined && data[f.key] !== '')
-    .map((f) => `${f.label}: ${String(data[f.key])}`)
-    .join(' · ');
+  return wt ? summarizeFields(wt.field_schema, data) : '';
 }
 
 /** Lịch sử nhật ký có lọc theo vụ / loại việc / ngày; sửa và hủy theo quyền (FR-LOG-004/005). */
