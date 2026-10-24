@@ -47,7 +47,8 @@ export const GUIDES: Guide[] = [
         details: [
           'Ghi nhật ký việc hằng ngày: bón phân, tưới, phun thuốc, chăm sóc… ai làm, làm lúc nào.',
           'Theo dõi vật tư trong kho, chi phí, doanh thu, thu hoạch và công nợ.',
-          'Chấm công và tính tiền công cho người làm.',
+          'Chấm công, tính và chốt lương cho người làm; mỗi người tự xem bảng lương của mình.',
+          'Xem ngay trên thẻ từng vụ: chi phí, thu hoạch, doanh thu, lãi lỗ, so với kế hoạch (ngân sách, sản lượng dự kiến).',
           'Biết mỗi vụ lời hay lỗ (Tổng kết vụ) và giá thành mỗi ký.',
           'Tạo mã QR truy xuất nguồn gốc để khách quét xem được quá trình nuôi trồng.',
           'Đưa sản phẩm lên website để khách hàng tìm đến.',
@@ -57,7 +58,7 @@ export const GUIDES: Guide[] = [
         title: 'Một vòng đời mùa vụ gồm 5 bước',
         details: [
           '1) Khai báo: trang trại, sản phẩm, vật tư, quy trình mẫu (làm một lần, dùng nhiều vụ).',
-          '2) Tạo vụ: chọn sản phẩm, trang trại và quy trình mẫu; app tự lập lịch các giai đoạn.',
+          '2) Tạo vụ: chọn sản phẩm, trang trại và quy trình mẫu; app tự lập lịch các giai đoạn (có thể đặt sản lượng và ngân sách dự kiến). Bắt đầu chạy muộn hay làm lệch kế hoạch thì lịch tự dời theo thực tế.',
           '3) Ghi việc hằng ngày: mỗi việc làm xong bấm nút ＋ Ghi việc, ghi cả vật tư đã dùng.',
           '4) Thu hoạch và bán: ghi sản lượng, hao hụt, doanh thu, khách còn nợ.',
           '5) Tổng kết: xem chi phí, doanh thu, lãi lỗ, giá thành mỗi ký của cả vụ.',
@@ -66,8 +67,8 @@ export const GUIDES: Guide[] = [
       {
         title: 'Các mục trong app dùng để làm gì',
         details: [
-          'Thanh dưới cùng: Trang chủ (tổng quan, nhắc việc) · Sản xuất (mùa vụ, chấm công, thu hoạch, kho, nhật ký) · Ghi việc (nút ＋ ở giữa) · Báo cáo.',
-          'Menu ☰ góc trên bên trái: Tổ chức (nhân sự, vai trò, tổ lao động) · Khai báo · Hướng dẫn sử dụng · Tài khoản.',
+          'Thanh dưới cùng: Trang chủ (tổng quan, nhắc việc, lương tháng này) · Sản xuất (Mùa vụ, Chấm công, Thu hoạch, Kho, Chi phí, Nhật ký việc) · Ghi việc (nút ＋ ở giữa) · Báo cáo (Báo cáo tuần, Theo nhu cầu, Công nợ, Doanh thu, Bảng lương, Tổng kết vụ, Đơn khách từ website, Hồ sơ website).',
+          'Menu ☰ góc trên bên trái: Tài khoản · Tổ chức (Nhân sự, Chức vụ, Phòng / Tổ) · Khai báo · Hướng dẫn sử dụng · Chia sẻ hệ thống.',
           'Chạm vào ô chức năng để vào; bấm "‹ Menu" để quay lại.',
         ],
       },
@@ -84,9 +85,9 @@ export const GUIDES: Guide[] = [
         title: 'Ai làm được gì (vai trò và quyền)',
         details: [
           'Chỉ có 3 vai trò: Chủ cơ sở, Quản lý, Nhân viên.',
-          'Chủ cơ sở: làm được mọi việc, cấp quyền, đặt lương và giá công, xem gói dịch vụ và giấy phép.',
+          'Chủ cơ sở: làm được mọi việc, cấp quyền, đặt cách trả công, chốt lương, xem gói dịch vụ và giấy phép.',
           'Quản lý: điều hành sản xuất hằng ngày (tạo vụ, sửa nhật ký, xác nhận chấm công), xem Kho và danh sách nhân sự, xem Báo cáo tuần (phần tiền chỉ hiện khi được cấp quyền).',
-          'Nhân viên: ghi việc, thu hoạch, chấm công của mình và xem tiền công của mình.',
+          'Nhân viên: ghi việc, thu hoạch, chấm công của mình và xem Bảng lương của mình (Báo cáo → Bảng lương).',
           'Chức vụ: chủ tạo chức vụ cho cơ sở (ví dụ Thủ kho và kế toán, Tổ trưởng vườn). Mỗi chức vụ có MỘT vai trò (mặc định Nhân viên; chọn Quản lý thì chọn thêm quyền). Mỗi người giữ đúng một chức vụ, chọn ở mục Nhân sự; vai trò và quyền của người theo chức vụ. Mục nào không có quyền thì không hiện.',
           'Chủ có thể giao mỗi người một hay nhiều trang trại; người đó chỉ thấy và ghi việc ở các trang trại được giao.',
         ],
@@ -115,12 +116,13 @@ export const GUIDES: Guide[] = [
     icon: '🌾',
     flow: [
       { title: 'Làm một lần đầu', tone: 'info', nodes: [{ icon: '📝', label: 'Đăng ký', step: 0 }, { icon: '🏡', label: 'Trang trại', step: 1 }, { icon: '🌾', label: 'Sản phẩm', step: 2 }, { icon: '📦', label: 'Kho và vật tư', step: 3 }, { icon: '📋', label: 'Quy trình mẫu', step: 4 }] },
-      { title: 'Mỗi vụ', tone: 'ok', nodes: [{ icon: '📥', label: 'Nhập kho', step: 5 }, { icon: '🌱', label: 'Tạo vụ', step: 6 }] },
-      { title: 'Mỗi ngày', tone: 'ok', nodes: [{ icon: '⏱', label: 'Vào ca → Ghi việc → Ra ca', step: 7 }] },
-      { title: 'Khi có thu và chi', tone: 'warn', nodes: [{ icon: '🧺', label: 'Thu hoạch và bán', step: 8 }, { icon: '💳', label: 'Chi phí và công nợ', step: 9 }] },
-      { title: 'Quản lý và kết quả', tone: 'neutral', nodes: [{ icon: '👥', label: 'Người làm, chấm công', step: 10 }, { icon: '📊', label: 'Kết quả và website', step: 11 }] },
+      { title: 'Mỗi vụ', tone: 'ok', nodes: [{ icon: '📥', label: 'Nhập kho', step: 5 }, { icon: '🌱', label: 'Tạo vụ', step: 6 }, { icon: '📈', label: 'Theo dõi vụ', step: 7 }] },
+      { title: 'Mỗi ngày', tone: 'ok', nodes: [{ icon: '⏱', label: 'Vào ca → Ghi việc → Ra ca', step: 8 }] },
+      { title: 'Khi có thu và chi', tone: 'warn', nodes: [{ icon: '🧺', label: 'Thu hoạch và bán', step: 9 }, { icon: '💳', label: 'Chi phí và công nợ', step: 10 }] },
+      { title: 'Nhân sự và lương', tone: 'info', nodes: [{ icon: '👥', label: 'Nhân sự, chức vụ, trả công', step: 11 }, { icon: '💼', label: 'Chấm công, bảng lương', step: 12 }] },
+      { title: 'Kết quả', tone: 'neutral', nodes: [{ icon: '📊', label: 'Báo cáo và website', step: 13 }] },
     ],
-    intro: 'Làm lần lượt từ bước 1 đến bước 12. Bước 1–5 chỉ làm một lần đầu; từ bước 6 là việc lặp lại mỗi vụ, mỗi ngày.',
+    intro: 'Làm lần lượt từ bước 1 đến bước 14. Bước 1–5 chỉ làm một lần đầu; từ bước 6 là việc lặp lại mỗi vụ, mỗi ngày.',
     steps: [
       {
         title: 'Đăng ký tài khoản và tạo cơ sở',
@@ -168,6 +170,7 @@ export const GUIDES: Guide[] = [
         details: [
           'Vào Sản xuất → Kho, chọn Nhập kho: chọn vật tư, số lượng, giá, ngày nhập.',
           'Kho tính giá vốn bình quân và tự trừ khi bạn ghi vật tư đã dùng.',
+          'Mua vật tư thì ghi vào Kho, không ghi thêm vào Chi phí: tiền vật tư được tính vào chi phí của vụ lúc bạn DÙNG nó.',
           'Kiểm kho lệch thì dùng "Điều chỉnh": app ghi lại lý do, không sửa đè.',
         ],
         go: { tab: 'production', section: 'stock', label: 'Mở Kho' },
@@ -175,10 +178,23 @@ export const GUIDES: Guide[] = [
       {
         title: 'Tạo vụ theo quy trình mẫu',
         details: [
-          'Vào Sản xuất → Mùa vụ → Tạo vụ: chọn trang trại, sản phẩm, quy trình mẫu và ngày bắt đầu.',
-          'App lập lịch các giai đoạn. Xem Quy trình & Lịch của vụ để biết hôm nay cần làm gì.',
-          'Cần đổi giai đoạn hoặc ngày thì sửa trong chi tiết vụ; có thể ghi chú theo ngày và được nhắc ở Trang chủ.',
+          'Vào Sản xuất → Mùa vụ, bấm + Tạo vụ mới: chọn trang trại, sản phẩm, quy trình mẫu và ngày bắt đầu.',
+          'Có thể nhập Sản lượng dự kiến (kg) và Ngân sách dự kiến (đồng) để so với thực tế (không bắt buộc; sửa sau ở Sửa vụ).',
+          'Chọn "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước, bắt đầu chạy sau. App lập lịch các giai đoạn theo quy trình mẫu.',
+          'Mỗi vụ có một mã (hiện sau tên vụ, ví dụ "Dưa vụ 1 - AB12CD34") dùng cho mã QR truy xuất.',
         ],
+        go: { tab: 'production', section: 'cycles', label: 'Mở Mùa vụ' },
+      },
+      {
+        title: 'Theo dõi vụ: lịch và số liệu',
+        details: [
+          'Bấm "Bắt đầu sản xuất" khi vụ thật sự chạy: ngày bắt đầu thành ngày thực tế và lịch các giai đoạn tự dời theo.',
+          'Bắt đầu hoặc hoàn thành một giai đoạn sớm/trễ so với kế hoạch, hoặc sửa ngày kết thúc của một giai đoạn: các giai đoạn phía sau tự dời theo số ngày lệch (giai đoạn đang chạy hay đã xong không bị đổi).',
+          'Bấm Quy trình & Lịch để xem hôm nay cần làm gì; có thể ghi chú theo ngày và được nhắc ở Trang chủ.',
+          'Mỗi thẻ vụ có dòng số liệu: Chi phí · Thu hoạch · Doanh thu · Lãi/Lỗ tạm tính, và thanh so với ngân sách, sản lượng dự kiến. Bấm "Xem thêm số liệu" để xem chi phí chia theo vật tư/tiền công/khác, hao hụt, còn tồn, giá thành mỗi kg, ngày chạy, giờ công, tiền khách còn nợ.',
+          'Chỉ hiện số bạn có quyền xem (tiền cần quyền Tổng kết vụ).',
+        ],
+        tip: 'Muốn so với kế hoạch: bấm Sửa vụ để nhập sản lượng và ngân sách dự kiến.',
         go: { tab: 'production', section: 'cycles', label: 'Mở Mùa vụ' },
       },
       {
@@ -204,29 +220,43 @@ export const GUIDES: Guide[] = [
       {
         title: 'Chi phí và công nợ',
         details: [
-          'Sản xuất → Chi phí: ghi các khoản chi theo 6 nhóm (vật tư, nhân công, nhiên liệu…).',
+          'Sản xuất → Chi phí: ghi các khoản chi theo 6 nhóm (vật tư, nhân công, điện nước, thuê, khấu hao, khác). Mua vật tư thì ghi ở Kho, không ghi lại ở đây.',
           'Mua vật tư chưa trả hết tiền: ghi số hóa đơn và hạn trả (bạn tự nhập), app nhắc khi sắp hoặc đã quá hạn.',
           'Công nợ: xem tổng nợ phải trả và phải thu, tuổi nợ, ghi lần trả/thu tiếp theo.',
         ],
         go: { tab: 'production', section: 'expense', label: 'Mở Chi phí' },
       },
       {
-        title: 'Mời người làm, chấm công, tiền công',
+        title: 'Nhân sự: chức vụ, hồ sơ, trả công',
         details: [
-          'Tổ chức → Nhân sự: tạo tài khoản cho người làm bằng số điện thoại, chọn chức vụ. Lần đầu họ phải đổi mật khẩu tạm.',
-          'Tổ chức → Phòng / Tổ: chia người vào tổ, chọn tổ trưởng.',
-          'Tổ chức → Nhân sự → bấm vào người → Trả công: đặt cách trả riêng cho từng người, theo giờ làm (đồng/giờ) hoặc lương cố định theo tháng.',
-          'Sản xuất → Chấm công: xác nhận ca công. Báo cáo → Bảng lương (xem một tháng): bấm Tính lương, nhập thưởng/phạt/tạm ứng ở chi tiết từng người (có lý do, tự tính lại), xử lý hết việc còn dang dở rồi chủ khóa kỳ. Mỗi người xem lương và công của mình (từng ngày vào ca/ra ca, thưởng, phạt, tạm ứng, thực nhận) ở Báo cáo → Bảng lương; chủ xem được từng người, tất cả hoặc theo tổ.',
+          'Tổ chức → Chức vụ: tạo chức vụ (mặc định vai trò Nhân viên; chọn Quản lý thì chọn thêm quyền). Cơ sở mới đã có sẵn vài chức vụ để dùng.',
+          'Tổ chức → Nhân sự: bấm "＋ Tạo tài khoản nhân viên" (đăng nhập bằng số điện thoại) hoặc mời người đã có email; chọn chức vụ và trang trại làm việc. Lần đầu họ phải đổi mật khẩu tạm.',
+          'Bấm vào một người để mở hồ sơ: Thông tin và tài khoản · Chức vụ và quyền · Trang trại làm việc · Phòng / Tổ · Trả công.',
+          'Trả công: đặt riêng cho từng người, theo giờ làm (đồng/giờ) hoặc lương cố định theo tháng, có ngày hiệu lực và ngày hết hiệu lực. Thêm dòng mới thì dòng cũ cùng loại tự kết thúc hôm trước.',
+          'Tổ chức → Phòng / Tổ: lập tổ, chọn tổ trưởng.',
         ],
         go: { tab: 'org', section: 'members', label: 'Mở Nhân sự' },
       },
       {
+        title: 'Chấm công, bảng lương và chốt lương',
+        details: [
+          'Sản xuất → Chấm công: người làm Vào ca / Ra ca; quản lý hoặc tổ trưởng xác nhận ca công, chấm công hộ khi cần.',
+          'Báo cáo → Bảng lương: mỗi người xem lương và công của MÌNH theo tháng/quý/năm: thực nhận, giờ công, công từng ngày (giờ vào ra), lương cố định, thưởng, phạt, tạm ứng. Số "Ước tính" hiện cả khi chủ chưa chốt.',
+          'Chủ (và người được cấp quyền Tiền công) chọn xem Tất cả, Phòng / Tổ hoặc Một người; lọc "Cần xử lý"; xuất CSV; chia sẻ phiếu lương một người qua Zalo.',
+          'Chốt lương: xem một THÁNG, thanh "Chốt lương tháng này" ở đầu trang. Bấm Tính lương; nhập thưởng / phạt / tạm ứng ở chi tiết từng người (có lý do, tự tính lại); xử lý hết việc còn dang dở (công chờ xác nhận, ca chưa ra ca, yêu cầu sửa công, người chưa có cách trả công) thì chủ bấm Khóa kỳ. Còn việc dang dở thì chưa khóa được.',
+          'Khóa nhầm: chủ bấm Mở khóa kỳ (ghi lý do), sửa xong Tính lại rồi Khóa lại.',
+        ],
+        go: { tab: 'reports', section: 'paybook', label: 'Mở Bảng lương' },
+      },
+      {
         title: 'Xem kết quả và đưa sản phẩm lên website',
         details: [
-          'Trang chủ: số liệu tháng, xu hướng, cảnh báo. Báo cáo → Báo cáo tuần: tóm tắt tuần (chủ, quản lý) và nút chia sẻ.',
-          'Báo cáo → Tổng kết vụ: chi phí, doanh thu, lãi lỗ, giá thành mỗi ký (chỉ tính khi đủ số liệu); xuất ra bảng CSV.',
+          'Trang chủ: số liệu tháng, xu hướng 6 tháng, cảnh báo, lương tháng này của bạn.',
+          'Báo cáo → Báo cáo tuần: tóm tắt tuần (chủ, quản lý), so với tuần trước, điểm cần chú ý, nút chia sẻ.',
           'Báo cáo → Theo nhu cầu: tự chọn loại báo cáo, bộ lọc, xem dạng biểu đồ hoặc bảng và lưu lại.',
-          'Báo cáo → Hồ sơ website: soạn hồ sơ, gửi duyệt để hiện trên website. Mỗi vụ có mã QR truy xuất để in dán lên sản phẩm.',
+          'Báo cáo → Công nợ và Doanh thu: nợ phải trả, phải thu, các lần bán.',
+          'Báo cáo → Tổng kết vụ: chi phí, doanh thu, lãi lỗ, giá thành mỗi ký (chỉ tính khi đủ số liệu); xuất ra bảng CSV.',
+          'Báo cáo → Hồ sơ website: soạn hồ sơ, gửi duyệt để hiện trên website. Báo cáo → Đơn khách từ website: xử lý đơn và báo giá. Mỗi vụ có mã QR truy xuất để in dán lên sản phẩm.',
         ],
         go: { tab: 'reports', section: 'summary', label: 'Mở Tổng kết vụ' },
       },
@@ -270,8 +300,8 @@ export const GUIDES: Guide[] = [
       {
         title: 'Theo dõi mùa vụ và sản lượng',
         details: [
-          'Xem tiến độ các vụ đang chạy, vụ trễ tiến độ ở Trang chủ và Sản xuất → Mùa vụ.',
-          'Tổng hợp thu hoạch, doanh thu, chi phí theo vụ ở Tổng kết vụ và Báo cáo theo nhu cầu.',
+          'Xem tiến độ các vụ đang chạy, vụ trễ tiến độ ở Trang chủ và Sản xuất → Mùa vụ; lịch giai đoạn tự dời theo thực tế.',
+          'Mỗi thẻ vụ có dòng số liệu (chi phí, thu hoạch, doanh thu, lãi lỗ) và so với ngân sách, sản lượng dự kiến. Tổng hợp theo vụ ở Tổng kết vụ và Báo cáo theo nhu cầu.',
         ],
         go: { tab: 'production', section: 'cycles', label: 'Mở Mùa vụ' },
       },
@@ -279,7 +309,7 @@ export const GUIDES: Guide[] = [
         title: 'Nhân sự, chấm công và tiền công của hợp tác xã',
         details: [
           'Chia phòng/tổ, đặt chức vụ và quyền theo mục cho từng người (Tổ chức → Chức vụ).',
-          'Chấm công, xác nhận công và tính tiền công giống như hộ.',
+          'Chấm công, Bảng lương và chốt lương giống như hộ (Báo cáo → Bảng lương).',
         ],
         go: { tab: 'org', section: 'positions', label: 'Mở Chức vụ' },
       },
@@ -333,8 +363,8 @@ export const GUIDES: Guide[] = [
       {
         title: 'Nhiều trang trại, nhiều vụ chạy song song',
         details: [
-          'Khai báo từng trang trại, tạo nhiều vụ cho từng sản phẩm; lọc theo vụ khi ghi việc và xem báo cáo.',
-          'Theo dõi vụ trễ tiến độ và vật tư sắp hết ở Trang chủ.',
+          'Khai báo từng trang trại, tạo nhiều vụ cho từng sản phẩm; đặt sản lượng và ngân sách dự kiến cho từng vụ.',
+          'Thẻ mỗi vụ có dòng số liệu và thanh so với kế hoạch; theo dõi vụ trễ tiến độ và vật tư sắp hết ở Trang chủ.',
         ],
         go: { tab: 'production', section: 'cycles', label: 'Mở Mùa vụ' },
       },
@@ -349,8 +379,9 @@ export const GUIDES: Guide[] = [
       {
         title: 'Chấm công và tiền công cho nhiều người',
         details: [
-          'Đặt đơn giá theo giờ cho từng người (hồ sơ nhân sự), xác nhận công theo tổ, tính lương theo kỳ và khóa kỳ khi đã chốt.',
-          'Báo cáo giờ công theo người và theo phòng/tổ.',
+          'Đặt cách trả công cho từng người trong hồ sơ nhân sự (theo giờ hoặc lương cố định theo tháng); xác nhận công theo tổ.',
+          'Báo cáo → Bảng lương: xem Tất cả hoặc Phòng / Tổ, lọc "Cần xử lý", xuất CSV; chốt lương theo tháng (Tính lương, thưởng/phạt/tạm ứng, Khóa kỳ).',
+          'Báo cáo theo nhu cầu: giờ công theo người và theo phòng/tổ.',
         ],
         go: { tab: 'production', section: 'attendance', label: 'Mở Chấm công' },
       },

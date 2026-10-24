@@ -84,7 +84,6 @@ export function CycleStatsStrip({ s }: { s: CycleStat }) {
         )}
         {s.receivable !== null && s.receivable > 0 && (<><h3 className="sub">Tiền chưa thu</h3><Row label="Khách còn nợ của vụ này" value={money(s.receivable)} /></>)}
         {warns.length > 0 && <div className="msg warn" role="status">{warns.map((w) => <p key={w}>{w}</p>)}</div>}
-        {s.budget_amount === null && s.target_yield_kg === null && s.cost_total !== null && <p className="muted">Muốn so với kế hoạch: bấm Sửa vụ để nhập sản lượng và ngân sách dự kiến.</p>}
       </Collapsible>
     </div>
   );
