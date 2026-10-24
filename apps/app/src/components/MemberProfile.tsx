@@ -102,9 +102,11 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
         <Collapsible inline highlight title="Quyền cấp riêng (ngoại lệ)" summary={Object.keys(overrides).length > 0 ? 'Đã cấp riêng' : 'Theo chức vụ'}>
           <MemberPermissions key={JSON.stringify(overrides)} orgId={org.id} userId={member.user_id} roles={member.roles} overrides={overrides} onSaved={onChanged} />
         </Collapsible>
-        <Collapsible inline title="Trang trại được giao" summary={areas ? `${areas.length} trang trại` : 'Tất cả trang trại'}>
-          <MemberAreas key={JSON.stringify(areas)} orgId={org.id} userId={member.user_id} initial={areas} onSaved={onChanged} />
-        </Collapsible>
+      </Collapsible>
+
+      <Collapsible title="Trang trại làm việc" summary={areas ? `${areas.length} trang trại` : 'Tất cả trang trại'}>
+        <p className="muted">Người này chỉ thấy và ghi việc ở các trang trại được chọn. Một người làm được nhiều trang trại.</p>
+        <MemberAreas key={JSON.stringify(areas)} orgId={org.id} userId={member.user_id} initial={areas} onSaved={onChanged} />
       </Collapsible>
 
       <Collapsible title="Phòng / Tổ" summary={team ? team.name : 'Chưa vào tổ'}>

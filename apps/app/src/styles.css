@@ -2,6 +2,7 @@
   --green: #168043; /* cùng bảng màu với website (D74) */
   --green-d: #0e5e2e;
   --tint: #e6f4eb;
+  --label: #2c6e49; /* chữ nhãn biểu mẫu: khác màu dữ liệu nhập */
   --bg: #f2f7f3;
   --field: #ffffff;
   --fg: #1c2a22;
@@ -15,7 +16,7 @@
   font-size: 18px; /* chữ lớn cho người ít quen công nghệ */
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #0f1511; --field: #151c17; --tint: #1c2b21; --fg: #ececec; --muted: #a8aeb3; --line: #2c372f; --card: #19211b; --green: #5fbf83; --warn: #ffb74d; --err: #f2b8b5; --shadow: none; }
+  :root { --bg: #0f1511; --field: #151c17; --tint: #1c2b21; --fg: #ececec; --muted: #a8aeb3; --line: #2c372f; --card: #19211b; --label: #8fd0a8; --green: #5fbf83; --warn: #ffb74d; --err: #f2b8b5; --shadow: none; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); }
@@ -508,3 +509,10 @@ button.ordercard:active { background: var(--tint); }
 button.member-btn { width: 100%; text-align: left; font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; align-items: center; }
 button.member-btn .sub { display: block; }
 .member-profile { display: grid; gap: 4px; }
+
+/* Biểu mẫu: nhãn đổi màu, dữ liệu nhập chữ nhỏ hơn; ô nhập/ô chọn rộng vừa màn hình, ô nhiều dòng cao vừa nội dung */
+.inline-form label:not(.check), .inline-form legend { color: var(--label); font-weight: 600; font-size: .95rem; }
+.inline-form input:not([type='radio']):not([type='checkbox']), .inline-form select, .inline-form textarea { font-size: .88rem; font-weight: 400; color: var(--fg); width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
+.inline-form select { text-overflow: ellipsis; }
+.inline-form textarea { font-family: inherit; min-height: 48px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--field); line-height: 1.35; resize: none; overflow: hidden; display: block; }
+.inline-form .pair > label { min-width: 0; }

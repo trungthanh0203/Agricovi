@@ -221,11 +221,11 @@ export async function listRates(orgId: string): Promise<RateRow[]> {
     .eq('organization_id', orgId).order('valid_from', { ascending: false }));
   return num((rows ?? []) as RateRow[], ['amount']);
 }
-export async function addRate(orgId: string, r: { type: 'hour' | 'month' | 'quantity'; workerId: string | null; teamId: string | null; unit: string | null; amount: number; validFrom: string }): Promise<void> {
+export async function addRate(orgId: string, r: { type: 'hour' | 'month' | 'quantity'; workerId: string | null; teamId: string | null; unit: string | null; amount: number; validFrom: string; validTo?: string | null }): Promise<void> {
   needOnline('thêm đơn giá');
   await ok(client().from('work_rates').insert({
     organization_id: orgId, rate_type: r.type, worker_id: r.workerId, team_id: r.teamId, unit: r.type === 'quantity' ? r.unit : null,
-    amount: r.amount, valid_from: r.validFrom,
+    amount: r.amount, valid_from: r.validFrom, valid_to: r.validTo ?? null,
   }));
 }
 export async function setRateActive(id: string, active: boolean): Promise<void> {
@@ -304,4 +304,10 @@ export const fmtVnd = (n: number) => `${Math.round(n).toLocaleString('vi-VN')} �
 export async function deleteAdjustment(id: string): Promise<void> {
   needOnline('xóa khoản điều chỉnh');
   await ok(client().from('pay_adjustments').delete().eq('id', id));
+}
+
+/** Đặt (hoặc bỏ) ngày hết hiệu lực của một dòng đơn giá/lương */
+export async function setRateEnd(id: string, validTo: string | null): Promise<void> {
+  needOnline('đổi ngày hết hiệu lực');
+  await ok(client().from('work_rates').update({ valid_to: validTo }).eq('id', id));
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { MemberRole } from '@agriconnect/shared';
 import { useCatalog } from '../lib/catalog';
+import { AutoTextarea } from './AutoTextarea';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { listMembers, type Member } from '../lib/members';
@@ -124,8 +125,8 @@ function RoleForm({ initial, busy, onSave, onClose }: {
     <div className="card">
       <h2>{initial ? `Sửa: ${initial.name}` : 'Thêm chức vụ'}</h2>
       <div className="inline-form">
-        <label>Tên chức vụ<input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Kỹ thuật viên" /></label>
-        <label>Mô tả (người này làm gì)<input value={desc} maxLength={300} onChange={(e) => setDesc(e.target.value)} /></label>
+        <label>Tên chức vụ<AutoTextarea value={name} maxLength={60} onChange={setName} placeholder="Ví dụ: Kỹ thuật viên" /></label>
+        <label>Mô tả (người này làm gì)<AutoTextarea value={desc} maxLength={300} onChange={setDesc} /></label>
         <label>Vai trò của chức vụ
           <select value={role} onChange={(e) => { const r = e.target.value as MemberRole; setRole(r); if (!initial) setStages(r === 'manager'); }}>
             <option value="worker">{ROLE_LABEL.worker} (quyền cơ bản của nhân viên)</option>
