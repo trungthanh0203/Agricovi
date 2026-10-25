@@ -28,7 +28,7 @@ export interface Section<Id extends string = string> {
 export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'expense' | 'attendance' | 'logs';
 export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'customers';
 export type OrgSection = 'members' | 'positions' | 'teams' | 'coop';
-export type ReportSection = 'payables' | 'sales' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce';
+export type ReportSection = 'payables' | 'sales' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist';
 
 export function productionSections(org: MyOrg | null): Section<ProductionSection>[] {
   if (!org) return [];
@@ -76,6 +76,7 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
     canPerm(org.perms, 'sales') ? { id: 'sales' as const, label: 'Doanh thu' } : null,
     { id: 'paybook' as const, label: 'Bảng lương' }, // mọi người xem của mình; chủ/người có quyền Tiền công xem cả cơ sở
     canPerm(org.perms, 'summary') ? { id: 'summary' as const, label: 'Tổng kết vụ' } : null,
+    canPerm(org.perms, 'declare') ? { id: 'checklist' as const, label: 'Bảng kiểm' } : null,
     canPerm(org.perms, 'website') ? { id: 'website' as const, label: 'Đơn khách từ website' } : null,
     canPerm(org.perms, 'website') ? { id: 'commerce' as const, label: 'Hồ sơ website' } : null, // luôn để cuối
   ].filter((x): x is Section<ReportSection> => x !== null);

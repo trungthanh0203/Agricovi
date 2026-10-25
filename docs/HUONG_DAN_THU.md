@@ -241,3 +241,9 @@ Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng m�
 5. **Gói trường**: Khai báo → Danh mục việc → Áp dụng "Dưa lưới nhà màng" hoặc "Heo thịt". Mỗi gói chỉ thêm việc/trường của loại hình đó.
 6. **Thu hoạch**: Ghi thu hoạch → mở "＋ Số … và thông tin thêm": nhập số con/quả, Brix hoặc thẻ tai. Phiếu có mã lô tự sinh (`LO-THIT-10/L01`) và khối lượng trung bình.
 7. **Kim gãy** (vật nuôi): trong vụ → Sự cố → loại "Kim tiêm gãy". Thử thu/bán: app đòi lý do; đóng sự cố thì hết đòi.
+
+## Thử P1B: bảng kiểm VietGAP (cần `db push` 0084)
+1. Báo cáo → **Bảng kiểm** → "Lấy bộ bảng kiểm về" (45 tiêu chí, 31 loại A, 14 loại B). Dòng cảnh báo vàng nhắc bộ này **chưa đối chiếu** với bản chính thức.
+2. Mở "Bộ tiêu chí": đổi mức A/B của một tiêu chí, sửa chữ, thêm tiêu chí riêng, đổi ngưỡng (A 100%, B 50%). Đối chiếu xong bấm "Đã đối chiếu với bản chính thức".
+3. "+ Bắt đầu lần đánh giá mới": bấm Đạt / Chưa đạt / Không áp dụng cho từng tiêu chí, ghi bằng chứng; bảng kết luận ở đầu trang tự cập nhật. Phải trả lời hết mới chốt được.
+4. Chốt xong không sửa được; muốn bỏ thì "Hủy lần đánh giá" kèm lý do. Danh sách xếp theo năm.
