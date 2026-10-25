@@ -108,10 +108,13 @@ try {
           </div>
           <p class="herotext">{chrome.settings.brand.hero_text}</p>
           <form class="herotrace" action="/truyxuat/" method="get">
-            <label for="hero-ma">🔎 Kiểm tra nguồn gốc</label>
             <input id="hero-ma" name="ma" placeholder="Nhập mã vụ in trên bao bì, ví dụ VU-1A2B3C4D" aria-label="Mã vụ" />
-            <button class="btn cta1" type="submit">Truy xuất</button>
+            <button class="btn cta1" type="submit">Truy xuất nguồn gốc</button>
           </form>
+          <div class="herotrade">
+            <a class="btn cta3" href="/giao-thuong/">🤝 Giao thương</a>
+            <p>{chrome.settings.brand.hero_trade}</p>
+          </div>
         </div>
       )}
       {hero.map((b) => (
@@ -147,15 +150,6 @@ try {
         </>
       )}
     </div>
-  </section>
-
-  <section class="duo-card trade">
-    <span class="duo-ico" aria-hidden="true">🤝</span>
-    <div class="duo-body">
-      <h2>Giao thương</h2>
-      <p>{chrome.settings.brand.hero_trade}</p>
-    </div>
-    <a class="btn" href="/giao-thuong/">Vào giao thương</a>
   </section>
 
   {blocks.map((b) => (
@@ -241,7 +235,7 @@ try {
   .slide.fallback { align-items: stretch; gap: 12px; } .slide.fallback h1 { max-width: none; }
   .herotop { display: flex; align-items: center; gap: 16px; } .herotop h1 { flex: 1; } .slide .herologo { flex: none; height: 30px; min-height: 0; width: auto; display: block; background: #fff; border-radius: 8px; padding: 4px 8px; box-sizing: content-box; }
   .slide.fallback .herotext { margin: 0; max-width: none; }
-  .herotrace { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(255,255,255,.14); border-radius: 12px; padding: 10px 12px; } .herotrace label { font-weight: 700; flex: none; } .herotrace input { flex: 1 1 200px; min-width: 0; padding: 9px 12px; border: 0; border-radius: 10px; font: inherit; } .herotrace .btn { flex: none; }
+  .herotrace { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(255,255,255,.14); border-radius: 12px; padding: 10px 12px; } .herotrace input { flex: 1 1 200px; min-width: 0; padding: 9px 12px; border: 0; border-radius: 10px; font: inherit; } .herotrace .btn { flex: none; }
   .ctas { display: flex; gap: 10px; flex-wrap: wrap; }
   .herotrade { display: flex; align-items: center; gap: 14px; margin-top: 6px; flex-wrap: wrap; } .herotrade .btn { flex: none; } .herotrade p { margin: 0; font-size: .86rem; flex: 1 1 220px; max-width: 360px; line-height: 1.4; opacity: .95; }
   .btn.cta3 { background: linear-gradient(135deg, #efe7ff, #d8c8fb); color: #3b1d7a; box-shadow: 0 3px 10px rgba(124,77,214,.4); } .btn.cta3:hover { background: linear-gradient(135deg, #e3d6ff, #c9b3f7); }
@@ -261,16 +255,11 @@ try {
   .sideban span { position: relative; display: flex; flex-direction: column; font-size: 1.05rem; } .sideban small { color: var(--muted); }
   .sideban img + span { color: #fff; background: rgba(0,0,0,.5); padding: 6px 10px; border-radius: 8px; } .sideban img + span small { color: #fff; }
 
-  .duo-card { display: flex; gap: 16px; align-items: center; border-radius: 16px; padding: 18px 20px; box-shadow: var(--shadow); min-width: 0; margin: 0 0 22px; }
-  .duo-ico { flex: none; width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; font-size: 1.9rem; }
-  .duo-body { flex: 1; min-width: 0; } .duo-body h2 { margin: 0 0 4px; font-size: 1.15rem; } .duo-body p { margin: 0; font-size: .9rem; line-height: 1.4; opacity: .95; }
-  .duo-card.trade { background: radial-gradient(circle at 92% 12%, rgba(255,255,255,.16) 0 70px, transparent 71px), linear-gradient(135deg, #0f5f2f, #1e9650); color: #fff; } .duo-card.trade .duo-ico { background: rgba(255,255,255,.18); }
-  .duo-card.trade .btn { flex: none; background: linear-gradient(135deg, #efe7ff, #d8c8fb); color: #3b1d7a; }
   .soon { background: #fff8e6; border: 1px solid #f3dfa7; border-radius: 12px; padding: 14px; } .soon p { margin: .3em 0 0; }
   .cta { margin-top: 28px; background: radial-gradient(circle at 90% 20%, rgba(255,255,255,.15) 0 80px, transparent 81px), linear-gradient(135deg, #0f5f2f, #1e9650); color: #fff; border-radius: 18px; padding: 26px 28px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; box-shadow: var(--shadow); }
   .cta p { opacity: .95; } .cta .btn { background: var(--yl); color: #2a2200; }
   @media (max-width: 1000px) { .hero2 { grid-template-columns: minmax(0, 1fr); } .fly { display: none !important; } .catbox { border-radius: 14px; }
     .catlist { display: flex; overflow-x: auto; padding: 6px; gap: 6px; } .catlist > li > a { white-space: nowrap; border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; } .catlist .car { display: none; } .cathead { display: none; }
     .sidebans { grid-template-columns: 1fr 1fr; grid-template-rows: auto; } }
-  @media (max-width: 560px) { .herotop { gap: 10px; } .slide .herologo { height: 22px; } .slide.fallback { padding: 20px 16px; } .sidebans { grid-template-columns: 1fr; } .duo-card { padding: 14px; gap: 12px; flex-wrap: wrap; } .duo-card .btn { width: 100%; text-align: center; } .duo-ico { width: 44px; height: 44px; font-size: 1.5rem; }  .slide.fallback h1 { font-size: 1.5rem; } }
+  @media (max-width: 560px) { .herotop { gap: 10px; } .slide .herologo { height: 22px; } .slide.fallback { padding: 20px 16px; } .sidebans { grid-template-columns: 1fr; }  .slide.fallback h1 { font-size: 1.5rem; } }
 </style>

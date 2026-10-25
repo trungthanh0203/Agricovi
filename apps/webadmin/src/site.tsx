@@ -358,7 +358,7 @@ export function SiteMenusPage({ roles }: { roles: string[] }) {
 type SettingKey = keyof SiteSettings;
 const SETTING_FIELDS: { key: SettingKey; label: string; fields: { name: string; label: string; area?: boolean }[] }[] = [
   { key: 'brand', label: 'Thương hiệu', fields: [{ name: 'name', label: 'Tên hiển thị' }, { name: 'tagline', label: 'Khẩu hiệu' }, { name: 'description', label: 'Giới thiệu ngắn (chân trang, chia sẻ)', area: true }] },
-  { key: 'brand', label: 'Phần giới thiệu đầu trang chủ (hiện khi chưa có băng chuyền ảnh)', fields: [{ name: 'hero_title', label: 'Tiêu đề' }, { name: 'hero_text', label: 'Đoạn mô tả', area: true }, { name: 'hero_trade', label: 'Đoạn giới thiệu ở ô Giao thương', area: true }] },
+  { key: 'brand', label: 'Phần giới thiệu đầu trang chủ (hiện khi chưa có băng chuyền ảnh)', fields: [{ name: 'hero_title', label: 'Tiêu đề' }, { name: 'hero_text', label: 'Đoạn mô tả', area: true }, { name: 'hero_trade', label: 'Đoạn giải thích cạnh nút Giao thương', area: true }] },
   { key: 'contact', label: 'Liên hệ (hiện ở chân trang; để trống thì không hiện)', fields: [{ name: 'hotline', label: 'Hotline' }, { name: 'email', label: 'Email' }, { name: 'address', label: 'Địa chỉ' }, { name: 'operator', label: 'Đơn vị vận hành' }] },
   { key: 'social', label: 'Mạng xã hội (dán đường dẫn https://…)', fields: [{ name: 'facebook', label: 'Facebook' }, { name: 'zalo', label: 'Zalo OA' }, { name: 'youtube', label: 'YouTube' }, { name: 'tiktok', label: 'TikTok' }] },
   { key: 'legal', label: 'Pháp lý (chỉ điền khi đã có thông tin chính thức)', fields: [{ name: 'registration', label: 'Thông tin đăng ký website thương mại điện tử', area: true }, { name: 'copyright', label: 'Dòng bản quyền (để trống = tự tạo)' }] },
