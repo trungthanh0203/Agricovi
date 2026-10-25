@@ -1,6 +1,6 @@
 # Kế hoạch chi tiết P1: nền dữ liệu chung + bộ trường dưa và heo thịt
 
-*Soạn 25/10/2026, **chờ chủ sản phẩm duyệt trước khi làm**. Thuộc `KE_HOACH_TONG_THE.md` (D97). Bối cảnh mới: hộ nuôi heo **nuôi thịt, không gia công C.P., chuồng nửa kín nửa hở (sau này kín hết)**; có thêm file `Bangkiem_SoNhatky_nuoiheo_VietGAP.xlsx`.*
+*Soạn 25/10/2026. **ĐÃ DUYỆT (25/10/2026): đồng ý cả 8 điểm ở mục 4 theo đề xuất; bắt đầu từ mốc M1; P1B (bảng kiểm 45 tiêu chí) làm ngay sau P1.** Thuộc `KE_HOACH_TONG_THE.md` (D97). Bối cảnh mới: hộ nuôi heo **nuôi thịt, không gia công C.P., chuồng nửa kín nửa hở (sau này kín hết)**; có thêm file `Bangkiem_SoNhatky_nuoiheo_VietGAP.xlsx`.*
 
 ## 1. File bảng kiểm và sổ heo cho biết gì
 File gồm **bảng kiểm VietGAP 45 tiêu chí** (đã kiểm: đúng **31 loại A bắt buộc 100 % và 14 loại B yêu cầu ≥ 50 %**; kèm phương pháp đánh giá và cột bằng chứng) và **4 sổ** đánh số theo biểu mẫu chính thức:
@@ -69,7 +69,7 @@ Cập nhật Hướng dẫn trong app, `HUONG_DAN_THU.md`, DECISIONS (D98), STAT
 
 Mỗi mốc: giao diện đi kèm, commit riêng; chỉ chạy các file test mới (không chạy cả bộ); typecheck một lần ở cuối mốc. Không `db push`/`git push` thay bạn. Dự kiến cỡ: M1 nhỏ–vừa, M2 vừa–lớn, M3 vừa.
 
-## 4. Điều cần bạn quyết định (kèm đề xuất)
+## 4. Quyết định (đã duyệt theo đề xuất)
 1. **Lô khi xuất**: tự gắn theo FIFO (nhân viên không phải chọn) hay bắt chọn lô mỗi lần? *Đề xuất: tự gắn.*
 2. **Xuất lô hết hạn**: bắt buộc ghi lý do (như cách ly) hay chỉ cảnh báo? *Đề xuất: bắt buộc lý do.*
 3. **Khu cơ sở vật chất** (cổng, biogas, kho) là loại khu riêng, không tạo vụ. *Đề xuất: đồng ý.*
