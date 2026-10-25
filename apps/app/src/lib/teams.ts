@@ -5,6 +5,8 @@ export interface TeamRow {
   name: string;
   leader_worker_id: string | null;
   is_active: boolean;
+  description?: string | null;
+  area_id?: string | null;
 }
 export interface WorkerRow {
   id: string;
@@ -33,7 +35,10 @@ function client() {
 export async function loadTeams(org: string) {
   const c = client();
   const [teams, workers, members, orphans] = await Promise.all([
-    c.from('worker_teams').select('id, name, leader_worker_id, is_active').eq('organization_id', org).eq('is_active', true).order('name'),
+    c.from('worker_teams').select('id, name, leader_worker_id, is_active, description, area_id').eq('organization_id', org).eq('is_active', true).order('name')
+      .then(async (r) => r.error // chưa db push 0091: tải bản cũ để vẫn xem được
+        ? c.from('worker_teams').select('id, name, leader_worker_id, is_active').eq('organization_id', org).eq('is_active', true).order('name')
+        : r),
     c.from('worker_profiles').select('id, full_name, phone, user_id, work_mode, status').eq('organization_id', org).eq('status', 'active').order('full_name'),
     c.from('worker_team_memberships').select('team_id, worker_id').is('valid_to', null),
     c.from('workers_without_leader').select('worker_id, full_name, work_mode, team_name').eq('organization_id', org),
@@ -53,8 +58,11 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
-export const createTeam = (org: string, name: string, leader: string | null) =>
-  rpc<string>('create_team', { p_org: org, p_name: name, p_leader: leader });
+export const createTeam = (org: string, name: string, leader: string | null, description: string | null = null, area: string | null = null) =>
+  rpc<string>('create_team', { p_org: org, p_name: name, p_leader: leader, p_description: description, p_area: area });
+export const updateTeam = (team: string, name: string, leader: string | null, description: string | null, area: string | null) =>
+  rpc<void>('update_team', { p_team: team, p_name: name, p_leader: leader, p_description: description, p_area: area });
+export const archiveTeam = (team: string) => rpc<void>('archive_team', { p_team: team });
 export const setTeamLeader = (team: string, leader: string | null) =>
   rpc<void>('set_team_leader', { p_team: team, p_leader: leader });
 export const assignWorkerToTeam = (worker: string, team: string) =>

@@ -40,6 +40,7 @@ export interface Member {
   must_change_password: boolean;
   work_mode: string | null;
   leads_teams: string[] | null;
+  description?: string | null;
 }
 export interface PendingInvite {
   id: string;
@@ -132,3 +133,7 @@ export async function fetchMemberAreas(orgId: string): Promise<Record<string, st
 /** Chủ giao trang trại cho một người; null hoặc rỗng = tất cả trang trại (D83) */
 export const setMemberAreas = (orgId: string, userId: string, areaIds: string[] | null) =>
   rpc<void>('set_member_areas', { p_org: orgId, p_user: userId, p_area_ids: areaIds && areaIds.length > 0 ? areaIds : null });
+
+/** Chủ ghi mô tả cho một nhân sự (rỗng = xóa mô tả) */
+export const setMemberDescription = (orgId: string, userId: string, description: string) =>
+  rpc<void>('set_member_description', { p_org: orgId, p_user: userId, p_description: description });

@@ -9,6 +9,7 @@ import { inviteMemberPosition, listMemberPositions, listPositions, type Position
 import { isOwner as ownerOf, roleSummary } from '../lib/roles';
 import type { StaffCredentials } from '../lib/staff';
 import { loadTeams, type TeamMembershipRow, type TeamRow, type WorkerRow } from '../lib/teams';
+import { useTable } from '../lib/tables';
 import { Collapsible } from './Collapsible';
 import { MemberProfile } from './MemberProfile';
 import { PositionPicker } from './PositionPicker';
@@ -33,6 +34,8 @@ export function MembersSection({ org }: { org: MyOrg }) {
   const [email, setEmail] = useState('');
   const [invitePos, setInvitePos] = useState('');
   const [open, setOpen] = useState<string | null>(null); // người đang mở hồ sơ
+  const [adding, setAdding] = useState(false); // đang ở biểu mẫu thêm nhân sự
+  const areas = useTable('areas').filter((a) => a.organization_id === org.id);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -43,15 +46,13 @@ export function MembersSection({ org }: { org: MyOrg }) {
     try {
       const [m, i, t] = await Promise.all([listMembers(org.id), pendingOrgInvites(org.id), loadTeams(org.id)]);
       setMembers(m); setInvites(i); setTeams(t.teams); setWorkers(t.workers); setTeamLinks(t.members);
-      if (ownerOf(org.roles)) {
-        const [ov, ar, h, cat] = await Promise.all([
-          fetchPermissionOverrides(org.id),
-          fetchMemberAreas(org.id).catch(() => ({} as Record<string, string[] | null>)),
-          listMemberPositions(org.id).catch(() => new Map<string, string[]>()),
-          listPositions(org.id).catch(() => [] as PositionRow[]),
-        ]);
-        setOverrides(ov); setAreaMap(ar); setHeld(h); setCatalog(cat);
-      }
+      const [ar, h, cat] = await Promise.all([
+        fetchMemberAreas(org.id).catch(() => ({} as Record<string, string[] | null>)),
+        listMemberPositions(org.id).catch(() => new Map<string, string[]>()),
+        listPositions(org.id).catch(() => [] as PositionRow[]),
+      ]);
+      setAreaMap(ar); setHeld(h); setCatalog(cat);
+      if (ownerOf(org.roles)) setOverrides(await fetchPermissionOverrides(org.id));
     } catch (e) {
       setError(friendlyError(e));
     }
@@ -90,55 +91,24 @@ export function MembersSection({ org }: { org: MyOrg }) {
     );
   }
 
-  return (
-    <>
-      <h2 className="sect">Nhân sự{members.length > 0 ? ` (${members.length} người${invites.length > 0 ? ` · ${invites.length} lời mời chờ` : ''})` : ''}</h2>
-      {!navigator.onLine && <p className="msg warn">Cần có mạng để xem và quản lý nhân sự.</p>}
-      {error && <p className="msg error" role="alert">{error}</p>}
-      {info && <p className="msg ok" role="status">{info}</p>}
-      {creds && <CredentialsCard creds={creds} onClose={() => setCreds(null)} />}
+  const areaText = (uid: string) => {
+    if (!(uid in areaMap)) return '';
+    const ids = areaMap[uid];
+    return !ids ? 'Tất cả' : ids.map((id) => areas.find((a) => a.id === id)?.name).filter(Boolean).join(', ');
+  };
 
-      {members.map((m) => {
-        const label = m.is_staff ? m.full_name ?? m.phone ?? '' : m.email;
-        const owner = m.roles.includes('owner');
-        const pos = positionOf(m.user_id);
-        const team = teamOf(m.user_id);
-        const body = (
-          <>
-            <span className="grow">
-              <strong>{label}{m.is_self && ' (bạn)'}</strong>
-              <span className="sub">
-                {owner ? 'Chủ cơ sở (toàn quyền)' : `${pos ? `${pos.name} · ` : ''}${roleSummary(m.roles)}`}{team ? ` · Tổ ${team.name}` : ''}
-              </span>
-              <span className="badges">
-                {m.status === 'suspended' && <span className="pill err">Tạm dừng</span>}
-                {m.is_staff && m.must_change_password && <span className="pill warn">Chưa đổi mật khẩu</span>}
-                {m.leads_teams && m.leads_teams.length > 0 && <span className="pill ok">Tổ trưởng — {m.leads_teams.join(', ')}</span>}
-              </span>
-            </span>
-            {isOwner && !owner && <span className="menu-go" aria-hidden>›</span>}
-          </>
-        );
-        return isOwner && !owner
-          ? <button key={m.user_id} className="member row member-btn" onClick={() => { setOpen(m.user_id); setError(null); setInfo(null); }}>{body}</button>
-          : <div key={m.user_id} className="member row">{body}</div>;
-      })}
-
-      {invites.length > 0 && <h3 className="sub">Đang chờ chấp nhận</h3>}
-      {invites.map((i) => (
-        <div className="row member" key={i.id}>
-          <span className="grow">{i.email} · {roleSummary(i.roles)}</span>
-          {isOwner && <button className="link" disabled={busy} onClick={() => void run(() => revokeInvitation(i.id))}>Hủy lời mời</button>}
+  if (isOwner && adding) {
+    return (
+      <>
+        <div className="menubar">
+          <button className="menu-back" onClick={() => setAdding(false)} aria-label="Quay lại danh sách nhân sự">‹ Danh sách</button>
+          <strong className="menu-cur">Thêm nhân sự</strong>
         </div>
-      ))}
-
-      {isOwner && (
-        <Collapsible inline title="＋ Tạo tài khoản nhân viên (đăng nhập bằng số điện thoại)">
+        {creds && <CredentialsCard creds={creds} onClose={() => setCreds(null)} />}
+        <Collapsible inline defaultOpen title="Tài khoản nhân viên (đăng nhập bằng số điện thoại)">
           <StaffCreateForm org={org} teams={teams} workers={workers} onChanged={() => void load()} />
         </Collapsible>
-      )}
-      {isOwner && (
-        <Collapsible inline title="＋ Mời người đã có tài khoản email">
+        <Collapsible inline title="Hoặc mời người đã có tài khoản email">
           <form onSubmit={onInvite} className="inline-form" noValidate>
             <label>
               Email người được mời
@@ -151,7 +121,64 @@ export function MembersSection({ org }: { org: MyOrg }) {
             </div>
           </form>
         </Collapsible>
-      )}
+        {error && <p className="msg error" role="alert">{error}</p>}
+        {info && <p className="msg ok" role="status">{info}</p>}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h2 className="sect">Nhân sự{members.length > 0 ? ` (${members.length} người${invites.length > 0 ? ` · ${invites.length} lời mời chờ` : ''})` : ''}</h2>
+      {!navigator.onLine && <p className="msg warn">Cần có mạng để xem và quản lý nhân sự.</p>}
+      {error && <p className="msg error" role="alert">{error}</p>}
+      {info && <p className="msg ok" role="status">{info}</p>}
+      {creds && <CredentialsCard creds={creds} onClose={() => setCreds(null)} />}
+      {isOwner && <button className="secondary" disabled={!navigator.onLine} onClick={() => { setAdding(true); setError(null); setInfo(null); }}>+ Thêm nhân sự</button>}
+
+      <div className="tablewrap">
+        <table className="grid">
+          <thead><tr><th>Họ tên</th><th>Điện thoại</th><th>Chức vụ</th><th>Phòng / Tổ</th><th>Trang trại</th>{isOwner && <th></th>}</tr></thead>
+          <tbody>
+            {members.length === 0 && <tr><td colSpan={isOwner ? 6 : 5} className="muted">Chưa có nhân sự.</td></tr>}
+            {members.map((m) => {
+              const label = m.is_staff ? m.full_name ?? m.phone ?? '' : m.email;
+              const owner = m.roles.includes('owner');
+              const pos = positionOf(m.user_id);
+              const team = teamOf(m.user_id);
+              return (
+                <tr key={m.user_id} className={m.status === 'suspended' ? 'off' : ''}>
+                  <td>
+                    <strong>{label}{m.is_self && ' (bạn)'}</strong>
+                    {m.description && <span className="sub">{m.description}</span>}
+                    {m.status === 'suspended' && <span className="pill err">Tạm dừng</span>}
+                    {m.is_staff && m.must_change_password && <span className="pill warn">Chưa đổi mật khẩu</span>}
+                    {m.leads_teams && m.leads_teams.length > 0 && <span className="pill ok">Tổ trưởng — {m.leads_teams.join(', ')}</span>}
+                  </td>
+                  <td>{m.phone ?? ''}</td>
+                  <td>{owner ? 'Chủ cơ sở' : pos?.name ?? roleSummary(m.roles)}</td>
+                  <td>{team?.name ?? ''}</td>
+                  <td>{owner ? 'Tất cả' : areaText(m.user_id)}</td>
+                  {isOwner && (
+                    <td className="act">
+                      {!owner && <button className="icon" aria-label={`Sửa ${label}`} onClick={() => { setOpen(m.user_id); setError(null); setInfo(null); }}>✎</button>}
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {invites.length > 0 && <h3 className="sub">Đang chờ chấp nhận</h3>}
+      {invites.map((i) => (
+        <div className="row member" key={i.id}>
+          <span className="grow">{i.email} · {roleSummary(i.roles)}</span>
+          {isOwner && <button className="link" disabled={busy} onClick={() => void run(() => revokeInvitation(i.id))}>Hủy lời mời</button>}
+        </div>
+      ))}
+
     </>
   );
 }

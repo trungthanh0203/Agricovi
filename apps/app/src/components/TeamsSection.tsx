@@ -3,8 +3,9 @@ import { friendlyError } from '../lib/errors';
 import { Collapsible } from './Collapsible';
 import type { MyOrg } from '../lib/orgs';
 import { WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
+import { useTable } from '../lib/tables';
 import {
-  assignWorkerToTeam, createTeam, createWorkerWithoutAccount, loadTeams, setTeamLeader,
+  archiveTeam, assignWorkerToTeam, createTeam, createWorkerWithoutAccount, loadTeams, updateTeam,
   type OrphanWorker, type TeamMembershipRow, type TeamRow, type WorkerRow,
 } from '../lib/teams';
 
@@ -17,8 +18,12 @@ export function TeamsSection({ org }: { org: MyOrg }) {
   const [workers, setWorkers] = useState<WorkerRow[]>([]);
   const [members, setMembers] = useState<TeamMembershipRow[]>([]);
   const [orphans, setOrphans] = useState<OrphanWorker[]>([]);
+  const areas = useTable('areas').filter((a) => a.organization_id === org.id);
+  const [editing, setEditing] = useState<string | 'new' | null>(null); // tổ đang sửa / tạo
   const [teamName, setTeamName] = useState('');
   const [leaderId, setLeaderId] = useState('');
+  const [desc, setDesc] = useState('');
+  const [areaId, setAreaId] = useState('');
   const [wName, setWName] = useState('');
   const [wPhone, setWPhone] = useState('');
   const [wMode, setWMode] = useState<WorkMode>('leader_hourly');
@@ -56,14 +61,27 @@ export function TeamsSection({ org }: { org: MyOrg }) {
   const withAccount = workers.filter((w) => w.user_id);
   const leaderOf = (t: TeamRow) => workers.find((w) => w.id === t.leader_worker_id);
 
-  function onCreateTeam(e: FormEvent) {
+  function openForm(t: TeamRow | null) {
+    setEditing(t ? t.id : 'new');
+    setTeamName(t?.name ?? '');
+    setLeaderId(t?.leader_worker_id ?? '');
+    setDesc(t?.description ?? '');
+    setAreaId(t?.area_id ?? '');
+    setError(null);
+  }
+
+  function onSaveTeam(e: FormEvent) {
     e.preventDefault();
     if (!teamName.trim()) return setError('Hãy nhập tên tổ.');
+    const id = editing;
     void run(async () => {
-      const id = await createTeam(org.id, teamName, leaderId || null);
-      if (leaderId) await assignWorkerToTeam(leaderId, id); // tổ trưởng cũng là thành viên của tổ
-      setTeamName('');
-      setLeaderId('');
+      if (id && id !== 'new') {
+        await updateTeam(id, teamName, leaderId || null, desc, areaId || null);
+      } else {
+        const nid = await createTeam(org.id, teamName, leaderId || null, desc, areaId || null);
+        if (leaderId) await assignWorkerToTeam(leaderId, nid); // tổ trưởng cũng là thành viên của tổ
+      }
+      setEditing(null);
     });
   }
 
@@ -92,51 +110,64 @@ export function TeamsSection({ org }: { org: MyOrg }) {
         </div>
       )}
 
-      {teams.length === 0 && <p className="muted">Chưa có tổ nào.</p>}
-      {teams.map((t) => {
-        const leader = leaderOf(t);
-        const ids = members.filter((m) => m.team_id === t.id).map((m) => m.worker_id);
-        return (
-          <div className="member" key={t.id}>
-            <div className="row">
-              <strong className="grow">{t.name}</strong>
-              {leader ? <span className="pill ok">Tổ trưởng: {leader.full_name}</span> : <span className="pill warn">Chưa có tổ trưởng</span>}
-            </div>
-            <label>
-              Tổ trưởng
-              <select value={t.leader_worker_id ?? ''} disabled={busy}
-                onChange={(e) => void run(async () => {
-                  const v = e.target.value || null;
-                  await setTeamLeader(t.id, v);
-                  if (v && !ids.includes(v)) await assignWorkerToTeam(v, t.id);
-                })}>
-                <option value="">— Chưa chọn —</option>
-                {withAccount.map((w) => <option key={w.id} value={w.id}>{w.full_name}</option>)}
-              </select>
-              <small>Chỉ người có tài khoản (điện thoại) mới làm tổ trưởng được.</small>
-            </label>
-            <p className="muted">Thành viên ({ids.length}): {ids.map((id) => workers.find((w) => w.id === id)?.full_name).filter(Boolean).join(', ') || '—'}</p>
+      {editing === null && <button className="secondary" disabled={busy || !navigator.onLine} onClick={() => openForm(null)}>+ Thêm phòng / tổ</button>}
+      {editing !== null && (
+        <form onSubmit={onSaveTeam} className="inline-form" noValidate>
+          <h3 className="sub">{editing === 'new' ? 'Thêm phòng / tổ' : 'Sửa phòng / tổ'}</h3>
+          <label>
+            Tên tổ
+            <input value={teamName} maxLength={80} onChange={(e) => setTeamName(e.target.value)} placeholder="Ví dụ: Tổ thu hoạch 1" />
+          </label>
+          <label>
+            Tổ trưởng (không bắt buộc, chọn sau cũng được)
+            <select value={leaderId} onChange={(e) => setLeaderId(e.target.value)}>
+              <option value="">— Chưa chọn —</option>
+              {withAccount.map((w) => <option key={w.id} value={w.id}>{w.full_name}</option>)}
+            </select>
+            <small>Chỉ người có tài khoản (điện thoại) mới làm tổ trưởng được.</small>
+          </label>
+          <label>
+            Mô tả (không bắt buộc)
+            <textarea rows={2} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Ví dụ: Phụ trách thu hoạch và đóng gói" />
+          </label>
+          <label>
+            Trang trại (không bắt buộc)
+            <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
+              <option value="">— Không chọn —</option>
+              {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          </label>
+          <div className="btnrow">
+            <button type="submit" className="primary" disabled={busy}>Lưu</button>
+            <button type="button" className="secondary" onClick={() => setEditing(null)}>Hủy</button>
           </div>
-        );
-      })}
+        </form>
+      )}
 
-
-      <Collapsible inline title="＋ Tạo tổ mới">
-      <form onSubmit={onCreateTeam} className="inline-form" noValidate>
-        <label>
-          Tên tổ
-          <input value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Ví dụ: Tổ thu hoạch 1" />
-        </label>
-        <label>
-          Tổ trưởng (không bắt buộc, chọn sau cũng được)
-          <select value={leaderId} onChange={(e) => setLeaderId(e.target.value)}>
-            <option value="">— Chưa chọn —</option>
-            {withAccount.map((w) => <option key={w.id} value={w.id}>{w.full_name}</option>)}
-          </select>
-        </label>
-        <button type="submit" className="secondary" disabled={busy}>Tạo tổ</button>
-      </form>
-      </Collapsible>
+      <table className="grid">
+        <thead><tr><th>Tên tổ</th><th>Tổ trưởng</th><th>Mô tả</th><th>Trang trại</th><th></th></tr></thead>
+        <tbody>
+          {teams.length === 0 && <tr><td colSpan={5} className="muted">Chưa có tổ nào. Bấm "+ Thêm phòng / tổ".</td></tr>}
+          {teams.map((t) => {
+            const leader = leaderOf(t);
+            const count = members.filter((m) => m.team_id === t.id).length;
+            return (
+              <tr key={t.id}>
+                <td>{t.name}<span className="sub">{count} người</span></td>
+                <td>{leader ? leader.full_name : <span className="pill warn">Chưa có</span>}</td>
+                <td>{t.description ?? ''}</td>
+                <td>{areas.find((a) => a.id === t.area_id)?.name ?? ''}</td>
+                <td className="act">
+                  <button className="icon" disabled={busy} aria-label={`Sửa ${t.name}`} onClick={() => openForm(t)}>✎</button>{' '}
+                  <button className="icon" disabled={busy || !navigator.onLine} aria-label={`Xóa ${t.name}`} onClick={() => {
+                    if (window.confirm(`Xóa tổ "${t.name}"? Các thành viên sẽ không còn thuộc tổ này; lịch sử chấm công vẫn được giữ.`)) void run(() => archiveTeam(t.id));
+                  }}>🗑</button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
 
       <Collapsible inline title="＋ Thêm người không có điện thoại">
       <form onSubmit={onCreateWorker} className="inline-form" noValidate>

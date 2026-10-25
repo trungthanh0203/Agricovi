@@ -9,7 +9,7 @@ import type { TeamRow, WorkerRow } from '../lib/teams';
 import { PositionPicker } from './PositionPicker';
 import { AreaChoice } from './MemberAreas';
 import { setMemberPosition } from '../lib/positions';
-import { setMemberAreas } from '../lib/members';
+import { setMemberAreas, setMemberDescription } from '../lib/members';
 
 /**
  * Chủ cơ sở tạo tài khoản nhân viên đăng nhập bằng số điện thoại; hệ thống sinh mật khẩu tạm ngẫu nhiên, hiện MỘT lần.
@@ -25,6 +25,7 @@ export function StaffCreateForm({
   const [areaSel, setAreaSel] = useState<string[] | null>(null); // null = tất cả trang trại
   const [mode, setMode] = useState<WorkMode>('self_hourly');
   const [teamId, setTeamId] = useState('');
+  const [desc, setDesc] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creds, setCreds] = useState<StaffCredentials | null>(null);
@@ -56,9 +57,11 @@ export function StaffCreateForm({
       });
       if (posId && res.user_id) await setMemberPosition(org.id, res.user_id, posId); // chức vụ quyết định vai trò và quyền
       if (areaSel && areaSel.length > 0 && res.user_id) await setMemberAreas(org.id, res.user_id, areaSel); // trang trại làm việc
+      if (desc.trim() && res.user_id) await setMemberDescription(org.id, res.user_id, desc); // mô tả
       setCreds(res);
       setName('');
       setPhone('');
+      setDesc('');
       onChanged();
     } catch (err) {
       setError(friendlyError(err));
@@ -80,10 +83,6 @@ export function StaffCreateForm({
           <input type="tel" inputMode="tel" autoComplete="off" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0912345678" />
         </label>
         <PositionPicker orgId={org.id} value={posId} onChange={(id, role) => { setPosId(id); setRoles([role]); }} />
-        <fieldset className="roles">
-          <legend>Trang trại làm việc</legend>
-          <AreaChoice orgId={org.id} value={areaSel} onChange={setAreaSel} />
-        </fieldset>
         <label>
           Kiểu phân hệ
           <select value={mode} onChange={(e) => setMode(e.target.value as WorkMode)}>
@@ -97,6 +96,14 @@ export function StaffCreateForm({
             {teamsWithLeader.map((t) => <option key={t.id} value={t.id}>{t.name} · {t.leader_worker_id ? `tổ trưởng ${leaderName(t)}` : 'chưa có tổ trưởng'}</option>)}
           </select>
           {teamsWithLeader.length === 0 && <small>Chưa có tổ nào. Hãy tạo ở mục Phòng / Tổ.</small>}
+        </label>
+        <fieldset className="roles">
+          <legend>Trang trại làm việc</legend>
+          <AreaChoice orgId={org.id} value={areaSel} onChange={setAreaSel} />
+        </fieldset>
+        <label>
+          Mô tả (không bắt buộc)
+          <textarea rows={2} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Ví dụ: Lái máy, phụ trách tưới" />
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
         <button type="submit" className="secondary" disabled={busy}>{busy ? 'Đang tạo…' : 'Tạo tài khoản'}</button>

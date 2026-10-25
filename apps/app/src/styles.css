@@ -150,6 +150,7 @@ details.fold.inline > .fold-body { padding: 0 0 8px; }
 .timeline .seg { min-width: 6px; }
 
 /* Danh sách dạng bảng gọn (danh mục việc, cây trồng, quy trình mẫu, giai đoạn) */
+.tablewrap { overflow-x: auto; }
 table.grid { width: 100%; border-collapse: collapse; font-size: 15px; margin: 6px 0 10px; }
 .grid th { text-align: left; color: var(--muted); font-weight: 600; font-size: 13px; padding: 6px 8px; border-bottom: 2px solid var(--line); }
 .grid td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; overflow-wrap: anywhere; }
