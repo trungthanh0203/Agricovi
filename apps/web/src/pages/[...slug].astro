@@ -18,7 +18,7 @@ if (!page && !soon) Astro.response.status = 404;
 const blocks: Block[] = page ? parseBody(page.body) : [];
 ---
 {page && (
-  <Base title={`${page.title} — AgriConnect`} description={page.description || undefined}>
+  <Base title={`${page.title} — Agricovi`} description={page.description || undefined}>
     <article class="prose">
       <h1>{page.title}</h1>
       {blocks.map((b) => (
@@ -31,7 +31,7 @@ const blocks: Block[] = page ? parseBody(page.body) : [];
   </Base>
 )}
 {!page && soon && (
-  <Base title={`${soon} — AgriConnect`} noindex cache={false}>
+  <Base title={`${soon} — Agricovi`} noindex cache={false}>
     <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
       <h1>{soon}</h1>
       <p class="muted">Mục này đang được chuẩn bị và sẽ sớm ra mắt.</p>
@@ -40,7 +40,7 @@ const blocks: Block[] = page ? parseBody(page.body) : [];
   </Base>
 )}
 {!page && !soon && (
-  <Base title="Không tìm thấy trang — AgriConnect" noindex cache={false}>
+  <Base title="Không tìm thấy trang — Agricovi" noindex cache={false}>
     <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
       <h1>Không tìm thấy trang</h1>
       <p class="muted">Địa chỉ này không tồn tại hoặc đã được chuyển.</p>

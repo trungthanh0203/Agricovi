@@ -19,7 +19,7 @@ test('dịch văn bản: khớp nguyên câu, tiền tố biểu tượng, quy t
   assert.equal(translate('còn 12 ngày'), '12 days left');
   assert.equal(translate('Tháng 12/2026'), 'December 2026');
   assert.equal(translate('📍 Long An · còn 5 ngày'), '📍 Long An · 5 days left');         // tên riêng giữ nguyên
-  assert.equal(translate('Tin hội chợ: Sắp diễn ra — AgriConnect'), 'Trade fair news: Upcoming — AgriConnect');
+  assert.equal(translate('Tin hội chợ: Sắp diễn ra — Agricovi'), 'Trade fair news: Upcoming — Agricovi');
   assert.equal(translate('Gian hàng đăng tối đa 10 vật tư trong giai đoạn này.'), 'A shop can list at most 10 supply items at this stage.');
   // chữ do người dùng nhập giữ nguyên dù chứa từ có trong từ điển
   for (const t of ['Cần báo giá nhanh cho dưa lưới', 'Mô tả của người dùng: giỏ hàng đẹp', 'Dưa lưới Taki loại 1 đẹp']) assert.equal(translate(t), t);
@@ -33,11 +33,11 @@ test('từ điển bổ sung của quản trị được ưu tiên', () => {
 });
 
 test('dịch HTML: chữ, placeholder/title/alt, liên kết /en; không đụng script, style, value, tên trường, nội dung ô nhập', () => {
-  const html = '<head><title>Giỏ hàng — AgriConnect</title><meta name="description" content="Giỏ hàng"><script>const a = "Giỏ hàng";</script><style>.x::after{content:"Giỏ hàng"}</style></head>'
+  const html = '<head><title>Giỏ hàng — Agricovi</title><meta name="description" content="Giỏ hàng"><script>const a = "Giỏ hàng";</script><style>.x::after{content:"Giỏ hàng"}</style></head>'
     + '<a href="/gio-hang/" class="Giỏ hàng">Giỏ hàng</a><a href="https://x.vn/a">Giỏ hàng</a><a href="/anh/sp/1">Xem</a><form action="/bao-gia/"><input placeholder="Tìm kiếm" value="Giỏ hàng" name="Giỏ hàng">'
     + '<select><option value="tấn">tấn</option></select><textarea placeholder="Tìm kiếm">Giỏ hàng</textarea><img alt="Giỏ hàng" src="/anh/sp/x/0"></form><p>Nhà cung cấp:<textarea>x</textarea> Giỏ hàng</p>';
   const out = translateHtml(html);
-  assert.match(out, /<title>Cart — AgriConnect<\/title>/);
+  assert.match(out, /<title>Cart — Agricovi<\/title>/);
   assert.match(out, /content="Cart"/);
   assert.match(out, /const a = "Giỏ hàng";/);                    // script nguyên
   assert.match(out, /content:"Giỏ hàng"/);                       // style nguyên

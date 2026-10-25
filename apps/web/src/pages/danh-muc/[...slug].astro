@@ -28,7 +28,7 @@ const products = all.filter((p) => (!tinh || p.province === tinh) && (!conHang |
 const materials = cat && isMaterial ? (await loadMaterials()).filter((m) => (m.categoryId && ids.has(m.categoryId)) && (!q || fold(`${m.name} ${m.brand} ${m.summary}`).includes(fold(q)))) : [];
 ---
 {cat ? (
-  <Base title={`${cat.name} — AgriConnect`} description={cat.description || `Danh mục ${cat.name} trên AgriConnect.`}>
+  <Base title={`${cat.name} — Agricovi`} description={cat.description || `Danh mục ${cat.name} trên Agricovi.`}>
     <p class="crumbs"><a href="/">Trang chủ</a>{trail.map((t) => <> › <a href={catHref(t)}>{t.name}</a></>)}</p>
     <h1>{cat.name}</h1>
     {cat.description && <p class="muted">{cat.description}</p>}
@@ -58,7 +58,7 @@ const materials = cat && isMaterial ? (await loadMaterials()).filter((m) => (m.c
     )}
   </Base>
 ) : (
-  <Base title="Không tìm thấy danh mục — AgriConnect" noindex cache={false}>
+  <Base title="Không tìm thấy danh mục — Agricovi" noindex cache={false}>
     <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
       <h1>Không tìm thấy danh mục</h1>
       <p><a class="btn solid" href="/">Về trang chủ</a></p>

@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 ---
-<Base title="Hồ sơ cơ sở — AgriConnect">
+<Base title="Hồ sơ cơ sở — Agricovi">
   <div id="app"><p class="muted">Đang tải…</p></div>
 </Base>
 
@@ -18,7 +18,7 @@ import Base from '../layouts/Base.astro';
     if (error) throw new Error(error.message);
     if (!pr) { app.innerHTML = '<p class="empty">Không tìm thấy cơ sở này, hoặc hồ sơ đang được tạm ẩn. <a href="/danh-ba/">Xem danh bạ</a></p>'; return; }
     const s = withImageUrls(pr.snapshot as ProfileSnap, 'cs', pr.profile_id);
-    document.title = `${s.display_name} — AgriConnect`;
+    document.title = `${s.display_name} — Agricovi`;
     const [pp, cy, rv, rt, bd] = await Promise.all([
       sb.from('public_products_lite').select('listing_id, profile_id, supply_status, supply_updated_on, snapshot').eq('profile_id', pr.profile_id),
       sb.from('public_cycles').select('code, snapshot, published_at').eq('organization_id', pr.organization_id).eq('is_visible', true).order('published_at', { ascending: false }).limit(12),

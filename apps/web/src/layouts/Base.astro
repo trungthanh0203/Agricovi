@@ -11,7 +11,7 @@ const { title, description = 'Danh bạ nhà cung cấp nông sản, vật tư v
 const chrome = await loadChrome();
 const { top: topCats, kids: subCats } = catTree(await loadCategories());
 const { settings, header, about, footer } = chrome;
-const brand = settings.brand.name ?? 'AgriConnect';
+const brand = settings.brand.name ?? 'Agricovi';
 // Menu Giao thương luôn có: Cho người bán / người mua và (cuối cùng) Kết quả giao thương, dù quản trị đã lưu menu riêng
 const TRADE_EXTRA = [{ label: 'Cho người bán', href: '/danh-cho-nguoi-ban' }, { label: 'Cho người mua', href: '/danh-cho-nguoi-mua' }, { label: 'Kết quả giao thương', href: '/giao-thuong/ket-qua/' }];
 const nav = header.map((it) => (/^\/giao-thuong\/?$/.test(it.href)
@@ -33,7 +33,7 @@ const tick = buyNow.length + doneNow.length > 0
   ? [...buyNow.map((t) => ({ text: t.title, href: `/giao-thuong/tin/${t.id}` })), ...doneNow.map((r) => ({ text: `Giao dịch thành công: ${r.title}`, href: '/giao-thuong/ket-qua/' }))]
   : latestNews.length > 0 ? latestNews.map((a) => ({ text: a.title, href: `/bai-viet/${a.slug}` }))
   : [
-    { text: 'Chào mừng bạn đến với AgriConnect — kết nối nhà vườn, hợp tác xã và người mua nông sản', href: '/gioi-thieu' },
+    { text: 'Chào mừng bạn đến với Agricovi — kết nối nhà vườn, hợp tác xã và người mua nông sản', href: '/gioi-thieu' },
     { text: 'Quét mã QR trên bao bì để xem nguồn gốc nông sản', href: '/truyxuat/' },
     { text: 'Đăng tin cần mua, cần bán miễn phí tại mục Giao thương', href: '/giao-thuong/' },
   ];

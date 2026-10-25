@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 ---
-<Base title="Gian hàng của tôi — AgriConnect" noindex cache={false}>
+<Base title="Gian hàng của tôi — Agricovi" noindex cache={false}>
   <div id="app"><p class="muted">Đang tải…</p></div>
 </Base>
 
@@ -45,7 +45,7 @@ import Base from '../layouts/Base.astro';
       quotes = await call<Quote[]>('my_quote_requests', { p_status: null });
     } catch (e) { app.innerHTML = note('err', friendly(e)); return; }
     if (orgs.length === 0) {
-      app.innerHTML = `<h1>Gian hàng của tôi</h1><p class="empty">Tài khoản này chưa là chủ hoặc quản lý của cơ sở nào. Nhà vườn, hợp tác xã đăng ký và tạo cơ sở trong ứng dụng AgriConnect rồi đăng nhập website bằng cùng email. <a href="/danh-cho-nguoi-ban">Xem trang dành cho người bán</a></p>`;
+      app.innerHTML = `<h1>Gian hàng của tôi</h1><p class="empty">Tài khoản này chưa là chủ hoặc quản lý của cơ sở nào. Nhà vườn, hợp tác xã đăng ký và tạo cơ sở trong ứng dụng Agricovi rồi đăng nhập website bằng cùng email. <a href="/danh-cho-nguoi-ban">Xem trang dành cho người bán</a></p>`;
       return;
     }
     const price = (l: Listing) => (l.price_from ? `Từ ${Math.round(l.price_from).toLocaleString('vi-VN')}đ` : l.price_note || 'Liên hệ báo giá');

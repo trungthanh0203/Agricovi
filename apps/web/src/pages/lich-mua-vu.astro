@@ -17,7 +17,7 @@ const label = (m: string) => (m === 'chua' ? 'Chưa có ngày dự kiến' : `Th
 const fd = (d: string) => (d ? new Date(d + 'T00:00:00').toLocaleDateString('vi-VN') : '—');
 const ST: Record<string, string> = { planned: 'Dự kiến', preparing: 'Đang chuẩn bị', active: 'Đang sản xuất' };
 ---
-<Base title="Lịch mùa vụ — AgriConnect" description="Lịch mùa vụ từ các vụ sản xuất đã được cơ sở công khai: sản phẩm gì, ở đâu, dự kiến có hàng khi nào.">
+<Base title="Lịch mùa vụ — Agricovi" description="Lịch mùa vụ từ các vụ sản xuất đã được cơ sở công khai: sản phẩm gì, ở đâu, dự kiến có hàng khi nào.">
   <p class="crumbs"><a href="/">Trang chủ</a> › Lịch mùa vụ</p>
   <h1>Lịch mùa vụ</h1>
   <p class="muted">Tự động tổng hợp từ các vụ mà cơ sở đã chọn công khai. Ngày kết thúc vụ là <b>dự kiến</b> của cơ sở, có thể thay đổi theo thời tiết và sâu bệnh.</p>

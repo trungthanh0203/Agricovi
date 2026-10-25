@@ -55,7 +55,7 @@ const RULES: [RegExp, string | ((...m: string[]) => string)][] = [
   [/^(\d+) tin\. Khách xem được danh sách;$/, '$1 listing(s). Visitors can see the list;'],
   [/^Không tìm thấy kết quả cho "(.*)"\.$/, 'No results found for "$1".'],
   [/^Không tìm thấy (.+) cho "(.*)"\.$/, 'No $1 found for "$2".'],
-  [/^(.+) trên AgriConnect\.$/, '$1 on AgriConnect.'],
+  [/^(.+) trên Agricovi\.$/, '$1 on Agricovi.'],
   [/^🛒 Giỏ hàng \((\d+)\)$/, '🛒 Cart ($1)'],
   [/^Vật tư \((\d+)\)$/, 'Items ($1)'],
   [/^Tin cần mua phù hợp với sản phẩm của bạn \((\d+)\)$/, 'Buy listings that match your products ($1)'],

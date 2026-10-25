@@ -7,7 +7,7 @@ import { daysLeft, loadTradePosts } from '../../../lib/trade';
 const id = Astro.params.id ?? '';
 const t = (await loadTradePosts()).find((x) => x.id === id) ?? null;
 ---
-<Base title={t ? `${t.title} — Giao thương` : 'Tin giao thương — AgriConnect'} description={t ? `${TRADE_KIND_LABEL[t.kind]} ${t.category_name ?? ''} tại ${t.province}. Đăng nhập để xem chi tiết.` : undefined} noindex={!t} cache={false}>
+<Base title={t ? `${t.title} — Giao thương` : 'Tin giao thương — Agricovi'} description={t ? `${TRADE_KIND_LABEL[t.kind]} ${t.category_name ?? ''} tại ${t.province}. Đăng nhập để xem chi tiết.` : undefined} noindex={!t} cache={false}>
   <p class="crumbs"><a href="/">Trang chủ</a> › <a href="/giao-thuong/">Giao thương</a></p>
   <div id="app" data-id={id}>
     {t ? (
@@ -116,7 +116,7 @@ const t = (await loadTradePosts()).find((x) => x.id === id) ?? null;
         ${r.status === 'open' ? '<button class="btn sm" id="withdraw">Rút lại</button>' : ''}${convLink}</div>`;
     }
     if (!live) return '<p class="muted">Tin này không còn nhận báo giá.</p>';
-    if (p.kind === 'buy' && orgs.length === 0) return `<div class="panel"><b>Gửi báo giá</b><p class="muted">Báo giá cho tin cần mua do chủ hoặc quản lý cơ sở thực hiện. Hãy đăng nhập bằng tài khoản ứng dụng AgriConnect của cơ sở. <a href="/danh-cho-nguoi-ban">Tìm hiểu cho người bán</a></p></div>`;
+    if (p.kind === 'buy' && orgs.length === 0) return `<div class="panel"><b>Gửi báo giá</b><p class="muted">Báo giá cho tin cần mua do chủ hoặc quản lý cơ sở thực hiện. Hãy đăng nhập bằng tài khoản ứng dụng Agricovi của cơ sở. <a href="/danh-cho-nguoi-ban">Tìm hiểu cho người bán</a></p></div>`;
     return `<h2>${p.kind === 'buy' ? 'Gửi báo giá' : 'Quan tâm tin này'}</h2>
       <form id="rf" class="panel mini">
         ${p.kind === 'buy' ? `<label>Báo giá với tư cách cơ sở<select name="org">${orgs.map((o) => `<option value="${esc(o.org_id)}">${esc(o.name)}</option>`).join('')}</select></label>` : ''}

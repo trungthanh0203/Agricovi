@@ -37,7 +37,7 @@ try {
   else if (kind === 'profile') target = (await loadDirectory()).rows.find((r) => r.slug === ref)?.display_name ?? '';
 } catch { /* bỏ qua: chỉ để hiển thị tên */ }
 ---
-<Base title="Yêu cầu báo giá — AgriConnect" noindex cache={false}>
+<Base title="Yêu cầu báo giá — Agricovi" noindex cache={false}>
   <div class="prose">
     <h1>Yêu cầu báo giá</h1>
     {done ? (

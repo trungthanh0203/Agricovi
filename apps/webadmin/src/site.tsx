@@ -426,7 +426,7 @@ export function SiteRolesPage() {
   }
   return (
     <>
-      <p className="muted">Người được cấp vai trò đăng nhập trang quản trị này bằng email của mình và chỉ thấy phần Website. Người đó cần có tài khoản AgriConnect (đăng ký bằng email) trước.</p>
+      <p className="muted">Người được cấp vai trò đăng nhập trang quản trị này bằng email của mình và chỉ thấy phần Website. Người đó cần có tài khoản Agricovi (đăng ký bằng email) trước.</p>
       <Err e={error ?? err} />
       <section className="card">
         <h2>Cấp vai trò</h2>

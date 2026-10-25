@@ -35,7 +35,7 @@ const heading = current ? `${title}: ${current.label}` : title;
 const total = blocks.reduce((n, b) => n + b.items.length, 0);
 ---
 {!section || current ? (
-  <Base title={`${heading} — AgriConnect`} description={`${heading} trên AgriConnect.`}>
+  <Base title={`${heading} — Agricovi`} description={`${heading} trên Agricovi.`}>
     <p class="crumbs"><a href="/">Trang chủ</a> › {current ? <><a href={base}>{title}</a> › {current.label}</> : title}</p>
     <h1>{heading}</h1>
     {sections.length > 0 && (
@@ -53,7 +53,7 @@ const total = blocks.reduce((n, b) => n + b.items.length, 0);
     ))}
   </Base>
 ) : (
-  <Base title="Không tìm thấy mục — AgriConnect" noindex cache={false}>
+  <Base title="Không tìm thấy mục — Agricovi" noindex cache={false}>
     <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
       <h1>Không tìm thấy mục này</h1>
       <p><a class="btn solid" href={base}>Về {title}</a></p>

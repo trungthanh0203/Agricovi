@@ -15,7 +15,7 @@ import { loadChrome } from '../lib/site';
 import { localizeArticle } from '../lib/translations';
 
 const chrome = await loadChrome();
-const brand = chrome.settings.brand.name ?? 'AgriConnect';
+const brand = chrome.settings.brand.name ?? 'Agricovi';
 const hero = chrome.banners.filter((b) => b.slot === 'hero').slice(0, 6);
 const sideDefault = [
   { id: 'd1', title: 'Giao thương', subtitle: 'Đăng tin cần mua, cần bán', image: '', link: '/giao-thuong/' },
@@ -73,7 +73,7 @@ try {
   dirError = e instanceof Error ? e.message : String(e);
 }
 ---
-<Base title={`${brand} — Kết nối nông sản`} description={chrome.settings.brand.description}>
+<Base title={`${brand} — Kết nối nông nghiệp Việt`} description={chrome.settings.brand.description}>
   <section class="hero2">
     <nav class="catbox" aria-label="Danh mục sản phẩm">
       <div class="cathead">☰ Danh mục sản phẩm</div>
@@ -102,7 +102,7 @@ try {
     <Rail full class="herorail">
       {hero.length === 0 && (
         <div class="slide fallback">
-          <span class="kicker">AgriConnect</span>
+          <span class="kicker">Agricovi</span>
           <h1>Tìm nơi trồng, sản phẩm và nguồn gốc nông sản</h1>
           <p>Danh bạ nhà cung cấp đã được kiểm duyệt, tình trạng cung ứng cập nhật thường xuyên và truy xuất nguồn gốc từng mùa vụ.</p>
           <div class="ctas"><a class="btn cta1" href="/danh-ba/">Xem nhà cung cấp</a></div>

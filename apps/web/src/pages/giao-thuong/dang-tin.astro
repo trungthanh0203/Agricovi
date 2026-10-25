@@ -2,7 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { TRADE_TAGS, TRADE_UNITS } from '@agriconnect/shared';
 ---
-<Base title="Đăng tin giao thương — AgriConnect" noindex cache={false}>
+<Base title="Đăng tin giao thương — Agricovi" noindex cache={false}>
   <div class="prose">
     <h1 id="h1">Đăng tin giao thương</h1>
     <div id="app"><p class="muted">Đang tải…</p></div>
@@ -86,7 +86,7 @@ import { TRADE_TAGS, TRADE_UNITS } from '@agriconnect/shared';
         const p = await call<Post>('get_trade_post', { p_id: editId });
         if (!p.is_owner || p.status === 'closed') { app.innerHTML = `<div class="panel"><b>Tin này không sửa được.</b><p class="muted">Chỉ chủ tin mới sửa, và tin đã đóng thì cần đăng tin mới. <a href="/giao-thuong/cua-toi/">Về tin của tôi</a></p></div>`; return; }
         document.getElementById('h1')!.textContent = 'Sửa tin giao thương';
-        document.title = 'Sửa tin giao thương — AgriConnect';
+        document.title = 'Sửa tin giao thương — Agricovi';
         kind.innerHTML = `<option value="${esc(p.kind)}">${p.kind === 'sell' ? 'Cần bán' : 'Cần mua'}</option>`; kind.disabled = true; syncKind();
         (document.getElementById('orgRow') as HTMLElement).hidden = true;
         const el = (n: string) => f.elements.namedItem(n) as HTMLInputElement;

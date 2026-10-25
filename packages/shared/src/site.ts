@@ -14,8 +14,8 @@ export interface SiteSettings {
 
 export const DEFAULT_SETTINGS: SiteSettings = {
   brand: {
-    name: 'AgriConnect',
-    tagline: 'Kết nối nhà vườn, hợp tác xã và người mua nông sản',
+    name: 'Agricovi',
+    tagline: 'Kết nối nông nghiệp Việt',
     description: 'Nền tảng kết nối nhà vườn, hợp tác xã và người mua nông sản, vật tư; truy xuất nguồn gốc từ dữ liệu sản xuất thật.',
   },
   contact: {},
@@ -61,7 +61,7 @@ export const DEFAULT_HEADER_NAV: SiteNavItem[] = [
   ] },
 ];
 
-/** Menu "Tìm hiểu về AgriConnect" trên thanh xanh */
+/** Menu "Tìm hiểu về Agricovi" trên thanh xanh */
 export const DEFAULT_ABOUT_MENU: SiteLink[] = [
   { label: 'Về chúng tôi', href: '/gioi-thieu' },
   { label: 'Hướng dẫn sử dụng', href: '/huong-dan-mua-hang' },
@@ -108,9 +108,9 @@ const SOON = 'Nội dung trang này đang được hoàn thiện và sẽ sớm 
 export const DEFAULT_PAGES: Record<string, DefaultPage> = {
   'gioi-thieu': {
     title: 'Giới thiệu',
-    description: 'AgriConnect kết nối nhà vườn, hợp tác xã và người mua nông sản.',
+    description: 'Agricovi kết nối nhà vườn, hợp tác xã và người mua nông sản.',
     body: [
-      'AgriConnect giúp nhà vườn, trang trại và hợp tác xã ghi chép quá trình nuôi trồng, quản lý vật tư, chấm công và chi phí; đồng thời giới thiệu sản phẩm đến người mua.',
+      'Agricovi giúp nhà vườn, trang trại và hợp tác xã ghi chép quá trình nuôi trồng, quản lý vật tư, chấm công và chi phí; đồng thời giới thiệu sản phẩm đến người mua.',
       '## Điều làm nên khác biệt',
       '- Thông tin nguồn gốc đi thẳng từ nhật ký sản xuất thật: mùa vụ, vật tư đã dùng, thời gian cách ly.',
       '- Người trồng tự quyết định thông tin nào được công khai; mọi hồ sơ đều được kiểm duyệt trước khi hiển thị.',
@@ -129,7 +129,7 @@ export const DEFAULT_PAGES: Record<string, DefaultPage> = {
       '- Hồ sơ giới thiệu trên website, mã QR truy xuất nguồn gốc cho từng vụ.',
       '- Dùng thử miễn phí trước khi chọn gói.',
       '## Bắt đầu',
-      'Đăng ký tài khoản trên ứng dụng AgriConnect, tạo cơ sở của bạn và làm theo hướng dẫn từng bước.',
+      'Đăng ký tài khoản trên ứng dụng Agricovi, tạo cơ sở của bạn và làm theo hướng dẫn từng bước.',
     ].join('\n\n'),
   },
   'danh-cho-nguoi-mua': {
@@ -146,7 +146,7 @@ export const DEFAULT_PAGES: Record<string, DefaultPage> = {
   },
   'tro-giup': {
     title: 'Trung tâm trợ giúp',
-    description: 'Giải đáp thắc mắc khi dùng AgriConnect.',
+    description: 'Giải đáp thắc mắc khi dùng Agricovi.',
     body: [
       '## Câu hỏi thường gặp',
       '- Thông tin cơ sở trên website có đáng tin không? Hồ sơ do từng cơ sở tự khai và được kiểm duyệt trước khi hiển thị. Nhãn "Tự khai báo" nghĩa là chưa được xác minh độc lập.',
@@ -181,7 +181,7 @@ export const DEFAULT_PAGES: Record<string, DefaultPage> = {
   },
   'lien-he': {
     title: 'Liên hệ',
-    description: 'Liên hệ với AgriConnect.',
+    description: 'Liên hệ với Agricovi.',
     body: [
       'Thông tin liên hệ nằm ở cuối trang. Nếu cần báo cáo hồ sơ có thông tin sai hoặc vi phạm, vui lòng liên hệ qua các kênh đó, kèm đường dẫn trang liên quan.',
     ].join('\n\n'),

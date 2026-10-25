@@ -140,4 +140,5 @@ export const EN_MSGS: Record<string, string> = {
   'Nhận xét': 'Comment',
   'Ghi chú': 'Note',
   'Trả lời': 'Reply',
+  'Tài khoản nhân viên không dùng website. Hãy dùng ứng dụng AgriConnect.': 'Staff accounts do not use the website. Please use the Agricovi app.',
 };

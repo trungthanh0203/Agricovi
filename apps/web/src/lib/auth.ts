@@ -52,7 +52,7 @@ export async function loadAccount(): Promise<WebAccount> {
   let acc = await call<WebAccount>('get_my_web_account');
   if (acc.staff) {
     await auth!.auth.signOut();
-    throw new Error('Tài khoản nhân viên không dùng website. Hãy dùng ứng dụng AgriConnect.');
+    throw new Error('Tài khoản nhân viên không dùng website. Hãy dùng ứng dụng Agricovi.');
   }
   if (!acc.profile) acc = await call<WebAccount>('ensure_buyer_profile');
   rememberShops(acc);

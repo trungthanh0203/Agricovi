@@ -13,7 +13,7 @@ import { SiteArticlesPage, SiteCategoriesPage, SiteMaterialsPage, SiteQuotesPage
 import '@agriconnect/admin-kit/src/styles.css';
 
 /**
- * Trang QUẢN TRỊ WEBSITE AgriConnect (D63): dự án Cloudflare riêng, tách khỏi quản trị nền tảng (gói, thanh toán, cơ sở…) của app.
+ * Trang QUẢN TRỊ WEBSITE Agricovi (D63): dự án Cloudflare riêng, tách khỏi quản trị nền tảng (gói, thanh toán, cơ sở…) của app.
  * Gom mọi thứ cần quản lý của website: nội dung, sản phẩm/vật tư, kiểm duyệt, người biên tập, nhật ký. Các phần của W3 trở đi
  * (người dùng web, giao thương, đơn hàng, báo cáo vi phạm, huy hiệu) sẽ thêm vào đây.
  * Quyền thật do CSDL ép; giao diện chỉ ẩn bớt mục không dùng được.
@@ -60,7 +60,7 @@ function Login() {
   }
   return (
     <main className="login">
-      <h1>AgriConnect — Quản trị website</h1>
+      <h1>Agricovi — Quản trị website</h1>
       <form className="form" onSubmit={(e) => void submit(e)}>
         <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" /></label>
         <label>Mật khẩu<input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" /></label>
@@ -83,7 +83,7 @@ function Admin({ session, roles }: { session: Session; roles: string[] }) {
   return (
     <div className="shell">
       <aside>
-        <h1>AgriConnect<br /><small>Quản trị website</small></h1>
+        <h1>Agricovi<br /><small>Quản trị website</small></h1>
         <nav>
           {groups.map((g) => (
             <div key={g || 'top'}>

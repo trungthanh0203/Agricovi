@@ -32,7 +32,7 @@ const items = shop ? (await loadMaterials()).filter((m) => m.shopId === shop.id)
     </div>
   </Base>
 ) : (
-  <Base title="Không tìm thấy gian hàng — AgriConnect" noindex cache={false}>
+  <Base title="Không tìm thấy gian hàng — Agricovi" noindex cache={false}>
     <div class="panel" style="max-width:640px;margin:32px auto;text-align:center"><h1>Không tìm thấy gian hàng</h1><p class="muted">Gian hàng không còn hoạt động hoặc địa chỉ chưa đúng.</p><p><a class="btn solid" href="/vat-tu/">Xem vật tư</a></p></div>
   </Base>
 )}

@@ -21,7 +21,7 @@ const items = base.filter((t) => (!tinh || t.province === tinh) && (!dm || t.cat
 const title = kind === 'buy' ? 'Tin cần mua' : kind === 'sell' ? 'Tin cần bán' : 'Giao thương';
 const TABS: [string, string, string][] = [['', '/giao-thuong/', 'Tất cả'], ['buy', '/giao-thuong/can-mua/', 'Cần mua'], ['sell', '/giao-thuong/can-ban/', 'Cần bán']];
 ---
-<Base title={`${title} — AgriConnect`} description="Người mua đăng tin cần mua, nhà cung cấp đăng tin cần bán nông sản và vật tư. Đăng nhập để xem chi tiết và trao đổi.">
+<Base title={`${title} — Agricovi`} description="Người mua đăng tin cần mua, nhà cung cấp đăng tin cần bán nông sản và vật tư. Đăng nhập để xem chi tiết và trao đổi.">
   <p class="crumbs"><a href="/">Trang chủ</a> › Giao thương</p>
   <div class="pagehead"><h1>{title}</h1><a class="btn solid" href="/giao-thuong/dang-tin/">+ Đăng tin</a></div>
   <div class="subcats">{TABS.map(([k, href, label]) => <a href={href} class={(kind ?? '') === k ? 'on' : ''}>{label}</a>)}</div>
@@ -34,7 +34,7 @@ const TABS: [string, string, string][] = [['', '/giao-thuong/', 'Tất cả'], [
   <p class="muted">{items.length} tin. Khách xem được danh sách; <a href="/dang-nhap/?next=/giao-thuong/">đăng nhập</a> để xem chi tiết, báo giá và trao đổi.</p>
   {items.length === 0 && <p class="empty">Chưa có tin phù hợp. <a href="/giao-thuong/dang-tin/">Hãy là người đăng tin đầu tiên</a>.</p>}
   <div class="pgrid">{items.map((t) => <TradeCard t={t} />)}</div>
-  <p class="muted" style="margin-top:20px">Giao dịch do hai bên thỏa thuận trực tiếp; AgriConnect chỉ kết nối và không thu hộ tiền. Hãy cảnh giác với tin có dấu hiệu lừa đảo và dùng nút "Báo cáo" trong trang chi tiết. <a href="/quy-che-hoat-dong">Quy chế hoạt động</a></p>
+  <p class="muted" style="margin-top:20px">Giao dịch do hai bên thỏa thuận trực tiếp; Agricovi chỉ kết nối và không thu hộ tiền. Hãy cảnh giác với tin có dấu hiệu lừa đảo và dùng nút "Báo cáo" trong trang chi tiết. <a href="/quy-che-hoat-dong">Quy chế hoạt động</a></p>
 </Base>
 
 <style is:global>
