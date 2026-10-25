@@ -11,8 +11,8 @@ import { useTable } from '../lib/tables';
 
 const LAST_LOCATION_KEY = 'agriconnect.lastLocation';
 
-interface DraftLine { key: string; id: string; materialId: string; qty: string; cost: string }
-const newLine = (materialId = ''): DraftLine => ({ key: crypto.randomUUID(), id: crypto.randomUUID(), materialId, qty: '', cost: '' });
+interface DraftLine { key: string; id: string; materialId: string; qty: string; cost: string; lotNo: string; lotExpiry: string }
+const newLine = (materialId = ''): DraftLine => ({ key: crypto.randomUUID(), id: crypto.randomUUID(), materialId, qty: '', cost: '', lotNo: '', lotExpiry: '' });
 
 /**
  * Mua theo hóa đơn (G2-2): chọn nhà cung ứng, ghi số hóa đơn, nhiều dòng vật tư, số tiền đã trả và hạn thanh toán.
@@ -69,11 +69,12 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
     setError(null);
     const input: PurchaseInput = {
       id: draftId, orgId, partnerId, invoiceNo: invoice, billDate, dueDate: due || null, total, note, locationId: effLocation,
-      lines: parsed.map((l) => ({ id: l.id, materialId: l.materialId, quantity: l.quantity ?? NaN, unitCost: l.unitCost ?? NaN })),
+      lines: parsed.map((l) => ({ id: l.id, materialId: l.materialId, quantity: l.quantity ?? NaN, unitCost: l.unitCost ?? NaN, lotNo: l.lotNo, lotExpiry: l.lotExpiry || null })),
       paid, method,
     };
     const bad = validatePurchase(input, todayLocal());
     if (bad) return setError(bad);
+    if (parsed.some((l) => l.lotExpiry && !l.lotNo.trim())) return setError('Đã nhập hạn dùng thì cần nhập cả số lô.');
     setBusy(true);
     try {
       await recordPurchase(input);
@@ -187,6 +188,10 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
                 <label>Đơn giá (đ){l.materialId && unitOf(l.materialId) ? ` / ${unitOf(l.materialId)}` : ''}
                   <input value={lines.find((x) => x.key === l.key)!.cost} inputMode="numeric" onChange={(e) => setLine(l.key, { cost: e.target.value })} />
                 </label>
+              </div>
+              <div className="pair">
+                <label>Số lô (nếu có)<input value={l.lotNo} maxLength={60} onChange={(e) => setLine(l.key, { lotNo: e.target.value })} /></label>
+                <label>Hạn dùng<input type="date" value={l.lotExpiry} onChange={(e) => setLine(l.key, { lotExpiry: e.target.value })} /></label>
               </div>
               <div className="row">
                 <span className="muted">Thành tiền: <strong>{formatMoney(lineValue(l))}</strong>{l.quantity ? ` (${formatQty(l.quantity)} ${unitOf(l.materialId)})` : ''}</span>

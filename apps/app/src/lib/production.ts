@@ -363,7 +363,8 @@ export interface UsedMaterials {
   /** Cơ sở sở hữu kho và vật tư (cơ sở đang chọn) */
   organizationId: string;
   locationId: string;
-  items: { materialId: string; quantity: number }[];
+  /** lotId: lô do người dùng chọn tay (trống = máy chủ tự gắn theo hạn gần nhất); reason: bắt buộc nếu lô đã hết hạn */
+  items: { materialId: string; quantity: number; lotId?: string | null; reason?: string }[];
 }
 
 export interface NewLog {
@@ -415,7 +416,8 @@ export async function logActivity(l: NewLog): Promise<string> {
         txn_date: day,
         cycle_id: l.cycle?.id ?? null,
         activity_log_id: id,
-        reason: null,
+        reason: it.reason?.trim() || null,
+        ...(it.lotId ? { lot_id: it.lotId } : {}),
         source,
       });
     }

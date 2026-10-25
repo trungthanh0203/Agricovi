@@ -81,6 +81,9 @@ export interface PurchaseLine {
   /** Mã dòng nhập kho tạo sẵn (bấm lặp không nhân đôi) */
   id: string;
   materialId: string;
+  /** Số lô và hạn dùng của dòng hàng (không bắt buộc, D98) */
+  lotNo?: string;
+  lotExpiry?: string | null;
   /** Số lượng theo đơn vị cơ sở của vật tư */
   quantity: number;
   /** Đơn giá (đồng) theo đơn vị cơ sở */
@@ -137,7 +140,7 @@ export async function recordPurchase(i: PurchaseInput): Promise<void> {
     p_due_date: i.dueDate || null,
     p_total: i.total,
     p_note: i.note.trim() || null,
-    p_lines: i.lines.map((l) => ({ id: l.id, location_id: i.locationId, material_id: l.materialId, quantity: l.quantity, unit_cost: l.unitCost })),
+    p_lines: i.lines.map((l) => ({ id: l.id, location_id: i.locationId, material_id: l.materialId, quantity: l.quantity, unit_cost: l.unitCost, ...(l.lotNo?.trim() ? { lot_no: l.lotNo.trim(), lot_expiry: l.lotExpiry || null } : {}) })),
     p_paid: i.paid,
     p_method: i.method,
   });

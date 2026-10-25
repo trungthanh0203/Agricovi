@@ -14,6 +14,7 @@ import { logActivity } from '../lib/production';
 import { hasRole } from '../lib/roles';
 import { useTable } from '../lib/tables';
 import { VoiceNote } from '../components/VoiceNote';
+import { LotPicker } from '../components/LotPicker';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 const LAST_LOCATION_KEY = 'agriconnect.lastLocation'; // dùng chung với màn nhập kho
@@ -85,7 +86,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   ).filter((l) => l.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const units = useTable('units');
   const [usedOpen, setUsedOpen] = useState(false);
-  const [used, setUsed] = useState<{ materialId: string; qty: string }[]>([]);
+  const [used, setUsed] = useState<{ materialId: string; qty: string; lotId?: string; lotExpired?: boolean; lotReason?: string }[]>([]);
   const [locationId, setLocationId] = useState('');
   const rememberedLoc = (() => { try { return localStorage.getItem(LAST_LOCATION_KEY); } catch { return null; } })();
   const effLocation = locationId || (locations.find((l) => l.id === rememberedLoc)?.id ?? locations[0]?.id ?? '');
@@ -105,13 +106,14 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
     if (bad) return setError(bad);
     const data = fieldsToData(workType.field_schema, merged);
     // dòng vật tư: bỏ dòng trống hoàn toàn; dòng đã nhập dở thì báo để người dùng sửa, không âm thầm bỏ
-    const items: { materialId: string; quantity: number }[] = [];
+    const items: { materialId: string; quantity: number; lotId?: string; reason?: string }[] = [];
     for (const row of used) {
       if (!row.materialId && row.qty.trim() === '') continue;
       const q = parseNumber(row.qty);
       if (!row.materialId) return setError('Hãy chọn vật tư cho dòng "Vật tư đã dùng", hoặc xóa dòng đó.');
       if (q === null || Number.isNaN(q) || q <= 0) return setError('Số lượng vật tư đã dùng phải là số lớn hơn 0.');
-      items.push({ materialId: row.materialId, quantity: q });
+      if (row.lotId && !(row.lotReason ?? '').trim() && row.lotExpired) return setError('Lô đã chọn đã hết hạn: hãy ghi lý do dùng, hoặc chọn lô khác.');
+      items.push({ materialId: row.materialId, quantity: q, lotId: row.lotId || undefined, reason: row.lotReason });
     }
     if (items.length > 0 && !effLocation) return setError('Chưa có kho để trừ vật tư. Hãy nhờ chủ cơ sở thêm kho ở mục "Vật tư & chi phí".');
     setError(null);
@@ -260,9 +262,9 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
               ) : (
                 <>
                   {used.map((row, i) => (
-                    <div className="row member" key={i}>
+                    <div key={i}><div className="row member">
                       <select aria-label="Vật tư" value={row.materialId} className="grow"
-                        onChange={(e) => setUsed((s) => s.map((r, j) => (j === i ? { ...r, materialId: e.target.value } : r)))}>
+                        onChange={(e) => setUsed((s) => s.map((r, j) => (j === i ? { ...r, materialId: e.target.value, lotId: '', lotExpired: false, lotReason: '' } : r)))}>
                         <option value="">— Chọn vật tư —</option>
                         {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                       </select>
@@ -271,6 +273,12 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
                         onChange={(e) => setUsed((s) => s.map((r, j) => (j === i ? { ...r, qty: e.target.value } : r)))} />
                       <button type="button" className="link inline" aria-label="Xóa dòng vật tư"
                         onClick={() => setUsed((s) => s.filter((_, j) => j !== i))}>Xóa</button>
+                    </div>
+                    {row.materialId && (
+                        <LotPicker materialId={row.materialId} lotId={row.lotId ?? ''} reason={row.lotReason ?? ''}
+                          onLot={(id, expired) => setUsed((s) => s.map((r, j) => (j === i ? { ...r, lotId: id, lotExpired: expired } : r)))}
+                          onReason={(v) => setUsed((s) => s.map((r, j) => (j === i ? { ...r, lotReason: v } : r)))} />
+                      )}
                     </div>
                   ))}
                   <button type="button" className="secondary" onClick={() => setUsed((s) => [...s, { materialId: '', qty: '' }])}>+ Thêm dòng</button>

@@ -82,3 +82,13 @@ test('hủy nhật ký đảo kho: bản đảo mang đúng lô; get_lot_status 
   await db.query(`update activity_logs set voided_at=now(), void_reason='nhập nhầm' where id=$1`, [LOG]);
   assert.deepEqual(await rem(), [{ lot_no: 'SOON', r: 100 }]);  // trả lại đúng lô
 });
+
+test('mua có hóa đơn: dòng hàng kèm số lô và hạn dùng tạo lô như nhập kho', async () => {
+  const { db, owner, org } = await setup();
+  const partner = '10000000-0000-4000-8000-0000000000c1';
+  await db.query(`insert into partners (id,organization_id,name) values ($1,$2,'Đại lý cám')`, [partner, org]);
+  const lines = JSON.stringify([{ id: tid(40), location_id: LOC, material_id: MAT, quantity: 100, unit_cost: 12000, lot_no: 'HD-01', lot_expiry: new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10) }]);
+  await asUser(db, owner, `select * from record_purchase($1,$2,$3,'HD1',current_date,null,1200000,null,$4::jsonb,0,'cash')`, [tid(41), org, partner, lines]);
+  const r = (await db.query(`select l.lot_no, l.expiry_date is not null has_exp from inventory_transactions t join material_lots l on l.id=t.lot_id where t.id=$1`, [tid(40)])).rows[0];
+  assert.deepEqual(r, { lot_no: 'HD-01', has_exp: true });
+});

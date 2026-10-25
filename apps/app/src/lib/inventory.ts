@@ -251,3 +251,12 @@ export async function fetchLotStatus(orgId: string, days = 30): Promise<LotStatu
   if (error) return [];
   return ((data ?? []) as LotStatus[]).map((r) => ({ ...r, remaining: Number(r.remaining) }));
 }
+
+export interface LotOption { id: string; lot_no: string; expiry_date: string | null }
+
+/** Các lô đã nhập của một vật tư (cần mạng và quyền xem Kho; không được thì trả về rỗng, khi đó máy chủ tự gắn lô theo hạn gần nhất) */
+export async function fetchLots(materialId: string): Promise<LotOption[]> {
+  if (!supabase || !navigator.onLine || !materialId) return [];
+  const { data, error } = await supabase.from('material_lots').select('id, lot_no, expiry_date').eq('material_id', materialId).order('expiry_date', { ascending: true, nullsFirst: false });
+  return error ? [] : ((data ?? []) as LotOption[]);
+}

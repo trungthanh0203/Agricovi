@@ -183,6 +183,8 @@ export const GUIDES: Guide[] = [
           'Có thể nhập Sản lượng dự kiến (kg) và Ngân sách dự kiến (đồng) để so với thực tế (không bắt buộc; sửa sau ở Sửa vụ).',
           'Chọn "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước, bắt đầu chạy sau. App lập lịch các giai đoạn theo quy trình mẫu.',
           'Mỗi vụ có một mã (hiện sau tên vụ, ví dụ "Dưa vụ 1 - AB12CD34") dùng cho mã QR truy xuất.',
+          'Mục "Thông tin quản lý" (không bắt buộc) cho nhập mã vụ/lô, đơn vị đếm (cây, con…) và cán bộ kỹ thuật/thú y phụ trách. Khu loại "Cơ sở vật chất" (cổng, kho, biogas…) không tạo vụ; việc ở đó ghi bằng Ghi việc → "Khu vực".',
+          'Nhập kho và Mua có hóa đơn có ô số lô và hạn dùng; khi xuất dùng, app tự lấy lô hạn gần nhất (hoặc bạn chọn lô). Lô sắp hết hạn hiện ở Trang chủ và Kho.',
         ],
         go: { tab: 'production', section: 'cycles', label: 'Mở Mùa vụ' },
       },
