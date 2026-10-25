@@ -1,4 +1,6 @@
-import { Fragment, lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { Fragment, Suspense, useCallback, useEffect, useState } from 'react';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { lazyRetry } from './lib/lazyRetry';
 import { SYNC_STATE_LABEL_VI, type SyncState } from '@agriconnect/shared';
 import { AuthProvider, useAuth } from './lib/auth';
 import { useMyName } from './lib/profile';
@@ -21,15 +23,15 @@ import { ForcePasswordScreen } from './screens/ForcePasswordScreen';
 import { fetchStaffStatus, readCachedStaffStatus, type StaffStatus } from './lib/staff';
 
 // Các màn ngoài Trang chủ tải khi mở lần đầu (giảm dung lượng phải tải lúc vào app); bản dựng vẫn được lưu sẵn để dùng offline
-const CreateCycleScreen = lazy(() => import('./screens/CreateCycleScreen').then((m) => ({ default: m.CreateCycleScreen })));
-const CycleDetailScreen = lazy(() => import('./screens/CycleDetailScreen').then((m) => ({ default: m.CycleDetailScreen })));
-const DeclareTab = lazy(() => import('./screens/DeclareTab').then((m) => ({ default: m.DeclareTab })));
-const LogActivityScreen = lazy(() => import('./screens/LogActivityScreen').then((m) => ({ default: m.LogActivityScreen })));
-const OrgTab = lazy(() => import('./screens/OrgTab').then((m) => ({ default: m.OrgTab })));
-const ProductionTab = lazy(() => import('./screens/ProductionTab').then((m) => ({ default: m.ProductionTab })));
-const ProfileTab = lazy(() => import('./screens/ProfileTab').then((m) => ({ default: m.ProfileTab })));
-const GuideTab = lazy(() => import('./screens/GuideTab').then((m) => ({ default: m.GuideTab })));
-const ReportsTab = lazy(() => import('./screens/ReportsTab').then((m) => ({ default: m.ReportsTab })));
+const CreateCycleScreen = lazyRetry(() => import('./screens/CreateCycleScreen').then((m) => ({ default: m.CreateCycleScreen })));
+const CycleDetailScreen = lazyRetry(() => import('./screens/CycleDetailScreen').then((m) => ({ default: m.CycleDetailScreen })));
+const DeclareTab = lazyRetry(() => import('./screens/DeclareTab').then((m) => ({ default: m.DeclareTab })));
+const LogActivityScreen = lazyRetry(() => import('./screens/LogActivityScreen').then((m) => ({ default: m.LogActivityScreen })));
+const OrgTab = lazyRetry(() => import('./screens/OrgTab').then((m) => ({ default: m.OrgTab })));
+const ProductionTab = lazyRetry(() => import('./screens/ProductionTab').then((m) => ({ default: m.ProductionTab })));
+const ProfileTab = lazyRetry(() => import('./screens/ProfileTab').then((m) => ({ default: m.ProfileTab })));
+const GuideTab = lazyRetry(() => import('./screens/GuideTab').then((m) => ({ default: m.GuideTab })));
+const ReportsTab = lazyRetry(() => import('./screens/ReportsTab').then((m) => ({ default: m.ReportsTab })));
 const Loading = () => <p className="center muted">Đang tải…</p>;
 
 const TAB_ICON: Record<TabId, string> = { home: '🏠', production: '🌱', reports: '📊', declare: '🧰', org: '👥', guide: '📖', profile: '👤' };
@@ -174,6 +176,7 @@ function Shell() {
       )}
 
       <main className="content">
+        <ErrorBoundary resetKey={`${tab}|${overlay ?? ''}|${subs[tab as keyof typeof subs] ?? ''}`}>
         <Suspense fallback={<Loading />}>
         {overlayEl ? overlayEl : tab === 'home' ? (
           <HomeTab onGo={goTo} onOpenCycle={(id) => { setDetailId(id); setQrFirst(false); setDetailOpts({}); setOverlay('detail'); }} />
@@ -200,6 +203,7 @@ function Shell() {
           <ProfileTab onAddOrg={() => setAdding(true)} isPlatformAdmin={isPlatformAdmin} />
         )}
         </Suspense>
+        </ErrorBoundary>
       </main>
 
       <nav className="bnav" aria-label="Điều hướng chính">
