@@ -13,6 +13,12 @@ export interface AreaRow {
   image?: string | null;
   /** false = trang trại đã dừng: giữ lịch sử, không dùng để tạo vụ mới */
   is_active?: boolean;
+  /** Mã khu/chuồng (ví dụ C-THIT-02), duy nhất trong cơ sở (D98) */
+  code?: string | null;
+  /** growing = khu nuôi/trồng (tạo vụ được); facility = cơ sở vật chất (cổng, kho, biogas...: chỉ ghi việc) */
+  kind?: 'growing' | 'facility';
+  /** Kiểu chuồng: chỉ lưu và hiển thị ở P1 */
+  housing?: 'closed' | 'semi_open' | 'open' | null;
 }
 
 export interface CycleRow {
@@ -39,6 +45,11 @@ export interface CycleRow {
   seed_lot?: string | null;
   sowing_date?: string | null;
   planting_date?: string | null;
+  /** Mã vụ/lô (duy nhất trong cơ sở), đơn vị đếm (cây, con...), cán bộ kỹ thuật/thú y phụ trách (D98) */
+  code?: string | null;
+  count_unit?: string | null;
+  supervisor_name?: string | null;
+  supervisor_phone?: string | null;
   /** Quy trình mẫu vụ được tạo theo (bản chụp lúc tạo, P2) */
   template_id?: string | null;
   template_name?: string | null;

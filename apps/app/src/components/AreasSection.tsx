@@ -8,6 +8,8 @@ import { createArea, updateArea, type FarmInput } from '../lib/production';
 import { canPerm } from '../lib/permissions';
 import { useTable } from '../lib/tables';
 
+const HOUSING_LABEL = { closed: 'Chuồng kín', semi_open: 'Chuồng nửa kín', open: 'Chuồng hở' } as const;
+
 const fmtSize = (a: AreaRow) => (a.area_size != null ? `${a.area_size.toLocaleString('vi-VN')} ${a.area_unit === 'ha' ? 'ha' : 'm²'}` : '');
 
 /**
@@ -57,7 +59,8 @@ export function AreasSection() {
           {rows.map((a) => (
             <tr key={a.id} className={a.is_active === false ? 'off' : ''}>
               <td>
-                <Thumb src={a.image} />{a.name}
+                <Thumb src={a.image} />{a.name}{a.code ? ` · ${a.code}` : ''}
+                {(a.kind === 'facility' || a.housing) && <span className="sub">{[a.kind === 'facility' ? 'Cơ sở vật chất' : '', a.housing ? HOUSING_LABEL[a.housing] : ''].filter(Boolean).join(' · ')}</span>}
                 {a.location && <span className="sub">📍 {a.location}</span>}
                 {a.description && <span className="sub">{a.description}</span>}
                 {a.is_active === false && <span className="sub">Đã dừng</span>}
@@ -92,6 +95,9 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
   const [location, setLocation] = useState(initial?.location ?? '');
   const [size, setSize] = useState(initial?.area_size != null ? String(initial.area_size) : '');
   const [unit, setUnit] = useState<'m2' | 'ha'>(initial?.area_unit ?? 'm2');
+  const [code, setCode] = useState(initial?.code ?? '');
+  const [kind, setKind] = useState<'growing' | 'facility'>(initial?.kind ?? 'growing');
+  const [housing, setHousing] = useState<string>(initial?.housing ?? '');
   const [desc, setDesc] = useState(initial?.description ?? '');
   const [image, setImage] = useState(initial?.image ?? '');
   const [err, setErr] = useState<string | null>(null);
@@ -100,6 +106,26 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
       <h2>{title}</h2>
       <div className="inline-form">
         <label>Tên trang trại<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
+        <div className="pair">
+          <label>Mã khu / chuồng<input value={code} maxLength={40} onChange={(e) => setCode(e.target.value)} placeholder="Ví dụ: C-THIT-02" /></label>
+          <label>Loại khu
+            <select value={kind} onChange={(e) => setKind(e.target.value as 'growing' | 'facility')}>
+              <option value="growing">Khu nuôi / trồng</option>
+              <option value="facility">Cơ sở vật chất</option>
+            </select>
+          </label>
+        </div>
+        {kind === 'facility' && <p className="muted">Cơ sở vật chất (cổng, kho, biogas, hố sát trùng…) chỉ để ghi việc, không tạo vụ.</p>}
+        {kind === 'growing' && (
+          <label>Kiểu chuồng / nhà
+            <select value={housing} onChange={(e) => setHousing(e.target.value)}>
+              <option value="">— Không áp dụng —</option>
+              <option value="closed">Kín</option>
+              <option value="semi_open">Nửa kín nửa hở</option>
+              <option value="open">Hở</option>
+            </select>
+          </label>
+        )}
         <label>Vị trí<input value={location} maxLength={200} onChange={(e) => setLocation(e.target.value)} placeholder="Xã, huyện, tỉnh hoặc mô tả đường đi" /></label>
         <div className="pair">
           <label>Diện tích<input value={size} inputMode="decimal" onChange={(e) => setSize(e.target.value)} /></label>
@@ -119,7 +145,7 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
             const n = size.trim() === '' ? null : Number(size.replace(',', '.'));
             if (n !== null && (Number.isNaN(n) || n < 0)) return setErr('Diện tích phải là số không âm.');
             setErr(null);
-            void onSave({ name, location, area_size: n, area_unit: unit, description: desc, image }).catch(() => undefined);
+            void onSave({ name, location, area_size: n, area_unit: unit, description: desc, image, code, kind, housing: kind === 'growing' && housing ? (housing as 'closed' | 'semi_open' | 'open') : null }).catch(() => undefined);
           }}>Lưu</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>

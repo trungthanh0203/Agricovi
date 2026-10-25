@@ -51,10 +51,11 @@ export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedde
     [cycles, areas, active],
   );
   const myCycleIds = useMemo(() => new Set(myCycles.map((c) => c.id)), [myCycles]);
+  const myAreaIds = useMemo(() => new Set(areas.filter((a) => a.organization_id === active?.id).map((a) => a.id)), [areas, active]);
 
-  const cycleLabel = (id: string | null) => {
+  const cycleLabel = (id: string | null, areaId?: string | null) => {
     const c = cycles.find((x) => x.id === id);
-    if (!c) return '';
+    if (!c) return areas.find((a) => a.id === areaId)?.name ? `Khu vực · ${areas.find((a) => a.id === areaId)!.name}` : '';
     return `${cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? ''} · ${areas.find((a) => a.id === c.area_id)?.name ?? ''}`;
   };
 
@@ -62,7 +63,7 @@ export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedde
     const fromT = from ? new Date(`${from}T00:00:00`).getTime() : null;
     const toT = to ? new Date(`${to}T23:59:59`).getTime() : null;
     return logs
-      .filter((l) => l.cycle_id && myCycleIds.has(l.cycle_id))
+      .filter((l) => (l.cycle_id ? myCycleIds.has(l.cycle_id) : !!l.area_id && myAreaIds.has(l.area_id))) // gồm cả việc ghi cho khu vực không gắn vụ
       .filter((l) => !cycleId || l.cycle_id === cycleId)
       .filter((l) => !typeId || l.work_type_id === typeId)
       .filter((l) => (showVoided ? true : !l.voided_at))
@@ -71,7 +72,7 @@ export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedde
         return (fromT === null || t >= fromT) && (toT === null || t <= toT);
       })
       .sort((a, b) => b.performed_at.localeCompare(a.performed_at));
-  }, [logs, myCycleIds, cycleId, typeId, from, to, showVoided]);
+  }, [logs, myCycleIds, myAreaIds, cycleId, typeId, from, to, showVoided]);
 
   const visible = filtered.slice(0, limit);
 
@@ -169,7 +170,7 @@ export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedde
               <strong>{wt?.name ?? 'Việc'}{whoLabel(l) ? ` - ${whoLabel(l)}` : ''}</strong>
               <span className="muted">{new Date(l.performed_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}</span>
             </div>
-            <p className="muted">{cycleLabel(l.cycle_id)}</p>
+            <p className="muted">{cycleLabel(l.cycle_id, l.area_id)}</p>
             {summarize(wt, l.data) && <p>{summarize(wt, l.data)}</p>}
             {l.note && <p>{l.note}</p>}
             <div className="badges">

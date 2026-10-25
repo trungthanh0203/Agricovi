@@ -55,6 +55,13 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const effectiveCycleId = cycleId || (options.find((c) => c.id === remembered)?.id ?? options[0]?.id ?? '');
   const cycle = options.find((c) => c.id === effectiveCycleId) ?? null;
 
+  // Ghi cho khu vực không gắn vụ (cổng, kho, biogas, hố sát trùng...): mọi khu đang dùng của cơ sở
+  const siteAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const [forArea, setForArea] = useState<boolean | null>(null); // null = tự chọn: không có vụ nào thì ghi cho khu
+  const areaMode = forArea ?? (options.length === 0 && siteAreas.length > 0);
+  const [areaPick, setAreaPick] = useState('');
+  const siteArea = siteAreas.find((a) => a.id === areaPick) ?? siteAreas[0] ?? null;
+
   const [workTypeId, setWorkTypeId] = useState<string | null>(preset?.workTypeId ?? null);
   const stages = useLiveQuery(() => db.stages.where('cycle_id').equals(effectiveCycleId).sortBy('seq'), [effectiveCycleId], []);
   // giai đoạn gắn với việc: mặc định theo preset, nếu không thì giai đoạn đang làm có cùng loại việc
@@ -91,7 +98,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!workType || !cycle || !session) return;
+    if (!workType || !session || (areaMode ? !siteArea || !active : !cycle)) return;
     if (!note.trim()) return setError('Hãy nhập "Nội dung việc": gõ chữ hoặc bấm Nói để đọc nội dung đã làm.');
     const merged = { ...initialValues(workType.field_schema), ...values };
     const bad = validateFields(workType.field_schema, merged);
@@ -109,16 +116,18 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
     if (items.length > 0 && !effLocation) return setError('Chưa có kho để trừ vật tư. Hãy nhờ chủ cơ sở thêm kho ở mục "Vật tư & chi phí".');
     setError(null);
     const id = await logActivity({
-      cycle,
+      cycle: areaMode ? null : cycle,
+      areaId: areaMode ? siteArea!.id : undefined,
+      organizationId: active?.id,
       workTypeId: workType.id,
       performedAt: new Date(when).toISOString(),
       data,
       note,
       userId: session.user.id,
-      stageId: effStage,
+      stageId: areaMode ? null : effStage,
       used: items.length > 0 && active ? { organizationId: active.id, locationId: effLocation, items } : undefined,
     });
-    try { localStorage.setItem(LAST_CYCLE_KEY, cycle.id); } catch { /* bỏ qua */ }
+    if (cycle && !areaMode) { try { localStorage.setItem(LAST_CYCLE_KEY, cycle.id); } catch { /* bỏ qua */ } }
     if (items.length > 0) { try { localStorage.setItem(LAST_LOCATION_KEY, effLocation); } catch { /* bỏ qua */ } }
     setSavedItems(items);
     setSavedId(id);
@@ -165,7 +174,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
     <div className="auth">
       <h1>Ghi việc vừa làm</h1>
 
-      {options.length === 0 ? (
+      {options.length === 0 && siteAreas.length === 0 ? (
         <>
           <p className="msg warn">
             Chưa có vụ nào đang sản xuất nên chưa ghi việc được.{' '}
@@ -190,6 +199,24 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
         <form onSubmit={onSubmit} noValidate>
           <p><strong>{workType.name}</strong> <button type="button" className="link inline" onClick={() => setWorkTypeId(null)}>Đổi</button></p>
 
+          {siteAreas.length > 0 && options.length > 0 && (
+            <label>
+              Ghi cho
+              <select value={areaMode ? 'area' : 'cycle'} onChange={(e) => setForArea(e.target.value === 'area')}>
+                <option value="cycle">Một vụ đang sản xuất</option>
+                <option value="area">Khu vực / cơ sở vật chất (không gắn vụ)</option>
+              </select>
+            </label>
+          )}
+
+          {areaMode ? (
+            <label>
+              Khu vực
+              <select value={siteArea?.id ?? ''} onChange={(e) => setAreaPick(e.target.value)}>
+                {siteAreas.map((a) => <option key={a.id} value={a.id}>{a.name}{a.code ? ` · ${a.code}` : ''}{a.kind === 'facility' ? ' (cơ sở vật chất)' : ''}</option>)}
+              </select>
+            </label>
+          ) : (
           <label>
             Vụ trồng
             <select value={effectiveCycleId} onChange={(e) => { setCycleId(e.target.value); setStageSel(undefined); }}>
@@ -200,8 +227,9 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
               ))}
             </select>
           </label>
+          )}
 
-          {stages.length > 0 && (
+          {!areaMode && stages.length > 0 && (
             <label>
               Thuộc giai đoạn
               <select value={effStage ?? ''} onChange={(e) => setStageSel(e.target.value || null)}>

@@ -3,6 +3,7 @@ import { useCatalog } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
+import { defaultCountUnit } from '../lib/countUnit';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
 import { createCycle, fetchQuotaContexts, type QuotaContext } from '../lib/production';
 import { addDays, fmtDate } from '../lib/dates';
@@ -18,7 +19,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const areas = useTable('areas');
   const { cropTypes } = useCatalog();
 
-  const myAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false); // trang trại đã dừng không tạo vụ mới
+  const myAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false && a.kind !== 'facility'); // khu đã dừng hoặc là cơ sở vật chất thì không tạo vụ
   const [areaId, setAreaId] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [templates, setTemplates] = useState<TemplateRow[] | null>(null);
@@ -82,6 +83,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   if (!active) return null;
   const choices = contexts && contexts.length > 1 ? contexts : null;
   const chosen = contexts?.find((c) => c.org_id === ownerId) ?? null;
+  const chosenTemplate = (templates ?? []).find((t) => t.id === templateId);
   const ownerLabel = (c: QuotaContext) => (c.kind === 'own' ? `Hộ riêng (${c.org_name})` : `HTX ${c.org_name}`);
   const picked = templates?.find((t) => t.id === templateId) ?? null;
   const total = stages.reduce((s, x) => s + x.duration_days, 0);
@@ -199,7 +201,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </label>
 
-          <CycleInfoFields value={cropInfo} onChange={setCropInfo} />
+          <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultCountUnit(cropTypes.find((c) => c.id === chosenTemplate?.crop_type_id)?.kind)} />
 
           <div className="pair">
             <label>Sản lượng dự kiến (kg)<input value={targetYield} inputMode="numeric" onChange={(e) => setTargetYield(e.target.value)} placeholder="Không bắt buộc" /></label>

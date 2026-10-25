@@ -13,7 +13,23 @@ import { supabase } from './supabase';
 const CYCLE_COLUMNS_BASE =
   'id, owner_org_id, area_id, crop_type_id, status, start_date, expected_end_date, note, version, created_at, name, template_id, template_name, template_version';
 // cột kế hoạch (D93) chỉ có sau khi CSDL được cập nhật; chưa cập nhật thì tải bản không có để KHÔNG làm hỏng đồng bộ cả danh sách vụ
-const CYCLE_COLUMNS = `${CYCLE_COLUMNS_BASE}, target_yield_kg, budget_amount, planted_area_m2, plant_count, variety_name, seed_source, seed_lot, sowing_date, planting_date`;
+const CYCLE_COLUMNS_PLAN = `${CYCLE_COLUMNS_BASE}, target_yield_kg, budget_amount, planted_area_m2, plant_count, variety_name, seed_source, seed_lot, sowing_date, planting_date`;
+// cột mã vụ/đơn vị đếm/cán bộ phụ trách (D98) cũng chỉ có sau migration 0080
+const CYCLE_COLUMNS = `${CYCLE_COLUMNS_PLAN}, code, count_unit, supervisor_name, supervisor_phone`;
+const AREA_COLUMNS_BASE = 'id, organization_id, name, description, location, area_size, area_unit, image, is_active';
+const AREA_COLUMNS = `${AREA_COLUMNS_BASE}, code, kind, housing`;
+
+/** Tải vụ theo từng bậc cột: đầy đủ -> bản trước D98 -> bản gốc, để CSDL chưa cập nhật không làm hỏng đồng bộ */
+async function selectCycles(id?: string) {
+  const q = async (cols: string) => {
+    const b = supabase!.from('production_cycles').select(cols);
+    return id ? b.eq('id', id) : b;
+  };
+  let r = await q(CYCLE_COLUMNS);
+  if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_PLAN);
+  if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_BASE);
+  return r;
+}
 const missingPlanColumns = (e: { message?: string; code?: string } | null) => !!e && (e.code === '42703' || /target_yield_kg|budget_amount|planted_area|variety_name|column/i.test(e.message ?? ''));
 const STAGE_COLUMNS =
   'id, cycle_id, name, seq, work_type_id, duration_days, planned_start, planned_end, actual_start, actual_end, status, note';
@@ -22,6 +38,11 @@ const NOTE_COLUMNS = 'id, cycle_id, organization_id, note_date, content, done, c
 
 const LOG_COLUMNS =
   'id, organization_id, cycle_id, area_id, work_type_id, stage_id, performed_at, data, note, voided_at, void_reason, version, created_by, performed_by, author_name, author_roles, received_at';
+
+async function selectAreas() {
+  const r = await supabase!.from('production_areas').select(AREA_COLUMNS);
+  return r.error && missingPlanColumns(r.error) ? supabase!.from('production_areas').select(AREA_COLUMNS_BASE) : r;
+}
 
 /** Tải dữ liệu về thiết bị để dùng offline. Không ghi đè bản ghi đang chờ gửi hoặc đang xung đột. */
 export async function syncDown(): Promise<void> {
@@ -34,14 +55,13 @@ export async function syncDown(): Promise<void> {
   const fresh = <T extends { id: string }>(rows: T[] | null) => (rows ?? []).filter((r) => !pendingIds.has(r.id));
 
   const [areas, cycles, logs, stages, notes] = await Promise.all([
-    supabase.from('production_areas').select('id, organization_id, name, description, location, area_size, area_unit, image, is_active'),
-    supabase.from('production_cycles').select(CYCLE_COLUMNS),
+    selectAreas(),
+    selectCycles(),
     supabase.from('activity_logs').select(LOG_COLUMNS).order('performed_at', { ascending: false }).limit(200),
     supabase.from('production_stages').select(STAGE_COLUMNS),
     supabase.from('cycle_notes').select(NOTE_COLUMNS).order('note_date', { ascending: false }).limit(1000),
   ]);
-  let cyclesRes: { data: unknown; error: { message?: string; code?: string } | null } = cycles;
-  if (cycles.error && missingPlanColumns(cycles.error)) cyclesRes = await supabase.from('production_cycles').select(CYCLE_COLUMNS_BASE);
+  const cyclesRes: { data: unknown; error: { message?: string; code?: string } | null } = cycles;
   // mỗi bảng độc lập: bảng nào tải được thì vẫn ghi vào máy, lỗi của bảng khác chỉ báo ở cuối (không để một bảng lỗi làm mất cả danh sách vụ)
   const firstErr = [areas, cyclesRes, logs].find((r) => r.error)?.error ?? null;
   // Các phần còn lại độc lập nhau nên tải song song (trước đây tải tuần tự, chậm hơn nhiều khi mạng yếu).
@@ -118,6 +138,10 @@ export interface FarmInput {
   area_unit?: 'm2' | 'ha';
   description?: string | null;
   image?: string | null;
+  /** Mã khu/chuồng, loại khu và kiểu chuồng (D98) */
+  code?: string | null;
+  kind?: 'growing' | 'facility';
+  housing?: 'closed' | 'semi_open' | 'open' | null;
 }
 
 export async function createArea(organizationId: string, f: FarmInput): Promise<string> {
@@ -125,6 +149,7 @@ export async function createArea(organizationId: string, f: FarmInput): Promise<
   const row: AreaRow = {
     id, organization_id: organizationId, name: f.name.trim(), description: f.description?.trim() || null,
     location: f.location?.trim() || null, area_size: f.area_size ?? null, area_unit: f.area_unit ?? 'm2', image: f.image || null,
+    code: f.code?.trim() || null, kind: f.kind ?? 'growing', housing: f.housing ?? null,
   };
   await insertAndCache('production_areas', { ...row }, { ...row }, 'thêm trang trại');
   return id;
@@ -141,6 +166,9 @@ export async function updateArea(id: string, c: Partial<FarmInput> & { is_active
   if (c.area_size !== undefined) patch.area_size = c.area_size;
   if (c.area_unit !== undefined) patch.area_unit = c.area_unit;
   if (c.image !== undefined) patch.image = c.image || null;
+  if (c.code !== undefined) patch.code = c.code?.trim() || null;
+  if (c.kind !== undefined) patch.kind = c.kind;
+  if (c.housing !== undefined) patch.housing = c.housing;
   if (c.is_active !== undefined) patch.is_active = c.is_active;
   const { error } = await supabase.from('production_areas').update(patch).eq('id', id);
   if (error) throw new Error(error.message);
@@ -165,6 +193,8 @@ export interface NewCycle {
 /** Giống và diện tích của vụ; diện tích theo m² (D94) */
 export interface CropInfo {
   areaM2: number | null; plants: number | null; variety: string; seedSource: string; seedLot: string; sowingDate: string | null; plantingDate: string | null;
+  /** Mã vụ/lô, đơn vị đếm (trống = theo loại sản phẩm), cán bộ kỹ thuật/thú y phụ trách (D98) */
+  code: string; countUnit: string; supervisorName: string; supervisorPhone: string;
 }
 
 /** Đặt thông tin giống và diện tích của vụ (cần mạng, người quản lý vụ); trống = bỏ */
@@ -176,6 +206,15 @@ export async function setCycleInfo(cycleId: string, i: CropInfo): Promise<void> 
     p_sowing: i.sowingDate, p_planting: i.plantingDate,
   });
   if (error) throw new Error(error.message);
+  // phần quản lý (D98): chỉ gọi khi có giá trị hoặc vụ đang có giá trị cần xóa, để CSDL chưa cập nhật vẫn lưu được phần cũ
+  const cur = await db.cycles.get(cycleId);
+  const hadExt = !!(cur?.code || cur?.count_unit || cur?.supervisor_name || cur?.supervisor_phone);
+  if (hadExt || i.code.trim() || i.countUnit.trim() || i.supervisorName.trim() || i.supervisorPhone.trim()) {
+    const ext = await supabase.rpc('set_cycle_ext', {
+      p_cycle: cycleId, p_code: i.code, p_count_unit: i.countUnit, p_supervisor_name: i.supervisorName, p_supervisor_phone: i.supervisorPhone,
+    });
+    if (ext.error) throw new Error(ext.error.message);
+  }
   await refreshCycle(cycleId);
 }
 
@@ -190,8 +229,8 @@ export async function createCycle(c: NewCycle): Promise<string> {
   });
   if (error) throw new Error(error.message);
   if ((c.targetYield ?? null) !== null || (c.budget ?? null) !== null) await setCyclePlan(id, c.targetYield ?? null, c.budget ?? null).catch(() => undefined);
-  if (c.info && (c.info.areaM2 !== null || c.info.plants !== null || c.info.variety.trim() || c.info.seedSource.trim() || c.info.seedLot.trim() || c.info.sowingDate || c.info.plantingDate)) {
-    await setCycleInfo(id, c.info).catch(() => undefined);
+  if (c.info && (c.info.areaM2 !== null || c.info.plants !== null || c.info.variety.trim() || c.info.seedSource.trim() || c.info.seedLot.trim() || c.info.sowingDate || c.info.plantingDate || c.info.code.trim() || c.info.countUnit.trim() || c.info.supervisorName.trim() || c.info.supervisorPhone.trim())) {
+    await setCycleInfo(id, c.info).catch(() => undefined); // vụ đã tạo; nếu mã bị trùng thì sửa lại ở "Sửa vụ" (máy chủ báo lỗi rõ ở đó)
   }
   await refreshCycle(id);
   return id;
@@ -209,13 +248,13 @@ export async function setCyclePlan(cycleId: string, targetYield: number | null, 
 /** Tải lại một vụ cùng giai đoạn của nó từ máy chủ vào bộ nhớ trên máy */
 export async function refreshCycle(id: string): Promise<void> {
   if (!supabase) return;
-  let [cy, st] = await Promise.all([
-    supabase.from('production_cycles').select(CYCLE_COLUMNS).eq('id', id).maybeSingle(),
+  const [cyRes, st] = await Promise.all([
+    selectCycles(id),
     supabase.from('production_stages').select(STAGE_COLUMNS).eq('cycle_id', id),
   ]);
-  if (cy.error && missingPlanColumns(cy.error)) cy = (await supabase.from('production_cycles').select(CYCLE_COLUMNS_BASE).eq('id', id).maybeSingle()) as typeof cy;
-  if (cy.error) throw new Error(cy.error.message);
-  if (cy.data) await db.cycles.put(cy.data as unknown as CycleRow);
+  if (cyRes.error) throw new Error(cyRes.error.message);
+  const cyRow = (cyRes.data as unknown as CycleRow[] | null)?.[0];
+  if (cyRow) await db.cycles.put(cyRow);
   if (!st.error) {
     await db.stages.where('cycle_id').equals(id).delete();
     await db.stages.bulkPut((st.data ?? []) as StageRow[]);
@@ -328,7 +367,10 @@ export interface UsedMaterials {
 }
 
 export interface NewLog {
-  cycle: CycleRow;
+  /** Vụ được ghi việc; null = ghi cho khu vực không gắn vụ (cần areaId và organizationId) */
+  cycle: CycleRow | null;
+  areaId?: string;
+  organizationId?: string;
   workTypeId: string;
   performedAt: string; // ISO
   data: Record<string, unknown>;
@@ -348,9 +390,9 @@ export async function logActivity(l: NewLog): Promise<string> {
   const source = navigator.onLine ? 'online' : 'offline';
   const row = {
     id,
-    organization_id: l.cycle.owner_org_id, // máy chủ tự gán lại theo chủ vụ
-    cycle_id: l.cycle.id,
-    area_id: l.cycle.area_id,
+    organization_id: (l.cycle?.owner_org_id ?? l.organizationId)!, // có vụ thì máy chủ tự gán lại theo chủ vụ
+    cycle_id: l.cycle?.id ?? null,
+    area_id: l.cycle?.area_id ?? l.areaId ?? null,
     work_type_id: l.workTypeId,
     stage_id: l.stageId ?? null,
     performed_at: l.performedAt,
@@ -371,7 +413,7 @@ export async function logActivity(l: NewLog): Promise<string> {
         quantity_delta: -it.quantity,
         unit_cost: null, // giá vốn do máy chủ tính (bình quân gia quyền), người ghi việc không biết giá
         txn_date: day,
-        cycle_id: l.cycle.id,
+        cycle_id: l.cycle?.id ?? null,
         activity_log_id: id,
         reason: null,
         source,

@@ -31,7 +31,7 @@ function Plan({ label, pct, text }: { label: string; pct: number; text: string }
  * Dòng thống kê của một vụ trong danh sách mùa vụ (D93): 4 số chính (Chi phí · Thu hoạch · Doanh thu · Lãi/lỗ), thanh so với kế hoạch
  * (ngân sách, sản lượng), và "Xem thêm" chia nhóm Chi phí / Sản lượng / Hiệu quả / Tiến độ và công / Tiền chưa thu. Chỉ hiện số người xem có quyền.
  */
-export function CycleStatsStrip({ s }: { s: CycleStat }) {
+export function CycleStatsStrip({ s, countUnit = 'cây' }: { s: CycleStat; countUnit?: string }) {
   const budgetPct = pctOf(s.cost_total, s.budget_amount);
   const yieldPct = pctOf(s.harvest_net, s.target_yield_kg);
   const warns = statWarnings(s);
@@ -84,7 +84,7 @@ export function CycleStatsStrip({ s }: { s: CycleStat }) {
           <>
             <h3 className="sub">Diện tích và năng suất</h3>
             <Row label="Diện tích trồng" value={fmtArea(s.area_m2, unitId)} />
-            {s.plant_count !== null && <Row label="Số cây" value={`${s.plant_count.toLocaleString('vi-VN')}${s.density_per_1000m2 !== null ? ` (${s.density_per_1000m2.toLocaleString('vi-VN')} cây/1.000 m²)` : ''}`} />}
+            {s.plant_count !== null && <Row label={`Số ${countUnit}`} value={`${s.plant_count.toLocaleString('vi-VN')}${s.density_per_1000m2 !== null ? ` (${s.density_per_1000m2.toLocaleString('vi-VN')} ${countUnit}/1.000 m²)` : ''}`} />}
             {s.variety && <Row label="Giống" value={s.variety} />}
             {s.yield_per_1000m2 !== null && <Row label={`Năng suất / ${perLabel}`} value={kg(s.yield_per_1000m2 * f)} />}
             {s.kg_per_plant !== null && <Row label="Thu hoạch mỗi cây" value={kg(s.kg_per_plant)} />}
