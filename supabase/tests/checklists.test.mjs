@@ -106,3 +106,13 @@ test('chốt kết quả bất biến; chưa đạt vẫn chốt được; hủy
   assert.equal((await db.query(`select void_reason from checklist_audits where id=$1`, [AUD])).rows[0].void_reason, 'Nhập nhầm ngày đánh giá');
   assert.match(await expectError(asUser(db, owner, `update checklist_answers set result='fail' where audit_id=$1`, [AUD])), /permission denied/i);
 });
+
+test('bộ bảng kiểm dưa lưới dùng chung: 18 tiêu chí (11 A, 7 B), chưa đối chiếu; cơ sở lấy về được độc lập với bộ heo', async () => {
+  const { db, owner, org } = await setup();
+  const sh = (await db.query(`select count(*)::int n, count(*) filter (where level='A')::int a, count(*) filter (where level='B')::int b from checklist_items i join checklist_templates t on t.id=i.template_id where t.code='vietgap_melon'`)).rows[0];
+  assert.deepEqual(sh, { n: 18, a: 11, b: 7 });
+  assert.equal((await db.query(`select verified_at from checklist_templates where code='vietgap_melon'`)).rows[0].verified_at, null);
+  const mel = (await asUser(db, owner, `select ensure_checklist_template($1,'vietgap_melon') id`, [org])).rows[0].id;
+  assert.equal((await asUser(db, owner, `select count(*)::int n from checklist_items where template_id=$1`, [mel])).rows[0].n, 18);
+  assert.equal((await db.query(`select count(*)::int n from checklist_templates where organization_id=$1`, [org])).rows[0].n, 2); // heo (ở setup) + dưa
+});

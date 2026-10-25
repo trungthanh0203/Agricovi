@@ -5,8 +5,10 @@ import { supabase } from './supabase';
 /** Bảng kiểm nội bộ (D98, P1B). Cần mạng (như D24): đọc và ghi thẳng qua CSDL, không lưu trên máy. */
 
 export interface ChecklistTemplate {
-  id: string; name: string; source_note: string | null; pass_a_pct: number; pass_b_pct: number; verified_at: string | null;
+  id: string; name: string; source_note: string | null; pass_a_pct: number; pass_b_pct: number; verified_at: string | null; source_code: string | null;
 }
+/** Bộ dùng chung do hệ thống nạp sẵn (chưa lấy về thì chưa sửa được) */
+export interface SharedTemplate { code: string; name: string; source_note: string | null }
 export interface ChecklistItem { id: string; seq: number; item_text: string; level: 'A' | 'B'; method: string | null }
 export interface ChecklistAudit {
   id: string; template_name: string; audit_date: string; auditor: string | null; pass_a_pct: number; pass_b_pct: number;
@@ -29,17 +31,17 @@ function rows<T>(r: { data: unknown; error: { message: string } | null }): T[] {
   return (r.data ?? []) as T[];
 }
 
-const TEMPLATE_COLUMNS = 'id, name, source_note, pass_a_pct, pass_b_pct, verified_at';
-export const SHARED_CODE = 'vietgap_pig';
+const TEMPLATE_COLUMNS = 'id, name, source_note, pass_a_pct, pass_b_pct, verified_at, source_code';
 
-/** Bản sao bộ bảng kiểm của cơ sở (null nếu chưa lấy về) */
-export async function getOrgTemplate(orgId: string): Promise<ChecklistTemplate | null> {
-  const r = await client().from('checklist_templates').select(TEMPLATE_COLUMNS).eq('organization_id', orgId).eq('source_code', SHARED_CODE).maybeSingle();
-  if (r.error) throw new Error(r.error.message);
-  return r.data as ChecklistTemplate | null;
+/** Các bản sao bộ bảng kiểm của cơ sở */
+export async function listOrgTemplates(orgId: string): Promise<ChecklistTemplate[]> {
+  return rows<ChecklistTemplate>(await client().from('checklist_templates').select(TEMPLATE_COLUMNS).eq('organization_id', orgId).eq('is_active', true).order('created_at'));
 }
-export async function adoptTemplate(orgId: string): Promise<string> {
-  return rpc<string>('ensure_checklist_template', { p_org: orgId, p_source_code: SHARED_CODE }, 'lấy bộ bảng kiểm');
+export async function listSharedTemplates(): Promise<SharedTemplate[]> {
+  return rows<SharedTemplate>(await client().from('checklist_templates').select('code, name, source_note').is('organization_id', null).eq('is_active', true).order('name'));
+}
+export async function adoptTemplate(orgId: string, code: string): Promise<string> {
+  return rpc<string>('ensure_checklist_template', { p_org: orgId, p_source_code: code }, 'lấy bộ bảng kiểm');
 }
 export async function listItems(templateId: string): Promise<ChecklistItem[]> {
   return rows<ChecklistItem>(await client().from('checklist_items').select('id, seq, item_text, level, method').eq('template_id', templateId).order('seq'));

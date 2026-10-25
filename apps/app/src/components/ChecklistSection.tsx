@@ -3,9 +3,9 @@ import { AutoTextarea } from './AutoTextarea';
 import { Collapsible } from './Collapsible';
 import { checklistSummary, RESULT_LABEL, VERDICT_LABEL, type ChecklistResult } from '../lib/checklistLogic';
 import {
-  addItem, adoptTemplate, deleteItem, finalizeAudit, getOrgTemplate, listAnswers, listAudits, listItems, saveAnswer, startAudit,
+  addItem, adoptTemplate, deleteItem, finalizeAudit, listAnswers, listAudits, listItems, listOrgTemplates, listSharedTemplates, saveAnswer, startAudit,
   updateItem, updateTemplate, voidAudit,
-  type ChecklistAnswer, type ChecklistAudit, type ChecklistItem, type ChecklistTemplate,
+  type ChecklistAnswer, type ChecklistAudit, type ChecklistItem, type ChecklistTemplate, type SharedTemplate,
 } from '../lib/checklists';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
@@ -22,7 +22,9 @@ const vnDate = (iso: string) => iso.split('-').reverse().join('/');
 export function ChecklistSection() {
   const { active } = useOrgs();
   const online = useOnline();
-  const [tpl, setTpl] = useState<ChecklistTemplate | null | undefined>(undefined);
+  const [tpls, setTpls] = useState<ChecklistTemplate[] | undefined>(undefined);
+  const [shared, setShared] = useState<SharedTemplate[]>([]);
+  const [selId, setSelId] = useState<string | null>(null);
   const [audits, setAudits] = useState<ChecklistAudit[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,9 +34,9 @@ export function ChecklistSection() {
   const reload = useCallback(async () => {
     if (!active || !navigator.onLine) return;
     try {
-      const t = await getOrgTemplate(active.id);
-      setTpl(t);
-      setAudits(t ? await listAudits(active.id) : []);
+      const [t, sh] = await Promise.all([listOrgTemplates(active.id), listSharedTemplates()]);
+      setTpls(t); setShared(sh);
+      setAudits(t.length > 0 ? await listAudits(active.id) : []);
     } catch (e) { setError(friendlyError(e)); }
   }, [active]);
   useEffect(() => { void reload(); }, [reload]);
@@ -50,19 +52,32 @@ export function ChecklistSection() {
     return audit ? <AuditView audit={audit} canEdit={canEdit} online={online} onBack={() => { setOpenId(null); void reload(); }} /> : null;
   }
 
+  const tpl = tpls?.find((t) => t.id === selId) ?? tpls?.[0] ?? null;
+  const notAdopted = shared.filter((s) => !(tpls ?? []).some((t) => t.source_code === s.code));
   const years = [...new Set(audits.map((a) => a.audit_date.slice(0, 4)))];
   return (
     <>
       {!online && <p className="msg warn" role="status">Đang offline: bảng kiểm cần có mạng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
-      {tpl === null && (
-        <div className="card">
-          <h2>Bảng kiểm VietGAP chăn nuôi heo</h2>
-          <p className="muted">Bộ 45 tiêu chí (31 loại A bắt buộc, 14 loại B) làm sẵn để bạn tự đánh giá. Lấy về, bạn sửa được nội dung, mức A/B và ngưỡng đạt cho khớp bản chính thức của đơn vị chứng nhận.</p>
-          {canEdit ? <button className="primary" disabled={busy || !online} onClick={() => void run(() => adoptTemplate(active.id))}>Lấy bộ bảng kiểm về</button>
-            : <p className="muted">Chủ cơ sở hoặc người có quyền Khai báo cần lấy bộ bảng kiểm về trước.</p>}
-        </div>
+      {tpls && tpls.length > 1 && (
+        <label>Bộ bảng kiểm
+          <select value={tpl?.id ?? ''} onChange={(e) => setSelId(e.target.value)}>
+            {tpls.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </label>
+      )}
+      {tpls && notAdopted.length > 0 && (
+        <Collapsible inline title={tpls.length === 0 ? 'Chọn bộ bảng kiểm để bắt đầu' : '＋ Lấy thêm bộ bảng kiểm'} summary={`${notAdopted.length} bộ có sẵn`} defaultOpen={tpls.length === 0}>
+          {notAdopted.map((s) => (
+            <div className="card slim" key={s.code}>
+              <strong>{s.name}</strong>
+              <p className="muted">Lấy về, bạn sửa được nội dung, mức A/B và ngưỡng đạt cho khớp bản chính thức của đơn vị chứng nhận.</p>
+              {canEdit ? <button className="primary" disabled={busy || !online} onClick={() => void run(async () => { const id = await adoptTemplate(active.id, s.code); setSelId(id); })}>Lấy bộ này về</button>
+                : <p className="muted">Chủ cơ sở hoặc người có quyền Khai báo cần lấy bộ về trước.</p>}
+            </div>
+          ))}
+        </Collapsible>
       )}
 
       {tpl && (
@@ -88,7 +103,7 @@ export function ChecklistSection() {
                 return (
                   <div className={a.voided_at ? 'card slim voided' : 'card slim'} key={a.id}>
                     <div className="row">
-                      <strong className="grow">{vnDate(a.audit_date)}{a.auditor ? ` · ${a.auditor}` : ''}</strong>
+                      <strong className="grow">{vnDate(a.audit_date)}{a.auditor ? ` · ${a.auditor}` : ''}</strong>{tpls && tpls.length > 1 && <span className="muted">{a.template_name.slice(0, 28)}</span>}
                       {a.voided_at ? <span className="pill err">Đã hủy</span> : a.status === 'draft' ? <span className="pill warn">Bản nháp</span> : verdict && <span className={verdictClass(verdict)}>{VERDICT_LABEL[verdict]}</span>}
                     </div>
                     {a.conclusion && !a.voided_at && <p className="muted">Loại A: {a.conclusion.a_pass}/{a.conclusion.a_total} ({a.conclusion.a_pct}%) · Loại B: {a.conclusion.b_pass}/{a.conclusion.b_total} ({a.conclusion.b_pct}%)</p>}

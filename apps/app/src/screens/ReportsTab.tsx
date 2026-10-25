@@ -8,6 +8,7 @@ import { pickSection, SubTabs } from '../components/SubTabs';
 import { SummarySection } from '../components/SummarySection';
 import { WeeklyReport } from '../components/WeeklyReport';
 import { ChecklistSection } from '../components/ChecklistSection';
+import { LogbookSection } from '../components/LogbookSection';
 import { useOrgs } from '../lib/orgs';
 import { reportSections, type ReportSection, type TabId } from '../lib/tabs';
 
@@ -25,7 +26,7 @@ export function ReportsTab({ section, onSection, onGo }: { section?: string; onS
     <section>
       <h1>Báo cáo</h1>
       <SubTabs items={items} value={current} onChange={onSection} onBack={() => onSection('' as ReportSection)} label="Báo cáo" />
-      {current === 'website' ? <WebSiteSection /> : current === 'payables' ? <DebtsSection /> : current === 'sales' ? <SalesSection /> : current === 'summary' ? <SummarySection /> : current === 'weekly' ? <WeeklyReport onSection={onSection} /> : current === 'paybook' ? <PayrollBook onGo={onGo} /> : current === 'custom' ? <ReportBuilder /> : current === 'commerce' ? <CommerceProfile org={active} /> : current === 'checklist' ? <ChecklistSection /> : null}
+      {current === 'website' ? <WebSiteSection /> : current === 'payables' ? <DebtsSection /> : current === 'sales' ? <SalesSection /> : current === 'summary' ? <SummarySection /> : current === 'weekly' ? <WeeklyReport onSection={onSection} /> : current === 'paybook' ? <PayrollBook onGo={onGo} /> : current === 'custom' ? <ReportBuilder /> : current === 'commerce' ? <CommerceProfile org={active} /> : current === 'checklist' ? <ChecklistSection /> : current === 'logbook' ? <LogbookSection /> : null}
     </section>
   );
 }

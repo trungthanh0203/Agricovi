@@ -260,3 +260,9 @@ Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng m�
 3. Đổi ngày bắt đầu hoặc ngày thu dự kiến của vụ: ngày đến hạn của các mốc tự dời.
 4. Khi mốc đến hạn trong 3 ngày hoặc quá hạn, Trang chủ có thẻ **Việc cần nhớ**; bấm "Đã làm xong" (cần mạng).
 5. Tạo vụ mới ở khu vừa kết thúc vụ trước chưa đủ 7 ngày: app hiện dòng vàng nhắc trống chuồng (chỉ cảnh báo, không chặn).
+
+## Thử P5: sổ nhật ký, in và Excel (cần `db push` 0087, có mạng)
+1. Báo cáo → **Sổ nhật ký**: chọn vụ, khoảng ngày và sổ (dưa: gieo trồng, bón phân, phun thuốc kèm PHI, tưới, thu hoạch, sự cố; heo: đàn–giống, thức ăn–nước, thú y–vaccine, vệ sinh–môi trường, sự cố).
+2. Mở **Còn thiếu gì trước khi nộp**: app liệt kê thiếu mã vụ, người phụ trách, thuốc chưa ghi hoạt chất/cách ly, thu hoạch trong thời gian cách ly, chưa Brix, sự cố còn mở, mốc quá hạn…
+3. Bấm **In sổ** (chọn khổ A4 ngang) hoặc **Tải file Excel** (mở bằng Excel; ngăn cách bằng dấu chấm phẩy, tiếng Việt có dấu).
+4. Bảng kiểm: Báo cáo → Bảng kiểm → lấy thêm bộ **dưa lưới** (18 tiêu chí) nếu hộ trồng dưa.

@@ -546,3 +546,20 @@ button.range-btn:disabled { opacity: .35; cursor: default; }
 .plan-line .progress { margin-top: 3px; }
 .stat-row { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: .9rem; border-bottom: 1px dashed var(--line); }
 .stat-row span { color: var(--muted); }
+
+/* Sổ nhật ký (P5): cuộn ngang trên điện thoại; khi in chỉ in phần sổ, giấy A4 ngang */
+.logbook-scroll { overflow-x: auto; }
+.logbook table.grid { font-size: 13px; min-width: 720px; }
+.logbook td.bad { color: var(--c-bad, #b3261e); font-weight: 600; }
+.logbook-sign { display: flex; justify-content: space-between; margin-top: 28px; gap: 12px; text-align: center; }
+.logbook-sign span { flex: 1; border-top: 1px solid var(--line); padding-top: 4px; font-size: 13px; }
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  body * { visibility: hidden; }
+  #print-root, #print-root * { visibility: visible; }
+  #print-root { position: absolute; left: 0; top: 0; width: 100%; color: #000; background: #fff; }
+  .logbook table.grid { font-size: 10px; min-width: 0; }
+  .logbook th, .logbook td { border: 1px solid #444; padding: 3px 4px; }
+  .logbook-scroll { overflow: visible; }
+  .no-print { display: none !important; }
+}
