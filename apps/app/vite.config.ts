@@ -29,7 +29,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate', // bản mới tự thay âm thầm, có hiệu lực ở lần mở app kế tiếp (không hiện thông báo, không tự tải lại giữa lúc nhập)
-      includeAssets: ['icon.svg'],
+      includeAssets: ['favicon.ico', 'favicon-32.png', 'favicon-16.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'logo-mark.png', 'welcome.webp'],
       manifest: {
         name: 'Agricovi',
         short_name: 'Agricovi',
@@ -39,10 +39,14 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
-        icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+        icons: [
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,webp}'],
         // trang quản trị (/quan-tri/) là bản dựng riêng, không để app chặn điều hướng vào đó
         navigateFallbackDenylist: [/^\/quan-tri/],
       },

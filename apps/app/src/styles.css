@@ -563,3 +563,7 @@ button.range-btn:disabled { opacity: .35; cursor: default; }
   .logbook-scroll { overflow: visible; }
   .no-print { display: none !important; }
 }
+
+/* Logo thật (D75) */
+.auth-logo img { width: 56px; height: 56px; object-fit: contain; display: block; }
+.welcome-img { display: block; width: 100%; height: auto; border-radius: 16px; margin-bottom: 14px; box-shadow: var(--shadow); }

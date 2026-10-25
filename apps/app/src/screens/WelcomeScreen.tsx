@@ -32,6 +32,7 @@ export function WelcomeScreen({ isStaff = false }: { isStaff?: boolean }) {
 
   return (
     <main className="auth">
+      <img className="welcome-img" src="/welcome.webp" alt="" width="900" height="468" />
       <h1>Chào mừng!</h1>
       <p className="muted">Tài khoản: {session?.user.email}</p>
       <InvitationsPanel onChanged={() => setInvCount((n) => n)} />
