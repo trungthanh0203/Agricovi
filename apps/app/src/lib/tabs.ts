@@ -30,21 +30,36 @@ export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'ma
 export type OrgSection = 'members' | 'positions' | 'teams' | 'coop';
 export type ReportSection = 'payables' | 'sales' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist' | 'logbook';
 
+/**
+ * Chế độ đơn giản (D100): các mục NÂNG CAO bị ẩn khỏi menu cho hộ nhỏ. Chỉ là cách hiển thị: quyền và dữ liệu không đổi, chủ bật lại chế độ đầy đủ bất cứ lúc nào
+ * (Tài khoản → Chế độ hiển thị). Quy trình mẫu và Sản phẩm vẫn hiện vì cần để tạo vụ.
+ */
+export const SIMPLE_HIDDEN: Record<'production' | 'declare' | 'org' | 'reports', string[]> = {
+  production: ['attendance'],
+  declare: ['worktypes', 'partners', 'customers'],
+  org: ['positions', 'teams', 'coop'],
+  reports: ['custom', 'paybook', 'website', 'commerce', 'checklist', 'logbook'],
+};
+
+function simpleFilter<T extends string>(org: MyOrg, tab: keyof typeof SIMPLE_HIDDEN, list: Section<T>[]): Section<T>[] {
+  return org.simple ? list.filter((s) => !SIMPLE_HIDDEN[tab].includes(s.id)) : list;
+}
+
 export function productionSections(org: MyOrg | null): Section<ProductionSection>[] {
   if (!org) return [];
-  return [
+  return simpleFilter(org, 'production', [
     { id: 'cycles' as const, label: 'Mùa vụ' },
     hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,
     canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'stock' as const, label: 'Kho' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'expense' as const, label: 'Chi phí' } : null, // ghi chi phí hằng ngày: cùng nhóm với Thu hoạch, Kho (D92)
     { id: 'logs' as const, label: 'Nhật ký việc' }, // luôn để cuối
-  ].filter((x): x is Section<ProductionSection> => x !== null);
+  ].filter((x): x is Section<ProductionSection> => x !== null));
 }
 
 export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
   if (!org) return [];
-  return [
+  return simpleFilter(org, 'declare', [
     canPerm(org.perms, 'declare') ? { id: 'areas' as const, label: 'Trang trại' } : null,
     canPerm(org.perms, 'declare') ? { id: 'crops' as const, label: 'Sản phẩm' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'places' as const, label: 'Kho và đơn vị' } : null,
@@ -53,23 +68,23 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'partners' as const, label: 'Nhà cung ứng' } : null,
     canPerm(org.perms, 'sales') ? { id: 'customers' as const, label: 'Khách hàng' } : null,
-  ].filter((x): x is Section<DeclareSection> => x !== null);
+  ].filter((x): x is Section<DeclareSection> => x !== null));
 }
 
 export function orgSections(org: MyOrg | null): Section<OrgSection>[] {
   if (!org) return [];
   const manager = hasRole(org.roles, 'manager');
-  return [
+  return simpleFilter(org, 'org', [
     manager ? { id: 'teams' as const, label: 'Phòng / Tổ' } : null,
     hasRole(org.roles, 'owner') ? { id: 'positions' as const, label: 'Chức vụ' } : null,
     manager ? { id: 'members' as const, label: 'Nhân sự' } : null,
     canPerm(org.perms, 'coop') ? { id: 'coop' as const, label: org.type === 'cooperative' ? 'Hộ thành viên' : 'Hợp tác xã' } : null,
-  ].filter((x): x is Section<OrgSection> => x !== null);
+  ].filter((x): x is Section<OrgSection> => x !== null));
 }
 
 export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
   if (!org) return [];
-  return [
+  return simpleFilter(org, 'reports', [
     hasRole(org.roles, 'manager') ? { id: 'weekly' as const, label: 'Báo cáo tuần' } : null,
     REPORT_TYPES.some((t) => t.allowed(org.perms, org.roles)) ? { id: 'custom' as const, label: 'Theo nhu cầu' } : null,
     canPerm(org.perms, 'expenses') || canPerm(org.perms, 'sales') ? { id: 'payables' as const, label: 'Công nợ' } : null,
@@ -80,7 +95,7 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
     canPerm(org.perms, 'declare') ? { id: 'checklist' as const, label: 'Bảng kiểm' } : null,
     canPerm(org.perms, 'website') ? { id: 'website' as const, label: 'Đơn khách từ website' } : null,
     canPerm(org.perms, 'website') ? { id: 'commerce' as const, label: 'Hồ sơ website' } : null, // luôn để cuối
-  ].filter((x): x is Section<ReportSection> => x !== null);
+  ].filter((x): x is Section<ReportSection> => x !== null));
 }
 
 /** Các tab được hiện với người đang đăng nhập ở cơ sở đang chọn */

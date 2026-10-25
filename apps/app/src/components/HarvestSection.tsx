@@ -20,6 +20,7 @@ import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { canManageProduction } from '../lib/roles';
 import { useTable } from '../lib/tables';
+import { CycleWord } from './CycleWord';
 
 const OWN_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // khớp chính sách harvest_update_own ở máy chủ
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
@@ -112,12 +113,12 @@ export function HarvestSection() {
       ) : (
         <p className="muted">Bạn chỉ được xem thu hoạch (chủ cơ sở cấp quyền nhập liệu).</p>
       )}
-      {myCycles.length === 0 && <p className="msg warn">Chưa có vụ trồng nào. Hãy tạo vụ ở màn hình Sản xuất trước.</p>}
+      {myCycles.length === 0 && <p className="msg warn">Chưa có vụ nào. Hãy tạo vụ ở màn hình Sản xuất trước.</p>}
 
       <Collapsible inline title="Bộ lọc" summary={`${cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả vụ'}${showVoided ? ' · cả phiếu đã hủy' : ''}`}>
       <div className="filters">
           <label>
-            Vụ trồng
+            <CycleWord cap />
             <select value={cycleFilter} onChange={(e) => setCycleFilter(e.target.value)}>
               <option value="">Tất cả vụ</option>
               {myCycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
@@ -224,7 +225,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
     const bad = validateHarvest(q, l);
     if (bad) return setError(bad);
     const cycle = allCycles.find((c) => c.id === effCycleId);
-    if (!cycle) return setError('Hãy chọn vụ trồng.');
+    if (!cycle) return setError('Hãy chọn vụ.');
     const c = cnt.trim() ? Number(cnt.replace(/[.,\s]/g, '')) : null;
     if (c !== null && (!Number.isInteger(c) || c <= 0)) return setError(`Số ${unitName} phải là số nguyên lớn hơn 0.`);
     const merged = { ...initialValues(schema), ...vals };
@@ -281,7 +282,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
           <p className="muted">{cycleLabel(editing.cycle_id)} — không đổi được vụ; muốn đổi hãy hủy phiếu và ghi lại. Mọi thay đổi được lưu lịch sử.</p>
         ) : (
           <label>
-            Vụ trồng
+            <CycleWord cap />
             <select value={effCycleId} onChange={(e) => setCycleId(e.target.value)}>
               {ordered.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
             </select>

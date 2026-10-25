@@ -272,3 +272,8 @@ Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng m�
 2. Khai báo → Đầu việc → áp dụng gói "Heo thịt" (có việc **Cân heo** và **Cho ăn**). Ghi việc "Cho ăn" kèm cám ở ô "Vật tư đã dùng".
 3. Ghi "Cân heo" (số con cân, cân nặng TB) ít nhất 2 lần ở 2 ngày khác nhau (ví dụ lúc nhập và 30 ngày sau).
 4. Chi tiết vụ → **Tăng trọng và FCR**: xem g/con/ngày, FCR và cám trên mỗi kg xuất bán.
+
+## Thử chế độ đơn giản (cần `db push` 0089)
+1. Chủ cơ sở: Tài khoản → **Chế độ hiển thị** → chọn **Đơn giản**. Mở lại app: menu Khai báo, Tổ chức, Báo cáo, Sản xuất gọn hơn (ẩn Đầu việc, Nhà cung ứng, Chấm công, Chức vụ, Bảng lương, Bảng kiểm, Sổ nhật ký…).
+2. Tạo vụ vẫn dùng được (Quy trình mẫu, Sản phẩm vẫn hiện). Chọn lại **Đầy đủ** để hiện lại mọi mục.
+3. Vụ heo: form Sửa vụ có nhãn "Diện tích chuồng", "Ngày nhập chuồng", "Giống / dòng"; cơ sở chỉ nuôi gọi là "lứa nuôi" thay vì "vụ trồng".

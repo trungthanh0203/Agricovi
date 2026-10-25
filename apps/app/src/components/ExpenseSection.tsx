@@ -14,6 +14,7 @@ import { formatMoney, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { useTable } from '../lib/tables';
+import { CycleWord } from './CycleWord';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 
@@ -94,7 +95,7 @@ export function ExpenseSection() {
       <Collapsible inline title="Bộ lọc" summary={`${cycleFilter === 'none' ? 'Chi phí chung' : cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả'}${showVoided ? ' · cả khoản đã hủy' : ''}`}>
       <div className="filters">
           <label>
-            Vụ trồng
+            <CycleWord cap />
             <select value={cycleFilter} onChange={(e) => setCycleFilter(e.target.value)}>
               <option value="">Tất cả</option>
               <option value="none">Chi phí chung (không gắn vụ)</option>

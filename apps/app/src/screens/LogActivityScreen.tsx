@@ -15,6 +15,7 @@ import { hasRole } from '../lib/roles';
 import { useTable } from '../lib/tables';
 import { VoiceNote } from '../components/VoiceNote';
 import { LotPicker } from '../components/LotPicker';
+import { CycleWord } from '../components/CycleWord';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 const LAST_LOCATION_KEY = 'agriconnect.lastLocation'; // dùng chung với màn nhập kho
@@ -220,7 +221,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
             </label>
           ) : (
           <label>
-            Vụ trồng
+            <CycleWord cap />
             <select value={effectiveCycleId} onChange={(e) => { setCycleId(e.target.value); setStageSel(undefined); }}>
               {options.map((c) => (
                 <option key={c.id} value={c.id}>

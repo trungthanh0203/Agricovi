@@ -98,7 +98,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
       <p className="muted">Mã vụ: <strong>{cycleCode(cycleId)}</strong></p>
       <p className="muted">Quy trình: {cycle.template_name ?? 'không có (vụ cũ)'}{cycle.template_version ? ` · bản ${cycle.template_version}` : ''}</p>
       {cycle.note && <p>{cycle.note}</p>}
-      {isOwner(active?.roles) && cycle.owner_org_id === active?.id && (
+      {isOwner(active?.roles) && cycle.owner_org_id === active?.id && !active?.simple && (
         <Collapsible title="Mở công khai website" summary="chủ cơ sở tự chọn công khai">
           <PublishCycle cycleId={cycleId} />
         </Collapsible>
@@ -120,7 +120,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
 
       {active && <CycleCounts cycleId={cycleId} canManage={canManage} userId={session?.user.id} online={online} today={today} />}
 
-      {active && <CycleGrowth cycleId={cycleId} />}
+      {active && !active.simple && <CycleGrowth cycleId={cycleId} />}
 
       {active && <IncidentsSection cycleId={cycleId} orgId={active.id} stages={stages} canManage={canManage} userId={session?.user.id} online={online} today={today} />}
 

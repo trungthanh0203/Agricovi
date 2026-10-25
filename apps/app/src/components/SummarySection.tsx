@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { cycleCountUnit } from '../lib/countUnit';
+import { infoLabels } from '../lib/terms';
 import { AREA_UNITS, fmtArea, getAreaUnit } from '../lib/areaUnits';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { ChartCard, DonutChart, HBarList } from './charts';
@@ -10,6 +11,7 @@ import { useOrgs } from '../lib/orgs';
 import { countPendingForSummary, downloadCsv, fetchCycleSummary, getCachedSummary } from '../lib/summary';
 import { buildSummaryCsv, canCompare, summaryNotes, vnNumber, type CycleSummary } from '../lib/summaryReport';
 import { useTable } from '../lib/tables';
+import { CycleWord } from './CycleWord';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 
@@ -95,7 +97,7 @@ export function SummarySection() {
   }, [outbox, load]);
 
   if (!active) return null;
-  if (ordered.length === 0) return <p className="muted">Chưa có vụ trồng nào của cơ sở này để tổng kết.</p>;
+  if (ordered.length === 0) return <p className="muted">Chưa có vụ nào của cơ sở này để tổng kết.</p>;
 
   const notes = summary ? summaryNotes(summary, pending) : [];
   const compare = summary ? canCompare(summary) : false;
@@ -112,7 +114,7 @@ export function SummarySection() {
   return (
     <>
       <label>
-        Vụ trồng
+        <CycleWord cap />
         <select value={cycleId} onChange={(e) => setPicked(e.target.value)}>
           {ordered.map((c) => <option key={c.id} value={c.id}>{label(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
         </select>
@@ -179,7 +181,7 @@ export function SummarySection() {
           {areaM2 ? (
             <div className="card">
               <h2>Diện tích và năng suất</h2>
-              <Row k="Diện tích trồng" v={fmtArea(areaM2, areaUnit)} />
+              <Row k={infoLabels(cropTypes.find((t) => t.id === cycleRow?.crop_type_id)?.kind).area} v={fmtArea(areaM2, areaUnit)} />
               {cycleRow?.plant_count ? <Row k={`Số ${cnt}`} v={`${cycleRow.plant_count.toLocaleString('vi-VN')} (${Math.round((cycleRow.plant_count / areaM2) * 1000).toLocaleString('vi-VN')} ${cnt}/1.000 m²)`} /> : null}
               {cycleRow?.variety_name ? <Row k="Giống" v={cycleRow.variety_name} /> : null}
               <Row k={`Năng suất (kg / ${perLabel})`} v={vnNumber((summary.harvested_net_qty / areaM2) * 1000 * f)} />

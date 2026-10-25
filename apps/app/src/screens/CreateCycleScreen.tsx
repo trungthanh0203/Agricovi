@@ -210,7 +210,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
 
           {rest && <p className="msg warn" role="status">{rest}</p>}
 
-          <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultCountUnit(cropTypes.find((c) => c.id === chosenTemplate?.crop_type_id)?.kind)} />
+          <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultCountUnit(cropTypes.find((c) => c.id === chosenTemplate?.crop_type_id)?.kind)} kind={cropTypes.find((c) => c.id === chosenTemplate?.crop_type_id)?.kind} />
 
           <div className="pair">
             <label>Sản lượng dự kiến (kg)<input value={targetYield} inputMode="numeric" onChange={(e) => setTargetYield(e.target.value)} placeholder="Không bắt buộc" /></label>

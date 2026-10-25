@@ -24,6 +24,8 @@ import { canManageProduction, isOwner } from '../lib/roles';
 import { deleteCycle, editCycle, fetchQuotaContexts, setCycleInfo, setCyclePlan, setCycleStatus, type CropInfo, type QuotaContext } from '../lib/production';
 import type { CycleRow } from '../lib/db';
 import { cycleCountUnit } from '../lib/countUnit';
+import { CycleWord } from '../components/CycleWord';
+import { infoLabels } from '../lib/terms';
 import { productionSections, type ProductionSection, type TabId } from '../lib/tabs';
 import { useTable } from '../lib/tables';
 
@@ -74,8 +76,8 @@ const GROUPS: { id: CycleGroup; label: string; statuses: CycleStatus[] }[] = [
 ];
 
 /** Sửa nhanh thông tin vụ: tên, ngày bắt đầu, ghi chú */
-function CycleEditForm({ cycle, busy, defaultUnit, onSave, onClose }: {
-  cycle: CycleRow; busy: boolean; defaultUnit: string;
+function CycleEditForm({ cycle, busy, defaultUnit, kind, onSave, onClose }: {
+  cycle: CycleRow; busy: boolean; defaultUnit: string; kind?: 'crop' | 'livestock' | 'other';
   onSave: (v: { name: string; start_date: string | null; note: string; targetYield: number | null; budget: number | null; info: CropInfo }) => Promise<void>; onClose: () => void;
 }) {
   const [name, setName] = useState(cycle.name ?? '');
@@ -91,7 +93,7 @@ function CycleEditForm({ cycle, busy, defaultUnit, onSave, onClose }: {
       <label>Tên vụ<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
       <label>Ngày bắt đầu<input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></label>
       <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
-      <CycleInfoFields value={info} onChange={setInfo} defaultUnit={defaultUnit} />
+      <CycleInfoFields value={info} onChange={setInfo} defaultUnit={defaultUnit} kind={kind} />
       <div className="pair">
         <label>Sản lượng dự kiến (kg)<input value={target} inputMode="numeric" onChange={(e) => setTarget(e.target.value)} placeholder="Không bắt buộc" /></label>
         <label>Ngân sách dự kiến (đồng)<input value={budget} inputMode="numeric" onChange={(e) => setBudget(e.target.value)} placeholder="Không bắt buộc" /></label>
@@ -187,7 +189,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
 
   return (
     <>
-      {myCycles.length === 0 && <p className="muted">Tạo vụ trồng trước để bắt đầu ghi nhật ký.</p>}
+      {myCycles.length === 0 && <p className="muted">Tạo vụ trước để bắt đầu ghi nhật ký.</p>}
       {myCycles.length > 0 && !myCycles.some((c) => c.status === 'active') && (
         <p className="muted">Chỉ vụ đang sản xuất mới ghi việc được. Hãy bấm "Bắt đầu sản xuất" hoặc "Tiếp tục" ở vụ bên dưới.</p>
       )}
@@ -195,10 +197,10 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
       {!online && canManage && <p className="msg warn" role="status">Đang offline: tạo vụ và đổi trạng thái cần có mạng.</p>}
       {actionError && <p className="msg error" role="alert">{actionError}</p>}
       <div className="sect-row">
-        <h2 className="sect">Vụ trồng ({myCycles.length})</h2>
+        <h2 className="sect"><CycleWord cap /> ({myCycles.length})</h2>
         {canManage && hasAreas && <button className="chip add" onClick={onCreateCycle} disabled={!online}>+ Tạo vụ mới</button>}
       </div>
-      {myCycles.length === 0 && <p className="muted">Chưa có vụ trồng nào.</p>}
+      {myCycles.length === 0 && <p className="muted">Chưa có vụ nào.</p>}
       {(myCycles.length > 0 || (canManage && hasAreas)) && (
         <div className="chips" role="tablist" aria-label="Nhóm vụ theo trạng thái">
           {GROUPS.map((g) => (
@@ -237,18 +239,18 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
                 </p>
               </>
             )}
-            {hasAnyStat(statById.get(c.id)) && <CycleStatsStrip s={statById.get(c.id)!} countUnit={cycleCountUnit(c, cropTypes)} />}
+            {hasAnyStat(statById.get(c.id)) && <CycleStatsStrip s={statById.get(c.id)!} countUnit={cycleCountUnit(c, cropTypes)} areaLabel={infoLabels(cropTypes.find((t) => t.id === c.crop_type_id)?.kind).area} />}
             <div className="actions">
               <button className="secondary" onClick={() => onOpenCycle(c.id)}>Quy trình &amp; Lịch</button>
               <button className="secondary" aria-expanded={qrId === c.id} onClick={() => setQrId(qrId === c.id ? null : c.id)}>{qrId === c.id ? 'Ẩn mã QR' : 'Mã QR của vụ'}</button>
-              {isOwner(active.roles) && c.owner_org_id === active.id && (
+              {isOwner(active.roles) && c.owner_org_id === active.id && !active.simple && (
                 <button className="secondary" aria-expanded={pubId === c.id} onClick={() => setPubId(pubId === c.id ? null : c.id)}>{pubId === c.id ? 'Ẩn mục công khai' : '🌐 Mở công khai website'}</button>
               )}
             </div>
             {pubId === c.id && <PublishCycle cycleId={c.id} />}
             {qrId === c.id && <CycleQr cycleId={c.id} label={c.name || cropName(c.crop_type_id)} />}
             {editId === c.id && (
-              <CycleEditForm cycle={c} busy={!online} defaultUnit={cycleCountUnit({ crop_type_id: c.crop_type_id, count_unit: null }, cropTypes)} onClose={() => setEditId(null)}
+              <CycleEditForm cycle={c} busy={!online} defaultUnit={cycleCountUnit({ crop_type_id: c.crop_type_id, count_unit: null }, cropTypes)} kind={cropTypes.find((t) => t.id === c.crop_type_id)?.kind} onClose={() => setEditId(null)}
                 onSave={async (v) => {
                   await editCycle(c.id, { name: v.name, start_date: v.start_date, note: v.note });
                   if (v.targetYield !== (c.target_yield_kg ?? null) || v.budget !== (c.budget_amount ?? null)) await setCyclePlan(c.id, v.targetYield, v.budget);

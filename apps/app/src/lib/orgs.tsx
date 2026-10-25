@@ -18,6 +18,8 @@ export interface MyOrg {
   allowedWorkTypes?: string[] | null;
   /** Được bắt đầu/hoàn thành/sửa giai đoạn nhờ chức vụ */
   canManageStages?: boolean;
+  /** Chế độ đơn giản (D100): ẩn các mục nâng cao cho hộ nhỏ; chỉ là cách hiển thị, quyền và dữ liệu không đổi */
+  simple?: boolean;
 }
 
 interface PositionRow {
@@ -101,7 +103,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     try {
       if (!supabase || !navigator.onLine) throw new Error('offline');
       // hai truy vấn không phụ thuộc nhau nên gửi cùng lúc
-      const [memRes, posRes, labelRes] = await Promise.all([
+      const [memRes, posRes, labelRes, modeRes] = await Promise.all([
         supabase
           .from('organization_memberships')
           .select('roles, permissions, position_ids, organizations ( id, type, name )')
@@ -113,7 +115,10 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         supabase.from('org_positions').select('id, organization_id, name, perms, work_type_ids, can_manage_stages, base_role, is_builtin').eq('is_active', true),
         // tên vai trò do quản trị nền tảng đặt (D82)
         supabase.from('platform_role_labels').select('role, name'),
+        // chế độ hiển thị của cơ sở (cột mới; lỗi/thiếu cột thì coi như đầy đủ)
+        supabase.from('organizations').select('id, ui_mode'),
       ]);
+      const simpleOrgs = new Set(modeRes.error ? [] : ((modeRes.data ?? []) as { id: string; ui_mode: string }[]).filter((r) => r.ui_mode === 'simple').map((r) => r.id));
       const { data, error } = memRes;
       if (error) throw error;
       if (!labelRes.error && labelRes.data) saveRoleLabels(Object.fromEntries((labelRes.data as { role: string; name: string }[]).map((r) => [r.role, r.name])));
@@ -136,6 +141,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           positions: mine.map((p) => ({ id: p.id, name: p.name })),
           allowedWorkTypes: restricted ? [...new Set(rule.flatMap((p) => p.work_type_ids ?? []))] : null,
           canManageStages: [...mine, ...builtinHeld].some((p) => p.can_manage_stages),
+          simple: simpleOrgs.has(o.id),
         }];
       });
       list.sort((a, b) => a.name.localeCompare(b.name, 'vi'));

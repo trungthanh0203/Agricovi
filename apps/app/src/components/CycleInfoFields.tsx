@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AutoTextarea } from './AutoTextarea';
 import { Collapsible } from './Collapsible';
+import { infoLabels, type ProductKind } from '../lib/terms';
 import { AREA_UNITS, fromM2, getAreaUnit, parseDecimal, setAreaUnit, toM2 } from '../lib/areaUnits';
 import type { CropInfo } from '../lib/production';
 
@@ -31,7 +32,8 @@ export function formToCropInfo(f: CropInfoForm): { info: CropInfo } | { error: s
 }
 
 /** Các ô giống, diện tích, số cây, nguồn giống, ngày gieo/trồng của vụ (không bắt buộc). Dùng khi tạo vụ và sửa vụ. */
-export function CycleInfoFields({ value, onChange, defaultUnit = 'cây' }: { value: CropInfoForm; onChange: (v: CropInfoForm) => void; defaultUnit?: string }) {
+export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind }: { value: CropInfoForm; onChange: (v: CropInfoForm) => void; defaultUnit?: string; kind?: ProductKind }) {
+  const L = infoLabels(kind);
   const cnt = value.countUnit.trim() || defaultUnit;
   const [, force] = useState(0);
   const set = (patch: Partial<CropInfoForm>) => onChange({ ...value, ...patch });
@@ -42,7 +44,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây' }: { val
   return (
     <>
       <div className="pair">
-        <label>Diện tích trồng<input value={value.area} inputMode="decimal" onChange={(e) => set({ area: e.target.value })} placeholder="Không bắt buộc" /></label>
+        <label>{L.area}<input value={value.area} inputMode="decimal" onChange={(e) => set({ area: e.target.value })} placeholder="Không bắt buộc" /></label>
         <label>Đơn vị
           <select value={value.unit} onChange={(e) => {
             // đổi đơn vị thì quy đổi lại số đang nhập để diện tích thực không đổi
@@ -72,12 +74,12 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây' }: { val
         <label>Điện thoại<input value={value.supPhone} maxLength={30} inputMode="tel" onChange={(e) => set({ supPhone: e.target.value })} /></label>
       </div>
       </Collapsible>
-      <label>Giống<AutoTextarea value={value.variety} maxLength={120} onChange={(v) => set({ variety: v })} placeholder="Ví dụ: Dưa lưới Kim Cô Nương" /></label>
-      <label>Nguồn giống (nơi mua, nhà cung cấp)<AutoTextarea value={value.source} maxLength={200} onChange={(v) => set({ source: v })} /></label>
-      <label>Số lô giống<input value={value.lot} maxLength={80} onChange={(e) => set({ lot: e.target.value })} /></label>
+      <label>{L.variety}<AutoTextarea value={value.variety} maxLength={120} onChange={(v) => set({ variety: v })} placeholder={L.varietyHint} /></label>
+      <label>{L.source}<AutoTextarea value={value.source} maxLength={200} onChange={(v) => set({ source: v })} /></label>
+      <label>{L.lot}<input value={value.lot} maxLength={80} onChange={(e) => set({ lot: e.target.value })} /></label>
       <div className="pair">
-        <label>Ngày gieo<input type="date" value={value.sowing} onChange={(e) => set({ sowing: e.target.value })} /></label>
-        <label>Ngày trồng<input type="date" value={value.planting} min={value.sowing || undefined} onChange={(e) => set({ planting: e.target.value })} /></label>
+        <label>{L.sowing}<input type="date" value={value.sowing} onChange={(e) => set({ sowing: e.target.value })} /></label>
+        <label>{L.planting}<input type="date" value={value.planting} min={value.sowing || undefined} onChange={(e) => set({ planting: e.target.value })} /></label>
       </div>
     </>
   );

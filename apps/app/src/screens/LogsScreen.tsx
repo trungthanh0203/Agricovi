@@ -12,6 +12,7 @@ import { loadOlderLogs, voidLog } from '../lib/production';
 import { EditLogScreen } from './EditLogScreen';
 import { summarizeFields } from '../lib/fieldsLogic';
 import { useTable } from '../lib/tables';
+import { CycleWord } from '../components/CycleWord';
 
 const PAGE = 30;
 const OWN_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // khớp chính sách logs_update_own ở máy chủ
@@ -131,7 +132,7 @@ export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedde
 
       <div className="filters">
         <label>
-          Vụ trồng
+          <CycleWord cap />
           <select value={cycleId} onChange={(e) => { setCycleId(e.target.value); setLimit(PAGE); }}>
             <option value="">Tất cả vụ</option>
             {myCycles.map((c) => (
