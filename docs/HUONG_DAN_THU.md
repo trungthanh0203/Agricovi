@@ -266,3 +266,9 @@ Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng m�
 2. Mở **Còn thiếu gì trước khi nộp**: app liệt kê thiếu mã vụ, người phụ trách, thuốc chưa ghi hoạt chất/cách ly, thu hoạch trong thời gian cách ly, chưa Brix, sự cố còn mở, mốc quá hạn…
 3. Bấm **In sổ** (chọn khổ A4 ngang) hoặc **Tải file Excel** (mở bằng Excel; ngăn cách bằng dấu chấm phẩy, tiếng Việt có dấu).
 4. Bảng kiểm: Báo cáo → Bảng kiểm → lấy thêm bộ **dưa lưới** (18 tiêu chí) nếu hộ trồng dưa.
+
+## Thử P3: tăng trọng và FCR (cần `db push` 0088, vụ vật nuôi, có mạng)
+1. Vật tư cám: Khai báo → Vật tư → sửa → *Nhóm vật tư* = **Thức ăn**, đơn vị **kg**.
+2. Khai báo → Đầu việc → áp dụng gói "Heo thịt" (có việc **Cân heo** và **Cho ăn**). Ghi việc "Cho ăn" kèm cám ở ô "Vật tư đã dùng".
+3. Ghi "Cân heo" (số con cân, cân nặng TB) ít nhất 2 lần ở 2 ngày khác nhau (ví dụ lúc nhập và 30 ngày sau).
+4. Chi tiết vụ → **Tăng trọng và FCR**: xem g/con/ngày, FCR và cám trên mỗi kg xuất bán.

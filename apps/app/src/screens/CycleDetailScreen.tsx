@@ -5,6 +5,7 @@ import { CycleCalendar } from '../components/CycleCalendar';
 import { Collapsible } from '../components/Collapsible';
 import { CycleQr } from '../components/CycleQr';
 import { CycleCounts } from '../components/CycleCounts';
+import { CycleGrowth } from '../components/CycleGrowth';
 import { CycleMilestones } from '../components/MilestonePanels';
 import { IncidentsSection } from '../components/IncidentsSection';
 import { useTable } from '../lib/tables';
@@ -118,6 +119,8 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
       {cycle && <CycleMilestones cycle={cycle} canManage={canManage} canMark={Boolean(session)} />}
 
       {active && <CycleCounts cycleId={cycleId} canManage={canManage} userId={session?.user.id} online={online} today={today} />}
+
+      {active && <CycleGrowth cycleId={cycleId} />}
 
       {active && <IncidentsSection cycleId={cycleId} orgId={active.id} stages={stages} canManage={canManage} userId={session?.user.id} online={online} today={today} />}
 
