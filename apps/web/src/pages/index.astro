@@ -103,16 +103,16 @@ try {
       {hero.length === 0 && (
         <div class="slide fallback">
           <div class="herotop">
-            <h1>Tìm nơi trồng, sản phẩm và nguồn gốc nông sản</h1>
+            <h1>{chrome.settings.brand.hero_title}</h1>
             <img class="herologo" src="/brand/logo-horizontal.webp" alt={brand} height="30" />
           </div>
           <div class="heromid">
-            <p>Danh bạ nhà cung cấp đã được kiểm duyệt, tình trạng cung ứng cập nhật thường xuyên và truy xuất nguồn gốc từng mùa vụ.</p>
-            <a class="btn cta1" href="/danh-ba/">Xem nhà cung cấp</a>
+            <p>{chrome.settings.brand.hero_text}</p>
+            <a class="btn cta1" href="/danh-ba/">{chrome.settings.brand.hero_button}</a>
           </div>
           <div class="herotrade">
             <a class="btn cta3" href="/giao-thuong/">🤝 Giao thương</a>
-            <p>Đăng tin cần mua, cần bán và trao đổi trực tiếp với người mua, nhà cung cấp đã đăng ký. Liên hệ chỉ mở khi hai bên cùng đồng ý.</p>
+            <p>{chrome.settings.brand.hero_trade}</p>
           </div>
         </div>
       )}
