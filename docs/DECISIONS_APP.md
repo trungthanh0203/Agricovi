@@ -1,5 +1,68 @@
 # Quyết định riêng của APP quản lý cơ sở (và trang quản trị nền tảng)
 
+> **Mục lục nhanh** (mỗi quyết định một dòng; muốn chi tiết thì tìm `| Dnn |` bằng Grep rồi đọc đúng dòng đó, đừng đọc cả file):
+- D15: Bước B:
+- D16: Nhiều vai trò/người
+- D17: Tổ trưởng là chỉ định theo tổ
+- D19: Giá vốn vật tư xuất dùng = bình quân gia quyền
+- D20: Thu hoạch
+- D31: Giai đoạn của quy trình mẫu chọn từ danh mục việc
+- D32: Mục có sẵn cũng sửa/dừng được theo từng cơ sở
+- D33: Mọi đối tượng khai báo có thêm "Mô tả"
+- D34: Tạo vụ BẮT BUỘC theo quy trình mẫu và giám sát vụ theo đúng quy trình đó (P2)
+- D35: Quản lý vụ đã tạo
+- D36: Vật tư tạo sẵn và có thông tin mở rộng
+- D37: Dùng chung cho trồng trọt và chăn nuôi
+- D38: Chọn mọi tổ khi tạo nhân viên/người lao động, kể cả tổ chưa có tổ trưởng
+- D39: Vật tư và Kho tách mục riêng trong Khai báo
+- D40: Hồ sơ đầy đủ (P4)
+- D41: Trang chủ thống kê (P5 phần số liệu)
+- D42: Chấm công và tiền công, lát 1 (bước E)
+- D43: Chấm công, lát 2 (bước E)
+- D44: Chức vụ do chủ định nghĩa (P3) và chấm công cho chủ
+- D45: Thanh trên có tên người dùng + Đăng xuất + biểu tượng mạng
+- D46: Giao diện và Nhân sự
+- D47: Chấm công, phần còn lại của bước E
+- D48: Báo cáo theo nhu cầu (P6)
+- D49: Danh mục VAI TRÒ thống nhất
+- D50: Mã QR, giấy phép/chứng chỉ, Hồ sơ thu gọn
+- D51: Menu dọc thay thanh mục ngang
+- D52: Sản xuất gọn hơn, Trang chủ có mục "Cần làm"
+- D53: Trang quản trị nền tảng, giai đoạn 1
+- D54: Trang quản trị nằm chung dự án Cloudflare với app
+- D55: Giai đoạn 2 — soạn và xuất bản hồ sơ thương mại trong app
+- D56: Hồ sơ website chuyển sang tab Báo cáo
+- D24: Phạm vi offline
+- D25: Ghi việc chỉ cho vụ "Đang sản xuất"
+- D27: Chủ cơ sở cấp quyền theo MỤC cho từng người
+- D28: Bố cục 6 tab
+- D29: Xóa hết dữ liệu thử trước khi làm bố cục mới
+- D74: Giao diện app v2, cùng bảng màu với website (23/10/2026)
+- D75: G2-1: kho ảnh riêng cho ảnh vận hành của app (23/10/2026)
+- D76: G2-2: nhà cung ứng, hóa đơn mua, công nợ phải trả (23/10/2026)
+- D77: G2-4: khách hàng và công nợ phải thu (23/10/2026)
+- D78: G2-5: đơn và khách từ website xử lý ngay trong app (23/10/2026)
+- D79: Biểu đồ (G2-7, làm trước thông báo và giao việc) (23/10/2026)
+- D80: Báo cáo tuần (G2-7 N4, làm sau biểu đồ) (23/10/2026)
+- D81: Hướng dẫn sử dụng và Chia sẻ hệ thống (24/10/2026)
+- D82: Tài khoản, giấy phép, tên vai trò, sơ đồ hướng dẫn (24/10/2026)
+- D83: Chỉ 3 vai trò + chức vụ + giao trang trại (24/10/2026)
+- D84: Chức vụ có vai trò; mỗi người một chức vụ (24/10/2026)
+- D85: Nhân sự theo từng người (V2) (24/10/2026)
+- D86: Trả công theo từng người, thưởng/phạt, phiếu lương (V3) (24/10/2026)
+- D87: Bảng lương theo người (giai đoạn 1–2) (24/10/2026)
+- D88: Bảng lương giai đoạn 3 (24/10/2026)
+- D89: Chốt lương gộp vào Bảng lương (A+B) (24/10/2026)
+- D90: Bảng lương giai đoạn C (24/10/2026)
+- D91: Lịch giai đoạn của vụ tự đổi theo thực tế (24/10/2026)
+- D92: Mã vụ cạnh tên vụ; Chi phí chuyển sang tab Sản xuất (24/10/2026)
+- D93: Kế hoạch vụ và dòng thống kê trong danh sách mùa vụ (25/10/2026)
+- D94: Đợt 1 trồng trọt, T1: giống, diện tích và năng suất theo diện tích (25/10/2026)
+- D95: Đợt 1 trồng trọt, T3: sự cố và việc khắc phục (25/10/2026)
+- D96: Đợt 1 trồng trọt, T2: FORM ĐỘNG + thời gian cách ly + bộ mẫu theo loại hình + dữ liệu mẫu 
+- D97: Hướng tổng thể trồng trọt + chăn nuôi (25/10/2026)
+- D98: Duyệt kế hoạch P1 (25/10/2026)
+
 Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DECISIONS_WEB.md`. Mục **[GIẢ ĐỊNH]** chờ chủ sản phẩm xác nhận.
 
 | # | Quyết định | Ngày | Nguồn | Tác động |

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AutoTextarea } from './AutoTextarea';
+import { Collapsible } from './Collapsible';
 import { AREA_UNITS, fromM2, getAreaUnit, parseDecimal, setAreaUnit, toM2 } from '../lib/areaUnits';
 import type { CropInfo } from '../lib/production';
 
@@ -58,6 +59,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây' }: { val
         <label>Số {cnt}<input value={value.plants} inputMode="numeric" onChange={(e) => set({ plants: e.target.value })} placeholder="Không bắt buộc" /></label>
         <label>Mật độ<input value={density !== null ? `${density.toLocaleString('vi-VN')} ${cnt}/1.000 m²` : ''} readOnly placeholder="Tự tính" /></label>
       </div>
+      <Collapsible inline title="＋ Thông tin quản lý (không bắt buộc)" summary={[value.code, value.countUnit, value.supName].filter(Boolean).join(' · ') || undefined}>
       <div className="pair">
         <label>Mã vụ / mã lô<input value={value.code} maxLength={40} onChange={(e) => set({ code: e.target.value })} placeholder="Ví dụ: LO-THIT-10" /></label>
         <label>Đơn vị đếm
@@ -69,6 +71,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây' }: { val
         <label>Cán bộ kỹ thuật / thú y phụ trách<input value={value.supName} maxLength={120} onChange={(e) => set({ supName: e.target.value })} placeholder="Không bắt buộc" /></label>
         <label>Điện thoại<input value={value.supPhone} maxLength={30} inputMode="tel" onChange={(e) => set({ supPhone: e.target.value })} /></label>
       </div>
+      </Collapsible>
       <label>Giống<AutoTextarea value={value.variety} maxLength={120} onChange={(v) => set({ variety: v })} placeholder="Ví dụ: Dưa lưới Kim Cô Nương" /></label>
       <label>Nguồn giống (nơi mua, nhà cung cấp)<AutoTextarea value={value.source} maxLength={200} onChange={(v) => set({ source: v })} /></label>
       <label>Số lô giống<input value={value.lot} maxLength={80} onChange={(e) => set({ lot: e.target.value })} /></label>
