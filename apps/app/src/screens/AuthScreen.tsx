@@ -83,7 +83,7 @@ export function AuthScreen() {
     <div className="authpage">
       <header className="auth-hero">
         <span className="auth-logo" aria-hidden>🌱</span>
-        <h1>AgriConnect</h1>
+        <h1>Agricovi</h1>
         <p>Quản lý nuôi trồng đơn giản, kết nối nông sản</p>
       </header>
 

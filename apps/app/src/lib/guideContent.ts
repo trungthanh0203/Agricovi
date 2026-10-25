@@ -40,10 +40,10 @@ export const GUIDES: Guide[] = [
       { title: 'Dùng hằng ngày', tone: 'info', nodes: [{ icon: '🧭', label: 'Thanh dưới và menu ☰', step: 2 }, { icon: '📶', label: 'Mất mạng vẫn ghi', step: 3 }, { icon: '🛡️', label: 'Ai làm được gì', step: 4 }] },
       { title: 'Yên tâm và cài đặt', tone: 'neutral', nodes: [{ icon: '🔒', label: 'Dữ liệu riêng tư', step: 5 }, { icon: '📲', label: 'Cài lên điện thoại', step: 6 }] },
     ],
-    intro: 'AgriConnect là app giúp bạn ghi chép và quản lý nuôi trồng ngay trên điện thoại, thay cho sổ tay. Đọc nhanh 7 ý dưới đây, bấm vào từng ý để xem thêm.',
+    intro: 'Agricovi là app giúp bạn ghi chép và quản lý nuôi trồng ngay trên điện thoại, thay cho sổ tay. Đọc nhanh 7 ý dưới đây, bấm vào từng ý để xem thêm.',
     steps: [
       {
-        title: 'AgriConnect giúp được gì cho bạn',
+        title: 'Agricovi giúp được gì cho bạn',
         details: [
           'Ghi nhật ký việc hằng ngày: bón phân, tưới, phun thuốc, chăm sóc… ai làm, làm lúc nào.',
           'Theo dõi vật tư trong kho, chi phí, doanh thu, thu hoạch và công nợ.',

@@ -130,7 +130,7 @@ export function ResetPasswordButton({ org, userId, onDone }: { org: MyOrg; userI
 
 export function CredentialsCard({ creds, onClose }: { creds: StaffCredentials; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
-  const text = `Đăng nhập AgriConnect\nSố điện thoại: ${creds.phone}\nMật khẩu tạm: ${creds.temp_password}`;
+  const text = `Đăng nhập Agricovi\nSố điện thoại: ${creds.phone}\nMật khẩu tạm: ${creds.temp_password}`;
   async function copy() {
     try {
       await navigator.clipboard.writeText(text);

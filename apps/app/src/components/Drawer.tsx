@@ -98,7 +98,7 @@ export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, 
             <span className="drawer-ico" aria-hidden>🚪</span>
             <span className="grow"><strong>Đăng xuất</strong></span>
           </button>
-          <p className="muted drawer-ver">AgriConnect · {__APP_VERSION__}</p>
+          <p className="muted drawer-ver">Agricovi · {__APP_VERSION__}</p>
         </div>
       </aside>
     </div>

@@ -4,7 +4,7 @@ export function SetupNotice() {
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
   return (
     <main className="auth">
-      <h1>AgriConnect</h1>
+      <h1>Agricovi</h1>
       <p className="msg warn" role="alert">
         Ứng dụng chưa được nối với máy chủ Supabase.
       </p>

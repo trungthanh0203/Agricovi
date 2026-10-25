@@ -6,7 +6,7 @@ import { AuditPage, OrgDetailPage, OrgsPage, OverviewPage, PaymentsPage, PlansPa
 import '@agriconnect/admin-kit/src/styles.css';
 
 /**
- * Trang quản trị NỀN TẢNG AgriConnect (D53): cơ sở, gói, thanh toán, cấu hình, nhật ký kiểm toán. Chỉ tài khoản có tên trong bảng
+ * Trang quản trị NỀN TẢNG Agricovi (D53): cơ sở, gói, thanh toán, cấu hình, nhật ký kiểm toán. Chỉ tài khoản có tên trong bảng
  * quản trị viên vào được; quyền kiểm ở CSDL (mọi hàm admin_* đều kiểm lại). Quản trị viên chỉ xem số liệu tổng hợp, không đọc dữ liệu
  * vận hành của nhà vườn.
  * Từ D63, nội dung và kiểm duyệt WEBSITE (bài viết, vật tư, banner, duyệt hồ sơ, vụ công khai…) nằm ở trang quản trị website riêng (apps/webadmin).
@@ -38,7 +38,7 @@ function Login() {
   }
   return (
     <main className="login">
-      <h1>AgriConnect — Quản trị nền tảng</h1>
+      <h1>Agricovi — Quản trị nền tảng</h1>
       <form className="form" onSubmit={(e) => void submit(e)}>
         <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" /></label>
         <label>Mật khẩu<input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" /></label>
@@ -58,7 +58,7 @@ function Admin({ session }: { session: Session }) {
   return (
     <div className="shell">
       <aside>
-        <h1>AgriConnect<br /><small>Quản trị nền tảng</small></h1>
+        <h1>Agricovi<br /><small>Quản trị nền tảng</small></h1>
         <nav>
           {PAGES.map((p) => (
             <button key={p.id} className={page === p.id ? 'active' : ''} onClick={() => go(p.id)}><span>{p.icon}</span> {p.label}</button>

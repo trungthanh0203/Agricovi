@@ -7,7 +7,7 @@ export const APP_SHARE_URL = window.location.origin;
 export async function shareSystem(): Promise<string> {
   const text = buildShareText(APP_SHARE_URL);
   try {
-    if (navigator.share) { await navigator.share({ title: 'AgriConnect', text }); return ''; }
+    if (navigator.share) { await navigator.share({ title: 'Agricovi', text }); return ''; }
     await navigator.clipboard.writeText(text);
     return 'Đã chép lời giới thiệu, dán vào Zalo hoặc tin nhắn để gửi.';
   } catch {

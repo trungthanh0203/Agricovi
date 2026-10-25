@@ -31,8 +31,8 @@ export default defineConfig({
       registerType: 'autoUpdate', // bản mới tự thay âm thầm, có hiệu lực ở lần mở app kế tiếp (không hiện thông báo, không tự tải lại giữa lúc nhập)
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'AgriConnect',
-        short_name: 'AgriConnect',
+        name: 'Agricovi',
+        short_name: 'Agricovi',
         description: 'Quản lý sản xuất nông nghiệp',
         lang: 'vi',
         theme_color: '#0e5e2e',
