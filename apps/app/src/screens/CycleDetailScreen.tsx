@@ -4,6 +4,7 @@ import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { CycleCalendar } from '../components/CycleCalendar';
 import { Collapsible } from '../components/Collapsible';
 import { CycleQr } from '../components/CycleQr';
+import { CycleCounts } from '../components/CycleCounts';
 import { IncidentsSection } from '../components/IncidentsSection';
 import { useTable } from '../lib/tables';
 import { withdrawalMessage } from '../lib/withdrawalLogic';
@@ -112,6 +113,8 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
           ? <p className="msg warn" role="status">{msg}</p>
           : <p className="muted">Thuốc/phân đã dùng đều đã hết thời gian cách ly (mới nhất {w.safe_date.split('-').reverse().join('/')}).</p>;
       })()}
+
+      {active && <CycleCounts cycleId={cycleId} canManage={canManage} userId={session?.user.id} online={online} today={today} />}
 
       {active && <IncidentsSection cycleId={cycleId} orgId={active.id} stages={stages} canManage={canManage} userId={session?.user.id} online={online} today={today} />}
 

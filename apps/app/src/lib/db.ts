@@ -95,6 +95,22 @@ export interface IncidentRow {
   created_at?: string;
 }
 
+/** Biến động số lượng của vụ: nhập thêm/dặm, chết, loại, xuất (P2, D100) */
+export interface CountEventRow {
+  id: string;
+  cycle_id: string;
+  organization_id: string;
+  event_date: string;
+  kind: 'in' | 'dead' | 'culled' | 'out';
+  quantity: number;
+  note: string | null;
+  voided_at?: string | null;
+  void_reason?: string | null;
+  created_by?: string | null;
+  author_name?: string | null;
+  created_at?: string;
+}
+
 /** Việc khắc phục của sự cố */
 export interface IncidentActionRow {
   id: string;
@@ -359,6 +375,7 @@ export class LocalDb extends Dexie {
   incidents!: Table<IncidentRow, string>;
   withdrawals!: Table<WithdrawalRow, string>;
   incidentActions!: Table<IncidentActionRow, string>;
+  countEvents!: Table<CountEventRow, string>;
   localShifts!: Table<LocalShift, string>;
   media!: Table<MediaRow, string>;
 
@@ -462,6 +479,10 @@ export class LocalDb extends Dexie {
     // v13 (D96): thời gian cách ly của vụ
     this.version(13).stores({
       withdrawals: 'cycle_id',
+    });
+    // v14 (D100): biến động số lượng của vụ
+    this.version(14).stores({
+      countEvents: 'id, cycle_id',
     });
   }
 }

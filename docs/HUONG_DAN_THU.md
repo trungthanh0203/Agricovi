@@ -247,3 +247,9 @@ Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng m�
 2. Mở "Bộ tiêu chí": đổi mức A/B của một tiêu chí, sửa chữ, thêm tiêu chí riêng, đổi ngưỡng (A 100%, B 50%). Đối chiếu xong bấm "Đã đối chiếu với bản chính thức".
 3. "+ Bắt đầu lần đánh giá mới": bấm Đạt / Chưa đạt / Không áp dụng cho từng tiêu chí, ghi bằng chứng; bảng kết luận ở đầu trang tự cập nhật. Phải trả lời hết mới chốt được.
 4. Chốt xong không sửa được; muốn bỏ thì "Hủy lần đánh giá" kèm lý do. Danh sách xếp theo năm.
+
+## Thử P2: số lượng và hao hụt (cần `db push` 0085)
+1. Sửa vụ → nhập "Số con/cây" ban đầu (ví dụ 500). Mở chi tiết vụ → mục **Số … và hao hụt**.
+2. Bấm "− Chết", nhập 3, Lưu; "− Loại thải" 2; "+ Nhập thêm" 20; "− Xuất" 100. Xem **Còn lại**, **Tỉ lệ hao**, **Diện tích mỗi con**.
+3. Tắt mạng rồi ghi một lần chết: bản ghi nằm trên máy, bật mạng thì tự gửi. Hủy bản ghi thì cần mạng và lý do.
+4. Vụ vật nuôi: ghi thu hoạch/xuất có "Số con" thì số còn lại tự trừ, không phải ghi "Xuất" thêm.

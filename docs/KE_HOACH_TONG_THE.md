@@ -114,3 +114,14 @@ Gia công C.P. (hợp đồng, nhận giống–cám, tiền công/thưởng FCR
 
 ## 7. Tình trạng hiện tại so với lộ trình
 Đã xong: T1 (diện tích, năng suất), T3 (sự cố và việc khắc phục), form động, thời gian cách ly kèm lý do, bộ mẫu trường (dưa, heo sơ bộ), dữ liệu mẫu. **Chưa `db push` 0063–0079.** Việc kế tiếp: P1.
+
+## 8. Lộ trình RÚT GỌN đã chốt (25/10/2026, D100) — thay cho mục 3 khi hai bên khác nhau
+Nguyên tắc: chỉ làm thứ **an toàn, kiểm soát được, hữu ích cho cả chủ và người làm**; bỏ thứ quá sức hoặc ít người dùng cần. Sau P1 và P1B, thứ tự làm:
+1. **P2 gọn**: sự kiện nhập/chết/loại/xuất, số còn lại, tỉ lệ hao, mật độ hiển thị. Người làm ghi chết/loại một chạm, dùng được khi mất mạng. *Bỏ* cảnh báo vượt mật độ.
+2. **P4 gọn (nhắc việc an toàn)**: nhắc ngưng thuốc/phân, lịch vaccine, trống chuồng 7 ngày ở Trang chủ; chỉ 2 quy trình mẫu (dưa lưới, heo thịt). Lịch vaccine do thú y của trại chốt.
+3. **P5 gọn**: in A4/xuất Excel sổ VietGAP heo và dưa lưới + danh sách "còn thiếu gì trước khi nộp". *Bỏ* lịch kiểm tra định kỳ phức tạp.
+4. **P3 gọn**: tăng trọng (ADG) và FCR từ việc "Cân heo" và cám đã xuất. *Bỏ* biểu đồ, ngưỡng theo giai đoạn, cảnh báo.
+5. Việc nhỏ khi hộ nhỏ thấy rối: **chế độ đơn giản** (ẩn mục theo loại hình).
+
+**Hoãn/bỏ**: P8 cá thể và cặp sinh sản (chỉ làm khi có hộ thật cần); P9 (gia công C.P., truy xuất công khai, cảm biến, thủy sản); P7 (thu trứng hằng ngày, gói gà/chim); P6 (gói trọn bộ); bảng kiểm VietGAP dưa lưới (chưa có tài liệu).
+**Điều kiện**: nên `db push` và cho 1 hộ dùng thử thật trước khi làm tiếp phần lớn của mục 2–4; mọi tính năng mới phải giữ màn hình gọn (khối thu gọn, phần riêng chỉ hiện khi dùng).
