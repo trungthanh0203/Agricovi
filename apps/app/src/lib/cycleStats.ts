@@ -8,16 +8,12 @@ const KEY = (orgId: string) => `agriconnect.cyclestats.${orgId}`;
 const N = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 const B = (v: unknown) => (v === null || v === undefined ? null : Boolean(v));
 
-export const cachedCycleStats = (orgId: string): CycleStats | null => {
-  try { const raw = localStorage.getItem(KEY(orgId)); return raw ? (JSON.parse(raw) as CycleStats) : null; } catch { return null; }
-};
-
-export async function fetchCycleStats(orgId: string): Promise<CycleStats> {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  const { data, error } = await supabase.rpc('get_cycles_stats', { p_org: orgId });
-  if (error) throw new Error(error.message);
-  const d = data as Record<string, unknown>;
-  const r: CycleStats = {
+/**
+ * Chuẩn hóa dữ liệu thống kê từ máy chủ HOẶC từ bản lưu cũ trên máy: khóa thiếu (bản lưu từ phiên bản app cũ chưa có cột mới) thành null,
+ * để giao diện không gặp "undefined" (lỗi "Cannot read properties of undefined (reading 'toLocaleString')").
+ */
+export function normalizeStats(d: Record<string, unknown>): CycleStats {
+  return {
     generated_at: String(d.generated_at ?? ''), can_money: Boolean(d.can_money), can_ops: Boolean(d.can_ops),
     cycles: ((d.cycles ?? []) as Record<string, unknown>[]).map((x) => ({
       cycle_id: String(x.cycle_id), status: String(x.status), start_date: (x.start_date as string | null) ?? null, expected_end_date: (x.expected_end_date as string | null) ?? null,
@@ -31,6 +27,17 @@ export async function fetchCycleStats(orgId: string): Promise<CycleStats> {
       missing_cost: B(x.missing_cost), has_estimate: B(x.has_estimate), missing_harvest: B(x.missing_harvest), missing_revenue: B(x.missing_revenue),
     })),
   };
+}
+
+export const cachedCycleStats = (orgId: string): CycleStats | null => {
+  try { const raw = localStorage.getItem(KEY(orgId)); return raw ? normalizeStats(JSON.parse(raw) as Record<string, unknown>) : null; } catch { return null; }
+};
+
+export async function fetchCycleStats(orgId: string): Promise<CycleStats> {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { data, error } = await supabase.rpc('get_cycles_stats', { p_org: orgId });
+  if (error) throw new Error(error.message);
+  const r = normalizeStats(data as Record<string, unknown>);
   try { localStorage.setItem(KEY(orgId), JSON.stringify(r)); } catch { /* bỏ qua */ }
   return r;
 }
