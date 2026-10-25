@@ -279,6 +279,13 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
       window.addEventListener('fav:refresh', () => void loadFavs());
       void loadFavs();
     </script>
+    <script is:inline>
+      // Ô chọn ngày: bấm vào đâu cũng mở lịch (kể cả ô dựng bằng mã sau khi tải trang)
+      document.addEventListener('click', function (e) {
+        var t = e.target;
+        if (t && t.tagName === 'INPUT' && t.type === 'date' && !t.readOnly && !t.disabled && typeof t.showPicker === 'function') { try { t.showPicker(); } catch (x) {} }
+      });
+    </script>
   </body>
 </html>
 
@@ -430,7 +437,7 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
   .ni + .ni > a { border-left: 0; }
   .sub, .about ul, .cats ul { border: 1px solid var(--line); }
   .cart { background: var(--g2); color: var(--g-d); border-radius: 999px; padding: 7px 14px; transition: background .15s; } .cart:hover { background: #cfe9d8; }
-  .bell.has { background: #fff3cd; border-radius: 999px; padding: 2px 8px; }
+  .bell.has { background: #fff3cd; color: #b00020 !important; font-weight: 800; border-radius: 999px; padding: 2px 8px; }
 
   .btn { border-radius: 12px; box-shadow: 0 1px 2px rgba(16,40,26,.1); transition: transform .12s, box-shadow .15s, background .15s; }
   .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(16,40,26,.18); }
@@ -599,6 +606,7 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
     .bar2 .ticker { order: 5; flex-basis: 100%; margin: 0; }
     .acct { margin-left: auto; }
   }
+  @media (max-width: 640px) { .bar2 { display: none; } }
 </style>
 
 <style is:global>
