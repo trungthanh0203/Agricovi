@@ -15,7 +15,7 @@ const jsonLd = a ? JSON.stringify(a.channel === 'hoi_cho' && a.start
   : { '@context': 'https://schema.org', '@type': 'Article', headline: a.title, datePublished: a.publishedAt || undefined, description: a.summary || undefined }).replace(/</g, '\\u003c') : '';
 ---
 {a && ch ? (
-  <Base title={`${a.title} — Agricovi`} description={(a.summary || a.title).slice(0, 200)}>
+  <Base image={a.image || undefined} title={`${a.title} — Agricovi`} description={(a.summary || a.title).slice(0, 200)}>
     <script type="application/ld+json" set:html={jsonLd} />
     <p class="crumbs"><a href="/">Trang chủ</a> › <a href={ch[1]}>{ch[0]}</a></p>
     <article class="prose">

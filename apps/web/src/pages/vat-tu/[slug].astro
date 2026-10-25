@@ -9,7 +9,7 @@ if (!m) Astro.response.status = 404;
 const jsonLd = m ? JSON.stringify({ '@context': 'https://schema.org', '@type': 'Product', name: m.name, brand: m.brand ? { '@type': 'Brand', name: m.brand } : undefined, description: m.summary || undefined }).replace(/</g, '\\u003c') : '';
 ---
 {m ? (
-  <Base title={`${m.name} — Vật tư nông nghiệp`} description={(m.summary || `${m.name} ${m.brand}`).slice(0, 200)}>
+  <Base image={m.image || undefined} title={`${m.name} — Vật tư nông nghiệp`} description={(m.summary || `${m.name} ${m.brand}`).slice(0, 200)}>
     <script type="application/ld+json" set:html={jsonLd} />
     <p class="crumbs"><a href="/">Trang chủ</a> › <a href="/vat-tu/">Vật tư</a>{cat && <> › <a href={catHref(cat)}>{cat.name}</a></>} › {m.name}</p>
     <div class="two">

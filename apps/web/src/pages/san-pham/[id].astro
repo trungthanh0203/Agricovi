@@ -15,7 +15,7 @@ const jsonLd = p ? JSON.stringify({
 }).replace(/</g, '\\u003c') : '';
 ---
 {p ? (
-  <Base title={`${p.name} — ${p.supplier}`} description={(p.description || p.spec || `${p.name} của ${p.supplier}`).slice(0, 200)}>
+  <Base image={p.image || undefined} title={`${p.name} — ${p.supplier}`} description={(p.description || p.spec || `${p.name} của ${p.supplier}`).slice(0, 200)}>
     <script type="application/ld+json" set:html={jsonLd} />
     <p class="crumbs"><a href="/">Trang chủ</a>{cat && <> › <a href={catHref(cat)}>{cat.name}</a></>} › {p.name}</p>
     <div class="two">

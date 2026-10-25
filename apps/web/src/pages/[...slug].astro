@@ -16,11 +16,19 @@ if (page) page = localizePage(page, first, Astro.locals.tr);
 if (!page && COMING_SOON_SECTIONS[first]) soon = COMING_SOON_SECTIONS[first]!;
 if (!page && !soon) Astro.response.status = 404;
 const blocks: Block[] = page ? parseBody(page.body) : [];
+// Ảnh minh họa cho một số trang giới thiệu
+const PAGE_IMG: Record<string, { src: string; alt: string }> = {
+  'danh-cho-nguoi-ban': { src: '/brand/photo-seller.webp', alt: 'Nhà vườn dùng Agricovi để ghi chép trong nhà màng' },
+  'huong-dan-ban-hang': { src: '/brand/photo-guide.webp', alt: 'Người trồng xem ứng dụng Agricovi ngay tại vườn' },
+  'gioi-thieu': { src: '/brand/photo-about.webp', alt: 'Agricovi — nông nghiệp thông minh, kết nối thương mại' },
+};
+const pageImg = parts.length === 1 ? PAGE_IMG[first] : undefined;
 ---
 {page && (
   <Base title={`${page.title} — Agricovi`} description={page.description || undefined}>
     <article class="prose">
       <h1>{page.title}</h1>
+      {pageImg && <img class="pageimg" src={pageImg.src} alt={pageImg.alt} width="1200" height="626" decoding="async" />}
       {blocks.map((b) => (
         b.t === 'h' ? <h2>{b.text}</h2>
         : b.t === 'p' ? <p>{b.text}</p>

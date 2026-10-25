@@ -624,4 +624,7 @@ export const EN_UI: Record<string, string> = {
   'Hội chợ': 'Trade fairs',
   '🤝 Giao thương': '🤝 Trade',
   'Đăng tin cần mua, cần bán và trao đổi trực tiếp với người mua, nhà cung cấp đã đăng ký. Liên hệ chỉ mở khi hai bên cùng đồng ý.': 'Post what you want to buy or sell and talk directly with registered buyers and suppliers. Contact details open only when both sides agree.',
+  'Nhà vườn dùng Agricovi để ghi chép trong nhà màng': 'A grower using Agricovi to keep records in a greenhouse',
+  'Người trồng xem ứng dụng Agricovi ngay tại vườn': 'A grower checking the Agricovi app right in the field',
+  'Agricovi — nông nghiệp thông minh, kết nối thương mại': 'Agricovi — smart agriculture, connected trade',
 };

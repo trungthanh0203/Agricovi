@@ -5,8 +5,8 @@ import { localizeArticle } from '../lib/translations';
 import { loadLatestResults, loadTradePosts } from '../lib/trade';
 import { loadChrome } from '../lib/site';
 
-interface Props { title: string; description?: string; noindex?: boolean; cache?: boolean }
-const { title, description = 'Danh bạ nhà cung cấp nông sản, vật tư và truy xuất nguồn gốc mùa vụ.', noindex = false, cache = true } = Astro.props;
+interface Props { title: string; description?: string; noindex?: boolean; cache?: boolean; image?: string }
+const { title, description = 'Danh bạ nhà cung cấp nông sản, vật tư và truy xuất nguồn gốc mùa vụ.', noindex = false, cache = true, image } = Astro.props;
 
 const chrome = await loadChrome();
 const { top: topCats, kids: subCats } = catTree(await loadCategories());
@@ -43,6 +43,9 @@ const lang: 'vi' | 'en' = Astro.locals.lang ?? 'vi';
 const pathVi = Astro.locals.pathVi ?? Astro.url.pathname;
 const withLang = (l: 'vi' | 'en') => new URL((l === 'en' ? (pathVi === '/' ? '/en/' : '/en' + pathVi) : pathVi) + Astro.url.search, Astro.url.origin).toString();
 const canonical = withLang(lang).replace(/\?.*$/, '');
+// Ảnh khi chia sẻ link (Zalo, Facebook, Google): ảnh riêng của trang (sản phẩm, bài viết) hoặc ảnh chung của thương hiệu 1200x630
+const ogImage = new URL(image && image.startsWith('/') ? image : '/brand/og-default.jpg', Astro.url.origin).toString();
+const ogIsDefault = !(image && image.startsWith('/'));
 const appUrl = import.meta.env.PUBLIC_APP_URL as string | undefined;
 const year = new Date().getFullYear();
 const social = Object.entries({ Facebook: settings.social.facebook, 'Zalo OA': settings.social.zalo, YouTube: settings.social.youtube, TikTok: settings.social.tiktok })
@@ -59,13 +62,22 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#1b8a4b" />
+    <meta name="theme-color" content="#0e5e2e" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="canonical" href={canonical} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={brand} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    {ogIsDefault && <meta property="og:image:width" content="1200" />}
+    {ogIsDefault && <meta property="og:image:height" content="630" />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogImage} />
     <meta property="og:locale" content={lang === 'en' ? 'en_US' : 'vi_VN'} />
     {noindex ? <meta name="robots" content="noindex" /> : (
       <>
@@ -79,7 +91,7 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
   <body>
     <header class="site-head">
       <div class="bar1">
-        <a class="logo" href="/">{brand}</a>
+        <a class="logo" href="/" aria-label={brand}><img src="/brand/logo-header.webp" alt={brand} width="138" height="34" /></a>
         <details class="about">
           <summary>Tìm hiểu về {brand}</summary>
           <ul>{about.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
@@ -120,8 +132,7 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
       <div class="fwrap">
         <div class="fgrid">
           <div class="fabout">
-            <a class="flogo" href="/">🌿 {brand}</a>
-            {settings.brand.tagline && <p class="ftag">{settings.brand.tagline}</p>}
+            <a class="flogo" href="/" aria-label={brand}><img src="/brand/logo-horizontal.webp" alt={brand} width="250" height="81" loading="lazy" /></a>
             <p>{settings.brand.description}</p>
             {settings.legal.registration && <div class="reg"><b>Chứng nhận đăng ký</b><span class="regbadge">✔ Đã đăng ký</span><p>{settings.legal.registration}</p></div>}
           </div>
@@ -599,4 +610,11 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
   .bar1 .ni.fair > a::before { content: "🎪 "; }
   .bar1 .ni.fair > a::after { background: #6d3fc9; }
   .bar1 .ni.fair > a:hover, .bar1 .ni.fair:focus-within > a { background: linear-gradient(135deg, #e3d6ff, #c9b3f7); color: #3b1d7a; }
+</style>
+
+<style is:global>
+  /* ===== Logo thật (D75) ===== */
+  .bar1 .logo { padding: 5px 14px; } .logo::before { content: none; } .logo img { display: block; height: 34px; width: auto; }
+  .flogo { display: inline-block; margin-bottom: 8px; } .flogo img { display: block; width: 250px; max-width: 100%; height: auto; }
+  .pageimg { display: block; width: 100%; max-width: 760px; height: auto; border-radius: 16px; box-shadow: var(--shadow); margin: 8px 0 14px; aspect-ratio: 1200 / 626; object-fit: cover; }
 </style>

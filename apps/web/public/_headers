@@ -1,4 +1,12 @@
 # Tiêu đề bảo mật cho tệp tĩnh (trang quản trị website ở /admin/). Trang do Astro dựng được gắn tiêu đề tương tự ở src/middleware.ts.
+/brand/*
+  Cache-Control: public, max-age=604800
+/favicon.ico
+  Cache-Control: public, max-age=604800
+/favicon-32.png
+  Cache-Control: public, max-age=604800
+/apple-touch-icon.png
+  Cache-Control: public, max-age=604800
 /admin/*
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
