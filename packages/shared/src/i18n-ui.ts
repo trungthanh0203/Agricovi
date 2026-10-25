@@ -96,6 +96,7 @@ export const EN_UI: Record<string, string> = {
   'Xem danh bạ nhà cung cấp': 'View supplier directory',
   'Xem nhà cung cấp': 'View suppliers',
   'Gian hàng bán vật tư': 'Supply shops',
+  'Vào giao thương': 'Go to trade board',
   'Nhập mã vụ in trên bao bì để xem quá trình sản xuất của lô hàng.': 'Enter the cycle code printed on the packaging to see how the batch was produced.',
   'Ví dụ VU-1A2B3C4D': 'e.g. VU-1A2B3C4D',
   'Xem sản phẩm': 'View products',

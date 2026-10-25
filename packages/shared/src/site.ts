@@ -6,7 +6,7 @@ export interface SiteLink { label: string; href: string }
 export interface SiteNavItem extends SiteLink { children?: SiteLink[] }
 export interface SiteFooterCol { title: string; links: SiteLink[] }
 export interface SiteSettings {
-  brand: { name?: string; tagline?: string; description?: string; hero_title?: string; hero_text?: string; hero_button?: string; hero_trade?: string };
+  brand: { name?: string; tagline?: string; description?: string; hero_title?: string; hero_text?: string; hero_trade?: string };
   contact: { hotline?: string; email?: string; address?: string; operator?: string };
   social: { facebook?: string; zalo?: string; youtube?: string; tiktok?: string };
   legal: { registration?: string; copyright?: string };
@@ -19,7 +19,6 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     description: 'Nền tảng kết nối nhà vườn, hợp tác xã và người mua nông sản, vật tư; truy xuất nguồn gốc từ dữ liệu sản xuất thật.',
     hero_title: 'Tìm nơi trồng, sản phẩm và nguồn gốc nông sản',
     hero_text: 'Danh bạ nhà cung cấp đã được kiểm duyệt, tình trạng cung ứng cập nhật thường xuyên và truy xuất nguồn gốc từng mùa vụ.',
-    hero_button: 'Xem nhà cung cấp',
     hero_trade: 'Đăng tin cần mua, cần bán và trao đổi trực tiếp với người mua, nhà cung cấp đã đăng ký. Liên hệ chỉ mở khi hai bên cùng đồng ý.',
   },
   contact: {},
