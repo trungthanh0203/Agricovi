@@ -152,12 +152,27 @@ try {
     </div>
   </section>
 
-  <ul class="trust">
-    <li><span aria-hidden="true">🛡️</span><div><b>Nhà cung cấp được kiểm duyệt</b><small>Hồ sơ duyệt trước khi hiển thị</small></div></li>
-    <li><span aria-hidden="true">🔎</span><div><b>Truy xuất nguồn gốc</b><small>Quét mã QR xem quá trình sản xuất</small></div></li>
-    <li><span aria-hidden="true">🤝</span><div><b>Giao thương an toàn</b><small>Chặn lộ liên hệ, báo cáo vi phạm</small></div></li>
-    <li><span aria-hidden="true">🌐</span><div><b>Tiếng Việt và tiếng Anh</b><small>Dành cho cả người mua trong và ngoài nước</small></div></li>
-  </ul>
+  <div class="duo">
+    <section class="duo-card trace">
+      <span class="duo-ico" aria-hidden="true">🔎</span>
+      <div class="duo-body">
+        <h2>Kiểm tra nguồn gốc</h2>
+        <p>Nhập mã vụ in trên bao bì để xem quá trình sản xuất của lô hàng.</p>
+        <form class="duo-form" action="/truyxuat/" method="get">
+          <input name="ma" placeholder="Ví dụ VU-1A2B3C4D" aria-label="Mã vụ" />
+          <button class="btn solid" type="submit">Truy xuất</button>
+        </form>
+      </div>
+    </section>
+    <section class="duo-card grower">
+      <span class="duo-ico" aria-hidden="true">🌾</span>
+      <div class="duo-body">
+        <h2>Bạn là nhà vườn hay hợp tác xã?</h2>
+        <p>Ghi chép sản xuất, truy xuất nguồn gốc và giới thiệu sản phẩm đến người mua. Dùng thử miễn phí.</p>
+        <a class="btn" href="/danh-cho-nguoi-ban">Tìm hiểu thêm</a>
+      </div>
+    </section>
+  </div>
 
   {blocks.map((b) => (
     b.id === 'giao_thuong' ? (
@@ -199,18 +214,6 @@ try {
       <Section title="Sự kiện, hội chợ và tin tức" icon="📰" href="/tin-nong-nghiep/">
         <Rail w={260}>{latest.map((a) => <ArticleCard a={a} />)}</Rail>
       </Section>
-    ) : b.id === 'truy_xuat' ? (
-      <Section title="Kiểm tra nguồn gốc" icon="🔎">
-        <form class="search" action="/truyxuat/" method="get">
-          <input name="ma" placeholder="Nhập mã vụ in trên bao bì, ví dụ VU-1A2B3C4D" aria-label="Mã vụ" />
-          <button class="btn solid" type="submit">Truy xuất</button>
-        </form>
-      </Section>
-    ) : b.id === 'cta' ? (
-      <section class="cta">
-        <div><h2 style="margin:0">Bạn là nhà vườn hay hợp tác xã?</h2><p style="margin:.3em 0 0">Ghi chép sản xuất, truy xuất nguồn gốc và giới thiệu sản phẩm đến người mua. Dùng thử miễn phí.</p></div>
-        <a class="btn" href="/danh-cho-nguoi-ban">Tìm hiểu thêm</a>
-      </section>
     ) : null
   ))}
 </Base>
@@ -269,14 +272,19 @@ try {
   .sideban span { position: relative; display: flex; flex-direction: column; font-size: 1.05rem; } .sideban small { color: var(--muted); }
   .sideban img + span { color: #fff; background: rgba(0,0,0,.5); padding: 6px 10px; border-radius: 8px; } .sideban img + span small { color: #fff; }
 
-  .trust { list-style: none; margin: 0 0 18px; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
-  .trust li { display: flex; gap: 12px; align-items: center; padding: 14px 16px; } .trust li + li { border-left: 1px solid var(--line); }
-  .trust li > span { font-size: 1.7rem; } .trust b { display: block; font-size: .95rem; } .trust small { color: var(--muted); font-size: .8rem; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 0 0 22px; }
+  .duo-card { display: flex; gap: 16px; align-items: center; border-radius: 16px; padding: 18px 20px; box-shadow: var(--shadow); min-width: 0; }
+  .duo-ico { flex: none; width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; font-size: 1.9rem; }
+  .duo-body { flex: 1; min-width: 0; } .duo-body h2 { margin: 0 0 4px; font-size: 1.15rem; } .duo-body p { margin: 0 0 10px; font-size: .9rem; line-height: 1.4; }
+  .duo-card.trace { background: #fff; border: 1px solid var(--line); } .duo-card.trace .duo-ico { background: var(--g2); } .duo-card.trace p { color: var(--muted); }
+  .duo-form { display: flex; gap: 8px; } .duo-form input { flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; } .duo-form .btn { flex: none; }
+  .duo-card.grower { background: radial-gradient(circle at 92% 12%, rgba(255,255,255,.16) 0 70px, transparent 71px), linear-gradient(135deg, #0f5f2f, #1e9650); color: #fff; } .duo-card.grower .duo-ico { background: rgba(255,255,255,.18); }
+  .duo-card.grower p { opacity: .95; } .duo-card.grower .btn { background: var(--yl); color: #2a2200; }
   .soon { background: #fff8e6; border: 1px solid #f3dfa7; border-radius: 12px; padding: 14px; } .soon p { margin: .3em 0 0; }
   .cta { margin-top: 28px; background: radial-gradient(circle at 90% 20%, rgba(255,255,255,.15) 0 80px, transparent 81px), linear-gradient(135deg, #0f5f2f, #1e9650); color: #fff; border-radius: 18px; padding: 26px 28px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; box-shadow: var(--shadow); }
   .cta p { opacity: .95; } .cta .btn { background: var(--yl); color: #2a2200; }
   @media (max-width: 1000px) { .hero2 { grid-template-columns: minmax(0, 1fr); } .fly { display: none !important; } .catbox { border-radius: 14px; }
     .catlist { display: flex; overflow-x: auto; padding: 6px; gap: 6px; } .catlist > li > a { white-space: nowrap; border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; } .catlist .car { display: none; } .cathead { display: none; }
-    .sidebans { grid-template-columns: 1fr 1fr; grid-template-rows: auto; } .trust { grid-template-columns: 1fr 1fr; } .trust li:nth-child(3) { border-left: 0; } .trust li:nth-child(n+3) { border-top: 1px solid var(--line); } }
-  @media (max-width: 560px) { .herotop { gap: 10px; } .herologo img { width: 64px; } .heropic { height: 80px; } .heromid { flex-direction: column; align-items: flex-start; gap: 10px; } .slide.fallback { padding: 20px 16px; } .sidebans { grid-template-columns: 1fr; } .trust { grid-template-columns: 1fr; } .trust li + li { border-left: 0; border-top: 1px solid var(--line); } .slide.fallback h1 { font-size: 1.5rem; } }
+    .sidebans { grid-template-columns: 1fr 1fr; grid-template-rows: auto; } .duo { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .herotop { gap: 10px; } .herologo img { width: 64px; } .heropic { height: 80px; } .heromid { flex-direction: column; align-items: flex-start; gap: 10px; } .slide.fallback { padding: 20px 16px; } .sidebans { grid-template-columns: 1fr; } .duo-card { padding: 14px; gap: 12px; } .duo-ico { width: 44px; height: 44px; font-size: 1.5rem; } .duo-form { flex-direction: column; } .slide.fallback h1 { font-size: 1.5rem; } }
 </style>
