@@ -2,6 +2,9 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
 import { Collapsible } from './Collapsible';
+import { DynamicField } from './DynamicField';
+import { cycleCountUnit } from '../lib/countUnit';
+import { fieldsToData, initialValues, summarizeFields, validateFields } from '../lib/fieldsLogic';
 import { WithdrawalNotice, useWithdrawalBlocked } from './WithdrawalNotice';
 import { validReason } from '../lib/withdrawalLogic';
 import { SyncBadge } from './SyncBadge';
@@ -28,6 +31,8 @@ export function HarvestSection() {
   const sync = useRecordSync();
   const online = useOnline();
   const harvests = useTable('harvests');
+  const { workTypes: catWorkTypes } = useCatalog();
+  const harvestSchema = catWorkTypes.find((w) => w.code === 'harvesting')?.field_schema ?? [];
   const cycles = useTable('cycles');
   const areas = useTable('areas');
   const { cropTypes } = useCatalog();
@@ -142,7 +147,9 @@ export function HarvestSection() {
             <strong>{formatQty(h.quantity)} kg{h.grade ? ` · ${h.grade}` : ''}</strong>
             <span className="muted">{new Date(h.harvested_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}</span>
           </div>
-          <p className="muted">{cycleLabel(h.cycle_id)}</p>
+          <p className="muted">{cycleLabel(h.cycle_id)}{h.lot_code ? ` · mã lô ${h.lot_code}` : ''}</p>
+          {h.unit_count ? <p>Số lượng: {h.unit_count.toLocaleString('vi-VN')}{h.unit_count && h.quantity ? ` (TB ${formatQty(h.quantity / h.unit_count)} kg)` : ''}</p> : null}
+          {h.extra && summarizeFields(harvestSchema, h.extra) ? <p>{summarizeFields(harvestSchema, h.extra)}</p> : null}
           {h.loss_quantity ? <p>Hao hụt: {formatQty(h.loss_quantity)} kg</p> : null}
           {h.note && <p>{h.note}</p>}
           <div className="badges">
@@ -187,6 +194,8 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const sync = useRecordSync();
   const online = useOnline();
   const allCycles = useTable('cycles');
+  const { workTypes: catWorkTypes, cropTypes } = useCatalog();
+  const schema = catWorkTypes.find((w) => w.code === 'harvesting')?.field_schema ?? [];
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
   // vụ đang chạy lên đầu danh sách
   const ordered = [...cycles].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active'));
@@ -197,6 +206,8 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const [qty, setQty] = useState(editing ? String(editing.quantity) : '');
   const [loss, setLoss] = useState(editing?.loss_quantity ? String(editing.loss_quantity) : '');
   const [note, setNote] = useState(editing?.note ?? '');
+  const [cnt, setCnt] = useState(editing?.unit_count ? String(editing.unit_count) : '');
+  const [vals, setVals] = useState<Record<string, string>>(() => initialValues(schema, editing?.extra ?? undefined));
   const [wReason, setWReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
@@ -204,6 +215,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const effCycleId = editing ? editing.cycle_id : cycleId || (ordered.find((c) => c.id === remembered)?.id ?? ordered[0]?.id ?? '');
   const whenDay = toLocalInput(new Date(when)).slice(0, 10);
   const inWithdrawal = useWithdrawalBlocked(effCycleId, whenDay);
+  const unitName = cycleCountUnit(allCycles.find((c) => c.id === effCycleId), cropTypes);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -213,15 +225,21 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
     if (bad) return setError(bad);
     const cycle = allCycles.find((c) => c.id === effCycleId);
     if (!cycle) return setError('Hãy chọn vụ trồng.');
+    const c = cnt.trim() ? Number(cnt.replace(/[.,\s]/g, '')) : null;
+    if (c !== null && (!Number.isInteger(c) || c <= 0)) return setError(`Số ${unitName} phải là số nguyên lớn hơn 0.`);
+    const merged = { ...initialValues(schema), ...vals };
+    const badField = validateFields(schema, merged);
+    if (badField) return setError(badField);
+    const extra = fieldsToData(schema, merged);
     if (inWithdrawal && !editing && !validReason(wReason)) return setError('Vụ còn trong thời gian cách ly: hãy ghi lý do vẫn thu hoạch vào ngày này (ít nhất 3 ký tự), hoặc đổi sang ngày đã hết cách ly.');
     setError(null);
     try {
       if (editing) {
-        await editHarvest(editing.id, { harvestedAt: new Date(when).toISOString(), grade, quantity: q!, lossQuantity: l, note });
+        await editHarvest(editing.id, { harvestedAt: new Date(when).toISOString(), grade, quantity: q!, lossQuantity: l, note, unitCount: c, extra });
         onClose();
         return;
       }
-      const id = await recordHarvest({ cycle, harvestedAt: new Date(when).toISOString(), grade, quantity: q!, lossQuantity: l, note, userId, withdrawalReason: inWithdrawal ? wReason : undefined });
+      const id = await recordHarvest({ cycle, harvestedAt: new Date(when).toISOString(), grade, quantity: q!, lossQuantity: l, note, userId, withdrawalReason: inWithdrawal ? wReason : undefined, unitCount: c, extra });
       try { localStorage.setItem(LAST_CYCLE_KEY, cycle.id); } catch { /* bỏ qua */ }
       setSavedId(id);
     } catch (err) {
@@ -234,6 +252,8 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
     setQty('');
     setLoss('');
     setNote('');
+    setCnt('');
+    setVals(initialValues(schema));
     setWReason('');
     setError(null);
     setWhen(toLocalInput(new Date()));
@@ -276,6 +296,16 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
           Số lượng thu (kg)
           <input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} />
         </label>
+        <Collapsible inline title={`＋ Số ${unitName} và thông tin thêm`} summary={[cnt && `${cnt} ${unitName}`, schema.length > 0 && 'theo mẫu của cơ sở'].filter(Boolean).join(' · ') || undefined}>
+          <label>
+            Số {unitName} thu / xuất (không bắt buộc)
+            <input value={cnt} inputMode="numeric" onChange={(e) => setCnt(e.target.value)} />
+            <small>Có số này, app tính khối lượng trung bình mỗi {unitName}.</small>
+          </label>
+          {schema.map((f) => (
+            <DynamicField key={f.key} def={f} value={vals[f.key] ?? initialValues([f])[f.key] ?? ''} onChange={(v) => setVals((s) => ({ ...s, [f.key]: v }))} />
+          ))}
+        </Collapsible>
         <label>
           Phân loại (không bắt buộc)
           <input value={grade} list="grade-list" onChange={(e) => setGrade(e.target.value)} placeholder="Loại 1, Loại 2…" />

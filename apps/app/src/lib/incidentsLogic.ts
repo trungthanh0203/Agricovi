@@ -7,8 +7,21 @@ export const INCIDENT_KINDS: { id: IncidentRow['kind']; label: string }[] = [
   { id: 'loss', label: 'Hao hụt, hư hỏng' },
   { id: 'weather', label: 'Thời tiết bất thường' },
   { id: 'complaint', label: 'Khách phản ánh' },
+  { id: 'equipment', label: 'Thiết bị / nhà màng / chuồng hỏng' },
+  { id: 'broken_needle', label: 'Kim tiêm gãy' },
   { id: 'other', label: 'Khác' },
 ];
+
+/** Loại sự cố RIÊNG của vật nuôi: không hiện cho cây trồng (D98) */
+const LIVESTOCK_ONLY: IncidentRow['kind'][] = ['broken_needle'];
+
+/** Danh sách loại sự cố hiện cho người dùng theo loại sản phẩm của vụ; "Sâu bệnh" thành "Sâu bệnh / dịch bệnh" với vật nuôi */
+export function incidentKindOptions(productKind: string | undefined): { id: IncidentRow['kind']; label: string }[] {
+  const livestock = productKind === 'livestock';
+  return INCIDENT_KINDS
+    .filter((k) => livestock || !LIVESTOCK_ONLY.includes(k.id))
+    .map((k) => (livestock && k.id === 'pest' ? { ...k, label: 'Sâu bệnh / dịch bệnh' } : k));
+}
 
 export const INCIDENT_SEVERITIES: { id: IncidentRow['severity']; label: string }[] = [
   { id: 'low', label: 'Nhẹ' },

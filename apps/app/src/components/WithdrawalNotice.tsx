@@ -1,4 +1,5 @@
 import { useTable } from '../lib/tables';
+import { needleMessage } from '../lib/withdrawalLogic';
 import { withdrawalMessage } from '../lib/withdrawalLogic';
 
 /**
@@ -7,7 +8,9 @@ import { withdrawalMessage } from '../lib/withdrawalLogic';
  */
 export function WithdrawalNotice({ cycleId, date, reason, onReason }: { cycleId: string; date: string; reason: string; onReason: (v: string) => void }) {
   const rows = useTable('withdrawals');
-  const msg = withdrawalMessage(rows.find((r) => r.cycle_id === cycleId)?.items, date);
+  const incidents = useTable('incidents');
+  // cách ly thuốc, hoặc (riêng vật nuôi) còn sự cố kim tiêm gãy chưa xử lý: cùng một ô lý do
+  const msg = [withdrawalMessage(rows.find((r) => r.cycle_id === cycleId)?.items, date), needleMessage(incidents, cycleId)].filter(Boolean).join(' ') || null;
   if (!msg) return null;
   return (
     <div className="msg warn" role="status">
@@ -23,5 +26,6 @@ export function WithdrawalNotice({ cycleId, date, reason, onReason }: { cycleId:
 /** Có đang vướng cách ly vào ngày này không (để chặn nút Lưu khi chưa ghi lý do) */
 export function useWithdrawalBlocked(cycleId: string, date: string): boolean {
   const rows = useTable('withdrawals');
-  return withdrawalMessage(rows.find((r) => r.cycle_id === cycleId)?.items, date) !== null;
+  const incidents = useTable('incidents');
+  return withdrawalMessage(rows.find((r) => r.cycle_id === cycleId)?.items, date) !== null || needleMessage(incidents, cycleId) !== null;
 }

@@ -7,21 +7,28 @@ import { supabase } from './supabase';
  * xong thì cập nhật bản lưu trên máy để vẫn xem được khi mất mạng.
  */
 
-const INCIDENT_COLUMNS =
+const INCIDENT_COLUMNS_BASE =
   'id, cycle_id, organization_id, kind, incident_date, stage_id, severity, description, loss_quantity, loss_amount, image, status, closed_at, close_note, voided_at, void_reason, version, created_by, author_name, created_at';
+const INCIDENT_COLUMNS = `${INCIDENT_COLUMNS_BASE}, cause`; // cột nguyên nhân (D98) chỉ có sau migration 0082
 const ACTION_COLUMNS = 'id, incident_id, cycle_id, organization_id, content, assignee_id, assignee_name, due_date, done, done_at, created_by';
 
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 const fixIncident = (r: Record<string, unknown>) => ({ ...r, loss_quantity: num(r.loss_quantity), loss_amount: num(r.loss_amount) }) as unknown as IncidentRow;
 
+async function selectIncidents() {
+  const q = (cols: string) => supabase!.from('cycle_incidents').select(cols).order('incident_date', { ascending: false }).limit(1000);
+  const r = await q(INCIDENT_COLUMNS);
+  return r.error && /column|schema cache/i.test(r.error.message ?? '') ? q(INCIDENT_COLUMNS_BASE) : r;
+}
+
 /** Tải sự cố và việc khắc phục về máy. Bảng chưa có (CSDL chưa cập nhật) thì bỏ qua, không làm hỏng đồng bộ chung. */
 export async function syncIncidentsDown(): Promise<void> {
   if (!supabase || !navigator.onLine) return;
   const [inc, act] = await Promise.all([
-    supabase.from('cycle_incidents').select(INCIDENT_COLUMNS).order('incident_date', { ascending: false }).limit(1000),
+    selectIncidents(),
     supabase.from('incident_actions').select(ACTION_COLUMNS).limit(3000),
   ]);
-  if (!inc.error) { await db.incidents.clear(); await db.incidents.bulkPut(((inc.data ?? []) as Record<string, unknown>[]).map(fixIncident)); }
+  if (!inc.error) { await db.incidents.clear(); await db.incidents.bulkPut(((inc.data ?? []) as unknown as Record<string, unknown>[]).map(fixIncident)); }
   if (!act.error) { await db.incidentActions.clear(); await db.incidentActions.bulkPut((act.data ?? []) as IncidentActionRow[]); }
 }
 
@@ -55,12 +62,15 @@ export interface IncidentInput {
   lossQty: number | null;
   lossAmount: number | null;
   image: string;
+  /** Nguyên nhân (không bắt buộc, D98) */
+  cause?: string;
 }
 
 export async function reportIncident(id: string, cycleId: string, v: IncidentInput): Promise<void> {
   const r = await call<Record<string, unknown>>('report_incident', {
     p_id: id, p_cycle: cycleId, p_kind: v.kind, p_date: v.date, p_stage: v.stageId, p_severity: v.severity, p_desc: v.description,
     p_loss_qty: v.lossQty, p_loss_amount: v.lossAmount, p_image: v.image || null,
+    ...(v.cause?.trim() ? { p_cause: v.cause.trim() } : {}), // chỉ gửi khi có để CSDL chưa cập nhật vẫn báo được
   }, 'báo sự cố');
   await db.incidents.put(fixIncident(r));
 }
@@ -71,6 +81,7 @@ export async function updateIncident(i: IncidentRow, v: IncidentInput): Promise<
     p_changes: {
       kind: v.kind, incident_date: v.date, stage_id: v.stageId ?? '', severity: v.severity, description: v.description,
       loss_quantity: v.lossQty === null ? '' : String(v.lossQty), loss_amount: v.lossAmount === null ? '' : String(v.lossAmount), image: v.image,
+      ...(v.cause !== undefined && (v.cause.trim() || i.cause) ? { cause: v.cause.trim() } : {}),
     },
   }, 'sửa sự cố');
   await db.incidents.put(fixIncident(r));

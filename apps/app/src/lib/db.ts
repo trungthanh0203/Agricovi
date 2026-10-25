@@ -74,7 +74,9 @@ export interface IncidentRow {
   id: string;
   cycle_id: string;
   organization_id: string;
-  kind: 'pest' | 'loss' | 'weather' | 'complaint' | 'other';
+  kind: 'pest' | 'loss' | 'weather' | 'complaint' | 'other' | 'equipment' | 'broken_needle';
+  /** Nguyên nhân (D98) */
+  cause?: string | null;
   incident_date: string;
   stage_id: string | null;
   severity: 'low' | 'medium' | 'high';
@@ -276,6 +278,10 @@ export interface HarvestRow {
   version: number;
   created_by?: string | null;
   received_at?: string;
+  /** Mã lô thu hoạch (máy chủ tự sinh), số quả/con, dữ liệu theo form động của việc Thu hoạch (D98) */
+  lot_code?: string | null;
+  unit_count?: number | null;
+  extra?: Record<string, unknown> | null;
 }
 
 /** Bản tổng kết vụ đã tải về gần nhất, để xem lại khi mất mạng */

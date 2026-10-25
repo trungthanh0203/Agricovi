@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AutoTextarea } from './AutoTextarea';
 import { Collapsible } from './Collapsible';
+import { useCatalog } from '../lib/catalog';
 import { Img, ImagePicker } from './ImagePicker';
 import { db, type IncidentActionRow, type IncidentRow, type StageRow } from '../lib/db';
 import { fmtDate, diffDays } from '../lib/dates';
@@ -10,7 +11,7 @@ import {
   type IncidentInput,
 } from '../lib/incidents';
 import {
-  INCIDENT_KINDS, INCIDENT_SEVERITIES, kindLabel, liveIncidents, openCount, overdueActions, severityLabel, sortIncidents,
+  incidentKindOptions, INCIDENT_SEVERITIES, kindLabel, liveIncidents, openCount, overdueActions, severityLabel, sortIncidents,
 } from '../lib/incidentsLogic';
 import { listMembers, type Member } from '../lib/members';
 import { parseDecimal } from '../lib/areaUnits';
@@ -25,6 +26,9 @@ export function IncidentsSection({ cycleId, orgId, stages, canManage, userId, on
 }) {
   const allIncidents = useTable('incidents');
   const allActions = useTable('incidentActions');
+  const allCycles = useTable('cycles');
+  const { cropTypes } = useCatalog();
+  const kinds = incidentKindOptions(cropTypes.find((c) => c.id === allCycles.find((x) => x.id === cycleId)?.crop_type_id)?.kind);
   const incidents = useMemo(() => sortIncidents(allIncidents.filter((i) => i.cycle_id === cycleId)), [allIncidents, cycleId]);
   const actions = useMemo(() => allActions.filter((a) => a.cycle_id === cycleId), [allActions, cycleId]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -57,7 +61,7 @@ export function IncidentsSection({ cycleId, orgId, stages, canManage, userId, on
 
       {form ? (
         <IncidentForm
-          key={form.edit?.id ?? 'new'} edit={form.edit} stages={stages} today={today} busy={busy || !online}
+          key={form.edit?.id ?? 'new'} edit={form.edit} kinds={kinds} stages={stages} today={today} busy={busy || !online}
           onClose={() => setForm(null)}
           onSave={(v) => run(async () => {
             if (form.edit) await updateIncident(form.edit, v); else await reportIncident(crypto.randomUUID(), cycleId, v);
@@ -196,8 +200,8 @@ function ActionForm({ members, busy, today, onSave, onClose }: {
   );
 }
 
-function IncidentForm({ edit, stages, today, busy, onSave, onClose }: {
-  edit?: IncidentRow; stages: StageRow[]; today: string; busy: boolean; onSave: (v: IncidentInput) => Promise<unknown>; onClose: () => void;
+function IncidentForm({ edit, kinds, stages, today, busy, onSave, onClose }: {
+  edit?: IncidentRow; kinds: { id: IncidentRow['kind']; label: string }[]; stages: StageRow[]; today: string; busy: boolean; onSave: (v: IncidentInput) => Promise<unknown>; onClose: () => void;
 }) {
   const [kind, setKind] = useState<IncidentRow['kind']>(edit?.kind ?? 'pest');
   const [severity, setSeverity] = useState<IncidentRow['severity']>(edit?.severity ?? 'medium');
@@ -207,6 +211,7 @@ function IncidentForm({ edit, stages, today, busy, onSave, onClose }: {
   const [qty, setQty] = useState(edit?.loss_quantity != null ? String(edit.loss_quantity) : '');
   const [amount, setAmount] = useState(edit?.loss_amount != null ? String(edit.loss_amount) : '');
   const [image, setImage] = useState(edit?.image ?? '');
+  const [cause, setCause] = useState(edit?.cause ?? '');
   const [err, setErr] = useState<string | null>(null);
   return (
     <div className="card">
@@ -215,7 +220,7 @@ function IncidentForm({ edit, stages, today, busy, onSave, onClose }: {
         <div className="pair">
           <label>Loại sự cố
             <select value={kind} onChange={(e) => setKind(e.target.value as IncidentRow['kind'])}>
-              {INCIDENT_KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
+              {kinds.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
             </select>
           </label>
           <label>Mức độ
@@ -234,6 +239,7 @@ function IncidentForm({ edit, stages, today, busy, onSave, onClose }: {
           </label>
         </div>
         <label>Mô tả<AutoTextarea value={desc} maxLength={1000} onChange={setDesc} placeholder="Ví dụ: Dưa ở luống 3 héo rũ, lá vàng, khoảng 20 cây" /></label>
+        <label>Nguyên nhân (nếu biết)<input value={cause} maxLength={300} onChange={(e) => setCause(e.target.value)} placeholder="Không bắt buộc" /></label>
         <div className="pair">
           <label>Hao hụt ước tính (kg hoặc cây)<input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} placeholder="Không bắt buộc" /></label>
           <label>Thiệt hại ước tính (đồng)<input value={amount} inputMode="numeric" onChange={(e) => setAmount(e.target.value)} placeholder="Không bắt buộc" /></label>
@@ -247,7 +253,7 @@ function IncidentForm({ edit, stages, today, busy, onSave, onClose }: {
             const m = amount.trim() ? parseDecimal(amount) : null;
             if ((qty.trim() && (q === null || q < 0)) || (amount.trim() && (m === null || m < 0))) return setErr('Thiệt hại phải là số, không âm.');
             setErr(null);
-            void onSave({ kind, date, stageId: stageId || null, severity, description: desc.trim(), lossQty: q, lossAmount: m, image }).catch(() => undefined);
+            void onSave({ kind, date, stageId: stageId || null, severity, description: desc.trim(), lossQty: q, lossAmount: m, image, cause }).catch(() => undefined);
           }}>Lưu</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>

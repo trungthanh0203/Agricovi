@@ -6,11 +6,12 @@ Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi t
 - Lộ trình: `KE_HOACH_TONG_THE.md` (P1–P9). **P1** theo `PLAN_P1_NEN_DU_LIEU.md` (D98), 3 mốc:
   - **M1 xong về code (25/10/2026)**: migration 0080 (mã/loại khu/kiểu chuồng; mã vụ, đơn vị đếm, cán bộ phụ trách; ghi việc cho khu không gắn vụ); test `areas_fields`.
   - **M2 xong về code (25/10/2026)**: migration 0081 (nhóm/hoạt chất/số đăng ký/nhà sản xuất của vật tư; số lô + hạn dùng khi nhập kho; tự gắn lô FIFO khi xuất, bỏ qua lô hết hạn; chỉ định lô hết hạn phải có lý do; đảo kho mang đúng lô; `get_lot_status`); test `material_lots`; app: sửa vật tư, Nhập kho có lô/hạn, lịch sử hiện lô, thẻ "Lô sắp hết hạn" ở Trang chủ và Kho. Chưa làm: chọn lô tay khi Ghi việc; nhập lô trong "Mua có hóa đơn" (nhập kho từ hóa đơn chưa có ô lô).
-  - **M3 (kế tiếp)**: thu hoạch, sự cố, bộ trường dưa và heo → `0082_app_harvest_incident_fields`.
-- Sau P1: P1B (bảng kiểm VietGAP 45 tiêu chí), rồi P2.
+  - **M3 xong về code (25/10/2026)**: migration 0082 (mã lô thu hoạch tự sinh, số quả/con, dữ liệu form động `extra`; sự cố có nguyên nhân + loại thiết bị/chuồng + kim gãy; kim gãy chưa xử lý ⇒ thu/bán phải ghi lý do, cùng ô lý do với cách ly); test `harvest_fields`; gói trường tách file `lib/packs/melon.ts`, `lib/packs/pig.ts` (thêm loại hình = thêm file). **P1 xong về code.**
+- **Kế tiếp: P1B** (bảng kiểm VietGAP 45 tiêu chí; cần bạn xác nhận 31 loại A / 14 loại B với bản chính thức), rồi P2 (biến động số lượng, mật độ, hao hụt).
+- Việc nhỏ còn lại của P1: chọn lô tay khi Ghi việc; ô số lô trong "Mua có hóa đơn"; cập nhật Hướng dẫn trong app và D98 vào DECISIONS (gộp một lần).
 
 ## Việc người dùng cần làm
-- **Chưa `npx supabase db push` các migration 0016–0081** (app vẫn tải được dữ liệu cũ khi chưa push, nhưng chưa lưu được trường mới; xem `HUONG_DAN_THU.md` để thử tay).
+- **Chưa `npx supabase db push` các migration 0016–0082** (app vẫn tải được dữ liệu cũ khi chưa push, nhưng chưa lưu được trường mới; xem `HUONG_DAN_THU.md` để thử tay).
 - Chưa deploy lại Edge Function `staff-accounts` (D45).
 
 ## Cần bên WEB

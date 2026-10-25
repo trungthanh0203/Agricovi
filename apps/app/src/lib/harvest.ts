@@ -16,6 +16,8 @@ export const GRADE_SUGGESTIONS = ['Loại 1', 'Loại 2', 'Loại 3', 'Loại b�
 
 const COLUMNS =
   'id, organization_id, cycle_id, harvested_at, grade, quantity, unit, loss_quantity, note, voided_at, void_reason, version, created_by, received_at';
+// mã lô, số quả/con, dữ liệu form động (D98) chỉ có sau migration 0082
+const COLUMNS_D98 = `${COLUMNS}, lot_code, unit_count, extra`;
 
 /** Tải thu hoạch gần đây về thiết bị (200 phiếu mới nhất). Không ghi đè phiếu đang chờ gửi hoặc đang xung đột. */
 export async function syncHarvestsDown(): Promise<void> {
@@ -23,10 +25,11 @@ export async function syncHarvestsDown(): Promise<void> {
   const pendingIds = new Set(
     (await db.outbox.where('state').notEqual('synced').toArray()).map((i) => i.payload.id as string),
   );
-  const { data, error } = await supabase
-    .from('harvest_records').select(COLUMNS).order('harvested_at', { ascending: false }).limit(200);
+  const q = (cols: string) => supabase!.from('harvest_records').select(cols).order('harvested_at', { ascending: false }).limit(200);
+  let { data, error } = await q(COLUMNS_D98);
+  if (error && /column|schema cache/i.test(error.message ?? '')) ({ data, error } = await q(COLUMNS));
   if (error) throw error;
-  const rows = ((data ?? []) as HarvestRow[])
+  const rows = ((data ?? []) as unknown as HarvestRow[])
     .filter((r) => !pendingIds.has(r.id))
     .map((r) => ({ ...r, quantity: Number(r.quantity), loss_quantity: r.loss_quantity == null ? null : Number(r.loss_quantity) }));
   await db.harvests.bulkPut(rows);
@@ -42,6 +45,9 @@ export interface NewHarvest {
   userId: string;
   /** Lý do thu trong thời gian cách ly (D96) */
   withdrawalReason?: string;
+  /** Số quả/con và dữ liệu theo form động (D98); trống thì không gửi để không cần CSDL mới */
+  unitCount?: number | null;
+  extra?: Record<string, unknown>;
 }
 
 export async function recordHarvest(h: NewHarvest): Promise<string> {
@@ -58,6 +64,8 @@ export async function recordHarvest(h: NewHarvest): Promise<string> {
     loss_quantity: h.lossQuantity,
     note: h.note.trim() || null,
     ...(h.withdrawalReason?.trim() ? { withdrawal_reason: h.withdrawalReason.trim() } : {}),
+    ...(h.unitCount ? { unit_count: h.unitCount } : {}),
+    ...(h.extra && Object.keys(h.extra).length > 0 ? { extra: h.extra } : {}),
   };
   await db.transaction('rw', db.harvests, db.outbox, async () => {
     await db.harvests.put({ ...row, version: 1, created_by: h.userId, received_at: new Date().toISOString() });
@@ -73,6 +81,8 @@ export interface HarvestEdit {
   quantity: number;
   lossQuantity: number | null;
   note: string;
+  unitCount?: number | null;
+  extra?: Record<string, unknown>;
 }
 
 /** Sửa phiếu (cần mạng): kèm phiên bản đã thấy để phát hiện xung đột. */
@@ -85,6 +95,9 @@ export async function editHarvest(id: string, e: HarvestEdit): Promise<void> {
     quantity: e.quantity,
     loss_quantity: e.lossQuantity,
     note: e.note.trim() || null,
+    // chỉ gửi phần riêng khi có (hoặc đang có sẵn cần xóa) để CSDL chưa cập nhật vẫn sửa được phần chung
+    ...(e.unitCount !== undefined && (e.unitCount || cur.unit_count) ? { unit_count: e.unitCount ? String(e.unitCount) : '' } : {}),
+    ...(e.extra !== undefined && (Object.keys(e.extra).length > 0 || Object.keys(cur.extra ?? {}).length > 0) ? { extra: e.extra } : {}),
   };
   await updateAndCache('harvest_records', id, cur.version, changes, 'sửa phiếu thu hoạch');
 }

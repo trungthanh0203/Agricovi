@@ -230,3 +230,14 @@ Khi gặp lỗi hoặc chỗ khó hiểu, hãy gửi cho chúng tôi:
 3. Ở app: Sản xuất → Mùa vụ → "Mở công khai website" cho một vụ. Mở `/truyxuat/?ma=VU-XXXXXXXX` kiểm tra thông tin vụ, vật tư, giấy phép.
 4. Ở app đổi "Tình trạng cung ứng" thành Đang có hàng: tải lại trang chủ website, sản phẩm hiện ở mục "Đang có hàng".
 5. Tạm ẩn hồ sơ hoặc ngừng công khai vụ: tải lại, trang báo không tìm thấy.
+
+
+## Thử P1 (D98): nền dữ liệu chung + bộ trường dưa / heo
+Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng mới hiện; không dùng thì màn hình giữ như cũ.
+1. **Khu**: Khai báo → Trang trại → thêm "Cổng chính" loại *Cơ sở vật chất*; thêm "Dãy thịt 2", mã `C-THIT-02`, kiểu chuồng nửa kín. Thử tạo vụ: khu Cơ sở vật chất không có trong danh sách.
+2. **Ghi việc không gắn vụ**: Ghi việc → chọn việc → "Ghi cho: Khu vực / cơ sở vật chất" → Cổng chính. Việc hiện trong Nhật ký với nhãn "Khu vực · …".
+3. **Vụ**: Sửa vụ → mở "＋ Thông tin quản lý": mã lô `LO-THIT-10`, đơn vị đếm `con`, cán bộ thú y. Nhãn "Số cây" đổi thành "Số con".
+4. **Vật tư và lô**: Kho → Nhập kho: ô *Số lô* và *Hạn dùng*. Nhập 2 lô cùng vật tư (hạn khác nhau), ghi xuất cho vụ: Giao dịch gần đây hiện lô hạn gần hơn. Lô sắp hết hạn hiện ở thẻ "Lô vật tư sắp hết hạn".
+5. **Gói trường**: Khai báo → Danh mục việc → Áp dụng "Dưa lưới nhà màng" hoặc "Heo thịt". Mỗi gói chỉ thêm việc/trường của loại hình đó.
+6. **Thu hoạch**: Ghi thu hoạch → mở "＋ Số … và thông tin thêm": nhập số con/quả, Brix hoặc thẻ tai. Phiếu có mã lô tự sinh (`LO-THIT-10/L01`) và khối lượng trung bình.
+7. **Kim gãy** (vật nuôi): trong vụ → Sự cố → loại "Kim tiêm gãy". Thử thu/bán: app đòi lý do; đóng sự cố thì hết đòi.

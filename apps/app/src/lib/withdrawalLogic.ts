@@ -28,3 +28,9 @@ export function withdrawalMessage(items: WithdrawalItem[] | null | undefined, d:
 
 /** Lý do hợp lệ (máy chủ yêu cầu ít nhất 3 ký tự) */
 export const validReason = (r: string) => r.trim().length >= 3;
+
+/** Cảnh báo kim tiêm gãy (RIÊNG cho vật nuôi, D98): còn sự cố kim gãy đang mở, chưa hủy thì thu/bán phải ghi lý do. Khớp needle_guard ở CSDL. */
+export function needleMessage(incidents: { cycle_id: string; kind: string; status: string; voided_at: string | null }[], cycleId: string): string | null {
+  const n = incidents.filter((i) => i.cycle_id === cycleId && i.kind === 'broken_needle' && i.status === 'open' && !i.voided_at).length;
+  return n > 0 ? `Vụ còn ${n} sự cố kim tiêm gãy chưa xử lý xong. Hãy tìm và xử lý con bị gãy kim rồi đóng sự cố trước khi thu hoặc bán.` : null;
+}
