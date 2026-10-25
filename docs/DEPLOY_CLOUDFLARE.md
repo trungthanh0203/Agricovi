@@ -123,6 +123,8 @@ App là PWA nên trình duyệt giữ một bản app trong máy (service worker
 
 ### 6.2 Khi đã mua tên miền (đưa cho người dùng thật)
 
+> **Tên miền `agricovi.com` đã mua: làm theo `docs/TRIEN_KHAI_TEN_MIEN.md` (từng bước cho website, app, thư, bảo vệ quản trị).** Mục này giữ làm tham khảo chung.
+
 Làm theo thứ tự; mỗi bước đều làm được mà không ngắt bản thử.
 
 1. **Mua tên miền** (ở Cloudflare Registrar thì tiện nhất; mua nơi khác thì thêm tên miền vào Cloudflare và trỏ nameserver về Cloudflare).

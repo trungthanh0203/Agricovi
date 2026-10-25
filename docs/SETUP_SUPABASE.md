@@ -83,7 +83,7 @@ npx supabase functions deploy staff-accounts
 - Kiểm tra: Supabase → **Edge Functions** thấy `staff-accounts`, trạng thái Active. Nếu lỗi, xem tab **Logs** của hàm.
 - Hàm yêu cầu đăng nhập (`verify_jwt`), và chỉ **chủ cơ sở** mới tạo/đặt lại được.
 
-**Cấu hình tên miền email ẩn.** Mặc định `agricovi.com`, lưu trong bảng `platform_settings`. Đổi bằng SQL Editor:
+**Cấu hình tên miền email ẩn.** Mặc định `agricovi.com` (tên miền của chủ sản phẩm, xem D74), lưu trong bảng `platform_settings`. Đổi bằng SQL Editor:
 
 ```sql
 update platform_settings set value = '"ten-mien-cua-ban.vn"' where key = 'login_email_domain';
