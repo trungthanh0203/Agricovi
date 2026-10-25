@@ -249,7 +249,7 @@ try {
   .slide.fallback .kicker { background: rgba(255,255,255,.18); border-radius: 999px; padding: 3px 12px; font-size: .8rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
   .slide.fallback h1 { margin: 0; font-size: 2rem; line-height: 1.2; max-width: 520px; } .slide.fallback p { margin: 0 0 8px; opacity: .95; max-width: 520px; }
   .slide.fallback { align-items: stretch; gap: 12px; } .slide.fallback h1 { max-width: none; }
-  .herotop { display: flex; align-items: center; gap: 16px; } .herotop h1 { flex: 1; } .herologo { flex: none; height: 30px; width: auto; display: block; background: #fff; border-radius: 8px; padding: 4px 8px; box-sizing: content-box; }
+  .herotop { display: flex; align-items: center; gap: 16px; } .herotop h1 { flex: 1; } .slide .herologo { flex: none; height: 30px; min-height: 0; width: auto; display: block; background: #fff; border-radius: 8px; padding: 4px 8px; box-sizing: content-box; }
   .heromid { display: flex; align-items: center; gap: 16px; } .heromid p { margin: 0 !important; flex: 1; max-width: none !important; } .heromid .btn { flex: none; }
   .ctas { display: flex; gap: 10px; flex-wrap: wrap; }
   .herotrade { display: flex; align-items: center; gap: 14px; margin-top: 6px; flex-wrap: wrap; } .herotrade .btn { flex: none; } .herotrade p { margin: 0; font-size: .86rem; flex: 1 1 220px; max-width: 360px; line-height: 1.4; opacity: .95; }
@@ -284,5 +284,5 @@ try {
   @media (max-width: 1000px) { .hero2 { grid-template-columns: minmax(0, 1fr); } .fly { display: none !important; } .catbox { border-radius: 14px; }
     .catlist { display: flex; overflow-x: auto; padding: 6px; gap: 6px; } .catlist > li > a { white-space: nowrap; border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; } .catlist .car { display: none; } .cathead { display: none; }
     .sidebans { grid-template-columns: 1fr 1fr; grid-template-rows: auto; } .duo { grid-template-columns: 1fr; } }
-  @media (max-width: 560px) { .herotop { gap: 10px; } .herologo { height: 22px; } .heromid { flex-direction: column; align-items: flex-start; gap: 10px; } .slide.fallback { padding: 20px 16px; } .sidebans { grid-template-columns: 1fr; } .duo-card { padding: 14px; gap: 12px; } .duo-ico { width: 44px; height: 44px; font-size: 1.5rem; } .duo-form { flex-direction: column; } .slide.fallback h1 { font-size: 1.5rem; } }
+  @media (max-width: 560px) { .herotop { gap: 10px; } .slide .herologo { height: 22px; } .heromid { flex-direction: column; align-items: flex-start; gap: 10px; } .slide.fallback { padding: 20px 16px; } .sidebans { grid-template-columns: 1fr; } .duo-card { padding: 14px; gap: 12px; } .duo-ico { width: 44px; height: 44px; font-size: 1.5rem; } .duo-form { flex-direction: column; } .slide.fallback h1 { font-size: 1.5rem; } }
 </style>
