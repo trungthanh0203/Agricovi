@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Collapsible } from '../components/Collapsible';
+import { ExpiringLots } from '../components/ExpiringLots';
 import { PurchaseEntry } from '../components/PurchaseEntry';
 import { StockEntry } from '../components/StockEntry';
 import { Thumb } from '../components/ImagePicker';
@@ -115,6 +116,7 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust, onPurchase }: { orgId
         );
       })}
 
+      <ExpiringLots />
       <Collapsible title="Giao dịch gần đây" summary={!navigator.onLine ? 'Cần có mạng' : history ? `${history.length} giao dịch` : 'Đang tải…'}>
       {navigator.onLine && history && history.length === 0 && <p className="muted">Chưa có giao dịch nào.</p>}
       {(history ?? []).map((h) => (
@@ -130,6 +132,7 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust, onPurchase }: { orgId
             {new Date(h.txn_date).toLocaleDateString('vi-VN')} · {locName(h.location_id)}
             {h.unit_cost != null ? ` · giá ${formatMoney(h.unit_cost)}` : h.txn_type === 'receipt' ? ' · chưa ghi giá' : ''}
             {h.purchase_bills?.partners?.name ? ` · mua của ${h.purchase_bills.partners.name}${h.purchase_bills.invoice_no ? ` (HĐ ${h.purchase_bills.invoice_no})` : ''}` : ''}
+            {h.material_lots ? ` · lô ${h.material_lots.lot_no}${h.material_lots.expiry_date ? ` (hạn ${new Date(h.material_lots.expiry_date).toLocaleDateString('vi-VN')})` : ''}` : ''}
             {h.activity_log_id ? ' · dùng khi ghi việc' : ''}
             {h.reason ? ` — ${h.reason}` : ''}
           </p>

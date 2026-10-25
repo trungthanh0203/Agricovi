@@ -25,15 +25,21 @@ function needOnline() {
   if (!navigator.onLine) throw new Error('OFFLINE: Cần có mạng để thay đổi danh mục vật tư và kho.');
 }
 
+const MATERIAL_COLUMNS = 'id, organization_id, name, description, image, category, brand, usage_guide, usage_method, safety_warning, quality_specs, limit_elements, withdrawal_days, base_unit_id, reorder_threshold, is_active';
+const MATERIAL_COLUMNS_D98 = 'material_group, active_ingredient, registration_no, manufacturer';
+
 /** Tải danh mục và tồn kho về thiết bị. Lỗi ở đây không được làm hỏng đồng bộ sản xuất nên người gọi tự bắt lỗi. */
 export async function syncInventoryDown(): Promise<void> {
   if (!supabase || !navigator.onLine) return;
-  const [units, materials, locations, balances] = await Promise.all([
+  const [units, materialsFull, locations, balances] = await Promise.all([
     supabase.from('units_of_measure').select('id, code, name, organization_id'),
-    supabase.from('materials').select('id, organization_id, name, description, image, category, brand, usage_guide, usage_method, safety_warning, quality_specs, limit_elements, withdrawal_days, base_unit_id, reorder_threshold, is_active'),
+    supabase.from('materials').select(`${MATERIAL_COLUMNS}, ${MATERIAL_COLUMNS_D98}`),
     supabase.from('inventory_locations').select('id, organization_id, name, description, is_active'),
     supabase.from('inventory_balances').select('organization_id, location_id, material_id, balance, is_negative, receipts_missing_cost, last_receipt_date, last_adjust_date, last_adjust_delta, last_adjust_reason'),
   ]);
+  // cột mới (D98) chưa có vì CSDL chưa cập nhật: tải bản cũ để Kho vẫn dùng được
+  const materials = materialsFull.error && /column|schema cache/i.test(materialsFull.error.message ?? '')
+    ? await supabase.from('materials').select(MATERIAL_COLUMNS) : materialsFull;
   for (const r of [units, materials, locations, balances]) if (r.error) throw r.error;
 
   await db.transaction('rw', [db.units, db.materials, db.locations, db.balances], async () => {
@@ -66,6 +72,9 @@ export interface NewTxn {
   locationId: string;
   materialId: string;
   type: 'receipt' | 'adjustment';
+  /** Số lô và hạn dùng của lô (chỉ khi nhập kho, không bắt buộc) */
+  lotNo?: string;
+  lotExpiry?: string | null;
   /** Số lượng dương; với điều chỉnh, hướng do `direction` quyết định */
   quantity: number;
   direction?: 'increase' | 'decrease';
@@ -87,6 +96,7 @@ export async function recordTransaction(t: NewTxn): Promise<string> {
     txn_type: t.type,
     quantity_delta: sign * t.quantity,
     unit_cost: t.type === 'receipt' ? t.unitCost : null,
+    ...(t.type === 'receipt' && t.lotNo?.trim() ? { lot_no: t.lotNo.trim(), lot_expiry: t.lotExpiry || null } : {}),
     txn_date: t.date,
     reason: t.reason.trim() || null,
     source: 'online',
@@ -111,15 +121,16 @@ export interface TxnHistoryRow {
   created_at: string;
   /** Hóa đơn mua và nhà cung ứng (chỉ có khi người xem có quyền xem Chi phí) */
   purchase_bills?: { invoice_no: string | null; partners: { name: string } | null } | null;
+  /** Lô của giao dịch (nhập kèm lô, hoặc xuất được tự gắn lô theo hạn gần nhất) */
+  material_lots?: { lot_no: string; expiry_date: string | null } | null;
 }
 
 export async function fetchRecentTransactions(orgId: string, limit = 30): Promise<TxnHistoryRow[]> {
-  const { data, error } = await client()
-    .from('inventory_transactions')
-    .select('id, location_id, material_id, txn_type, quantity_delta, unit_cost, txn_date, reason, activity_log_id, author_name, author_roles, created_at, purchase_bills(invoice_no, partners(name))')
-    .eq('organization_id', orgId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  const q = (cols: string) => client().from('inventory_transactions').select(cols)
+    .eq('organization_id', orgId).order('created_at', { ascending: false }).limit(limit);
+  const base = 'id, location_id, material_id, txn_type, quantity_delta, unit_cost, txn_date, reason, activity_log_id, author_name, author_roles, created_at, purchase_bills(invoice_no, partners(name))';
+  let { data, error } = await q(`${base}, material_lots(lot_no, expiry_date)`);
+  if (error && /relationship|column|schema cache/i.test(error.message ?? '')) ({ data, error } = await q(base)); // CSDL chưa có bảng lô
   if (error) throw error;
   return ((data ?? []) as unknown as TxnHistoryRow[]).map((r) => ({ ...r, quantity_delta: Number(r.quantity_delta) }));
 }
@@ -128,6 +139,10 @@ export async function fetchRecentTransactions(orgId: string, limit = 30): Promis
 
 /** Thông tin mở rộng của vật tư (không bắt buộc) */
 export interface MaterialExt {
+  material_group: string | null;
+  active_ingredient: string | null;
+  registration_no: string | null;
+  manufacturer: string | null;
   image: string | null;
   brand: string | null;
   usage_guide: string | null;
@@ -217,3 +232,22 @@ export function parseNumber(raw: string): number | null {
 
 export const formatQty = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 3 });
 export const formatMoney = (n: number) => `${n.toLocaleString('vi-VN')} đ`;
+
+/** Nhóm vật tư (D98): quyết định cách app xử lý sau này (cách ly chỉ với thuốc/vaccine/BVTV, FCR lấy nhóm thức ăn) */
+export const MATERIAL_GROUPS: { id: string; label: string }[] = [
+  { id: 'feed', label: 'Thức ăn' }, { id: 'vet_drug', label: 'Thuốc thú y' }, { id: 'vaccine', label: 'Vaccine' },
+  { id: 'pesticide', label: 'Thuốc bảo vệ thực vật' }, { id: 'fertilizer', label: 'Phân bón' }, { id: 'disinfectant', label: 'Thuốc sát trùng' },
+  { id: 'seed', label: 'Giống' }, { id: 'other', label: 'Khác' },
+];
+
+export interface LotStatus {
+  lot_id: string; material_id: string; material_name: string; lot_no: string; expiry_date: string; remaining: number; days_left: number;
+}
+
+/** Lô còn tồn đã hết hạn hoặc sắp hết hạn trong `days` ngày (cần mạng; lỗi/offline thì trả về rỗng, không làm hỏng màn hình) */
+export async function fetchLotStatus(orgId: string, days = 30): Promise<LotStatus[]> {
+  if (!supabase || !navigator.onLine) return [];
+  const { data, error } = await supabase.rpc('get_lot_status', { p_org: orgId, p_days: days });
+  if (error) return [];
+  return ((data ?? []) as LotStatus[]).map((r) => ({ ...r, remaining: Number(r.remaining) }));
+}

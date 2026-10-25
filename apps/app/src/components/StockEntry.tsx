@@ -26,6 +26,8 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
   const [cost, setCost] = useState('');
   const [direction, setDirection] = useState<'increase' | 'decrease'>('decrease');
   const [reason, setReason] = useState('');
+  const [lotNo, setLotNo] = useState('');
+  const [lotExpiry, setLotExpiry] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [draftId, setDraftId] = useState(() => crypto.randomUUID());
@@ -45,13 +47,14 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
     if (q === null || Number.isNaN(q) || q <= 0) return setError('Số lượng phải là số lớn hơn 0.');
     const c = parseNumber(cost);
     if (c !== null && (Number.isNaN(c) || c < 0 || !Number.isInteger(c))) return setError('Giá nhập phải là số tiền (đồng), không có phần lẻ.');
+    if (lotExpiry && !lotNo.trim()) return setError('Đã nhập hạn dùng thì cần nhập cả số lô.');
     if (mode === 'receipt' && date > todayLocal()) return setError('Ngày nhập kho không được sau ngày hôm nay.');
     if (mode === 'adjustment' && reason.trim().length < 3) return setError('Điều chỉnh cần ghi lý do (ví dụ: kiểm kê, hao hụt, hỏng).');
     setBusy(true);
     try {
       const id = await recordTransaction({
         id: draftId, organizationId: orgId, locationId: effLocation, materialId: effMaterial, type: mode,
-        quantity: q, direction, unitCost: c, date, reason,
+        quantity: q, direction, unitCost: c, date, reason, lotNo, lotExpiry: lotExpiry || null,
       });
       try { localStorage.setItem(LAST_LOCATION_KEY, effLocation); } catch { /* bỏ qua */ }
       setSavedId(id);
@@ -68,6 +71,8 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
     setQty('');
     setCost('');
     setReason('');
+    setLotNo('');
+    setLotExpiry('');
     setError(null);
   }
 
@@ -136,6 +141,12 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
             <input value={cost} inputMode="numeric" onChange={(e) => setCost(e.target.value)} />
             <small>Để trống nếu chưa biết giá. Khi đó báo cáo sẽ ghi rõ là thiếu giá vốn, không tự đoán.</small>
           </label>
+        )}
+        {mode === 'receipt' && (
+          <div className="pair">
+            <label>Số lô (không bắt buộc)<input value={lotNo} maxLength={60} onChange={(e) => setLotNo(e.target.value)} placeholder="Ghi trên bao bì" /></label>
+            <label>Hạn dùng<input type="date" value={lotExpiry} onChange={(e) => setLotExpiry(e.target.value)} /></label>
+          </div>
         )}
         <label>
           Ngày

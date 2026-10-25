@@ -243,6 +243,11 @@ export interface MaterialRow {
   limit_elements?: string | null;
   /** Thời gian cách ly (số ngày) */
   withdrawal_days?: number | null;
+  /** Nhóm vật tư, hoạt chất, số đăng ký, nhà sản xuất (D98) */
+  material_group?: string | null;
+  active_ingredient?: string | null;
+  registration_no?: string | null;
+  manufacturer?: string | null;
   base_unit_id: string;
   reorder_threshold: number | null;
   is_active: boolean;

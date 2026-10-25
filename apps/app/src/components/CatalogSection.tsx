@@ -6,7 +6,7 @@ import { ImagePicker, Thumb } from './ImagePicker';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import {
-  createLocation, createMaterial, createUnit, formatQty, parseNumber, updateLocation, updateMaterial,
+  createLocation, createMaterial, createUnit, formatQty, MATERIAL_GROUPS, parseNumber, updateLocation, updateMaterial,
 } from '../lib/inventory';
 import { useTable } from '../lib/tables';
 
@@ -184,7 +184,8 @@ function MaterialEditor({ m, busy, onSave, onClose }: {
   const [cat, setCat] = useState(m.category ?? '');
   const [desc, setDesc] = useState(m.description ?? '');
   const [ext, setExt] = useState({
-    image: m.image ?? '', brand: m.brand ?? '', usage_guide: m.usage_guide ?? '', usage_method: m.usage_method ?? '', safety_warning: m.safety_warning ?? '',
+    image: m.image ?? '', brand: m.brand ?? '', material_group: m.material_group ?? '', active_ingredient: m.active_ingredient ?? '',
+    registration_no: m.registration_no ?? '', manufacturer: m.manufacturer ?? '', usage_guide: m.usage_guide ?? '', usage_method: m.usage_method ?? '', safety_warning: m.safety_warning ?? '',
     quality_specs: m.quality_specs ?? '', limit_elements: m.limit_elements ?? '', withdrawal_days: m.withdrawal_days == null ? '' : String(m.withdrawal_days),
   });
   const setE = (k: keyof typeof ext) => (e: { target: { value: string } }) => setExt((x) => ({ ...x, [k]: e.target.value }));
@@ -198,7 +199,18 @@ function MaterialEditor({ m, busy, onSave, onClose }: {
         <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} /></label>
         <ImagePicker value={ext.image} onChange={(v) => setExt((x) => ({ ...x, image: v }))} store="materials" />
         <label>Thương hiệu / xuất xứ<input value={ext.brand} onChange={setE('brand')} /></label>
-        <label>Nhóm (phân bón, thuốc BVTV, giống…)<input value={cat} onChange={(e) => setCat(e.target.value)} /></label>
+        <label>Nhóm vật tư
+          <select value={ext.material_group} onChange={setE('material_group')}>
+            <option value="">— Chưa phân nhóm —</option>
+            {MATERIAL_GROUPS.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+          </select>
+        </label>
+        <label>Hoạt chất / thành phần<input value={ext.active_ingredient} maxLength={300} onChange={setE('active_ingredient')} /></label>
+        <div className="pair">
+          <label>Số đăng ký lưu hành<input value={ext.registration_no} maxLength={80} onChange={setE('registration_no')} /></label>
+          <label>Nhà sản xuất<input value={ext.manufacturer} maxLength={200} onChange={setE('manufacturer')} /></label>
+        </div>
+        <label>Ghi chú loại (tùy ý)<input value={cat} onChange={(e) => setCat(e.target.value)} /></label>
         <label>Báo "sắp hết" khi tồn ≤ (để trống nếu không báo)<input value={thr} inputMode="decimal" onChange={(e) => setThr(e.target.value)} /></label>
         <details className="fold">
           <summary>Thông tin mở rộng (không bắt buộc)</summary>

@@ -3,6 +3,7 @@ import { addDays, diffDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { setNoteDone } from '../lib/production';
 import { useCatalog } from '../lib/catalog';
+import { ExpiringLots } from '../components/ExpiringLots';
 import { HomeStats } from '../components/HomeStats';
 import { CycleProgressList } from '../components/CycleProgressList';
 import { ShiftButton } from '../components/ShiftButton';
@@ -166,6 +167,7 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
         </div>
       )}
 
+      <ExpiringLots />
       <HomeStats cycleIds={mineIds} onGo={onGo} />
 
     </section>
