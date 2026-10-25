@@ -4,6 +4,7 @@ import { friendlyError } from '../lib/errors';
 import { setNoteDone } from '../lib/production';
 import { useCatalog } from '../lib/catalog';
 import { ExpiringLots } from '../components/ExpiringLots';
+import { HomeReminders } from '../components/MilestonePanels';
 import { HomeStats } from '../components/HomeStats';
 import { CycleProgressList } from '../components/CycleProgressList';
 import { ShiftButton } from '../components/ShiftButton';
@@ -167,6 +168,7 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
         </div>
       )}
 
+      <HomeReminders />
       <ExpiringLots />
       <HomeStats cycleIds={mineIds} onGo={onGo} />
 

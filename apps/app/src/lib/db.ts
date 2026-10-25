@@ -111,6 +111,20 @@ export interface CountEventRow {
   created_at?: string;
 }
 
+/** Mốc nhắc việc an toàn của vụ (P4 gọn, D100); ngày đến hạn tính từ ngày của vụ */
+export interface MilestoneRow {
+  id: string;
+  cycle_id: string;
+  organization_id: string;
+  title: string;
+  anchor: 'start' | 'end';
+  offset_days: number;
+  note: string | null;
+  done_at: string | null;
+  done_by: string | null;
+  done_name: string | null;
+}
+
 /** Việc khắc phục của sự cố */
 export interface IncidentActionRow {
   id: string;
@@ -376,6 +390,7 @@ export class LocalDb extends Dexie {
   withdrawals!: Table<WithdrawalRow, string>;
   incidentActions!: Table<IncidentActionRow, string>;
   countEvents!: Table<CountEventRow, string>;
+  milestones!: Table<MilestoneRow, string>;
   localShifts!: Table<LocalShift, string>;
   media!: Table<MediaRow, string>;
 
@@ -483,6 +498,10 @@ export class LocalDb extends Dexie {
     // v14 (D100): biến động số lượng của vụ
     this.version(14).stores({
       countEvents: 'id, cycle_id',
+    });
+    // v15 (D100): mốc nhắc việc an toàn của vụ
+    this.version(15).stores({
+      milestones: 'id, cycle_id',
     });
   }
 }

@@ -4,6 +4,7 @@ import { syncFinanceDown } from './finance';
 import { refreshCatalogCache } from './templates';
 import { syncHarvestsDown } from './harvest';
 import { syncCountEventsDown } from './counts';
+import { syncMilestonesDown } from './milestones';
 import { syncIncidentsDown, syncWithdrawalsDown } from './incidents';
 import { toLocalInput } from './hooks';
 import { syncInventoryDown } from './inventory';
@@ -74,6 +75,7 @@ export async function syncDown(): Promise<void> {
     syncFinanceDown().catch((e) => console.warn('Không tải được chi phí/doanh thu', e)),
     syncIncidentsDown().catch((e) => console.warn('Không tải được sự cố', e)),
     syncCountEventsDown().catch((e) => console.warn('Không tải được số lượng', e)),
+    syncMilestonesDown().catch((e) => console.warn('Không tải được mốc nhắc việc', e)),
     syncWithdrawalsDown().catch((e) => console.warn('Không tải được thời gian cách ly', e)),
   ]);
 

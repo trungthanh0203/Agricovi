@@ -4,6 +4,7 @@ import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { defaultCountUnit } from '../lib/countUnit';
+import { restWarning } from '../lib/milestoneLogic';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
 import { createCycle, fetchQuotaContexts, type QuotaContext } from '../lib/production';
 import { addDays, fmtDate } from '../lib/dates';
@@ -84,6 +85,12 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const choices = contexts && contexts.length > 1 ? contexts : null;
   const chosen = contexts?.find((c) => c.org_id === ownerId) ?? null;
   const chosenTemplate = (templates ?? []).find((t) => t.id === templateId);
+  const allCycles = useTable('cycles');
+  const allStages = useTable('stages');
+  // trống chuồng tối thiểu 7 ngày trước khi nhập lứa mới (cảnh báo, không chặn)
+  const rest = areaId && startDate
+    ? restWarning(areaId, startDate, 7, allCycles, (cid) => allStages.filter((s) => s.cycle_id === cid && s.actual_end).map((s) => s.actual_end as string).sort().pop() ?? null)
+    : null;
   const ownerLabel = (c: QuotaContext) => (c.kind === 'own' ? `Hộ riêng (${c.org_name})` : `HTX ${c.org_name}`);
   const picked = templates?.find((t) => t.id === templateId) ?? null;
   const total = stages.reduce((s, x) => s + x.duration_days, 0);
@@ -200,6 +207,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
             Ngày bắt đầu
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </label>
+
+          {rest && <p className="msg warn" role="status">{rest}</p>}
 
           <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultCountUnit(cropTypes.find((c) => c.id === chosenTemplate?.crop_type_id)?.kind)} />
 

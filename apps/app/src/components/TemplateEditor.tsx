@@ -3,6 +3,7 @@ import { useCatalog } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { parseNumber } from '../lib/inventory';
+import { TemplateMilestones } from './MilestonePanels';
 import {
   addStage, createWorkType, deleteStage, duplicateTemplate, loadTemplate, refreshCatalogCache, reorderStages, stageRanges,
   totalDays, updateStage, updateTemplate, type StageRow, type TemplateRow,
@@ -19,7 +20,7 @@ interface Props { templateId: string; canEdit: boolean; onBack: () => void; onOp
  */
 export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Props) {
   const online = useOnline();
-  const { workTypes: allTypes } = useCatalog();
+  const { workTypes: allTypes, cropTypes } = useCatalog();
   const [tpl, setTpl] = useState<TemplateRow | null>(null);
   const [stages, setStages] = useState<StageRow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -109,6 +110,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
 
   if (!tpl) return <p className="muted">{error ?? 'Đang tải…'}</p>;
   const editable = canEdit && online && !busy;
+  const cropKind = cropTypes.find((c) => c.id === tpl.crop_type_id)?.kind;
 
   return (
     <>
@@ -211,6 +213,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
           )}
         </>
       )}
+      <TemplateMilestones templateId={templateId} kind={cropKind} canEdit={editable} />
       <p className="muted">Sửa mẫu không đổi các vụ đã tạo trước đó. Cầm ⠿ kéo để đổi thứ tự, hoặc dùng nút ↑ ↓.</p>
     </>
   );
