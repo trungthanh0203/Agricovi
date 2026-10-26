@@ -86,7 +86,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
     () => (active ? db.locations.where('organization_id').equals(active.id).toArray() : []), [active?.id], [],
   ).filter((l) => l.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const units = useTable('units');
-  // Kho gắn với trang trại nào thì được gợi ý trước khi ghi việc ở trang trại đó (không có kho phù hợp thì hiện tất cả)
+  // Kho gắn với phân khu nào thì được gợi ý trước khi ghi việc ở phân khu đó (không có kho phù hợp thì hiện tất cả)
   const areaHere = areaMode ? siteArea?.id : cycle?.area_id;
   const locationsHere = (() => { const f = locations.filter((l) => !l.area_ids || l.area_ids.length === 0 || !areaHere || l.area_ids.includes(areaHere)); return f.length > 0 ? f : locations; })();
   const [usedOpen, setUsedOpen] = useState(false);

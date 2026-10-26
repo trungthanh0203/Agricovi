@@ -152,7 +152,7 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
           {canManage ? (
             mine.length === 0 && (
               <button className="primary" onClick={() => onGo(areas.every((a) => a.organization_id !== active.id) ? 'declare' : 'production', areas.every((a) => a.organization_id !== active.id) ? 'areas' : 'cycles')}>
-                {areas.some((a) => a.organization_id === active.id) ? 'Tạo vụ đầu tiên' : 'Thêm trang trại đầu tiên'}
+                {areas.some((a) => a.organization_id === active.id) ? 'Tạo vụ đầu tiên' : 'Thêm phân khu đầu tiên'}
               </button>
             )
           ) : (

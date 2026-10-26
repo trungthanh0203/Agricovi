@@ -57,8 +57,8 @@ export const GUIDES: Guide[] = [
       {
         title: 'Một vòng đời mùa vụ gồm 5 bước',
         details: [
-          '1) Khai báo: trang trại, sản phẩm, vật tư, quy trình mẫu (làm một lần, dùng nhiều vụ).',
-          '2) Tạo vụ: chọn sản phẩm, trang trại và quy trình mẫu; app tự lập lịch các giai đoạn (có thể đặt sản lượng và ngân sách dự kiến). Bắt đầu chạy muộn hay làm lệch kế hoạch thì lịch tự dời theo thực tế.',
+          '1) Khai báo: phân khu, sản phẩm, vật tư, quy trình mẫu (làm một lần, dùng nhiều vụ).',
+          '2) Tạo vụ: chọn sản phẩm, phân khu và quy trình mẫu; app tự lập lịch các giai đoạn (có thể đặt sản lượng và ngân sách dự kiến). Bắt đầu chạy muộn hay làm lệch kế hoạch thì lịch tự dời theo thực tế.',
           '3) Ghi việc hằng ngày: mỗi việc làm xong bấm nút ＋ Ghi việc, ghi cả vật tư đã dùng.',
           '4) Thu hoạch và bán: ghi sản lượng, hao hụt, doanh thu, khách còn nợ.',
           '5) Tổng kết: xem chi phí, doanh thu, lãi lỗ, giá thành mỗi ký của cả vụ.',
@@ -89,7 +89,7 @@ export const GUIDES: Guide[] = [
           'Quản lý: điều hành sản xuất hằng ngày (tạo vụ, sửa nhật ký, xác nhận chấm công), xem Kho và danh sách nhân sự, xem Báo cáo tuần (phần tiền chỉ hiện khi được cấp quyền).',
           'Nhân viên: ghi việc, thu hoạch, chấm công của mình và xem Bảng lương của mình (Báo cáo → Bảng lương).',
           'Chức vụ: chủ tạo chức vụ cho cơ sở (ví dụ Thủ kho và kế toán, Tổ trưởng vườn). Mỗi chức vụ có MỘT vai trò (mặc định Nhân viên; chọn Quản lý thì chọn thêm quyền). Mỗi người giữ đúng một chức vụ, chọn ở mục Nhân sự; vai trò và quyền của người theo chức vụ. Mục nào không có quyền thì không hiện.',
-          'Chủ có thể giao mỗi người một hay nhiều trang trại; người đó chỉ thấy và ghi việc ở các trang trại được giao.',
+          'Chủ có thể giao mỗi người một hay nhiều phân khu; người đó chỉ thấy và ghi việc ở các phân khu được giao.',
         ],
         go: { tab: 'declare', section: 'members', label: 'Mở Nhân sự' },
       },
@@ -115,7 +115,7 @@ export const GUIDES: Guide[] = [
     label: 'Hướng dẫn Hộ nuôi trồng',
     icon: '🌾',
     flow: [
-      { title: 'Làm một lần đầu', tone: 'info', nodes: [{ icon: '📝', label: 'Đăng ký', step: 0 }, { icon: '🏡', label: 'Trang trại', step: 1 }, { icon: '🌾', label: 'Sản phẩm', step: 2 }, { icon: '📦', label: 'Kho và vật tư', step: 3 }, { icon: '📋', label: 'Quy trình mẫu', step: 4 }] },
+      { title: 'Làm một lần đầu', tone: 'info', nodes: [{ icon: '📝', label: 'Đăng ký', step: 0 }, { icon: '🏡', label: 'Phân khu', step: 1 }, { icon: '🌾', label: 'Sản phẩm', step: 2 }, { icon: '📦', label: 'Kho và vật tư', step: 3 }, { icon: '📋', label: 'Quy trình mẫu', step: 4 }] },
       { title: 'Mỗi vụ', tone: 'ok', nodes: [{ icon: '📥', label: 'Nhập kho', step: 5 }, { icon: '🌱', label: 'Tạo vụ', step: 6 }, { icon: '📈', label: 'Theo dõi vụ', step: 7 }] },
       { title: 'Mỗi ngày', tone: 'ok', nodes: [{ icon: '⏱', label: 'Vào ca → Ghi việc → Ra ca', step: 8 }] },
       { title: 'Khi có thu và chi', tone: 'warn', nodes: [{ icon: '🧺', label: 'Thu hoạch và bán', step: 9 }, { icon: '💳', label: 'Chi phí và công nợ', step: 10 }] },
@@ -133,12 +133,12 @@ export const GUIDES: Guide[] = [
         ],
       },
       {
-        title: 'Khai báo trang trại',
+        title: 'Khai báo phân khu',
         details: [
-          'Trang trại là nơi bạn nuôi trồng: vườn, ao, chuồng, nhà màng…',
+          'Phân khu là nơi bạn nuôi trồng: vườn, ao, chuồng, nhà màng…',
           'Nhập tên, diện tích, vị trí và ảnh (nếu có). Có nhiều vườn/ao thì thêm từng cái.',
         ],
-        go: { tab: 'declare', section: 'areas', label: 'Mở Trang trại' },
+        go: { tab: 'declare', section: 'areas', label: 'Mở Phân khu' },
       },
       {
         title: 'Khai báo sản phẩm',
@@ -178,7 +178,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Tạo vụ theo quy trình mẫu',
         details: [
-          'Vào Sản xuất → Mùa vụ, bấm + Tạo vụ mới: chọn trang trại, sản phẩm, quy trình mẫu và ngày bắt đầu.',
+          'Vào Sản xuất → Mùa vụ, bấm + Tạo vụ mới: chọn phân khu, sản phẩm, quy trình mẫu và ngày bắt đầu.',
           'Có thể nhập Giống, Diện tích trồng (m², ha, sào hoặc công), Số cây, nguồn giống, số lô giống, ngày gieo/trồng: app tự tính mật độ, năng suất, chi phí và lãi trên 1.000 m² (hoặc trên sào/công/ha bạn chọn).',
           'Có thể nhập Sản lượng dự kiến (kg) và Ngân sách dự kiến (đồng) để so với thực tế (không bắt buộc; sửa sau ở Sửa vụ).',
           'Chọn "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước, bắt đầu chạy sau. App lập lịch các giai đoạn theo quy trình mẫu.',
@@ -234,8 +234,8 @@ export const GUIDES: Guide[] = [
         title: 'Nhân sự: chức vụ, hồ sơ, trả công',
         details: [
           'Khai báo → Chức vụ: tạo chức vụ (mặc định vai trò Nhân viên; chọn Quản lý thì chọn thêm quyền). Cơ sở mới đã có sẵn vài chức vụ để dùng.',
-          'Khai báo → Nhân sự: bấm "＋ Tạo tài khoản nhân viên" (đăng nhập bằng số điện thoại) hoặc mời người đã có email; chọn chức vụ và trang trại làm việc. Lần đầu họ phải đổi mật khẩu tạm.',
-          'Bấm vào một người để mở hồ sơ: Thông tin và tài khoản · Chức vụ và quyền · Trang trại làm việc · Phòng / Tổ · Trả công.',
+          'Khai báo → Nhân sự: bấm "＋ Tạo tài khoản nhân viên" (đăng nhập bằng số điện thoại) hoặc mời người đã có email; chọn chức vụ và phân khu làm việc. Lần đầu họ phải đổi mật khẩu tạm.',
+          'Bấm vào một người để mở hồ sơ: Thông tin và tài khoản · Chức vụ và quyền · Phân khu làm việc · Phòng / Tổ · Trả công.',
           'Trả công: đặt riêng cho từng người, theo giờ làm (đồng/giờ) hoặc lương cố định theo tháng, có ngày hiệu lực và ngày hết hiệu lực. Thêm dòng mới thì dòng cũ cùng loại tự kết thúc hôm trước.',
           'Khai báo → Phòng / Tổ: lập tổ, chọn tổ trưởng.',
         ],
@@ -333,7 +333,7 @@ export const GUIDES: Guide[] = [
     icon: '🏢',
     flow: [
       { title: 'Thiết lập tổ chức', tone: 'info', nodes: [{ icon: '🏢', label: 'Tạo cơ sở', step: 0 }, { icon: '🧑‍🤝‍🧑', label: 'Phòng / Tổ', step: 1 }, { icon: '🛡️', label: 'Phân quyền', step: 2 }] },
-      { title: 'Sản xuất và tiền', tone: 'ok', nodes: [{ icon: '🏡', label: 'Nhiều trang trại, nhiều vụ', step: 3 }, { icon: '💳', label: 'Nhà cung ứng, khách, nợ', step: 4 }, { icon: '⏱', label: 'Chấm công, tiền công', step: 5 }] },
+      { title: 'Sản xuất và tiền', tone: 'ok', nodes: [{ icon: '🏡', label: 'Nhiều phân khu, nhiều vụ', step: 3 }, { icon: '💳', label: 'Nhà cung ứng, khách, nợ', step: 4 }, { icon: '⏱', label: 'Chấm công, tiền công', step: 5 }] },
       { title: 'Công khai và bán', tone: 'neutral', nodes: [{ icon: '🌐', label: 'Giấy phép, QR, đơn website', step: 6 }] },
     ],
     intro: 'Công ty có nhiều người và nhiều bộ phận nên cần chia quyền cẩn thận. Các thao tác khác giống Hướng dẫn Hộ nuôi trồng.',
@@ -357,7 +357,7 @@ export const GUIDES: Guide[] = [
         title: 'Phân quyền theo từng mục',
         details: [
           'Quyền theo từng chức vụ: xem hoặc sửa các mục Kho, Thu hoạch, Chi phí, Doanh thu, Tổng kết, Khai báo, Tiền công, Hồ sơ website. Cần ngoại lệ cho một người thì chủ cấp riêng thêm hoặc bớt.',
-          'Giao trang trại cho từng người (một người làm được nhiều trang trại): họ chỉ thấy và ghi việc ở trang trại được giao.',
+          'Giao phân khu cho từng người (một người làm được nhiều phân khu): họ chỉ thấy và ghi việc ở phân khu được giao.',
           'Người nào không có quyền mục nào thì mục đó biến mất trên màn hình của họ, và máy chủ cũng chặn.',
           'Có thể tạm dừng một thành viên khi họ nghỉ làm mà không mất dữ liệu cũ.',
         ],
@@ -365,9 +365,9 @@ export const GUIDES: Guide[] = [
         go: { tab: 'declare', section: 'members', label: 'Mở Nhân sự' },
       },
       {
-        title: 'Nhiều trang trại, nhiều vụ chạy song song',
+        title: 'Nhiều phân khu, nhiều vụ chạy song song',
         details: [
-          'Khai báo từng trang trại, tạo nhiều vụ cho từng sản phẩm; đặt sản lượng và ngân sách dự kiến cho từng vụ.',
+          'Khai báo từng phân khu, tạo nhiều vụ cho từng sản phẩm; đặt sản lượng và ngân sách dự kiến cho từng vụ.',
           'Thẻ mỗi vụ có dòng số liệu và thanh so với kế hoạch; theo dõi vụ trễ tiến độ và vật tư sắp hết ở Trang chủ.',
         ],
         go: { tab: 'production', section: 'cycles', label: 'Mở Mùa vụ' },

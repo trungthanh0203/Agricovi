@@ -13,7 +13,7 @@ import { housingText, useConfig } from '../lib/config';
 const fmtSize = (a: AreaRow) => (a.area_size != null ? `${a.area_size.toLocaleString('vi-VN')} ${a.area_unit === 'ha' ? 'ha' : 'm²'}` : '');
 
 /**
- * Trang trại của cơ sở (trồng trọt hoặc chăn nuôi): bảng gọn kèm tên, vị trí, diện tích, đặc điểm, hình ảnh;
+ * Phân khu của cơ sở (trồng trọt hoặc chăn nuôi): bảng gọn kèm tên, vị trí, diện tích, đặc điểm, hình ảnh;
  * thêm bằng biểu mẫu, sửa bằng ✎, dừng/dùng lại bằng ⏸/▶. Cần mạng để thêm/sửa (D24).
  */
 export function AreasSection() {
@@ -43,21 +43,21 @@ export function AreasSection() {
 
   return (
     <>
-      {!online && canManage && <p className="msg warn" role="status">Đang offline: thêm và sửa trang trại cần có mạng.</p>}
+      {!online && canManage && <p className="msg warn" role="status">Đang offline: thêm và sửa phân khu cần có mạng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
       {canManage && !adding && !editRow && (
-        <button className="secondary" disabled={!online} onClick={() => setAdding(true)}>+ Thêm trang trại</button>
+        <button className="secondary" disabled={!online} onClick={() => setAdding(true)}>+ Thêm phân khu</button>
       )}
       {canManage && adding && (
-        <FarmForm title="Thêm trang trại" busy={busy || !online} onClose={() => setAdding(false)}
+        <FarmForm title="Thêm phân khu" busy={busy || !online} onClose={() => setAdding(false)}
           onSave={(f) => run(async () => { await createArea(active.id, f); setAdding(false); })} />
       )}
 
       <table className="grid">
-        <thead><tr><th>Trang trại ({rows.length})</th><th className="num">Diện tích</th>{canManage && <th></th>}</tr></thead>
+        <thead><tr><th>Phân khu ({rows.length})</th><th className="num">Diện tích</th>{canManage && <th></th>}</tr></thead>
         <tbody>
-          {rows.length === 0 && <tr><td colSpan={3} className="muted">Chưa có trang trại nào.{canManage ? ' Hãy thêm trang trại đầu tiên ở nút trên.' : ''}</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={3} className="muted">Chưa có phân khu nào.{canManage ? ' Hãy thêm phân khu đầu tiên ở nút trên.' : ''}</td></tr>}
           {rows.map((a) => (
             <tr key={a.id} className={a.is_active === false ? 'off' : ''}>
               <td>
@@ -79,12 +79,12 @@ export function AreasSection() {
           ))}
         </tbody>
       </table>
-      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả trang trại đã dừng</label>
-      <p className="muted">Trang trại đã dừng vẫn giữ lịch sử nhưng không chọn được để tạo vụ mới.</p>
-      <p className="msg" role="note">💡 Sau khi tạo trang trại, hãy vào <strong>Khai báo → Sản phẩm</strong> để tạo/chọn loại đối tượng nuôi / trồng, rồi tạo vụ nuôi trồng cho từng trang trại của bạn.</p>
+      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả phân khu đã dừng</label>
+      <p className="muted">Phân khu đã dừng vẫn giữ lịch sử nhưng không chọn được để tạo vụ mới.</p>
+      <p className="msg" role="note">💡 Sau khi tạo phân khu, hãy vào <strong>Khai báo → Sản phẩm</strong> để tạo/chọn loại đối tượng nuôi / trồng, rồi tạo vụ nuôi trồng cho từng phân khu của bạn.</p>
 
       {canManage && editRow && (
-        <FarmForm key={editRow.id} title={`Sửa trang trại: ${editRow.name}`} initial={editRow} busy={busy || !online} onClose={() => setEditing(null)}
+        <FarmForm key={editRow.id} title={`Sửa phân khu: ${editRow.name}`} initial={editRow} busy={busy || !online} onClose={() => setEditing(null)}
           onSave={(f) => run(async () => { await updateArea(editRow.id, f); setEditing(null); })} />
       )}
     </>
@@ -112,7 +112,7 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
     <div className="card">
       <h2>{title}</h2>
       <div className="inline-form">
-        <label>Tên trang trại<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
+        <label>Tên phân khu<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
         <div className="pair">
           <label>Loại khu
             <select value={choice} onChange={(e) => setChoice(e.target.value)}>
@@ -146,7 +146,7 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {
-            if (!name.trim()) return setErr('Hãy nhập tên trang trại.');
+            if (!name.trim()) return setErr('Hãy nhập tên phân khu.');
             const n = size.trim() === '' ? null : Number(size.replace(',', '.'));
             if (n !== null && (Number.isNaN(n) || n < 0)) return setErr('Diện tích phải là số không âm.');
             setErr(null);

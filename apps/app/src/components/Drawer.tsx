@@ -7,7 +7,7 @@ import type { MyOrg } from '../lib/orgs';
 const ORG_TYPE_LABEL: Record<'household' | 'cooperative', string> = { household: 'Hộ nuôi trồng', cooperative: 'Hợp tác xã' };
 const TAB_ICON: Partial<Record<TabId, string>> = { declare: '🧰', config: '⚙️', guide: '📖', profile: '👤', reports: '📊' };
 const TAB_HINT: Partial<Record<TabId, string>> = {
-  declare: 'Trang trại, sản phẩm, vật tư, nhân sự, tổ',
+  declare: 'Phân khu, sản phẩm, vật tư, nhân sự, tổ',
   config: 'Nhóm loại sản phẩm và các cấu hình mặc định',
   guide: 'Giới thiệu, hướng dẫn hộ, HTX, công ty',
   profile: 'Thông tin cá nhân, mã QR, giấy phép',

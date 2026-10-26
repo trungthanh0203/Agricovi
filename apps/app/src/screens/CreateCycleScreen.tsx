@@ -101,7 +101,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!areaId) return setError('Hãy chọn trang trại. Nếu chưa có, quay lại và thêm trang trại trước.');
+    if (!areaId) return setError('Hãy chọn phân khu. Nếu chưa có, quay lại và thêm phân khu trước.');
     if (!templateId) return setError('Hãy chọn quy trình mùa vụ. Vụ phải được tạo theo một quy trình.');
     // Báo sớm khi biết chắc đã hết hạn mức; máy chủ vẫn là nơi kiểm tra cuối cùng
     if (startNow && chosen && (!chosen.is_current || (chosen.max_cycles !== null && chosen.used_cycles >= chosen.max_cycles))) {
@@ -141,13 +141,13 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
 
       {myAreas.length === 0 ? (
         <>
-          <p className="msg warn">Cơ sở chưa có trang trại. Hãy thêm trang trại ở tab Khai báo trước.</p>
+          <p className="msg warn">Cơ sở chưa có phân khu. Hãy thêm phân khu ở tab Khai báo trước.</p>
           <button className="secondary" onClick={onCancel}>Quay lại</button>
         </>
       ) : (
         <form onSubmit={onSubmit} noValidate>
           <label>
-            Trang trại
+            Phân khu
             <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
               {myAreas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>

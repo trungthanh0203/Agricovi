@@ -136,7 +136,7 @@ export async function fetchQuotaContexts(householdId: string): Promise<QuotaCont
   return (data ?? []) as QuotaContext[];
 }
 
-/** Thêm trang trại (cần mạng, quyết định D24) */
+/** Thêm phân khu (cần mạng, quyết định D24) */
 export interface FarmInput {
   name: string;
   location?: string | null;
@@ -160,13 +160,13 @@ export async function createArea(organizationId: string, f: FarmInput): Promise<
     code: f.code?.trim() || null, kind: f.kind ?? 'crop', housing: f.housing ?? null,
     ...(f.kind_item ? { kind_item: f.kind_item } : {}),
   };
-  await insertAndCache('production_areas', { ...row }, { ...row }, 'thêm trang trại');
+  await insertAndCache('production_areas', { ...row }, { ...row }, 'thêm phân khu');
   return id;
 }
 
-/** Đổi tên hoặc dừng/dùng lại trang trại (cần mạng). Trang trại đã dừng giữ lịch sử, không dùng để tạo vụ mới. */
+/** Đổi tên hoặc dừng/dùng lại phân khu (cần mạng). Phân khu đã dừng giữ lịch sử, không dùng để tạo vụ mới. */
 export async function updateArea(id: string, c: Partial<FarmInput> & { is_active?: boolean }): Promise<void> {
-  requireOnline('sửa trang trại');
+  requireOnline('sửa phân khu');
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   const patch: Record<string, unknown> = {};
   if (c.name !== undefined) patch.name = c.name.trim();

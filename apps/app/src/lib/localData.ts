@@ -3,7 +3,7 @@ import { db } from './db';
 const LAST_USER_KEY = 'agriconnect.lastUser';
 
 /**
- * Bản lưu để xem offline (trang trại, vụ, nhật ký, kho, chi phí...) thuộc về người dùng đã đăng nhập trước.
+ * Bản lưu để xem offline (phân khu, vụ, nhật ký, kho, chi phí...) thuộc về người dùng đã đăng nhập trước.
  * Khi một tài khoản KHÁC đăng nhập trên cùng thiết bị thì xóa các bản lưu đó, để không lẫn dữ liệu giữa hai người
  * (hoặc dữ liệu cũ còn sót sau khi xóa hết dữ liệu trên máy chủ).
  * Hàng đợi gửi (outbox) được GIỮ NGUYÊN: đó là việc chưa gửi của người trước, không tự xóa âm thầm.

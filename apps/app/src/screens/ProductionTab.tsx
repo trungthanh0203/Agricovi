@@ -40,7 +40,7 @@ interface Props {
   onGo: (tab: TabId, section?: string) => void;
 }
 
-/** Tab Sản xuất: Mùa vụ (trạng thái các vụ, ghi việc), Thu hoạch, Kho. Trang trại và danh mục nằm ở tab Khai báo. */
+/** Tab Sản xuất: Mùa vụ (trạng thái các vụ, ghi việc), Thu hoạch, Kho. Phân khu và danh mục nằm ở tab Khai báo. */
 export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, onLogFor, onLog, onHistory, onGo }: Props) {
   const { active } = useOrgs();
   const items = productionSections(active);
@@ -157,7 +157,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
 
   if (!active) return null;
 
-  // Vụ của cơ sở đang chọn: do cơ sở sở hữu, hoặc diễn ra trên trang trại của cơ sở
+  // Vụ của cơ sở đang chọn: do cơ sở sở hữu, hoặc diễn ra trên phân khu của cơ sở
   const myCycles = cycles
     .filter((c) => c.owner_org_id === active.id || areaById.get(c.area_id)?.organization_id === active.id)
     .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
@@ -221,7 +221,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
               <span className="pill">{CYCLE_STATUS_LABEL_VI[c.status]}</span>
             </div>
             <p className="muted">
-              Trang trại: {areaById.get(c.area_id)?.name ?? '—'}
+              Phân khu: {areaById.get(c.area_id)?.name ?? '—'}
               {c.start_date && ` · Bắt đầu ${new Date(c.start_date).toLocaleDateString('vi-VN')}`}
             </p>
             {c.name && <p className="muted">Sản phẩm: {cropName(c.crop_type_id)}</p>}
@@ -277,8 +277,8 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
       })}
       {canManage && !hasAreas && (
         <div className="card">
-          <p>Chưa có trang trại nên chưa tạo được vụ.</p>
-          <button className="secondary" onClick={() => onGo('declare', 'areas')}>Thêm trang trại ở tab Khai báo</button>
+          <p>Chưa có phân khu nên chưa tạo được vụ.</p>
+          <button className="secondary" onClick={() => onGo('declare', 'areas')}>Thêm phân khu ở tab Khai báo</button>
         </div>
       )}
     </>

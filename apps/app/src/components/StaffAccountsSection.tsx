@@ -22,7 +22,7 @@ export function StaffCreateForm({
   const [phone, setPhone] = useState('');
   const [roles, setRoles] = useState<MemberRole[]>(['worker']);
   const [posId, setPosId] = useState('');
-  const [areaSel, setAreaSel] = useState<string[] | null>(null); // null = tất cả trang trại
+  const [areaSel, setAreaSel] = useState<string[] | null>(null); // null = tất cả phân khu
   const [mode, setMode] = useState<WorkMode>('self_hourly');
   const [teamId, setTeamId] = useState('');
   const [desc, setDesc] = useState('');
@@ -41,7 +41,7 @@ export function StaffCreateForm({
     if (name.trim().length < 2) return setError('Hãy nhập họ tên nhân viên.');
     if (!phone.trim()) return setError('Hãy nhập số điện thoại của nhân viên.');
     if (!posId) return setError('Hãy chọn chức vụ cho nhân viên.');
-    if (areaSel && areaSel.length === 0) return setError('Hãy chọn ít nhất một trang trại, hoặc chọn "Tất cả trang trại".');
+    if (areaSel && areaSel.length === 0) return setError('Hãy chọn ít nhất một phân khu, hoặc chọn "Tất cả phân khu".');
     if (needTeam && !teamId) {
       return setError(
         teamsWithLeader.length === 0
@@ -56,7 +56,7 @@ export function StaffCreateForm({
         organization_id: org.id, full_name: name, phone, roles, work_mode: mode, team_id: needTeam || teamId ? teamId || null : null,
       });
       if (posId && res.user_id) await setMemberPosition(org.id, res.user_id, posId); // chức vụ quyết định vai trò và quyền
-      if (areaSel && areaSel.length > 0 && res.user_id) await setMemberAreas(org.id, res.user_id, areaSel); // trang trại làm việc
+      if (areaSel && areaSel.length > 0 && res.user_id) await setMemberAreas(org.id, res.user_id, areaSel); // phân khu làm việc
       if (desc.trim() && res.user_id) await setMemberDescription(org.id, res.user_id, desc); // mô tả
       setCreds(res);
       setName('');
@@ -98,7 +98,7 @@ export function StaffCreateForm({
           {teamsWithLeader.length === 0 && <small>Chưa có tổ nào. Hãy tạo ở mục Phòng / Tổ.</small>}
         </label>
         <fieldset className="roles">
-          <legend>Trang trại làm việc</legend>
+          <legend>Phân khu làm việc</legend>
           <AreaChoice orgId={org.id} value={areaSel} onChange={setAreaSel} />
         </fieldset>
         <label>

@@ -5,7 +5,7 @@ import { syncDown } from '../lib/production';
 import { supabase } from '../lib/supabase';
 
 /**
- * Nạp dữ liệu mẫu (D96) cho chủ cơ sở để thử app: một trang trại, kho, thuốc có thời gian cách ly, vụ dưa lưới đang chạy với nhật ký
+ * Nạp dữ liệu mẫu (D96) cho chủ cơ sở để thử app: một phân khu, kho, thuốc có thời gian cách ly, vụ dưa lưới đang chạy với nhật ký
  * và một sự cố đang mở. Mỗi cơ sở một lần. Mọi mục có tiền tố "[MẪU]". Cần mạng.
  */
 export function DemoDataCard({ orgId }: { orgId: string }) {
@@ -24,7 +24,7 @@ export function DemoDataCard({ orgId }: { orgId: string }) {
 
   async function seed() {
     if (!supabase) return;
-    if (!window.confirm('Nạp dữ liệu mẫu để thử app? Sẽ tạo thêm trang trại, kho, thuốc, một vụ dưa lưới và nhật ký (đều có chữ [MẪU]). Chỉ nạp được một lần.')) return;
+    if (!window.confirm('Nạp dữ liệu mẫu để thử app? Sẽ tạo thêm phân khu, kho, thuốc, một vụ dưa lưới và nhật ký (đều có chữ [MẪU]). Chỉ nạp được một lần.')) return;
     setBusy(true); setMsg(null);
     try {
       const { error } = await supabase.rpc('seed_demo_data', { p_org: orgId, p_kind: 'melon' });

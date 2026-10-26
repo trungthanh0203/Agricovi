@@ -6,7 +6,7 @@ import { supabase } from './supabase';
  * Hàng đợi gửi (outbox) - v1.1 mục 8, FR-SYNC-001..006.
  *
  * Phạm vi (quyết định D24): hàng đợi CHỈ dành cho việc GHI MỚI hằng ngày của nhân viên khi không có mạng tại nơi làm việc:
- * nhật ký (kèm giao dịch xuất vật tư đã dùng) và phiếu thu hoạch. Mọi thao tác khác (trang trại, vụ, kho, chi phí,
+ * nhật ký (kèm giao dịch xuất vật tư đã dùng) và phiếu thu hoạch. Mọi thao tác khác (phân khu, vụ, kho, chi phí,
  * doanh thu, sửa/hủy…) cần mạng và ghi thẳng lên máy chủ, xem serverWrite.ts.
  *
  *  INSERT: id là UUID tạo ở thiết bị, gửi bằng "ON CONFLICT DO NOTHING" => gửi lặp không tạo bản ghi trùng.
@@ -78,7 +78,7 @@ export function createOutbox(deps: OutboxDeps) {
 
     for (const item of pending) {
       const rid = item.payload.id as string;
-      // bản ghi cha: vụ, trang trại, hoặc nhật ký mà giao dịch xuất kho gắn vào
+      // bản ghi cha: vụ, phân khu, hoặc nhật ký mà giao dịch xuất kho gắn vào
       const parents = [item.payload.cycle_id, item.payload.area_id, item.payload.activity_log_id] as (string | undefined)[];
       if (blocked.has(rid) || parents.some((p) => p && blocked.has(p))) {
         blocked.add(rid);

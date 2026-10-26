@@ -33,7 +33,7 @@ export function MigrateImages({ orgId }: { orgId: string }) {
 
   return (
     <>
-      <p className="muted">Ảnh trang trại, sản phẩm, vật tư, giấy phép đã thêm trước đây đang nằm trong dữ liệu, làm app tải chậm. Bấm nút dưới để chuyển sang kho ảnh mới (nhanh hơn, nhẹ hơn). Cần có mạng; ảnh nào chuyển lỗi sẽ được giữ nguyên, bấm lại là thử tiếp.</p>
+      <p className="muted">Ảnh phân khu, sản phẩm, vật tư, giấy phép đã thêm trước đây đang nằm trong dữ liệu, làm app tải chậm. Bấm nút dưới để chuyển sang kho ảnh mới (nhanh hơn, nhẹ hơn). Cần có mạng; ảnh nào chuyển lỗi sẽ được giữ nguyên, bấm lại là thử tiếp.</p>
       {error && <p className="msg error" role="alert">{error}</p>}
       {busy && progress && <p className="msg ok" role="status">Đang chuyển ảnh {progress[0]}/{progress[1]}… xin đừng đóng app.</p>}
       {report && (

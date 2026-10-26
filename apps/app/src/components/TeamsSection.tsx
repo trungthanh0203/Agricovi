@@ -131,7 +131,7 @@ export function TeamsSection({ org }: { org: MyOrg }) {
             <textarea rows={2} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Ví dụ: Phụ trách thu hoạch và đóng gói" />
           </label>
           <label>
-            Trang trại (không bắt buộc)
+            Phân khu (không bắt buộc)
             <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
               <option value="">— Không chọn —</option>
               {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -145,7 +145,7 @@ export function TeamsSection({ org }: { org: MyOrg }) {
       )}
 
       <table className="grid">
-        <thead><tr><th>Tên tổ</th><th>Tổ trưởng</th><th>Mô tả</th><th>Trang trại</th><th></th></tr></thead>
+        <thead><tr><th>Tên tổ</th><th>Tổ trưởng</th><th>Mô tả</th><th>Phân khu</th><th></th></tr></thead>
         <tbody>
           {teams.length === 0 && <tr><td colSpan={5} className="muted">Chưa có tổ nào. Bấm "+ Thêm phòng / tổ".</td></tr>}
           {teams.map((t) => {

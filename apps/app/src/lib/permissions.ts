@@ -17,7 +17,7 @@ export const PERM_MODULE_LABEL: Record<PermModule, string> = {
   expenses: 'Chi phí',
   sales: 'Doanh thu bán hàng',
   summary: 'Tổng kết vụ',
-  declare: 'Khai báo (sản phẩm, việc, quy trình mẫu, trang trại)',
+  declare: 'Khai báo (sản phẩm, việc, quy trình mẫu, phân khu)',
   payroll: 'Tiền công (lương, giá công, thưởng/phạt)',
   website: 'Hồ sơ website và đơn khách',
   coop: 'Hộ thành viên (hợp tác xã)',

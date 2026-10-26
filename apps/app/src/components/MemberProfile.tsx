@@ -15,7 +15,7 @@ import { ResetPasswordButton } from './StaffAccountsSection';
 
 /**
  * Hồ sơ một nhân sự (D85, chỉ chủ): ba nút Đặt lại mật khẩu / Tạm dừng / Gỡ khỏi cơ sở ở TRÊN CÙNG; dưới là MỘT biểu mẫu
- * (họ tên, điện thoại, chức vụ, phòng/tổ, trang trại, mô tả) với một nút Lưu; quyền cấp riêng và Trả công để thu gọn.
+ * (họ tên, điện thoại, chức vụ, phòng/tổ, phân khu, mô tả) với một nút Lưu; quyền cấp riêng và Trả công để thu gọn.
  */
 export function MemberProfile({ org, member, worker, team, teams, position, overrides, areas, onBack, onChanged, onCreds }: {
   org: MyOrg;
@@ -59,7 +59,7 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
       if (name.trim().length < 2) return setError('Hãy nhập họ tên (ít nhất 2 ký tự).');
       if (!phone.trim()) return setError('Hãy nhập số điện thoại.');
     }
-    if (areaSel && areaSel.length === 0) return setError('Hãy chọn ít nhất một trang trại, hoặc chọn "Tất cả trang trại".');
+    if (areaSel && areaSel.length === 0) return setError('Hãy chọn ít nhất một phân khu, hoặc chọn "Tất cả phân khu".');
     void run(async () => {
       // chỉ gửi phần đã đổi
       if (member.is_staff && (name.trim() !== (member.full_name ?? '') || phone.trim() !== (member.phone ?? ''))) await updateStaffProfile(org.id, member.user_id, name, phone);
@@ -115,7 +115,7 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
           {member.leads_teams && member.leads_teams.length > 0 && <small>Đang là tổ trưởng: {member.leads_teams.join(', ')} (đổi tổ trưởng ở mục Phòng / Tổ).</small>}
         </label>
         <fieldset className="roles">
-          <legend>Trang trại làm việc</legend>
+          <legend>Phân khu làm việc</legend>
           <AreaChoice orgId={org.id} value={areaSel} onChange={setAreaSel} />
         </fieldset>
         <label>Mô tả (không bắt buộc)

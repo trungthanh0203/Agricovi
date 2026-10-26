@@ -43,7 +43,7 @@ const MATERIAL_BUILTINS = [
 export const CONFIG_DEFS: ConfigDef[] = [
   {
     id: 'product_groups', title: 'Nhóm loại sản phẩm', mode: 'entries', builtins: PRODUCT_BUILTINS, defaults: [],
-    hint: 'Dùng để chọn loại khi khai báo Sản phẩm và Loại khu của Trang trại. Mục có sẵn đổi tên hoặc dừng được, không xóa. Mục tự thêm phải chọn "tính như" một nhóm có sẵn (ví dụ Gia cầm tính như Vật nuôi) để các chức năng vẫn chạy đúng.',
+    hint: 'Dùng để chọn loại khi khai báo Sản phẩm và Loại khu của Phân khu. Mục có sẵn đổi tên hoặc dừng được, không xóa. Mục tự thêm phải chọn "tính như" một nhóm có sẵn (ví dụ Gia cầm tính như Vật nuôi) để các chức năng vẫn chạy đúng.',
   },
   {
     id: 'material_groups', title: 'Nhóm vật tư', mode: 'entries', builtins: MATERIAL_BUILTINS, defaults: [],
@@ -59,7 +59,7 @@ export const CONFIG_DEFS: ConfigDef[] = [
   },
   {
     id: 'housing', title: 'Kiểu nhà / chuồng', mode: 'free', defaults: ['Kín', 'Hở', 'Nửa kín hở'],
-    hint: 'Dùng để chọn Kiểu nhà/chuồng của Trang trại. Thêm, bớt hoặc đổi tên tùy ý.',
+    hint: 'Dùng để chọn Kiểu nhà/chuồng của Phân khu. Thêm, bớt hoặc đổi tên tùy ý.',
   },
 ];
 

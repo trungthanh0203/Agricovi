@@ -36,7 +36,7 @@ export function PublishCycle({ cycleId }: { cycleId: string }) {
   function publish(update: boolean) {
     const msg = update
       ? 'Cập nhật bản công khai theo thông tin mới nhất của vụ?'
-      : 'CÔNG KHAI vụ này lên website?\n\nThông tin sẽ hiện cho mọi người: tên vụ, sản phẩm, trang trại và vị trí, ngày bắt đầu/kết thúc, phân - thuốc - vật tư đã dùng, giấy phép còn hạn của cơ sở.\n\nKHÔNG công khai: chi phí, doanh thu, nhật ký chi tiết, tiền công.\n\nBạn có thể ngừng công khai bất cứ lúc nào.';
+      : 'CÔNG KHAI vụ này lên website?\n\nThông tin sẽ hiện cho mọi người: tên vụ, sản phẩm, phân khu và vị trí, ngày bắt đầu/kết thúc, phân - thuốc - vật tư đã dùng, giấy phép còn hạn của cơ sở.\n\nKHÔNG công khai: chi phí, doanh thu, nhật ký chi tiết, tiền công.\n\nBạn có thể ngừng công khai bất cứ lúc nào.';
     if (window.confirm(msg)) void run('publish_cycle');
   }
 

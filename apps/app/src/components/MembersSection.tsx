@@ -138,7 +138,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
 
       <div className="tablewrap">
         <table className="grid">
-          <thead><tr><th>Họ tên</th><th>Điện thoại</th><th>Chức vụ</th><th>Phòng / Tổ</th><th>Trang trại</th>{isOwner && <th></th>}</tr></thead>
+          <thead><tr><th>Họ tên</th><th>Điện thoại</th><th>Chức vụ</th><th>Phòng / Tổ</th><th>Phân khu</th>{isOwner && <th></th>}</tr></thead>
           <tbody>
             {members.length === 0 && <tr><td colSpan={isOwner ? 6 : 5} className="muted">Chưa có nhân sự.</td></tr>}
             {members.map((m) => {

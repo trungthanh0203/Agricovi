@@ -13,7 +13,7 @@ export interface AreaRow {
   area_size?: number | null;
   area_unit?: 'm2' | 'ha';
   image?: string | null;
-  /** false = trang trại đã dừng: giữ lịch sử, không dùng để tạo vụ mới */
+  /** false = phân khu đã dừng: giữ lịch sử, không dùng để tạo vụ mới */
   is_active?: boolean;
   /** Mã khu/chuồng (ví dụ C-THIT-02), duy nhất trong cơ sở (D98) */
   code?: string | null;
@@ -298,7 +298,7 @@ export interface LocationRow {
   organization_id: string;
   name: string;
   description?: string | null;
-  /** Kho dùng cho các trang trại này; null/thiếu = tất cả trang trại */
+  /** Kho dùng cho các phân khu này; null/thiếu = tất cả phân khu */
   area_ids?: string[] | null;
   is_active: boolean;
 }

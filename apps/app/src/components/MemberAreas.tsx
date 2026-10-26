@@ -3,7 +3,7 @@ import { friendlyError } from '../lib/errors';
 import { setMemberAreas } from '../lib/members';
 import { useTable } from '../lib/tables';
 
-/** Chọn trang trại làm việc: "Tất cả" (null) hoặc một số trang trại. Dùng ở hồ sơ nhân sự và khi tạo tài khoản nhân viên. */
+/** Chọn phân khu làm việc: "Tất cả" (null) hoặc một số phân khu. Dùng ở hồ sơ nhân sự và khi tạo tài khoản nhân viên. */
 export function AreaChoice({ orgId, value, onChange }: { orgId: string; value: string[] | null; onChange: (v: string[] | null) => void }) {
   const areas = useTable('areas').filter((a) => a.organization_id === orgId);
   const all = value === null;
@@ -11,17 +11,17 @@ export function AreaChoice({ orgId, value, onChange }: { orgId: string; value: s
   const toggle = (id: string) => onChange(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
   return (
     <>
-      <label className="check"><input type="radio" checked={all} onChange={() => onChange(null)} /> Tất cả trang trại</label>
-      <label className="check"><input type="radio" checked={!all} onChange={() => onChange(picked)} /> Chỉ những trang trại được chọn</label>
+      <label className="check"><input type="radio" checked={all} onChange={() => onChange(null)} /> Tất cả phân khu</label>
+      <label className="check"><input type="radio" checked={!all} onChange={() => onChange(picked)} /> Chỉ những phân khu được chọn</label>
       {!all && <div className="cols2">{areas.map((a) => <label className="check" key={a.id}><input type="checkbox" checked={picked.includes(a.id)} onChange={() => toggle(a.id)} /> {a.name}</label>)}</div>}
-      {!all && areas.length === 0 && <p className="muted">Chưa có trang trại nào. Khai báo trang trại trước.</p>}
+      {!all && areas.length === 0 && <p className="muted">Chưa có phân khu nào. Khai báo phân khu trước.</p>}
     </>
   );
 }
 
 /**
- * Trang trại được giao cho một người (D83): "Tất cả" hoặc chọn một số trang trại (một người làm được nhiều trang trại).
- * Người bị giới hạn chỉ thấy và ghi vụ, nhật ký, thu hoạch của các trang trại đó; máy chủ ép, không chỉ ẩn trên màn hình.
+ * Phân khu được giao cho một người (D83): "Tất cả" hoặc chọn một số phân khu (một người làm được nhiều phân khu).
+ * Người bị giới hạn chỉ thấy và ghi vụ, nhật ký, thu hoạch của các phân khu đó; máy chủ ép, không chỉ ẩn trên màn hình.
  */
 export function MemberAreas({ orgId, userId, initial, onSaved }: { orgId: string; userId: string; initial: string[] | null; onSaved: () => void }) {
   const areas = useTable('areas').filter((a) => a.organization_id === orgId);
@@ -33,7 +33,7 @@ export function MemberAreas({ orgId, userId, initial, onSaved }: { orgId: string
 
   const toggle = (id: string) => setPicked((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const save = async () => {
-    if (!all && picked.length === 0) return setMsg({ ok: false, text: 'Hãy chọn ít nhất một trang trại, hoặc chọn "Tất cả trang trại".' });
+    if (!all && picked.length === 0) return setMsg({ ok: false, text: 'Hãy chọn ít nhất một phân khu, hoặc chọn "Tất cả phân khu".' });
     if (!navigator.onLine) return setMsg({ ok: false, text: 'Cần có mạng để lưu.' });
     setBusy(true); setMsg(null);
     try {
@@ -46,12 +46,12 @@ export function MemberAreas({ orgId, userId, initial, onSaved }: { orgId: string
   };
   return (
     <div className="inline-form">
-      <label className="check"><input type="radio" checked={all} onChange={() => setAll(true)} /> Tất cả trang trại</label>
-      <label className="check"><input type="radio" checked={!all} onChange={() => setAll(false)} /> Chỉ những trang trại được chọn</label>
+      <label className="check"><input type="radio" checked={all} onChange={() => setAll(true)} /> Tất cả phân khu</label>
+      <label className="check"><input type="radio" checked={!all} onChange={() => setAll(false)} /> Chỉ những phân khu được chọn</label>
       {!all && <div className="cols2">{areas.map((a) => (
         <label className="check" key={a.id}><input type="checkbox" checked={picked.includes(a.id)} onChange={() => toggle(a.id)} /> {a.name}</label>
       ))}</div>}
-      {!all && areas.length === 0 && <p className="muted">Chưa có trang trại nào. Khai báo trang trại trước.</p>}
+      {!all && areas.length === 0 && <p className="muted">Chưa có phân khu nào. Khai báo phân khu trước.</p>}
       {msg && <p className={msg.ok ? 'msg ok' : 'msg error'} role="status">{msg.text}</p>}
       <div className="btnrow">
         <button type="button" className="primary" disabled={busy} onClick={() => void save()}>Lưu</button>

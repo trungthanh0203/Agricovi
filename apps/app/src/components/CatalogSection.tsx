@@ -104,7 +104,7 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
       {canWrite && <button className="secondary" disabled={!writable} onClick={() => setFormLoc('new')}>+ Thêm kho</button>}
       <div className="tablewrap">
       <table className="grid">
-        <thead><tr><th>Tên kho</th><th>Mô tả</th><th>Trang trại</th>{canWrite && <th></th>}</tr></thead>
+        <thead><tr><th>Tên kho</th><th>Mô tả</th><th>Phân khu</th>{canWrite && <th></th>}</tr></thead>
         <tbody>
           {locs.length === 0 && <tr><td colSpan={4} className="muted">Chưa có kho nào{canWrite ? ' — hãy thêm kho đầu tiên.' : '.'}</td></tr>}
           {locs.map((l) => (
@@ -125,7 +125,7 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
       </table>
       </div>
       <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả kho đã dừng</label>
-      <p className="muted">⏸ dừng (không chọn được cho giao dịch mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Kho đã có lịch sử thì không xóa được, chỉ dừng. Kho gắn với trang trại nào thì khi ghi việc ở trang trại đó sẽ được gợi ý trước.</p>
+      <p className="muted">⏸ dừng (không chọn được cho giao dịch mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Kho đã có lịch sử thì không xóa được, chỉ dừng. Kho gắn với phân khu nào thì khi ghi việc ở phân khu đó sẽ được gợi ý trước.</p>
       </>)}
     </>
   );
@@ -146,14 +146,14 @@ function LocationForm({ l, orgId, busy, onSave, onClose }: {
         <label>Tên kho<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Kho chính" /></label>
         <label>Mô tả (không bắt buộc)<textarea rows={2} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Vị trí, loại hàng chứa…" /></label>
         <fieldset className="roles">
-          <legend>Dùng cho trang trại</legend>
+          <legend>Dùng cho phân khu</legend>
           <AreaChoice orgId={orgId} value={areaSel} onChange={setAreaSel} />
         </fieldset>
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {
             if (name.trim().length < 2) return setErr('Hãy nhập tên kho (ít nhất 2 ký tự).');
-            if (areaSel && areaSel.length === 0) return setErr('Hãy chọn ít nhất một trang trại, hoặc chọn "Tất cả trang trại".');
+            if (areaSel && areaSel.length === 0) return setErr('Hãy chọn ít nhất một phân khu, hoặc chọn "Tất cả phân khu".');
             setErr(null);
             void onSave({ name, description: desc, areaIds: areaSel }).catch(() => undefined);
           }}>Lưu</button>
