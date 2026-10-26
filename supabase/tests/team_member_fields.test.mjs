@@ -73,3 +73,18 @@ test('nhóm loại sản phẩm: cây trồng, vật nuôi, thủy sản, khác 
   for (const k of ['crop', 'livestock', 'aquatic', 'other']) await db.query(`insert into crop_types (organization_id,code,name,kind) values ($1,$2,$2,$3)`, [org, `t_${k}`, k]);
   assert.match(await expectError(db.query(`insert into crop_types (organization_id,code,name,kind) values ($1,'zz','zz','nuoi')`, [org])), /check|kind/i);
 });
+
+// Migration 0095: cấu hình của cơ sở
+test('cấu hình cơ sở: chủ/quản lý sửa, thành viên chỉ đọc; nhóm loại sản phẩm đúng 4 mục; làm sạch danh sách', async () => {
+  const { db, owner, wk, other, org } = await setup();
+  assert.match(await expectError(asUser(db, wk, `select set_org_config($1,'housing',array['Kín'])`, [org])), /FORBIDDEN/);
+  assert.match(await expectError(asUser(db, other, `select set_org_config($1,'housing',array['Kín'])`, [org])), /FORBIDDEN/);
+  assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'khac',array['a'])`, [org])), /INVALID_KEY/);
+  assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'product_groups',array['A','B','C'])`, [org])), /4 mục/);
+  assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'housing',array[' ',''])`, [org])), /INVALID_ITEMS/);
+  await asUser(db, owner, `select set_org_config($1,'housing',array[' Kín ','Hở','Kín','Nửa kín hở'])`, [org]);
+  assert.deepEqual((await asUser(db, wk, `select items from org_config where organization_id=$1 and key='housing'`, [org])).rows[0].items, ['Kín', 'Hở', 'Nửa kín hở']);
+  assert.equal((await asUser(db, other, `select count(*)::int n from org_config where organization_id=$1`, [org])).rows[0].n, 0); // cơ sở khác không đọc được
+  await asUser(db, owner, `select set_org_config($1,'product_groups',array['Cây trồng','Gia súc','Thủy sản','Khác'])`, [org]);
+  await db.query(`insert into production_areas (id,organization_id,name,kind,housing) values (gen_random_uuid(),$1,'A','aquatic','Nửa kín hở')`, [org]);
+});

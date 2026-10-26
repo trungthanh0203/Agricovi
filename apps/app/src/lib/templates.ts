@@ -85,7 +85,6 @@ export async function clearOverride(orgId: string, kind: 'crop_type' | 'work_typ
 // ------------------------------------------------------------------ sản phẩm
 import type { ProductKind } from './config';
 export type { ProductKind } from './config';
-export { PRODUCT_GROUP_LABEL as PRODUCT_KIND_LABEL } from './config';
 
 export async function createCrop(orgId: string, f: { name: string; kind: ProductKind; description?: string; image?: string }): Promise<void> {
   needOnline('thêm sản phẩm');

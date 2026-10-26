@@ -1,4 +1,4 @@
-import { PRODUCT_GROUPS, PRODUCT_GROUP_LABEL } from '../lib/config';
+import { useConfig } from '../lib/config';
 import { useEffect, useState } from 'react';
 import { ImagePicker, Thumb } from './ImagePicker';
 import { useCatalog, type EffCrop } from '../lib/catalog';
@@ -15,6 +15,7 @@ import {
  * Có sẵn cũng đổi tên/mô tả/hình ảnh/dừng được cho riêng cơ sở (bản chỉnh, D32). Cần mạng để thêm/sửa.
  */
 export function CropsSection() {
+  const cfg = useConfig();
   const { active } = useOrgs();
   const online = useOnline();
   const { cropTypes } = useCatalog();
@@ -67,7 +68,7 @@ export function CropsSection() {
                 {c.shared && !c.overridden && <span className="sub">Có sẵn</span>}
                 {!c.is_active && <span className="sub">Đã dừng</span>}
               </td>
-              <td className="muted">{PRODUCT_GROUP_LABEL[c.kind ?? 'crop']}</td>
+              <td className="muted">{cfg.groupLabel(c.kind)}</td>
               {canManage && (
                 <td className="act">
                   <button className="icon" disabled={busy || !online} aria-label={c.is_active ? `Dừng ${c.name}` : `Dùng lại ${c.name}`} onClick={() => void run(() => toggle(c)).catch(() => undefined)}>{c.is_active ? '⏸' : '▶'}</button>{' '}
@@ -104,6 +105,7 @@ function ProductForm({ title, initial, busy, onSave, onReset, onClose }: {
   onSave: (f: { name: string; kind: ProductKind; description: string; image: string }) => Promise<unknown>;
   onReset?: () => Promise<unknown>; onClose: () => void;
 }) {
+  const cfg = useConfig();
   const [name, setName] = useState(initial?.name ?? '');
   const [kind, setKind] = useState<ProductKind>(initial?.kind ?? 'crop');
   const [desc, setDesc] = useState(initial?.description ?? '');
@@ -117,7 +119,7 @@ function ProductForm({ title, initial, busy, onSave, onReset, onClose }: {
         <label>Tên sản phẩm<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
         <label>Loại
           <select value={kind} disabled={kindLocked} onChange={(e) => setKind(e.target.value as ProductKind)}>
-            {PRODUCT_GROUPS.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+            {cfg.productGroups().map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
           </select>
         </label>
         <label>Mô tả<textarea rows={3} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Giống, đặc điểm, thời gian sinh trưởng…" /></label>

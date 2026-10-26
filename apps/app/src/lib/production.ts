@@ -145,7 +145,7 @@ export interface FarmInput {
   /** Mã khu/chuồng, loại khu và kiểu chuồng (D98) */
   code?: string | null;
   kind?: Exclude<AreaKind, 'growing'>;
-  housing?: 'closed' | 'semi_open' | 'open' | null;
+  housing?: string | null;
 }
 
 export async function createArea(organizationId: string, f: FarmInput): Promise<string> {

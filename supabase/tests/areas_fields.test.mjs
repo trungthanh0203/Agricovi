@@ -21,11 +21,11 @@ async function setup() {
   return { db, owner, wk, other, org, org2, cyc };
 }
 
-test('mã khu duy nhất trong cơ sở (không phân biệt hoa thường); kiểu chuồng chỉ nhận giá trị hợp lệ', async () => {
+test('mã khu duy nhất trong cơ sở (không phân biệt hoa thường); kiểu nhà/chuồng tối đa 40 ký tự', async () => {
   const { db, org, org2 } = await setup();
   assert.match(await expectError(db.query(`insert into production_areas (id,organization_id,name,code) values (gen_random_uuid(),$1,'X','c-thit-02')`, [org])), /production_areas_code_uq|duplicate/i);
   await db.query(`insert into production_areas (id,organization_id,name,code) values (gen_random_uuid(),$1,'Y','C-THIT-02')`, [org2]); // cơ sở khác dùng lại được
-  assert.match(await expectError(db.query(`insert into production_areas (id,organization_id,name,housing) values (gen_random_uuid(),$1,'Z','kin-het')`, [org])), /check|housing/i);
+  assert.match(await expectError(db.query(`insert into production_areas (id,organization_id,name,housing) values (gen_random_uuid(),$1,'Z',repeat('x',41))`, [org])), /check|housing/i);
 });
 
 test('khu cơ sở vật chất không tạo được vụ; khu đã có vụ không đổi thành cơ sở vật chất', async () => {

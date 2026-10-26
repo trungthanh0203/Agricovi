@@ -2,7 +2,7 @@ import Dexie, { type Table } from 'dexie';
 import type { CycleStatus, OutboxItem } from '@agriconnect/shared';
 import type { CycleSummary } from './summaryReport';
 
-export type AreaKind = 'crop' | 'livestock' | 'facility' | 'other' | 'growing';
+export type AreaKind = 'crop' | 'livestock' | 'aquatic' | 'facility' | 'other' | 'growing';
 
 export interface AreaRow {
   id: string;
@@ -20,7 +20,7 @@ export interface AreaRow {
   /** crop = trồng trọt, livestock = chăn nuôi, other = khác (đều tạo vụ được); facility = cơ sở vật chất (cổng, kho, biogas...: chỉ ghi việc). 'growing' là giá trị cũ trên máy, coi như trồng trọt */
   kind?: AreaKind;
   /** Kiểu chuồng: chỉ lưu và hiển thị ở P1 */
-  housing?: 'closed' | 'semi_open' | 'open' | null;
+  housing?: string | null;
 }
 
 export interface CycleRow {
