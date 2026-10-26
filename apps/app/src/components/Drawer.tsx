@@ -4,10 +4,10 @@ import { ADMIN_URL } from '../lib/platformAdmin';
 import { TAB_LABEL, type TabId } from '../lib/tabs';
 import type { MyOrg } from '../lib/orgs';
 
-const TAB_ICON: Partial<Record<TabId, string>> = { declare: '🧰', org: '👥', guide: '📖', profile: '👤', reports: '📊' };
+const TAB_ICON: Partial<Record<TabId, string>> = { declare: '🧰', config: '⚙️', guide: '📖', profile: '👤', reports: '📊' };
 const TAB_HINT: Partial<Record<TabId, string>> = {
-  declare: 'Trang trại, sản phẩm, quy trình, vật tư',
-  org: 'Nhân sự, vai trò, tổ lao động',
+  declare: 'Trang trại, sản phẩm, vật tư, nhân sự, tổ',
+  config: 'Nhóm loại sản phẩm và các cấu hình mặc định',
   guide: 'Giới thiệu, hướng dẫn hộ, HTX, công ty',
   profile: 'Thông tin cá nhân, mã QR, giấy phép',
 };
@@ -20,7 +20,7 @@ interface Props {
   orgs: MyOrg[];
   active: MyOrg | null;
   onSwitchOrg: (id: string) => void;
-  /** Các tab đặt trong menu (Khai báo, Tổ chức, Tài khoản) */
+  /** Các tab đặt trong menu (Cấu hình, Hướng dẫn, Tài khoản) */
   tabs: TabId[];
   current: TabId;
   onGo: (t: TabId) => void;

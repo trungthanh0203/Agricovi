@@ -130,7 +130,7 @@ function MilestoneForm({ m, offset, setM, setOffset, busy, onSave, onClose }: {
 }
 
 /** Quy trình mẫu: danh sách mốc, thêm nhanh theo gợi ý hoặc tự nhập. Mốc được sao vào mỗi vụ tạo sau đó. */
-export function TemplateMilestones({ templateId, kind, canEdit }: { templateId: string; kind: 'crop' | 'livestock' | 'other' | undefined; canEdit: boolean }) {
+export function TemplateMilestones({ templateId, kind, canEdit }: { templateId: string; kind: 'crop' | 'livestock' | 'aquatic' | 'other' | undefined; canEdit: boolean }) {
   const online = useOnline();
   const [items, setItems] = useState<TemplateMilestone[] | null>(null);
   const [form, setForm] = useState(false);

@@ -33,7 +33,7 @@ export function PositionPicker({ orgId, value, onChange, disabled }: {
 
   if (error) return <p className="muted">Cần có mạng để chọn chức vụ.</p>;
   if (!list) return <p className="muted">Đang tải chức vụ…</p>;
-  if (list.length === 0) return <p className="msg warn">Chưa có chức vụ nào. Hãy tạo chức vụ ở mục Tổ chức → Chức vụ trước.</p>;
+  if (list.length === 0) return <p className="msg warn">Chưa có chức vụ nào. Hãy tạo chức vụ ở mục Khai báo → Chức vụ trước.</p>;
   const cur = list.find((p) => p.id === value);
   return (
     <label>

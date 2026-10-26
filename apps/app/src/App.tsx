@@ -27,14 +27,14 @@ const CreateCycleScreen = lazyRetry(() => import('./screens/CreateCycleScreen').
 const CycleDetailScreen = lazyRetry(() => import('./screens/CycleDetailScreen').then((m) => ({ default: m.CycleDetailScreen })));
 const DeclareTab = lazyRetry(() => import('./screens/DeclareTab').then((m) => ({ default: m.DeclareTab })));
 const LogActivityScreen = lazyRetry(() => import('./screens/LogActivityScreen').then((m) => ({ default: m.LogActivityScreen })));
-const OrgTab = lazyRetry(() => import('./screens/OrgTab').then((m) => ({ default: m.OrgTab })));
+const ConfigTab = lazyRetry(() => import('./screens/ConfigTab').then((m) => ({ default: m.ConfigTab })));
 const ProductionTab = lazyRetry(() => import('./screens/ProductionTab').then((m) => ({ default: m.ProductionTab })));
 const ProfileTab = lazyRetry(() => import('./screens/ProfileTab').then((m) => ({ default: m.ProfileTab })));
 const GuideTab = lazyRetry(() => import('./screens/GuideTab').then((m) => ({ default: m.GuideTab })));
 const ReportsTab = lazyRetry(() => import('./screens/ReportsTab').then((m) => ({ default: m.ReportsTab })));
 const Loading = () => <p className="center muted">Đang tải…</p>;
 
-const TAB_ICON: Record<TabId, string> = { home: '🏠', production: '🌱', reports: '📊', declare: '🧰', org: '👥', guide: '📖', profile: '👤' };
+const TAB_ICON: Record<TabId, string> = { home: '🏠', production: '🌱', reports: '📊', declare: '🧰', config: '⚙️', guide: '📖', profile: '👤' };
 
 export function App() {
   if (!supabase) return <SetupNotice />;
@@ -104,7 +104,7 @@ function Shell() {
     setCounts((cur) => (cur && (Object.keys(next) as SyncState[]).every((k) => cur[k] === next[k]) ? cur : next));
   }, []);
 
-  // Tab Khai báo, Tổ chức, Báo cáo chỉ hiện với người có quyền (xem lib/tabs.ts)
+  // Tab Khai báo, Cấu hình, Báo cáo chỉ hiện với người có quyền (xem lib/tabs.ts)
   const tabs = visibleTabs(active);
   const tab: TabId = tabs.includes(tabState) ? tabState : 'home';
   const setSub = (t: TabId) => (s: string) => setSubs((cur) => ({ ...cur, [t]: s }));
@@ -148,9 +148,9 @@ function Shell() {
 
   const waiting = counts ? counts.local_only + counts.syncing : 0;
   const attention = counts?.needs_attention ?? 0;
-  // Thanh dưới chỉ giữ việc dùng hằng ngày; Khai báo, Tổ chức, Tài khoản nằm ở menu ☰ (D74)
-  const mainTabs = tabs.filter((t) => t === 'home' || t === 'production' || t === 'reports');
-  const menuTabs = (['profile', 'org', 'declare', 'guide'] as TabId[]).filter((t) => tabs.includes(t)); // Tài khoản lên đầu menu ☰
+  // Thanh dưới: Trang chủ · Khai báo · (Ghi việc) · Sản xuất · Báo cáo; Cấu hình, Tài khoản, Hướng dẫn nằm ở menu ☰ (D74)
+  const mainTabs = (['home', 'declare', 'production', 'reports'] as TabId[]).filter((t) => tabs.includes(t));
+  const menuTabs = (['profile', 'config', 'guide'] as TabId[]).filter((t) => tabs.includes(t)); // Tài khoản lên đầu menu ☰
   const fabAt = mainTabs.length >= 3 ? 2 : 1; // nút Ghi việc nằm giữa
   const canLog = cyclesAll.some((c) => c.status === 'active' && c.owner_org_id === active?.id);
 
@@ -193,8 +193,8 @@ function Shell() {
           />
         ) : tab === 'declare' ? (
           <DeclareTab section={subs.declare} onSection={setSub('declare')} />
-        ) : tab === 'org' ? (
-          <OrgTab section={subs.org} onSection={setSub('org')} />
+        ) : tab === 'config' ? (
+          <ConfigTab />
         ) : tab === 'guide' ? (
           <GuideTab section={subs.guide} onSection={setSub('guide')} onGo={(t, s) => { closeOverlay(); goTo(t, s); }} />
         ) : tab === 'reports' ? (

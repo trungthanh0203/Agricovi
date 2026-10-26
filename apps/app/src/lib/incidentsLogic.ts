@@ -18,9 +18,10 @@ const LIVESTOCK_ONLY: IncidentRow['kind'][] = ['broken_needle'];
 /** Danh sách loại sự cố hiện cho người dùng theo loại sản phẩm của vụ; "Sâu bệnh" thành "Sâu bệnh / dịch bệnh" với vật nuôi */
 export function incidentKindOptions(productKind: string | undefined): { id: IncidentRow['kind']; label: string }[] {
   const livestock = productKind === 'livestock';
+  const animal = livestock || productKind === 'aquatic';
   return INCIDENT_KINDS
     .filter((k) => livestock || !LIVESTOCK_ONLY.includes(k.id))
-    .map((k) => (livestock && k.id === 'pest' ? { ...k, label: 'Sâu bệnh / dịch bệnh' } : k));
+    .map((k) => (animal && k.id === 'pest' ? { ...k, label: 'Sâu bệnh / dịch bệnh' } : k));
 }
 
 export const INCIDENT_SEVERITIES: { id: IncidentRow['severity']; label: string }[] = [

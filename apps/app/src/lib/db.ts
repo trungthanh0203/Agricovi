@@ -223,8 +223,8 @@ export interface CropTypeRow {
   code: string;
   name: string;
   description?: string | null;
-  /** Loại sản phẩm: cây trồng, vật nuôi hoặc khác */
-  kind?: 'crop' | 'livestock' | 'other';
+  /** Loại sản phẩm: cây trồng, vật nuôi, thủy sản hoặc khác (nhóm cấu hình ở lib/config.ts) */
+  kind?: 'crop' | 'livestock' | 'aquatic' | 'other';
   image?: string | null;
   /** null = cây dùng chung; có giá trị = cây do cơ sở khai báo */
   organization_id?: string | null;

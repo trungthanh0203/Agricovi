@@ -66,3 +66,10 @@ test('hộ thành viên: HTX ghi thông tin, mã hộ không trùng, người ng
   assert.match(await expectError(asUser(db, boss, `select update_coop_household($1,$2,'hv-001',null,null,null,null,null,null)`, [C, H2])), /DUPLICATE_CODE/);
   assert.match(await expectError(asUser(db, stranger, `select update_coop_household($1,$2,'X',null,null,null,null,null,null)`, [C, H1])), /FORBIDDEN/);
 });
+
+// Migration 0094: nhóm loại sản phẩm có Thủy sản
+test('nhóm loại sản phẩm: cây trồng, vật nuôi, thủy sản, khác hợp lệ; giá trị lạ bị từ chối', async () => {
+  const { db, org } = await setup();
+  for (const k of ['crop', 'livestock', 'aquatic', 'other']) await db.query(`insert into crop_types (organization_id,code,name,kind) values ($1,$2,$2,$3)`, [org, `t_${k}`, k]);
+  assert.match(await expectError(db.query(`insert into crop_types (organization_id,code,name,kind) values ($1,'zz','zz','nuoi')`, [org])), /check|kind/i);
+});

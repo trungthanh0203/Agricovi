@@ -14,7 +14,7 @@ export interface LogbookData {
   areaName: string;
   areaLocation: string | null;
   productName: string;
-  productKind: 'crop' | 'livestock' | 'other' | undefined;
+  productKind: 'crop' | 'livestock' | 'aquatic' | 'other' | undefined;
   /** đơn vị đếm: cây, con… */
   unit: string;
   from: string; // yyyy-mm-dd

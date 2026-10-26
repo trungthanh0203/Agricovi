@@ -8,13 +8,13 @@ import { canManageProduction, hasRole } from './roles';
  * mỗi tab có các mục con. Hiện/ẩn theo quyền chỉ là giao diện; máy chủ luôn kiểm tra lại.
  * Khai báo và Tổ chức tạm theo vai trò; sẽ chuyển sang quyền theo mục khi làm chức vụ (kế hoạch P3).
  */
-export type TabId = 'home' | 'production' | 'declare' | 'org' | 'reports' | 'guide' | 'profile';
+export type TabId = 'home' | 'production' | 'declare' | 'config' | 'reports' | 'guide' | 'profile';
 
 export const TAB_LABEL: Record<TabId, string> = {
   home: 'Trang chủ',
   production: 'Sản xuất',
   declare: 'Khai báo',
-  org: 'Tổ chức',
+  config: 'Cấu hình',
   reports: 'Báo cáo',
   guide: 'Hướng dẫn sử dụng',
   profile: 'Tài khoản',
@@ -26,18 +26,16 @@ export interface Section<Id extends string = string> {
 }
 
 export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'expense' | 'attendance' | 'logs';
-export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'customers';
-export type OrgSection = 'members' | 'positions' | 'teams' | 'coop';
+export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'customers' | 'positions' | 'teams' | 'members' | 'coop';
 export type ReportSection = 'payables' | 'sales' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist' | 'logbook';
 
 /**
  * Chế độ đơn giản (D100): các mục NÂNG CAO bị ẩn khỏi menu cho hộ nhỏ. Chỉ là cách hiển thị: quyền và dữ liệu không đổi, chủ bật lại chế độ đầy đủ bất cứ lúc nào
  * (Tài khoản → Chế độ hiển thị). Quy trình mẫu và Sản phẩm vẫn hiện vì cần để tạo vụ.
  */
-export const SIMPLE_HIDDEN: Record<'production' | 'declare' | 'org' | 'reports', string[]> = {
+export const SIMPLE_HIDDEN: Record<'production' | 'declare' | 'reports', string[]> = {
   production: ['attendance'],
-  declare: ['worktypes', 'partners', 'customers'],
-  org: ['positions', 'teams', 'coop'],
+  declare: ['worktypes', 'partners', 'customers', 'positions', 'teams', 'coop'],
   reports: ['custom', 'paybook', 'website', 'commerce', 'checklist', 'logbook'],
 };
 
@@ -59,6 +57,7 @@ export function productionSections(org: MyOrg | null): Section<ProductionSection
 
 export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
   if (!org) return [];
+  const manager = hasRole(org.roles, 'manager');
   return simpleFilter(org, 'declare', [
     canPerm(org.perms, 'declare') ? { id: 'areas' as const, label: 'Trang trại' } : null,
     canPerm(org.perms, 'declare') ? { id: 'crops' as const, label: 'Sản phẩm' } : null,
@@ -68,19 +67,16 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'partners' as const, label: 'Nhà cung ứng' } : null,
     canPerm(org.perms, 'sales') ? { id: 'customers' as const, label: 'Khách hàng' } : null,
-  ].filter((x): x is Section<DeclareSection> => x !== null));
-}
-
-export function orgSections(org: MyOrg | null): Section<OrgSection>[] {
-  if (!org) return [];
-  const manager = hasRole(org.roles, 'manager');
-  return simpleFilter(org, 'org', [
+    // Nhân sự và tổ chức (trước đây ở tab Tổ chức)
     hasRole(org.roles, 'owner') ? { id: 'positions' as const, label: 'Chức vụ' } : null,
     manager ? { id: 'teams' as const, label: 'Phòng / Tổ' } : null,
     manager ? { id: 'members' as const, label: 'Nhân sự' } : null,
     canPerm(org.perms, 'coop') ? { id: 'coop' as const, label: org.type === 'cooperative' ? 'Hộ thành viên' : 'Hợp tác xã' } : null,
-  ].filter((x): x is Section<OrgSection> => x !== null));
+  ].filter((x): x is Section<DeclareSection> => x !== null));
 }
+
+/** Tab Cấu hình (chủ và quản lý): các danh sách mặc định của hệ thống, xem lib/config.ts */
+export const canSeeConfig = (org: MyOrg | null) => !!org && hasRole(org.roles, 'manager');
 
 export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
   if (!org) return [];
@@ -100,11 +96,12 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
 
 /** Các tab được hiện với người đang đăng nhập ở cơ sở đang chọn */
 export function visibleTabs(org: MyOrg | null): TabId[] {
-  // Thứ tự: Trang chủ · Tổ chức · Khai báo · Sản xuất · Báo cáo · Tài khoản
+  // Thứ tự: Trang chủ · Khai báo · Sản xuất · Báo cáo; Cấu hình, Hướng dẫn, Tài khoản nằm ở menu ☰
   const tabs: TabId[] = ['home'];
-  if (orgSections(org).length > 0) tabs.push('org');
   if (declareSections(org).length > 0) tabs.push('declare');
-  tabs.push('guide', 'production'); // Hướng dẫn nằm trong menu ☰, ngay sau Khai báo
+  tabs.push('production');
+  if (canSeeConfig(org)) tabs.push('config');
+  tabs.push('guide');
   if (reportSections(org).length > 0) tabs.push('reports');
   tabs.push('profile');
   return tabs;

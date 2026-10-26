@@ -68,7 +68,7 @@ export const GUIDES: Guide[] = [
         title: 'Các mục trong app dùng để làm gì',
         details: [
           'Thanh dưới cùng: Trang chủ (tổng quan, nhắc việc, lương tháng này) · Sản xuất (Mùa vụ, Chấm công, Thu hoạch, Kho, Chi phí, Nhật ký việc) · Ghi việc (nút ＋ ở giữa) · Báo cáo (Báo cáo tuần, Theo nhu cầu, Công nợ, Doanh thu, Bảng lương, Tổng kết vụ, Đơn khách từ website, Hồ sơ website).',
-          'Menu ☰ góc trên bên trái: Tài khoản · Tổ chức (Nhân sự, Chức vụ, Phòng / Tổ) · Khai báo · Hướng dẫn sử dụng · Chia sẻ hệ thống.',
+          'Menu ☰ góc trên bên trái: Tài khoản · Cấu hình · Hướng dẫn sử dụng (Khai báo, gồm cả Nhân sự, Chức vụ, Phòng / Tổ, nằm ở thanh dưới) · Chia sẻ hệ thống.',
           'Chạm vào ô chức năng để vào; bấm "‹ Menu" để quay lại.',
         ],
       },
@@ -91,7 +91,7 @@ export const GUIDES: Guide[] = [
           'Chức vụ: chủ tạo chức vụ cho cơ sở (ví dụ Thủ kho và kế toán, Tổ trưởng vườn). Mỗi chức vụ có MỘT vai trò (mặc định Nhân viên; chọn Quản lý thì chọn thêm quyền). Mỗi người giữ đúng một chức vụ, chọn ở mục Nhân sự; vai trò và quyền của người theo chức vụ. Mục nào không có quyền thì không hiện.',
           'Chủ có thể giao mỗi người một hay nhiều trang trại; người đó chỉ thấy và ghi việc ở các trang trại được giao.',
         ],
-        go: { tab: 'org', section: 'members', label: 'Mở Nhân sự' },
+        go: { tab: 'declare', section: 'members', label: 'Mở Nhân sự' },
       },
       {
         title: 'Dữ liệu của bạn có riêng tư không',
@@ -233,13 +233,13 @@ export const GUIDES: Guide[] = [
       {
         title: 'Nhân sự: chức vụ, hồ sơ, trả công',
         details: [
-          'Tổ chức → Chức vụ: tạo chức vụ (mặc định vai trò Nhân viên; chọn Quản lý thì chọn thêm quyền). Cơ sở mới đã có sẵn vài chức vụ để dùng.',
-          'Tổ chức → Nhân sự: bấm "＋ Tạo tài khoản nhân viên" (đăng nhập bằng số điện thoại) hoặc mời người đã có email; chọn chức vụ và trang trại làm việc. Lần đầu họ phải đổi mật khẩu tạm.',
+          'Khai báo → Chức vụ: tạo chức vụ (mặc định vai trò Nhân viên; chọn Quản lý thì chọn thêm quyền). Cơ sở mới đã có sẵn vài chức vụ để dùng.',
+          'Khai báo → Nhân sự: bấm "＋ Tạo tài khoản nhân viên" (đăng nhập bằng số điện thoại) hoặc mời người đã có email; chọn chức vụ và trang trại làm việc. Lần đầu họ phải đổi mật khẩu tạm.',
           'Bấm vào một người để mở hồ sơ: Thông tin và tài khoản · Chức vụ và quyền · Trang trại làm việc · Phòng / Tổ · Trả công.',
           'Trả công: đặt riêng cho từng người, theo giờ làm (đồng/giờ) hoặc lương cố định theo tháng, có ngày hiệu lực và ngày hết hiệu lực. Thêm dòng mới thì dòng cũ cùng loại tự kết thúc hôm trước.',
-          'Tổ chức → Phòng / Tổ: lập tổ, chọn tổ trưởng.',
+          'Khai báo → Phòng / Tổ: lập tổ, chọn tổ trưởng.',
         ],
-        go: { tab: 'org', section: 'members', label: 'Mở Nhân sự' },
+        go: { tab: 'declare', section: 'members', label: 'Mở Nhân sự' },
       },
       {
         title: 'Chấm công, bảng lương và chốt lương',
@@ -287,11 +287,11 @@ export const GUIDES: Guide[] = [
       {
         title: 'Mời và quản lý hộ thành viên',
         details: [
-          'Tổ chức → Hộ thành viên: mời hộ bằng lời mời; hộ chấp nhận thì thành thành viên.',
+          'Khai báo → Hộ thành viên: mời hộ bằng lời mời; hộ chấp nhận thì thành thành viên.',
           'Mỗi hộ vẫn có cơ sở riêng và tự quản dữ liệu của mình; hợp tác xã chỉ thấy phần hộ đồng ý chia sẻ.',
           'Hộ rời đi thì dữ liệu của hộ vẫn thuộc về hộ.',
         ],
-        go: { tab: 'org', section: 'coop', label: 'Mở Hộ thành viên' },
+        go: { tab: 'declare', section: 'coop', label: 'Mở Hộ thành viên' },
       },
       {
         title: 'Khai báo chung: sản phẩm, vật tư, quy trình mẫu',
@@ -312,10 +312,10 @@ export const GUIDES: Guide[] = [
       {
         title: 'Nhân sự, chấm công và tiền công của hợp tác xã',
         details: [
-          'Chia phòng/tổ, đặt chức vụ và quyền theo mục cho từng người (Tổ chức → Chức vụ).',
+          'Chia phòng/tổ, đặt chức vụ và quyền theo mục cho từng người (Khai báo → Chức vụ).',
           'Chấm công, Bảng lương và chốt lương giống như hộ (Báo cáo → Bảng lương).',
         ],
-        go: { tab: 'org', section: 'positions', label: 'Mở Chức vụ' },
+        go: { tab: 'declare', section: 'positions', label: 'Mở Chức vụ' },
       },
       {
         title: 'Giấy phép, truy xuất và hồ sơ trên website',
@@ -348,10 +348,10 @@ export const GUIDES: Guide[] = [
       {
         title: 'Chia phòng / tổ và đặt chức vụ',
         details: [
-          'Tổ chức → Phòng / Tổ: lập phòng ban, tổ sản xuất, chọn tổ trưởng.',
-          'Tổ chức → Chức vụ: đặt tên chức vụ riêng của công ty (ví dụ Thủ kho, Kế toán), chọn vai trò (Nhân viên hoặc Quản lý) và quyền thêm cho chức vụ đó.',
+          'Khai báo → Phòng / Tổ: lập phòng ban, tổ sản xuất, chọn tổ trưởng.',
+          'Khai báo → Chức vụ: đặt tên chức vụ riêng của công ty (ví dụ Thủ kho, Kế toán), chọn vai trò (Nhân viên hoặc Quản lý) và quyền thêm cho chức vụ đó.',
         ],
-        go: { tab: 'org', section: 'teams', label: 'Mở Phòng / Tổ' },
+        go: { tab: 'declare', section: 'teams', label: 'Mở Phòng / Tổ' },
       },
       {
         title: 'Phân quyền theo từng mục',
@@ -362,7 +362,7 @@ export const GUIDES: Guide[] = [
           'Có thể tạm dừng một thành viên khi họ nghỉ làm mà không mất dữ liệu cũ.',
         ],
         tip: 'Chỉ cấp quyền xem tiền (Chi phí, Doanh thu) cho người thật sự cần.',
-        go: { tab: 'org', section: 'members', label: 'Mở Nhân sự' },
+        go: { tab: 'declare', section: 'members', label: 'Mở Nhân sự' },
       },
       {
         title: 'Nhiều trang trại, nhiều vụ chạy song song',

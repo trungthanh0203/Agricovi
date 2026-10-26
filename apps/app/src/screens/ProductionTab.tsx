@@ -77,7 +77,7 @@ const GROUPS: { id: CycleGroup; label: string; statuses: CycleStatus[] }[] = [
 
 /** Sửa nhanh thông tin vụ: tên, ngày bắt đầu, ghi chú */
 function CycleEditForm({ cycle, busy, defaultUnit, kind, onSave, onClose }: {
-  cycle: CycleRow; busy: boolean; defaultUnit: string; kind?: 'crop' | 'livestock' | 'other';
+  cycle: CycleRow; busy: boolean; defaultUnit: string; kind?: 'crop' | 'livestock' | 'aquatic' | 'other';
   onSave: (v: { name: string; start_date: string | null; note: string; targetYield: number | null; budget: number | null; info: CropInfo }) => Promise<void>; onClose: () => void;
 }) {
   const [name, setName] = useState(cycle.name ?? '');

@@ -25,7 +25,8 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
   const { cropTypes } = useCatalog();
   const cycle = cycles.find((c) => c.id === cycleId);
   const events = useMemo(() => allEvents.filter((e) => e.cycle_id === cycleId).sort((a, b) => b.event_date.localeCompare(a.event_date) || (b.created_at ?? '').localeCompare(a.created_at ?? '')), [allEvents, cycleId]);
-  const livestock = cropTypes.find((c) => c.id === cycle?.crop_type_id)?.kind === 'livestock';
+  const kindOf = cropTypes.find((c) => c.id === cycle?.crop_type_id)?.kind;
+  const livestock = kindOf === 'livestock' || kindOf === 'aquatic';
   // vật nuôi: số con ghi ở phiếu thu hoạch/xuất cũng được trừ, để không phải nhập hai lần
   const harvestOut = livestock ? harvests.filter((h) => h.cycle_id === cycleId && !h.voided_at).reduce((n, h) => n + (h.unit_count ?? 0), 0) : 0;
   const s = useMemo(() => countSummary(cycle ?? {}, events, harvestOut), [cycle, events, harvestOut]);

@@ -1,3 +1,4 @@
+import { PRODUCT_GROUPS, PRODUCT_GROUP_LABEL } from '../lib/config';
 import { useEffect, useState } from 'react';
 import { ImagePicker, Thumb } from './ImagePicker';
 import { useCatalog, type EffCrop } from '../lib/catalog';
@@ -6,7 +7,7 @@ import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import {
-  clearOverride, createCrop, PRODUCT_KIND_LABEL, refreshCatalogCache, saveOverride, updateCrop, type ProductKind,
+  clearOverride, createCrop, refreshCatalogCache, saveOverride, updateCrop, type ProductKind,
 } from '../lib/templates';
 
 /**
@@ -66,7 +67,7 @@ export function CropsSection() {
                 {c.shared && !c.overridden && <span className="sub">Có sẵn</span>}
                 {!c.is_active && <span className="sub">Đã dừng</span>}
               </td>
-              <td className="muted">{PRODUCT_KIND_LABEL[c.kind ?? 'crop']}</td>
+              <td className="muted">{PRODUCT_GROUP_LABEL[c.kind ?? 'crop']}</td>
               {canManage && (
                 <td className="act">
                   <button className="icon" disabled={busy || !online} aria-label={c.is_active ? `Dừng ${c.name}` : `Dùng lại ${c.name}`} onClick={() => void run(() => toggle(c)).catch(() => undefined)}>{c.is_active ? '⏸' : '▶'}</button>{' '}
@@ -116,7 +117,7 @@ function ProductForm({ title, initial, busy, onSave, onReset, onClose }: {
         <label>Tên sản phẩm<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
         <label>Loại
           <select value={kind} disabled={kindLocked} onChange={(e) => setKind(e.target.value as ProductKind)}>
-            {(Object.keys(PRODUCT_KIND_LABEL) as ProductKind[]).map((k) => <option key={k} value={k}>{PRODUCT_KIND_LABEL[k]}</option>)}
+            {PRODUCT_GROUPS.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
           </select>
         </label>
         <label>Mô tả<textarea rows={3} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Giống, đặc điểm, thời gian sinh trưởng…" /></label>

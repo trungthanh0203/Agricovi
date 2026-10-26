@@ -3,7 +3,7 @@ import { PIG_BOOKS } from './pig';
 import type { LogbookSet } from './types';
 
 /** Bộ sổ theo loại sản phẩm của vụ: vật nuôi dùng bộ heo, còn lại dùng bộ dưa lưới/trồng trọt. Thêm loại hình = thêm file + một dòng ở đây. */
-export function logbookSetFor(kind: 'crop' | 'livestock' | 'other' | undefined): LogbookSet {
+export function logbookSetFor(kind: 'crop' | 'livestock' | 'aquatic' | 'other' | undefined): LogbookSet {
   return kind === 'livestock' ? PIG_BOOKS : MELON_BOOKS;
 }
 export { MELON_BOOKS, PIG_BOOKS };

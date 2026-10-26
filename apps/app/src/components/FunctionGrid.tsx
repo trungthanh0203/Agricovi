@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { SECTION_ICONS } from './SubTabs';
-import { declareSections, orgSections, productionSections, reportSections, type TabId } from '../lib/tabs';
+import { declareSections, productionSections, reportSections, type TabId } from '../lib/tabs';
 import type { MyOrg } from '../lib/orgs';
 
 /** 6 ô ở Trang chủ: Mùa vụ, Chấm công, Chi phí, Kho, Nhật ký việc, Theo nhu cầu */
@@ -12,7 +12,7 @@ interface Item { tab: TabId; id: string; label: string }
 export function FunctionGrid({ org, onGo }: { org: MyOrg; onGo: (tab: TabId, section?: string) => void }) {
   const shown = useMemo<Item[]>(() => {
     const mk = (tab: TabId, list: { id: string; label: string }[]): Item[] => list.map((x) => ({ tab, id: x.id, label: x.label }));
-    const all = [...mk('production', productionSections(org)), ...mk('reports', reportSections(org)), ...mk('declare', declareSections(org)), ...mk('org', orgSections(org))];
+    const all = [...mk('production', productionSections(org)), ...mk('reports', reportSections(org)), ...mk('declare', declareSections(org))];
     return HOME_ORDER.map((id) => all.find((x) => x.id === id)).filter((x): x is Item => x !== undefined);
   }, [org]);
 

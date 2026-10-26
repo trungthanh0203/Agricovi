@@ -76,7 +76,7 @@ export function AttendanceOverview({ orgId, workers, att, isAdmin }: { orgId: st
           <h2>Cần xử lý</h2>
           {s.stale.map((a) => <p key={a.id}><span className="pill err">Quên ra ca</span> {nameOf(a.worker_id)} vào ca {fmtDate(a.work_date)} chưa ra ca. Hãy nhờ họ Ra ca hoặc dùng "Chấm công hộ".</p>)}
           {s.pending.length > 0 && <p><span className="pill warn">Chờ xác nhận</span> {s.pending.length} ca đang chờ tổ trưởng/quản lý xác nhận (bấm ✔ ở bảng bên dưới).</p>}
-          {orphans.map((o) => <p key={o.worker_id}><span className="pill warn">Chưa có tổ trưởng</span> {o.full_name}{o.team_name ? ` (${o.team_name})` : ' chưa thuộc tổ nào'}: công của họ do tổ trưởng chấm nhưng chưa có ai. Chọn tổ trưởng ở Tổ chức → Tổ lao động.</p>)}
+          {orphans.map((o) => <p key={o.worker_id}><span className="pill warn">Chưa có tổ trưởng</span> {o.full_name}{o.team_name ? ` (${o.team_name})` : ' chưa thuộc tổ nào'}: công của họ do tổ trưởng chấm nhưng chưa có ai. Chọn tổ trưởng ở Khai báo → Phòng / Tổ.</p>)}
         </div>
       )}
 
