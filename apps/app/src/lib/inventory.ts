@@ -129,15 +129,28 @@ export interface TxnHistoryRow {
   material_lots?: { lot_no: string; expiry_date: string | null } | null;
 }
 
-export async function fetchRecentTransactions(orgId: string, limit = 30): Promise<TxnHistoryRow[]> {
-  const q = (cols: string) => client().from('inventory_transactions').select(cols)
-    .eq('organization_id', orgId).order('created_at', { ascending: false }).limit(limit);
+/** Bộ lọc xem giao dịch kho (tất cả không bắt buộc) */
+export interface TxnFilter { materialId?: string; locationId?: string; txnType?: string; from?: string; to?: string; limit?: number }
+
+/** Giao dịch kho mới nhất trước (theo thứ tự ghi), có lọc theo vật tư, kho, loại, khoảng ngày. Cần mạng. */
+export async function fetchTransactions(orgId: string, f: TxnFilter = {}): Promise<TxnHistoryRow[]> {
+  const q = (cols: string) => {
+    let b = client().from('inventory_transactions').select(cols).eq('organization_id', orgId);
+    if (f.materialId) b = b.eq('material_id', f.materialId);
+    if (f.locationId) b = b.eq('location_id', f.locationId);
+    if (f.txnType) b = b.eq('txn_type', f.txnType);
+    if (f.from) b = b.gte('txn_date', f.from);
+    if (f.to) b = b.lte('txn_date', f.to);
+    return b.order('created_at', { ascending: false }).limit(f.limit ?? 200);
+  };
   const base = 'id, location_id, material_id, txn_type, quantity_delta, unit_cost, txn_date, reason, activity_log_id, author_name, author_roles, created_at, purchase_bills(invoice_no, partners(name))';
   let { data, error } = await q(`${base}, material_lots(lot_no, expiry_date)`);
   if (error && /relationship|column|schema cache/i.test(error.message ?? '')) ({ data, error } = await q(base)); // CSDL chưa có bảng lô
   if (error) throw error;
   return ((data ?? []) as unknown as TxnHistoryRow[]).map((r) => ({ ...r, quantity_delta: Number(r.quantity_delta) }));
 }
+
+export const fetchRecentTransactions = (orgId: string, limit = 30) => fetchTransactions(orgId, { limit });
 
 // --- danh mục (cần mạng) ---
 
