@@ -239,12 +239,7 @@ export function parseNumber(raw: string): number | null {
 export const formatQty = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 3 });
 export const formatMoney = (n: number) => `${n.toLocaleString('vi-VN')} đ`;
 
-/** Nhóm vật tư (D98): quyết định cách app xử lý sau này (cách ly chỉ với thuốc/vaccine/BVTV, FCR lấy nhóm thức ăn) */
-export const MATERIAL_GROUPS: { id: string; label: string }[] = [
-  { id: 'feed', label: 'Thức ăn' }, { id: 'vet_drug', label: 'Thuốc thú y' }, { id: 'vaccine', label: 'Vaccine' },
-  { id: 'pesticide', label: 'Thuốc bảo vệ thực vật' }, { id: 'fertilizer', label: 'Phân bón' }, { id: 'disinfectant', label: 'Thuốc sát trùng' },
-  { id: 'seed', label: 'Giống' }, { id: 'other', label: 'Khác' },
-];
+// Nhóm vật tư (D98: quyết định cách app xử lý, FCR lấy nhóm thức ăn) nay nằm ở lib/config.ts (cấu hình 'material_groups', mã cố định).
 
 export interface LotStatus {
   lot_id: string; material_id: string; material_name: string; lot_no: string; expiry_date: string; remaining: number; days_left: number;

@@ -89,6 +89,13 @@ test('cấu hình cơ sở: chủ/quản lý sửa, thành viên chỉ đọc; n
   await db.query(`insert into production_areas (id,organization_id,name,kind,housing) values (gen_random_uuid(),$1,'A','aquatic','Nửa kín hở')`, [org]);
 });
 
+// Migration 0097: nhóm vật tư đúng 8 mục
+test('cấu hình nhóm vật tư: đúng 8 mục', async () => {
+  const { db, owner, org } = await setup();
+  assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'material_groups',array['A','B'])`, [org])), /8 mục/);
+  await asUser(db, owner, `select set_org_config($1,'material_groups',array['1','2','3','4','5','6','7','8'])`, [org]);
+});
+
 // Migration 0096: kho theo trang trại
 test('kho dùng cho trang trại nào: rỗng = tất cả; trang trại phải cùng cơ sở', async () => {
   const { db, owner, org, area, area2 } = await setup();

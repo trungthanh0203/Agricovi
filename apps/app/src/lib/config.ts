@@ -33,6 +33,14 @@ export const CONFIG_DEFS: ConfigDef[] = [
     defaults: ['Cây trồng', 'Vật nuôi', 'Thủy sản', 'Khác'],
   },
   {
+    id: 'material_groups',
+    title: 'Nhóm vật tư',
+    hint: 'Dùng để chọn nhóm khi khai báo Vật tư. Cần đúng 8 mục theo thứ tự: thức ăn, thuốc thú y, vaccine, thuốc bảo vệ thực vật, phân bón, thuốc sát trùng, giống, khác (mỗi mục gắn với chức năng như tính FCR nên chỉ đổi được tên gọi).',
+    mode: 'fixed',
+    codes: ['feed', 'vet_drug', 'vaccine', 'pesticide', 'fertilizer', 'disinfectant', 'seed', 'other'],
+    defaults: ['Thức ăn', 'Thuốc thú y', 'Vaccine', 'Thuốc bảo vệ thực vật', 'Phân bón', 'Thuốc sát trùng', 'Giống', 'Khác'],
+  },
+  {
     id: 'housing',
     title: 'Kiểu nhà / chuồng',
     hint: 'Dùng để chọn Kiểu nhà/chuồng của Trang trại. Thêm, bớt hoặc đổi tên tùy ý.',
@@ -140,5 +148,16 @@ export function useConfig() {
       return i >= 0 ? labels[i]! : kind ?? '';
     },
     housing: (): string[] => itemsOf(org, def('housing')),
+    /** Nhóm vật tư: mã cố định + tên đang dùng */
+    materialGroups: (): { id: string; label: string }[] => {
+      const d = def('material_groups');
+      const labels = itemsOf(org, d);
+      return d.codes!.map((c, i) => ({ id: c, label: labels[i]! }));
+    },
+    materialGroupLabel: (code: string | null | undefined): string => {
+      const d = def('material_groups');
+      const i = code ? d.codes!.indexOf(code) : -1;
+      return i >= 0 ? itemsOf(org, d)[i]! : '';
+    },
   };
 }

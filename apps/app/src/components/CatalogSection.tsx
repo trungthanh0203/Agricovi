@@ -7,8 +7,9 @@ import { AreaChoice } from './MemberAreas';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import {
-  createLocation, createMaterial, formatQty, MATERIAL_GROUPS, parseNumber, updateLocation, updateMaterial,
+  createLocation, createMaterial, formatQty, parseNumber, updateLocation, updateMaterial,
 } from '../lib/inventory';
+import { useConfig } from '../lib/config';
 import { useTable } from '../lib/tables';
 
 /**
@@ -17,6 +18,7 @@ import { useTable } from '../lib/tables';
  */
 export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWrite: boolean; part: 'materials' | 'places' }) {
   const online = useOnline();
+  const cfg = useConfig();
   const materials = useLiveQuery(() => db.materials.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const locations = useLiveQuery(() => db.locations.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const units = useTable('units');
@@ -62,14 +64,15 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
       {canWrite && <button className="secondary" disabled={!writable} onClick={() => setFormMat('new')}>+ Thêm vật tư</button>}
       <div className="tablewrap">
       <table className="grid">
-        <thead><tr><th>Vật tư</th><th>Danh mục</th><th className="num">Báo sắp hết ≤</th>{canWrite && <th></th>}</tr></thead>
+        <thead><tr><th>Tên vật tư</th><th>Nhóm vật tư</th><th>Nhà sản xuất</th><th className="num">Báo sắp hết ≤</th>{canWrite && <th></th>}</tr></thead>
         <tbody>
-          {mats.length === 0 && <tr><td colSpan={4} className="muted">Chưa có vật tư nào.</td></tr>}
+          {mats.length === 0 && <tr><td colSpan={5} className="muted">Chưa có vật tư nào.</td></tr>}
           {mats.map((m) => (
             <tr key={m.id} className={m.is_active ? '' : 'off'}>
-              <td><Thumb src={m.image} />{m.name}{m.description && <span className="sub">{m.description}</span>}<span className="sub">{unitName(m.base_unit_id)}{m.is_active ? '' : ' · đã dừng'}</span></td>
-              <td className="muted">{MATERIAL_GROUPS.find((g) => g.id === m.material_group)?.label ?? m.category ?? '—'}{m.brand ? <span className="sub">{m.brand}</span> : null}</td>
-              <td className="num">{m.reorder_threshold != null ? formatQty(m.reorder_threshold) : '—'}</td>
+              <td><Thumb src={m.image} />{m.name}{m.is_active ? '' : <span className="sub">Đã dừng</span>}</td>
+              <td className="muted">{cfg.materialGroupLabel(m.material_group)}</td>
+              <td className="muted">{m.manufacturer ?? ''}</td>
+              <td className="num">{m.reorder_threshold != null ? `${formatQty(m.reorder_threshold)} ${unitName(m.base_unit_id)}` : '—'}</td>
               {canWrite && (
                 <td className="act">
                   <button className="icon" disabled={busy || !writable} aria-label={m.is_active ? `Dừng ${m.name}` : `Dùng lại ${m.name}`}
@@ -166,6 +169,7 @@ function MaterialForm({ m, units, busy, onSave, onClose }: {
   m: MaterialRow | null; units: UnitRow[]; busy: boolean;
   onSave: (v: { name: string; description: string; category: string | null; threshold: number | null; unitId: string; ext: MaterialExt }) => Promise<unknown>; onClose: () => void;
 }) {
+  const cfg = useConfig();
   const [name, setName] = useState(m?.name ?? '');
   const [cat, setCat] = useState(m?.category ?? '');
   const [desc, setDesc] = useState(m?.description ?? '');
@@ -183,36 +187,37 @@ function MaterialForm({ m, units, busy, onSave, onClose }: {
       <h2>{m ? `Sửa vật tư: ${m.name}` : 'Thêm vật tư'}</h2>
       <div className="inline-form">
         <label>Tên vật tư<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
-        <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Nhãn hiệu, công dụng…" /></label>
+        <label>Nhóm vật tư
+          <select value={ext.material_group} onChange={setE('material_group')}>
+            <option value="">— Chưa phân nhóm —</option>
+            {cfg.materialGroups().map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+          </select>
+        </label>
         <label>Đơn vị tính
           {m ? <input value={units.find((u) => u.id === m.base_unit_id)?.name ?? ''} disabled /> : (
             <select value={unitId} onChange={(e) => setUnitId(e.target.value)}>
               {units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
             </select>
           )}
-          {m ? <small>Đơn vị tính không đổi được sau khi tạo (để tồn kho không bị sai). Thêm đơn vị riêng ở tab Cấu hình.</small> : <small>Chọn đúng ngay từ đầu, không đổi được sau này. Muốn thêm đơn vị riêng: tab Cấu hình.</small>}
+          {m ? <small>Đơn vị tính không đổi được sau khi tạo (để tồn kho không bị sai).</small> : <small>Chọn đúng ngay từ đầu, không đổi được sau này. Muốn thêm đơn vị riêng: tab Cấu hình.</small>}
         </label>
+        <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Nhãn hiệu, công dụng…" /></label>
         <ImagePicker value={ext.image} onChange={(v) => setExt((x) => ({ ...x, image: v }))} store="materials" />
-        <label>Thương hiệu / xuất xứ<input value={ext.brand} onChange={setE('brand')} /></label>
-        <label>Nhóm vật tư
-          <select value={ext.material_group} onChange={setE('material_group')}>
-            <option value="">— Chưa phân nhóm —</option>
-            {MATERIAL_GROUPS.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
-          </select>
-        </label>
-        <label>Hoạt chất / thành phần<input value={ext.active_ingredient} maxLength={300} onChange={setE('active_ingredient')} /></label>
-        <div className="pair">
-          <label>Số đăng ký lưu hành<input value={ext.registration_no} maxLength={80} onChange={setE('registration_no')} /></label>
-          <label>Nhà sản xuất<input value={ext.manufacturer} maxLength={200} onChange={setE('manufacturer')} /></label>
-        </div>
-        <label>Ghi chú loại (tùy ý)<input value={cat} onChange={(e) => setCat(e.target.value)} /></label>
-        <label>Báo "sắp hết" khi tồn ≤ (để trống nếu không báo)<input value={thr} inputMode="decimal" onChange={(e) => setThr(e.target.value)} /></label>
-        <label>Thời gian cách ly (số ngày)<input value={ext.withdrawal_days} inputMode="numeric" onChange={setE('withdrawal_days')} /></label>
-        <label>Hướng dẫn sử dụng<textarea rows={3} value={ext.usage_guide} onChange={setE('usage_guide')} /></label>
-        <label>Phương thức sử dụng<textarea rows={3} value={ext.usage_method} onChange={setE('usage_method')} /></label>
-        <label>Cảnh báo an toàn<textarea rows={3} value={ext.safety_warning} onChange={setE('safety_warning')} /></label>
-        <label>Chỉ tiêu chất lượng<textarea rows={3} value={ext.quality_specs} onChange={setE('quality_specs')} /></label>
-        <label>Hàm lượng yếu tố hạn chế<textarea rows={3} value={ext.limit_elements} onChange={setE('limit_elements')} /></label>
+        <label>Xuất xứ / thương hiệu<input value={ext.brand} onChange={setE('brand')} /></label>
+        <label>Nhà sản xuất<input value={ext.manufacturer} maxLength={200} onChange={setE('manufacturer')} /></label>
+        <label>Số đăng ký lưu hành<input value={ext.registration_no} maxLength={80} onChange={setE('registration_no')} /></label>
+        <details className="fold">
+          <summary>Thông tin tùy chọn (không bắt buộc)</summary>
+          <label>Hoạt chất / thành phần<input value={ext.active_ingredient} maxLength={300} onChange={setE('active_ingredient')} /></label>
+          <label>Báo "sắp hết" khi tồn ≤ (để trống nếu không báo)<input value={thr} inputMode="decimal" onChange={(e) => setThr(e.target.value)} /></label>
+          <label>Thời gian cách ly (số ngày)<input value={ext.withdrawal_days} inputMode="numeric" onChange={setE('withdrawal_days')} /></label>
+          <label>Ghi chú loại (tùy ý)<input value={cat} onChange={(e) => setCat(e.target.value)} /></label>
+          <label>Hướng dẫn sử dụng<textarea rows={3} value={ext.usage_guide} onChange={setE('usage_guide')} /></label>
+          <label>Phương thức sử dụng<textarea rows={3} value={ext.usage_method} onChange={setE('usage_method')} /></label>
+          <label>Cảnh báo an toàn<textarea rows={3} value={ext.safety_warning} onChange={setE('safety_warning')} /></label>
+          <label>Chỉ tiêu chất lượng<textarea rows={3} value={ext.quality_specs} onChange={setE('quality_specs')} /></label>
+          <label>Hàm lượng yếu tố hạn chế<textarea rows={3} value={ext.limit_elements} onChange={setE('limit_elements')} /></label>
+        </details>
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {
