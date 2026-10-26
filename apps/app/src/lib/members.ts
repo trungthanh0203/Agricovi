@@ -54,6 +54,18 @@ export interface CoopHousehold {
   joined_at: string | null;
   managed: boolean;
   active_coop_cycles: number;
+  /** Thông tin cơ bản do HTX ghi (migration 0092) */
+  member_code?: string | null;
+  head_name?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  main_products?: string | null;
+  area_ha?: number | null;
+  note?: string | null;
+}
+
+export interface HouseholdInfo {
+  member_code: string; head_name: string; phone: string; address: string; main_products: string; area_ha: number | null; note: string;
 }
 export interface MyCooperative {
   cooperative_org_id: string;
@@ -137,3 +149,10 @@ export const setMemberAreas = (orgId: string, userId: string, areaIds: string[] 
 /** Chủ ghi mô tả cho một nhân sự (rỗng = xóa mô tả) */
 export const setMemberDescription = (orgId: string, userId: string, description: string) =>
   rpc<void>('set_member_description', { p_org: orgId, p_user: userId, p_description: description });
+
+/** HTX ghi thông tin cơ bản của một hộ thành viên (rỗng = xóa) */
+export const updateCoopHousehold = (coop: string, household: string, f: HouseholdInfo) =>
+  rpc<void>('update_coop_household', {
+    p_coop: coop, p_household: household, p_member_code: f.member_code, p_head_name: f.head_name, p_phone: f.phone,
+    p_address: f.address, p_main_products: f.main_products, p_area_ha: f.area_ha, p_note: f.note,
+  });

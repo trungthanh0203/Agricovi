@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ImagePicker, Thumb } from './ImagePicker';
-import { db, type AreaRow } from '../lib/db';
+import { type AreaKind, type AreaRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
@@ -8,7 +8,8 @@ import { createArea, updateArea, type FarmInput } from '../lib/production';
 import { canPerm } from '../lib/permissions';
 import { useTable } from '../lib/tables';
 
-const HOUSING_LABEL = { closed: 'Chuồng kín', semi_open: 'Chuồng nửa kín', open: 'Chuồng hở' } as const;
+const HOUSING_LABEL = { closed: 'Kín', semi_open: 'Nửa kín nửa hở', open: 'Hở' } as const;
+const KIND_LABEL: Record<AreaKind, string> = { crop: 'Trồng trọt', growing: 'Trồng trọt', livestock: 'Chăn nuôi', facility: 'Cơ sở vật chất', other: 'Khác' };
 
 const fmtSize = (a: AreaRow) => (a.area_size != null ? `${a.area_size.toLocaleString('vi-VN')} ${a.area_unit === 'ha' ? 'ha' : 'm²'}` : '');
 
@@ -60,7 +61,7 @@ export function AreasSection() {
             <tr key={a.id} className={a.is_active === false ? 'off' : ''}>
               <td>
                 <Thumb src={a.image} />{a.name}{a.code ? ` · ${a.code}` : ''}
-                {(a.kind === 'facility' || a.housing) && <span className="sub">{[a.kind === 'facility' ? 'Cơ sở vật chất' : '', a.housing ? HOUSING_LABEL[a.housing] : ''].filter(Boolean).join(' · ')}</span>}
+                {(a.kind || a.housing) && <span className="sub">{[a.kind ? KIND_LABEL[a.kind] : '', a.housing ? `Nhà/chuồng ${HOUSING_LABEL[a.housing].toLowerCase()}` : ''].filter(Boolean).join(' · ')}</span>}
                 {a.location && <span className="sub">📍 {a.location}</span>}
                 {a.description && <span className="sub">{a.description}</span>}
                 {a.is_active === false && <span className="sub">Đã dừng</span>}
@@ -79,6 +80,7 @@ export function AreasSection() {
       </table>
       <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả trang trại đã dừng</label>
       <p className="muted">Trang trại đã dừng vẫn giữ lịch sử nhưng không chọn được để tạo vụ mới.</p>
+      <p className="msg" role="note">💡 Sau khi tạo trang trại, hãy vào <strong>Khai báo → Sản phẩm</strong> để tạo/chọn loại đối tượng nuôi / trồng, rồi tạo vụ (lứa nuôi) cho từng trang trại của bạn.</p>
 
       {canManage && editRow && (
         <FarmForm key={editRow.id} title={`Sửa trang trại: ${editRow.name}`} initial={editRow} busy={busy || !online} onClose={() => setEditing(null)}
@@ -96,7 +98,7 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
   const [size, setSize] = useState(initial?.area_size != null ? String(initial.area_size) : '');
   const [unit, setUnit] = useState<'m2' | 'ha'>(initial?.area_unit ?? 'm2');
   const [code, setCode] = useState(initial?.code ?? '');
-  const [kind, setKind] = useState<'growing' | 'facility'>(initial?.kind ?? 'growing');
+  const [kind, setKind] = useState<Exclude<AreaKind, 'growing'>>(initial?.kind && initial.kind !== 'growing' ? initial.kind : 'crop');
   const [housing, setHousing] = useState<string>(initial?.housing ?? '');
   const [desc, setDesc] = useState(initial?.description ?? '');
   const [image, setImage] = useState(initial?.image ?? '');
@@ -107,17 +109,19 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
       <div className="inline-form">
         <label>Tên trang trại<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
         <div className="pair">
-          <label>Mã khu / chuồng<input value={code} maxLength={40} onChange={(e) => setCode(e.target.value)} placeholder="Ví dụ: C-THIT-02" /></label>
           <label>Loại khu
-            <select value={kind} onChange={(e) => setKind(e.target.value as 'growing' | 'facility')}>
-              <option value="growing">Khu nuôi / trồng</option>
+            <select value={kind} onChange={(e) => setKind(e.target.value as Exclude<AreaKind, 'growing'>)}>
+              <option value="crop">Trồng trọt</option>
+              <option value="livestock">Chăn nuôi</option>
               <option value="facility">Cơ sở vật chất</option>
+              <option value="other">Khác</option>
             </select>
           </label>
+          <label>Mã khu / chuồng<input value={code} maxLength={40} onChange={(e) => setCode(e.target.value)} placeholder="Ví dụ: C-THIT-02" /></label>
         </div>
         {kind === 'facility' && <p className="muted">Cơ sở vật chất (cổng, kho, biogas, hố sát trùng…) chỉ để ghi việc, không tạo vụ.</p>}
-        {kind === 'growing' && (
-          <label>Kiểu chuồng / nhà
+        {kind !== 'facility' && (
+          <label>Kiểu Nhà/Chuồng
             <select value={housing} onChange={(e) => setHousing(e.target.value)}>
               <option value="">— Không áp dụng —</option>
               <option value="closed">Kín</option>
@@ -145,7 +149,7 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
             const n = size.trim() === '' ? null : Number(size.replace(',', '.'));
             if (n !== null && (Number.isNaN(n) || n < 0)) return setErr('Diện tích phải là số không âm.');
             setErr(null);
-            void onSave({ name, location, area_size: n, area_unit: unit, description: desc, image, code, kind, housing: kind === 'growing' && housing ? (housing as 'closed' | 'semi_open' | 'open') : null }).catch(() => undefined);
+            void onSave({ name, location, area_size: n, area_unit: unit, description: desc, image, code, kind, housing: kind !== 'facility' && housing ? (housing as 'closed' | 'semi_open' | 'open') : null }).catch(() => undefined);
           }}>Lưu</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>

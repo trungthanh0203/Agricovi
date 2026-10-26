@@ -2,6 +2,8 @@ import Dexie, { type Table } from 'dexie';
 import type { CycleStatus, OutboxItem } from '@agriconnect/shared';
 import type { CycleSummary } from './summaryReport';
 
+export type AreaKind = 'crop' | 'livestock' | 'facility' | 'other' | 'growing';
+
 export interface AreaRow {
   id: string;
   organization_id: string;
@@ -15,8 +17,8 @@ export interface AreaRow {
   is_active?: boolean;
   /** Mã khu/chuồng (ví dụ C-THIT-02), duy nhất trong cơ sở (D98) */
   code?: string | null;
-  /** growing = khu nuôi/trồng (tạo vụ được); facility = cơ sở vật chất (cổng, kho, biogas...: chỉ ghi việc) */
-  kind?: 'growing' | 'facility';
+  /** crop = trồng trọt, livestock = chăn nuôi, other = khác (đều tạo vụ được); facility = cơ sở vật chất (cổng, kho, biogas...: chỉ ghi việc). 'growing' là giá trị cũ trên máy, coi như trồng trọt */
+  kind?: AreaKind;
   /** Kiểu chuồng: chỉ lưu và hiển thị ở P1 */
   housing?: 'closed' | 'semi_open' | 'open' | null;
 }

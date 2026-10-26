@@ -1,5 +1,5 @@
 import type { CycleStatus } from '@agriconnect/shared';
-import { db, type AreaRow, type CycleRow, type LogRow, type NoteRow, type StageRow } from './db';
+import { db, type AreaKind, type AreaRow, type CycleRow, type LogRow, type NoteRow, type StageRow } from './db';
 import { syncFinanceDown } from './finance';
 import { refreshCatalogCache } from './templates';
 import { syncHarvestsDown } from './harvest';
@@ -144,7 +144,7 @@ export interface FarmInput {
   image?: string | null;
   /** Mã khu/chuồng, loại khu và kiểu chuồng (D98) */
   code?: string | null;
-  kind?: 'growing' | 'facility';
+  kind?: Exclude<AreaKind, 'growing'>;
   housing?: 'closed' | 'semi_open' | 'open' | null;
 }
 
@@ -153,7 +153,7 @@ export async function createArea(organizationId: string, f: FarmInput): Promise<
   const row: AreaRow = {
     id, organization_id: organizationId, name: f.name.trim(), description: f.description?.trim() || null,
     location: f.location?.trim() || null, area_size: f.area_size ?? null, area_unit: f.area_unit ?? 'm2', image: f.image || null,
-    code: f.code?.trim() || null, kind: f.kind ?? 'growing', housing: f.housing ?? null,
+    code: f.code?.trim() || null, kind: f.kind ?? 'crop', housing: f.housing ?? null,
   };
   await insertAndCache('production_areas', { ...row }, { ...row }, 'thêm trang trại');
   return id;
