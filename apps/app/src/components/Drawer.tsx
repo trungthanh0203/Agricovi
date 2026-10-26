@@ -60,7 +60,7 @@ export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, 
 
         <div className="drawer-body">
           <div className="drawer-org">
-            <span className="muted">{active ? ORG_TYPE_LABEL[active.type] : 'Tài khoản'}</span>
+            <span className="muted">{active ? `Cơ sở ${ORG_TYPE_LABEL[active.type]}` : 'Tài khoản'}</span>
             {orgs.length > 1 ? (
               <select value={active?.id ?? ''} onChange={(e) => { onSwitchOrg(e.target.value); onClose(); }} aria-label="Chuyển cơ sở">
                 {orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
