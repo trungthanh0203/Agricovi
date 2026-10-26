@@ -4,6 +4,8 @@ import { useAuth } from './auth';
 import { effectivePerms, type EffectivePerms, type PermOverrides } from './permissions';
 import { saveRoleLabels } from './roles';
 import { supabase } from './supabase';
+import { orgFeatures, type Features } from './models';
+import { useTable } from './tables';
 
 export interface MyOrg {
   id: string;
@@ -20,9 +22,10 @@ export interface MyOrg {
   canManageStages?: boolean;
   /** Chế độ đơn giản (D100): ẩn các mục nâng cao cho hộ nhỏ; chỉ là cách hiển thị, quyền và dữ liệu không đổi */
   simple?: boolean;
-  /** Mô hình quản lý mặc định của cơ sở và gói VietGAP (docs/PLAN_MO_HINH_QUAN_LY.md); null = chưa chọn */
+  /** Mô hình quản lý mặc định của cơ sở (docs/PLAN_MO_HINH_QUAN_LY.md); null = chưa chọn */
   mgmtModel?: string | null;
-  mgmtVietgap?: boolean;
+  /** Chức năng đang dùng = hợp các mô hình của các vụ còn chạy (tính ở OrgsProvider); thiếu = đầy đủ */
+  features?: Features;
 }
 
 interface PositionRow {
@@ -120,12 +123,11 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         supabase.from('platform_role_labels').select('role, name'),
         // chế độ hiển thị của cơ sở (cột mới; lỗi/thiếu cột thì coi như đầy đủ)
         (async () => {
-          const r = await supabase.from('organizations').select('id, ui_mode, mgmt_model, mgmt_vietgap');
+          const r = await supabase.from('organizations').select('id, ui_mode, mgmt_model');
           return r.error ? supabase.from('organizations').select('id, ui_mode') : r; // chưa db push 0102
         })(),
       ]);
-      const modeRows = (modeRes.error ? [] : (modeRes.data ?? [])) as unknown as { id: string; ui_mode: string; mgmt_model?: string | null; mgmt_vietgap?: boolean }[];
-      const simpleOrgs = new Set(modeRows.filter((r) => r.ui_mode === 'simple').map((r) => r.id));
+      const modeRows = (modeRes.error ? [] : (modeRes.data ?? [])) as unknown as { id: string; ui_mode: string; mgmt_model?: string | null }[];
       const modelOf = new Map(modeRows.map((r) => [r.id, r]));
       const { data, error } = memRes;
       if (error) throw error;
@@ -149,9 +151,8 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           positions: mine.map((p) => ({ id: p.id, name: p.name })),
           allowedWorkTypes: restricted ? [...new Set(rule.flatMap((p) => p.work_type_ids ?? []))] : null,
           canManageStages: [...mine, ...builtinHeld].some((p) => p.can_manage_stages),
-          simple: simpleOrgs.has(o.id),
+          simple: false, // chế độ đơn giản/đầy đủ tạm khóa: luôn đầy đủ; thay bằng mô hình quản lý theo vụ (D103)
           mgmtModel: modelOf.get(o.id)?.mgmt_model ?? null,
-          mgmtVietgap: Boolean(modelOf.get(o.id)?.mgmt_vietgap),
         }];
       });
       list.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
@@ -217,7 +218,10 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     return row ?? null;
   }, []);
 
-  const active = orgs.find((o) => o.id === activeId) ?? null;
+  const cycles = useTable('cycles');
+  const activeBase = orgs.find((o) => o.id === activeId) ?? null;
+  // chức năng hiện ra = hợp các mô hình của các vụ còn chạy (vụ chưa chọn mô hình = đầy đủ)
+  const active = useMemo(() => (activeBase ? { ...activeBase, features: orgFeatures(cycles, activeBase.id, activeBase.mgmtModel) } : null), [activeBase, cycles]);
   const value = useMemo(
     () => ({ orgs, active, loading, stale, setActive, refresh: load, createOrg, fetchUsage }),
     [orgs, active, loading, stale, setActive, load, createOrg, fetchUsage],

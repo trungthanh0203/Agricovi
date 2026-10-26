@@ -2,6 +2,7 @@ import type { MyOrg } from './orgs';
 import { canPerm } from './permissions';
 import { REPORT_TYPES } from './reports';
 import { canManageProduction, hasRole } from './roles';
+import { featureShown, SECTION_FEATURE } from './models';
 
 /**
  * Bố cục 6 tab (quyết định D28, D30): Trang chủ · Tổ chức · Khai báo · Sản xuất · Báo cáo · Hồ sơ,
@@ -39,8 +40,15 @@ export const SIMPLE_HIDDEN: Record<'production' | 'declare' | 'reports', string[
   reports: ['custom', 'paybook', 'website', 'commerce', 'checklist', 'logbook'],
 };
 
+/**
+ * Lọc mục menu: (1) chế độ đơn giản cũ (nay tạm khóa, `org.simple` luôn false); (2) mô hình quản lý theo vụ (D103): mục thuộc chức năng bị ẩn
+ * trong MỌI vụ còn chạy thì không hiện (`org.features` = hợp các mô hình; thiếu = hiện đầy đủ).
+ */
 function simpleFilter<T extends string>(org: MyOrg, tab: keyof typeof SIMPLE_HIDDEN, list: Section<T>[]): Section<T>[] {
-  return org.simple ? list.filter((s) => !SIMPLE_HIDDEN[tab].includes(s.id)) : list;
+  let out = org.simple ? list.filter((s) => !SIMPLE_HIDDEN[tab].includes(s.id)) : list;
+  const feat = org.features;
+  if (feat) out = out.filter((s) => { const f = SECTION_FEATURE[s.id]; return !f || featureShown(feat[f]); });
+  return out;
 }
 
 export function productionSections(org: MyOrg | null): Section<ProductionSection>[] {

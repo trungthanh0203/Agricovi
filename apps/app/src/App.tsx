@@ -14,6 +14,7 @@ import { Drawer } from './components/Drawer';
 import { useTable } from './lib/tables';
 import { AuthScreen } from './screens/AuthScreen';
 import { CreateOrgScreen } from './screens/CreateOrgScreen';
+import { ModelPicker } from './components/ModelPicker';
 import type { LogPreset } from './screens/CycleDetailScreen';
 import { HomeTab } from './screens/HomeTab';
 import { syncDown } from './lib/production';
@@ -90,7 +91,7 @@ function Shell() {
   const [adding, setAdding] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const cyclesAll = useTable('cycles');
-  const [overlay, setOverlay] = useState<null | 'log' | 'cycle' | 'logs' | 'detail'>(null);
+  const [overlay, setOverlay] = useState<null | 'log' | 'cycle' | 'logs' | 'detail' | 'model'>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [qrFirst, setQrFirst] = useState(false); // vừa tạo vụ: mở sẵn mã QR
   const [detailOpts, setDetailOpts] = useState<{ calendar?: boolean; notice?: string }>({}); // vừa vào ca: mở thẳng Lịch kèm thông báo giai đoạn hôm nay
@@ -137,8 +138,13 @@ function Shell() {
       <CycleDetailScreen cycleId={detailId} openQr={qrFirst} openCalendar={detailOpts.calendar} notice={detailOpts.notice} onClose={() => { setQrFirst(false); setDetailOpts({}); setOverlay(null); }} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} />
     ) : overlay === 'log' ? (
       <LogActivityScreen preset={logPreset} onClose={() => { setOverlay(logPreset && detailId ? 'detail' : null); setLogPreset(null); }} />
+    ) : overlay === 'model' && detailId ? (
+      <div className="auth">
+        <h1>Chọn cách quản lý vụ</h1>
+        <ModelPicker cycleId={detailId} onDone={() => setOverlay('detail')} onSkip={() => setOverlay('detail')} />
+      </div>
     ) : overlay === 'cycle' ? (
-      <CreateCycleScreen onDone={(id) => { setDetailId(id); setQrFirst(true); setOverlay('detail'); setTab('production'); }} onCancel={() => setOverlay(null)} />
+      <CreateCycleScreen onDone={(id) => { setDetailId(id); setQrFirst(true); setOverlay('model'); setTab('production'); }} onCancel={() => setOverlay(null)} />
     ) : null;
   const closeOverlay = () => { setOverlay(null); setLogPreset(null); setQrFirst(false); setDetailOpts({}); };
 

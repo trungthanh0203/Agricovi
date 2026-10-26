@@ -1,41 +1,69 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDb, addUser, asUser, expectError } from './harness.mjs';
-import { MODELS, SECTION_FEATURE, effectiveModel, featuresOf, featureShown, mergeFeatures, suggestModel } from '../../apps/app/src/lib/models.ts';
+import { MODELS, SECTION_FEATURE, allFeaturesOn, effectiveModel, featuresOf, featureShown, mergeFeatures, modelName, orgFeatures, suggestModel } from '../../apps/app/src/lib/models.ts';
+import { declareSections, productionSections, reportSections } from '../../apps/app/src/lib/tabs.ts';
 
-// Phần A (lib/models.ts, thuần) và phần B (migration 0102): mô hình quản lý theo vụ, người làm lương tháng không tài khoản.
+// Phần A (lib/models.ts, thuần), tích hợp với menu (lib/tabs.ts) và phần B (migrations 0102-0103): mô hình quản lý theo vụ, người làm lương tháng không tài khoản.
 
-test('mô hình: 4 mô hình, mô hình lớn hơn không mất chức năng của mô hình nhỏ; VietGAP bật thêm ghi việc và các sổ', () => {
-  assert.deepEqual(MODELS.map((m) => m.id), ['family', 'monthly', 'managed', 'staffed']);
-  const order = ['family', 'monthly', 'managed', 'staffed'];
+test('mô hình: 5 mô hình, mô hình sau có đủ chức năng của mô hình trước; VietGAP là mô hình riêng', () => {
+  const order = ['family', 'monthly', 'managed', 'staffed', 'vietgap'];
+  assert.deepEqual(MODELS.map((m) => m.id), order);
   const rank = { off: 0, optional: 1, on: 2 };
   for (let i = 1; i < order.length; i++) {
-    const a = featuresOf(order[i - 1], false), b = featuresOf(order[i], false);
+    const a = featuresOf(order[i - 1]), b = featuresOf(order[i]);
     for (const k of Object.keys(a)) assert.ok(rank[b[k]] >= rank[a[k]], `${order[i]} phải có ${k} như ${order[i - 1]}`);
   }
-  // quyết định chủ sản phẩm: bán qua website từ mô hình 2 trở đi; mô hình 1 không có
-  assert.equal(featuresOf('family', false).web, 'off');
-  for (const m of order.slice(1)) assert.equal(featuresOf(m, false).web, 'on');
-  assert.equal(featuresOf('family', false).logs, 'optional'); // ghi việc nhẹ tùy chọn
-  assert.equal(featuresOf('staffed', false).attendance, 'on');
-  assert.equal(featuresOf('monthly', false).attendance, 'off');
-  const vg = featuresOf('family', true);
-  for (const k of ['logs', 'logbook', 'checklist', 'licenses', 'lots']) assert.equal(vg[k], 'on', k);
-  assert.equal(featuresOf('family', false).logbook, 'off');
+  assert.equal(featuresOf('family').web, 'off'); // bán qua website từ mô hình 2 trở đi
+  for (const m of order.slice(1)) assert.equal(featuresOf(m).web, 'on');
+  assert.equal(featuresOf('family').logs, 'optional'); // ghi việc nhẹ tùy chọn
+  assert.equal(featuresOf('staffed').attendance, 'on');
+  assert.equal(featuresOf('monthly').attendance, 'off');
+  for (const k of ['logs', 'logbook', 'checklist', 'licenses', 'lots']) assert.equal(featuresOf('vietgap')[k], 'on', k);
+  assert.equal(featuresOf('staffed').logbook, 'off'); // sổ nhật ký, bảng kiểm thuộc Chuẩn VietGAP
 });
 
-test('mô hình: cơ sở/vụ chưa chọn giữ cách cũ; gộp nhiều vụ lấy mức cao nhất; mục menu đều có chức năng hợp lệ', () => {
-  assert.equal(effectiveModel('managed', 'family', false), 'managed'); // vụ ưu tiên
-  assert.equal(effectiveModel(null, 'family', false), 'family');       // theo cơ sở
-  assert.equal(effectiveModel(null, null, true), 'family');            // chế độ đơn giản cũ
-  assert.equal(effectiveModel(null, null, false), 'staffed');          // đầy đủ cũ
-  assert.equal(effectiveModel('lạ', 'lạ', false), 'staffed');          // giá trị lạ bị bỏ qua
-  const u = mergeFeatures([featuresOf('family', false), featuresOf('managed', false)]);
+test('mô hình: chưa chọn = đầy đủ; vụ ưu tiên hơn cơ sở; cơ sở hợp các vụ còn chạy; mục menu đều có chức năng hợp lệ', () => {
+  assert.equal(effectiveModel('managed', 'family'), 'managed');
+  assert.equal(effectiveModel(null, 'family'), 'family');
+  assert.equal(effectiveModel(null, null), null);
+  assert.equal(effectiveModel('lạ', 'lạ'), null);
+  assert.deepEqual(featuresOf(null), allFeaturesOn());
+  const u = mergeFeatures([featuresOf('family'), featuresOf('managed')]);
   assert.equal(u.stock, 'on');
   assert.equal(u.teams, 'off');
   assert.ok(featureShown(u.logs) && !featureShown(u.custom_reports));
-  const feats = new Set(Object.keys(featuresOf('family', false)));
+
+  const cy = (model, status = 'active', org = 'O') => ({ owner_org_id: org, status, mgmt_model: model });
+  assert.deepEqual(orgFeatures([], 'O', null), allFeaturesOn()); // chưa có vụ, chưa chọn gì: đầy đủ
+  assert.equal(orgFeatures([], 'O', 'family').stock, 'off'); // chưa có vụ: theo mặc định cơ sở
+  assert.equal(orgFeatures([cy('family')], 'O', null).stock, 'off');
+  assert.equal(orgFeatures([cy('family'), cy('managed')], 'O', null).stock, 'on'); // hợp các vụ đang chạy
+  assert.equal(orgFeatures([cy('family'), cy('managed', 'ended')], 'O', null).stock, 'off'); // vụ đã kết thúc không tính
+  assert.equal(orgFeatures([cy(null)], 'O', 'family').stock, 'off'); // vụ chưa chọn theo cơ sở
+  assert.deepEqual(orgFeatures([cy(null)], 'O', null), allFeaturesOn()); // cả hai chưa chọn: đầy đủ
+  assert.equal(orgFeatures([cy('family', 'active', 'KHAC')], 'O', null).stock, 'on'); // vụ của cơ sở khác bỏ qua
+  const feats = new Set(Object.keys(allFeaturesOn()));
   for (const [sec, f] of Object.entries(SECTION_FEATURE)) assert.ok(f === null || feats.has(f), `${sec} -> ${f}`);
+  assert.equal(modelName(null, null), 'Chưa chọn (hiện đầy đủ)');
+  assert.equal(modelName('family', 'staffed'), 'Tự làm trong gia đình');
+});
+
+test('menu theo mô hình: Tự làm trong gia đình ẩn kho, nhân sự, bảng lương; Chuẩn VietGAP hiện sổ nhật ký; không chọn thì đủ', () => {
+  const perms = { declare: 'edit', inventory: 'edit', expenses: 'edit', sales: 'edit', harvest: 'edit', summary: 'view', coop: 'none', website: 'edit', tasks: 'edit' };
+  const org = (features) => ({ id: 'O', type: 'household', name: 'Hộ', roles: ['owner'], perms, features });
+  const ids = (l) => l.map((s) => s.id);
+  const full = org(undefined), family = org(featuresOf('family')), vietgap = org(featuresOf('vietgap')), staffed = org(featuresOf('staffed'));
+  for (const k of ['members', 'places', 'teams', 'licenses']) assert.ok(ids(declareSections(full)).includes(k), `đủ: ${k}`);
+  for (const k of ['members', 'places', 'materials', 'teams', 'positions', 'partners']) assert.ok(!ids(declareSections(family)).includes(k), `gia đình ẩn ${k}`);
+  for (const k of ['areas', 'crops', 'templates']) assert.ok(ids(declareSections(family)).includes(k), `gia đình giữ ${k}`);
+  assert.ok(!ids(productionSections(family)).includes('stock') && !ids(productionSections(family)).includes('attendance'));
+  for (const k of ['cycles', 'harvest', 'expense', 'logs']) assert.ok(ids(productionSections(family)).includes(k), k);
+  assert.ok(!ids(reportSections(family)).includes('paybook') && !ids(reportSections(family)).includes('commerce'));
+  for (const k of ['summary', 'sales', 'payables']) assert.ok(ids(reportSections(family)).includes(k), k);
+  assert.ok(ids(reportSections(vietgap)).includes('logbook') && ids(reportSections(vietgap)).includes('checklist'));
+  assert.ok(!ids(reportSections(staffed)).includes('logbook'));
+  assert.ok(ids(reportSections(full)).includes('logbook'));
 });
 
 test('gợi ý mô hình theo tình hình cơ sở', () => {
@@ -60,19 +88,20 @@ async function setup() {
 
 test('đặt mô hình: cơ sở chỉ chủ; vụ chủ hoặc quản lý; nhân viên và người ngoài bị chặn; giá trị lạ bị từ chối', async () => {
   const { db, owner, mgr, worker, other, org, cyc } = await setup();
-  await asUser(db, owner, `select set_org_model($1,'monthly',true)`, [org]);
-  assert.deepEqual((await db.query(`select mgmt_model, mgmt_vietgap from organizations where id=$1`, [org])).rows[0], { mgmt_model: 'monthly', mgmt_vietgap: true });
-  assert.match(await expectError(asUser(db, mgr, `select set_org_model($1,'family',false)`, [org])), /FORBIDDEN/);
-  assert.match(await expectError(asUser(db, owner, `select set_org_model($1,'xxx',false)`, [org])), /INVALID_MODEL/);
+  await asUser(db, owner, `select set_org_model($1,'vietgap')`, [org]);
+  assert.equal((await db.query(`select mgmt_model from organizations where id=$1`, [org])).rows[0].mgmt_model, 'vietgap');
+  assert.match(await expectError(asUser(db, mgr, `select set_org_model($1,'family')`, [org])), /FORBIDDEN/);
+  assert.match(await expectError(asUser(db, owner, `select set_org_model($1,'xxx')`, [org])), /INVALID_MODEL/);
 
-  await asUser(db, mgr, `select set_cycle_model($1,'managed',false)`, [cyc]);
-  assert.deepEqual((await db.query(`select mgmt_model, mgmt_vietgap from production_cycles where id=$1`, [cyc])).rows[0], { mgmt_model: 'managed', mgmt_vietgap: false });
-  await asUser(db, owner, `select set_cycle_model($1,'family',null)`, [cyc]); // đổi sang mô hình khác được; null = theo cơ sở
-  assert.equal((await db.query(`select mgmt_model, mgmt_vietgap from production_cycles where id=$1`, [cyc])).rows[0].mgmt_vietgap, null);
-  assert.match(await expectError(asUser(db, worker, `select set_cycle_model($1,'staffed',false)`, [cyc])), /FORBIDDEN/);
-  assert.match(await expectError(asUser(db, other, `select set_cycle_model($1,'staffed',false)`, [cyc])), /FORBIDDEN/);
-  assert.match(await expectError(asUser(db, owner, `select set_cycle_model($1,'khac',false)`, [cyc])), /INVALID_MODEL/);
-  await asUser(db, owner, `select set_cycle_model($1,null,null)`, [cyc]); // bỏ chọn
+  await asUser(db, mgr, `select set_cycle_model($1,'managed')`, [cyc]);
+  assert.equal((await db.query(`select mgmt_model from production_cycles where id=$1`, [cyc])).rows[0].mgmt_model, 'managed');
+  await asUser(db, owner, `select set_cycle_model($1,'family')`, [cyc]); // đổi sang mô hình khác được
+  assert.equal((await db.query(`select mgmt_model from production_cycles where id=$1`, [cyc])).rows[0].mgmt_model, 'family');
+  assert.match(await expectError(asUser(db, worker, `select set_cycle_model($1,'staffed')`, [cyc])), /FORBIDDEN/);
+  assert.match(await expectError(asUser(db, other, `select set_cycle_model($1,'staffed')`, [cyc])), /FORBIDDEN/);
+  assert.match(await expectError(asUser(db, owner, `select set_cycle_model($1,'khac')`, [cyc])), /INVALID_MODEL/);
+  await asUser(db, owner, `select set_cycle_model($1,'vietgap')`, [cyc]);
+  await asUser(db, owner, `select set_cycle_model($1,null)`, [cyc]); // bỏ chọn: theo cơ sở
 });
 
 test('người làm không tài khoản lương tháng: không cần tổ; kiểu do tổ trưởng chấm vẫn bắt buộc có tổ', async () => {

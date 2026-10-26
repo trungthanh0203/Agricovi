@@ -19,7 +19,7 @@ const CYCLE_COLUMNS_PLAN = `${CYCLE_COLUMNS_BASE}, target_yield_kg, budget_amoun
 // cột mã vụ/đơn vị đếm/cán bộ phụ trách (D98) cũng chỉ có sau migration 0080
 const CYCLE_COLUMNS_D98 = `${CYCLE_COLUMNS_PLAN}, code, count_unit, supervisor_name, supervisor_phone`;
 // mô hình quản lý theo vụ (migration 0102)
-const CYCLE_COLUMNS = `${CYCLE_COLUMNS_D98}, mgmt_model, mgmt_vietgap`;
+const CYCLE_COLUMNS = `${CYCLE_COLUMNS_D98}, mgmt_model`;
 const AREA_COLUMNS_BASE = 'id, organization_id, name, description, location, area_size, area_unit, image, is_active';
 const AREA_COLUMNS_D98 = `${AREA_COLUMNS_BASE}, code, kind, housing`;
 const AREA_COLUMNS = `${AREA_COLUMNS_D98}, kind_item`;

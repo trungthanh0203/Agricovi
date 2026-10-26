@@ -16,7 +16,6 @@ import { changeMyPassword, fetchDisplayName, fetchMyWork, renameOrg, saveDisplay
 import { buildAccountQr } from '../lib/qr';
 import { isOwner, roleSummary } from '../lib/roles';
 import { fetchStaffStatus, WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
-import { setOrgUiMode } from '../lib/uiMode';
 
 /**
  * Tab Tài khoản (D40, D50): mọi phần đều THU GỌN được — tài khoản (tên hiển thị, đổi mật khẩu), "Tôi được làm gì", công việc,
@@ -93,8 +92,8 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
       )}
 
       {active && isOwner(active.roles) && (
-        <Collapsible title="Chế độ hiển thị" summary={active.simple ? 'đơn giản (hộ nhỏ)' : 'đầy đủ'}>
-          <UiModeForm orgId={active.id} simple={Boolean(active.simple)} onChanged={() => void refresh()} />
+        <Collapsible title="Chế độ hiển thị" summary="đầy đủ (tạm khóa)">
+          <p className="muted">Hiện luôn ở chế độ đầy đủ. Việc hiện hay ẩn các mục nay được quyết định theo <strong>cách quản lý của từng vụ</strong>: chọn khi tạo vụ, đổi ở Chi tiết vụ → Cách quản lý vụ này.</p>
         </Collapsible>
       )}
 
@@ -224,20 +223,3 @@ function PasswordForm() {
   );
 }
 
-/** Chủ chọn chế độ hiển thị cho cả cơ sở: đơn giản (ẩn mục nâng cao) hoặc đầy đủ */
-function UiModeForm({ orgId, simple, onChanged }: { orgId: string; simple: boolean; onChanged: () => void }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  async function choose(mode: 'simple' | 'full') {
-    setBusy(true); setError(null);
-    try { await setOrgUiMode(orgId, mode); onChanged(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
-  }
-  return (
-    <>
-      {error && <p className="msg error" role="alert">{error}</p>}
-      <label className="check"><input type="radio" name="uimode" checked={simple} disabled={busy} onChange={() => void choose('simple')} /> <strong>Đơn giản</strong> (hộ nhỏ): chỉ giữ việc dùng hằng ngày</label>
-      <label className="check"><input type="radio" name="uimode" checked={!simple} disabled={busy} onChange={() => void choose('full')} /> <strong>Đầy đủ</strong>: có thêm các mục nâng cao</label>
-      <p className="muted">Chế độ đơn giản ẩn: Đầu việc, Nhà cung ứng, Khách hàng, Chấm công, Phòng/Tổ, Chức vụ, Hợp tác xã, Bảng lương, Báo cáo theo nhu cầu, Sổ nhật ký, Bảng kiểm, Hồ sơ website và nút mở công khai. Dữ liệu và quyền không đổi; áp dụng cho mọi người trong cơ sở khi mở lại app. Bật lại "Đầy đủ" khi cần.</p>
-    </>
-  );
-}

@@ -58,3 +58,8 @@ Thứ tự đề xuất: **A → B → C → D**, rồi E, F, G theo phản hồ
 4. Làm khoảng trống F: người làm **không tài khoản, lương tháng cố định**, không chấm công.
 5. **Thay hẳn** chế độ đơn giản/đầy đủ bằng mô hình (① ② ≈ đơn giản; ④ ≈ đầy đủ). Bản xem trước màn chọn đã gửi cho chủ sản phẩm duyệt.
 6. Cách ly dựa vào **giai đoạn phun thuốc của quy trình** (mốc "ngưng thuốc N ngày trước thu") thay vì bắt buộc ghi việc. Lưu ý: mốc chỉ theo ngày thu dự kiến của quy trình, không biết loại thuốc cụ thể; cách ly chính xác theo từng thuốc chỉ có khi có ghi việc dùng thuốc (gói VietGAP luôn bật).
+
+## 7. Tiến độ (26/10/2026)
+- Chủ sản phẩm đổi: **Chuẩn VietGAP là mô hình số 5** (không còn là gói thêm); chế độ đơn giản/đầy đủ **tạm khóa, luôn đầy đủ**.
+- Đã xong về code: A (bảng mô hình), B (migration 0102–0103), C (màn "Chọn cách quản lý vụ" sau khi tạo vụ + "Cách quản lý vụ này" trong Chi tiết vụ), D (menu theo hợp các mô hình của vụ đang chạy). Trang chủ giữ nguyên.
+- Còn lại: E (việc cần làm tiếp theo vụ, nhắc cách ly mô hình 1–2), G (lối tắt ghi tiền công).

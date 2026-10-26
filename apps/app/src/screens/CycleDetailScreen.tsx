@@ -20,6 +20,8 @@ import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { useAuth } from '../lib/auth';
 import { useOrgs } from '../lib/orgs';
+import { ModelPicker } from '../components/ModelPicker';
+import { modelName } from '../lib/models';
 import {
   addCycleStage, addNote, advanceStage, deleteCycleStage, deleteNote, refreshCycle, setNoteDone, updateCycleStage,
 } from '../lib/production';
@@ -101,6 +103,11 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
       {isOwner(active?.roles) && cycle.owner_org_id === active?.id && !active?.simple && (
         <Collapsible title="Mở công khai website" summary="chủ cơ sở tự chọn công khai">
           <PublishCycle cycleId={cycleId} />
+        </Collapsible>
+      )}
+      {canManage && cycle.owner_org_id === active?.id && (
+        <Collapsible title="Cách quản lý vụ này" summary={modelName(cycle.mgmt_model, active?.mgmtModel)}>
+          <ModelPicker cycleId={cycleId} onDone={() => undefined} />
         </Collapsible>
       )}
       <Collapsible title="Mã QR của vụ" summary="tên vụ, nơi trồng, thời gian, vật tư đã dùng" defaultOpen={openQr}>
