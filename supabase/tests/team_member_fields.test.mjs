@@ -59,9 +59,10 @@ test('hộ thành viên: HTX ghi thông tin, mã hộ không trùng, người ng
   const C = (await asUser(db, boss, `select create_organization('cooperative','HTX') id`)).rows[0].id;
   const H1 = (await asUser(db, boss, `select create_member_household($1,'Hộ bác Tư') id`, [C])).rows[0].id;
   const H2 = (await asUser(db, boss, `select create_member_household($1,'Hộ bác Năm') id`, [C])).rows[0].id;
-  await asUser(db, boss, `select update_coop_household($1,$2,' HV-001 ','Nguyễn Văn Tư','0912345678','Ấp 3','Dưa lưới',1.5,'Ghi chú')`, [C, H1]);
+  await asUser(db, boss, `select update_coop_household($1,$2,' HV-001 ','Nguyễn Văn Tư','0912345678','Ấp 3','Dưa lưới',1.5,'Ghi chú','paused',' VietGAP, OCOP ')`, [C, H1]);
   const r = (await asUser(db, boss, `select * from list_coop_households($1) where household_org_id=$2`, [C, H1])).rows[0];
-  assert.deepEqual([r.member_code, r.head_name, r.phone, r.main_products, Number(r.area_ha)], ['HV-001', 'Nguyễn Văn Tư', '0912345678', 'Dưa lưới', 1.5]);
+  assert.deepEqual([r.member_code, r.head_name, r.phone, r.main_products, Number(r.area_ha), r.activity_status, r.certificates], ['HV-001', 'Nguyễn Văn Tư', '0912345678', 'Dưa lưới', 1.5, 'paused', 'VietGAP, OCOP']);
+  assert.match(await expectError(asUser(db, boss, `select update_coop_household($1,$2,null,null,null,null,null,null,null,'xx',null)`, [C, H2])), /INVALID_STATUS/);
   assert.match(await expectError(asUser(db, boss, `select update_coop_household($1,$2,'hv-001',null,null,null,null,null,null)`, [C, H2])), /DUPLICATE_CODE/);
   assert.match(await expectError(asUser(db, stranger, `select update_coop_household($1,$2,'X',null,null,null,null,null,null)`, [C, H1])), /FORBIDDEN/);
 });

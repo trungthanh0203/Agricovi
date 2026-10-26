@@ -62,10 +62,13 @@ export interface CoopHousehold {
   main_products?: string | null;
   area_ha?: number | null;
   note?: string | null;
+  activity_status?: 'active' | 'paused';
+  certificates?: string | null;
 }
 
 export interface HouseholdInfo {
   member_code: string; head_name: string; phone: string; address: string; main_products: string; area_ha: number | null; note: string;
+  activity_status: 'active' | 'paused'; certificates: string;
 }
 export interface MyCooperative {
   cooperative_org_id: string;
@@ -154,5 +157,5 @@ export const setMemberDescription = (orgId: string, userId: string, description:
 export const updateCoopHousehold = (coop: string, household: string, f: HouseholdInfo) =>
   rpc<void>('update_coop_household', {
     p_coop: coop, p_household: household, p_member_code: f.member_code, p_head_name: f.head_name, p_phone: f.phone,
-    p_address: f.address, p_main_products: f.main_products, p_area_ha: f.area_ha, p_note: f.note,
+    p_address: f.address, p_main_products: f.main_products, p_area_ha: f.area_ha, p_note: f.note, p_activity_status: f.activity_status, p_certificates: f.certificates,
   });

@@ -36,10 +36,11 @@ function useRunner(reload: () => Promise<void>) {
   return { error, info, busy, run, setError };
 }
 
-const EMPTY_INFO: HouseholdInfo = { member_code: '', head_name: '', phone: '', address: '', main_products: '', area_ha: null, note: '' };
+const EMPTY_INFO: HouseholdInfo = { member_code: '', head_name: '', phone: '', address: '', main_products: '', area_ha: null, note: '', activity_status: 'active', certificates: '' };
 const infoOf = (h: CoopHousehold): HouseholdInfo => ({
   member_code: h.member_code ?? '', head_name: h.head_name ?? '', phone: h.phone ?? '', address: h.address ?? '',
   main_products: h.main_products ?? '', area_ha: h.area_ha != null ? Number(h.area_ha) : null, note: h.note ?? '',
+  activity_status: h.activity_status ?? 'active', certificates: h.certificates ?? '',
 });
 
 /**
@@ -122,7 +123,14 @@ function ForCooperative({ org }: { org: MyOrg }) {
           <label>Số điện thoại<input type="tel" inputMode="tel" value={f.phone} maxLength={30} onChange={set('phone')} /></label>
           <label>Địa chỉ (thôn/ấp, xã, huyện)<input value={f.address} maxLength={200} onChange={set('address')} /></label>
           <label>Sản phẩm chính<input value={f.main_products} maxLength={200} onChange={set('main_products')} placeholder="Ví dụ: Dưa lưới, heo thịt" /></label>
+          <label>Giấy chứng nhận (VietGAP, OCOP…)<input value={f.certificates} maxLength={300} onChange={set('certificates')} placeholder="Ví dụ: VietGAP dưa lưới (hết hạn 06/2027), OCOP 3 sao" /></label>
           <label>Diện tích sản xuất (ha)<input inputMode="decimal" value={areaText} onChange={(e) => setAreaText(e.target.value)} /></label>
+          <label>Trạng thái hộ
+            <select value={f.activity_status} onChange={(e) => setF((cur) => ({ ...cur, activity_status: e.target.value as 'active' | 'paused' }))}>
+              <option value="active">Đang hoạt động</option>
+              <option value="paused">Tạm ngưng</option>
+            </select>
+          </label>
           <label>Ghi chú<textarea rows={2} maxLength={500} value={f.note} onChange={set('note')} /></label>
           <div className="btnrow">
             <button type="submit" className="primary" disabled={r.busy}>Lưu</button>
@@ -143,11 +151,11 @@ function ForCooperative({ org }: { org: MyOrg }) {
 
       <div className="tablewrap">
         <table className="grid">
-          <thead><tr><th>Mã hộ</th><th>Hộ</th><th>Điện thoại</th><th>Địa chỉ</th><th>Sản phẩm chính</th><th className="num">Diện tích (ha)</th><th className="num">Vụ đang chạy</th><th></th></tr></thead>
+          <thead><tr><th>Mã hộ</th><th>Hộ</th><th>Điện thoại</th><th>Địa chỉ</th><th>Sản phẩm chính</th><th>Giấy chứng nhận</th><th className="num">Diện tích (ha)</th><th>Ngày vào HTX</th><th className="num">Vụ đang chạy</th><th>Trạng thái</th><th></th></tr></thead>
           <tbody>
-            {households.length === 0 && <tr><td colSpan={8} className="muted">Chưa có hộ thành viên.</td></tr>}
+            {households.length === 0 && <tr><td colSpan={11} className="muted">Chưa có hộ thành viên.</td></tr>}
             {households.map((h) => (
-              <tr key={h.household_org_id}>
+              <tr key={h.household_org_id} className={h.activity_status === 'paused' ? 'off' : ''}>
                 <td>{h.member_code ?? ''}</td>
                 <td>
                   <strong>{h.name}</strong>
@@ -157,8 +165,11 @@ function ForCooperative({ org }: { org: MyOrg }) {
                 <td>{h.phone ?? ''}</td>
                 <td>{h.address ?? ''}</td>
                 <td>{h.main_products ?? ''}</td>
+                <td>{h.certificates ?? ''}</td>
                 <td className="num">{h.area_ha != null ? Number(h.area_ha).toLocaleString('vi-VN') : ''}</td>
+                <td>{h.joined_at ? new Date(h.joined_at).toLocaleDateString('vi-VN') : ''}</td>
                 <td className="num">{h.active_coop_cycles}</td>
+                <td>{h.activity_status === 'paused' ? <span className="pill warn">Tạm ngưng</span> : <span className="pill ok">Đang hoạt động</span>}</td>
                 <td className="act">
                   {canManage && <button className="icon" aria-label={`Sửa ${h.name}`} onClick={() => openForm(h)}>✎</button>}{' '}
                   {h.managed && <button className="icon" aria-label={`Làm việc ở hộ ${h.name}`} title="Làm việc ở hộ này" onClick={() => setActive(h.household_org_id)}>➜</button>}{' '}
