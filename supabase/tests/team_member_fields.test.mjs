@@ -142,6 +142,19 @@ test('kho dùng cho trang trại nào: rỗng = tất cả; trang trại phải 
   assert.equal((await db.query(`select area_ids from inventory_locations where id=$1`, [loc])).rows[0].area_ids, null);
 });
 
+// Migration 0100: nhóm chi phí có mã
+test('nhóm chi phí có mã: mục tự thêm tính như nhóm gốc; mục đang dùng không xóa được; sửa khoản chi đổi được mục', async () => {
+  const { db, owner, org } = await setup();
+  const EG = ['material', 'labor', 'utility', 'rent', 'depreciation', 'other'].map((code) => ({ code, label: code, active: true }));
+  const set = (arr) => asUser(db, owner, `select set_org_entries($1,'expense_groups',$2::jsonb)`, [org, JSON.stringify(arr)]);
+  await set([...EG, { code: 'c_cam', label: 'Thức ăn chăn nuôi', base: 'material', active: true }]);
+  const id = (await db.query(`insert into expense_records (id,organization_id,category,category_item,kind,amount,expense_date) values (gen_random_uuid(),$1,'material','c_cam','cash_paid',1000,current_date) returning id`, [org])).rows[0].id;
+  assert.match(await expectError(set(EG)), /đang được dùng/);
+  await asUser(db, owner, `select update_expense($1,1,gen_random_uuid(),'{"category":"other","category_item":""}'::jsonb)`, [id]);
+  assert.equal((await db.query(`select category_item from expense_records where id=$1`, [id])).rows[0].category_item, null);
+  await set(EG); // hết dùng thì xóa được
+});
+
 // Migration 0099: loại khách là chữ tự do lấy từ cấu hình
 test('loại khách hàng: cấu hình tự do; cột lưu chữ, tối đa 40 ký tự', async () => {
   const { db, owner, wk, org } = await setup();

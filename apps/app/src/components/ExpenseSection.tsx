@@ -15,6 +15,7 @@ import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
+import { useConfig } from '../lib/config';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 
@@ -27,6 +28,7 @@ export function ExpenseSection() {
   const cycles = useTable('cycles');
   const areas = useTable('areas');
   const { cropTypes } = useCatalog();
+  const cfg = useConfig();
 
   const [mode, setMode] = useState<{ kind: 'list' } | { kind: 'new' } | { kind: 'edit'; id: string }>({ kind: 'list' });
   const [cycleFilter, setCycleFilter] = useState(''); // '' = tất cả, 'none' = chi phí chung
@@ -126,7 +128,7 @@ export function ExpenseSection() {
             <strong>{formatMoney(e.amount)}</strong>
             <span className="muted">{new Date(`${e.expense_date}T00:00:00`).toLocaleDateString('vi-VN')}</span>
           </div>
-          <p>{EXPENSE_CATEGORY_LABEL[e.category] ?? e.category} · {EXPENSE_KIND_LABEL[e.kind] ?? e.kind}</p>
+          <p>{cfg.expenseGroupLabel(e.category, e.category_item) || EXPENSE_CATEGORY_LABEL[e.category] || e.category} · {EXPENSE_KIND_LABEL[e.kind] ?? e.kind}</p>
           <p className="muted">{cycleLabel(e.cycle_id)}</p>
           {e.note && <p>{NEEDS_ASSUMPTION.has(e.kind) ? 'Giả định: ' : ''}{e.note}</p>}
           <div className="badges">
@@ -169,12 +171,13 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
   onClose: () => void;
 }) {
   const online = useOnline();
+  const cfg = useConfig();
   const allCycles = useTable('cycles');
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
 
   // '' = chưa chọn (dùng vụ đã nhớ), 'none' = chi phí chung
   const [cycleId, setCycleId] = useState(editing ? editing.cycle_id ?? 'none' : '');
-  const [category, setCategory] = useState(editing?.category ?? 'other');
+  const [category, setCategory] = useState(cfg.choiceOf('expense_groups', editing?.category ?? 'other', editing?.category_item)); // mã mục đang chọn
   const [kind, setKind] = useState(editing?.kind ?? 'cash_paid');
   const [amount, setAmount] = useState(editing ? String(editing.amount) : '');
   const [date, setDate] = useState(editing?.expense_date ?? todayLocal());
@@ -195,12 +198,14 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
     setBusy(true);
     try {
       if (editing) {
-        await editExpense(editing.id, { category, kind, amount: a!, date, note });
+        const g = cfg.resolve('expense_groups', category);
+        await editExpense(editing.id, { category: g.base, categoryItem: g.item ?? (editing.category_item ? null : undefined), kind, amount: a!, date, note });
         onClose();
         return;
       }
       const cycle = effCycle === 'none' ? null : allCycles.find((c) => c.id === effCycle) ?? null;
-      const id = await recordExpense({ id: draftId, organizationId: orgId, cycle, category, kind, amount: a!, date, note, userId });
+      const g = cfg.resolve('expense_groups', category);
+      const id = await recordExpense({ id: draftId, organizationId: orgId, cycle, category: g.base, categoryItem: g.item, kind, amount: a!, date, note, userId });
       setSavedId(id);
     } catch (err) {
       setError(friendlyError(err));
@@ -247,11 +252,11 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
         <label>
           Nhóm chi phí
           <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            {Object.entries(EXPENSE_CATEGORY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            {cfg.expenseGroups(category).map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
           </select>
         </label>
         <label>
-          Đây là
+          Loại chi
           <select value={kind} onChange={(e) => setKind(e.target.value)}>
             {Object.entries(EXPENSE_KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
@@ -268,7 +273,7 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
         <label>
           {NEEDS_ASSUMPTION.has(kind) ? (kind === 'estimated' ? 'Cách ước tính (bắt buộc)' : 'Cách phân bổ (bắt buộc)') : 'Ghi chú (không bắt buộc)'}
           <input value={note} onChange={(e) => setNote(e.target.value)}
-            placeholder={NEEDS_ASSUMPTION.has(kind) ? 'Ví dụ: nhà màng 50 triệu chia 10 vụ' : ''} />
+            placeholder={NEEDS_ASSUMPTION.has(kind) ? 'Ví dụ: nhà/chuồng 50 triệu chia 10 vụ' : ''} />
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
         {!online && <p className="msg warn">Đang offline. Cần có mạng để lưu; hãy kết nối mạng rồi bấm Lưu.</p>}

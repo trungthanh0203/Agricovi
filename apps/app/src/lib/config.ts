@@ -30,6 +30,10 @@ export interface ConfigDef {
 const PRODUCT_BUILTINS = [
   { code: 'crop', label: 'Cây trồng' }, { code: 'livestock', label: 'Vật nuôi' }, { code: 'aquatic', label: 'Thủy sản' }, { code: 'other', label: 'Khác' },
 ];
+const EXPENSE_BUILTINS = [
+  { code: 'material', label: 'Vật tư' }, { code: 'labor', label: 'Nhân công' }, { code: 'utility', label: 'Điện, nước' },
+  { code: 'rent', label: 'Thuê đất, ao, nhà/chuồng' }, { code: 'depreciation', label: 'Khấu hao nhà/chuồng' }, { code: 'other', label: 'Chi phí khác' },
+];
 const MATERIAL_BUILTINS = [
   { code: 'feed', label: 'Thức ăn' }, { code: 'vet_drug', label: 'Thuốc thú y' }, { code: 'vaccine', label: 'Vaccine' },
   { code: 'pesticide', label: 'Thuốc bảo vệ thực vật' }, { code: 'fertilizer', label: 'Phân bón' }, { code: 'disinfectant', label: 'Thuốc sát trùng' },
@@ -44,6 +48,10 @@ export const CONFIG_DEFS: ConfigDef[] = [
   {
     id: 'material_groups', title: 'Nhóm vật tư', mode: 'entries', builtins: MATERIAL_BUILTINS, defaults: [],
     hint: 'Dùng để chọn nhóm khi khai báo Vật tư. Mục có sẵn đổi tên hoặc dừng được, không xóa. Mục tự thêm phải chọn "tính như" một nhóm có sẵn (ví dụ Cám đậm đặc tính như Thức ăn để được tính vào FCR).',
+  },
+  {
+    id: 'expense_groups', title: 'Nhóm chi phí', mode: 'entries', builtins: EXPENSE_BUILTINS, defaults: [],
+    hint: 'Dùng để chọn Nhóm chi phí khi ghi chi phí. Mục có sẵn đổi tên hoặc dừng được, không xóa. Mục tự thêm phải chọn "tính như" một nhóm có sẵn (ví dụ Thức ăn chăn nuôi tính như Vật tư để báo cáo tách đúng khoản vật tư).',
   },
   {
     id: 'customer_kinds', title: 'Loại khách hàng', mode: 'free', defaults: ['Bán lẻ', 'Thương lái', 'Siêu thị / bếp ăn', 'Doanh nghiệp', 'HTX khác', 'Khác'],
@@ -207,6 +215,8 @@ export function useConfig() {
     housing: (): string[] => itemsOf(org, defById('housing')),
     customerKinds: (): string[] => itemsOf(org, defById('customer_kinds')),
     materialGroups: (current?: string | null) => choices('material_groups', current).map((e) => ({ id: e.code, label: e.label })),
+    expenseGroups: (current?: string | null) => choices('expense_groups', current).map((e) => ({ id: e.code, label: e.label })),
+    expenseGroupLabel: (category: string | null | undefined, item?: string | null) => (category ? labelOf('expense_groups', category, item) : ''),
     materialGroupLabel: (group: string | null | undefined, item?: string | null) => (group ? labelOf('material_groups', group, item) : ''),
   };
 }

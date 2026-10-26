@@ -13,8 +13,8 @@ export const EXPENSE_CATEGORY_LABEL: Record<string, string> = {
   material: 'Vật tư',
   labor: 'Nhân công',
   utility: 'Điện, nước',
-  rent: 'Thuê đất, nhà màng',
-  depreciation: 'Khấu hao',
+  rent: 'Thuê đất, ao, nhà/chuồng',
+  depreciation: 'Khấu hao nhà/chuồng',
   other: 'Chi phí khác',
 };
 
@@ -35,8 +35,16 @@ export const EXPENSE_KIND_HINT: Record<string, string> = {
 /** Loại bắt buộc phải ghi giả định (khớp ràng buộc ở máy chủ) */
 export const NEEDS_ASSUMPTION = new Set(['allocated', 'estimated']);
 
-const EXPENSE_COLUMNS =
+const EXPENSE_COLUMNS_BASE =
   'id, organization_id, cycle_id, category, kind, amount, expense_date, note, voided_at, void_reason, version, created_by, received_at';
+const EXPENSE_COLUMNS = `${EXPENSE_COLUMNS_BASE}, category_item`;
+
+/** Tải chi phí gần đây; chưa db push 0100 (chưa có cột category_item) thì tải bản cũ */
+async function expenseQuery(): Promise<{ data: ExpenseRow[] | null; error: { message?: string } | null }> {
+  const q = (cols: string) => supabase!.from('expense_records').select(cols).order('expense_date', { ascending: false }).limit(200);
+  const r = await q(EXPENSE_COLUMNS);
+  return (r.error && /column|schema cache/i.test(r.error.message ?? '') ? await q(EXPENSE_COLUMNS_BASE) : r) as unknown as { data: ExpenseRow[] | null; error: { message?: string } | null };
+}
 const SALE_COLUMNS =
   'id, organization_id, cycle_id, sold_date, quantity, unit, amount, buyer_note, voided_at, void_reason, version, created_by, received_at';
 
@@ -47,7 +55,7 @@ export async function syncFinanceDown(): Promise<void> {
     (await db.outbox.where('state').notEqual('synced').toArray()).map((i) => i.payload.id as string),
   );
   const [ex, sa] = await Promise.all([
-    supabase.from('expense_records').select(EXPENSE_COLUMNS).order('expense_date', { ascending: false }).limit(200),
+    expenseQuery(),
     supabase.from('sales_records').select(SALE_COLUMNS).order('sold_date', { ascending: false }).limit(200),
   ]);
   if (ex.error) throw ex.error;
@@ -69,6 +77,8 @@ export interface NewExpense {
   organizationId: string;
   cycle: CycleRow | null;
   category: string;
+  /** Mã mục tự thêm trong cấu hình Nhóm chi phí (bỏ trống nếu là mục có sẵn) */
+  categoryItem?: string | null;
   kind: string;
   amount: number;
   date: string; // yyyy-mm-dd
@@ -83,6 +93,7 @@ export async function recordExpense(e: NewExpense): Promise<string> {
     organization_id: e.cycle ? e.cycle.owner_org_id : e.organizationId,
     cycle_id: e.cycle?.id ?? null,
     category: e.category,
+    ...(e.categoryItem ? { category_item: e.categoryItem } : {}),
     kind: e.kind,
     amount: e.amount,
     expense_date: e.date,
@@ -97,6 +108,8 @@ export async function recordExpense(e: NewExpense): Promise<string> {
 
 export interface ExpenseEdit {
   category: string;
+  /** null = bỏ mục tự thêm (về mục có sẵn); undefined = không đổi */
+  categoryItem?: string | null;
   kind: string;
   amount: number;
   date: string;
@@ -106,7 +119,7 @@ export interface ExpenseEdit {
 export async function editExpense(id: string, e: ExpenseEdit): Promise<void> {
   const cur = await db.expenses.get(id);
   if (!cur) return;
-  const changes = { category: e.category, kind: e.kind, amount: e.amount, expense_date: e.date, note: e.note.trim() || null };
+  const changes = { category: e.category, ...(e.categoryItem !== undefined ? { category_item: e.categoryItem } : {}), kind: e.kind, amount: e.amount, expense_date: e.date, note: e.note.trim() || null };
   await updateAndCache('expense_records', id, cur.version, changes, 'sửa khoản chi');
 }
 

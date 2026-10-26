@@ -12,7 +12,7 @@ import { supabase } from './supabase';
 
 export const HARVEST_UNIT = 'kg';
 /** Gợi ý phân loại; người dùng gõ tự do được */
-export const GRADE_SUGGESTIONS = ['Loại 1', 'Loại 2', 'Loại 3', 'Loại bỏ'];
+export const GRADE_SUGGESTIONS = ['Loại 1', 'Loại 2', 'Loại 3', 'Cỡ lớn', 'Cỡ vừa', 'Cỡ nhỏ', 'Loại bỏ'];
 
 const COLUMNS =
   'id, organization_id, cycle_id, harvested_at, grade, quantity, unit, loss_quantity, note, voided_at, void_reason, version, created_by, received_at';
@@ -111,8 +111,8 @@ export async function voidHarvest(id: string, reason: string): Promise<void> {
 
 /** Kiểm tra số liệu nhập: trả về thông báo lỗi tiếng Việt hoặc null nếu hợp lệ */
 export function validateHarvest(quantity: number | null, loss: number | null): string | null {
-  if (quantity === null || Number.isNaN(quantity) || quantity <= 0) return 'Số lượng thu phải là số lớn hơn 0 (kg).';
+  if (quantity === null || Number.isNaN(quantity) || quantity <= 0) return 'Khối lượng thu phải là số lớn hơn 0 (kg).';
   if (loss !== null && (Number.isNaN(loss) || loss < 0)) return 'Hao hụt phải là số không âm (kg).';
-  if (loss !== null && loss > quantity) return 'Hao hụt không được lớn hơn số lượng thu.';
+  if (loss !== null && loss > quantity) return 'Hao hụt không được lớn hơn khối lượng thu.';
   return null;
 }

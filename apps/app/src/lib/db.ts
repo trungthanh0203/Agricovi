@@ -336,6 +336,8 @@ export interface ExpenseRow {
   organization_id: string;
   cycle_id: string | null;
   category: string;
+  /** Mã mục tự thêm trong cấu hình Nhóm chi phí (category là nhóm gốc mục đó tính như); null = mục có sẵn */
+  category_item?: string | null;
   kind: string;
   amount: number;
   expense_date: string;

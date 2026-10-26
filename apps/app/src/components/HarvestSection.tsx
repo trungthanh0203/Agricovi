@@ -294,29 +294,31 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
         </label>
         <WithdrawalNotice cycleId={effCycleId} date={whenDay} reason={wReason} onReason={setWReason} />
         <label>
-          Số lượng thu (kg)
+          Khối lượng thu (kg)
           <input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} />
         </label>
-        <Collapsible inline title={`＋ Số ${unitName} và thông tin thêm`} summary={[cnt && `${cnt} ${unitName}`, schema.length > 0 && 'theo mẫu của cơ sở'].filter(Boolean).join(' · ') || undefined}>
-          <label>
-            Số {unitName} thu / xuất (không bắt buộc)
-            <input value={cnt} inputMode="numeric" onChange={(e) => setCnt(e.target.value)} />
-            <small>Có số này, app tính khối lượng trung bình mỗi {unitName}.</small>
-          </label>
-          {schema.map((f) => (
-            <DynamicField key={f.key} def={f} value={vals[f.key] ?? initialValues([f])[f.key] ?? ''} onChange={(v) => setVals((s) => ({ ...s, [f.key]: v }))} />
-          ))}
-        </Collapsible>
         <label>
-          Phân loại (không bắt buộc)
-          <input value={grade} list="grade-list" onChange={(e) => setGrade(e.target.value)} placeholder="Loại 1, Loại 2…" />
-          <datalist id="grade-list">{GRADE_SUGGESTIONS.map((g) => <option key={g} value={g} />)}</datalist>
+          Số lượng ({unitName}, không bắt buộc)
+          <input value={cnt} inputMode="numeric" onChange={(e) => setCnt(e.target.value)} />
+          <small>Có số này, app tính khối lượng trung bình mỗi {unitName}; với vật nuôi, thủy sản thì tự trừ vào số còn lại của vụ.</small>
         </label>
         <label>
           Hao hụt (kg, không bắt buộc)
           <input value={loss} inputMode="decimal" onChange={(e) => setLoss(e.target.value)} />
-          <small>Quả hỏng, nứt, loại bỏ… tính trong số lượng thu ở trên.</small>
+          <small>Phần hỏng, chết, loại bỏ… đã tính trong khối lượng thu ở trên.</small>
         </label>
+        <label>
+          Loại cỡ (không bắt buộc)
+          <input value={grade} list="grade-list" onChange={(e) => setGrade(e.target.value)} placeholder="Loại 1, cỡ lớn…" />
+          <datalist id="grade-list">{GRADE_SUGGESTIONS.map((g) => <option key={g} value={g} />)}</datalist>
+        </label>
+        {schema.length > 0 && (
+          <Collapsible inline title="＋ Thông tin thêm theo mẫu của cơ sở" summary="mở để nhập">
+            {schema.map((f) => (
+              <DynamicField key={f.key} def={f} value={vals[f.key] ?? initialValues([f])[f.key] ?? ''} onChange={(v) => setVals((s) => ({ ...s, [f.key]: v }))} />
+            ))}
+          </Collapsible>
+        )}
         <label>
           Ghi chú (không bắt buộc)
           <input value={note} onChange={(e) => setNote(e.target.value)} />

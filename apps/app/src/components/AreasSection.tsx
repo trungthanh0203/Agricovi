@@ -81,7 +81,7 @@ export function AreasSection() {
       </table>
       <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả trang trại đã dừng</label>
       <p className="muted">Trang trại đã dừng vẫn giữ lịch sử nhưng không chọn được để tạo vụ mới.</p>
-      <p className="msg" role="note">💡 Sau khi tạo trang trại, hãy vào <strong>Khai báo → Sản phẩm</strong> để tạo/chọn loại đối tượng nuôi / trồng, rồi tạo vụ (lứa nuôi) cho từng trang trại của bạn.</p>
+      <p className="msg" role="note">💡 Sau khi tạo trang trại, hãy vào <strong>Khai báo → Sản phẩm</strong> để tạo/chọn loại đối tượng nuôi / trồng, rồi tạo vụ nuôi trồng cho từng trang trại của bạn.</p>
 
       {canManage && editRow && (
         <FarmForm key={editRow.id} title={`Sửa trang trại: ${editRow.name}`} initial={editRow} busy={busy || !online} onClose={() => setEditing(null)}

@@ -7,10 +7,8 @@ export type ProductKind = Kind | undefined;
 
 /** Danh từ gọi một vụ/lứa theo các loại sản phẩm đang có của cơ sở */
 export function cycleNoun(kinds: ProductKind[]): string {
-  const set = new Set(kinds.filter(Boolean));
-  if (set.size > 0 && [...set].every((k) => k === 'livestock' || k === 'aquatic')) return 'lứa nuôi';
-  if (set.size === 1 && set.has('crop')) return 'vụ trồng';
-  return 'vụ';
+  void kinds; // dùng tên chung cho mọi loại hình (trồng trọt, vật nuôi, thủy sản)
+  return 'vụ nuôi trồng';
 }
 
 export const capFirst = (s: string) => (s ? s[0]!.toUpperCase() + s.slice(1) : s);
