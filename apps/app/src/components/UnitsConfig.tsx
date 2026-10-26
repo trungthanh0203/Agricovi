@@ -39,7 +39,7 @@ export function UnitsConfig() {
   }
 
   return (
-    <Collapsible title="Đơn vị tính riêng" summary={own.length > 0 ? own.map((u) => u.name).join(', ') : 'Chưa có'} defaultOpen>
+    <Collapsible title="Đơn vị tính riêng" summary={own.length > 0 ? own.map((u) => u.name).join(', ') : 'Chưa có'}>
       <div className="inline-form">
         <p className="muted">Đơn vị có sẵn (dùng chung, không sửa): {shared.map((u) => u.name).join(', ') || '—'}.</p>
         <p>Đơn vị riêng của cơ sở: <strong>{own.length > 0 ? own.map((u) => u.name).join(', ') : 'chưa có'}</strong></p>

@@ -141,3 +141,12 @@ test('kho dùng cho trang trại nào: rỗng = tất cả; trang trại phải 
   await asUser(db, owner, `update inventory_locations set area_ids='{}' where id=$1`, [loc]);
   assert.equal((await db.query(`select area_ids from inventory_locations where id=$1`, [loc])).rows[0].area_ids, null);
 });
+
+// Migration 0099: loại khách là chữ tự do lấy từ cấu hình
+test('loại khách hàng: cấu hình tự do; cột lưu chữ, tối đa 40 ký tự', async () => {
+  const { db, owner, wk, org } = await setup();
+  assert.match(await expectError(asUser(db, wk, `select set_org_config($1,'customer_kinds',array['Quán ăn'])`, [org])), /FORBIDDEN/);
+  await asUser(db, owner, `select set_org_config($1,'customer_kinds',array['Quán ăn','Chợ đầu mối'])`, [org]);
+  await db.query(`insert into partners (id,organization_id,name,is_customer,customer_kind) values (gen_random_uuid(),$1,'Khách A',true,'Quán ăn')`, [org]);
+  assert.match(await expectError(db.query(`insert into partners (id,organization_id,name,is_customer,customer_kind) values (gen_random_uuid(),$1,'Khách B',true,repeat('x',41))`, [org])), /check|customer_kind/i);
+});

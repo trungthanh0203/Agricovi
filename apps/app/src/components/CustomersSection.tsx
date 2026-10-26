@@ -1,9 +1,10 @@
+import { customerKindText, useConfig } from '../lib/config';
 import { useCallback, useEffect, useState } from 'react';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import {
-  CUSTOMER_KIND_LABEL, anonymizeCustomer, createCustomer, listAllPartners, listCustomers, updateCustomer, type Customer, type CustomerInput, type CustomerKind,
+  anonymizeCustomer, createCustomer, listAllPartners, listCustomers, updateCustomer, type Customer, type CustomerInput, type CustomerKind,
 } from '../lib/partners';
 import { canPerm } from '../lib/permissions';
 
@@ -96,7 +97,7 @@ export function CustomersSection() {
               <tr key={p.id} className={p.is_active ? '' : 'off'}>
                 <td>
                   {p.name}
-                  {p.customer_kind && <span className="sub">{CUSTOMER_KIND_LABEL[p.customer_kind]}</span>}
+                  {p.customer_kind && <span className="sub">{customerKindText(p.customer_kind)}</span>}
                   {p.goods && <span className="sub">{p.goods}</span>}
                   {p.is_supplier && <span className="sub">Cũng là nhà cung ứng</span>}
                   {!p.is_active && <span className="sub">Đã dừng</span>}
@@ -140,7 +141,9 @@ export function CustomerForm({ title, initial, busy, onSave, onClose }: {
   title: string; initial?: Customer; busy: boolean; onSave: (f: CustomerInput) => Promise<unknown>; onClose: () => void;
 }) {
   const [name, setName] = useState(initial?.name ?? '');
-  const [kind, setKind] = useState<CustomerKind | ''>(initial?.customer_kind ?? '');
+  const cfg = useConfig();
+  const [kind, setKind] = useState<CustomerKind>(customerKindText(initial?.customer_kind));
+  const kindChoices = !kind || cfg.customerKinds().includes(kind) ? cfg.customerKinds() : [...cfg.customerKinds(), kind]; // giữ loại cũ dù đã bỏ khỏi cấu hình
   const [phone, setPhone] = useState(initial?.phone ?? '');
   const [address, setAddress] = useState(initial?.address ?? '');
   const [goods, setGoods] = useState(initial?.goods ?? '');
@@ -152,9 +155,9 @@ export function CustomerForm({ title, initial, busy, onSave, onClose }: {
       <div className="inline-form">
         <label>Tên khách hàng<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Chị Lan (chợ đầu mối)" /></label>
         <label>Loại khách
-          <select value={kind} onChange={(e) => setKind(e.target.value as CustomerKind | '')}>
+          <select value={kind} onChange={(e) => setKind(e.target.value)}>
             <option value="">— Chưa phân loại —</option>
-            {(Object.keys(CUSTOMER_KIND_LABEL) as CustomerKind[]).map((k) => <option key={k} value={k}>{CUSTOMER_KIND_LABEL[k]}</option>)}
+            {kindChoices.map((k) => <option key={k} value={k}>{k}</option>)}
           </select>
         </label>
         <label>Điện thoại<input value={phone} maxLength={40} inputMode="tel" onChange={(e) => setPhone(e.target.value)} /></label>

@@ -106,7 +106,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
         </div>
         {creds && <CredentialsCard creds={creds} onClose={() => setCreds(null)} />}
         <Collapsible inline defaultOpen title="Tài khoản nhân viên (đăng nhập bằng số điện thoại)">
-          <StaffCreateForm org={org} teams={teams} workers={workers} onChanged={() => void load()} />
+          <StaffCreateForm org={org} teams={teams} workers={workers} onChanged={() => void load()} onCancel={() => setAdding(false)} />
         </Collapsible>
         <Collapsible inline title="Hoặc mời người đã có tài khoản email">
           <form onSubmit={onInvite} className="inline-form" noValidate>
@@ -117,7 +117,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
             <PositionPicker orgId={org.id} value={invitePos} onChange={(id) => setInvitePos(id)} />
             <div className="btnrow">
               <button type="submit" className="primary" disabled={busy}>Gửi lời mời</button>
-              <button type="button" className="secondary" onClick={() => { setEmail(''); setError(null); }}>Hủy</button>
+              <button type="button" className="secondary" onClick={() => { setEmail(''); setError(null); setAdding(false); }}>Hủy</button>
             </div>
           </form>
         </Collapsible>

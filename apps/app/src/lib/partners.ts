@@ -256,10 +256,8 @@ export function summarizePayables(rows: PayableBill[]): { owed: number; overdueC
 // Khách hàng (G2-4, D77): dùng chung bảng Đối tác với nhà cung ứng. Quyền gộp với mục Doanh thu.
 // ---------------------------------------------------------------------------
 
-export type CustomerKind = 'retail' | 'trader' | 'market' | 'enterprise' | 'coop' | 'other';
-export const CUSTOMER_KIND_LABEL: Record<CustomerKind, string> = {
-  retail: 'Bán lẻ', trader: 'Thương lái', market: 'Siêu thị / bếp ăn', enterprise: 'Doanh nghiệp', coop: 'HTX khác', other: 'Khác',
-};
+/** Loại khách là chữ lấy từ Cấu hình → Loại khách hàng (lưu đúng chữ đã chọn) */
+export type CustomerKind = string;
 
 export interface Customer extends Partner {
   customer_kind: CustomerKind | null;

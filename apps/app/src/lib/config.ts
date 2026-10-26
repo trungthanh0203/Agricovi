@@ -46,6 +46,10 @@ export const CONFIG_DEFS: ConfigDef[] = [
     hint: 'Dùng để chọn nhóm khi khai báo Vật tư. Mục có sẵn đổi tên hoặc dừng được, không xóa. Mục tự thêm phải chọn "tính như" một nhóm có sẵn (ví dụ Cám đậm đặc tính như Thức ăn để được tính vào FCR).',
   },
   {
+    id: 'customer_kinds', title: 'Loại khách hàng', mode: 'free', defaults: ['Bán lẻ', 'Thương lái', 'Siêu thị / bếp ăn', 'Doanh nghiệp', 'HTX khác', 'Khác'],
+    hint: 'Dùng để chọn Loại khách khi thêm/sửa Khách hàng. Chỉ để phân loại, thêm, bớt hoặc đổi tên tùy ý (khách cũ giữ nguyên loại đã chọn).',
+  },
+  {
     id: 'housing', title: 'Kiểu nhà / chuồng', mode: 'free', defaults: ['Kín', 'Hở', 'Nửa kín hở'],
     hint: 'Dùng để chọn Kiểu nhà/chuồng của Trang trại. Thêm, bớt hoặc đổi tên tùy ý.',
   },
@@ -53,6 +57,9 @@ export const CONFIG_DEFS: ConfigDef[] = [
 
 /** Mã kiểu nhà/chuồng cũ (trước migration 0095) còn nằm trong bản lưu trên máy */
 const LEGACY_HOUSING: Record<string, string> = { closed: 'Kín', semi_open: 'Nửa kín hở', open: 'Hở' };
+/** Mã loại khách cũ (trước migration 0099) còn nằm trong bản lưu trên máy */
+const LEGACY_CUSTOMER: Record<string, string> = { retail: 'Bán lẻ', trader: 'Thương lái', market: 'Siêu thị / bếp ăn', enterprise: 'Doanh nghiệp', coop: 'HTX khác', other: 'Khác' };
+export const customerKindText = (v: string | null | undefined) => (v ? LEGACY_CUSTOMER[v] ?? v : '');
 export const housingText = (v: string | null | undefined) => (v ? LEGACY_HOUSING[v] ?? v : '');
 
 /** Chữ nhập cách nhau bằng dấu phẩy → danh sách đã làm sạch (bỏ trống, bỏ trùng) */
@@ -198,6 +205,7 @@ export function useConfig() {
     productGroups: (current?: string | null) => choices('product_groups', current).map((e) => ({ id: e.code, label: e.label })),
     groupLabel: (kind: string | null | undefined, item?: string | null) => labelOf('product_groups', kind, item),
     housing: (): string[] => itemsOf(org, defById('housing')),
+    customerKinds: (): string[] => itemsOf(org, defById('customer_kinds')),
     materialGroups: (current?: string | null) => choices('material_groups', current).map((e) => ({ id: e.code, label: e.label })),
     materialGroupLabel: (group: string | null | undefined, item?: string | null) => (group ? labelOf('material_groups', group, item) : ''),
   };

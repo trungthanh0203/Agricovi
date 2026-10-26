@@ -46,7 +46,7 @@ function FreeRow({ def, orgId, items }: { def: ConfigDef; orgId: string | undefi
   useEffect(() => { setText(saved); }, [saved]);
 
   return (
-    <Collapsible title={def.title} summary={saved} defaultOpen>
+    <Collapsible title={def.title} summary={saved}>
       <div className="inline-form">
         <label>
           {def.title}
@@ -87,7 +87,7 @@ function EntriesRow({ def, orgId }: { def: ConfigDef; orgId: string | undefined 
   const baseOptions = (def.builtins ?? []).map((b) => ({ code: b.code, label: rows.find((r) => r.code === b.code)?.label || b.label }));
 
   return (
-    <Collapsible title={def.title} summary={rows.filter((r) => r.active).map((r) => r.label).join(' · ')} defaultOpen>
+    <Collapsible title={def.title} summary={rows.filter((r) => r.active).map((r) => r.label).join(' · ')}>
       <div className="inline-form">
         <p className="muted">{def.hint}</p>
         <div className="tablewrap">

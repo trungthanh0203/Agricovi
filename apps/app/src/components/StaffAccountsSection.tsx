@@ -16,8 +16,8 @@ import { setMemberAreas, setMemberDescription } from '../lib/members';
  * Kiểu phân hệ do tổ trưởng chấm/ghi thì bắt buộc chọn một tổ ĐÃ CÓ tổ trưởng (quyết định D17).
  */
 export function StaffCreateForm({
-  org, teams, workers, onChanged,
-}: { org: MyOrg; teams: TeamRow[]; workers: WorkerRow[]; onChanged: () => void }) {
+  org, teams, workers, onChanged, onCancel,
+}: { org: MyOrg; teams: TeamRow[]; workers: WorkerRow[]; onChanged: () => void; onCancel?: () => void }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [roles, setRoles] = useState<MemberRole[]>(['worker']);
@@ -106,7 +106,10 @@ export function StaffCreateForm({
           <textarea rows={2} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Ví dụ: Lái máy, phụ trách tưới" />
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
-        <button type="submit" className="secondary" disabled={busy}>{busy ? 'Đang tạo…' : 'Tạo tài khoản'}</button>
+        <div className="btnrow">
+          <button type="submit" className="primary" disabled={busy}>{busy ? 'Đang tạo…' : 'Tạo tài khoản'}</button>
+          {onCancel && <button type="button" className="secondary" disabled={busy} onClick={onCancel}>Hủy</button>}
+        </div>
       </form>
     </>
   );

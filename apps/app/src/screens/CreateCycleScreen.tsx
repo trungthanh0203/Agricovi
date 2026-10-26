@@ -5,6 +5,7 @@ import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { defaultCountUnit } from '../lib/countUnit';
 import { restWarning } from '../lib/milestoneLogic';
+import { Collapsible } from '../components/Collapsible';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
 import { createCycle, fetchQuotaContexts, type QuotaContext } from '../lib/production';
 import { addDays, fmtDate } from '../lib/dates';
@@ -93,6 +94,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     : null;
   const ownerLabel = (c: QuotaContext) => (c.kind === 'own' ? `Hộ riêng (${c.org_name})` : `HTX ${c.org_name}`);
   const picked = templates?.find((t) => t.id === templateId) ?? null;
+  const prodKind = cropTypes.find((c) => c.id === chosenTemplate?.crop_type_id)?.kind;
+  const defaultUnit = defaultCountUnit(prodKind);
   const total = stages.reduce((s, x) => s + x.duration_days, 0);
 
   async function onSubmit(e: FormEvent) {
@@ -210,12 +213,22 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
 
           {rest && <p className="msg warn" role="status">{rest}</p>}
 
-          <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultCountUnit(cropTypes.find((c) => c.id === chosenTemplate?.crop_type_id)?.kind)} kind={cropTypes.find((c) => c.id === chosenTemplate?.crop_type_id)?.kind} />
+          {/* Các nhóm không bắt buộc, gom theo nội dung và thu gọn */}
+          <Collapsible inline title="＋ Giống, diện tích, số lượng (không bắt buộc)"
+            summary={[cropInfo.variety, cropInfo.area && `${cropInfo.area} ${cropInfo.unit}`, cropInfo.plants && `${cropInfo.plants} ${cropInfo.countUnit || defaultUnit}`].filter(Boolean).join(' · ') || undefined}>
+            <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="scale" />
+            <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="seed" />
+          </Collapsible>
 
-          <div className="pair">
-            <label>Sản lượng dự kiến (kg)<input value={targetYield} inputMode="numeric" onChange={(e) => setTargetYield(e.target.value)} placeholder="Không bắt buộc" /></label>
-            <label>Ngân sách dự kiến (đồng)<input value={budget} inputMode="numeric" onChange={(e) => setBudget(e.target.value)} placeholder="Không bắt buộc" /></label>
-          </div>
+          <Collapsible inline title="＋ Kế hoạch: sản lượng, ngân sách (không bắt buộc)"
+            summary={[targetYield && `${targetYield} kg`, budget && `${budget} đ`].filter(Boolean).join(' · ') || undefined}>
+            <div className="pair">
+              <label>Sản lượng dự kiến (kg)<input value={targetYield} inputMode="numeric" onChange={(e) => setTargetYield(e.target.value)} /></label>
+              <label>Ngân sách dự kiến (đồng)<input value={budget} inputMode="numeric" onChange={(e) => setBudget(e.target.value)} /></label>
+            </div>
+          </Collapsible>
+
+          <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="manage" />
 
           {plan.length > 0 && (
             <div className="card slim">
