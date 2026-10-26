@@ -17,7 +17,9 @@ const CYCLE_COLUMNS_BASE =
 // cột kế hoạch (D93) chỉ có sau khi CSDL được cập nhật; chưa cập nhật thì tải bản không có để KHÔNG làm hỏng đồng bộ cả danh sách vụ
 const CYCLE_COLUMNS_PLAN = `${CYCLE_COLUMNS_BASE}, target_yield_kg, budget_amount, planted_area_m2, plant_count, variety_name, seed_source, seed_lot, sowing_date, planting_date`;
 // cột mã vụ/đơn vị đếm/cán bộ phụ trách (D98) cũng chỉ có sau migration 0080
-const CYCLE_COLUMNS = `${CYCLE_COLUMNS_PLAN}, code, count_unit, supervisor_name, supervisor_phone`;
+const CYCLE_COLUMNS_D98 = `${CYCLE_COLUMNS_PLAN}, code, count_unit, supervisor_name, supervisor_phone`;
+// mô hình quản lý theo vụ (migration 0102)
+const CYCLE_COLUMNS = `${CYCLE_COLUMNS_D98}, mgmt_model, mgmt_vietgap`;
 const AREA_COLUMNS_BASE = 'id, organization_id, name, description, location, area_size, area_unit, image, is_active';
 const AREA_COLUMNS_D98 = `${AREA_COLUMNS_BASE}, code, kind, housing`;
 const AREA_COLUMNS = `${AREA_COLUMNS_D98}, kind_item`;
@@ -29,6 +31,7 @@ async function selectCycles(id?: string) {
     return id ? b.eq('id', id) : b;
   };
   let r = await q(CYCLE_COLUMNS);
+  if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_D98);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_PLAN);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_BASE);
   return r;

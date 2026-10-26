@@ -88,9 +88,9 @@ export function TeamsSection({ org }: { org: MyOrg }) {
   function onCreateWorker(e: FormEvent) {
     e.preventDefault();
     if (wName.trim().length < 2) return setError('Hãy nhập họ tên.');
-    if (!wTeam) return setError('Hãy chọn tổ (tổ phải có tổ trưởng).');
+    if (wMode !== 'monthly_salary' && !wTeam) return setError('Hãy chọn tổ (tổ phải có tổ trưởng).');
     void run(async () => {
-      await createWorkerWithoutAccount(org.id, wName, wPhone, wMode, wTeam);
+      await createWorkerWithoutAccount(org.id, wName, wPhone, wMode, wMode === 'monthly_salary' ? wTeam || null : wTeam);
       setWName('');
       setWPhone('');
     });
@@ -185,10 +185,12 @@ export function TeamsSection({ org }: { org: MyOrg }) {
           <select value={wMode} onChange={(e) => setWMode(e.target.value as WorkMode)}>
             <option value="leader_hourly">{WORK_MODE_LABEL.leader_hourly}</option>
             <option value="leader_output">{WORK_MODE_LABEL.leader_output}</option>
+            <option value="monthly_salary">{WORK_MODE_LABEL.monthly_salary}</option>
           </select>
+          {wMode === 'monthly_salary' && <small>Không cần tổ trưởng chấm. Đặt lương tháng ở Nhân sự → bấm vào người này → Trả công.</small>}
         </label>
         <label>
-          Phòng / Tổ
+          Phòng / Tổ{wMode === 'monthly_salary' ? ' (không bắt buộc)' : ''}
           <select value={wTeam} onChange={(e) => setWTeam(e.target.value)}>
             <option value="">— Chọn tổ —</option>
             {teams.map((t) => <option key={t.id} value={t.id}>{t.name}{t.leader_worker_id ? '' : ' · chưa có tổ trưởng'}</option>)}

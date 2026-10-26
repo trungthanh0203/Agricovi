@@ -27,6 +27,9 @@ export interface AreaRow {
 
 export interface CycleRow {
   id: string;
+  /** Mô hình quản lý của vụ (null = theo cơ sở) và gói VietGAP (null = theo cơ sở) */
+  mgmt_model?: string | null;
+  mgmt_vietgap?: boolean | null;
   owner_org_id: string;
   area_id: string;
   crop_type_id: string;

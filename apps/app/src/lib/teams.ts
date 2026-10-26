@@ -67,5 +67,17 @@ export const setTeamLeader = (team: string, leader: string | null) =>
   rpc<void>('set_team_leader', { p_team: team, p_leader: leader });
 export const assignWorkerToTeam = (worker: string, team: string) =>
   rpc<void>('assign_worker_to_team', { p_worker: worker, p_team: team });
-export const createWorkerWithoutAccount = (org: string, name: string, phone: string, mode: string, team: string) =>
+export const createWorkerWithoutAccount = (org: string, name: string, phone: string, mode: string, team: string | null) =>
   rpc<string>('create_worker_without_account', { p_org: org, p_name: name, p_phone: phone, p_work_mode: mode, p_team: team });
+
+/** Sửa họ tên và điện thoại của người làm không có tài khoản (chủ/quản lý; cần mạng) */
+export async function updateWorkerInfo(worker: string, name: string, phone: string): Promise<void> {
+  const { error } = await client().from('worker_profiles').update({ full_name: name.trim(), phone: phone.trim() || null }).eq('id', worker);
+  if (error) throw error;
+}
+
+/** Cho người làm không có tài khoản ngừng làm việc (không xóa: lịch sử công và lương vẫn giữ) */
+export async function deactivateWorker(worker: string): Promise<void> {
+  const { error } = await client().from('worker_profiles').update({ status: 'inactive' }).eq('id', worker);
+  if (error) throw error;
+}

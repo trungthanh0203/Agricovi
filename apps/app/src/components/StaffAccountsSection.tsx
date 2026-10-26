@@ -86,7 +86,7 @@ export function StaffCreateForm({
         <label>
           Kiểu phân hệ
           <select value={mode} onChange={(e) => setMode(e.target.value as WorkMode)}>
-            {(Object.keys(WORK_MODE_LABEL) as WorkMode[]).map((m) => <option key={m} value={m}>{WORK_MODE_LABEL[m]}</option>)}
+            {(Object.keys(WORK_MODE_LABEL) as WorkMode[]).filter((m) => m !== 'monthly_salary').map((m) => <option key={m} value={m}>{WORK_MODE_LABEL[m]}</option>)}
           </select>
         </label>
         <label>

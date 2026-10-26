@@ -8,7 +8,7 @@ export interface StaffStatus {
   full_name: string | null;
 }
 
-export type WorkMode = 'self_hourly' | 'leader_hourly' | 'leader_output' | 'mixed';
+export type WorkMode = 'self_hourly' | 'leader_hourly' | 'leader_output' | 'mixed' | 'monthly_salary';
 
 /** Kiểu do tổ trưởng chấm/ghi: bắt buộc thuộc một tổ có tổ trưởng (quyết định D17) */
 export const isLeaderMode = (m: WorkMode) => m === 'leader_hourly' || m === 'leader_output';
@@ -19,6 +19,7 @@ export const WORK_MODE_LABEL: Record<WorkMode, string> = {
   leader_hourly: 'Tổ trưởng chấm công, tính theo giờ',
   leader_output: 'Tổ trưởng ghi sản lượng, tính theo sản lượng',
   mixed: 'Kết hợp giờ và sản lượng',
+  monthly_salary: 'Lương tháng cố định, không chấm công',
 };
 
 const cacheKey = (uid: string) => `agriconnect.staff.${uid}`;

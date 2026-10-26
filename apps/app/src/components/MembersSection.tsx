@@ -8,10 +8,11 @@ import type { PermOverrides } from '../lib/permissions';
 import { inviteMemberPosition, listMemberPositions, listPositions, type PositionRow } from '../lib/positions';
 import { isOwner as ownerOf, roleSummary } from '../lib/roles';
 import type { StaffCredentials } from '../lib/staff';
-import { loadTeams, type TeamMembershipRow, type TeamRow, type WorkerRow } from '../lib/teams';
+import { createWorkerWithoutAccount, loadTeams, type TeamMembershipRow, type TeamRow, type WorkerRow } from '../lib/teams';
 import { useTable } from '../lib/tables';
 import { Collapsible } from './Collapsible';
 import { MemberProfile } from './MemberProfile';
+import { WorkerProfile } from './WorkerProfile';
 import { PositionPicker } from './PositionPicker';
 import { CredentialsCard, StaffCreateForm } from './StaffAccountsSection';
 
@@ -35,6 +36,9 @@ export function MembersSection({ org }: { org: MyOrg }) {
   const [invitePos, setInvitePos] = useState('');
   const [open, setOpen] = useState<string | null>(null); // người đang mở hồ sơ
   const [adding, setAdding] = useState(false); // đang ở biểu mẫu thêm nhân sự
+  const [wName, setWName] = useState('');
+  const [wPhone, setWPhone] = useState('');
+  const [openWorker, setOpenWorker] = useState<string | null>(null); // người làm không tài khoản đang mở hồ sơ
   const areas = useTable('areas').filter((a) => a.organization_id === org.id);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -80,6 +84,12 @@ export function MembersSection({ org }: { org: MyOrg }) {
     return link ? teams.find((t) => t.id === link.team_id) ?? null : null;
   };
 
+  const offlineWorkers = workers.filter((w) => !w.user_id);
+  const selWorker = offlineWorkers.find((w) => w.id === openWorker) ?? null;
+  if (isOwner && selWorker) {
+    const link = teamLinks.find((l) => l.worker_id === selWorker.id);
+    return <WorkerProfile org={org} worker={selWorker} team={link ? teams.find((t) => t.id === link.team_id) ?? null : null} onBack={() => setOpenWorker(null)} onChanged={() => void load()} />;
+  }
   const sel = members.find((m) => m.user_id === open) ?? null;
   if (isOwner && sel && !sel.roles.includes('owner')) {
     return (
@@ -107,6 +117,22 @@ export function MembersSection({ org }: { org: MyOrg }) {
         {creds && <CredentialsCard creds={creds} onClose={() => setCreds(null)} />}
         <Collapsible inline defaultOpen title="Tài khoản nhân viên (đăng nhập bằng số điện thoại)">
           <StaffCreateForm org={org} teams={teams} workers={workers} onChanged={() => void load()} onCancel={() => setAdding(false)} />
+        </Collapsible>
+        <Collapsible inline title="Hoặc thêm người làm không có tài khoản (làm công tháng)">
+          <form className="inline-form" noValidate onSubmit={(e) => {
+            e.preventDefault();
+            if (wName.trim().length < 2) return setError('Hãy nhập họ tên người làm.');
+            void run(async () => { await createWorkerWithoutAccount(org.id, wName, wPhone, 'monthly_salary', null); setWName(''); setWPhone(''); setAdding(false); },
+              'Đã thêm người làm. Bấm ✎ ở dòng của người đó để đặt lương tháng.');
+          }}>
+            <p className="muted">Người này không đăng nhập và không chấm công; trả lương tháng cố định. Đặt số tiền lương ở hồ sơ người đó sau khi thêm.</p>
+            <label>Họ tên<input value={wName} maxLength={80} onChange={(e) => setWName(e.target.value)} /></label>
+            <label>Số điện thoại (không bắt buộc)<input type="tel" inputMode="tel" value={wPhone} onChange={(e) => setWPhone(e.target.value)} /></label>
+            <div className="btnrow">
+              <button type="submit" className="primary" disabled={busy}>Thêm người làm</button>
+              <button type="button" className="secondary" onClick={() => { setWName(''); setWPhone(''); setAdding(false); }}>Hủy</button>
+            </div>
+          </form>
         </Collapsible>
         <Collapsible inline title="Hoặc mời người đã có tài khoản email">
           <form onSubmit={onInvite} className="inline-form" noValidate>
@@ -140,7 +166,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
         <table className="grid">
           <thead><tr><th>Họ tên</th><th>Điện thoại</th><th>Chức vụ</th><th>Phòng / Tổ</th><th>Phân khu</th>{isOwner && <th></th>}</tr></thead>
           <tbody>
-            {members.length === 0 && <tr><td colSpan={isOwner ? 6 : 5} className="muted">Chưa có nhân sự.</td></tr>}
+            {members.length === 0 && offlineWorkers.length === 0 && <tr><td colSpan={isOwner ? 6 : 5} className="muted">Chưa có nhân sự.</td></tr>}
             {members.map((m) => {
               const label = m.is_staff ? m.full_name ?? m.phone ?? '' : m.email;
               const owner = m.roles.includes('owner');
@@ -164,6 +190,19 @@ export function MembersSection({ org }: { org: MyOrg }) {
                       {!owner && <button className="icon" aria-label={`Sửa ${label}`} onClick={() => { setOpen(m.user_id); setError(null); setInfo(null); }}>✎</button>}
                     </td>
                   )}
+                </tr>
+              );
+            })}
+            {offlineWorkers.map((w) => {
+              const link = teamLinks.find((l) => l.worker_id === w.id);
+              return (
+                <tr key={w.id}>
+                  <td><strong>{w.full_name}</strong><span className="pill">Không tài khoản</span></td>
+                  <td>{w.phone ?? ''}</td>
+                  <td className="muted">{w.work_mode === 'monthly_salary' ? 'Lương tháng' : 'Người làm'}</td>
+                  <td>{link ? teams.find((t) => t.id === link.team_id)?.name ?? '' : ''}</td>
+                  <td></td>
+                  {isOwner && <td className="act"><button className="icon" aria-label={`Sửa ${w.full_name}`} onClick={() => { setOpenWorker(w.id); setError(null); setInfo(null); }}>✎</button></td>}
                 </tr>
               );
             })}

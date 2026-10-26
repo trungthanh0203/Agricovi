@@ -20,6 +20,9 @@ export interface MyOrg {
   canManageStages?: boolean;
   /** Chế độ đơn giản (D100): ẩn các mục nâng cao cho hộ nhỏ; chỉ là cách hiển thị, quyền và dữ liệu không đổi */
   simple?: boolean;
+  /** Mô hình quản lý mặc định của cơ sở và gói VietGAP (docs/PLAN_MO_HINH_QUAN_LY.md); null = chưa chọn */
+  mgmtModel?: string | null;
+  mgmtVietgap?: boolean;
 }
 
 interface PositionRow {
@@ -116,9 +119,14 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         // tên vai trò do quản trị nền tảng đặt (D82)
         supabase.from('platform_role_labels').select('role, name'),
         // chế độ hiển thị của cơ sở (cột mới; lỗi/thiếu cột thì coi như đầy đủ)
-        supabase.from('organizations').select('id, ui_mode'),
+        (async () => {
+          const r = await supabase.from('organizations').select('id, ui_mode, mgmt_model, mgmt_vietgap');
+          return r.error ? supabase.from('organizations').select('id, ui_mode') : r; // chưa db push 0102
+        })(),
       ]);
-      const simpleOrgs = new Set(modeRes.error ? [] : ((modeRes.data ?? []) as { id: string; ui_mode: string }[]).filter((r) => r.ui_mode === 'simple').map((r) => r.id));
+      const modeRows = (modeRes.error ? [] : (modeRes.data ?? [])) as unknown as { id: string; ui_mode: string; mgmt_model?: string | null; mgmt_vietgap?: boolean }[];
+      const simpleOrgs = new Set(modeRows.filter((r) => r.ui_mode === 'simple').map((r) => r.id));
+      const modelOf = new Map(modeRows.map((r) => [r.id, r]));
       const { data, error } = memRes;
       if (error) throw error;
       if (!labelRes.error && labelRes.data) saveRoleLabels(Object.fromEntries((labelRes.data as { role: string; name: string }[]).map((r) => [r.role, r.name])));
@@ -142,6 +150,8 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           allowedWorkTypes: restricted ? [...new Set(rule.flatMap((p) => p.work_type_ids ?? []))] : null,
           canManageStages: [...mine, ...builtinHeld].some((p) => p.can_manage_stages),
           simple: simpleOrgs.has(o.id),
+          mgmtModel: modelOf.get(o.id)?.mgmt_model ?? null,
+          mgmtVietgap: Boolean(modelOf.get(o.id)?.mgmt_vietgap),
         }];
       });
       list.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
