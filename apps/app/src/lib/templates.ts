@@ -34,8 +34,12 @@ export interface StageRow { id: string; template_id: string; seq: number; name: 
  * Bản chỉnh lỗi/chưa có (CSDL chưa cập nhật) thì coi như không có, không làm hỏng phần còn lại.
  */
 export async function refreshCatalogCache(): Promise<void> {
+  const cropsQ = async () => {
+    const r = await client().from('crop_types').select('id, code, name, description, kind, kind_item, image, organization_id, is_active');
+    return r.error ? client().from('crop_types').select('id, code, name, description, kind, image, organization_id, is_active') : r; // chưa db push 0098
+  };
   const [crops, types, ovr] = await Promise.all([
-    client().from('crop_types').select('id, code, name, description, kind, image, organization_id, is_active'),
+    cropsQ(),
     client().from('work_types').select('id, code, name, description, field_schema, organization_id, is_active'),
     client().from('org_catalog_overrides').select('organization_id, item_kind, item_id, display_name, description, image, field_schema, is_active'),
   ]);
@@ -86,20 +90,21 @@ export async function clearOverride(orgId: string, kind: 'crop_type' | 'work_typ
 import type { ProductKind } from './config';
 export type { ProductKind } from './config';
 
-export async function createCrop(orgId: string, f: { name: string; kind: ProductKind; description?: string; image?: string }): Promise<void> {
+export async function createCrop(orgId: string, f: { name: string; kind: ProductKind; kindItem?: string | null; description?: string; image?: string }): Promise<void> {
   needOnline('thêm sản phẩm');
   await ok(client().from('crop_types').insert({
-    organization_id: orgId, name: f.name.trim(), kind: f.kind, description: f.description?.trim() || null, image: f.image || null,
+    organization_id: orgId, name: f.name.trim(), kind: f.kind, ...(f.kindItem ? { kind_item: f.kindItem } : {}), description: f.description?.trim() || null, image: f.image || null,
   }));
   await refreshCatalogCache().catch(() => undefined);
 }
 
-export async function updateCrop(id: string, c: { name?: string; kind?: ProductKind; description?: string | null; image?: string | null; is_active?: boolean }): Promise<void> {
+export async function updateCrop(id: string, c: { name?: string; kind?: ProductKind; kindItem?: string | null; description?: string | null; image?: string | null; is_active?: boolean }): Promise<void> {
   needOnline('sửa sản phẩm');
   const patch: Record<string, unknown> = {};
   if (c.name !== undefined) patch.name = c.name.trim();
   if (c.description !== undefined) patch.description = c.description?.trim() || null;
   if (c.kind !== undefined) patch.kind = c.kind;
+  if (c.kindItem !== undefined) patch.kind_item = c.kindItem;
   if (c.image !== undefined) patch.image = c.image || null;
   if (c.is_active !== undefined) patch.is_active = c.is_active;
   await ok(client().from('crop_types').update(patch).eq('id', id));

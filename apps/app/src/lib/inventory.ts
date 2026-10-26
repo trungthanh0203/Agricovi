@@ -27,21 +27,23 @@ function needOnline() {
 
 const MATERIAL_COLUMNS = 'id, organization_id, name, description, image, category, brand, usage_guide, usage_method, safety_warning, quality_specs, limit_elements, withdrawal_days, base_unit_id, reorder_threshold, is_active';
 const MATERIAL_COLUMNS_D98 = 'material_group, active_ingredient, registration_no, manufacturer';
+const MATERIAL_COLUMNS_D98B = `${MATERIAL_COLUMNS_D98}, group_item`;
 
 /** Tải danh mục và tồn kho về thiết bị. Lỗi ở đây không được làm hỏng đồng bộ sản xuất nên người gọi tự bắt lỗi. */
 export async function syncInventoryDown(): Promise<void> {
   if (!supabase || !navigator.onLine) return;
   const [units, materialsFull, locations, balances] = await Promise.all([
     supabase.from('units_of_measure').select('id, code, name, organization_id'),
-    supabase.from('materials').select(`${MATERIAL_COLUMNS}, ${MATERIAL_COLUMNS_D98}`),
+    supabase.from('materials').select(`${MATERIAL_COLUMNS}, ${MATERIAL_COLUMNS_D98B}`),
     supabase.from('inventory_locations').select('id, organization_id, name, description, is_active, area_ids'),
     supabase.from('inventory_balances').select('organization_id, location_id, material_id, balance, is_negative, receipts_missing_cost, last_receipt_date, last_adjust_date, last_adjust_delta, last_adjust_reason'),
   ]);
   // cột mới (D98) chưa có vì CSDL chưa cập nhật: tải bản cũ để Kho vẫn dùng được
   const locationsFixed = locations.error && /column|schema cache/i.test(locations.error.message ?? '')
     ? await supabase.from('inventory_locations').select('id, organization_id, name, description, is_active') : locations;
-  const materials = materialsFull.error && /column|schema cache/i.test(materialsFull.error.message ?? '')
-    ? await supabase.from('materials').select(MATERIAL_COLUMNS) : materialsFull;
+  let materials = materialsFull;
+  if (materials.error && /column|schema cache/i.test(materials.error.message ?? '')) materials = await supabase.from('materials').select(`${MATERIAL_COLUMNS}, ${MATERIAL_COLUMNS_D98}`) as typeof materials; // chưa db push 0098
+  if (materials.error && /column|schema cache/i.test(materials.error.message ?? '')) materials = await supabase.from('materials').select(MATERIAL_COLUMNS) as typeof materials;
   for (const r of [units, materials, locationsFixed, balances]) if (r.error) throw r.error;
 
   await db.transaction('rw', [db.units, db.materials, db.locations, db.balances], async () => {
@@ -142,6 +144,8 @@ export async function fetchRecentTransactions(orgId: string, limit = 30): Promis
 /** Thông tin mở rộng của vật tư (không bắt buộc) */
 export interface MaterialExt {
   material_group: string | null;
+  /** Mã mục tự thêm trong cấu hình Nhóm vật tư; null = mục có sẵn */
+  group_item?: string | null;
   active_ingredient: string | null;
   registration_no: string | null;
   manufacturer: string | null;

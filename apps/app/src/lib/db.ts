@@ -19,6 +19,8 @@ export interface AreaRow {
   code?: string | null;
   /** crop = trồng trọt, livestock = chăn nuôi, other = khác (đều tạo vụ được); facility = cơ sở vật chất (cổng, kho, biogas...: chỉ ghi việc). 'growing' là giá trị cũ trên máy, coi như trồng trọt */
   kind?: AreaKind;
+  /** Mã mục tự thêm trong cấu hình Nhóm loại sản phẩm; null = mục có sẵn */
+  kind_item?: string | null;
   /** Kiểu chuồng: chỉ lưu và hiển thị ở P1 */
   housing?: string | null;
 }
@@ -225,6 +227,8 @@ export interface CropTypeRow {
   description?: string | null;
   /** Loại sản phẩm: cây trồng, vật nuôi, thủy sản hoặc khác (nhóm cấu hình ở lib/config.ts) */
   kind?: 'crop' | 'livestock' | 'aquatic' | 'other';
+  /** Mã mục tự thêm trong cấu hình Nhóm loại sản phẩm (kind là nhóm gốc mục đó tính như); null = mục có sẵn */
+  kind_item?: string | null;
   image?: string | null;
   /** null = cây dùng chung; có giá trị = cây do cơ sở khai báo */
   organization_id?: string | null;
@@ -279,6 +283,8 @@ export interface MaterialRow {
   withdrawal_days?: number | null;
   /** Nhóm vật tư, hoạt chất, số đăng ký, nhà sản xuất (D98) */
   material_group?: string | null;
+  /** Mã mục tự thêm trong cấu hình Nhóm vật tư (material_group là nhóm gốc mục đó tính như) */
+  group_item?: string | null;
   active_ingredient?: string | null;
   registration_no?: string | null;
   manufacturer?: string | null;

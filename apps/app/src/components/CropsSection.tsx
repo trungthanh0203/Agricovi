@@ -51,7 +51,7 @@ export function CropsSection() {
       )}
       {canManage && adding && (
         <ProductForm title="Thêm sản phẩm" busy={busy || !online} onClose={() => setAdding(false)}
-          onSave={(f) => run(async () => { await createCrop(org, f); setAdding(false); })} />
+          onSave={(f) => run(async () => { await createCrop(org, { ...f, kindItem: f.kindItem ?? null }); setAdding(false); })} />
       )}
 
       <table className="grid">
@@ -68,7 +68,7 @@ export function CropsSection() {
                 {c.shared && !c.overridden && <span className="sub">Có sẵn</span>}
                 {!c.is_active && <span className="sub">Đã dừng</span>}
               </td>
-              <td className="muted">{cfg.groupLabel(c.kind)}</td>
+              <td className="muted">{cfg.groupLabel(c.kind, c.kind_item)}</td>
               {canManage && (
                 <td className="act">
                   <button className="icon" disabled={busy || !online} aria-label={c.is_active ? `Dừng ${c.name}` : `Dùng lại ${c.name}`} onClick={() => void run(() => toggle(c)).catch(() => undefined)}>{c.is_active ? '⏸' : '▶'}</button>{' '}
@@ -91,7 +91,7 @@ export function CropsSection() {
                 display_name: f.name.trim() === editRow.base_name ? null : f.name, description: f.description, image: f.image,
               });
             } else {
-              await updateCrop(editRow.id, { name: f.name, kind: f.kind, description: f.description, image: f.image });
+              await updateCrop(editRow.id, { name: f.name, kind: f.kind, kindItem: f.kindItem, description: f.description, image: f.image });
             }
             setEditing(null);
           })} />
@@ -102,12 +102,12 @@ export function CropsSection() {
 
 function ProductForm({ title, initial, busy, onSave, onReset, onClose }: {
   title: string; initial?: EffCrop; busy: boolean;
-  onSave: (f: { name: string; kind: ProductKind; description: string; image: string }) => Promise<unknown>;
+  onSave: (f: { name: string; kind: ProductKind; kindItem: string | null | undefined; description: string; image: string }) => Promise<unknown>;
   onReset?: () => Promise<unknown>; onClose: () => void;
 }) {
   const cfg = useConfig();
   const [name, setName] = useState(initial?.name ?? '');
-  const [kind, setKind] = useState<ProductKind>(initial?.kind ?? 'crop');
+  const [choice, setChoice] = useState(cfg.choiceOf('product_groups', initial?.kind ?? 'crop', initial?.kind_item));
   const [desc, setDesc] = useState(initial?.description ?? '');
   const [image, setImage] = useState(initial?.image ?? '');
   const [err, setErr] = useState<string | null>(null);
@@ -118,8 +118,8 @@ function ProductForm({ title, initial, busy, onSave, onReset, onClose }: {
       <div className="inline-form">
         <label>Tên sản phẩm<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
         <label>Loại
-          <select value={kind} disabled={kindLocked} onChange={(e) => setKind(e.target.value as ProductKind)}>
-            {cfg.productGroups().map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+          <select value={choice} disabled={kindLocked} onChange={(e) => setChoice(e.target.value)}>
+            {cfg.productGroups(choice).map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
           </select>
         </label>
         <label>Mô tả<textarea rows={3} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Giống, đặc điểm, thời gian sinh trưởng…" /></label>
@@ -129,7 +129,8 @@ function ProductForm({ title, initial, busy, onSave, onReset, onClose }: {
           <button className="primary" disabled={busy} onClick={() => {
             if (name.trim().length < 2) return setErr('Tên sản phẩm cần ít nhất 2 ký tự.');
             setErr(null);
-            void onSave({ name, kind, description: desc, image }).catch(() => undefined);
+            const r = cfg.resolve('product_groups', choice);
+            void onSave({ name, kind: r.base as ProductKind, kindItem: r.item ?? (initial?.kind_item ? null : undefined), description: desc, image }).catch(() => undefined);
           }}>Lưu</button>
           {onReset && <button className="secondary" disabled={busy} onClick={() => void onReset().catch(() => undefined)}>Khôi phục mặc định</button>}
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>

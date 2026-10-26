@@ -80,20 +80,55 @@ test('cấu hình cơ sở: chủ/quản lý sửa, thành viên chỉ đọc; n
   assert.match(await expectError(asUser(db, wk, `select set_org_config($1,'housing',array['Kín'])`, [org])), /FORBIDDEN/);
   assert.match(await expectError(asUser(db, other, `select set_org_config($1,'housing',array['Kín'])`, [org])), /FORBIDDEN/);
   assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'khac',array['a'])`, [org])), /INVALID_KEY/);
-  assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'product_groups',array['A','B','C'])`, [org])), /4 mục/);
+  assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'product_groups',array['A','B','C'])`, [org])), /INVALID_KEY/); // nhóm có mã đi qua set_org_entries
   assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'housing',array[' ',''])`, [org])), /INVALID_ITEMS/);
   await asUser(db, owner, `select set_org_config($1,'housing',array[' Kín ','Hở','Kín','Nửa kín hở'])`, [org]);
   assert.deepEqual((await asUser(db, wk, `select items from org_config where organization_id=$1 and key='housing'`, [org])).rows[0].items, ['Kín', 'Hở', 'Nửa kín hở']);
   assert.equal((await asUser(db, other, `select count(*)::int n from org_config where organization_id=$1`, [org])).rows[0].n, 0); // cơ sở khác không đọc được
-  await asUser(db, owner, `select set_org_config($1,'product_groups',array['Cây trồng','Gia súc','Thủy sản','Khác'])`, [org]);
   await db.query(`insert into production_areas (id,organization_id,name,kind,housing) values (gen_random_uuid(),$1,'A','aquatic','Nửa kín hở')`, [org]);
 });
 
 // Migration 0097: nhóm vật tư đúng 8 mục
 test('cấu hình nhóm vật tư: đúng 8 mục', async () => {
   const { db, owner, org } = await setup();
-  assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'material_groups',array['A','B'])`, [org])), /8 mục/);
-  await asUser(db, owner, `select set_org_config($1,'material_groups',array['1','2','3','4','5','6','7','8'])`, [org]);
+  assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'material_groups',array['A','B'])`, [org])), /INVALID_KEY/);
+});
+
+// Migration 0098: nhóm có mã, thêm/bớt/dừng
+const ENT = (arr) => JSON.stringify(arr);
+const PG = [['crop', 'Cây trồng'], ['livestock', 'Vật nuôi'], ['aquatic', 'Thủy sản'], ['other', 'Khác']].map(([code, label]) => ({ code, label, active: true }));
+
+test('nhóm có mã: thêm mục tự thêm, không xóa mục có sẵn, dừng được, xóa mục đang dùng bị chặn', async () => {
+  const { db, owner, wk, org } = await setup();
+  const set = (arr, who = owner) => asUser(db, who, `select set_org_entries($1,'product_groups',$2::jsonb)`, [org, ENT(arr)]);
+  assert.match(await expectError(set(PG, wk)), /FORBIDDEN/);
+  assert.match(await expectError(set(PG.slice(0, 3))), /không xóa được/); // thiếu mục có sẵn
+  assert.match(await expectError(set([...PG, { code: 'c_1', label: 'Gia cầm' }])), /tính như/); // thiếu base
+  assert.match(await expectError(set([...PG, { code: 'c_1', label: 'vật nuôi', base: 'livestock' }])), /trùng/);
+  assert.match(await expectError(set(PG.map((x) => ({ ...x, active: false })))), /ít nhất một mục/);
+
+  const withCustom = [...PG, { code: 'c_gc', label: 'Gia cầm', base: 'livestock', active: true }];
+  await set(withCustom);
+  const saved = (await asUser(db, wk, `select entries from org_config where organization_id=$1 and key='product_groups'`, [org])).rows[0].entries;
+  assert.deepEqual(saved.find((x) => x.code === 'c_gc'), { code: 'c_gc', label: 'Gia cầm', base: 'livestock', active: true });
+  assert.equal(saved.find((x) => x.code === 'livestock').base, 'livestock');
+
+  // dùng mục tự thêm
+  await db.query(`insert into production_areas (id,organization_id,name,kind,kind_item) values (gen_random_uuid(),$1,'Chuồng gà','livestock','c_gc')`, [org]);
+  assert.match(await expectError(set(PG)), /đang được dùng/); // xóa mục đang dùng
+  await set(withCustom.map((x) => (x.code === 'c_gc' ? { ...x, active: false } : x))); // dừng thì được
+  await db.query(`delete from production_areas where organization_id=$1`, [org]);
+  await set(PG); // chưa ai dùng thì xóa được
+});
+
+test('nhóm vật tư có mã: mục tự thêm tính như một nhóm gốc; mục đang dùng không xóa được', async () => {
+  const { db, owner, org } = await setup();
+  const MG = ['feed', 'vet_drug', 'vaccine', 'pesticide', 'fertilizer', 'disinfectant', 'seed', 'other'].map((code) => ({ code, label: code, active: true }));
+  const set = (arr) => asUser(db, owner, `select set_org_entries($1,'material_groups',$2::jsonb)`, [org, ENT(arr)]);
+  await set([...MG, { code: 'c_cam', label: 'Cám đậm đặc', base: 'feed', active: true }]);
+  const unit = (await db.query(`select id from units_of_measure limit 1`)).rows[0].id;
+  await db.query(`insert into materials (id,organization_id,name,base_unit_id,material_group,group_item) values (gen_random_uuid(),$1,'Cám 1',$2,'feed','c_cam')`, [org, unit]);
+  assert.match(await expectError(set(MG)), /đang được dùng/);
 });
 
 // Migration 0096: kho theo trang trại

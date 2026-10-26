@@ -4,48 +4,50 @@ import { requireOnline } from './serverWrite';
 import { supabase } from './supabase';
 
 /**
- * Cấu hình của cơ sở (tab Cấu hình): mỗi cấu hình là một danh sách các mục nhỏ do chủ/quản lý sửa (nhập cách nhau bằng dấu phẩy).
- * Chỗ nào cần danh sách này (chọn nhóm loại sản phẩm, loại khu, kiểu nhà/chuồng…) lấy từ đây. Thêm cấu hình mới = thêm một mục vào CONFIG_DEFS
- * (và tên khóa vào hàm set_org_config ở CSDL). Chưa có giá trị đã lưu thì dùng `defaults`.
+ * Cấu hình của cơ sở (tab Cấu hình). Chỗ nào cần danh sách (chọn nhóm loại sản phẩm, loại khu, nhóm vật tư, kiểu nhà/chuồng…) lấy từ đây.
+ * Thêm cấu hình mới = thêm một mục vào CONFIG_DEFS (và tên khóa vào hàm ở CSDL). Chưa có giá trị đã lưu thì dùng mặc định.
  *
  * Hai kiểu:
- * - 'fixed': mỗi mục gắn với một chức năng nên có MÃ cố định theo thứ tự (`codes`); chỉ đổi được TÊN gọi, giữ đúng số mục.
- * - 'free': mục chỉ là chữ để chọn; thêm, bớt, đổi tên thoải mái (giá trị lưu là chính chữ đó).
+ * - 'free': mục chỉ là chữ để chọn, nhập cách nhau bằng dấu phẩy; thêm, bớt, đổi tên thoải mái (giá trị lưu là chính chữ đó).
+ * - 'entries': mục CÓ MÃ vì chức năng của app chạy theo nhóm gốc. Mục có sẵn (builtin) mã cố định, không xóa (chỉ dừng); mục tự thêm có
+ *   mã riêng và "tính như" một nhóm gốc. Bản ghi lưu NHÓM GỐC ở cột cũ (kind / material_group) + mã mục tự thêm ở cột mới (kind_item / group_item).
  */
 export type ProductKind = 'crop' | 'livestock' | 'aquatic' | 'other';
+
+export interface ConfigEntry { code: string; label: string; base: string; active: boolean }
 
 export interface ConfigDef {
   id: string;
   title: string;
   hint: string;
-  mode: 'fixed' | 'free';
-  codes?: string[];
+  mode: 'free' | 'entries';
+  /** chỉ với 'entries': các mục có sẵn (mã = nhóm gốc) */
+  builtins?: { code: string; label: string }[];
+  /** chỉ với 'free' */
   defaults: string[];
 }
 
+const PRODUCT_BUILTINS = [
+  { code: 'crop', label: 'Cây trồng' }, { code: 'livestock', label: 'Vật nuôi' }, { code: 'aquatic', label: 'Thủy sản' }, { code: 'other', label: 'Khác' },
+];
+const MATERIAL_BUILTINS = [
+  { code: 'feed', label: 'Thức ăn' }, { code: 'vet_drug', label: 'Thuốc thú y' }, { code: 'vaccine', label: 'Vaccine' },
+  { code: 'pesticide', label: 'Thuốc bảo vệ thực vật' }, { code: 'fertilizer', label: 'Phân bón' }, { code: 'disinfectant', label: 'Thuốc sát trùng' },
+  { code: 'seed', label: 'Giống' }, { code: 'other', label: 'Khác' },
+];
+
 export const CONFIG_DEFS: ConfigDef[] = [
   {
-    id: 'product_groups',
-    title: 'Nhóm loại sản phẩm',
-    hint: 'Dùng để chọn loại khi khai báo Sản phẩm và Loại khu của Trang trại. Cần đúng 4 mục theo thứ tự: cây trồng, vật nuôi, thủy sản, khác (mỗi mục gắn với chức năng riêng nên chỉ đổi được tên gọi).',
-    mode: 'fixed',
-    codes: ['crop', 'livestock', 'aquatic', 'other'],
-    defaults: ['Cây trồng', 'Vật nuôi', 'Thủy sản', 'Khác'],
+    id: 'product_groups', title: 'Nhóm loại sản phẩm', mode: 'entries', builtins: PRODUCT_BUILTINS, defaults: [],
+    hint: 'Dùng để chọn loại khi khai báo Sản phẩm và Loại khu của Trang trại. Mục có sẵn đổi tên hoặc dừng được, không xóa. Mục tự thêm phải chọn "tính như" một nhóm có sẵn (ví dụ Gia cầm tính như Vật nuôi) để các chức năng vẫn chạy đúng.',
   },
   {
-    id: 'material_groups',
-    title: 'Nhóm vật tư',
-    hint: 'Dùng để chọn nhóm khi khai báo Vật tư. Cần đúng 8 mục theo thứ tự: thức ăn, thuốc thú y, vaccine, thuốc bảo vệ thực vật, phân bón, thuốc sát trùng, giống, khác (mỗi mục gắn với chức năng như tính FCR nên chỉ đổi được tên gọi).',
-    mode: 'fixed',
-    codes: ['feed', 'vet_drug', 'vaccine', 'pesticide', 'fertilizer', 'disinfectant', 'seed', 'other'],
-    defaults: ['Thức ăn', 'Thuốc thú y', 'Vaccine', 'Thuốc bảo vệ thực vật', 'Phân bón', 'Thuốc sát trùng', 'Giống', 'Khác'],
+    id: 'material_groups', title: 'Nhóm vật tư', mode: 'entries', builtins: MATERIAL_BUILTINS, defaults: [],
+    hint: 'Dùng để chọn nhóm khi khai báo Vật tư. Mục có sẵn đổi tên hoặc dừng được, không xóa. Mục tự thêm phải chọn "tính như" một nhóm có sẵn (ví dụ Cám đậm đặc tính như Thức ăn để được tính vào FCR).',
   },
   {
-    id: 'housing',
-    title: 'Kiểu nhà / chuồng',
+    id: 'housing', title: 'Kiểu nhà / chuồng', mode: 'free', defaults: ['Kín', 'Hở', 'Nửa kín hở'],
     hint: 'Dùng để chọn Kiểu nhà/chuồng của Trang trại. Thêm, bớt hoặc đổi tên tùy ý.',
-    mode: 'free',
-    defaults: ['Kín', 'Hở', 'Nửa kín hở'],
   },
 ];
 
@@ -64,18 +66,32 @@ export function parseItems(text: string): string[] {
 }
 export const joinItems = (items: string[]) => items.join(', ');
 
-/** Kiểm tra trước khi lưu; trả về lời nhắc tiếng Việt hoặc null nếu hợp lệ */
-export function validateItems(def: ConfigDef, items: string[]): string | null {
+/** Kiểm tra danh sách tự do trước khi lưu; trả về lời nhắc tiếng Việt hoặc null nếu hợp lệ */
+export function validateItems(_def: ConfigDef, items: string[]): string | null {
   if (items.length === 0) return 'Cần ít nhất một mục.';
   if (items.some((i) => i.length > 40)) return 'Mỗi mục tối đa 40 ký tự.';
-  if (def.mode === 'fixed' && items.length !== (def.codes?.length ?? 0)) {
-    return `Cần đúng ${def.codes?.length} mục (hiện có ${items.length}). Chỉ đổi tên gọi, giữ thứ tự: ${def.defaults.join(', ')}.`;
-  }
   return null;
 }
 
+/** Kiểm tra danh sách mục có mã trước khi lưu */
+export function validateEntries(list: ConfigEntry[]): string | null {
+  if (list.some((e) => !e.label.trim())) return 'Tên mỗi mục không được để trống.';
+  if (list.some((e) => e.label.trim().length > 40)) return 'Tên mỗi mục tối đa 40 ký tự.';
+  const seen = new Set<string>();
+  for (const e of list) {
+    const k = e.label.trim().toLowerCase();
+    if (seen.has(k)) return `Tên "${e.label.trim()}" bị trùng.`;
+    seen.add(k);
+  }
+  if (!list.some((e) => e.active)) return 'Cần ít nhất một mục đang dùng.';
+  return null;
+}
+
+/** Danh sách mục mặc định (chưa lưu gì) của một cấu hình dạng 'entries' */
+export const defaultEntries = (def: ConfigDef): ConfigEntry[] => (def.builtins ?? []).map((b) => ({ code: b.code, label: b.label, base: b.code, active: true }));
+
 // ------------------------------------------------------------------ kho nhớ theo cơ sở
-type Store = Record<string, string[]>;
+interface Store { items: Record<string, string[]>; entries: Record<string, ConfigEntry[]> }
 const mem = new Map<string, Store>();
 const listeners = new Set<() => void>();
 const storageKey = (org: string) => `agricovi.config.${org}`;
@@ -84,25 +100,32 @@ const emit = () => listeners.forEach((l) => l());
 function read(org: string): Store {
   const hit = mem.get(org);
   if (hit) return hit;
-  let s: Store = {};
-  try { s = JSON.parse(localStorage.getItem(storageKey(org)) ?? '{}') as Store; } catch { /* không có bản lưu */ }
+  let s: Store = { items: {}, entries: {} };
+  try {
+    const raw = JSON.parse(localStorage.getItem(storageKey(org)) ?? '{}') as Partial<Store> & Record<string, unknown>;
+    s = raw.items && raw.entries ? { items: raw.items, entries: raw.entries } : { items: {}, entries: {} }; // bản lưu cũ (dạng phẳng) bỏ qua, tải lại từ máy chủ
+  } catch { /* không có bản lưu */ }
   mem.set(org, s);
   return s;
 }
 
-/** Tải cấu hình từ máy chủ (im lặng nếu chưa có mạng hoặc chưa db push 0095: dùng bản đã lưu hoặc mặc định) */
+/** Tải cấu hình từ máy chủ (im lặng nếu chưa có mạng hoặc chưa db push: dùng bản đã lưu hoặc mặc định) */
 export async function loadConfig(org: string): Promise<void> {
   if (!supabase || !navigator.onLine) return;
-  const { data, error } = await supabase.from('org_config').select('key, items').eq('organization_id', org);
-  if (error) return;
-  const s: Store = {};
-  for (const r of data ?? []) s[r.key as string] = r.items as string[];
+  let r = await supabase.from('org_config').select('key, items, entries').eq('organization_id', org);
+  if (r.error) r = await supabase.from('org_config').select('key, items').eq('organization_id', org) as typeof r; // chưa db push 0098
+  if (r.error) return;
+  const s: Store = { items: {}, entries: {} };
+  for (const row of (r.data ?? []) as unknown as Array<{ key: string; items: string[]; entries?: ConfigEntry[] | null }>) {
+    if (row.entries) s.entries[row.key] = row.entries;
+    else if (row.items?.length) s.items[row.key] = row.items;
+  }
   mem.set(org, s);
   try { localStorage.setItem(storageKey(org), JSON.stringify(s)); } catch { /* bộ nhớ đầy hoặc bị chặn */ }
   emit();
 }
 
-/** Lưu một cấu hình (chủ/quản lý; cần mạng) */
+/** Lưu danh sách tự do (chủ/quản lý; cần mạng) */
 export async function saveConfig(org: string, key: string, items: string[]): Promise<void> {
   requireOnline('lưu cấu hình');
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
@@ -111,13 +134,30 @@ export async function saveConfig(org: string, key: string, items: string[]): Pro
   await loadConfig(org);
 }
 
-/** Danh sách đang dùng của một cấu hình (đã lưu, nếu không hợp lệ thì mặc định) */
+/** Lưu danh sách mục có mã (chủ/quản lý; cần mạng) */
+export async function saveEntries(org: string, key: string, list: ConfigEntry[]): Promise<void> {
+  requireOnline('lưu cấu hình');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const payload = list.map((e) => ({ code: e.code, label: e.label.trim(), base: e.base, active: e.active }));
+  const { error } = await supabase.rpc('set_org_entries', { p_org: org, p_key: key, p_entries: payload });
+  if (error) throw new Error(error.message);
+  await loadConfig(org);
+}
+
+/** Danh sách tự do đang dùng (đã lưu, nếu không có thì mặc định) */
 export function itemsOf(org: string | undefined, def: ConfigDef): string[] {
-  const saved = org ? read(org)[def.id] : undefined;
-  if (!saved || saved.length === 0) return def.defaults;
-  if (def.mode === 'fixed' && saved.length !== (def.codes?.length ?? 0)) return def.defaults;
+  const saved = org ? read(org).items[def.id] : undefined;
+  return saved && saved.length > 0 ? saved : def.defaults;
+}
+
+/** Các mục có mã đang dùng; bản lưu thiếu mục có sẵn thì coi như chưa lưu */
+export function entriesOf(org: string | undefined, def: ConfigDef): ConfigEntry[] {
+  const saved = org ? read(org).entries[def.id] : undefined;
+  if (!saved || !(def.builtins ?? []).every((b) => saved.some((e) => e.code === b.code))) return defaultEntries(def);
   return saved;
 }
+
+const defById = (id: string) => CONFIG_DEFS.find((d) => d.id === id)!;
 
 /** Hook: tự tải khi đổi cơ sở và tự vẽ lại khi cấu hình đổi */
 export function useConfig() {
@@ -130,34 +170,35 @@ export function useConfig() {
     return () => { listeners.delete(l); };
   }, []);
   useEffect(() => { if (org) void loadConfig(org); }, [org]);
-  const def = (id: string) => CONFIG_DEFS.find((d) => d.id === id)!;
+
+  const entries = (listId: string) => entriesOf(org, defById(listId));
+  /** Mục chọn được: mục đang dùng, kèm mục hiện tại của bản ghi dù đã dừng (để sửa không mất giá trị) */
+  const choices = (listId: string, current?: string | null) => entries(listId).filter((e) => e.active || e.code === current);
+  /** Mã chọn → nhóm gốc + mã mục tự thêm (null nếu là mục có sẵn) */
+  const resolve = (listId: string, choice: string): { base: string; item: string | null } => {
+    const e = entries(listId).find((x) => x.code === choice);
+    const builtin = defById(listId).builtins?.some((b) => b.code === choice);
+    return e ? { base: e.base, item: builtin ? null : e.code } : { base: choice, item: null };
+  };
+  /** Bản ghi (nhóm gốc + mã mục tự thêm) → mã đang chọn */
+  const choiceOf = (listId: string, base: string | null | undefined, item: string | null | undefined): string => {
+    const b = base === 'growing' || !base ? 'crop' : base;
+    return item && entries(listId).some((e) => e.code === item) ? item : b;
+  };
+  const labelOf = (listId: string, base: string | null | undefined, item: string | null | undefined): string => {
+    const c = choiceOf(listId, base, item);
+    return entries(listId).find((e) => e.code === c)?.label ?? base ?? '';
+  };
+
   return {
     org,
-    items: (id: string) => itemsOf(org, def(id)),
-    /** Nhóm loại sản phẩm: mã cố định + tên đang dùng */
-    productGroups: (): { id: ProductKind; label: string }[] => {
-      const d = def('product_groups');
-      const labels = itemsOf(org, d);
-      return d.codes!.map((c, i) => ({ id: c as ProductKind, label: labels[i]! }));
-    },
-    /** Tên gọi của một nhóm; mã lạ hoặc cũ ('growing') coi như cây trồng */
-    groupLabel: (kind: string | null | undefined): string => {
-      const d = def('product_groups');
-      const labels = itemsOf(org, d);
-      const i = d.codes!.indexOf(kind === 'growing' || !kind ? 'crop' : kind);
-      return i >= 0 ? labels[i]! : kind ?? '';
-    },
-    housing: (): string[] => itemsOf(org, def('housing')),
-    /** Nhóm vật tư: mã cố định + tên đang dùng */
-    materialGroups: (): { id: string; label: string }[] => {
-      const d = def('material_groups');
-      const labels = itemsOf(org, d);
-      return d.codes!.map((c, i) => ({ id: c, label: labels[i]! }));
-    },
-    materialGroupLabel: (code: string | null | undefined): string => {
-      const d = def('material_groups');
-      const i = code ? d.codes!.indexOf(code) : -1;
-      return i >= 0 ? itemsOf(org, d)[i]! : '';
-    },
+    items: (id: string) => itemsOf(org, defById(id)),
+    entries, choices, resolve, choiceOf, labelOf,
+    /** Nhóm loại sản phẩm chọn được (id là mã mục) */
+    productGroups: (current?: string | null) => choices('product_groups', current).map((e) => ({ id: e.code, label: e.label })),
+    groupLabel: (kind: string | null | undefined, item?: string | null) => labelOf('product_groups', kind, item),
+    housing: (): string[] => itemsOf(org, defById('housing')),
+    materialGroups: (current?: string | null) => choices('material_groups', current).map((e) => ({ id: e.code, label: e.label })),
+    materialGroupLabel: (group: string | null | undefined, item?: string | null) => (group ? labelOf('material_groups', group, item) : ''),
   };
 }

@@ -19,7 +19,8 @@ const CYCLE_COLUMNS_PLAN = `${CYCLE_COLUMNS_BASE}, target_yield_kg, budget_amoun
 // cột mã vụ/đơn vị đếm/cán bộ phụ trách (D98) cũng chỉ có sau migration 0080
 const CYCLE_COLUMNS = `${CYCLE_COLUMNS_PLAN}, code, count_unit, supervisor_name, supervisor_phone`;
 const AREA_COLUMNS_BASE = 'id, organization_id, name, description, location, area_size, area_unit, image, is_active';
-const AREA_COLUMNS = `${AREA_COLUMNS_BASE}, code, kind, housing`;
+const AREA_COLUMNS_D98 = `${AREA_COLUMNS_BASE}, code, kind, housing`;
+const AREA_COLUMNS = `${AREA_COLUMNS_D98}, kind_item`;
 
 /** Tải vụ theo từng bậc cột: đầy đủ -> bản trước D98 -> bản gốc, để CSDL chưa cập nhật không làm hỏng đồng bộ */
 async function selectCycles(id?: string) {
@@ -42,7 +43,8 @@ const LOG_COLUMNS =
   'id, organization_id, cycle_id, area_id, work_type_id, stage_id, performed_at, data, note, voided_at, void_reason, version, created_by, performed_by, author_name, author_roles, received_at';
 
 async function selectAreas() {
-  const r = await supabase!.from('production_areas').select(AREA_COLUMNS);
+  let r = await supabase!.from('production_areas').select(AREA_COLUMNS);
+  if (r.error && missingPlanColumns(r.error)) r = await supabase!.from('production_areas').select(AREA_COLUMNS_D98) as typeof r; // chưa db push 0098
   return r.error && missingPlanColumns(r.error) ? supabase!.from('production_areas').select(AREA_COLUMNS_BASE) : r;
 }
 
@@ -145,6 +147,8 @@ export interface FarmInput {
   /** Mã khu/chuồng, loại khu và kiểu chuồng (D98) */
   code?: string | null;
   kind?: Exclude<AreaKind, 'growing'>;
+  /** Mã mục tự thêm trong cấu hình Nhóm loại sản phẩm (kind là nhóm gốc); null/bỏ trống = mục có sẵn */
+  kind_item?: string | null;
   housing?: string | null;
 }
 
@@ -154,6 +158,7 @@ export async function createArea(organizationId: string, f: FarmInput): Promise<
     id, organization_id: organizationId, name: f.name.trim(), description: f.description?.trim() || null,
     location: f.location?.trim() || null, area_size: f.area_size ?? null, area_unit: f.area_unit ?? 'm2', image: f.image || null,
     code: f.code?.trim() || null, kind: f.kind ?? 'crop', housing: f.housing ?? null,
+    ...(f.kind_item ? { kind_item: f.kind_item } : {}),
   };
   await insertAndCache('production_areas', { ...row }, { ...row }, 'thêm trang trại');
   return id;
@@ -172,6 +177,7 @@ export async function updateArea(id: string, c: Partial<FarmInput> & { is_active
   if (c.image !== undefined) patch.image = c.image || null;
   if (c.code !== undefined) patch.code = c.code?.trim() || null;
   if (c.kind !== undefined) patch.kind = c.kind;
+  if (c.kind_item !== undefined) patch.kind_item = c.kind_item;
   if (c.housing !== undefined) patch.housing = c.housing;
   if (c.is_active !== undefined) patch.is_active = c.is_active;
   const { error } = await supabase.from('production_areas').update(patch).eq('id', id);

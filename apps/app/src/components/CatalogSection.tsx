@@ -70,7 +70,7 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
           {mats.map((m) => (
             <tr key={m.id} className={m.is_active ? '' : 'off'}>
               <td><Thumb src={m.image} />{m.name}{m.is_active ? '' : <span className="sub">Đã dừng</span>}</td>
-              <td className="muted">{cfg.materialGroupLabel(m.material_group)}</td>
+              <td className="muted">{cfg.materialGroupLabel(m.material_group, m.group_item)}</td>
               <td className="muted">{m.manufacturer ?? ''}</td>
               <td className="num">{m.reorder_threshold != null ? `${formatQty(m.reorder_threshold)} ${unitName(m.base_unit_id)}` : '—'}</td>
               {canWrite && (
@@ -175,7 +175,7 @@ function MaterialForm({ m, units, busy, onSave, onClose }: {
   const [desc, setDesc] = useState(m?.description ?? '');
   const [unitId, setUnitId] = useState(m?.base_unit_id ?? units[0]?.id ?? '');
   const [ext, setExt] = useState({
-    image: m?.image ?? '', brand: m?.brand ?? '', material_group: m?.material_group ?? '', active_ingredient: m?.active_ingredient ?? '',
+    image: m?.image ?? '', brand: m?.brand ?? '', material_group: m?.material_group ? cfg.choiceOf('material_groups', m.material_group, m.group_item) : '', active_ingredient: m?.active_ingredient ?? '', // material_group ở đây là mã mục đang chọn
     registration_no: m?.registration_no ?? '', manufacturer: m?.manufacturer ?? '', usage_guide: m?.usage_guide ?? '', usage_method: m?.usage_method ?? '', safety_warning: m?.safety_warning ?? '',
     quality_specs: m?.quality_specs ?? '', limit_elements: m?.limit_elements ?? '', withdrawal_days: m?.withdrawal_days == null ? '' : String(m.withdrawal_days),
   });
@@ -190,7 +190,7 @@ function MaterialForm({ m, units, busy, onSave, onClose }: {
         <label>Nhóm vật tư
           <select value={ext.material_group} onChange={setE('material_group')}>
             <option value="">— Chưa phân nhóm —</option>
-            {cfg.materialGroups().map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+            {cfg.materialGroups(ext.material_group).map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
           </select>
         </label>
         <label>Đơn vị tính
@@ -228,7 +228,9 @@ function MaterialForm({ m, units, busy, onSave, onClose }: {
             if (!m && !unitId) return setErr('Chưa có đơn vị tính. Hãy kết nối mạng để tải danh sách đơn vị rồi thử lại.');
             if (v !== null && (Number.isNaN(v) || v < 0)) return setErr('Mức cảnh báo phải là số không âm.');
             setErr(null);
-            void onSave({ name, description: desc, category: cat.trim() || null, threshold: v, unitId, ext: { ...ext, withdrawal_days: days } }).catch(() => undefined);
+            const r = ext.material_group ? cfg.resolve('material_groups', ext.material_group) : { base: '', item: null };
+            const groupItem = r.item ?? (m?.group_item ? null : undefined); // chỉ gửi cột mới khi cần (chưa db push thì vẫn lưu được mục có sẵn)
+            void onSave({ name, description: desc, category: cat.trim() || null, threshold: v, unitId, ext: { ...ext, material_group: r.base, ...(groupItem !== undefined ? { group_item: groupItem } : {}), withdrawal_days: days } }).catch(() => undefined);
           }}>{m ? 'Lưu thay đổi' : 'Thêm vật tư'}</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>

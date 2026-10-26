@@ -19,7 +19,7 @@ const fmtSize = (a: AreaRow) => (a.area_size != null ? `${a.area_size.toLocaleSt
 export function AreasSection() {
   const { active } = useOrgs();
   const cfg = useConfig();
-  const kindLabel = (k: string) => (k === 'facility' ? 'Cơ sở vật chất' : cfg.groupLabel(k));
+  const kindLabel = (k: string, item?: string | null) => (k === 'facility' ? 'Cơ sở vật chất' : cfg.groupLabel(k, item));
   const online = useOnline();
   const areas = useTable('areas');
   const [showOff, setShowOff] = useState(false);
@@ -62,7 +62,7 @@ export function AreasSection() {
             <tr key={a.id} className={a.is_active === false ? 'off' : ''}>
               <td>
                 <Thumb src={a.image} />{a.name}{a.code ? ` · ${a.code}` : ''}
-                {(a.kind || a.housing) && <span className="sub">{[a.kind ? kindLabel(a.kind) : '', a.housing ? `Nhà/chuồng ${housingText(a.housing).toLowerCase()}` : ''].filter(Boolean).join(' · ')}</span>}
+                {(a.kind || a.housing) && <span className="sub">{[a.kind ? kindLabel(a.kind, a.kind_item) : '', a.housing ? `Nhà/chuồng ${housingText(a.housing).toLowerCase()}` : ''].filter(Boolean).join(' · ')}</span>}
                 {a.location && <span className="sub">📍 {a.location}</span>}
                 {a.description && <span className="sub">{a.description}</span>}
                 {a.is_active === false && <span className="sub">Đã dừng</span>}
@@ -99,8 +99,10 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
   const [size, setSize] = useState(initial?.area_size != null ? String(initial.area_size) : '');
   const [unit, setUnit] = useState<'m2' | 'ha'>(initial?.area_unit ?? 'm2');
   const [code, setCode] = useState(initial?.code ?? '');
-  const [kind, setKind] = useState<Exclude<AreaKind, 'growing'>>(initial?.kind && initial.kind !== 'growing' ? initial.kind : 'crop');
   const cfg = useConfig();
+  // lựa chọn = mã mục trong Nhóm loại sản phẩm, hoặc 'facility' (cơ sở vật chất: loại riêng của khu, không tạo vụ)
+  const [choice, setChoice] = useState(initial?.kind === 'facility' ? 'facility' : cfg.choiceOf('product_groups', initial?.kind ?? 'crop', initial?.kind_item));
+  const isFacility = choice === 'facility';
   const [housing, setHousing] = useState<string>(housingText(initial?.housing));
   const housingChoices = cfg.housing().includes(housing) || !housing ? cfg.housing() : [...cfg.housing(), housing]; // giữ giá trị cũ dù đã bỏ khỏi cấu hình
   const [desc, setDesc] = useState(initial?.description ?? '');
@@ -113,15 +115,15 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
         <label>Tên trang trại<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
         <div className="pair">
           <label>Loại khu
-            <select value={kind} onChange={(e) => setKind(e.target.value as Exclude<AreaKind, 'growing'>)}>
-              {cfg.productGroups().map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+            <select value={choice} onChange={(e) => setChoice(e.target.value)}>
+              {cfg.productGroups(choice).map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
               <option value="facility">Cơ sở vật chất</option>
             </select>
           </label>
           <label>Mã khu / chuồng<input value={code} maxLength={40} onChange={(e) => setCode(e.target.value)} placeholder="Ví dụ: C-THIT-02" /></label>
         </div>
-        {kind === 'facility' && <p className="muted">Cơ sở vật chất (cổng, kho, biogas, hố sát trùng…) chỉ để ghi việc, không tạo vụ.</p>}
-        {kind !== 'facility' && (
+        {isFacility && <p className="muted">Cơ sở vật chất (cổng, kho, biogas, hố sát trùng…) chỉ để ghi việc, không tạo vụ.</p>}
+        {!isFacility && (
           <label>Kiểu Nhà/Chuồng
             <select value={housing} onChange={(e) => setHousing(e.target.value)}>
               <option value="">— Không áp dụng —</option>
@@ -148,7 +150,8 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
             const n = size.trim() === '' ? null : Number(size.replace(',', '.'));
             if (n !== null && (Number.isNaN(n) || n < 0)) return setErr('Diện tích phải là số không âm.');
             setErr(null);
-            void onSave({ name, location, area_size: n, area_unit: unit, description: desc, image, code, kind, housing: kind !== 'facility' && housing ? housing : null }).catch(() => undefined);
+            const r = isFacility ? { base: 'facility', item: null } : cfg.resolve('product_groups', choice);
+            void onSave({ name, location, area_size: n, area_unit: unit, description: desc, image, code, kind: r.base as Exclude<AreaKind, 'growing'>, kind_item: r.item ?? (initial?.kind_item ? null : undefined), housing: !isFacility && housing ? housing : null }).catch(() => undefined);
           }}>Lưu</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>
