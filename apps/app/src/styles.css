@@ -573,7 +573,7 @@ button.range-btn:disabled { opacity: .35; cursor: default; }
 .flow-wrap { margin: 4px 0 12px; }
 .flow-title { margin: 0 0 8px; font-weight: 700; color: var(--green-d); font-size: .95rem; }
 .flow { display: grid; grid-template-columns: 1fr 22px 1fr 22px 1fr; grid-template-rows: auto 22px auto; align-items: center; justify-items: center; row-gap: 2px; }
-.flow-step { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; padding: 4px; cursor: pointer; font: inherit; color: inherit; min-width: 0; }
+.flow-step { text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; padding: 4px; cursor: pointer; font: inherit; color: inherit; min-width: 0; }
 .flow-circle { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 1.7rem; background: var(--card); border: 2px solid var(--line); box-shadow: var(--shadow); }
 .flow-step:hover .flow-circle, .flow-step:focus-visible .flow-circle { border-color: var(--green); }
 .flow-label { font-weight: 700; font-size: .85rem; text-align: center; color: var(--green-d); }

@@ -4,16 +4,19 @@ import { canSeeConfig, declareSections, productionSections, reportSections, type
 import { hasRole } from '../lib/roles';
 import type { MyOrg } from '../lib/orgs';
 
-interface Step { key: string; label: string; icon: string; tab: TabId; section?: string }
+interface Step { key: string; label: string; icon: string; tab?: TabId; section?: string; href?: string }
+
+/** Trang website công khai (mở ở thẻ mới) */
+const SITE_URL = ((import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined) || 'https://agricovi.com').replace(/\/$/, '');
 
 /** Vị trí các bước trên lưới 5 cột (cột chẵn là mũi tên): hàng 1 đi sang phải, xuống một dòng, hàng 3 quay lại bên trái */
-const POS: { r: number; c: number }[] = [{ r: 1, c: 1 }, { r: 1, c: 3 }, { r: 1, c: 5 }, { r: 3, c: 5 }, { r: 3, c: 3 }];
-/** Mũi tên đi sau mỗi bước: → → ↓ ← */
-const ARROW: { r: number; c: number; ch: string }[] = [{ r: 1, c: 2, ch: '→' }, { r: 1, c: 4, ch: '→' }, { r: 2, c: 5, ch: '↓' }, { r: 3, c: 4, ch: '←' }];
+const POS: { r: number; c: number }[] = [{ r: 1, c: 1 }, { r: 1, c: 3 }, { r: 1, c: 5 }, { r: 3, c: 5 }, { r: 3, c: 3 }, { r: 3, c: 1 }];
+/** Mũi tên đi sau mỗi bước: → → ↓ ← ← */
+const ARROW: { r: number; c: number; ch: string }[] = [{ r: 1, c: 2, ch: '→' }, { r: 1, c: 4, ch: '→' }, { r: 2, c: 5, ch: '↓' }, { r: 3, c: 4, ch: '←' }, { r: 3, c: 2, ch: '←' }];
 
 /**
  * Trang chủ, phần dưới hộp chào:
- * - quản lý trở lên: sơ đồ luồng công việc Cấu hình → Khai báo → Sản xuất → Báo cáo → Hồ sơ web, bấm vào bước nào là vào phần đó;
+ * - quản lý trở lên: sơ đồ luồng công việc Cấu hình → Khai báo → Sản xuất → Báo cáo → Hồ sơ web → Website, bấm vào bước nào là vào phần đó;
  * - nhân viên: chỉ hai lối tắt Chấm công và Bảng lương (nếu được dùng).
  * Chỉ hiện bước/lối tắt mà người dùng được phép (giống menu).
  */
@@ -26,6 +29,7 @@ export function HomeLinks({ org, onGo }: { org: MyOrg; onGo: (tab: TabId, sectio
     out.push({ key: 'production', label: 'Sản xuất', icon: '🌱', tab: 'production' });
     if (reportSections(org).length > 0) out.push({ key: 'reports', label: 'Báo cáo', icon: '📊', tab: 'reports' });
     if (reportSections(org).some((s) => s.id === 'commerce')) out.push({ key: 'web', label: 'Hồ sơ web', icon: '🌐', tab: 'reports', section: 'commerce' });
+    out.push({ key: 'site', label: 'Website', icon: '🔗', href: SITE_URL });
     return out.slice(0, POS.length);
   }, [org]);
 
@@ -57,12 +61,13 @@ export function HomeLinks({ org, onGo }: { org: MyOrg; onGo: (tab: TabId, sectio
     <div className="flow-wrap">
       <p className="flow-title">Quản lý và kết nối cơ sở theo luồng công việc:</p>
       <nav className="flow" aria-label="Luồng công việc">
-        {steps.map((s, i) => (
-          <button key={s.key} className="flow-step" style={{ gridRow: POS[i]!.r, gridColumn: POS[i]!.c }} onClick={() => onGo(s.tab, s.section)}>
-            <span className="flow-circle" aria-hidden>{s.icon}</span>
-            <span className="flow-label">{s.label}</span>
-          </button>
-        ))}
+        {steps.map((s, i) => {
+          const inner = (<><span className="flow-circle" aria-hidden>{s.icon}</span><span className="flow-label">{s.label}</span></>);
+          const style = { gridRow: POS[i]!.r, gridColumn: POS[i]!.c };
+          return s.href
+            ? <a key={s.key} className="flow-step" style={style} href={s.href} target="_blank" rel="noopener noreferrer">{inner}</a>
+            : <button key={s.key} className="flow-step" style={style} onClick={() => onGo(s.tab!, s.section)}>{inner}</button>;
+        })}
         {steps.slice(0, -1).map((_, i) => (
           <span key={`a${i}`} className="flow-arrow" aria-hidden style={{ gridRow: ARROW[i]!.r, gridColumn: ARROW[i]!.c }}>{ARROW[i]!.ch}</span>
         ))}
