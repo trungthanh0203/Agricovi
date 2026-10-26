@@ -90,3 +90,15 @@ test('xuất CSV: có BOM, bao dấu ngoặc kép khi có dấu chấm phẩy / 
   assert.match(csv, /"x;y";"nói ""ok"""/);
   assert.match(csv, /"dòng\nhai"/);
 });
+
+test('bộ sổ theo loại: vật nuôi dùng bộ heo, trồng trọt bộ dưa lưới, thủy sản và loại khác dùng bộ chung; bộ chung dựng được từ dữ liệu rỗng', async () => {
+  const { GENERAL_BOOKS } = await import('../../apps/app/src/lib/logbook/index.ts');
+  assert.equal(logbookSetFor('livestock'), PIG_BOOKS);
+  assert.equal(logbookSetFor('crop'), MELON_BOOKS);
+  assert.equal(logbookSetFor(undefined), MELON_BOOKS);
+  assert.equal(logbookSetFor('aquatic'), GENERAL_BOOKS);
+  assert.equal(logbookSetFor('other'), GENERAL_BOOKS);
+  const empty = { orgName: 'o', cycle: null, areaName: '', areaLocation: null, productName: '', productKind: 'aquatic', unit: 'con', from: '2026-01-01', to: '2026-12-31', entries: [], receipts: [], harvests: [], incidents: [], actions: [], countEvents: [{ id: 'e', event_date: '2026-10-01', kind: 'dead', quantity: 3, note: null }], stages: [], milestones: [], areas: [], audits: [], usesAvailable: true };
+  for (const b of GENERAL_BOOKS.books) assert.ok(Array.isArray(b.build(empty)), b.id);
+  assert.deepEqual(GENERAL_BOOKS.books.find((b) => b.id === 'counts').build(empty)[0].slice(0, 3), ['01/10/2026', 'Chết', '3']);
+});

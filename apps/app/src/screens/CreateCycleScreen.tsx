@@ -11,6 +11,8 @@ import { createCycle, fetchQuotaContexts, type QuotaContext } from '../lib/produ
 import { addDays, fmtDate } from '../lib/dates';
 import { listTemplates, loadTemplate, type StageRow, type TemplateRow } from '../lib/templates';
 import { useTable } from '../lib/tables';
+import { useConfig } from '../lib/config';
+import type { AreaRow } from '../lib/db';
 
 /**
  * Tạo vụ mới (P2): BẮT BUỘC chọn quy trình mẫu của cơ sở sở hữu vụ. Giai đoạn và ngày kế hoạch của vụ
@@ -20,9 +22,11 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const { active } = useOrgs();
   const areas = useTable('areas');
   const { cropTypes } = useCatalog();
+  const cfg = useConfig();
 
   const myAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false && a.kind !== 'facility'); // khu đã dừng hoặc là cơ sở vật chất thì không tạo vụ
   const [areaId, setAreaId] = useState('');
+  const [productId, setProductId] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [templates, setTemplates] = useState<TemplateRow[] | null>(null);
   const [stages, setStages] = useState<StageRow[]>([]);
@@ -38,9 +42,21 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const online = useOnline();
   const [busy, setBusy] = useState(false);
 
+  // Phân khu hợp loại với sản phẩm: cùng loại, hoặc phân khu/sản phẩm loại "Khác". Phân khu khác loại vẫn chọn được nhưng có cảnh báo.
+  const baseKind = (k?: string | null) => (k === 'growing' || !k ? 'crop' : k);
+  const prodKind = cropTypes.find((c) => c.id === productId)?.kind;
+  const fits = (a: AreaRow) => !prodKind || prodKind === 'other' || baseKind(a.kind) === 'other' || baseKind(a.kind) === prodKind;
+  const fitAreas = myAreas.filter(fits);
+  const otherAreas = myAreas.filter((a) => !fits(a));
+  const pickedArea = myAreas.find((a) => a.id === areaId) ?? null;
+  const areaMismatch = pickedArea && !fits(pickedArea);
+  const isAnimal = prodKind === 'livestock' || prodKind === 'aquatic';
+
   useEffect(() => {
-    if (!areaId && myAreas[0]) setAreaId(myAreas[0].id);
-  }, [myAreas, areaId]);
+    // chọn sẵn phân khu đầu tiên hợp loại; đổi sản phẩm sang loại khác thì chọn lại nếu phân khu đang chọn không hợp
+    const cur = myAreas.find((a) => a.id === areaId);
+    if (!cur || !fits(cur)) { const next = fitAreas[0] ?? myAreas[0]; if (next && next.id !== areaId) setAreaId(next.id); }
+  }, [myAreas, areaId, productId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Hộ: chọn ghi theo hộ riêng hoặc theo HTX đang tham gia (v1.2 mục 4.1). HTX: luôn ghi theo HTX.
   useEffect(() => {
@@ -72,6 +88,15 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   }, [templateId]);
 
   const cropName = (id: string) => cropTypes.find((c) => c.id === id)?.name ?? '—';
+  // Sản phẩm chọn được: sản phẩm đang dùng có ít nhất một quy trình có giai đoạn; quy trình hiện theo sản phẩm đã chọn
+  const productsWithTpl = cropTypes.filter((c) => c.is_active && (templates ?? []).some((t) => t.crop_type_id === c.id)).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const templatesFor = (templates ?? []).filter((t) => t.crop_type_id === productId);
+  function pickProduct(id: string) {
+    setProductId(id);
+    const list = (templates ?? []).filter((t) => t.crop_type_id === id);
+    setTemplateId(list.length === 1 ? list[0]!.id : '');
+  }
+  useEffect(() => { if (!productId && productsWithTpl.length === 1) pickProduct(productsWithTpl[0]!.id); }, [productsWithTpl.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const plan = useMemo(() => {
     let from = startDate || todayLocal();
     return stages.map((s) => {
@@ -94,7 +119,6 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     : null;
   const ownerLabel = (c: QuotaContext) => (c.kind === 'own' ? `Hộ riêng (${c.org_name})` : `HTX ${c.org_name}`);
   const picked = templates?.find((t) => t.id === templateId) ?? null;
-  const prodKind = cropTypes.find((c) => c.id === chosenTemplate?.crop_type_id)?.kind;
   const defaultUnit = defaultCountUnit(prodKind);
   const total = stages.reduce((s, x) => s + x.duration_days, 0);
 
@@ -102,6 +126,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     e.preventDefault();
     setError(null);
     if (!areaId) return setError('Hãy chọn phân khu. Nếu chưa có, quay lại và thêm phân khu trước.');
+    if (!productId) return setError('Hãy chọn sản phẩm (cây trồng, vật nuôi…) của vụ.');
     if (!templateId) return setError('Hãy chọn quy trình mùa vụ. Vụ phải được tạo theo một quy trình.');
     // Báo sớm khi biết chắc đã hết hạn mức; máy chủ vẫn là nơi kiểm tra cuối cùng
     if (startNow && chosen && (!chosen.is_current || (chosen.max_cycles !== null && chosen.used_cycles >= chosen.max_cycles))) {
@@ -113,6 +138,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     }
     const cropInfoResult = formToCropInfo(cropInfo);
     if ('error' in cropInfoResult) return setError(cropInfoResult.error);
+    // chỉ nhắc, không bắt buộc: số con là gốc để tính hao hụt, mật độ và FCR
+    if (isAnimal && !cropInfo.plants.trim() && !window.confirm('Chưa nhập số con nhập. Không có số này app chưa tính được hao hụt, mật độ và FCR (bổ sung sau ở Sửa vụ vẫn được). Vẫn tạo vụ?')) return;
     setBusy(true);
     try {
       const newId = await createCycle({
@@ -146,13 +173,6 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
         </>
       ) : (
         <form onSubmit={onSubmit} noValidate>
-          <label>
-            Phân khu
-            <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
-              {myAreas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-            </select>
-          </label>
-
           {choices && (
             <fieldset>
               <legend>Vụ này ghi theo</legend>
@@ -176,10 +196,17 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           {!online && <p className="msg warn">Đang offline. Tạo vụ cần có mạng để máy chủ kiểm hạn mức; hãy kết nối mạng rồi bấm Tạo vụ.</p>}
 
           <label>
+            Sản phẩm (cây trồng, vật nuôi…)
+            <select value={productId} onChange={(e) => pickProduct(e.target.value)} disabled={!online || templates === null}>
+              <option value="">{templates === null ? 'Đang tải…' : '— Chọn sản phẩm —'}</option>
+              {productsWithTpl.map((c) => <option key={c.id} value={c.id}>{c.name} · {cfg.groupLabel(c.kind, c.kind_item)}</option>)}
+            </select>
+          </label>
+          <label>
             Quy trình mùa vụ
-            <select value={templateId} onChange={(e) => setTemplateId(e.target.value)} disabled={!online || templates === null}>
-              <option value="">{templates === null ? 'Đang tải…' : '— Chọn quy trình —'}</option>
-              {(templates ?? []).map((t) => <option key={t.id} value={t.id}>{t.name} · {cropName(t.crop_type_id)}</option>)}
+            <select value={templateId} onChange={(e) => setTemplateId(e.target.value)} disabled={!online || templates === null || !productId}>
+              <option value="">{!productId ? 'Chọn sản phẩm trước' : '— Chọn quy trình —'}</option>
+              {templatesFor.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </label>
           {templates !== null && templates.length === 0 && (
@@ -188,6 +215,26 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
             </p>
           )}
           {picked?.note && <p className="muted">{picked.note}</p>}
+
+          <label>
+            Phân khu
+            <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
+              {fitAreas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              {otherAreas.length > 0 && (
+                <optgroup label="Phân khu khác loại (nên tránh)">
+                  {otherAreas.map((a) => <option key={a.id} value={a.id}>{a.name} · {cfg.groupLabel(a.kind, a.kind_item)}</option>)}
+                </optgroup>
+              )}
+            </select>
+          </label>
+          {areaMismatch && <p className="msg warn" role="status">Phân khu này thuộc loại "{cfg.groupLabel(pickedArea?.kind, pickedArea?.kind_item)}", còn sản phẩm thuộc loại "{cfg.groupLabel(prodKind, null)}". Vẫn tạo được, nhưng nên chọn phân khu đúng loại để báo cáo và nhãn hiển thị đúng.</p>}
+
+          {isAnimal && (
+            <>
+              <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="count" />
+              {!cropInfo.plants.trim() && <p className="msg warn" role="status">Nên nhập số con nhập chuồng/thả giống: có số này app mới tính được hao hụt, mật độ và FCR. Không bắt buộc, bổ sung sau cũng được.</p>}
+            </>
+          )}
 
           <label>
             Tên vụ (không bắt buộc)
@@ -216,7 +263,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           {/* Các nhóm không bắt buộc, gom theo nội dung và thu gọn */}
           <Collapsible inline title="＋ Giống, diện tích, số lượng (không bắt buộc)"
             summary={[cropInfo.variety, cropInfo.area && `${cropInfo.area} ${cropInfo.unit}`, cropInfo.plants && `${cropInfo.plants} ${cropInfo.countUnit || defaultUnit}`].filter(Boolean).join(' · ') || undefined}>
-            <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="scale" />
+            <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts={isAnimal ? 'area' : 'scale'} />
             <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="seed" />
           </Collapsible>
 

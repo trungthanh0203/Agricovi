@@ -32,8 +32,10 @@ export function formToCropInfo(f: CropInfoForm): { info: CropInfo } | { error: s
 }
 
 /** Các ô giống, diện tích, số cây, nguồn giống, ngày gieo/trồng của vụ (không bắt buộc). Dùng khi tạo vụ và sửa vụ. */
-export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, parts = 'all' }: { value: CropInfoForm; onChange: (v: CropInfoForm) => void; defaultUnit?: string; kind?: ProductKind; parts?: 'all' | 'scale' | 'seed' | 'manage' }) {
+export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, parts = 'all' }: { value: CropInfoForm; onChange: (v: CropInfoForm) => void; defaultUnit?: string; kind?: ProductKind; parts?: 'all' | 'scale' | 'area' | 'count' | 'seed' | 'manage' }) {
   const show = (p: 'scale' | 'seed' | 'manage') => parts === 'all' || parts === p;
+  const showArea = show('scale') || parts === 'area';
+  const showCount = show('scale') || parts === 'count';
   const L = infoLabels(kind);
   const cnt = value.countUnit.trim() || defaultUnit;
   const [, force] = useState(0);
@@ -44,7 +46,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
   })();
   return (
     <>
-      {show('scale') && <>
+      {showArea && <>
       <div className="pair">
         <label>{L.area}<input value={value.area} inputMode="decimal" onChange={(e) => set({ area: e.target.value })} placeholder="Không bắt buộc" /></label>
         <label>Đơn vị
@@ -59,6 +61,8 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
           </select>
         </label>
       </div>
+      </>}
+      {showCount && <>
       <div className="pair">
         <label>Số {cnt}<input value={value.plants} inputMode="numeric" onChange={(e) => set({ plants: e.target.value })} placeholder="Không bắt buộc" /></label>
         <label>Mật độ<input value={density !== null ? `${density.toLocaleString('vi-VN')} ${cnt}/1.000 m²` : ''} readOnly placeholder="Tự tính" /></label>

@@ -21,7 +21,7 @@ export function CycleGrowth({ cycleId }: { cycleId: string }) {
   const harvests = useTable('harvests');
   const { cropTypes } = useCatalog();
   const cycle = cycles.find((c) => c.id === cycleId);
-  const livestock = cropTypes.find((c) => c.id === cycle?.crop_type_id)?.kind === 'livestock';
+  const livestock = cropTypes.find((c) => c.id === cycle?.crop_type_id)?.kind === 'livestock'; // thủy sản chưa có phiếu cân chung nên chưa bật
   const [raw, setRaw] = useState<GrowthRaw | null>(null);
   const [error, setError] = useState<string | null>(null);
 

@@ -141,11 +141,11 @@ export function TemplateMilestones({ templateId, kind, canEdit }: { templateId: 
   const load = () => listTemplateMilestones(templateId).then(setItems).catch((e) => setError(friendlyError(e)));
   useEffect(() => { if (online) void load(); }, [templateId, online]); // eslint-disable-line react-hooks/exhaustive-deps
   const run = async (fn: () => Promise<unknown>) => { setBusy(true); setError(null); try { await fn(); await load(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); } };
-  const suggestions = MILESTONE_SUGGESTIONS[kind === 'livestock' ? 'livestock' : 'crop'].filter((s) => !(items ?? []).some((i) => i.title === s.title));
+  const suggestions = MILESTONE_SUGGESTIONS[kind === 'livestock' || kind === 'aquatic' ? 'livestock' : 'crop'].filter((s) => !(items ?? []).some((i) => i.title === s.title));
 
   return (
     <Collapsible title="Mốc nhắc việc an toàn" summary={items ? `${items.length} mốc` : online ? 'Đang tải…' : 'Cần có mạng'}>
-      <p className="muted">Mốc tự sinh nhắc ở Trang chủ cho mỗi vụ tạo từ quy trình này. Mốc "trước ngày thu" tự dời khi ngày thu dự kiến đổi. {kind === 'livestock' ? 'Lịch vaccine, tẩy giun do thú y của trại chốt: hãy tự thêm theo lịch đó.' : ''}</p>
+      <p className="muted">Mốc tự sinh nhắc ở Trang chủ cho mỗi vụ tạo từ quy trình này. Mốc "trước ngày thu" tự dời khi ngày thu dự kiến đổi. {kind === 'livestock' ? 'Lịch vaccine, tẩy giun do thú y của trại chốt: hãy tự thêm theo lịch đó.' : kind === 'aquatic' ? 'Lịch xử lý nước, thuốc và thu tỉa theo hướng dẫn kỹ thuật của bạn: hãy tự thêm mốc.' : ''}</p>
       {error && <p className="msg error" role="alert">{error}</p>}
       {(items ?? []).map((i) => (
         <div className="card slim" key={i.id}>
