@@ -320,7 +320,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Giấy phép, truy xuất và hồ sơ trên website',
         details: [
-          'Tài khoản → Giấy phép: lưu giấy chứng nhận, ngày hết hạn; app nhắc khi sắp hết hạn.',
+          'Khai báo → Giấy phép: lưu giấy chứng nhận, ngày hết hạn; app nhắc khi sắp hết hạn.',
           'Mỗi vụ có mã QR truy xuất; Báo cáo → Hồ sơ website để giới thiệu hợp tác xã và sản phẩm với khách.',
         ],
         go: { tab: 'reports', section: 'commerce', label: 'Mở Hồ sơ website' },
@@ -392,7 +392,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Giấy phép, truy xuất, hồ sơ website và đơn khách',
         details: [
-          'Tài khoản → Giấy phép: lưu chứng nhận, theo dõi ngày hết hạn.',
+          'Khai báo → Giấy phép: lưu chứng nhận, theo dõi ngày hết hạn.',
           'In mã QR truy xuất cho từng vụ; soạn hồ sơ công ty để hiện trên website.',
           'Báo cáo → Đơn khách từ website: báo giá, xử lý đơn đặt hàng và ghi doanh thu từ đơn.',
         ],

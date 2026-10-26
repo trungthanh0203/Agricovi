@@ -364,7 +364,7 @@ button.primary:active { transform: translateY(1px); }
   linear-gradient(120deg, var(--green-d) 0%, var(--green) 62%, #38a66a 100%); }
 .hero::before { content: '🌿'; position: absolute; right: 14px; top: 4px; font-size: 3.4rem; opacity: .22; transform: rotate(18deg); pointer-events: none; }
 .hero::after { content: '🌾'; position: absolute; right: 64px; bottom: -10px; font-size: 3rem; opacity: .16; transform: rotate(-12deg); pointer-events: none; }
-.hero h1 { position: relative; margin: 0 0 8px; font-size: 1.45rem; max-width: calc(100% - 52px); }
+.hero h1 { position: relative; margin: 0 0 6px; font-size: 1.05rem; max-width: calc(100% - 52px); }
 .hero-top { position: relative; }
 .hero small { font-weight: 600; opacity: .95; }
 

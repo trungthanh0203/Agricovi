@@ -2,7 +2,6 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Collapsible } from '../components/Collapsible';
 import { DemoDataCard } from '../components/DemoDataCard';
 import { InvitationsPanel } from '../components/InvitationsPanel';
-import { LicensesSection, licenseStatus } from '../components/LicensesSection';
 import { MigrateImages } from '../components/MigrateImages';
 import { PlanCard } from '../components/PlanCard';
 import { QrCard } from '../components/QrCard';
@@ -10,7 +9,7 @@ import { useAuth } from '../lib/auth';
 import { ADMIN_URL } from "../lib/platformAdmin";
 import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
-import type { LicenseRow } from '../lib/licenses';
+import { listLicenses, type LicenseRow } from '../lib/licenses';
 import { useOrgs } from '../lib/orgs';
 import { PERM_LEVEL_LABEL, PERM_MODULE_LABEL, PERM_MODULES } from '../lib/permissions';
 import { changeMyPassword, fetchDisplayName, fetchMyWork, renameOrg, saveDisplayName, type MyWork } from '../lib/profile';
@@ -38,6 +37,10 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
     void fetchStaffStatus(uid).then((s) => { setIsStaff(Boolean(s?.is_staff)); setStaffName(s?.full_name ?? null); });
     void fetchDisplayName(uid).then(setDisplay).catch(() => undefined);
   }, [uid]);
+  // danh sách giấy phép chỉ để đính kèm vào mã QR tài khoản (quản lý giấy phép ở Khai báo → Giấy phép)
+  useEffect(() => {
+    if (active && navigator.onLine) void listLicenses(active.id).then(setLicenses).catch(() => setLicenses([]));
+  }, [active?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (uid && active) void fetchMyWork(uid, active.id).then(setWork).catch(() => setWork(null));
   }, [uid, active]);
@@ -46,7 +49,6 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
   const email = session?.user.email ?? '';
   const login = email.includes('@sdt.') ? `Số điện thoại ${email.split('@')[0]}` : email; // nhân viên đăng nhập bằng số điện thoại
   const shownName = display ?? staffName ?? email.split('@')[0] ?? '';
-  const soon = licenses.filter((l) => { const s = licenseStatus(l); return s.cls.includes('warn') || s.cls.includes('err'); }).length;
 
   return (
     <section>
@@ -99,12 +101,6 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
       {active && isOwner(active.roles) && (
         <Collapsible title="Gói dịch vụ">
           <PlanCard />
-        </Collapsible>
-      )}
-
-      {active && (
-        <Collapsible title="Giấy phép, chứng chỉ" summary={licenses.length > 0 ? `${licenses.length} giấy${soon > 0 ? ` · ${soon} cần chú ý` : ''}` : 'chưa có'} warn={soon > 0}>
-          <LicensesSection orgId={active.id} canEdit={isOwner(active.roles)} onLoaded={setLicenses} />
         </Collapsible>
       )}
 

@@ -4,6 +4,7 @@ import { ADMIN_URL } from '../lib/platformAdmin';
 import { TAB_LABEL, type TabId } from '../lib/tabs';
 import type { MyOrg } from '../lib/orgs';
 
+const ORG_TYPE_LABEL: Record<'household' | 'cooperative', string> = { household: 'Hộ nuôi trồng', cooperative: 'Hợp tác xã' };
 const TAB_ICON: Partial<Record<TabId, string>> = { declare: '🧰', config: '⚙️', guide: '📖', profile: '👤', reports: '📊' };
 const TAB_HINT: Partial<Record<TabId, string>> = {
   declare: 'Trang trại, sản phẩm, vật tư, nhân sự, tổ',
@@ -59,7 +60,7 @@ export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, 
 
         <div className="drawer-body">
           <div className="drawer-org">
-            <span className="muted">Cơ sở đang làm việc</span>
+            <span className="muted">{active ? ORG_TYPE_LABEL[active.type] : 'Tài khoản'}</span>
             {orgs.length > 1 ? (
               <select value={active?.id ?? ''} onChange={(e) => { onSwitchOrg(e.target.value); onClose(); }} aria-label="Chuyển cơ sở">
                 {orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}

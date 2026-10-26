@@ -1,3 +1,5 @@
+import { LicensesSection } from '../components/LicensesSection';
+import { isOwner } from '../lib/roles';
 import { CooperativeSection } from '../components/CooperativeSection';
 import { MembersSection } from '../components/MembersSection';
 import { PositionsSection } from '../components/PositionsSection';
@@ -42,6 +44,8 @@ export function DeclareTab({ section, onSection }: { section?: string; onSection
         <TemplatesSection />
       ) : current === 'areas' ? (
         <AreasSection />
+      ) : current === 'licenses' ? (
+        <LicensesSection orgId={active.id} canEdit={isOwner(active.roles)} />
       ) : current === 'members' ? (
         <MembersSection org={active} />
       ) : current === 'positions' ? (
