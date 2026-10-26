@@ -54,3 +54,14 @@
 2. **B1, B2, B4** để hoàn chỉnh mô hình quản lý.
 3. **C1 Giao việc**, rồi **C2 Thông báo đẩy** (giá trị lớn cho mô hình 3–5).
 4. **C3 Phiếu đo** khi đi theo VietGAP; phần còn lại theo phản hồi dùng thử.
+
+## F. Rà soát phân biệt trồng trọt / vật nuôi / thủy sản (27/10/2026) — chờ chủ sản phẩm chọn
+| # | Vấn đề đã xác nhận trong mã | Hướng xử lý đề xuất | Cỡ |
+|---|---|---|---|
+| F1 | **Đầu việc và gói trường theo CƠ SỞ, không theo loại**: "Áp dụng gói heo" ghi đè form Thu hoạch của dưa (và ngược lại); Ghi việc hiện mọi đầu việc (Thụ phấn cho vụ heo, Tiêm vaccine cho vụ dưa) | Đầu việc có "áp dụng cho loại" và form riêng theo loại; Ghi việc/Thu hoạch lọc theo loại của vụ | L |
+| F2 | **Thủy sản gần như chưa có**: sổ nhật ký dùng bộ dưa lưới, mốc gợi ý "ngưng bón phân" của trồng trọt hiện cho thủy sản, Tăng trọng/FCR chỉ bật cho vật nuôi, chưa có gói trường/bảng kiểm | Sửa các chỗ sai ngay; làm gói thủy sản khi có tài liệu | S + M |
+| F3 | **Phân khu và sản phẩm không kiểm khớp**: phân khu "Chăn nuôi" vẫn tạo được vụ trồng; chọn phân khu trước nên chưa biết loại | Đổi thứ tự Tạo vụ: Sản phẩm → Quy trình → Phân khu (lọc theo loại, cảnh báo khác loại) | S–M |
+| F4 | **Số con ban đầu** nằm trong khung thu gọn không bắt buộc, trong khi là gốc của hao hụt, mật độ, FCR | Vật nuôi/thủy sản: hiện nổi bật "Số con nhập", nhắc/bắt buộc | S |
+| F5 | **Mô hình 1–2 làm vật nuôi mất FCR** (FCR cần Kho và cám xuất cho vụ) mà không báo | Nhắc rõ, hoặc ô "cám đã dùng (kg)" nhập tay thay thế | S–M |
+| F6 | **Tổng kết vụ chỉ tính theo kg và m²**; vật nuôi cần theo con: hao %, kg/con, giá thành/kg thịt hơi, lãi/con | Tổng kết theo loại | M |
+| F7 | Thiếu dữ liệu mẫu và thử nghiệm cho vật nuôi, thủy sản | Dữ liệu mẫu heo, cá; bài thử riêng | S |
