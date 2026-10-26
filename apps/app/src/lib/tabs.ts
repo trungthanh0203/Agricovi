@@ -61,7 +61,7 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
   return simpleFilter(org, 'declare', [
     canPerm(org.perms, 'declare') ? { id: 'areas' as const, label: 'Trang trại' } : null,
     canPerm(org.perms, 'declare') ? { id: 'crops' as const, label: 'Sản phẩm' } : null,
-    canPerm(org.perms, 'inventory') ? { id: 'places' as const, label: 'Kho và đơn vị' } : null,
+    canPerm(org.perms, 'inventory') ? { id: 'places' as const, label: 'Kho' } : null,
     canPerm(org.perms, 'declare') ? { id: 'templates' as const, label: 'Quy trình mẫu' } : null,
     canPerm(org.perms, 'declare') ? { id: 'worktypes' as const, label: 'Đầu việc' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư' } : null,

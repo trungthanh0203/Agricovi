@@ -292,6 +292,8 @@ export interface LocationRow {
   organization_id: string;
   name: string;
   description?: string | null;
+  /** Kho dùng cho các trang trại này; null/thiếu = tất cả trang trại */
+  area_ids?: string[] | null;
   is_active: boolean;
 }
 

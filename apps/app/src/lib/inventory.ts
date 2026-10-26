@@ -34,13 +34,15 @@ export async function syncInventoryDown(): Promise<void> {
   const [units, materialsFull, locations, balances] = await Promise.all([
     supabase.from('units_of_measure').select('id, code, name, organization_id'),
     supabase.from('materials').select(`${MATERIAL_COLUMNS}, ${MATERIAL_COLUMNS_D98}`),
-    supabase.from('inventory_locations').select('id, organization_id, name, description, is_active'),
+    supabase.from('inventory_locations').select('id, organization_id, name, description, is_active, area_ids'),
     supabase.from('inventory_balances').select('organization_id, location_id, material_id, balance, is_negative, receipts_missing_cost, last_receipt_date, last_adjust_date, last_adjust_delta, last_adjust_reason'),
   ]);
   // cột mới (D98) chưa có vì CSDL chưa cập nhật: tải bản cũ để Kho vẫn dùng được
+  const locationsFixed = locations.error && /column|schema cache/i.test(locations.error.message ?? '')
+    ? await supabase.from('inventory_locations').select('id, organization_id, name, description, is_active') : locations;
   const materials = materialsFull.error && /column|schema cache/i.test(materialsFull.error.message ?? '')
     ? await supabase.from('materials').select(MATERIAL_COLUMNS) : materialsFull;
-  for (const r of [units, materials, locations, balances]) if (r.error) throw r.error;
+  for (const r of [units, materials, locationsFixed, balances]) if (r.error) throw r.error;
 
   await db.transaction('rw', [db.units, db.materials, db.locations, db.balances], async () => {
     await Promise.all([db.units.clear(), db.materials.clear(), db.locations.clear(), db.balances.clear()]);
@@ -48,7 +50,7 @@ export async function syncInventoryDown(): Promise<void> {
     await db.materials.bulkPut(
       ((materials.data ?? []) as MaterialRow[]).map((m) => ({ ...m, reorder_threshold: m.reorder_threshold == null ? null : Number(m.reorder_threshold) })),
     );
-    await db.locations.bulkPut((locations.data ?? []) as LocationRow[]);
+    await db.locations.bulkPut((locationsFixed.data ?? []) as LocationRow[]);
     await db.balances.bulkPut(
       ((balances.data ?? []) as BalanceRow[]).map((b) => ({ ...b, balance: Number(b.balance), receipts_missing_cost: Number(b.receipts_missing_cost), last_adjust_delta: b.last_adjust_delta == null ? null : Number(b.last_adjust_delta) })),
     );
@@ -162,9 +164,12 @@ export async function addDefaultMaterials(orgId: string): Promise<number> {
   return Number(data ?? 0);
 }
 
-export async function createMaterial(orgId: string, m: { name: string; category: string; unitId: string; threshold: number | null; description?: string }): Promise<void> {
+export async function createMaterial(orgId: string, m: { name: string; category: string; unitId: string; threshold: number | null; description?: string; ext?: Partial<MaterialExt> }): Promise<void> {
   needOnline();
+  const ext: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(m.ext ?? {})) ext[k] = typeof v === 'string' ? v.trim() || null : v ?? null;
   const { error } = await client().from('materials').insert({
+    ...ext,
     id: crypto.randomUUID(),
     organization_id: orgId,
     name: m.name.trim(),
@@ -191,20 +196,21 @@ export async function updateMaterial(id: string, c: { name?: string; description
   await syncInventoryDown();
 }
 
-export async function createLocation(orgId: string, name: string, description = ''): Promise<string> {
+export async function createLocation(orgId: string, name: string, description = '', areaIds: string[] | null = null): Promise<string> {
   needOnline();
   const id = crypto.randomUUID();
-  const { error } = await client().from('inventory_locations').insert({ id, organization_id: orgId, name: name.trim(), description: description.trim() || null });
+  const { error } = await client().from('inventory_locations').insert({ id, organization_id: orgId, name: name.trim(), description: description.trim() || null, area_ids: areaIds && areaIds.length > 0 ? areaIds : null });
   if (error) throw error;
   await syncInventoryDown();
   return id;
 }
 
-export async function updateLocation(id: string, c: { name?: string; description?: string | null; is_active?: boolean }): Promise<void> {
+export async function updateLocation(id: string, c: { name?: string; description?: string | null; is_active?: boolean; area_ids?: string[] | null }): Promise<void> {
   needOnline();
   const patch: Record<string, unknown> = {};
   if (c.name !== undefined) patch.name = c.name.trim();
   if (c.description !== undefined) patch.description = c.description?.trim() || null;
+  if (c.area_ids !== undefined) patch.area_ids = c.area_ids && c.area_ids.length > 0 ? c.area_ids : null;
   if (c.is_active !== undefined) patch.is_active = c.is_active;
   const { error } = await client().from('inventory_locations').update(patch).eq('id', id);
   if (error) throw error;

@@ -88,3 +88,14 @@ test('cấu hình cơ sở: chủ/quản lý sửa, thành viên chỉ đọc; n
   await asUser(db, owner, `select set_org_config($1,'product_groups',array['Cây trồng','Gia súc','Thủy sản','Khác'])`, [org]);
   await db.query(`insert into production_areas (id,organization_id,name,kind,housing) values (gen_random_uuid(),$1,'A','aquatic','Nửa kín hở')`, [org]);
 });
+
+// Migration 0096: kho theo trang trại
+test('kho dùng cho trang trại nào: rỗng = tất cả; trang trại phải cùng cơ sở', async () => {
+  const { db, owner, org, area, area2 } = await setup();
+  const loc = (await db.query(`insert into inventory_locations (id,organization_id,name) values (gen_random_uuid(),$1,'Kho chính') returning id`, [org])).rows[0].id;
+  await asUser(db, owner, `update inventory_locations set area_ids=array[$2::uuid] where id=$1`, [loc, area]);
+  assert.deepEqual((await db.query(`select area_ids from inventory_locations where id=$1`, [loc])).rows[0].area_ids, [area]);
+  assert.match(await expectError(asUser(db, owner, `update inventory_locations set area_ids=array[$2::uuid] where id=$1`, [loc, area2])), /INVALID_AREA/);
+  await asUser(db, owner, `update inventory_locations set area_ids='{}' where id=$1`, [loc]);
+  assert.equal((await db.query(`select area_ids from inventory_locations where id=$1`, [loc])).rows[0].area_ids, null);
+});

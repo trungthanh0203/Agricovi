@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Collapsible } from '../components/Collapsible';
+import { UnitsConfig } from '../components/UnitsConfig';
 import { CONFIG_DEFS, joinItems, parseItems, saveConfig, useConfig, validateItems, type ConfigDef } from '../lib/config';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
@@ -15,6 +16,7 @@ export function ConfigTab() {
       <h1>Cấu hình</h1>
       <p className="muted">Nhập các mục cách nhau bằng dấu phẩy rồi bấm Lưu. Những chỗ cần chọn sẽ lấy danh sách từ đây.</p>
       {CONFIG_DEFS.map((d) => <ConfigRow key={d.id} def={d} orgId={cfg.org} items={cfg.items(d.id)} />)}
+      <UnitsConfig />
     </section>
   );
 }

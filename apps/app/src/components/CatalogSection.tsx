@@ -1,40 +1,34 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type MaterialRow } from '../lib/db';
+import { db, type LocationRow, type MaterialRow, type UnitRow } from '../lib/db';
 import { type MaterialExt } from '../lib/inventory';
 import { ImagePicker, Thumb } from './ImagePicker';
+import { AreaChoice } from './MemberAreas';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import {
-  createLocation, createMaterial, createUnit, formatQty, MATERIAL_GROUPS, parseNumber, updateLocation, updateMaterial,
+  createLocation, createMaterial, formatQty, MATERIAL_GROUPS, parseNumber, updateLocation, updateMaterial,
 } from '../lib/inventory';
 import { useTable } from '../lib/tables';
 
 /**
- * Danh mục vật tư, kho, đơn vị riêng: các bảng gọn, thêm nhanh một dòng, đổi tên, dừng/dùng lại.
- * Chỉ thay đổi khi có mạng (D22, D24). Đơn vị có sẵn (kg, lít, bao…) dùng chung, không sửa.
+ * Danh mục vật tư và kho: bảng gọn, thêm/sửa ở một biểu mẫu đầy đủ, dừng/dùng lại.
+ * Chỉ thay đổi khi có mạng (D22, D24). Đơn vị tính riêng nằm ở tab Cấu hình.
  */
 export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWrite: boolean; part: 'materials' | 'places' }) {
   const online = useOnline();
   const materials = useLiveQuery(() => db.materials.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const locations = useLiveQuery(() => db.locations.where('organization_id').equals(orgId).toArray(), [orgId], []);
   const units = useTable('units');
-  const orgUnits = units.filter((u) => u.organization_id === orgId);
+  const areas = useTable('areas').filter((a) => a.organization_id === orgId);
   const allUnits = [...units].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const unitName = (id: string) => units.find((u) => u.id === id)?.name ?? '';
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showOff, setShowOff] = useState(false);
-  const [editMat, setEditMat] = useState<string | null>(null);
-  const [editLoc, setEditLoc] = useState<string | null>(null);
-
-  const [mName, setMName] = useState('');
-  const [mDesc, setMDesc] = useState('');
-  const [lDesc, setLDesc] = useState('');
-  const [mUnit, setMUnit] = useState('');
-  const [lName, setLName] = useState('');
-  const [uName, setUName] = useState('');
+  const [formMat, setFormMat] = useState<string | 'new' | null>(null);
+  const [formLoc, setFormLoc] = useState<string | 'new' | null>(null);
 
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -45,14 +39,7 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
   const mats = materials.filter((m) => showOff || m.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const locs = locations.filter((l) => showOff || l.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const writable = canWrite && online;
-
-  function onAddMaterial(e: FormEvent) {
-    e.preventDefault();
-    if (mName.trim().length < 2) return setError('Hãy nhập tên vật tư.');
-    const unitId = mUnit || allUnits[0]?.id;
-    if (!unitId) return setError('Chưa tải được danh sách đơn vị. Hãy kết nối mạng rồi thử lại.');
-    void run(async () => { await createMaterial(orgId, { name: mName, category: '', unitId, threshold: null, description: mDesc }); setMName(''); setMDesc(''); });
-  }
+  const areaText = (l: LocationRow) => (!l.area_ids || l.area_ids.length === 0 ? 'Tất cả' : l.area_ids.map((id) => areas.find((a) => a.id === id)?.name).filter(Boolean).join(', '));
 
   return (
     <>
@@ -60,18 +47,20 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
       {!canWrite && <p className="muted">Bạn chỉ được xem danh mục. Chủ cơ sở cấp quyền nhập liệu kho cho từng người.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
-      {part === 'materials' && (<>
-      <h2 className="sect">Vật tư ({mats.length})</h2>
-      {canWrite && (
-        <form className="quickadd" onSubmit={onAddMaterial} noValidate>
-          <input value={mName} onChange={(e) => setMName(e.target.value)} placeholder="Thêm vật tư mới: nhập tên" aria-label="Tên vật tư mới" />
-          <input value={mDesc} onChange={(e) => setMDesc(e.target.value)} placeholder="Mô tả (nhãn hiệu, công dụng…)" aria-label="Mô tả vật tư mới" />
-          <select value={mUnit || allUnits[0]?.id || ''} onChange={(e) => setMUnit(e.target.value)} aria-label="Đơn vị tính" style={{ maxWidth: 130 }}>
-            {allUnits.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-          </select>
-          <button type="submit" className="primary" disabled={busy || !online}>Thêm</button>
-        </form>
+      {part === 'materials' && formMat !== null && (
+        <MaterialForm key={formMat} m={formMat === 'new' ? null : materials.find((x) => x.id === formMat) ?? null} units={allUnits} busy={busy || !writable}
+          onClose={() => setFormMat(null)}
+          onSave={(v) => run(async () => {
+            if (formMat === 'new') await createMaterial(orgId, { name: v.name, description: v.description, category: v.category ?? '', unitId: v.unitId, threshold: v.threshold, ext: v.ext });
+            else await updateMaterial(formMat, { name: v.name, description: v.description, category: v.category, threshold: v.threshold, ext: v.ext });
+            setFormMat(null);
+          })} />
       )}
+
+      {part === 'materials' && formMat === null && (<>
+      <h2 className="sect">Vật tư ({mats.length})</h2>
+      {canWrite && <button className="secondary" disabled={!writable} onClick={() => setFormMat('new')}>+ Thêm vật tư</button>}
+      <div className="tablewrap">
       <table className="grid">
         <thead><tr><th>Vật tư</th><th>Danh mục</th><th className="num">Báo sắp hết ≤</th>{canWrite && <th></th>}</tr></thead>
         <tbody>
@@ -79,124 +68,130 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
           {mats.map((m) => (
             <tr key={m.id} className={m.is_active ? '' : 'off'}>
               <td><Thumb src={m.image} />{m.name}{m.description && <span className="sub">{m.description}</span>}<span className="sub">{unitName(m.base_unit_id)}{m.is_active ? '' : ' · đã dừng'}</span></td>
-              <td className="muted">{m.category ?? '—'}{m.brand ? <span className="sub">{m.brand}</span> : null}</td>
+              <td className="muted">{MATERIAL_GROUPS.find((g) => g.id === m.material_group)?.label ?? m.category ?? '—'}{m.brand ? <span className="sub">{m.brand}</span> : null}</td>
               <td className="num">{m.reorder_threshold != null ? formatQty(m.reorder_threshold) : '—'}</td>
               {canWrite && (
                 <td className="act">
                   <button className="icon" disabled={busy || !writable} aria-label={m.is_active ? `Dừng ${m.name}` : `Dùng lại ${m.name}`}
                     onClick={() => void run(() => updateMaterial(m.id, { is_active: !m.is_active }))}>{m.is_active ? '⏸' : '▶'}</button>{' '}
-                  <button className="icon" aria-label={`Sửa ${m.name}`} onClick={() => setEditMat(editMat === m.id ? null : m.id)}>✎</button>
+                  <button className="icon" aria-label={`Sửa ${m.name}`} onClick={() => setFormMat(m.id)}>✎</button>
                 </td>
               )}
             </tr>
           ))}
         </tbody>
       </table>
-      {editMat && mats.concat(materials).find((m) => m.id === editMat) && (
-        <MaterialEditor key={editMat} m={materials.find((x) => x.id === editMat)!} busy={busy || !writable}
-          onSave={(c) => void run(async () => { await updateMaterial(editMat, c); setEditMat(null); })} onClose={() => setEditMat(null)} />
-      )}
+      </div>
 
       <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả vật tư đã dừng</label>
-      <p className="muted">⏸ dừng (không chọn được cho giao dịch mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Vật tư đã có lịch sử thì không xóa được, chỉ dừng.</p>
+      <p className="muted">⏸ dừng (không chọn được cho giao dịch mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Vật tư đã có lịch sử thì không xóa được, chỉ dừng. Muốn thêm đơn vị tính riêng: tab Cấu hình.</p>
       </>)}
 
-      {part === 'places' && (<>
-      <h2 className="sect">Kho ({locs.length})</h2>
-      {canWrite && (
-        <form className="quickadd" noValidate onSubmit={(e) => {
-          e.preventDefault();
-          if (lName.trim().length < 2) return setError('Hãy nhập tên kho.');
-          void run(async () => { await createLocation(orgId, lName, lDesc); setLName(''); setLDesc(''); });
-        }}>
-          <input value={lName} onChange={(e) => setLName(e.target.value)} placeholder="Thêm kho mới: nhập tên (ví dụ Kho chính)" aria-label="Tên kho mới" />
-          <input value={lDesc} onChange={(e) => setLDesc(e.target.value)} placeholder="Mô tả (vị trí, loại hàng chứa…)" aria-label="Mô tả kho mới" />
-          <button type="submit" className="primary" disabled={busy || !online}>Thêm</button>
-        </form>
+      {part === 'places' && formLoc !== null && (
+        <LocationForm key={formLoc} l={formLoc === 'new' ? null : locations.find((x) => x.id === formLoc) ?? null} busy={busy || !writable} onClose={() => setFormLoc(null)}
+          onSave={(v) => run(async () => {
+            if (formLoc === 'new') await createLocation(orgId, v.name, v.description, v.areaIds);
+            else await updateLocation(formLoc, { name: v.name, description: v.description, area_ids: v.areaIds });
+            setFormLoc(null);
+          })} orgId={orgId} />
       )}
+
+      {part === 'places' && formLoc === null && (<>
+      <h2 className="sect">Kho ({locs.length})</h2>
+      {canWrite && <button className="secondary" disabled={!writable} onClick={() => setFormLoc('new')}>+ Thêm kho</button>}
+      <div className="tablewrap">
       <table className="grid">
-        <thead><tr><th>Kho</th>{canWrite && <th></th>}</tr></thead>
+        <thead><tr><th>Tên kho</th><th>Mô tả</th><th>Trang trại</th>{canWrite && <th></th>}</tr></thead>
         <tbody>
-          {locs.length === 0 && <tr><td colSpan={2} className="muted">Chưa có kho nào{canWrite ? ' — hãy thêm kho đầu tiên ở ô trên.' : '.'}</td></tr>}
+          {locs.length === 0 && <tr><td colSpan={4} className="muted">Chưa có kho nào{canWrite ? ' — hãy thêm kho đầu tiên.' : '.'}</td></tr>}
           {locs.map((l) => (
             <tr key={l.id} className={l.is_active ? '' : 'off'}>
-              <td>
-                {editLoc === l.id ? (
-                  <LocationRename name={l.name} description={l.description ?? ''} busy={busy || !writable} onSave={(n, d) => void run(async () => { await updateLocation(l.id, { name: n, description: d }); setEditLoc(null); })} />
-                ) : (<>{l.name}{l.description && <span className="sub">{l.description}</span>}{!l.is_active && <span className="sub">Đã dừng</span>}</>)}
-              </td>
+              <td>{l.name}{!l.is_active && <span className="sub">Đã dừng</span>}</td>
+              <td>{l.description ?? ''}</td>
+              <td>{areaText(l)}</td>
               {canWrite && (
                 <td className="act">
-                  {editLoc === l.id ? (
-                    <button className="icon" aria-label="Đóng" onClick={() => setEditLoc(null)}>✕</button>
-                  ) : (
-                    <>
-                      <button className="icon" disabled={busy || !writable} aria-label={l.is_active ? `Dừng ${l.name}` : `Dùng lại ${l.name}`}
-                        onClick={() => void run(() => updateLocation(l.id, { is_active: !l.is_active }))}>{l.is_active ? '⏸' : '▶'}</button>{' '}
-                      <button className="icon" aria-label={`Sửa ${l.name}`} onClick={() => setEditLoc(l.id)}>✎</button>
-                    </>
-                  )}
+                  <button className="icon" disabled={busy || !writable} aria-label={l.is_active ? `Dừng ${l.name}` : `Dùng lại ${l.name}`}
+                    onClick={() => void run(() => updateLocation(l.id, { is_active: !l.is_active }))}>{l.is_active ? '⏸' : '▶'}</button>{' '}
+                  <button className="icon" aria-label={`Sửa ${l.name}`} onClick={() => setFormLoc(l.id)}>✎</button>
                 </td>
               )}
             </tr>
           ))}
         </tbody>
       </table>
+      </div>
       <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả kho đã dừng</label>
-
-      {canWrite && (
-        <>
-          <h2 className="sect">Đơn vị riêng ({orgUnits.length})</h2>
-          <form className="quickadd" noValidate onSubmit={(e) => {
-            e.preventDefault();
-            if (uName.trim().length < 1) return setError('Hãy nhập tên đơn vị.');
-            void run(async () => { await createUnit(orgId, uName); setUName(''); });
-          }}>
-            <input value={uName} onChange={(e) => setUName(e.target.value)} placeholder="Thêm đơn vị mới (ví dụ Thùng)" aria-label="Tên đơn vị mới" />
-            <button type="submit" className="primary" disabled={busy || !online}>Thêm</button>
-          </form>
-          <p className="muted">Đã có sẵn: kg, g, lít, ml, bao, chai, gói, cái, cây (dùng chung, không sửa).{orgUnits.length > 0 ? ` Đơn vị riêng: ${orgUnits.map((u) => u.name).join(', ')}.` : ''}</p>
-        </>
-      )}
-      <p className="muted">⏸ dừng (không chọn được cho giao dịch mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Kho đã có lịch sử thì không xóa được, chỉ dừng.</p>
+      <p className="muted">⏸ dừng (không chọn được cho giao dịch mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Kho đã có lịch sử thì không xóa được, chỉ dừng. Kho gắn với trang trại nào thì khi ghi việc ở trang trại đó sẽ được gợi ý trước.</p>
       </>)}
     </>
   );
 }
 
-function LocationRename({ name, description, busy, onSave }: { name: string; description: string; busy: boolean; onSave: (n: string, d: string) => void }) {
-  const [v, setV] = useState(name);
-  const [d, setD] = useState(description);
+function LocationForm({ l, orgId, busy, onSave, onClose }: {
+  l: LocationRow | null; orgId: string; busy: boolean;
+  onSave: (v: { name: string; description: string; areaIds: string[] | null }) => Promise<unknown>; onClose: () => void;
+}) {
+  const [name, setName] = useState(l?.name ?? '');
+  const [desc, setDesc] = useState(l?.description ?? '');
+  const [areaSel, setAreaSel] = useState<string[] | null>(l?.area_ids && l.area_ids.length > 0 ? l.area_ids : null); // null = tất cả
+  const [err, setErr] = useState<string | null>(null);
   return (
-    <div className="quickadd">
-      <input value={v} onChange={(e) => setV(e.target.value)} aria-label="Tên kho" />
-      <input value={d} onChange={(e) => setD(e.target.value)} placeholder="Mô tả" aria-label="Mô tả kho" />
-      <button className="primary" disabled={busy || v.trim().length < 2} onClick={() => onSave(v, d)}>Lưu</button>
+    <div className="card">
+      <h2>{l ? `Sửa kho: ${l.name}` : 'Thêm kho'}</h2>
+      <div className="inline-form">
+        <label>Tên kho<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Kho chính" /></label>
+        <label>Mô tả (không bắt buộc)<textarea rows={2} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Vị trí, loại hàng chứa…" /></label>
+        <fieldset className="roles">
+          <legend>Dùng cho trang trại</legend>
+          <AreaChoice orgId={orgId} value={areaSel} onChange={setAreaSel} />
+        </fieldset>
+        {err && <p className="msg error" role="alert">{err}</p>}
+        <div className="btnrow">
+          <button className="primary" disabled={busy} onClick={() => {
+            if (name.trim().length < 2) return setErr('Hãy nhập tên kho (ít nhất 2 ký tự).');
+            if (areaSel && areaSel.length === 0) return setErr('Hãy chọn ít nhất một trang trại, hoặc chọn "Tất cả trang trại".');
+            setErr(null);
+            void onSave({ name, description: desc, areaIds: areaSel }).catch(() => undefined);
+          }}>Lưu</button>
+          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        </div>
+      </div>
     </div>
   );
 }
 
-function MaterialEditor({ m, busy, onSave, onClose }: {
-  m: MaterialRow; busy: boolean;
-  onSave: (c: { name: string; description: string; category: string | null; threshold: number | null; ext: MaterialExt }) => void; onClose: () => void;
+/** Một biểu mẫu đầy đủ cho cả thêm mới và sửa vật tư (đơn vị tính chỉ chọn lúc thêm mới) */
+function MaterialForm({ m, units, busy, onSave, onClose }: {
+  m: MaterialRow | null; units: UnitRow[]; busy: boolean;
+  onSave: (v: { name: string; description: string; category: string | null; threshold: number | null; unitId: string; ext: MaterialExt }) => Promise<unknown>; onClose: () => void;
 }) {
-  const [name, setName] = useState(m.name);
-  const [cat, setCat] = useState(m.category ?? '');
-  const [desc, setDesc] = useState(m.description ?? '');
+  const [name, setName] = useState(m?.name ?? '');
+  const [cat, setCat] = useState(m?.category ?? '');
+  const [desc, setDesc] = useState(m?.description ?? '');
+  const [unitId, setUnitId] = useState(m?.base_unit_id ?? units[0]?.id ?? '');
   const [ext, setExt] = useState({
-    image: m.image ?? '', brand: m.brand ?? '', material_group: m.material_group ?? '', active_ingredient: m.active_ingredient ?? '',
-    registration_no: m.registration_no ?? '', manufacturer: m.manufacturer ?? '', usage_guide: m.usage_guide ?? '', usage_method: m.usage_method ?? '', safety_warning: m.safety_warning ?? '',
-    quality_specs: m.quality_specs ?? '', limit_elements: m.limit_elements ?? '', withdrawal_days: m.withdrawal_days == null ? '' : String(m.withdrawal_days),
+    image: m?.image ?? '', brand: m?.brand ?? '', material_group: m?.material_group ?? '', active_ingredient: m?.active_ingredient ?? '',
+    registration_no: m?.registration_no ?? '', manufacturer: m?.manufacturer ?? '', usage_guide: m?.usage_guide ?? '', usage_method: m?.usage_method ?? '', safety_warning: m?.safety_warning ?? '',
+    quality_specs: m?.quality_specs ?? '', limit_elements: m?.limit_elements ?? '', withdrawal_days: m?.withdrawal_days == null ? '' : String(m.withdrawal_days),
   });
   const setE = (k: keyof typeof ext) => (e: { target: { value: string } }) => setExt((x) => ({ ...x, [k]: e.target.value }));
-  const [thr, setThr] = useState(m.reorder_threshold == null ? '' : String(m.reorder_threshold));
+  const [thr, setThr] = useState(m?.reorder_threshold == null ? '' : String(m.reorder_threshold));
   const [err, setErr] = useState<string | null>(null);
   return (
     <div className="card">
-      <h2>Sửa vật tư: {m.name}</h2>
+      <h2>{m ? `Sửa vật tư: ${m.name}` : 'Thêm vật tư'}</h2>
       <div className="inline-form">
-        <label>Tên<input value={name} onChange={(e) => setName(e.target.value)} /></label>
-        <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} /></label>
+        <label>Tên vật tư<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
+        <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Nhãn hiệu, công dụng…" /></label>
+        <label>Đơn vị tính
+          {m ? <input value={units.find((u) => u.id === m.base_unit_id)?.name ?? ''} disabled /> : (
+            <select value={unitId} onChange={(e) => setUnitId(e.target.value)}>
+              {units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+          )}
+          {m ? <small>Đơn vị tính không đổi được sau khi tạo (để tồn kho không bị sai). Thêm đơn vị riêng ở tab Cấu hình.</small> : <small>Chọn đúng ngay từ đầu, không đổi được sau này. Muốn thêm đơn vị riêng: tab Cấu hình.</small>}
+        </label>
         <ImagePicker value={ext.image} onChange={(v) => setExt((x) => ({ ...x, image: v }))} store="materials" />
         <label>Thương hiệu / xuất xứ<input value={ext.brand} onChange={setE('brand')} /></label>
         <label>Nhóm vật tư
@@ -212,15 +207,12 @@ function MaterialEditor({ m, busy, onSave, onClose }: {
         </div>
         <label>Ghi chú loại (tùy ý)<input value={cat} onChange={(e) => setCat(e.target.value)} /></label>
         <label>Báo "sắp hết" khi tồn ≤ (để trống nếu không báo)<input value={thr} inputMode="decimal" onChange={(e) => setThr(e.target.value)} /></label>
-        <details className="fold">
-          <summary>Thông tin mở rộng (không bắt buộc)</summary>
-          <label>Hướng dẫn sử dụng<textarea rows={3} value={ext.usage_guide} onChange={setE('usage_guide')} /></label>
-          <label>Phương thức sử dụng<textarea rows={3} value={ext.usage_method} onChange={setE('usage_method')} /></label>
-          <label>Cảnh báo an toàn<textarea rows={3} value={ext.safety_warning} onChange={setE('safety_warning')} /></label>
-          <label>Chỉ tiêu chất lượng<textarea rows={3} value={ext.quality_specs} onChange={setE('quality_specs')} /></label>
-          <label>Hàm lượng yếu tố hạn chế<textarea rows={3} value={ext.limit_elements} onChange={setE('limit_elements')} /></label>
-          <label>Thời gian cách ly (số ngày)<input value={ext.withdrawal_days} inputMode="numeric" onChange={setE('withdrawal_days')} /></label>
-        </details>
+        <label>Thời gian cách ly (số ngày)<input value={ext.withdrawal_days} inputMode="numeric" onChange={setE('withdrawal_days')} /></label>
+        <label>Hướng dẫn sử dụng<textarea rows={3} value={ext.usage_guide} onChange={setE('usage_guide')} /></label>
+        <label>Phương thức sử dụng<textarea rows={3} value={ext.usage_method} onChange={setE('usage_method')} /></label>
+        <label>Cảnh báo an toàn<textarea rows={3} value={ext.safety_warning} onChange={setE('safety_warning')} /></label>
+        <label>Chỉ tiêu chất lượng<textarea rows={3} value={ext.quality_specs} onChange={setE('quality_specs')} /></label>
+        <label>Hàm lượng yếu tố hạn chế<textarea rows={3} value={ext.limit_elements} onChange={setE('limit_elements')} /></label>
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {
@@ -228,10 +220,11 @@ function MaterialEditor({ m, busy, onSave, onClose }: {
             if (days !== null && (!Number.isInteger(days) || days < 0)) return setErr('Thời gian cách ly phải là số ngày nguyên, không âm.');
             const v = parseNumber(thr);
             if (name.trim().length < 2) return setErr('Hãy nhập tên vật tư.');
+            if (!m && !unitId) return setErr('Chưa có đơn vị tính. Hãy kết nối mạng để tải danh sách đơn vị rồi thử lại.');
             if (v !== null && (Number.isNaN(v) || v < 0)) return setErr('Mức cảnh báo phải là số không âm.');
             setErr(null);
-            onSave({ name, description: desc, category: cat.trim() || null, threshold: v, ext: { ...ext, withdrawal_days: days } });
-          }}>Lưu thay đổi</button>
+            void onSave({ name, description: desc, category: cat.trim() || null, threshold: v, unitId, ext: { ...ext, withdrawal_days: days } }).catch(() => undefined);
+          }}>{m ? 'Lưu thay đổi' : 'Thêm vật tư'}</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>
       </div>
