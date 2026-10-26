@@ -3,19 +3,20 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { ExpiringLots } from '../components/ExpiringLots';
 import { PurchaseEntry } from '../components/PurchaseEntry';
 import { StockEntry } from '../components/StockEntry';
+import { StockIssue, StockTransfer } from '../components/StockMove';
 import { Thumb } from '../components/ImagePicker';
 import { useConfig } from '../lib/config';
 import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import {
-  fetchTransactions, formatMoney, formatQty, pendingDeltas, syncInventoryDown, TXN_TYPE_LABEL, type TxnFilter, type TxnHistoryRow,
+  fetchTransactions, formatMoney, formatQty, ISSUE_KIND_LABEL, pendingDeltas, syncInventoryDown, TXN_TYPE_LABEL, type TxnFilter, type TxnHistoryRow,
 } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { authorLabel } from '../lib/roles';
 import { useTable } from '../lib/tables';
 
-type Mode = 'list' | 'receipt' | 'adjustment' | 'purchase';
+type Mode = 'list' | 'receipt' | 'adjustment' | 'purchase' | 'issue' | 'transfer';
 
 /**
  * Kho (mục con của Sản xuất): tồn kho dạng lưới có tìm kiếm và bộ lọc, sổ kho từng vật tư (nhập – xuất – điều chỉnh kèm tồn sau mỗi dòng),
@@ -29,8 +30,10 @@ export function StockPanel() {
   // mua có hóa đơn tạo cả hóa đơn (quyền sửa Chi phí) lẫn nhập kho (quyền sửa Kho)
   const canPurchase = canWrite && canPerm(active.perms, 'expenses', 'edit');
   if (mode === 'purchase') return <PurchaseEntry orgId={active.id} onClose={() => setMode('list')} />;
+  if (mode === 'issue') return <StockIssue orgId={active.id} onClose={() => setMode('list')} />;
+  if (mode === 'transfer') return <StockTransfer orgId={active.id} onClose={() => setMode('list')} />;
   if (mode !== 'list') return <StockEntry orgId={active.id} mode={mode} onClose={() => setMode('list')} />;
-  return <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setMode('receipt')} onAdjust={() => setMode('adjustment')} onPurchase={canPurchase ? () => setMode('purchase') : undefined} />;
+  return <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setMode('receipt')} onAdjust={() => setMode('adjustment')} onIssue={() => setMode('issue')} onTransfer={() => setMode('transfer')} onPurchase={canPurchase ? () => setMode('purchase') : undefined} />;
 }
 
 function useStockData(orgId: string) {
@@ -49,7 +52,7 @@ function useStockData(orgId: string) {
 
 type View = 'stock' | 'txns';
 
-function StockList({ orgId, canWrite, onReceipt, onAdjust, onPurchase }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void; onPurchase?: () => void }) {
+function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, onPurchase }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void; onIssue: () => void; onTransfer: () => void; onPurchase?: () => void }) {
   const d = useStockData(orgId);
   const [view, setView] = useState<View>('stock');
   const [ledgerOf, setLedgerOf] = useState<string | null>(null);
@@ -65,6 +68,8 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust, onPurchase }: { orgId
         <div className="actions">
           {onPurchase && <button className="primary" onClick={onPurchase}>Mua theo hóa đơn</button>}
           <button className={onPurchase ? 'secondary' : 'primary'} onClick={onReceipt}>Nhập kho</button>
+          <button className="secondary" onClick={onIssue}>Xuất kho</button>
+          <button className="secondary" onClick={onTransfer}>Chuyển kho</button>
           <button className="secondary" onClick={onAdjust}>Điều chỉnh tồn</button>
         </div>
       )}
@@ -184,7 +189,11 @@ function StockGrid({ canWrite, d, onLedger }: { orgId: string; canWrite: boolean
   );
 }
 
-const typeText = (h: TxnHistoryRow) => (h.txn_type === 'adjustment' ? `Điều chỉnh ${h.quantity_delta > 0 ? 'tăng' : 'giảm'}` : TXN_TYPE_LABEL[h.txn_type] ?? h.txn_type);
+const typeText = (h: TxnHistoryRow) => {
+  if (h.transfer_id) return h.quantity_delta > 0 ? 'Chuyển kho (nhận)' : 'Chuyển kho (đi)';
+  if (h.issue_kind) return `Xuất kho: ${ISSUE_KIND_LABEL[h.issue_kind] ?? h.issue_kind}`;
+  return h.txn_type === 'adjustment' ? `Điều chỉnh ${h.quantity_delta > 0 ? 'tăng' : 'giảm'}` : TXN_TYPE_LABEL[h.txn_type] ?? h.txn_type;
+};
 
 function detailText(h: TxnHistoryRow, locName: (id: string) => string): string {
   return [
@@ -283,8 +292,8 @@ function TxnList({ orgId, d, refreshKey }: { orgId: string; d: Data; refreshKey:
           <select value={f.txnType ?? ''} onChange={(e) => set({ txnType: e.target.value || undefined })}>
             <option value="">Tất cả</option>
             <option value="receipt">Nhập kho</option>
-            <option value="issue">Xuất dùng</option>
-            <option value="adjustment">Điều chỉnh</option>
+            <option value="issue">Xuất kho (dùng, hao hụt, bán…)</option>
+            <option value="adjustment">Điều chỉnh và chuyển kho</option>
           </select>
         </label>
         {d.locations.filter((l) => l.is_active).length > 1 && (

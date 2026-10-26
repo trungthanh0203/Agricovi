@@ -110,8 +110,36 @@ export async function recordTransaction(t: NewTxn): Promise<string> {
   return id;
 }
 
+/** Lý do xuất kho tay */
+export const ISSUE_KIND_LABEL: Record<string, string> = { loss: 'Hao hụt / hỏng', sale: 'Xuất bán', shared: 'Dùng chung', other: 'Khác' };
+
+/** Xuất kho tay: cần mạng, bắt buộc lý do; lô tự gắn theo hạn gần nhất (máy chủ). Chỉ người có quyền sửa Kho. */
+export async function recordIssue(t: { id?: string; organizationId: string; locationId: string; materialId: string; quantity: number; kind: string; date: string; reason: string }): Promise<string> {
+  requireOnline('xuất kho');
+  const id = t.id ?? crypto.randomUUID();
+  await insertRow('inventory_transactions', {
+    id, organization_id: t.organizationId, location_id: t.locationId, material_id: t.materialId, txn_type: 'issue',
+    quantity_delta: -t.quantity, unit_cost: null, txn_date: t.date, reason: t.reason.trim(), issue_kind: t.kind, source: 'online',
+  });
+  await syncInventoryDown().catch(() => undefined);
+  return id;
+}
+
+/** Chuyển kho giữa hai kho (theo lô, hạn gần nhất trước): cần mạng; máy chủ tạo hai giao dịch liên kết */
+export async function transferStock(t: { organizationId: string; materialId: string; fromId: string; toId: string; quantity: number; date: string; note: string }): Promise<void> {
+  requireOnline('chuyển kho');
+  const { error } = await client().rpc('transfer_stock', {
+    p_org: t.organizationId, p_material: t.materialId, p_from: t.fromId, p_to: t.toId, p_qty: t.quantity, p_date: t.date, p_note: t.note.trim() || null,
+  });
+  if (error) throw error;
+  await syncInventoryDown().catch(() => undefined);
+}
+
 export interface TxnHistoryRow {
   id: string;
+  /** Loại xuất kho tay (hao hụt/hỏng, xuất bán, dùng chung, khác) và mã cặp chuyển kho */
+  issue_kind?: string | null;
+  transfer_id?: string | null;
   location_id: string;
   material_id: string;
   txn_type: string;
@@ -144,7 +172,8 @@ export async function fetchTransactions(orgId: string, f: TxnFilter = {}): Promi
     return b.order('created_at', { ascending: false }).limit(f.limit ?? 200);
   };
   const base = 'id, location_id, material_id, txn_type, quantity_delta, unit_cost, txn_date, reason, activity_log_id, author_name, author_roles, created_at, purchase_bills(invoice_no, partners(name))';
-  let { data, error } = await q(`${base}, material_lots(lot_no, expiry_date)`);
+  let { data, error } = await q(`${base}, issue_kind, transfer_id, material_lots(lot_no, expiry_date)`);
+  if (error && /relationship|column|schema cache/i.test(error.message ?? '')) ({ data, error } = await q(`${base}, material_lots(lot_no, expiry_date)`)); // chưa db push 0101
   if (error && /relationship|column|schema cache/i.test(error.message ?? '')) ({ data, error } = await q(base)); // CSDL chưa có bảng lô
   if (error) throw error;
   return ((data ?? []) as unknown as TxnHistoryRow[]).map((r) => ({ ...r, quantity_delta: Number(r.quantity_delta) }));
