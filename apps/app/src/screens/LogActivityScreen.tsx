@@ -188,7 +188,12 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
 
   return (
     <div className="auth">
-      <h1>{workType ? `Ghi việc: ${workType.name}` : 'Ghi việc vừa làm'}</h1>
+      {workType ? (
+        <div className="row">
+          <h1 className="grow">Ghi việc: {workType.name}</h1>
+          <button type="button" className="link inline" onClick={() => { setWorkTypeId(null); setStageSel(undefined); }}>Đổi việc</button>
+        </div>
+      ) : <h1>Ghi việc vừa làm</h1>}
 
       {options.length === 0 && siteAreas.length === 0 ? (
         <>
@@ -213,6 +218,15 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
         </>
       ) : (
         <form className="inline-form" onSubmit={onSubmit} noValidate>
+          {!areaMode && stages.length > 0 && (
+            <label>
+              Thuộc giai đoạn
+              <select value={effStage ?? ''} onChange={(e) => setStageSel(e.target.value || null)}>
+                <option value="">— Không gắn giai đoạn —</option>
+                {stages.map((st) => <option key={st.id} value={st.id}>{st.name}</option>)}
+              </select>
+            </label>
+          )}
 
           {siteAreas.length > 0 && options.length > 0 && (
             <label>
@@ -242,16 +256,6 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
               ))}
             </select>
           </label>
-          )}
-
-          {!areaMode && stages.length > 0 && (
-            <label>
-              Thuộc giai đoạn
-              <select value={effStage ?? ''} onChange={(e) => setStageSel(e.target.value || null)}>
-                <option value="">— Không gắn giai đoạn —</option>
-                {stages.map((st) => <option key={st.id} value={st.id}>{st.name}</option>)}
-              </select>
-            </label>
           )}
 
           <div className="pair">
