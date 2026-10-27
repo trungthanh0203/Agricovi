@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDb, addUser, asUser, expectError } from './harness.mjs';
-import { MODELS, SECTION_FEATURE, allFeaturesOn, effectiveModel, featuresOf, featureShown, mergeFeatures, modelName, orgFeatures, suggestModel } from '../../apps/app/src/lib/models.ts';
+import { nextSteps } from '../../apps/app/src/lib/nextSteps.ts';
+import { MODELS, SECTION_FEATURE, modelDef, optionalOf, allFeaturesOn, effectiveModel, featuresOf, featureShown, mergeFeatures, modelName, orgFeatures, suggestModel } from '../../apps/app/src/lib/models.ts';
 import { declareSections, productionSections, reportSections } from '../../apps/app/src/lib/tabs.ts';
 
 // Phần A (lib/models.ts, thuần), tích hợp với menu (lib/tabs.ts) và phần B (migrations 0102-0103): mô hình quản lý theo vụ, người làm lương tháng không tài khoản.
@@ -16,7 +17,13 @@ test('mô hình: 5 mô hình, mô hình sau có đủ chức năng của mô hì
   }
   assert.equal(featuresOf('family').web, 'off'); // bán qua website từ mô hình 2 trở đi
   for (const m of order.slice(1)) assert.equal(featuresOf(m).web, 'on');
-  assert.equal(featuresOf('family').logs, 'optional'); // ghi việc nhẹ tùy chọn
+  assert.equal(modelDef('family').features.logs, 'optional'); // ghi việc nhẹ tùy chọn
+  assert.equal(featuresOf('family').logs, 'off'); // chưa bật thì ẩn
+  assert.equal(featuresOf('family', ['logs']).logs, 'on'); // chủ bật riêng cho vụ
+  assert.equal(featuresOf('family', ['stock']).stock, 'off'); // chỉ bật được mục tùy chọn của chính mô hình
+  assert.deepEqual(optionalOf('family'), ['logs']);
+  assert.deepEqual(optionalOf('monthly'), ['stock', 'partners']);
+  assert.deepEqual(optionalOf('staffed'), []);
   assert.equal(featuresOf('staffed').attendance, 'on');
   assert.equal(featuresOf('monthly').attendance, 'off');
   for (const k of ['logs', 'logbook', 'checklist', 'licenses', 'lots']) assert.equal(featuresOf('vietgap')[k], 'on', k);
@@ -58,7 +65,9 @@ test('menu theo mô hình: Tự làm trong gia đình ẩn kho, nhân sự, bả
   for (const k of ['members', 'places', 'materials', 'teams', 'positions', 'partners']) assert.ok(!ids(declareSections(family)).includes(k), `gia đình ẩn ${k}`);
   for (const k of ['areas', 'crops', 'templates']) assert.ok(ids(declareSections(family)).includes(k), `gia đình giữ ${k}`);
   assert.ok(!ids(productionSections(family)).includes('stock') && !ids(productionSections(family)).includes('attendance'));
-  for (const k of ['cycles', 'harvest', 'expense', 'logs']) assert.ok(ids(productionSections(family)).includes(k), k);
+  for (const k of ['cycles', 'harvest', 'expense']) assert.ok(ids(productionSections(family)).includes(k), k);
+  assert.ok(!ids(productionSections(family)).includes('logs'), 'chưa bật Ghi việc thì ẩn Nhật ký việc');
+  assert.ok(ids(productionSections(org(featuresOf('family', ['logs'])))).includes('logs'));
   assert.ok(!ids(reportSections(family)).includes('paybook') && !ids(reportSections(family)).includes('commerce'));
   for (const k of ['summary', 'sales', 'payables']) assert.ok(ids(reportSections(family)).includes(k), k);
   assert.ok(ids(reportSections(vietgap)).includes('logbook') && ids(reportSections(vietgap)).includes('checklist'));
@@ -113,4 +122,35 @@ test('người làm không tài khoản lương tháng: không cần tổ; kiể
   assert.match(await expectError(asUser(db, owner, `select create_worker_without_account($1,'Anh Ba',null,'self_hourly',null)`, [org])), /INVALID_MODE/);
   // đơn giá lương tháng đặt được cho người này (dùng chung bảng đơn giá)
   await asUser(db, owner, `insert into work_rates (organization_id, worker_id, rate_type, amount, valid_from) values ($1,$2,'month',7000000,current_date)`, [org, w]);
+});
+
+const base = { model: 'family', features: featuresOf('family'), kind: 'crop', status: 'active', expenses: 0, harvests: 0, sales: 0, logs: 0, plantCount: null, stagesTotal: 4, stagesDone: 0,
+  can: { expense: true, harvest: true, sales: true, summary: true, logs: true } };
+
+test('việc cần làm tiếp theo mô hình: đúng thứ tự, tối đa 3, tôn trọng quyền, vụ đã kết thúc thì rỗng', () => {
+  const ids = (i) => nextSteps(i).map((s) => s.id);
+  assert.deepEqual(ids(base), ['expense']);
+  assert.deepEqual(ids({ ...base, model: null }), ['model', 'expense']);
+  assert.deepEqual(ids({ ...base, kind: 'livestock' }), ['count', 'expense']);
+  assert.deepEqual(ids({ ...base, kind: 'livestock', plantCount: 200 }), ['expense']);
+  assert.deepEqual(ids({ ...base, expenses: 3, stagesDone: 4 }), ['harvest']);
+  assert.deepEqual(ids({ ...base, expenses: 3, stagesDone: 4, harvests: 2 }), ['sales']);
+  assert.deepEqual(ids({ ...base, expenses: 3, stagesDone: 4, harvests: 2, sales: 1 }), ['summary']);
+  assert.deepEqual(ids({ ...base, can: { ...base.can, expense: false } }), []);
+  assert.deepEqual(ids({ ...base, status: 'ended' }), []);
+  // ghi việc chỉ gợi ý khi mô hình dùng ghi việc; VietGAP nhắc sổ nhật ký
+  assert.deepEqual(ids({ ...base, model: 'staffed', features: featuresOf('staffed'), expenses: 1 }), ['log']);
+  assert.ok(ids({ ...base, model: 'vietgap', features: featuresOf('vietgap'), expenses: 1, logs: 2 }).includes('logbook'));
+  assert.ok(nextSteps({ ...base, model: null, kind: 'aquatic' }).length <= 3);
+});
+
+test('mục tùy chọn theo vụ: chỉ chủ/quản lý đặt; mã lạ bị từ chối; lưu danh sách không trùng', async () => {
+  const { db, owner, worker, org, cyc } = await setup();
+  await asUser(db, owner, `select set_cycle_options($1, array['logs','stock','logs'])`, [cyc]);
+  assert.deepEqual((await db.query(`select mgmt_options from production_cycles where id=$1`, [cyc])).rows[0].mgmt_options.sort(), ['logs', 'stock']);
+  assert.match(await expectError(asUser(db, owner, `select set_cycle_options($1, array['khac'])`, [cyc])), /INVALID_OPTION/);
+  assert.match(await expectError(asUser(db, worker, `select set_cycle_options($1, array['logs'])`, [cyc])), /FORBIDDEN/);
+  await asUser(db, owner, `select set_cycle_options($1, null)`, [cyc]);
+  assert.deepEqual((await db.query(`select mgmt_options from production_cycles where id=$1`, [cyc])).rows[0].mgmt_options, []);
+  void org;
 });

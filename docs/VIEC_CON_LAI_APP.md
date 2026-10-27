@@ -14,13 +14,15 @@
 ## B. Dở dang của các đợt vừa làm
 | # | Việc | Cỡ | Quyết |
 |---|---|---|---|
-| B1 | **Mô hình E**: "Việc cần làm tiếp" của vụ theo mô hình; nhắc cách ly cho mô hình 1–2 (dựa mốc ngưng thuốc của quy trình) | M | |
-| B2 | **Mô hình G**: lối tắt "Ghi tiền công" ở Chi phí cho mô hình 1 (nhóm Nhân công, chọn người nhà) | S | |
-| B3 | Mục "tùy chọn" của mô hình hiện chỉ là hiện/ẩn; cho chủ **bật/tắt riêng** từng mục tùy chọn theo vụ | S–M | |
-| B4 | Cập nhật **Hướng dẫn trong app** và `HUONG_DAN_THU.md` cho cấu trúc mới (Khai báo gộp nhân sự, Cấu hình, Phân khu, mô hình theo vụ, Kho mới) | M | |
+| ~~B1~~ ✔ | **Mô hình E**: "Việc cần làm tiếp" của vụ theo mô hình; nhắc cách ly cho mô hình 1–2 (dựa mốc ngưng thuốc của quy trình) | M | |
+| ~~B2~~ ✔ | **Mô hình G**: lối tắt "Ghi tiền công" ở Chi phí cho mô hình 1 (nhóm Nhân công, chọn người nhà) | S | |
+| ~~B3~~ ✔ | Mục "tùy chọn" của mô hình hiện chỉ là hiện/ẩn; cho chủ **bật/tắt riêng** từng mục tùy chọn theo vụ | S–M | |
+| ~~B4~~ ✔ | Cập nhật **Hướng dẫn trong app** và `HUONG_DAN_THU.md` cho cấu trúc mới (Khai báo gộp nhân sự, Cấu hình, Phân khu, mô hình theo vụ, Kho mới) | M | |
 | B5 | Siết chính sách "xuất dùng" của nhân viên: chỉ ghi kèm nhật ký (cần sửa vài test cũ) | S | |
 | B6 | Thông báo lỗi từ máy chủ còn chữ "trang trại"; website (mảng WEB) còn dùng "trang trại" | S | |
 | B7 | Rà lại chế độ đơn giản cũ (đang khóa): xóa hẳn mã cũ hay giữ | S | |
+
+*(B1–B4 đã xong về code 27/10/2026: việc cần làm tiếp + nhắc cách ly, Ghi tiền công, mục tùy chọn theo vụ (migration 0104), hướng dẫn và bài thử mới.)*
 
 ## C. Trong kế hoạch từ trước, chưa làm
 | # | Việc | Cỡ | Ghi chú |

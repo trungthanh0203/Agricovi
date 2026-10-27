@@ -67,8 +67,9 @@ export const GUIDES: Guide[] = [
       {
         title: 'Các mục trong app dùng để làm gì',
         details: [
-          'Thanh dưới cùng: Trang chủ (tổng quan, nhắc việc, lương tháng này) · Sản xuất (Mùa vụ, Chấm công, Thu hoạch, Kho, Chi phí, Nhật ký việc) · Ghi việc (nút ＋ ở giữa) · Báo cáo (Báo cáo tuần, Theo nhu cầu, Công nợ, Doanh thu, Bảng lương, Tổng kết vụ, Đơn khách từ website, Hồ sơ website).',
-          'Menu ☰ góc trên bên trái: Tài khoản · Cấu hình · Hướng dẫn sử dụng (Khai báo, gồm cả Nhân sự, Chức vụ, Phòng / Tổ, nằm ở thanh dưới) · Chia sẻ hệ thống.',
+          'Thanh dưới cùng: Trang chủ (tổng quan, sơ đồ luồng công việc, nhắc việc) · Khai báo (Phân khu, Sản phẩm, Kho, Quy trình mẫu, Vật tư, Nhân sự, Phòng/Tổ, Chức vụ, Giấy phép…) · Ghi việc (nút ＋ ở giữa) · Sản xuất (Mùa vụ, Chấm công, Thu hoạch, Kho, Chi phí, Nhật ký việc) · Báo cáo (Báo cáo tuần, Công nợ, Doanh thu, Bảng lương, Tổng kết vụ, Sổ nhật ký, Bảng kiểm, Hồ sơ website…).',
+          'Menu ☰ góc trên bên trái: Tài khoản · Cấu hình (nhóm loại sản phẩm, nhóm vật tư, nhóm chi phí, loại khách, kiểu nhà/chuồng, đơn vị tính riêng) · Hướng dẫn sử dụng · Chia sẻ hệ thống.',
+          'Mục nào không có trong menu là do cách quản lý của các vụ đang chạy không dùng đến; đổi cách quản lý ở Chi tiết vụ nếu cần.',
           'Chạm vào ô chức năng để vào; bấm "‹ Menu" để quay lại.',
         ],
       },
@@ -178,12 +179,15 @@ export const GUIDES: Guide[] = [
       {
         title: 'Tạo vụ theo quy trình mẫu',
         details: [
-          'Vào Sản xuất → Mùa vụ, bấm + Tạo vụ mới: chọn phân khu, sản phẩm, quy trình mẫu và ngày bắt đầu.',
+          'Vào Sản xuất → Mùa vụ, bấm + Tạo vụ mới: chọn Sản phẩm (cây trồng, vật nuôi…), rồi Quy trình mẫu, rồi Phân khu (app ưu tiên phân khu đúng loại và cảnh báo nếu khác loại), sau đó ngày bắt đầu.',
+          'Tạo xong, app hỏi bạn muốn quản lý vụ này thế nào (5 cách: Tự làm trong gia đình · Chủ và người làm công tháng · Có người quản lý điều hành · Có nhiều nhân viên · Chuẩn VietGAP). Mỗi vụ chọn riêng, đổi lúc nào cũng được ở Chi tiết vụ → Cách quản lý vụ này, không mất dữ liệu. Chọn cách đơn giản thì app chỉ hiện các mục cần dùng (menu hiện theo tổng các vụ đang chạy).',
+          'Vụ vật nuôi, thủy sản: nên nhập Số con nhập chuồng/thả giống ngay khi tạo (không bắt buộc) để app tính hao hụt, mật độ và FCR.',
           'Có thể nhập Giống, Diện tích trồng (m², ha, sào hoặc công), Số cây, nguồn giống, số lô giống, ngày gieo/trồng: app tự tính mật độ, năng suất, chi phí và lãi trên 1.000 m² (hoặc trên sào/công/ha bạn chọn).',
           'Có thể nhập Sản lượng dự kiến (kg) và Ngân sách dự kiến (đồng) để so với thực tế (không bắt buộc; sửa sau ở Sửa vụ).',
           'Chọn "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước, bắt đầu chạy sau. App lập lịch các giai đoạn theo quy trình mẫu.',
           'Mỗi vụ có một mã (hiện sau tên vụ, ví dụ "Dưa vụ 1 - AB12CD34") dùng cho mã QR truy xuất.',
-          'Hộ nhỏ thấy app còn nhiều mục? Chủ cơ sở vào Tài khoản → Chế độ hiển thị → chọn "Đơn giản" để ẩn các mục nâng cao (đầu việc, bảng lương, bảng kiểm, sổ nhật ký…). Dữ liệu không mất, bật lại "Đầy đủ" bất cứ lúc nào.',
+          'Hộ nhỏ thấy app còn nhiều mục? Chọn cách quản lý "Tự làm trong gia đình" cho vụ: app ẩn kho, nhân sự, chấm công, bảng lương… Muốn dùng thêm Ghi việc hoặc Kho thì bật ở mục "Mục tùy chọn". Tiền công người nhà ghi nhanh ở Sản xuất → Chi phí → Ghi tiền công (không cần tạo nhân sự).',
+          'Mục "Việc cần làm tiếp" trong Chi tiết vụ nhắc bước kế tiếp theo cách quản lý của vụ (ghi chi phí, thu hoạch, doanh thu, tổng kết…).',
           'Mục "Thông tin quản lý" (không bắt buộc) cho nhập mã vụ/lô, đơn vị đếm (cây, con…) và cán bộ kỹ thuật/thú y phụ trách. Khu loại "Cơ sở vật chất" (cổng, kho, biogas…) không tạo vụ; việc ở đó ghi bằng Ghi việc → "Khu vực".',
           'Nhập kho và Mua có hóa đơn có ô số lô và hạn dùng; khi xuất dùng, app tự lấy lô hạn gần nhất (hoặc bạn chọn lô). Lô sắp hết hạn hiện ở Trang chủ và Kho.',
         ],

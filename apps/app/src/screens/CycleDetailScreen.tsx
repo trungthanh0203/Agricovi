@@ -21,7 +21,9 @@ import { todayLocal, useOnline } from '../lib/hooks';
 import { useAuth } from '../lib/auth';
 import { useOrgs } from '../lib/orgs';
 import { ModelPicker } from '../components/ModelPicker';
-import { modelName } from '../lib/models';
+import { CycleNextSteps } from '../components/CycleNextSteps';
+import type { TabId } from '../lib/tabs';
+import { effectiveModel, featuresOf, modelName } from '../lib/models';
 import {
   addCycleStage, addNote, advanceStage, deleteCycleStage, deleteNote, refreshCycle, setNoteDone, updateCycleStage,
 } from '../lib/production';
@@ -34,7 +36,7 @@ export interface LogPreset { cycleId: string; workTypeId?: string | null; stageI
  * Người quản lý bấm Bắt đầu / Hoàn thành, sửa/thêm/xóa giai đoạn của vụ này; mọi người ghi việc thẳng vào giai đoạn đang làm
  * và thêm ghi chú cho từng ngày ở dạng lịch (hiện nhắc ở Trang chủ).
  */
-export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalendar, notice }: { cycleId: string; onClose: () => void; onLog: (p: LogPreset) => void; openQr?: boolean; openCalendar?: boolean; notice?: string | null }) {
+export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openCalendar, notice }: { cycleId: string; onClose: () => void; onLog: (p: LogPreset) => void; onGo?: (tab: TabId, section?: string) => void; openQr?: boolean; openCalendar?: boolean; notice?: string | null }) {
   const { active } = useOrgs();
   const { session } = useAuth();
   const online = useOnline();
@@ -66,6 +68,8 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
   if (!cycle) return <div className="auth"><button className="link" onClick={onClose}>← Quay lại</button><p className="muted">Đang tải vụ…</p></div>;
 
   const canManage = canManageProduction(active?.roles) || Boolean(active?.canManageStages);
+  // vụ có ghi việc hay không theo mô hình của CHÍNH vụ này (mô hình 1 chưa bật tùy chọn Ghi việc thì ẩn)
+  const canLogHere = featuresOf(effectiveModel(cycle.mgmt_model, active?.mgmtModel), cycle.mgmt_options ?? []).logs !== 'off';
   const isActive = cycle.status === 'active';
   const closed = cycle.status === 'ended' || cycle.status === 'cancelled';
   const canEditStages = canManage && !closed;
@@ -105,6 +109,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
           <PublishCycle cycleId={cycleId} />
         </Collapsible>
       )}
+      <CycleNextSteps cycleId={cycleId} onGo={onGo} />
       {canManage && cycle.owner_org_id === active?.id && (
         <Collapsible title="Cách quản lý vụ này" summary={modelName(cycle.mgmt_model, active?.mgmtModel)}>
           <ModelPicker cycleId={cycleId} onDone={() => undefined} />
@@ -184,7 +189,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
                     <td>{fmtDate(s.planned_start)}<span className="sub">→ {fmtDate(s.planned_end)}</span></td>
                     <td>{s.actual_start ? fmtDate(s.actual_start) : '—'}<span className="sub">{s.actual_end ? `→ ${fmtDate(s.actual_end)}` : ''}</span></td>
                     <td className="act">
-                      {isActive && s.status === 'in_progress' && (
+                      {isActive && canLogHere && s.status === 'in_progress' && (
                         <button className="secondary" style={{ minHeight: 40, width: 'auto', margin: 0, padding: '0 10px' }}
                           onClick={() => onLog({ cycleId, workTypeId: s.work_type_id, stageId: s.id })}>Ghi việc</button>
                       )}
@@ -240,7 +245,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, openQr, openCalenda
         </>
       )}
 
-      {isActive && (
+      {isActive && canLogHere && (
         <button className="secondary" onClick={() => onLog({ cycleId, stageId: prog.current?.status === 'in_progress' ? prog.current.id : null })}>Ghi việc cho vụ này</button>
       )}
     </div>

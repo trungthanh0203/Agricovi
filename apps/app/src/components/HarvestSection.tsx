@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
 import { Collapsible } from './Collapsible';
+import { SafetyReminder } from './SafetyReminder';
 import { DynamicField } from './DynamicField';
 import { cycleCountUnit } from '../lib/countUnit';
 import { fieldsToData, initialValues, summarizeFields, validateFields } from '../lib/fieldsLogic';
@@ -293,6 +294,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
           <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
         </label>
         <WithdrawalNotice cycleId={effCycleId} date={whenDay} reason={wReason} onReason={setWReason} />
+        <SafetyReminder cycleId={effCycleId} />
         <label>
           Khối lượng thu (kg)
           <input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} />

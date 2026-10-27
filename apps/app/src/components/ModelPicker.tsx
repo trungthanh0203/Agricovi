@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { friendlyError } from '../lib/errors';
 import { listMembers } from '../lib/members';
 import { setCycleModel, setOrgModel } from '../lib/mgmtModel';
-import { effectiveModel, MODELS, suggestModel, type ModelId } from '../lib/models';
+import { effectiveModel, MODELS, OPTIONAL_FEATURES, optionalOf, suggestModel, type ModelId } from '../lib/models';
 import { useOrgs } from '../lib/orgs';
 import { isOwner } from '../lib/roles';
 import { loadTeams } from '../lib/teams';
@@ -20,6 +20,7 @@ export function ModelPicker({ cycleId, onDone, onSkip }: { cycleId: string; onDo
   const [sel, setSel] = useState<ModelId | null>(own);
   const [suggested, setSuggested] = useState<ModelId | null>(null);
   const [asDefault, setAsDefault] = useState(false);
+  const [opts, setOpts] = useState<string[]>(cycle?.mgmt_options ?? []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +45,7 @@ export function ModelPicker({ cycleId, onDone, onSkip }: { cycleId: string; onDo
   async function apply() {
     setBusy(true); setError(null);
     try {
-      await setCycleModel(cycleId, chosen);
+      await setCycleModel(cycleId, chosen, opts.filter((o) => (optionalOf(chosen) as string[]).includes(o)));
       if (asDefault && isOwner(active!.roles)) { await setOrgModel(active!.id, chosen); await refresh(); }
       onDone();
     } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
@@ -68,6 +69,17 @@ export function ModelPicker({ cycleId, onDone, onSkip }: { cycleId: string; onDo
         ))}
       </fieldset>
       <p className="muted">Với lựa chọn này, bạn sẽ không thấy: {def.hidden}.</p>
+      {optionalOf(chosen).length > 0 && (
+        <fieldset>
+          <legend>Mục tùy chọn (bật thêm nếu cần)</legend>
+          {OPTIONAL_FEATURES.filter((o) => optionalOf(chosen).includes(o.id)).map((o) => (
+            <label key={o.id} className="check">
+              <input type="checkbox" checked={opts.includes(o.id)} onChange={(e) => setOpts((cur) => (e.target.checked ? [...cur, o.id] : cur.filter((x) => x !== o.id)))} />
+              <span><strong>{o.label}</strong><small className="muted" style={{ display: 'block' }}>{o.hint}</small></span>
+            </label>
+          ))}
+        </fieldset>
+      )}
       {isOwner(active.roles) && (
         <label className="check"><input type="checkbox" checked={asDefault} onChange={(e) => setAsDefault(e.target.checked)} /> Dùng làm cách quản lý mặc định cho các vụ sau</label>
       )}

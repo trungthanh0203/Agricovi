@@ -29,6 +29,8 @@ export interface CycleRow {
   id: string;
   /** Mô hình quản lý của vụ (null = theo mô hình mặc định của cơ sở) */
   mgmt_model?: string | null;
+  /** Mục tùy chọn của mô hình đã bật cho vụ này (mã chức năng) */
+  mgmt_options?: string[] | null;
   owner_org_id: string;
   area_id: string;
   crop_type_id: string;

@@ -277,3 +277,46 @@ Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng m�
 1. Chủ cơ sở: Tài khoản → **Chế độ hiển thị** → chọn **Đơn giản**. Mở lại app: menu Khai báo, Tổ chức, Báo cáo, Sản xuất gọn hơn (ẩn Đầu việc, Nhà cung ứng, Chấm công, Chức vụ, Bảng lương, Bảng kiểm, Sổ nhật ký…).
 2. Tạo vụ vẫn dùng được (Quy trình mẫu, Sản phẩm vẫn hiện). Chọn lại **Đầy đủ** để hiện lại mọi mục.
 3. Vụ heo: form Sửa vụ có nhãn "Diện tích chuồng", "Ngày nhập chuồng", "Giống / dòng"; cơ sở chỉ nuôi gọi là "lứa nuôi" thay vì "vụ trồng".
+
+
+## Thử cấu trúc mới (26–27/10/2026; cần `db push` đến 0104)
+
+**Bố cục:** thanh dưới là Trang chủ · Khai báo · ＋ Ghi việc · Sản xuất · Báo cáo. Menu ☰ có Tài khoản, Cấu hình, Hướng dẫn. "Trang trại" nay gọi là **Phân khu**.
+
+### Thử A: Cấu hình (chủ hoặc quản lý)
+1. Menu ☰ → Cấu hình: mọi phần đều thu gọn khi mở.
+2. Nhóm loại sản phẩm: thêm mục "Gia cầm", chọn "Tính như: Vật nuôi", Lưu. Vào Khai báo → Sản phẩm, thêm sản phẩm chọn loại "Gia cầm": thấy đúng.
+3. Dừng mục vừa thêm rồi thử xóa khi đã có sản phẩm dùng: app phải từ chối và nhắc chọn Dừng.
+4. Kiểu nhà/chuồng và Loại khách hàng: nhập các mục cách nhau bằng dấu phẩy, Lưu; mở Phân khu hoặc Khách hàng thấy đúng danh sách.
+5. Đơn vị tính riêng: thêm "Thùng, Can"; vào Vật tư thêm vật tư dùng đơn vị mới.
+
+### Thử B: Khai báo
+- **Phân khu**: thêm phân khu, chọn Loại khu (Trồng trọt/Chăn nuôi/…), Mã khu, Kiểu nhà/chuồng; cuối danh sách có lời nhắc tạo sản phẩm.
+- **Vật tư**: nút "+ Thêm vật tư" mở form đủ thông tin; sửa thì Đơn vị tính chỉ xem; lưới có cột Nhóm, Nhà sản xuất, Báo sắp hết.
+- **Kho** (trong Khai báo): thêm kho có Mô tả và Dùng cho phân khu nào.
+- **Nhân sự**: lưới họ tên, điện thoại, chức vụ, phòng/tổ, phân khu; "+ Thêm nhân sự" có nút Hủy; ✎ mở form một chỗ (3 nút Đặt lại mật khẩu, Tạm dừng, Gỡ khỏi cơ sở ở trên cùng).
+- **Người làm công tháng không tài khoản**: Thêm nhân sự → "Thêm người làm không có tài khoản"; ✎ dòng đó → Trả công → thêm lương tháng.
+- **Hộ thành viên** (HTX): lưới có mã hộ, chủ hộ, điện thoại, địa chỉ, sản phẩm chính, giấy chứng nhận, diện tích, ngày vào, trạng thái.
+- **Giấy phép** nằm ở Khai báo (không còn ở Tài khoản).
+
+### Thử C: Tạo vụ và cách quản lý
+1. Sản xuất → Mùa vụ → Tạo vụ mới: thứ tự **Sản phẩm → Quy trình → Phân khu**. Chọn phân khu khác loại: có cảnh báo. Sản phẩm vật nuôi: ô Số con nhập hiện ngay, để trống thì có hỏi lại.
+2. Tạo xong hiện màn **Chọn cách quản lý vụ**: thử chọn "Tự làm trong gia đình": menu ẩn Kho, Nhân sự, Chấm công, Bảng lương, nút ＋ Ghi việc.
+3. Chi tiết vụ → Cách quản lý vụ này → bật "Ghi việc" (mục tùy chọn): nút ＋ Ghi việc hiện lại. Đổi sang "Có người quản lý điều hành": hiện Kho, Chấm công.
+4. Có hai vụ chạy hai cách khác nhau: menu hiện theo tổng của hai vụ.
+5. Chi tiết vụ có khối **Việc cần làm tiếp** (tối đa 3 dòng); làm xong bước thì dòng biến mất.
+6. Mô hình 1: Sản xuất → Chi phí → **Ghi tiền công** (nhập tên người nhận, số tiền); xem Tổng kết vụ có khoản Nhân công.
+7. Mô hình 1 hoặc 2 (chưa bật Ghi việc): mở Thu hoạch thấy khung **Nhắc an toàn thực phẩm** kèm các mốc ngưng thuốc/phân của quy trình.
+
+### Thử D: Chi phí, thu hoạch
+- Ghi chi phí: ô **Nhóm chi phí** (đổi tên/thêm ở Cấu hình) và **Loại chi**.
+- Ghi thu hoạch: **Khối lượng thu**, **Số lượng**, **Hao hụt**, **Loại cỡ**; ô theo mẫu riêng nằm trong khung thu gọn.
+
+### Thử E: Kho (Sản xuất → Kho)
+1. Tồn kho dạng lưới: tìm, lọc Kho/Nhóm, tích Sắp hết, Tồn âm.
+2. Bấm tên vật tư → **Sổ kho** (nhập, xuất, điều chỉnh, tồn sau mỗi dòng).
+3. Tab **Giao dịch** có lọc loại, kho, vật tư, ngày.
+4. **Xuất kho** (hao hụt/hỏng, bán…) bắt buộc lý do; **Chuyển kho** giữa hai kho; xem lại trong Sổ kho (tổng tồn không đổi).
+
+### Thử F: Thủy sản (khung chung tạm)
+Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở Báo cáo dùng bộ sổ chung, không có mốc "ngưng bón phân".

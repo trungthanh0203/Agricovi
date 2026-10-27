@@ -135,7 +135,7 @@ function Shell() {
   // Các màn Chi tiết vụ, Ghi việc, Tạo vụ hiện BÊN TRONG khung (thanh trên + thanh dưới), chạm tab nào là rời màn đó ngay
   const overlayEl =
     overlay === 'detail' && detailId ? (
-      <CycleDetailScreen cycleId={detailId} openQr={qrFirst} openCalendar={detailOpts.calendar} notice={detailOpts.notice} onClose={() => { setQrFirst(false); setDetailOpts({}); setOverlay(null); }} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} />
+      <CycleDetailScreen cycleId={detailId} openQr={qrFirst} openCalendar={detailOpts.calendar} notice={detailOpts.notice} onClose={() => { setQrFirst(false); setDetailOpts({}); setOverlay(null); }} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} onGo={(t, s) => { closeOverlay(); goTo(t, s); }} />
     ) : overlay === 'log' ? (
       <LogActivityScreen preset={logPreset} onClose={() => { setOverlay(logPreset && detailId ? 'detail' : null); setLogPreset(null); }} />
     ) : overlay === 'model' && detailId ? (
@@ -158,7 +158,8 @@ function Shell() {
   const mainTabs = (['home', 'declare', 'production', 'reports'] as TabId[]).filter((t) => tabs.includes(t));
   const menuTabs = (['profile', 'config', 'guide'] as TabId[]).filter((t) => tabs.includes(t)); // Tài khoản lên đầu menu ☰
   const fabAt = mainTabs.length >= 3 ? 2 : 1; // nút Ghi việc nằm giữa
-  const canLog = cyclesAll.some((c) => c.status === 'active' && c.owner_org_id === active?.id);
+  // nút Ghi việc ẩn khi mô hình của các vụ đang chạy không dùng ghi việc (mô hình 1 chưa bật tùy chọn Ghi việc)
+  const canLog = cyclesAll.some((c) => c.status === 'active' && c.owner_org_id === active?.id) && (active?.features?.logs ?? 'on') !== 'off';
 
   return (
     <div className="shell">

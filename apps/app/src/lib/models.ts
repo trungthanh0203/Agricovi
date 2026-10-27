@@ -27,7 +27,7 @@ const ALL_FEATURES: Feature[] = [
 ];
 const F = (o: Partial<Features>): Features => ({ ...(Object.fromEntries(ALL_FEATURES.map((k) => [k, 'off'])) as Features), ...o });
 
-const STAFFED = F({ logs: 'on', stock: 'on', partners: 'on', people: 'on', payroll: 'on', attendance: 'on', positions: 'on', teams: 'on', weekly: 'on', custom_reports: 'on', web: 'on', licenses: 'optional' });
+const STAFFED = F({ logs: 'on', stock: 'on', partners: 'on', people: 'on', payroll: 'on', attendance: 'on', positions: 'on', teams: 'on', weekly: 'on', custom_reports: 'on', web: 'on', licenses: 'on' });
 
 export const MODELS: ModelDef[] = [
   {
@@ -40,13 +40,13 @@ export const MODELS: ModelDef[] = [
     id: 'monthly', name: 'Chủ và người làm công tháng', who: 'Thuê 1–2 người lương tháng, chỉ chủ đăng nhập',
     uses: 'Như trên, thêm hồ sơ người làm, lương tháng, ghi việc, kho vật tư (tùy chọn), bán qua website',
     hidden: 'chấm công vào/ra ca, tổ, chức vụ',
-    features: F({ logs: 'on', stock: 'optional', partners: 'optional', people: 'on', payroll: 'on', web: 'on', licenses: 'optional' }),
+    features: F({ logs: 'on', stock: 'optional', partners: 'optional', people: 'on', payroll: 'on', web: 'on', licenses: 'on' }),
   },
   {
     id: 'managed', name: 'Có người quản lý điều hành', who: 'Một quản lý có tài khoản, nhập hộ mọi dữ liệu',
     uses: 'Như trên, thêm kho, chấm công hộ người làm, báo cáo tuần, chức vụ',
     hidden: 'vào/ra ca của từng người, tổ nhiều cấp',
-    features: F({ logs: 'on', stock: 'on', partners: 'on', people: 'on', payroll: 'on', attendance: 'on', positions: 'on', weekly: 'on', web: 'on', licenses: 'optional' }),
+    features: F({ logs: 'on', stock: 'on', partners: 'on', people: 'on', payroll: 'on', attendance: 'on', positions: 'on', weekly: 'on', web: 'on', licenses: 'on' }),
   },
   {
     id: 'staffed', name: 'Có nhiều nhân viên, mỗi người một tài khoản', who: 'Cơ sở lớn, nhân viên tự vào ca và ra ca',
@@ -76,8 +76,27 @@ export function effectiveModel(cycleModel: unknown, orgModel: unknown): ModelId 
   return null;
 }
 
-/** Chức năng của một mô hình; null (chưa chọn) = đầy đủ */
-export const featuresOf = (model: ModelId | null): Features => (model ? { ...modelDef(model).features } : allFeaturesOn());
+/** Chức năng tùy chọn được bật riêng từng vụ (mã khớp `set_cycle_options` ở CSDL) */
+export const OPTIONAL_FEATURES: { id: Feature; label: string; hint: string }[] = [
+  { id: 'logs', label: 'Ghi việc', hint: 'Ghi nhanh việc đã làm (phun thuốc, bón phân…) để app tính thời gian cách ly chính xác theo từng loại thuốc' },
+  { id: 'stock', label: 'Kho và vật tư', hint: 'Theo dõi nhập, xuất, tồn vật tư; vật nuôi cần để tính FCR' },
+  { id: 'partners', label: 'Nhà cung ứng và khách hàng', hint: 'Danh bạ người bán vật tư, người mua nông sản và công nợ' },
+  { id: 'licenses', label: 'Giấy phép', hint: 'Lưu giấy chứng nhận, ngày hết hạn' },
+];
+
+/** Các chức năng ở trạng thái "tùy chọn" của một mô hình (để hiện ô bật thêm) */
+export const optionalOf = (model: ModelId): Feature[] => OPTIONAL_FEATURES.map((o) => o.id).filter((f) => modelDef(model).features[f] === 'optional');
+
+/**
+ * Chức năng của một mô hình cho MỘT vụ; null (chưa chọn) = đầy đủ. Chức năng "tùy chọn" chỉ hiện khi chủ đã bật cho vụ đó (`options`);
+ * kết quả chỉ còn 'on' hoặc 'off'.
+ */
+export function featuresOf(model: ModelId | null, options: readonly string[] = []): Features {
+  if (!model) return allFeaturesOn();
+  const f = { ...modelDef(model).features };
+  for (const k of ALL_FEATURES) if (f[k] === 'optional') f[k] = options.includes(k) ? 'on' : 'off';
+  return f;
+}
 
 const RANK: Record<FeatureState, number> = { off: 0, optional: 1, on: 2 };
 
@@ -94,10 +113,10 @@ export const featureShown = (s: FeatureState | undefined) => s !== 'off';
  * Chức năng của CƠ SỞ = hợp các mô hình của các vụ còn chạy (chưa kết thúc/hủy). Vụ chưa chọn mô hình tính là đầy đủ.
  * Cơ sở chưa có vụ nào: theo mô hình mặc định của cơ sở (chưa chọn thì đầy đủ).
  */
-export function orgFeatures(cycles: { owner_org_id: string; status: string; mgmt_model?: string | null }[], orgId: string, orgModel: string | null | undefined): Features {
+export function orgFeatures(cycles: { owner_org_id: string; status: string; mgmt_model?: string | null; mgmt_options?: string[] | null }[], orgId: string, orgModel: string | null | undefined): Features {
   const live = cycles.filter((c) => c.owner_org_id === orgId && c.status !== 'ended' && c.status !== 'cancelled');
   if (live.length === 0) return featuresOf(effectiveModel(null, orgModel));
-  return mergeFeatures(live.map((c) => featuresOf(effectiveModel(c.mgmt_model, orgModel))));
+  return mergeFeatures(live.map((c) => featuresOf(effectiveModel(c.mgmt_model, orgModel), c.mgmt_options ?? [])));
 }
 
 /** Mục menu → chức năng cần có (null = luôn hiện) */
