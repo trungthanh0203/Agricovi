@@ -83,7 +83,7 @@ test('kiểm tra khi tạo: mẫu cơ sở khác, mẫu ngừng dùng, mẫu r�
   assert.match(await expectError(create(db, owner, { org, area, tpl: tplB })), /INVALID_TEMPLATE/);
 
   const empty = (await asUser(db, owner, `insert into cycle_templates (organization_id,crop_type_id,name) values ($1,${melon},'Rỗng') returning id`, [org])).rows[0].id;
-  assert.match(await expectError(create(db, owner, { org, area, tpl: empty })), /chưa có giai đoạn/);
+  assert.match(await expectError(create(db, owner, { org, area, tpl: empty })), /chưa có việc nào/);
 
   await asUser(db, owner, `update cycle_templates set is_active=false where id=$1`, [tpl]);
   assert.match(await expectError(create(db, owner, { org, area, tpl })), /ngừng dùng/);
