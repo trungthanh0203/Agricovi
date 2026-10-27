@@ -162,7 +162,7 @@ export const GUIDES: Guide[] = [
         details: [
           'Quy trình mẫu là danh sách các giai đoạn và công việc cho một loại sản phẩm (ví dụ: làm đất → gieo → chăm sóc → thu hoạch).',
           'Làm một lần, dùng cho nhiều vụ. Có thể nhân bản một mẫu rồi sửa.',
-          'Đầu việc là danh mục các loại việc để chọn khi ghi nhật ký; thêm loại việc riêng nếu cần.',
+          'Giai đoạn việc là danh mục các loại việc để chọn khi ghi nhật ký; thêm loại việc riêng nếu cần.',
         ],
         go: { tab: 'declare', section: 'templates', label: 'Mở Quy trình mẫu' },
       },

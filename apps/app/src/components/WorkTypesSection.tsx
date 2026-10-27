@@ -47,7 +47,22 @@ function FieldsEditor({ fields, onChange }: { fields: FieldDef[]; onChange: (f: 
   );
 }
 
-const cleanFields = (fields: FieldDef[]) => fields.filter((f) => f.label.trim()).map((f) => ({ ...f, label: f.label.trim() }));
+/** Chọn "Đối tượng sản xuất" mà việc áp dụng (không chọn gì = mọi đối tượng); dùng chung cho thêm mới và sửa */
+function AppliesPicker({ value, onChange, groups }: { value: string[]; onChange: (v: string[]) => void; groups: { id: string; label: string }[] }) {
+  return (
+    <fieldset className="roles">
+      <legend>Áp dụng cho đối tượng sản xuất</legend>
+      <label className="check"><input type="radio" checked={value.length === 0} onChange={() => onChange([])} /> Tất cả (cây trồng, vật nuôi, thủy sản)</label>
+      {groups.map((g) => (
+        <label className="check" key={g.id}>
+          <input type="checkbox" checked={value.includes(g.id)} onChange={(e) => onChange(e.target.checked ? [...value, g.id] : value.filter((x) => x !== g.id))} /> {g.label}
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
+const cleanFields =(fields: FieldDef[]) => fields.filter((f) => f.label.trim()).map((f) => ({ ...f, label: f.label.trim() }));
 
 /**
  * Danh mục công việc: MỘT bảng gồm việc có sẵn và việc cơ sở tự định nghĩa (việc mới vào bảng ngay).
@@ -63,6 +78,9 @@ export function WorkTypesSection() {
   const [editKind, setEditKind] = useState(''); // loại vụ đang sửa biểu mẫu ('' = mọi loại)
   const [editApplies, setEditApplies] = useState<string[]>([]); // việc riêng của cơ sở: áp dụng cho loại nào (rỗng = mọi loại)
   const [name, setName] = useState('');
+  const [filterKind, setFilterKind] = useState(''); // lọc danh sách theo đối tượng sản xuất ('' = tất cả)
+  const [addApplies, setAddApplies] = useState<string[]>([]);
+  const [addFields, setAddFields] = useState<FieldDef[]>([]);
   const [showOff, setShowOff] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -77,7 +95,8 @@ export function WorkTypesSection() {
   if (!active) return null;
   const org = active.id;
   const canManage = canPerm(active.perms, 'declare', 'edit');
-  const rows = workTypes.filter((t) => showOff || t.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const groups = cfg.productGroups();
+  const rows = workTypes.filter((t) => (showOff || t.is_active) && (!filterKind || !t.applies_to || t.applies_to.length === 0 || t.applies_to.includes(filterKind))).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const editingRow = workTypes.find((t) => t.id === editing) ?? null;
 
   async function run(fn: () => Promise<void>) {
@@ -91,8 +110,11 @@ export function WorkTypesSection() {
 
   function onAdd(e: FormEvent) {
     e.preventDefault();
-    if (name.trim().length < 2) return setError('Hãy nhập tên việc (ít nhất 2 ký tự).');
-    void run(async () => { await createWorkType(org, name, [], desc); setName(''); setDesc(''); });
+    if (name.trim().length < 2) return setError('Hãy nhập tên giai đoạn việc (ít nhất 2 ký tự).');
+    const f = cleanFields(addFields);
+    const bad = checkSchemaDraft(f);
+    if (bad) return setError(bad);
+    void run(async () => { await createWorkType(org, name, f, desc, addApplies); setName(''); setDesc(''); setAddFields([]); setAddApplies([]); });
   }
 
   /** Áp dụng bộ mẫu: đặt trường cho từng loại việc theo gói (việc có sẵn thì thành "bản chỉnh" của cơ sở, việc riêng thì sửa trực tiếp) */
@@ -135,28 +157,39 @@ export function WorkTypesSection() {
       {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Thêm và sửa cần có mạng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
+      <label>Đối tượng sản xuất
+        <select value={filterKind} onChange={(e) => setFilterKind(e.target.value)}>
+          <option value="">Tất cả</option>
+          {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+        </select>
+      </label>
+
       {canManage && (
-        <form className="quickadd" onSubmit={onAdd} noValidate>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Thêm việc mới: nhập tên" aria-label="Tên việc mới" />
-          <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Mô tả (làm thế nào, lưu ý…)" aria-label="Mô tả việc mới" />
-          <button type="submit" className="primary" disabled={busy || !online}>Thêm</button>
-        </form>
+        <Collapsible inline title="＋ Thêm giai đoạn việc">
+          <form className="inline-form" onSubmit={onAdd} noValidate>
+            <label>Tên giai đoạn việc<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Phun thuốc" /></label>
+            <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Làm thế nào, lưu ý…" /></label>
+            <AppliesPicker value={addApplies} onChange={setAddApplies} groups={groups} />
+            <FieldsEditor fields={addFields} onChange={setAddFields} />
+            <div className="btnrow"><button type="submit" className="primary" disabled={busy || !online}>Thêm</button></div>
+          </form>
+        </Collapsible>
       )}
 
       {canManage && (
         <Collapsible inline title="Bộ mẫu theo loại hình" summary="đặt sẵn các thông tin cần ghi">
-          <p className="muted">Chọn một bộ mẫu để tự điền các thông tin cần ghi cho từng việc, sau đó sửa lại cho đúng với cơ sở của bạn. Đây là bản dự kiến.</p>
+          <p className="muted">Chọn một bộ mẫu để tự điền các thông tin cần ghi cho từng giai đoạn việc, sau đó sửa lại cho đúng với cơ sở của bạn. Đây là bản dự kiến.</p>
           {FIELD_PACKS.map((p) => (
-            <div className="note-row" key={p.id}>
-              <span className="grow"><strong>{p.name}</strong><small className="muted"> — {p.description}</small></span>
-              <button className="secondary" disabled={busy || !online} onClick={() => void run(() => applyPack(p))}>Áp dụng</button>
+            <div className="inline-form" key={p.id}>
+              <p><strong>{p.name}</strong><br /><small className="muted">{p.description}</small></p>
+              <div className="btnrow"><button className="secondary" disabled={busy || !online} onClick={() => void run(() => applyPack(p))}>Áp dụng</button></div>
             </div>
           ))}
         </Collapsible>
       )}
 
       <table className="grid">
-        <thead><tr><th>Việc ({rows.length})</th><th>Áp dụng cho</th><th>Thông tin cần ghi</th>{canManage && <th></th>}</tr></thead>
+        <thead><tr><th>Giai đoạn việc ({rows.length})</th><th>Áp dụng cho</th><th>Thông tin cần ghi</th>{canManage && <th></th>}</tr></thead>
         <tbody>
           {rows.length === 0 && <tr><td colSpan={4} className="muted">{online ? 'Chưa có việc nào.' : 'Cần mạng để tải danh sách.'}</td></tr>}
           {rows.map((t) => (
@@ -186,33 +219,25 @@ export function WorkTypesSection() {
 
       {editingRow && (
         <div className="card">
-          <h2>Sửa việc: {editingRow.name}</h2>
+          <h2>Sửa giai đoạn việc: {editingRow.name}</h2>
           <div className="inline-form">
             <label>Tên việc<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
             <label>Mô tả<input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} /></label>
             {editingRow.shared ? (
-              <label>Sửa biểu mẫu cho loại vụ
+              <label>Sửa biểu mẫu cho đối tượng sản xuất
                 <select value={editKind} onChange={(e) => {
                   const k = e.target.value;
                   setEditKind(k);
                   const raw = rawTypes.find((r) => r.id === editingRow.id);
                   setEditFields(raw ? fieldsForKind(raw, org, k || undefined) : editingRow.field_schema);
                 }}>
-                  <option value="">Mọi loại (mặc định)</option>
-                  {cfg.productGroups().map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+                  <option value="">Tất cả (mặc định)</option>
+                  {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
                 </select>
                 <small>Một việc có thể có biểu mẫu riêng cho từng loại. Loại chưa chỉnh thì dùng biểu mẫu chuẩn (vật nuôi, thủy sản) hoặc "Mọi loại".</small>
               </label>
             ) : (
-              <fieldset className="roles">
-                <legend>Việc này áp dụng cho</legend>
-                <label className="check"><input type="radio" checked={editApplies.length === 0} onChange={() => setEditApplies([])} /> Mọi loại (cây trồng, vật nuôi, thủy sản)</label>
-                {cfg.productGroups().map((g) => (
-                  <label className="check" key={g.id}>
-                    <input type="checkbox" checked={editApplies.includes(g.id)} onChange={(e) => setEditApplies((cur) => (e.target.checked ? [...cur, g.id] : cur.filter((x) => x !== g.id)))} /> {g.label}
-                  </label>
-                ))}
-              </fieldset>
+              <AppliesPicker value={editApplies} onChange={setEditApplies} groups={groups} />
             )}
             <FieldsEditor fields={editFields} onChange={setEditFields} />
             <div className="btnrow">
