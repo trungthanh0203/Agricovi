@@ -12,6 +12,7 @@ const TABLES = [
 const FUNCS = [
   'can_configure', 'can_read_org_config', 'cycle_has_perm', 'fold_vi', 'has_perm', 'lite_images', 'login_email_for_phone', 'perm_level', 'perm_level_of', 'permissions_valid',
   'public_org_priority', 'role_default_perm', 'shop_is_active', 'shop_material_limit', 'site_search', 'submit_quote_request',
+  'valid_field_schema', // hàm thuần kiểm tra mẫu biểu, dùng trong ràng buộc CHECK nên phải gọi được; không đọc dữ liệu
 ];
 
 test('khách (anon) chỉ ĐỌC đúng các bảng/view công khai, không ghi được bảng nào', async () => {
