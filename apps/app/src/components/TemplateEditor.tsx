@@ -9,13 +9,13 @@ import {
   totalDays, updateStage, updateTemplate, type StageRow, type TemplateRow,
 } from '../lib/templates';
 
-/** Màu cho thanh tổng quan các giai đoạn (tên luôn hiện bằng chữ, màu chỉ để phân biệt) */
+/** Màu cho thanh tổng quan các công đoạn (tên luôn hiện bằng chữ, màu chỉ để phân biệt) */
 const COLORS = ['#2e7d32', '#1976d2', '#f9a825', '#8e24aa', '#00838f', '#c62828', '#6d4c41'];
 
 interface Props { templateId: string; canEdit: boolean; onBack: () => void; onOpenOther: (id: string) => void }
 
 /**
- * Trình soạn quy trình mẫu dạng DANH SÁCH: mỗi dòng là một giai đoạn = một việc chọn từ danh mục + số ngày.
+ * Trình soạn quy trình mẫu dạng DANH SÁCH: mỗi dòng là một công đoạn = một việc chọn từ danh mục + số ngày.
  * Đổi thứ tự bằng kéo thả (cầm ⠿) hoặc nút ↑ ↓. Mọi thay đổi lưu thẳng lên máy chủ (cần mạng).
  */
 export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Props) {
@@ -121,9 +121,9 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
           {!tpl.is_active && <span className="pill warn">Ngừng dùng</span>}
         </div>
         {tpl.note && <p>{tpl.note}</p>}
-        <p className="muted">{stages.length} giai đoạn · tổng {days} ngày · bản {tpl.version}</p>
+        <p className="muted">{stages.length} công đoạn · tổng {days} ngày · bản {tpl.version}</p>
         {stages.length > 0 && (
-          <div className="timeline" role="img" aria-label={`Tổng quan ${stages.length} giai đoạn, ${days} ngày`}>
+          <div className="timeline" role="img" aria-label={`Tổng quan ${stages.length} công đoạn, ${days} ngày`}>
             {shown.map((s, i) => <div key={s.id} className="seg" style={{ flexGrow: s.duration_days, background: COLORS[i % COLORS.length] }} title={`${s.name}: ${s.duration_days} ngày`} />)}
           </div>
         )}
@@ -149,10 +149,10 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
 
       <table className="grid">
         <thead>
-          <tr>{canEdit && <th></th>}<th>#</th><th>Giai đoạn (việc)</th><th className="num">Ngày</th><th className="num">Từ–đến</th>{canEdit && <th></th>}</tr>
+          <tr>{canEdit && <th></th>}<th>#</th><th>Công đoạn (việc)</th><th className="num">Ngày</th><th className="num">Từ–đến</th>{canEdit && <th></th>}</tr>
         </thead>
         <tbody ref={bodyRef}>
-          {shown.length === 0 && <tr><td colSpan={6} className="muted">Chưa có giai đoạn nào. Chọn việc từ danh mục và số ngày ở dòng bên dưới rồi bấm Thêm.</td></tr>}
+          {shown.length === 0 && <tr><td colSpan={6} className="muted">Chưa có công đoạn nào. Chọn việc từ danh mục và số ngày ở dòng bên dưới rồi bấm Thêm.</td></tr>}
           {shown.map((s, i) => {
             const r = ranges.get(s.id);
             return (
@@ -174,11 +174,11 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
                 <td className="num muted">{r ? `${r.from}–${r.to}` : ''}</td>
                 {canEdit && (
                   <td className="act">
-                    <button className="icon" disabled={!editable} aria-label={`Sửa giai đoạn ${i + 1}`} onClick={() => setEditId(editId === s.id ? null : s.id)}>✎</button>{' '}
+                    <button className="icon" disabled={!editable} aria-label={`Sửa công đoạn ${i + 1}`} onClick={() => setEditId(editId === s.id ? null : s.id)}>✎</button>{' '}
                     <button className="icon" disabled={!editable || i === 0} aria-label="Lên" onClick={() => moveBy(i, -1)}>↑</button>{' '}
                     <button className="icon" disabled={!editable || i === shown.length - 1} aria-label="Xuống" onClick={() => moveBy(i, 1)}>↓</button>{' '}
-                    <button className="icon" disabled={!editable} aria-label={`Xóa giai đoạn ${i + 1}`}
-                      onClick={() => { if (window.confirm(`Xóa giai đoạn "${s.name}"?`)) void run(() => deleteStage(s.id)); }}>✕</button>
+                    <button className="icon" disabled={!editable} aria-label={`Xóa công đoạn ${i + 1}`}
+                      onClick={() => { if (window.confirm(`Xóa công đoạn "${s.name}"?`)) void run(() => deleteStage(s.id)); }}>✕</button>
                   </td>
                 )}
               </tr>
@@ -199,7 +199,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
             <select value={newWt || types[0]?.id || ''} onChange={(e) => setNewWt(e.target.value)} aria-label="Đầu việc">
               {types.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
             </select>
-            <input value={newNote} onChange={(e) => setNewNote(e.target.value)} placeholder="Mô tả giai đoạn (không bắt buộc)" aria-label="Mô tả giai đoạn" />
+            <input value={newNote} onChange={(e) => setNewNote(e.target.value)} placeholder="Mô tả công đoạn (không bắt buộc)" aria-label="Mô tả công đoạn" />
             <input value={newDays} inputMode="numeric" onChange={(e) => setNewDays(e.target.value)} placeholder="Số ngày" aria-label="Số ngày" style={{ maxWidth: 110 }} />
             <button className="primary" disabled={busy || !online} onClick={onAdd}>Thêm</button>
           </div>
@@ -219,7 +219,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
   );
 }
 
-/** Sửa một giai đoạn: đổi việc, mô tả, số ngày rồi bấm Lưu (không lưu tự động để tránh nhầm) */
+/** Sửa một công đoạn: đổi việc, mô tả, số ngày rồi bấm Lưu (không lưu tự động để tránh nhầm) */
 function StageEditForm({ stage, types, busy, onSave, onClose }: {
   stage: StageRow; types: { id: string; name: string }[]; busy: boolean;
   onSave: (v: { work_type_id?: string; duration_days: number; note: string }) => Promise<void>; onClose: () => void;
@@ -230,7 +230,7 @@ function StageEditForm({ stage, types, busy, onSave, onClose }: {
   const [err, setErr] = useState<string | null>(null);
   return (
     <div className="card">
-      <h2>Sửa giai đoạn: {stage.name}</h2>
+      <h2>Sửa công đoạn: {stage.name}</h2>
       <div className="inline-form">
         <label>Đầu việc
           <select value={wt} onChange={(e) => setWt(e.target.value)}>

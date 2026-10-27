@@ -109,7 +109,7 @@ export function WorkTypesSection() {
 
   function onAdd(e: FormEvent) {
     e.preventDefault();
-    if (name.trim().length < 2) return setError('Hãy nhập tên giai đoạn việc (ít nhất 2 ký tự).');
+    if (name.trim().length < 2) return setError('Hãy nhập tên việc (ít nhất 2 ký tự).');
     const f = cleanFields(addFields);
     const bad = checkSchemaDraft(f);
     if (bad) return setError(bad);
@@ -150,9 +150,9 @@ export function WorkTypesSection() {
 
       {editingRow && (
         <div className="card">
-          <h2>Sửa giai đoạn việc: {editingRow.name}</h2>
+          <h2>Sửa việc: {editingRow.name}</h2>
           <div className="inline-form">
-            <label>Tên giai đoạn việc<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
+            <label>Tên việc<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
             <label>Mô tả<input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} /></label>
             {editingRow.shared ? (
               <label>Sửa biểu mẫu cho đối tượng sản xuất
@@ -183,9 +183,9 @@ export function WorkTypesSection() {
       )}
 
       {canManage && !editingRow && (
-        <Collapsible inline title="＋ Thêm giai đoạn việc">
+        <Collapsible inline title="＋ Thêm việc">
           <form className="inline-form" onSubmit={onAdd} noValidate>
-            <label>Tên giai đoạn việc<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Phun thuốc" /></label>
+            <label>Tên việc<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Phun thuốc" /></label>
             <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Làm thế nào, lưu ý…" /></label>
             <AppliesPicker value={addApplies} onChange={setAddApplies} groups={groups} />
             <FieldsEditor fields={addFields} onChange={setAddFields} />
@@ -195,7 +195,7 @@ export function WorkTypesSection() {
       )}
 
       <table className="grid">
-        <thead><tr><th>Giai đoạn việc ({rows.length})</th><th>Áp dụng cho</th><th>Thông tin cần ghi</th>{canManage && <th></th>}</tr></thead>
+        <thead><tr><th>Việc ({rows.length})</th><th>Áp dụng cho</th><th>Thông tin cần ghi</th>{canManage && <th></th>}</tr></thead>
         <tbody>
           {rows.length === 0 && <tr><td colSpan={4} className="muted">{online ? 'Chưa có việc nào.' : 'Cần mạng để tải danh sách.'}</td></tr>}
           {rows.map((t) => (

@@ -58,7 +58,7 @@ export const GUIDES: Guide[] = [
         title: 'Một vòng đời mùa vụ gồm 5 bước',
         details: [
           '1) Khai báo: phân khu, sản phẩm, vật tư, quy trình mẫu (làm một lần, dùng nhiều vụ).',
-          '2) Tạo vụ: chọn sản phẩm, phân khu và quy trình mẫu; app tự lập lịch các giai đoạn (có thể đặt sản lượng và ngân sách dự kiến). Bắt đầu chạy muộn hay làm lệch kế hoạch thì lịch tự dời theo thực tế.',
+          '2) Tạo vụ: chọn sản phẩm, phân khu và quy trình mẫu; app tự lập lịch các công đoạn (có thể đặt sản lượng và ngân sách dự kiến). Bắt đầu chạy muộn hay làm lệch kế hoạch thì lịch tự dời theo thực tế.',
           '3) Ghi việc hằng ngày: mỗi việc làm xong bấm nút ＋ Ghi việc, ghi cả vật tư đã dùng.',
           '4) Thu hoạch và bán: ghi sản lượng, hao hụt, doanh thu, khách còn nợ.',
           '5) Tổng kết: xem chi phí, doanh thu, lãi lỗ, giá thành mỗi ký của cả vụ.',
@@ -160,9 +160,9 @@ export const GUIDES: Guide[] = [
       {
         title: 'Lập quy trình mẫu',
         details: [
-          'Quy trình mẫu là danh sách các giai đoạn và công việc cho một loại sản phẩm (ví dụ: làm đất → gieo → chăm sóc → thu hoạch).',
+          'Quy trình mẫu là danh sách các công đoạn và công việc cho một loại sản phẩm (ví dụ: làm đất → gieo → chăm sóc → thu hoạch).',
           'Làm một lần, dùng cho nhiều vụ. Có thể nhân bản một mẫu rồi sửa.',
-          'Giai đoạn việc là danh mục các loại việc để chọn khi ghi nhật ký; thêm loại việc riêng nếu cần.',
+          'Việc là danh mục các việc để chọn khi ghi nhật ký (phun thuốc, bón phân…); thêm việc riêng nếu cần. Mỗi công đoạn của quy trình gồm các việc này.',
         ],
         go: { tab: 'declare', section: 'templates', label: 'Mở Quy trình mẫu' },
       },
@@ -184,7 +184,7 @@ export const GUIDES: Guide[] = [
           'Vụ vật nuôi, thủy sản: nên nhập Số con nhập chuồng/thả giống ngay khi tạo (không bắt buộc) để app tính hao hụt, mật độ và FCR.',
           'Có thể nhập Giống, Diện tích trồng (m², ha, sào hoặc công), Số cây, nguồn giống, số lô giống, ngày gieo/trồng: app tự tính mật độ, năng suất, chi phí và lãi trên 1.000 m² (hoặc trên sào/công/ha bạn chọn).',
           'Có thể nhập Sản lượng dự kiến (kg) và Ngân sách dự kiến (đồng) để so với thực tế (không bắt buộc; sửa sau ở Sửa vụ).',
-          'Chọn "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước, bắt đầu chạy sau. App lập lịch các giai đoạn theo quy trình mẫu.',
+          'Chọn "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước, bắt đầu chạy sau. App lập lịch các công đoạn theo quy trình mẫu.',
           'Mỗi vụ có một mã (hiện sau tên vụ, ví dụ "Dưa vụ 1 - AB12CD34") dùng cho mã QR truy xuất.',
           'Hộ nhỏ thấy app còn nhiều mục? Chọn cách quản lý "Tự làm trong gia đình" cho vụ: app ẩn kho, nhân sự, chấm công, bảng lương… Ghi việc vẫn dùng được bình thường (nút ＋ ở giữa); muốn dùng thêm Kho thì bật ở mục "Mục tùy chọn" (mô hình Chủ và người làm công tháng). Tiền công người nhà ghi ở Sản xuất → Chi phí, chọn nhóm Nhân công (không cần tạo nhân sự).',
           'Mục "Việc cần làm tiếp" trong Chi tiết vụ nhắc bước kế tiếp theo cách quản lý của vụ (ghi chi phí, thu hoạch, doanh thu, tổng kết…).',
@@ -196,8 +196,8 @@ export const GUIDES: Guide[] = [
       {
         title: 'Theo dõi vụ: lịch và số liệu',
         details: [
-          'Bấm "Bắt đầu sản xuất" khi vụ thật sự chạy: ngày bắt đầu thành ngày thực tế và lịch các giai đoạn tự dời theo.',
-          'Bắt đầu hoặc hoàn thành một giai đoạn sớm/trễ so với kế hoạch, hoặc sửa ngày kết thúc của một giai đoạn: các giai đoạn phía sau tự dời theo số ngày lệch (giai đoạn đang chạy hay đã xong không bị đổi).',
+          'Bấm "Bắt đầu sản xuất" khi vụ thật sự chạy: ngày bắt đầu thành ngày thực tế và lịch các công đoạn tự dời theo.',
+          'Bắt đầu hoặc hoàn thành một công đoạn sớm/trễ so với kế hoạch, hoặc sửa ngày kết thúc của một công đoạn: các công đoạn phía sau tự dời theo số ngày lệch (công đoạn đang chạy hay đã xong không bị đổi).',
           'Bấm Quy trình & Lịch để xem hôm nay cần làm gì; có thể ghi chú theo ngày và được nhắc ở Trang chủ.',
           'Mỗi thẻ vụ có dòng số liệu: Chi phí · Thu hoạch · Doanh thu · Lãi/Lỗ tạm tính, và thanh so với ngân sách, sản lượng dự kiến. Có diện tích thì hiện thêm Năng suất trên diện tích. Bấm "Xem thêm số liệu" để xem chi phí chia theo vật tư/tiền công/khác, hao hụt, còn tồn, giá thành mỗi kg, ngày chạy, giờ công, tiền khách còn nợ.',
           'Chỉ hiện số bạn có quyền xem (tiền cần quyền Tổng kết vụ).',
@@ -208,7 +208,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Hằng ngày: vào ca, ghi việc, ra ca',
         details: [
-          'Vào ca khi bắt đầu làm; app có thể nhắc giai đoạn của hôm nay.',
+          'Vào ca khi bắt đầu làm; app có thể nhắc công đoạn của hôm nay.',
           'Bấm nút ＋ Ghi việc ở giữa thanh dưới: chọn vụ, loại việc, nhập "Nội dung việc" (có thể bấm micro để nói), thêm vật tư đã dùng và ảnh.',
           'Ghi sai thì vào Nhật ký việc để sửa hoặc hủy (có lịch sử). Mất mạng vẫn ghi được.',
           'Xong việc thì Ra ca.',
@@ -308,7 +308,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Theo dõi mùa vụ và sản lượng',
         details: [
-          'Xem tiến độ các vụ đang chạy, vụ trễ tiến độ ở Trang chủ và Sản xuất → Mùa vụ; lịch giai đoạn tự dời theo thực tế.',
+          'Xem tiến độ các vụ đang chạy, vụ trễ tiến độ ở Trang chủ và Sản xuất → Mùa vụ; lịch công đoạn tự dời theo thực tế.',
           'Mỗi thẻ vụ có dòng số liệu (chi phí, thu hoạch, doanh thu, lãi lỗ) và so với ngân sách, sản lượng dự kiến. Tổng hợp theo vụ ở Tổng kết vụ và Báo cáo theo nhu cầu.',
         ],
         go: { tab: 'production', section: 'cycles', label: 'Mở Mùa vụ' },

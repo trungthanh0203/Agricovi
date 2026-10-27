@@ -94,7 +94,7 @@ function Shell() {
   const [overlay, setOverlay] = useState<null | 'log' | 'cycle' | 'logs' | 'detail' | 'model'>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [qrFirst, setQrFirst] = useState(false); // vừa tạo vụ: mở sẵn mã QR
-  const [detailOpts, setDetailOpts] = useState<{ calendar?: boolean; notice?: string }>({}); // vừa vào ca: mở thẳng Lịch kèm thông báo giai đoạn hôm nay
+  const [detailOpts, setDetailOpts] = useState<{ calendar?: boolean; notice?: string }>({}); // vừa vào ca: mở thẳng Lịch kèm thông báo công đoạn hôm nay
   const [logPreset, setLogPreset] = useState<LogPreset | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
   const [counts, setCounts] = useState<Record<SyncState, number> | null>(null);

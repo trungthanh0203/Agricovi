@@ -8,7 +8,7 @@ import { useCatalog } from '../lib/catalog';
 import { createTemplate, deleteTemplate, listTemplates, refreshCatalogCache, totalDays, type TemplateRow } from '../lib/templates';
 
 /**
- * Quy trình mùa vụ mẫu của cơ sở: một bảng gọn (quy trình, số giai đoạn, số ngày), bấm "Mở" để soạn.
+ * Quy trình mùa vụ mẫu của cơ sở: một bảng gọn (quy trình, số công đoạn, số ngày), bấm "Mở" để soạn.
  * Mỗi hộ/HTX có bộ mẫu riêng; vụ thật sẽ được tạo theo mẫu (P2). Cần mạng để soạn.
  */
 export function TemplatesSection() {
@@ -46,13 +46,13 @@ export function TemplatesSection() {
     setBusy(true);
     setError(null);
     createTemplate(active!.id, effCrop, name, desc)
-      .then((id) => { setName(''); setDesc(''); setOpenId(id); }) // mở ngay để thêm giai đoạn
+      .then((id) => { setName(''); setDesc(''); setOpenId(id); }) // mở ngay để thêm công đoạn
       .catch((err) => setError(friendlyError(err)))
       .finally(() => setBusy(false));
   }
 
   function onDelete(t: TemplateRow) {
-    if (!window.confirm(`Xóa quy trình "${t.name}" cùng ${t.template_stages.length} giai đoạn? Không khôi phục được. Nếu đã có vụ dùng quy trình này thì chỉ có thể ngừng dùng.`)) return;
+    if (!window.confirm(`Xóa quy trình "${t.name}" cùng ${t.template_stages.length} công đoạn? Không khôi phục được. Nếu đã có vụ dùng quy trình này thì chỉ có thể ngừng dùng.`)) return;
     setBusy(true);
     setError(null);
     deleteTemplate(t.id)
@@ -84,7 +84,7 @@ export function TemplatesSection() {
       ))}
 
       <table className="grid">
-        <thead><tr><th>Quy trình ({rows.length})</th><th className="num">Giai đoạn</th><th className="num">Ngày</th><th></th></tr></thead>
+        <thead><tr><th>Quy trình ({rows.length})</th><th className="num">Công đoạn</th><th className="num">Ngày</th><th></th></tr></thead>
         <tbody>
           {rows.length === 0 && (
             <tr><td colSpan={4} className="muted">Chưa có quy trình mẫu. Phải có mẫu cho sản phẩm nào thì mới tạo được vụ của sản phẩm đó.</td></tr>

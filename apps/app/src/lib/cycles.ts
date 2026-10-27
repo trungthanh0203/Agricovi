@@ -1,26 +1,26 @@
 import type { StageRow } from './db';
 import { diffDays } from './dates';
 
-/** Nhãn trạng thái giai đoạn của vụ */
+/** Nhãn trạng thái công đoạn của vụ */
 export const STAGE_STATUS_LABEL_VI: Record<StageRow['status'], string> = {
   pending: 'Chưa làm',
   in_progress: 'Đang làm',
   done: 'Đã xong',
 };
 
-/** Giai đoạn hiện tại: đang làm; nếu không có thì giai đoạn chưa làm đầu tiên; xong hết thì null */
+/** Công đoạn hiện tại: đang làm; nếu không có thì công đoạn chưa làm đầu tiên; xong hết thì null */
 export function currentStage(stages: StageRow[]): StageRow | null {
   const sorted = [...stages].sort((a, b) => a.seq - b.seq);
   return sorted.find((s) => s.status === 'in_progress') ?? sorted.find((s) => s.status === 'pending') ?? null;
 }
 
-/** Giai đoạn của một ngày: giai đoạn chưa xong có kế hoạch bao trùm ngày đó; không có thì giai đoạn hiện tại */
+/** Công đoạn của một ngày: công đoạn chưa xong có kế hoạch bao trùm ngày đó; không có thì công đoạn hiện tại */
 export function stageForDay(stages: StageRow[], day: string): StageRow | null {
   const sorted = [...stages].sort((a, b) => a.seq - b.seq);
   return sorted.find((s) => s.status !== 'done' && s.planned_start && s.planned_end && s.planned_start <= day && day <= s.planned_end) ?? currentStage(stages);
 }
 
-/** Số ngày trễ so với kế hoạch (0 = đúng hạn). Giai đoạn xong: so ngày xong thực tế; còn lại: so với hôm nay. */
+/** Số ngày trễ so với kế hoạch (0 = đúng hạn). Công đoạn xong: so ngày xong thực tế; còn lại: so với hôm nay. */
 export function stageDelayDays(s: StageRow, today: string): number {
   if (s.status === 'done') return s.actual_end && s.planned_end ? Math.max(0, diffDays(s.planned_end, s.actual_end)) : 0;
   if (s.status === 'in_progress') return s.planned_end ? Math.max(0, diffDays(s.planned_end, today)) : 0;
@@ -32,7 +32,7 @@ export interface CycleProgress {
   done: number;
   percent: number;
   current: StageRow | null;
-  /** Số ngày trễ của giai đoạn hiện tại */
+  /** Số ngày trễ của công đoạn hiện tại */
   delay: number;
 }
 
@@ -43,6 +43,6 @@ export function cycleProgress(stages: StageRow[], today: string): CycleProgress 
   return { total, done, percent: total ? Math.round((done / total) * 100) : 0, current, delay: current ? stageDelayDays(current, today) : 0 };
 }
 
-/** Màu giai đoạn (cùng bảng màu với trình soạn quy trình) */
+/** Màu công đoạn (cùng bảng màu với trình soạn quy trình) */
 export const STAGE_COLORS = ['#2e7d32', '#1976d2', '#f9a825', '#8e24aa', '#00838f', '#c62828', '#6d4c41'];
 export const stageColor = (index: number) => STAGE_COLORS[index % STAGE_COLORS.length]!;

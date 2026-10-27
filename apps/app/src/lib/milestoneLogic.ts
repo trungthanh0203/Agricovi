@@ -39,7 +39,7 @@ export function milestoneWhen(m: MilestoneLite): string {
 
 /**
  * Trống chuồng (P4 gọn): vụ mới bắt đầu ngày `startDate` ở khu `areaId` mà vụ trước ở khu đó mới kết thúc cách chưa đủ `minDays` ngày,
- * hoặc khu vẫn còn vụ đang chạy. Trả về câu cảnh báo hoặc null. Ngày kết thúc của vụ đã xong = ngày hoàn thành giai đoạn cuối nếu có, nếu không thì ngày kết thúc dự kiến.
+ * hoặc khu vẫn còn vụ đang chạy. Trả về câu cảnh báo hoặc null. Ngày kết thúc của vụ đã xong = ngày hoàn thành công đoạn cuối nếu có, nếu không thì ngày kết thúc dự kiến.
  */
 export function restWarning(
   areaId: string, startDate: string, minDays: number,

@@ -70,9 +70,9 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
 
   const [workTypeId, setWorkTypeId] = useState<string | null>(preset?.workTypeId ?? null);
   const stages = useLiveQuery(() => db.stages.where('cycle_id').equals(effectiveCycleId).sortBy('seq'), [effectiveCycleId], []);
-  // giai đoạn gắn với việc: mặc định theo preset, nếu không thì giai đoạn đang làm có cùng loại việc
+  // công đoạn gắn với việc: mặc định theo preset, nếu không thì công đoạn đang làm có cùng loại việc
   const [stageSel, setStageSel] = useState<string | null | undefined>(preset?.stageId);
-  // mặc định theo loại việc đã chọn: giai đoạn đang làm cùng loại việc, nếu không thì giai đoạn cùng loại việc chưa xong
+  // mặc định theo loại việc đã chọn: công đoạn đang làm cùng loại việc, nếu không thì công đoạn cùng loại việc chưa xong
   const sameType = stages.filter((s) => s.work_type_id === workTypeId);
   const autoStage = (sameType.find((s) => s.status === 'in_progress') ?? sameType.find((s) => s.status !== 'done'))?.id ?? null;
   const effStage = stageSel === undefined ? autoStage : stageSel;
@@ -220,9 +220,9 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
         <form className="inline-form" onSubmit={onSubmit} noValidate>
           {!areaMode && stages.length > 0 && (
             <label>
-              Thuộc giai đoạn
+              Thuộc công đoạn
               <select value={effStage ?? ''} onChange={(e) => setStageSel(e.target.value || null)}>
-                <option value="">— Không gắn giai đoạn —</option>
+                <option value="">— Không gắn công đoạn —</option>
                 {stages.map((st) => <option key={st.id} value={st.id}>{st.name}</option>)}
               </select>
             </label>
