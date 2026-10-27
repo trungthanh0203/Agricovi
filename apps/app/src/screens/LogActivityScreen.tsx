@@ -72,9 +72,12 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const stages = useLiveQuery(() => db.stages.where('cycle_id').equals(effectiveCycleId).sortBy('seq'), [effectiveCycleId], []);
   // giai đoạn gắn với việc: mặc định theo preset, nếu không thì giai đoạn đang làm có cùng loại việc
   const [stageSel, setStageSel] = useState<string | null | undefined>(preset?.stageId);
-  const autoStage = stages.find((s) => s.status === 'in_progress' && s.work_type_id === workTypeId)?.id ?? null;
+  // mặc định theo loại việc đã chọn: giai đoạn đang làm cùng loại việc, nếu không thì giai đoạn cùng loại việc chưa xong
+  const sameType = stages.filter((s) => s.work_type_id === workTypeId);
+  const autoStage = (sameType.find((s) => s.status === 'in_progress') ?? sameType.find((s) => s.status !== 'done'))?.id ?? null;
   const effStage = stageSel === undefined ? autoStage : stageSel;
   const [when, setWhen] = useState(toLocalInput(new Date()));
+  const [endWhen, setEndWhen] = useState(''); // thời điểm kết thúc (không bắt buộc)
   const [values, setValues] = useState<Record<string, string>>({});
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +115,8 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
     const merged = { ...initialValues(workType.field_schema), ...values };
     const bad = validateFields(workType.field_schema, merged);
     if (bad) return setError(bad);
-    const data = fieldsToData(workType.field_schema, merged);
+    if (endWhen && new Date(endWhen).getTime() < new Date(when).getTime()) return setError('Thời điểm kết thúc không được trước thời điểm bắt đầu.');
+    const data = fieldsToData(workType.field_schema, merged, endWhen ? { ended_at: new Date(endWhen).toISOString() } : {});
     // dòng vật tư: bỏ dòng trống hoàn toàn; dòng đã nhập dở thì báo để người dùng sửa, không âm thầm bỏ
     const items: { materialId: string; quantity: number; lotId?: string; reason?: string }[] = [];
     for (const row of used) {
@@ -153,6 +157,8 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
     setNote('');
     setError(null);
     setWhen(toLocalInput(new Date()));
+    setEndWhen('');
+    setStageSel(undefined);
   }
 
   // Màn xác nhận sau khi lưu: nói đúng trạng thái đồng bộ (FR-SYNC-006)
@@ -182,7 +188,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
 
   return (
     <div className="auth">
-      <h1>Ghi việc vừa làm</h1>
+      <h1>{workType ? `Ghi việc: ${workType.name}` : 'Ghi việc vừa làm'}</h1>
 
       {options.length === 0 && siteAreas.length === 0 ? (
         <>
@@ -206,8 +212,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
           <button className="link" onClick={onClose}>Hủy</button>
         </>
       ) : (
-        <form onSubmit={onSubmit} noValidate>
-          <p><strong>{workType.name}</strong> <button type="button" className="link inline" onClick={() => setWorkTypeId(null)}>Đổi</button></p>
+        <form className="inline-form" onSubmit={onSubmit} noValidate>
 
           {siteAreas.length > 0 && options.length > 0 && (
             <label>
@@ -249,14 +254,22 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
             </label>
           )}
 
-          <label>
-            Thời điểm làm
-            <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
-          </label>
+          <div className="pair">
+            <label>
+              Thời điểm bắt đầu làm
+              <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+            </label>
+            <label>
+              Thời điểm kết thúc
+              <input type="datetime-local" value={endWhen} min={when} onChange={(e) => setEndWhen(e.target.value)} />
+            </label>
+          </div>
 
           {workType.field_schema.map((f) => (
             <DynamicField key={f.key} def={f} value={values[f.key] ?? initialValues([f])[f.key] ?? ''} onChange={(v) => setValues((s) => ({ ...s, [f.key]: v }))} />
           ))}
+
+          <VoiceNote label="Nội dung việc (bắt buộc)" value={note} onChange={setNote} />
 
           {canIssue && (
             <fieldset className="roles">
@@ -303,8 +316,6 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
               )}
             </fieldset>
           )}
-
-          <VoiceNote label="Nội dung việc (bắt buộc)" value={note} onChange={setNote} />
 
           {error && <p className="msg error" role="alert">{error}</p>}
           {!navigator.onLine && <p className="msg warn">Đang offline. Bản ghi sẽ được lưu trên điện thoại và gửi sau.</p>}

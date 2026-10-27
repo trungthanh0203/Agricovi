@@ -133,7 +133,7 @@ const PEST = ['Rệp', 'Bọ trĩ', 'Nhện đỏ', 'Ruồi đục quả', 'Sâu
 /** Cây trồng (lấy từ bộ dưa lưới nhà màng cũ, hướng VietGAP). Phân/thuốc cụ thể chọn ở ô "Vật tư đã dùng" (trừ kho, tính cách ly). */
 const CROP: Record<string, FieldDef[]> = {
   spraying: [
-    { key: 'target', label: 'Đối tượng phòng trừ', type: 'multiselect', options: PEST, required: true },
+    { key: 'target', label: 'Phòng trừ sâu, bệnh gì', type: 'multiselect', options: PEST, required: true },
     { key: 'reason', label: 'Lý do phun', type: 'select', options: ['Phòng bệnh', 'Phát hiện sâu bệnh', 'Theo quy trình'] },
     { key: 'dose', label: 'Liều lượng / nồng độ', type: 'text', hint: 'Ví dụ: 20 ml pha bình 16 lít' },
     { key: 'tool', label: 'Dụng cụ phun', type: 'select', options: ['Bình đeo vai', 'Máy phun điện', 'Máy phun động cơ'] },

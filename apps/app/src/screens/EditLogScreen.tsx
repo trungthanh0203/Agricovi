@@ -24,6 +24,7 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
   const [when, setWhen] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string> | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [endWhen, setEndWhen] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const online = useOnline();
 
@@ -34,13 +35,16 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
   const whenV = when ?? toLocalInput(new Date(log.performed_at));
   const valuesV = values ?? initialValues(schema, log.data);
   const noteV = note ?? log.note ?? '';
+  const endV = endWhen ?? (typeof log.data?.ended_at === 'string' ? toLocalInput(new Date(log.data.ended_at)) : '');
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!noteV.trim()) return setError('Hãy nhập "Nội dung việc": gõ chữ hoặc bấm Nói để đọc nội dung đã làm.');
     const bad = validateFields(schema, valuesV);
     if (bad) return setError(bad);
+    if (endV && new Date(endV).getTime() < new Date(whenV).getTime()) return setError('Thời điểm kết thúc không được trước thời điểm bắt đầu.');
     const data = fieldsToData(schema, valuesV, log!.data);
+    if (endV) data.ended_at = new Date(endV).toISOString(); else delete data.ended_at;
     setError(null);
     try {
       await editLog(logId, { performedAt: new Date(whenV).toISOString(), data, note: noteV });
@@ -54,11 +58,17 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
     <main className="auth">
       <h1>Sửa nhật ký</h1>
       <p className="muted">{workType?.name ?? 'Việc'} — mọi thay đổi được lưu lịch sử.</p>
-      <form onSubmit={onSubmit} noValidate>
-        <label>
-          Thời điểm làm
-          <input type="datetime-local" value={whenV} onChange={(e) => setWhen(e.target.value)} />
-        </label>
+      <form className="inline-form" onSubmit={onSubmit} noValidate>
+        <div className="pair">
+          <label>
+            Thời điểm bắt đầu làm
+            <input type="datetime-local" value={whenV} onChange={(e) => setWhen(e.target.value)} />
+          </label>
+          <label>
+            Thời điểm kết thúc
+            <input type="datetime-local" value={endV} min={whenV} onChange={(e) => setEndWhen(e.target.value)} />
+          </label>
+        </div>
         {schema.map((f) => (
           <DynamicField key={f.key} def={f} value={valuesV[f.key] ?? ''} onChange={(v) => setValues({ ...valuesV, [f.key]: v })} />
         ))}

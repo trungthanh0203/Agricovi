@@ -172,7 +172,10 @@ export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedde
           <div className={l.voided_at ? 'card slim voided' : 'card slim'} key={l.id}>
             <div className="row">
               <strong>{wt?.name ?? 'Việc'}{whoLabel(l) ? ` - ${whoLabel(l)}` : ''}</strong>
-              <span className="muted">{new Date(l.performed_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}</span>
+              <span className="muted">
+                {new Date(l.performed_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
+                {typeof l.data?.ended_at === 'string' ? ` → ${new Date(l.data.ended_at).toLocaleTimeString('vi-VN', { timeStyle: 'short' })}` : ''}
+              </span>
             </div>
             <p className="muted">{cycleLabel(l.cycle_id, l.area_id)}</p>
             {summarize(wtRaw, l.data, active?.id, kindOfLog(l)) && <p>{summarize(wtRaw, l.data, active?.id, kindOfLog(l))}</p>}
