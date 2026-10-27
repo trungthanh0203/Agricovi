@@ -301,12 +301,12 @@ Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng m�
 
 ### Thử C: Tạo vụ và cách quản lý
 1. Sản xuất → Mùa vụ → Tạo vụ mới: thứ tự **Sản phẩm → Quy trình → Phân khu**. Chọn phân khu khác loại: có cảnh báo. Sản phẩm vật nuôi: ô Số con nhập hiện ngay, để trống thì có hỏi lại.
-2. Tạo xong hiện màn **Chọn cách quản lý vụ**: thử chọn "Tự làm trong gia đình": menu ẩn Kho, Nhân sự, Chấm công, Bảng lương, nút ＋ Ghi việc.
-3. Chi tiết vụ → Cách quản lý vụ này → bật "Ghi việc" (mục tùy chọn): nút ＋ Ghi việc hiện lại. Đổi sang "Có người quản lý điều hành": hiện Kho, Chấm công.
+2. Tạo xong hiện màn **Chọn cách quản lý vụ**: thử chọn "Tự làm trong gia đình": menu ẩn Kho, Nhân sự, Chấm công, Bảng lương (nút ＋ Ghi việc vẫn có).
+3. Chi tiết vụ → Cách quản lý vụ này → chọn "Chủ và người làm công tháng": có ô "Mục tùy chọn" (Kho và vật tư, Nhà cung ứng và khách hàng) để bật thêm. Đổi sang "Có người quản lý điều hành": hiện Kho, Chấm công.
 4. Có hai vụ chạy hai cách khác nhau: menu hiện theo tổng của hai vụ.
 5. Chi tiết vụ có khối **Việc cần làm tiếp** (tối đa 3 dòng); làm xong bước thì dòng biến mất.
 6. Mô hình 1: Sản xuất → Chi phí → Ghi chi phí, chọn nhóm **Nhân công** (ghi tên người nhận ở ô ghi chú); xem Tổng kết vụ có khoản Nhân công.
-7. Mô hình 1 hoặc 2 (chưa bật Ghi việc): mở Thu hoạch thấy khung **Nhắc an toàn thực phẩm** kèm các mốc ngưng thuốc/phân của quy trình.
+7. Vụ chưa ghi việc nào: mở Thu hoạch thấy khung **Nhắc an toàn thực phẩm** kèm các mốc ngưng thuốc/phân của quy trình; ghi một việc phun thuốc thì khung này biến mất.
 
 ### Thử D: Chi phí, thu hoạch
 - Ghi chi phí: ô **Nhóm chi phí** (đổi tên/thêm ở Cấu hình) và **Loại chi**.

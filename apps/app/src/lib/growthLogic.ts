@@ -7,11 +7,11 @@ import { countSummary, type CountEventLite } from './countLogic';
  *  - FCR = cám đã dùng giữa hai lần cân ÷ (tăng cân mỗi con × số con còn lại ở lần cân cuối). Cám tính từ NGÀY SAU lần cân đầu đến hết ngày cân cuối.
  *  - Cám trên mỗi kg xuất bán = tổng cám đã dùng của vụ ÷ tổng kg đã xuất bán (không phải FCR chuẩn vì chưa trừ cân nặng lúc nhập).
  */
-export interface Weighing { date: string; pigs: number | null; avg_kg: number }
+export interface Weighing { date: string; pigs: number | null; avg_kg: number; id?: string | null; manual?: boolean }
 export interface FeedByDate { date: string; kg: number }
 export interface GrowthRaw {
   weighings: Weighing[];
-  feed: { can_view: boolean; stock_by_date: FeedByDate[]; other_unit: boolean; logs_by_date: FeedByDate[] };
+  feed: { can_view: boolean; stock_by_date: FeedByDate[]; other_unit: boolean; logs_by_date: FeedByDate[]; manual_entries?: { id: string; date: string; kg: number; name: string | null }[] };
 }
 
 export interface Growth {

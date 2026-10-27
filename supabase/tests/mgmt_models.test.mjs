@@ -17,11 +17,9 @@ test('mô hình: 5 mô hình, mô hình sau có đủ chức năng của mô hì
   }
   assert.equal(featuresOf('family').web, 'off'); // bán qua website từ mô hình 2 trở đi
   for (const m of order.slice(1)) assert.equal(featuresOf(m).web, 'on');
-  assert.equal(modelDef('family').features.logs, 'optional'); // ghi việc nhẹ tùy chọn
-  assert.equal(featuresOf('family').logs, 'off'); // chưa bật thì ẩn
-  assert.equal(featuresOf('family', ['logs']).logs, 'on'); // chủ bật riêng cho vụ
+  for (const m of order) assert.equal(featuresOf(m).logs, 'on', `${m}: Ghi việc luôn hiện`); // quyết định chủ sản phẩm: không ẩn Ghi việc ở mô hình nào
   assert.equal(featuresOf('family', ['stock']).stock, 'off'); // chỉ bật được mục tùy chọn của chính mô hình
-  assert.deepEqual(optionalOf('family'), ['logs']);
+  assert.deepEqual(optionalOf('family'), []);
   assert.deepEqual(optionalOf('monthly'), ['stock', 'partners']);
   assert.deepEqual(optionalOf('staffed'), []);
   assert.equal(featuresOf('staffed').attendance, 'on');
@@ -65,9 +63,7 @@ test('menu theo mô hình: Tự làm trong gia đình ẩn kho, nhân sự, bả
   for (const k of ['members', 'places', 'materials', 'teams', 'positions', 'partners']) assert.ok(!ids(declareSections(family)).includes(k), `gia đình ẩn ${k}`);
   for (const k of ['areas', 'crops', 'templates']) assert.ok(ids(declareSections(family)).includes(k), `gia đình giữ ${k}`);
   assert.ok(!ids(productionSections(family)).includes('stock') && !ids(productionSections(family)).includes('attendance'));
-  for (const k of ['cycles', 'harvest', 'expense']) assert.ok(ids(productionSections(family)).includes(k), k);
-  assert.ok(!ids(productionSections(family)).includes('logs'), 'chưa bật Ghi việc thì ẩn Nhật ký việc');
-  assert.ok(ids(productionSections(org(featuresOf('family', ['logs'])))).includes('logs'));
+  for (const k of ['cycles', 'harvest', 'expense', 'logs']) assert.ok(ids(productionSections(family)).includes(k), k); // Ghi việc và Nhật ký việc luôn có
   assert.ok(!ids(reportSections(family)).includes('paybook') && !ids(reportSections(family)).includes('commerce'));
   for (const k of ['summary', 'sales', 'payables']) assert.ok(ids(reportSections(family)).includes(k), k);
   assert.ok(ids(reportSections(vietgap)).includes('logbook') && ids(reportSections(vietgap)).includes('checklist'));
@@ -129,8 +125,8 @@ const base = { model: 'family', features: featuresOf('family'), kind: 'crop', st
 
 test('việc cần làm tiếp theo mô hình: đúng thứ tự, tối đa 3, tôn trọng quyền, vụ đã kết thúc thì rỗng', () => {
   const ids = (i) => nextSteps(i).map((s) => s.id);
-  assert.deepEqual(ids(base), ['expense']);
-  assert.deepEqual(ids({ ...base, model: null }), ['model', 'expense']);
+  assert.deepEqual(ids(base), ['expense']); // mô hình gia đình: không nhắc ghi việc
+  assert.deepEqual(ids({ ...base, model: null }), ['model', 'expense', 'log']);
   assert.deepEqual(ids({ ...base, kind: 'livestock' }), ['count', 'expense']);
   assert.deepEqual(ids({ ...base, kind: 'livestock', plantCount: 200 }), ['expense']);
   assert.deepEqual(ids({ ...base, expenses: 3, stagesDone: 4 }), ['harvest']);

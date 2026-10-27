@@ -32,9 +32,9 @@ const STAFFED = F({ logs: 'on', stock: 'on', partners: 'on', people: 'on', payro
 export const MODELS: ModelDef[] = [
   {
     id: 'family', name: 'Tự làm trong gia đình', who: 'Chủ và 1–3 người nhà, không cần chấm công',
-    uses: 'Ghi chi phí (kể cả tiền công), thu hoạch, doanh thu, xem tổng kết vụ',
-    hidden: 'ghi việc (có thể bật nhẹ), chấm công, kho, nhân sự, bảng lương',
-    features: F({ logs: 'optional' }),
+    uses: 'Ghi chi phí (kể cả tiền công), thu hoạch, doanh thu, xem tổng kết vụ; muốn ghi việc đã làm thì vẫn ghi được',
+    hidden: 'chấm công, kho, nhân sự, bảng lương',
+    features: F({ logs: 'on' }),
   },
   {
     id: 'monthly', name: 'Chủ và người làm công tháng', who: 'Thuê 1–2 người lương tháng, chỉ chủ đăng nhập',
@@ -78,7 +78,6 @@ export function effectiveModel(cycleModel: unknown, orgModel: unknown): ModelId 
 
 /** Chức năng tùy chọn được bật riêng từng vụ (mã khớp `set_cycle_options` ở CSDL) */
 export const OPTIONAL_FEATURES: { id: Feature; label: string; hint: string }[] = [
-  { id: 'logs', label: 'Ghi việc', hint: 'Ghi nhanh việc đã làm (phun thuốc, bón phân…) để app tính thời gian cách ly chính xác theo từng loại thuốc' },
   { id: 'stock', label: 'Kho và vật tư', hint: 'Theo dõi nhập, xuất, tồn vật tư; vật nuôi cần để tính FCR' },
   { id: 'partners', label: 'Nhà cung ứng và khách hàng', hint: 'Danh bạ người bán vật tư, người mua nông sản và công nợ' },
   { id: 'licenses', label: 'Giấy phép', hint: 'Lưu giấy chứng nhận, ngày hết hạn' },

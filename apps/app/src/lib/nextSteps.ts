@@ -32,7 +32,8 @@ export function nextSteps(i: NextStepInput): NextStep[] {
   if (i.model === null) out.push({ id: 'model', text: 'Chọn cách quản lý vụ này ở khối "Cách quản lý vụ này" bên dưới để app chỉ hiện các mục bạn cần.' });
   if (animal && i.plantCount === null) out.push({ id: 'count', text: 'Nhập số con nhập chuồng/thả giống (Sửa vụ) để app tính hao hụt, mật độ và FCR.' });
   if (i.can.expense && i.expenses === 0) out.push({ id: 'expense', text: 'Ghi khoản chi đầu tiên của vụ (vật tư, tiền công…).', go: { tab: 'production', section: 'expense' } });
-  if (i.features.logs === 'on' && i.can.logs && i.logs === 0 && i.status === 'active') out.push({ id: 'log', text: 'Ghi việc đầu tiên (bấm nút ＋ Ghi việc) để có nhật ký và thời gian cách ly.' });
+  // gợi ý ghi việc đầu tiên cho các mô hình có người làm; mô hình tự làm trong gia đình thì ghi việc là tùy ý nên không nhắc
+  if (i.model !== 'family' && i.features.logs === 'on' && i.can.logs && i.logs === 0 && i.status === 'active') out.push({ id: 'log', text: 'Ghi việc đầu tiên (bấm nút ＋ Ghi việc) để có nhật ký và thời gian cách ly.' });
   if (i.can.harvest && i.harvests === 0 && allStagesDone) out.push({ id: 'harvest', text: 'Các giai đoạn đã xong: ghi thu hoạch.', go: { tab: 'production', section: 'harvest' } });
   if (i.can.sales && i.harvests > 0 && i.sales === 0) out.push({ id: 'sales', text: 'Đã có thu hoạch: ghi doanh thu (bán hàng).', go: { tab: 'reports', section: 'sales' } });
   if (i.can.summary && i.sales > 0 && i.harvests > 0) out.push({ id: 'summary', text: 'Xem Tổng kết vụ, rồi kết thúc vụ khi đã xong.', go: { tab: 'reports', section: 'summary' } });

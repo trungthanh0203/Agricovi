@@ -186,7 +186,7 @@ export const GUIDES: Guide[] = [
           'Có thể nhập Sản lượng dự kiến (kg) và Ngân sách dự kiến (đồng) để so với thực tế (không bắt buộc; sửa sau ở Sửa vụ).',
           'Chọn "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước, bắt đầu chạy sau. App lập lịch các giai đoạn theo quy trình mẫu.',
           'Mỗi vụ có một mã (hiện sau tên vụ, ví dụ "Dưa vụ 1 - AB12CD34") dùng cho mã QR truy xuất.',
-          'Hộ nhỏ thấy app còn nhiều mục? Chọn cách quản lý "Tự làm trong gia đình" cho vụ: app ẩn kho, nhân sự, chấm công, bảng lương… Muốn dùng thêm Ghi việc hoặc Kho thì bật ở mục "Mục tùy chọn". Tiền công người nhà ghi ở Sản xuất → Chi phí, chọn nhóm Nhân công (không cần tạo nhân sự).',
+          'Hộ nhỏ thấy app còn nhiều mục? Chọn cách quản lý "Tự làm trong gia đình" cho vụ: app ẩn kho, nhân sự, chấm công, bảng lương… Ghi việc vẫn dùng được bình thường (nút ＋ ở giữa); muốn dùng thêm Kho thì bật ở mục "Mục tùy chọn" (mô hình Chủ và người làm công tháng). Tiền công người nhà ghi ở Sản xuất → Chi phí, chọn nhóm Nhân công (không cần tạo nhân sự).',
           'Mục "Việc cần làm tiếp" trong Chi tiết vụ nhắc bước kế tiếp theo cách quản lý của vụ (ghi chi phí, thu hoạch, doanh thu, tổng kết…).',
           'Mục "Thông tin quản lý" (không bắt buộc) cho nhập mã vụ/lô, đơn vị đếm (cây, con…) và cán bộ kỹ thuật/thú y phụ trách. Khu loại "Cơ sở vật chất" (cổng, kho, biogas…) không tạo vụ; việc ở đó ghi bằng Ghi việc → "Khu vực".',
           'Nhập kho và Mua có hóa đơn có ô số lô và hạn dùng; khi xuất dùng, app tự lấy lô hạn gần nhất (hoặc bạn chọn lô). Lô sắp hết hạn hiện ở Trang chủ và Kho.',
