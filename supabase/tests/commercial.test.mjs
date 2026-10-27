@@ -68,7 +68,7 @@ test('bản chụp công khai chỉ gồm phần được đồng ý; ảnh chư
   assert.equal(snap.contact, undefined);
   assert.equal(snap.certifications, undefined);
   const prod = (await asAnon(db, `select snapshot from public_products`)).rows[0].snapshot;
-  assert.deepEqual(prod.images.map((i) => i.path), ['ok.jpg']);
+  assert.deepEqual(prod.images.map((i) => i.src), ['ok.jpg']); // ảnh công khai nằm ở khóa src (migration 0040)
   assert.equal(JSON.stringify(snap).includes('0900000000'), false);
 });
 
