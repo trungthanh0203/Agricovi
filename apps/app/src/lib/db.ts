@@ -204,8 +204,12 @@ export interface WorkTypeRow {
   /** null = loại việc dùng chung; có giá trị = loại việc do cơ sở định nghĩa */
   organization_id?: string | null;
   is_active?: boolean;
-  /** Bản chỉnh theo mã cơ sở (chỉ có ở mục dùng chung) */
+  /** Bản chỉnh theo mã cơ sở (chỉ có ở mục dùng chung), áp cho mọi loại (kind = '') */
   ov?: Record<string, CatalogOverride>;
+  /** Bản chỉnh biểu mẫu theo loại: mã cơ sở → loại (crop/livestock/aquatic/other) → bản chỉnh */
+  ovk?: Record<string, Record<string, CatalogOverride>>;
+  /** Đầu việc áp dụng cho loại nào (null/thiếu = mọi loại) */
+  applies_to?: string[] | null;
 }
 
 /** Một trường của form động (D96). Chỉ `key`, `label`, `type` là bắt buộc; nhật ký cũ không có các thuộc tính mới vẫn hiển thị bình thường. */

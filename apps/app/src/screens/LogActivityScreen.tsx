@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { useCatalog } from '../lib/catalog';
+import { productKindOfArea, useCatalog, useKindWorkTypes } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
 import { SyncBadge } from '../components/SyncBadge';
@@ -26,9 +26,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const { active } = useOrgs();
   const sync = useRecordSync();
   // loại việc dùng chung hoặc của cơ sở đang chọn, đã áp bản chỉnh; việc đã dừng không chọn được cho việc mới
-  const { workTypes: effWorkTypes, cropTypes } = useCatalog();
-  // chức vụ có thể giới hạn loại việc được ghi (D44); máy chủ cũng ép lại
-  const workTypes = effWorkTypes.filter((w) => w.is_active && (!active?.allowedWorkTypes || active.allowedWorkTypes.includes(w.id)));
+  const { cropTypes } = useCatalog();
   const cycles = useTable('cycles');
   const areas = useTable('areas');
 
@@ -63,6 +61,12 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const areaMode = forArea ?? (options.length === 0 && siteAreas.length > 0);
   const [areaPick, setAreaPick] = useState('');
   const siteArea = siteAreas.find((a) => a.id === areaPick) ?? siteAreas[0] ?? null;
+
+  // Loại của việc đang ghi (theo vụ đã chọn, hoặc theo loại khu khi ghi cho khu không gắn vụ) quyết định đầu việc hiện ra và biểu mẫu (điểm 2)
+  const wtKind = areaMode ? productKindOfArea(siteArea?.kind) : cropTypes.find((c) => c.id === cycle?.crop_type_id)?.kind;
+  const effWorkTypes = useKindWorkTypes(wtKind, true);
+  // chức vụ có thể giới hạn loại việc được ghi (D44); máy chủ cũng ép lại
+  const workTypes = effWorkTypes.filter((w) => w.is_active && (!active?.allowedWorkTypes || active.allowedWorkTypes.includes(w.id)));
 
   const [workTypeId, setWorkTypeId] = useState<string | null>(preset?.workTypeId ?? null);
   const stages = useLiveQuery(() => db.stages.where('cycle_id').equals(effectiveCycleId).sortBy('seq'), [effectiveCycleId], []);

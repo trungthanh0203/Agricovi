@@ -28,7 +28,7 @@ export const PIG_BOOKS: LogbookSet = {
         for (const h of d.harvests.filter((x) => !x.voided_at)) {
           rows.push({ date: h.harvested_at.slice(0, 10), r: [vnDate(h.harvested_at), pen(d), fv(h.extra, 'ear_tags') || h.lot_code || '', d.productName, h.unit_count ? String(h.unit_count) : '', h.unit_count ? (h.quantity / h.unit_count).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) : fv(h.extra, 'avg_kg'), 'Xuất bán', '', '', [fv(h.extra, 'quarantine_no') && `Kiểm dịch ${fv(h.extra, 'quarantine_no')}`, fv(h.extra, 'buyer')].filter(Boolean).join('; ')] });
         }
-        for (const e of d.entries.filter((x) => matchWork(x, ['cân heo']))) {
+        for (const e of d.entries.filter((x) => matchWork(x, ['cân heo', 'cân mẫu']))) {
           rows.push({ date: e.log.performed_at.slice(0, 10), r: [logDate(e), pen(d), d.cycle?.code ?? '', d.productName, fv(e.log.data, 'pigs'), fv(e.log.data, 'avg_kg'), 'Cân heo', e.log.note ?? '', e.log.author_name ?? '', ''] });
         }
         return rows.sort(byDate((x) => x.date)).map((x) => x.r);

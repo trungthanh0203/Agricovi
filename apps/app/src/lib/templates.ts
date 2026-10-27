@@ -38,35 +38,58 @@ export async function refreshCatalogCache(): Promise<void> {
     const r = await client().from('crop_types').select('id, code, name, description, kind, kind_item, image, organization_id, is_active');
     return r.error ? client().from('crop_types').select('id, code, name, description, kind, image, organization_id, is_active') : r; // chưa db push 0098
   };
+  const ovrQ = async () => {
+    const r = await client().from('org_catalog_overrides').select('organization_id, kind, item_kind, item_id, display_name, description, image, field_schema, is_active');
+    return r.error ? client().from('org_catalog_overrides').select('organization_id, item_kind, item_id, display_name, description, image, field_schema, is_active') : r; // chưa db push 0107
+  };
   const [crops, types, ovr] = await Promise.all([
     cropsQ(),
-    client().from('work_types').select('id, code, name, description, field_schema, organization_id, is_active'),
-    client().from('org_catalog_overrides').select('organization_id, item_kind, item_id, display_name, description, image, field_schema, is_active'),
+    (async () => {
+      const r = await client().from('work_types').select('id, code, name, description, field_schema, organization_id, is_active, applies_to');
+      return r.error ? client().from('work_types').select('id, code, name, description, field_schema, organization_id, is_active') : r; // chưa db push 0107
+    })(),
+    ovrQ(),
   ]);
   if (crops.error) throw new Error(crops.error.message);
   if (types.error) throw new Error(types.error.message);
   const ov = { crop_type: new Map<string, Record<string, CatalogOverride>>(), work_type: new Map<string, Record<string, CatalogOverride>>() };
-  for (const o of (ovr.error ? [] : ovr.data ?? []) as Array<{ organization_id: string; item_kind: 'crop_type' | 'work_type'; item_id: string } & CatalogOverride>) {
-    const m = ov[o.item_kind];
-    m.set(o.item_id, { ...(m.get(o.item_id) ?? {}), [o.organization_id]: { display_name: o.display_name, description: o.description ?? null, image: o.image ?? null, field_schema: o.field_schema, is_active: o.is_active } });
+  const ovk = new Map<string, Record<string, Record<string, CatalogOverride>>>(); // loại việc: mục → cơ sở → loại → bản chỉnh theo loại
+  for (const o of (ovr.error ? [] : ovr.data ?? []) as unknown as Array<{ organization_id: string; kind?: string; item_kind: 'crop_type' | 'work_type'; item_id: string } & CatalogOverride>) {
+    const one: CatalogOverride = { display_name: o.display_name, description: o.description ?? null, image: o.image ?? null, field_schema: o.field_schema, is_active: o.is_active };
+    if (o.kind) {
+      const byOrg = ovk.get(o.item_id) ?? {};
+      byOrg[o.organization_id] = { ...(byOrg[o.organization_id] ?? {}), [o.kind]: one };
+      ovk.set(o.item_id, byOrg);
+    } else {
+      const m = ov[o.item_kind];
+      m.set(o.item_id, { ...(m.get(o.item_id) ?? {}), [o.organization_id]: one });
+    }
   }
   await db.transaction('rw', db.cropTypes, db.workTypes, async () => {
     await db.cropTypes.clear();
     await db.workTypes.clear();
     await db.cropTypes.bulkPut((crops.data ?? []).map((c) => ({ ...c, ov: ov.crop_type.get(c.id) })));
-    await db.workTypes.bulkPut((types.data ?? []).map((w) => ({ ...w, ov: ov.work_type.get(w.id) })));
+    await db.workTypes.bulkPut((types.data ?? []).map((w) => ({ ...w, ov: ov.work_type.get(w.id), ovk: ovk.get(w.id) })));
   });
 }
 
-/** Chỉnh một mục có sẵn dùng chung cho riêng cơ sở này (đổi tên, trường ghi, dừng/dùng lại) */
+/**
+ * Chỉnh một mục có sẵn dùng chung cho riêng cơ sở này (đổi tên, trường ghi, dừng/dùng lại).
+ * `fieldKind` = loại vụ mà bản chỉnh áp dụng ('' = mọi loại, mặc định; 'crop'/'livestock'/'aquatic'/'other' = chỉ cho loại đó).
+ * Chưa db push 0107 (chưa có cột kind) thì bản chỉnh "mọi loại" vẫn lưu được như cũ.
+ */
 export async function saveOverride(
   orgId: string, kind: 'crop_type' | 'work_type', itemId: string,
   patch: { display_name?: string | null; description?: string | null; image?: string | null; field_schema?: FieldDef[] | null; is_active?: boolean },
+  fieldKind = '',
 ): Promise<void> {
   needOnline('chỉnh mục có sẵn');
-  const cur = await ok(client().from('org_catalog_overrides').select('display_name, description, image, field_schema, is_active')
-    .eq('organization_id', orgId).eq('item_kind', kind).eq('item_id', itemId).maybeSingle());
-  const base = (cur as CatalogOverride | null) ?? { display_name: null, description: null, image: null, field_schema: null, is_active: true };
+  const sel = () => client().from('org_catalog_overrides').select('display_name, description, image, field_schema, is_active')
+    .eq('organization_id', orgId).eq('item_kind', kind).eq('item_id', itemId);
+  let cur = await sel().eq('kind', fieldKind).maybeSingle();
+  if (cur.error && fieldKind === '') cur = await sel().maybeSingle();
+  if (cur.error) throw new Error(cur.error.message);
+  const base = (cur.data as CatalogOverride | null) ?? { display_name: null, description: null, image: null, field_schema: null, is_active: true };
   const row = {
     organization_id: orgId, item_kind: kind, item_id: itemId,
     display_name: patch.display_name === undefined ? base.display_name : (patch.display_name?.trim() || null),
@@ -75,14 +98,19 @@ export async function saveOverride(
     field_schema: patch.field_schema === undefined ? base.field_schema : patch.field_schema,
     is_active: patch.is_active ?? base.is_active,
   };
-  await ok(client().from('org_catalog_overrides').upsert(row, { onConflict: 'organization_id,item_kind,item_id' }));
+  let up = await client().from('org_catalog_overrides').upsert({ ...row, kind: fieldKind }, { onConflict: 'organization_id,item_kind,item_id,kind' });
+  if (up.error && fieldKind === '') up = await client().from('org_catalog_overrides').upsert(row, { onConflict: 'organization_id,item_kind,item_id' });
+  if (up.error) throw new Error(up.error.message);
   await refreshCatalogCache().catch(() => undefined);
 }
 
-/** Bỏ bản chỉnh: mục trở về mặc định của nền tảng */
-export async function clearOverride(orgId: string, kind: 'crop_type' | 'work_type', itemId: string): Promise<void> {
+/** Bỏ bản chỉnh: mục trở về mặc định của nền tảng (cho loại `fieldKind`; '' = bản chỉnh mọi loại) */
+export async function clearOverride(orgId: string, kind: 'crop_type' | 'work_type', itemId: string, fieldKind = ''): Promise<void> {
   needOnline('khôi phục mặc định');
-  await ok(client().from('org_catalog_overrides').delete().eq('organization_id', orgId).eq('item_kind', kind).eq('item_id', itemId));
+  const del = () => client().from('org_catalog_overrides').delete().eq('organization_id', orgId).eq('item_kind', kind).eq('item_id', itemId);
+  let r = await del().eq('kind', fieldKind);
+  if (r.error && fieldKind === '') r = await del();
+  if (r.error) throw new Error(r.error.message);
   await refreshCatalogCache().catch(() => undefined);
 }
 
@@ -112,19 +140,20 @@ export async function updateCrop(id: string, c: { name?: string; kind?: ProductK
 }
 
 // ------------------------------------------------------------------ loại việc
-export async function createWorkType(orgId: string, name: string, fields: FieldDef[], description = ''): Promise<void> {
+export async function createWorkType(orgId: string, name: string, fields: FieldDef[], description = '', appliesTo: string[] | null = null): Promise<void> {
   needOnline('thêm loại việc');
-  await ok(client().from('work_types').insert({ organization_id: orgId, name: name.trim(), description: description.trim() || null, field_schema: fields }));
+  await ok(client().from('work_types').insert({ organization_id: orgId, name: name.trim(), description: description.trim() || null, field_schema: fields, ...(appliesTo && appliesTo.length > 0 ? { applies_to: appliesTo } : {}) }));
   await refreshCatalogCache().catch(() => undefined);
 }
 
-export async function updateWorkType(id: string, c: { name?: string; description?: string | null; field_schema?: FieldDef[]; is_active?: boolean }): Promise<void> {
+export async function updateWorkType(id: string, c: { name?: string; description?: string | null; field_schema?: FieldDef[]; is_active?: boolean; applies_to?: string[] | null }): Promise<void> {
   needOnline('sửa loại việc');
   const patch: Record<string, unknown> = {};
   if (c.name !== undefined) patch.name = c.name.trim();
   if (c.description !== undefined) patch.description = c.description?.trim() || null;
   if (c.field_schema !== undefined) patch.field_schema = c.field_schema;
   if (c.is_active !== undefined) patch.is_active = c.is_active;
+  if (c.applies_to !== undefined) patch.applies_to = c.applies_to && c.applies_to.length > 0 ? c.applies_to : null;
   await ok(client().from('work_types').update(patch).eq('id', id));
   await refreshCatalogCache().catch(() => undefined);
 }

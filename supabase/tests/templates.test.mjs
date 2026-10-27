@@ -50,7 +50,7 @@ test('loại việc riêng: chủ/quản lý định nghĩa, mã tự sinh, nhâ
   assert.equal(await seen(owner), 1);
   assert.equal(await seen(worker), 1);
   assert.equal(await seen(owner2), 0);
-  assert.equal((await asUser(db, owner2, `select count(*)::int n from work_types where organization_id is null`)).rows[0].n, 7); // việc dùng chung còn nguyên
+  assert.equal((await asUser(db, owner2, `select count(*)::int n from work_types where organization_id is null`)).rows[0].n, 23); // việc dùng chung còn nguyên (7 gốc + 16 đầu việc chuẩn vật nuôi, thủy sản của migration 0107)
 });
 
 test('quy trình mẫu: quyền ghi/đọc theo cơ sở; cơ sở khác không thấy; organization_id không giả mạo được', async () => {
@@ -190,7 +190,7 @@ test('chỉnh/dừng mục có sẵn theo từng cơ sở: chủ/quản lý ch�
   const up = (u, orgId, kind, itemSql, extra = '') =>
     asUser(db, u, `insert into org_catalog_overrides (organization_id, item_kind, item_id, display_name, is_active ${extra ? ',' + extra.split('=')[0] : ''})
        values ($1,$2,${itemSql},$3,$4 ${extra ? ',' + extra.split('=')[1] : ''})
-       on conflict (organization_id, item_kind, item_id) do update set display_name = excluded.display_name, is_active = excluded.is_active`, [orgId, kind, 'Tưới nhỏ giọt', false]);
+       on conflict (organization_id, item_kind, item_id, kind) do update set display_name = excluded.display_name, is_active = excluded.is_active`, [orgId, kind, 'Tưới nhỏ giọt', false]);
   await up(mgr, org, 'work_type', irrigation);
   assert.match(await expectError(up(worker, org, 'work_type', irrigation)), /row-level security/);
   assert.match(await expectError(up(owner2, org, 'work_type', irrigation)), /row-level security/);       // cơ sở khác không chỉnh hộ A

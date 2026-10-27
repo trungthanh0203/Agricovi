@@ -7,6 +7,8 @@ import type { FieldDef } from '../db';
  */
 export interface FieldPack {
   id: string;
+  /** Loại vụ mà gói áp dụng (crop/livestock/aquatic/other); bản chỉnh được lưu cho riêng loại đó, không ghi đè loại khác */
+  kind?: 'crop' | 'livestock' | 'aquatic' | 'other';
   name: string;
   description: string;
   /** mã loại việc dùng chung (work_types.code) -> các trường */

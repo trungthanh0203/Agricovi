@@ -59,3 +59,9 @@
 3. Điểm 4: **bật Ghi việc, vẫn thêm ô nhập cân và cám riêng** → ĐÃ XONG (migration 0105: ô "Ghi lần cân", "Ghi cám đã dùng"; bật Tăng trọng/FCR cho thủy sản).
 4. Điểm 5: danh sách chỉ số "Theo con" đủ → ĐÃ XONG (khối "Theo con" ở Tổng kết vụ cho vật nuôi và thủy sản).
 5. Điểm 2: cơ sở đã chỉnh sẵn giữ thành "mọi loại", chỉ tách khi chạy lại gói; thứ tự 4 → 5 → 2 → còn lại điểm 2.
+
+## Điểm 2 — đã xong về code (27/10/2026, migration 0107)
+- 2a: `work_types.applies_to`, `org_catalog_overrides.kind` (khóa mới gồm loại), chọn biểu mẫu theo loại (`fieldsForKind`: bản chỉnh đúng loại → bản chỉnh mọi loại → biểu mẫu chuẩn → form gốc).
+- 2b: Ghi việc, Sửa nhật ký, Thu hoạch, Lịch sử việc dùng đầu việc/biểu mẫu theo loại của vụ (hoặc của khu khi ghi cho khu không gắn vụ).
+- 2c: màn Đầu việc có "Áp dụng cho", sửa biểu mẫu theo loại; gói trường áp theo loại (gói dưa → trồng trọt, gói heo → vật nuôi) và không tạo việc trùng với việc chuẩn.
+- 2d: 16 đầu việc chuẩn vật nuôi/thủy sản (dùng chung, có sẵn) với biểu mẫu chuẩn ở `lib/standardFields.ts`; Tăng trọng nhận việc "Cân mẫu". Cơ sở đã chỉnh sẵn giữ nguyên thành "mọi loại".

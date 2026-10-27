@@ -26,8 +26,9 @@ test('mọi bộ mẫu hợp lệ: khóa không trùng, qua kiểm tra nháp, đ
     }
     const plan = planPackApply(pack, shared.map((w) => ({ ...w, shared: true })));
     assert.equal(plan.missing.length, 0);
-    assert.equal(plan.steps.length, Object.keys(pack.workTypes).length);
-    assert.equal(plan.creates.length, (pack.newWorkTypes ?? []).length);
+    // việc mới cùng tên với việc chuẩn dùng chung (migration 0107) thì thành bản chỉnh của việc chuẩn, không tạo trùng
+    assert.equal(plan.steps.length + plan.creates.length, Object.keys(pack.workTypes).length + (pack.newWorkTypes ?? []).length);
+    if (pack.id === 'pig_farm') assert.equal(plan.creates.length, 0);
   }
   // việc thiếu thì báo thiếu, không lỗi
   const p = planPackApply(FIELD_PACKS[0], []);

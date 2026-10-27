@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { useCatalog } from '../lib/catalog';
+import { harvestSchemaFor, useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
 import { Collapsible } from './Collapsible';
 import { SafetyReminder } from './SafetyReminder';
@@ -33,11 +33,12 @@ export function HarvestSection() {
   const sync = useRecordSync();
   const online = useOnline();
   const harvests = useTable('harvests');
-  const { workTypes: catWorkTypes } = useCatalog();
-  const harvestSchema = catWorkTypes.find((w) => w.code === 'harvesting')?.field_schema ?? [];
   const cycles = useTable('cycles');
   const areas = useTable('areas');
   const { cropTypes } = useCatalog();
+  const workTypeRows = useTable('workTypes');
+  // biểu mẫu thu hoạch theo loại của từng vụ (điểm 2)
+  const harvestSchemaOf = (cycleId: string) => harvestSchemaFor(workTypeRows, active?.id, cropTypes.find((c) => c.id === cycles.find((x) => x.id === cycleId)?.crop_type_id)?.kind);
 
   const [mode, setMode] = useState<{ kind: 'list' } | { kind: 'new' } | { kind: 'edit'; id: string }>({ kind: 'list' });
   const [cycleFilter, setCycleFilter] = useState('');
@@ -151,7 +152,7 @@ export function HarvestSection() {
           </div>
           <p className="muted">{cycleLabel(h.cycle_id)}{h.lot_code ? ` · mã lô ${h.lot_code}` : ''}</p>
           {h.unit_count ? <p>Số lượng: {h.unit_count.toLocaleString('vi-VN')}{h.unit_count && h.quantity ? ` (TB ${formatQty(h.quantity / h.unit_count)} kg)` : ''}</p> : null}
-          {h.extra && summarizeFields(harvestSchema, h.extra) ? <p>{summarizeFields(harvestSchema, h.extra)}</p> : null}
+          {h.extra && summarizeFields(harvestSchemaOf(h.cycle_id), h.extra) ? <p>{summarizeFields(harvestSchemaOf(h.cycle_id), h.extra)}</p> : null}
           {h.loss_quantity ? <p>Hao hụt: {formatQty(h.loss_quantity)} kg</p> : null}
           {h.note && <p>{h.note}</p>}
           <div className="badges">
@@ -196,8 +197,10 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const sync = useRecordSync();
   const online = useOnline();
   const allCycles = useTable('cycles');
-  const { workTypes: catWorkTypes, cropTypes } = useCatalog();
-  const schema = catWorkTypes.find((w) => w.code === 'harvesting')?.field_schema ?? [];
+  const { cropTypes } = useCatalog();
+  const workTypeRows = useTable('workTypes');
+  const { active: activeOrg } = useOrgs();
+  const schemaOf = (cycleId: string) => harvestSchemaFor(workTypeRows, activeOrg?.id, cropTypes.find((c) => c.id === allCycles.find((x) => x.id === cycleId)?.crop_type_id)?.kind);
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
   // vụ đang chạy lên đầu danh sách
   const ordered = [...cycles].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active'));
@@ -209,7 +212,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const [loss, setLoss] = useState(editing?.loss_quantity ? String(editing.loss_quantity) : '');
   const [note, setNote] = useState(editing?.note ?? '');
   const [cnt, setCnt] = useState(editing?.unit_count ? String(editing.unit_count) : '');
-  const [vals, setVals] = useState<Record<string, string>>(() => initialValues(schema, editing?.extra ?? undefined));
+  const [vals, setVals] = useState<Record<string, string>>(() => initialValues(editing ? schemaOf(editing.cycle_id) : [], editing?.extra ?? undefined));
   const [wReason, setWReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
@@ -218,6 +221,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const whenDay = toLocalInput(new Date(when)).slice(0, 10);
   const inWithdrawal = useWithdrawalBlocked(effCycleId, whenDay);
   const unitName = cycleCountUnit(allCycles.find((c) => c.id === effCycleId), cropTypes);
+  const schema = schemaOf(effCycleId);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

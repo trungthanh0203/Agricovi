@@ -99,7 +99,7 @@ export function CycleGrowth({ cycleId }: { cycleId: string }) {
             <div className="row"><span>Tổng cám đã dùng cả vụ</span><strong>{g.feedTotalKg !== null ? `${num(g.feedTotalKg)} kg` : '—'}</strong></div>
             {g.feedPerSoldKg !== null && <div className="row"><span>Cám trên mỗi kg xuất bán</span><strong>{num(g.feedPerSoldKg, 2)} kg</strong></div>}
           </div>
-          {g.needMore === 'weighings' && <p className="muted">Cần ít nhất 2 lần cân ở các ngày khác nhau. Ghi bằng ô "Ghi lần cân" bên dưới (hoặc Ghi việc → "Cân heo").</p>}
+          {g.needMore === 'weighings' && <p className="muted">Cần ít nhất 2 lần cân ở các ngày khác nhau. Ghi bằng ô "Ghi lần cân" bên dưới (hoặc Ghi việc → "Cân mẫu").</p>}
           {g.needMore === 'feed' && <p className="muted">Chưa có cám đã dùng giữa hai lần cân. Ghi bằng ô "Ghi cám đã dùng" bên dưới, hoặc ghi việc "Cho ăn", hoặc xuất cám từ Kho (vật tư nhóm "Thức ăn").</p>}
           {raw?.feed.other_unit && <p className="msg warn">Có cám tính bằng đơn vị không quy ra kg được (bao, thùng…), chưa tính vào. Hãy đặt đơn vị cám là kg.</p>}
           {raw && !raw.feed.can_view && g.feedSource === 'logs' && <p className="muted">Bạn không xem được kho nên dùng cám ghi tay.</p>}

@@ -27,8 +27,10 @@ export function planPackApply(pack: FieldPack, workTypes: PackWorkType[]): { ste
   // việc mới: bỏ qua việc cơ sở đã có cùng tên; nếu đã có thì chỉ đặt lại trường cho việc đó
   const creates: PackNew[] = [];
   for (const n of pack.newWorkTypes ?? []) {
-    const same = workTypes.find((w) => !w.shared && w.name.trim().toLowerCase() === n.name.toLowerCase());
-    if (same) steps.push({ id: same.id, name: same.name, shared: false, fields: n.fields, replaces: same.field_schema.filter((f) => !n.fields.some((x) => x.key === f.key)).length });
+    // cùng tên với việc cơ sở đã có thì đặt lại trường cho việc đó; cùng tên với việc chuẩn dùng chung thì ghi bản chỉnh cho việc chuẩn (không tạo trùng)
+    const same = workTypes.find((w) => !w.shared && w.name.trim().toLowerCase() === n.name.toLowerCase())
+      ?? workTypes.find((w) => w.shared && w.name.trim().toLowerCase() === n.name.toLowerCase());
+    if (same) steps.push({ id: same.id, name: same.name, shared: same.shared, fields: n.fields, replaces: same.field_schema.filter((f) => !n.fields.some((x) => x.key === f.key)).length });
     else creates.push(n);
   }
   return { steps, missing, creates };

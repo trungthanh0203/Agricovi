@@ -5,6 +5,7 @@ const PEST = ['Rệp', 'Bọ trĩ', 'Nhện đỏ', 'Ruồi đục quả', 'Sâu
 
 export const MELON_PACK: FieldPack = {
   id: 'melon_greenhouse',
+  kind: 'crop',
   name: 'Dưa lưới nhà màng (hướng VietGAP)',
   description: 'Ươm giống, ra vườn, dặm, treo dây, bón phân (EC/pH), phun thuốc (dụng cụ, lý do, hiệu quả), tưới, thụ phấn, tỉa, thu hoạch (Brix, phân loại).',
   workTypes: {

@@ -3,7 +3,9 @@ import type { FieldDef } from '../lib/db';
 import { Collapsible } from './Collapsible';
 import { FIELD_PACKS, planPackApply, type FieldPack } from '../lib/fieldPacks';
 import { checkSchemaDraft, FIELD_TYPES, FIELD_TYPE_LABEL } from '../lib/fieldsLogic';
-import { useCatalog, type EffWorkType } from '../lib/catalog';
+import { fieldsForKind, useCatalog, type EffWorkType } from '../lib/catalog';
+import { useConfig } from '../lib/config';
+import { useTable } from '../lib/tables';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
@@ -56,6 +58,10 @@ export function WorkTypesSection() {
   const { active } = useOrgs();
   const online = useOnline();
   const { workTypes } = useCatalog();
+  const cfg = useConfig();
+  const rawTypes = useTable('workTypes');
+  const [editKind, setEditKind] = useState(''); // loại vụ đang sửa biểu mẫu ('' = mọi loại)
+  const [editApplies, setEditApplies] = useState<string[]>([]); // việc riêng của cơ sở: áp dụng cho loại nào (rỗng = mọi loại)
   const [name, setName] = useState('');
   const [showOff, setShowOff] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -98,10 +104,10 @@ export function WorkTypesSection() {
       (lost > 0 ? ` Có ${lost} trường tự thêm trước đây sẽ bị thay (nhật ký cũ vẫn giữ nguyên số liệu).` : '') + (missing.length ? ` Không tìm thấy việc: ${missing.join(', ')}.` : '') + ' Tiếp tục?';
     if (!window.confirm(text)) return;
     for (const s of steps) {
-      if (s.shared) await saveOverride(org, 'work_type', s.id, { field_schema: s.fields });
+      if (s.shared) await saveOverride(org, 'work_type', s.id, { field_schema: s.fields }, pack.kind ?? ''); // gói theo loại: chỉ ghi cho loại của gói
       else await updateWorkType(s.id, { field_schema: s.fields });
     }
-    for (const c of creates) await createWorkType(org, c.name, c.fields, c.description);
+    for (const c of creates) await createWorkType(org, c.name, c.fields, c.description, pack.kind ? [pack.kind] : null);
   }
 
   async function save(t: EffWorkType) {
@@ -109,14 +115,17 @@ export function WorkTypesSection() {
     const bad = checkSchemaDraft(f);
     if (bad) throw new Error(bad);
     if (editName.trim().length < 2) throw new Error('Tên việc cần ít nhất 2 ký tự.');
-    if (t.shared) {
+    if (t.shared && editKind) {
+      // biểu mẫu riêng cho MỘT loại vụ; tên và mô tả vẫn là của việc (chung mọi loại)
+      await saveOverride(org, 'work_type', t.id, { field_schema: f }, editKind);
+    } else if (t.shared) {
       await saveOverride(org, 'work_type', t.id, {
         display_name: editName.trim() === t.base_name ? null : editName,
         description: editDesc,
         field_schema: JSON.stringify(f) === JSON.stringify(t.field_schema) && !t.overridden ? null : f,
       });
     } else {
-      await updateWorkType(t.id, { name: editName, description: editDesc, field_schema: f });
+      await updateWorkType(t.id, { name: editName, description: editDesc, field_schema: f, applies_to: editApplies });
     }
     setEditing(null);
   }
@@ -147,9 +156,9 @@ export function WorkTypesSection() {
       )}
 
       <table className="grid">
-        <thead><tr><th>Việc ({rows.length})</th><th>Thông tin cần ghi</th>{canManage && <th></th>}</tr></thead>
+        <thead><tr><th>Việc ({rows.length})</th><th>Áp dụng cho</th><th>Thông tin cần ghi</th>{canManage && <th></th>}</tr></thead>
         <tbody>
-          {rows.length === 0 && <tr><td colSpan={3} className="muted">{online ? 'Chưa có việc nào.' : 'Cần mạng để tải danh sách.'}</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={4} className="muted">{online ? 'Chưa có việc nào.' : 'Cần mạng để tải danh sách.'}</td></tr>}
           {rows.map((t) => (
             <tr key={t.id} className={t.is_active ? '' : 'off'}>
               <td>
@@ -160,11 +169,12 @@ export function WorkTypesSection() {
                 {t.shared && !t.overridden && <span className="sub">Có sẵn</span>}
                 {!t.is_active && <span className="sub">Đã dừng</span>}
               </td>
+              <td className="muted">{t.applies_to && t.applies_to.length > 0 ? t.applies_to.map((k) => cfg.groupLabel(k, null)).join(', ') : 'Tất cả'}</td>
               <td className="muted">{t.field_schema.length > 0 ? t.field_schema.map((f) => f.label).join(', ') : '—'}</td>
               {canManage && (
                 <td className="act">
                   <button className="icon" disabled={busy || !online} aria-label={t.is_active ? `Dừng ${t.name}` : `Dùng lại ${t.name}`} onClick={() => void run(() => setActiveFlag(t))}>{t.is_active ? '⏸' : '▶'}</button>{' '}
-                  <button className="icon" aria-label={`Sửa ${t.name}`} onClick={() => { setEditing(editing === t.id ? null : t.id); setEditName(t.name); setEditDesc(t.description ?? ''); setEditFields(t.field_schema); }}>✎</button>
+                  <button className="icon" aria-label={`Sửa ${t.name}`} onClick={() => { setEditing(editing === t.id ? null : t.id); setEditName(t.name); setEditDesc(t.description ?? ''); setEditFields(t.field_schema); setEditKind(''); setEditApplies(t.applies_to ?? []); }}>✎</button>
                 </td>
               )}
             </tr>
@@ -180,11 +190,35 @@ export function WorkTypesSection() {
           <div className="inline-form">
             <label>Tên việc<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
             <label>Mô tả<input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} /></label>
+            {editingRow.shared ? (
+              <label>Sửa biểu mẫu cho loại vụ
+                <select value={editKind} onChange={(e) => {
+                  const k = e.target.value;
+                  setEditKind(k);
+                  const raw = rawTypes.find((r) => r.id === editingRow.id);
+                  setEditFields(raw ? fieldsForKind(raw, org, k || undefined) : editingRow.field_schema);
+                }}>
+                  <option value="">Mọi loại (mặc định)</option>
+                  {cfg.productGroups().map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+                </select>
+                <small>Một việc có thể có biểu mẫu riêng cho từng loại. Loại chưa chỉnh thì dùng biểu mẫu chuẩn (vật nuôi, thủy sản) hoặc "Mọi loại".</small>
+              </label>
+            ) : (
+              <fieldset className="roles">
+                <legend>Việc này áp dụng cho</legend>
+                <label className="check"><input type="radio" checked={editApplies.length === 0} onChange={() => setEditApplies([])} /> Mọi loại (cây trồng, vật nuôi, thủy sản)</label>
+                {cfg.productGroups().map((g) => (
+                  <label className="check" key={g.id}>
+                    <input type="checkbox" checked={editApplies.includes(g.id)} onChange={(e) => setEditApplies((cur) => (e.target.checked ? [...cur, g.id] : cur.filter((x) => x !== g.id)))} /> {g.label}
+                  </label>
+                ))}
+              </fieldset>
+            )}
             <FieldsEditor fields={editFields} onChange={setEditFields} />
             <div className="btnrow">
               <button className="primary" disabled={busy || !online} onClick={() => void run(() => save(editingRow))}>Lưu thay đổi</button>
               {editingRow.shared && editingRow.overridden && (
-                <button className="secondary" disabled={busy || !online} onClick={() => void run(async () => { await clearOverride(org, 'work_type', editingRow.id); setEditing(null); })}>Khôi phục mặc định</button>
+                <button className="secondary" disabled={busy || !online} onClick={() => void run(async () => { await clearOverride(org, 'work_type', editingRow.id, editKind); setEditing(null); })}>Khôi phục mặc định</button>
               )}
               <button type="button" className="secondary" onClick={() => setEditing(null)}>Hủy</button>
             </div>

@@ -13,6 +13,7 @@ const NEEDLE: FieldDef = { key: 'needle_broken', label: 'Có gãy kim tiêm', ty
 
 export const PIG_PACK: FieldPack = {
   id: 'pig_farm',
+  kind: 'livestock',
   name: 'Heo thịt (hướng VietGAHP)',
   description: 'Cho ăn, kiểm tra nước, tiêm vaccine, điều trị, tẩy giun (có gãy kim), cân heo, sát trùng, xử lý chất thải, diệt côn trùng và chuột, vệ sinh chuồng; xuất chuồng ghi thẻ tai và kiểm dịch. Ngưng thuốc dùng chung cơ chế cách ly.',
   workTypes: {
@@ -61,8 +62,8 @@ export const PIG_PACK: FieldPack = {
       { key: 'dose', label: 'Liều dùng', type: 'text' },
       NEEDLE,
     ] },
-    { name: 'Cân heo', description: 'Cân định kỳ để theo dõi tăng trọng (P3 sẽ chuyển thành phiếu đo)', fields: [
-      { key: 'pigs', label: 'Số heo đã cân', type: 'number', min: 0, required: true },
+    { name: 'Cân mẫu', description: 'Cân định kỳ để theo dõi tăng trọng (cũng ghi được ở ô "Ghi lần cân" của vụ)', fields: [
+      { key: 'pigs', label: 'Số con đã cân', type: 'number', min: 0, required: true },
       { key: 'avg_kg', label: 'Cân nặng trung bình', type: 'number', unit: 'kg', min: 0, required: true },
     ] },
     { name: 'Sát trùng', description: 'Sát trùng cổng, khuôn viên, dãy chuồng. Chọn khu vực ở "Ghi cho"; hóa chất ở "Vật tư đã dùng"', fields: [

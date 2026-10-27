@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useCatalog } from '../lib/catalog';
+import { fieldsForKind, productKindOfArea, useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { SyncBadge } from '../components/SyncBadge';
 import { useAuth } from '../lib/auth';
@@ -17,8 +17,8 @@ import { CycleWord } from '../components/CycleWord';
 const PAGE = 30;
 const OWN_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // khớp chính sách logs_update_own ở máy chủ
 
-function summarize(wt: WorkTypeRow | undefined, data: Record<string, unknown>): string {
-  return wt ? summarizeFields(wt.field_schema, data) : '';
+function summarize(wt: WorkTypeRow | undefined, data: Record<string, unknown>, orgId: string | undefined, kind: string | undefined): string {
+  return wt ? summarizeFields(fieldsForKind(wt, orgId, kind), data) : ''; // nhãn trường theo loại của vụ (điểm 2)
 }
 
 /** Lịch sử nhật ký có lọc theo vụ / loại việc / ngày; sửa và hủy theo quyền (FR-LOG-004/005). */
@@ -31,6 +31,8 @@ export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedde
   const cycles = useTable('cycles');
   const areas = useTable('areas');
   const { workTypes, cropTypes } = useCatalog();
+  const typeRows = useTable('workTypes');
+  const kindOfLog = (l: LogRow) => (l.cycle_id ? cropTypes.find((c) => c.id === cycles.find((x) => x.id === l.cycle_id)?.crop_type_id)?.kind : productKindOfArea(areas.find((a) => a.id === l.area_id)?.kind));
 
   const [cycleId, setCycleId] = useState('');
   const [typeId, setTypeId] = useState('');
@@ -164,6 +166,7 @@ export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedde
 
       {visible.map((l) => {
         const wt = workTypes.find((w) => w.id === l.work_type_id);
+        const wtRaw = typeRows.find((w) => w.id === l.work_type_id);
         const s = sync.get(l.id);
         return (
           <div className={l.voided_at ? 'card slim voided' : 'card slim'} key={l.id}>
@@ -172,7 +175,7 @@ export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedde
               <span className="muted">{new Date(l.performed_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}</span>
             </div>
             <p className="muted">{cycleLabel(l.cycle_id, l.area_id)}</p>
-            {summarize(wt, l.data) && <p>{summarize(wt, l.data)}</p>}
+            {summarize(wtRaw, l.data, active?.id, kindOfLog(l)) && <p>{summarize(wtRaw, l.data, active?.id, kindOfLog(l))}</p>}
             {l.note && <p>{l.note}</p>}
             <div className="badges">
               {l.version > 1 && !l.voided_at && <span className="pill">Đã chỉnh sửa</span>}

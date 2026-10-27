@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { useCatalog } from '../lib/catalog';
+import { productKindOfArea, useCatalog, useKindWorkTypes } from '../lib/catalog';
+import { useTable } from '../lib/tables';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type FieldDef } from '../lib/db';
 import { DynamicField } from '../components/DynamicField';
@@ -12,7 +13,14 @@ import { editLog } from '../lib/production';
 /** Sửa nhật ký đã ghi (FR-LOG-005). Không đổi được vụ hay loại việc: muốn đổi hãy hủy và ghi lại. */
 export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () => void }) {
   const log = useLiveQuery(() => db.logs.get(logId), [logId]);
-  const { workTypes } = useCatalog();
+  const { cropTypes } = useCatalog();
+  const allCycles = useTable('cycles');
+  const allAreas = useTable('areas');
+  // biểu mẫu theo loại của vụ (hoặc của khu nếu việc ghi cho khu không gắn vụ)
+  const logKind = log?.cycle_id
+    ? cropTypes.find((c) => c.id === allCycles.find((x) => x.id === log.cycle_id)?.crop_type_id)?.kind
+    : productKindOfArea(allAreas.find((a) => a.id === log?.area_id)?.kind);
+  const workTypes = useKindWorkTypes(logKind);
   const [when, setWhen] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string> | null>(null);
   const [note, setNote] = useState<string | null>(null);

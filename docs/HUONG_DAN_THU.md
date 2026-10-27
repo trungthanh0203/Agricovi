@@ -320,3 +320,11 @@ Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng m�
 
 ### Thử F: Thủy sản (khung chung tạm)
 Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở Báo cáo dùng bộ sổ chung, không có mốc "ngưng bón phân".
+
+### Thử G: Đầu việc theo loại vụ (cần `db push` đến 0107)
+1. Tạo vụ vật nuôi (hoặc thủy sản). Bấm ＋ Ghi việc: danh sách chỉ có việc của vật nuôi (Cho ăn, Tiêm vaccine, Điều trị bệnh, Cân mẫu, Sát trùng…), **không** có Thụ phấn, Phun thuốc. Vụ trồng trọt thì ngược lại.
+2. Mở "Cho ăn" ở vụ vật nuôi: form có sẵn Nhóm thức ăn, Lượng cho ăn (kg), Số con trong chuồng, không cần "Áp dụng gói". Ghi một lần rồi xem Chi tiết vụ → Tăng trọng và FCR.
+3. Khai báo → Đầu việc: có cột **Áp dụng cho** (Tất cả hoặc loại). Bấm ✎ một việc có sẵn → chọn **Sửa biểu mẫu cho loại vụ** (Mọi loại, Cây trồng, Vật nuôi, Thủy sản), chỉnh rồi Lưu: loại khác không bị đổi.
+4. Việc do cơ sở tự thêm: ✎ → chọn "Việc này áp dụng cho" loại nào (mặc định mọi loại).
+5. Phần Thu hoạch: vụ vật nuôi hiện ô Thẻ tai, Số giấy kiểm dịch…; vụ thủy sản hiện Cỡ thu…; vụ trồng trọt giữ form cũ.
+6. Cơ sở đã chỉnh sẵn biểu mẫu trước đây: giữ nguyên thành "Mọi loại", không đổi gì cho tới khi bạn chỉnh riêng cho một loại.
