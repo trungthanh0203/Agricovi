@@ -41,6 +41,12 @@ async function selectCycles(id?: string) {
 const missingPlanColumns = (e: { message?: string; code?: string } | null) => !!e && (e.code === '42703' || /target_yield_kg|budget_amount|planted_area|variety_name|column/i.test(e.message ?? ''));
 const STAGE_COLUMNS =
   'id, cycle_id, name, seq, work_type_id, duration_days, planned_start, planned_end, actual_start, actual_end, status, note';
+/** Việc của vụ kèm công đoạn và mức độ quan trọng (migration 0109); CSDL chưa cập nhật thì dùng bộ cột cũ */
+async function selectStages(cycleId?: string) {
+  const q = (cols: string) => { const b = supabase!.from('production_stages').select(cols); return cycleId ? b.eq('cycle_id', cycleId) : b; };
+  const r = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance');
+  return r.error ? q(STAGE_COLUMNS) : r;
+}
 
 const NOTE_COLUMNS = 'id, cycle_id, organization_id, note_date, content, done, created_by, author_name, created_at';
 
@@ -67,7 +73,7 @@ export async function syncDown(): Promise<void> {
     selectAreas(),
     selectCycles(),
     supabase.from('activity_logs').select(LOG_COLUMNS).order('performed_at', { ascending: false }).limit(200),
-    supabase.from('production_stages').select(STAGE_COLUMNS),
+    selectStages(),
     supabase.from('cycle_notes').select(NOTE_COLUMNS).order('note_date', { ascending: false }).limit(1000),
   ]);
   const cyclesRes: { data: unknown; error: { message?: string; code?: string } | null } = cycles;
@@ -92,7 +98,7 @@ export async function syncDown(): Promise<void> {
     // giai đoạn chưa có (CSDL chưa cập nhật) thì bỏ qua, không làm hỏng phần còn lại
     if (!stages.error) {
       await db.stages.clear(); // giai đoạn đã xóa ở nơi khác thì bỏ khỏi máy
-      await db.stages.bulkPut((stages.data ?? []) as StageRow[]);
+      await db.stages.bulkPut(((stages.data ?? []) as unknown as StageRow[]));
     }
     if (!notes.error) {
       await db.notes.clear();
@@ -265,14 +271,14 @@ export async function refreshCycle(id: string): Promise<void> {
   if (!supabase) return;
   const [cyRes, st] = await Promise.all([
     selectCycles(id),
-    supabase.from('production_stages').select(STAGE_COLUMNS).eq('cycle_id', id),
+    selectStages(id),
   ]);
   if (cyRes.error) throw new Error(cyRes.error.message);
   const cyRow = (cyRes.data as unknown as CycleRow[] | null)?.[0];
   if (cyRow) await db.cycles.put(cyRow);
   if (!st.error) {
     await db.stages.where('cycle_id').equals(id).delete();
-    await db.stages.bulkPut((st.data ?? []) as StageRow[]);
+    await db.stages.bulkPut(((st.data ?? []) as unknown as StageRow[]));
   }
 }
 

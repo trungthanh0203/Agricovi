@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { productKindOfArea, useCatalog, useKindWorkTypes } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
@@ -97,7 +97,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const areaHere = areaMode ? siteArea?.id : cycle?.area_id;
   const locationsHere = (() => { const f = locations.filter((l) => !l.area_ids || l.area_ids.length === 0 || !areaHere || l.area_ids.includes(areaHere)); return f.length > 0 ? f : locations; })();
   const [usedOpen, setUsedOpen] = useState(false);
-  const [used, setUsed] = useState<{ materialId: string; qty: string; lotId?: string; lotExpired?: boolean; lotReason?: string }[]>([]);
+  const [used, setUsed] = useState<{ materialId: string; qty: string; lotId?: string; lotExpired?: boolean; lotReason?: string; suggested?: boolean }[]>([]);
   const [locationId, setLocationId] = useState('');
   const rememberedLoc = (() => { try { return localStorage.getItem(LAST_LOCATION_KEY); } catch { return null; } })();
   const effLocation = (locationsHere.some((l) => l.id === locationId) ? locationId : '') || (locationsHere.find((l) => l.id === rememberedLoc)?.id ?? locationsHere[0]?.id ?? '');
@@ -107,6 +107,14 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   };
 
   const workType = workTypes.find((w) => w.id === workTypeId) ?? null;
+
+  // Vật tư sử dụng đã khai báo cho việc này hiện sẵn thành các dòng "Vật tư đã dùng" (chỉ cần nhập số lượng; dòng để trống thì bỏ qua)
+  const suggestedKey = canIssue && workType ? (workType.material_ids ?? []).join(',') : '';
+  useEffect(() => {
+    const ids = suggestedKey ? suggestedKey.split(',') : [];
+    setUsed(ids.map((materialId) => ({ materialId, qty: '', suggested: true })));
+    setUsedOpen(ids.length > 0);
+  }, [workTypeId, suggestedKey]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -121,6 +129,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
     const items: { materialId: string; quantity: number; lotId?: string; reason?: string }[] = [];
     for (const row of used) {
       if (!row.materialId && row.qty.trim() === '') continue;
+      if (row.suggested && row.qty.trim() === '') continue; // vật tư gợi ý chưa nhập số lượng: không dùng
       const q = parseNumber(row.qty);
       if (!row.materialId) return setError('Hãy chọn vật tư cho dòng "Vật tư đã dùng", hoặc xóa dòng đó.');
       if (q === null || Number.isNaN(q) || q <= 0) return setError('Số lượng vật tư đã dùng phải là số lớn hơn 0.');
@@ -223,7 +232,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
               Thuộc công đoạn
               <select value={effStage ?? ''} onChange={(e) => setStageSel(e.target.value || null)}>
                 <option value="">— Không gắn công đoạn —</option>
-                {stages.map((st) => <option key={st.id} value={st.id}>{st.name}</option>)}
+                {stages.map((st) => <option key={st.id} value={st.id}>{st.phase_name ? `${st.phase_name} › ${st.name}` : st.name}</option>)}
               </select>
             </label>
           )}

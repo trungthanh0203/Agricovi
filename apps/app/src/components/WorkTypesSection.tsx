@@ -1,4 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../lib/db';
 import type { FieldDef } from '../lib/db';
 import { Collapsible } from './Collapsible';
 import { checkSchemaDraft, FIELD_TYPES, FIELD_TYPE_LABEL } from '../lib/fieldsLogic';
@@ -46,17 +48,39 @@ function FieldsEditor({ fields, onChange }: { fields: FieldDef[]; onChange: (f: 
   );
 }
 
-/** Chọn "Đối tượng sản xuất" mà việc áp dụng (không chọn gì = mọi đối tượng); dùng chung cho thêm mới và sửa */
+/** Chọn MỘT "Đối tượng sản xuất" cho việc: cùng tên việc nhưng khác đối tượng thì cách làm khác nhau nên tách riêng từng việc; dùng chung cho thêm mới và sửa */
 function AppliesPicker({ value, onChange, groups }: { value: string[]; onChange: (v: string[]) => void; groups: { id: string; label: string }[] }) {
   return (
     <fieldset className="roles">
-      <legend>Áp dụng cho đối tượng sản xuất</legend>
-      <label className="check"><input type="radio" checked={value.length === 0} onChange={() => onChange([])} /> Tất cả (cây trồng, vật nuôi, thủy sản)</label>
+      <legend>Áp dụng cho đối tượng sản xuất (chọn một)</legend>
       {groups.map((g) => (
         <label className="check" key={g.id}>
-          <input type="checkbox" checked={value.includes(g.id)} onChange={(e) => onChange(e.target.checked ? [...value, g.id] : value.filter((x) => x !== g.id))} /> {g.label}
+          <input type="radio" name="applies-one" checked={value[0] === g.id} onChange={() => onChange([g.id])} /> {g.label}
         </label>
       ))}
+    </fieldset>
+  );
+}
+
+/** Vật tư sử dụng gợi ý cho việc: chọn từ danh mục vật tư của cơ sở; khi Ghi việc sẽ có sẵn các dòng này để nhập số lượng */
+function MaterialsPicker({ ids, onChange, materials }: { ids: string[]; onChange: (v: string[]) => void; materials: { id: string; name: string }[] }) {
+  const left = materials.filter((m) => !ids.includes(m.id));
+  return (
+    <fieldset className="roles">
+      <legend>Vật tư sử dụng (không bắt buộc)</legend>
+      {ids.length === 0 && <p className="muted">Chưa chọn vật tư nào.</p>}
+      {ids.map((id) => (
+        <div className="note-row" key={id}>
+          <span className="grow">{materials.find((m) => m.id === id)?.name ?? 'Vật tư đã xóa'}</span>
+          <button type="button" className="icon" aria-label="Bỏ vật tư" onClick={() => onChange(ids.filter((x) => x !== id))}>✕</button>
+        </div>
+      ))}
+      {left.length > 0 ? (
+        <select value="" aria-label="Thêm vật tư" onChange={(e) => { if (e.target.value) onChange([...ids, e.target.value]); }}>
+          <option value="">＋ Thêm vật tư…</option>
+          {left.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+        </select>
+      ) : ids.length === 0 && <p className="muted">Chưa có vật tư trong danh mục (thêm ở Khai báo → Vật tư).</p>}
     </fieldset>
   );
 }
@@ -80,6 +104,10 @@ export function WorkTypesSection() {
   const [filterKind, setFilterKind] = useState(''); // lọc danh sách theo đối tượng sản xuất ('' = tất cả)
   const [addApplies, setAddApplies] = useState<string[]>([]);
   const [addFields, setAddFields] = useState<FieldDef[]>([]);
+  const [addMaterials, setAddMaterials] = useState<string[]>([]);
+  const [editMaterials, setEditMaterials] = useState<string[]>([]);
+  const materials = useLiveQuery(() => (active ? db.materials.where('organization_id').equals(active.id).toArray() : []), [active?.id], [])
+    .filter((m) => m.is_active).map((m) => ({ id: m.id, name: m.name })).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const [showOff, setShowOff] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -110,10 +138,12 @@ export function WorkTypesSection() {
   function onAdd(e: FormEvent) {
     e.preventDefault();
     if (name.trim().length < 2) return setError('Hãy nhập tên việc (ít nhất 2 ký tự).');
+    const kind = addApplies[0] || filterKind;
+    if (!kind) return setError('Hãy chọn đối tượng sản xuất mà việc này áp dụng.');
     const f = cleanFields(addFields);
     const bad = checkSchemaDraft(f);
     if (bad) return setError(bad);
-    void run(async () => { await createWorkType(org, name, f, desc, addApplies); setName(''); setDesc(''); setAddFields([]); setAddApplies([]); });
+    void run(async () => { await createWorkType(org, name, f, desc, [kind], addMaterials); setName(''); setDesc(''); setAddFields([]); setAddApplies([]); setAddMaterials([]); });
   }
 
   async function save(t: EffWorkType) {
@@ -121,17 +151,20 @@ export function WorkTypesSection() {
     const bad = checkSchemaDraft(f);
     if (bad) throw new Error(bad);
     if (editName.trim().length < 2) throw new Error('Tên việc cần ít nhất 2 ký tự.');
+    const matChanged = JSON.stringify([...editMaterials].sort()) !== JSON.stringify([...(t.material_ids ?? [])].sort());
     if (t.shared && editKind) {
       // biểu mẫu riêng cho MỘT loại vụ; tên và mô tả vẫn là của việc (chung mọi loại)
       await saveOverride(org, 'work_type', t.id, { field_schema: f }, editKind);
+      if (matChanged) await saveOverride(org, 'work_type', t.id, { material_ids: editMaterials }, '');
     } else if (t.shared) {
       await saveOverride(org, 'work_type', t.id, {
         display_name: editName.trim() === t.base_name ? null : editName,
         description: editDesc,
         field_schema: JSON.stringify(f) === JSON.stringify(t.field_schema) && !t.overridden ? null : f,
+        ...(matChanged ? { material_ids: editMaterials } : {}),
       });
     } else {
-      await updateWorkType(t.id, { name: editName, description: editDesc, field_schema: f, applies_to: editApplies });
+      await updateWorkType(t.id, { name: editName, description: editDesc, field_schema: f, applies_to: editApplies, material_ids: editMaterials });
     }
     setEditing(null);
   }
@@ -171,6 +204,7 @@ export function WorkTypesSection() {
               <AppliesPicker value={editApplies} onChange={setEditApplies} groups={groups} />
             )}
             <FieldsEditor fields={editFields} onChange={setEditFields} />
+            <MaterialsPicker ids={editMaterials} onChange={setEditMaterials} materials={materials} />
             <div className="btnrow">
               <button className="primary" disabled={busy || !online} onClick={() => void run(() => save(editingRow))}>Lưu thay đổi</button>
               {editingRow.shared && editingRow.overridden && (
@@ -187,8 +221,9 @@ export function WorkTypesSection() {
           <form className="inline-form" onSubmit={onAdd} noValidate>
             <label>Tên việc<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Phun thuốc" /></label>
             <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Làm thế nào, lưu ý…" /></label>
-            <AppliesPicker value={addApplies} onChange={setAddApplies} groups={groups} />
+            <AppliesPicker value={addApplies.length > 0 ? addApplies : filterKind ? [filterKind] : []} onChange={setAddApplies} groups={groups} />
             <FieldsEditor fields={addFields} onChange={setAddFields} />
+            <MaterialsPicker ids={addMaterials} onChange={setAddMaterials} materials={materials} />
             <div className="btnrow"><button type="submit" className="primary" disabled={busy || !online}>Thêm</button></div>
           </form>
         </Collapsible>
@@ -203,6 +238,7 @@ export function WorkTypesSection() {
               <td>
                 {t.name}
                 {t.description && <span className="sub">{t.description}</span>}
+                {(t.material_ids ?? []).length > 0 && <span className="sub">Vật tư: {(t.material_ids ?? []).map((id) => materials.find((m) => m.id === id)?.name ?? '…').join(', ')}</span>}
                 {!t.shared && <span className="pill mine"> Riêng</span>}
                 {t.shared && t.overridden && <span className="pill warn"> Đã chỉnh</span>}
                 {t.shared && !t.overridden && <span className="sub">Có sẵn</span>}
@@ -213,7 +249,7 @@ export function WorkTypesSection() {
               {canManage && (
                 <td className="act">
                   <button className="icon" disabled={busy || !online} aria-label={t.is_active ? `Dừng ${t.name}` : `Dùng lại ${t.name}`} onClick={() => void run(() => setActiveFlag(t))}>{t.is_active ? '⏸' : '▶'}</button>{' '}
-                  <button className="icon" aria-label={`Sửa ${t.name}`} onClick={() => { setEditing(editing === t.id ? null : t.id); setEditName(t.name); setEditDesc(t.description ?? ''); setEditFields(t.field_schema); setEditKind(''); setEditApplies(t.applies_to ?? []); }}>✎</button>
+                  <button className="icon" aria-label={`Sửa ${t.name}`} onClick={() => { setEditing(editing === t.id ? null : t.id); setEditName(t.name); setEditDesc(t.description ?? ''); setEditFields(t.field_schema); setEditKind(''); setEditApplies(t.applies_to ?? []); setEditMaterials(t.material_ids ?? []); }}>✎</button>
                 </td>
               )}
             </tr>

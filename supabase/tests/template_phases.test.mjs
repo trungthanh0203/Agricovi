@@ -76,3 +76,14 @@ test('việc có vật tư gợi ý; bản chỉnh của cơ sở cho việc dù
   await asUser(db, owner, `insert into org_catalog_overrides (organization_id,item_kind,item_id,material_ids) values ($1,'work_type',${wt('fertilizing')},array[$2]::uuid[])`, [org, id1]);
   assert.deepEqual((await db.query(`select material_ids from org_catalog_overrides where organization_id=$1`, [org])).rows[0].material_ids, [id1]);
 });
+
+import { flatOrder } from '../../apps/app/src/lib/templates.ts';
+
+test('thứ tự việc của quy trình: theo công đoạn, việc chưa xếp công đoạn ở cuối', () => {
+  const phases = [{ id: 'P2', seq: 2 }, { id: 'P1', seq: 1 }];
+  const stages = [
+    { id: 'a', seq: 1, phase_id: 'P2' }, { id: 'b', seq: 2, phase_id: null }, { id: 'c', seq: 3, phase_id: 'P1' },
+    { id: 'd', seq: 4, phase_id: 'P2' }, { id: 'e', seq: 5, phase_id: 'GONE' },
+  ];
+  assert.deepEqual(flatOrder(phases, stages), ['c', 'a', 'd', 'b', 'e']);
+});

@@ -42,6 +42,7 @@ export function effectiveWorkTypes(rows: WorkTypeRow[], orgId: string | undefine
       return {
         ...r, name: o?.display_name ?? r.name, description: o ? o.description ?? r.description : r.description, base_name: r.name, shared, overridden: Boolean(o),
         field_schema: fieldsForKind(r, orgId, kind),
+        material_ids: (shared ? o?.material_ids : null) ?? r.material_ids ?? [],
         is_active: o ? o.is_active : (r.is_active ?? true),
       };
     });

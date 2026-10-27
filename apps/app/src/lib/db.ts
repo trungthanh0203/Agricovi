@@ -184,6 +184,10 @@ export interface StageRow {
   actual_end: string | null;
   status: 'pending' | 'in_progress' | 'done';
   note: string | null;
+  /** Công đoạn và mức độ quan trọng của việc (bản chụp từ quy trình mẫu lúc tạo vụ) */
+  phase_code?: string | null;
+  phase_name?: string | null;
+  importance?: 'high' | 'normal' | 'low';
 }
 
 /** Bản chỉnh của một cơ sở lên mục có sẵn dùng chung (D32) */
@@ -192,6 +196,8 @@ export interface CatalogOverride {
   description?: string | null;
   image?: string | null;
   field_schema: FieldDef[] | null;
+  /** Vật tư sử dụng gợi ý (chỉ ở bản chỉnh mọi loại của việc dùng chung); null/thiếu = không chỉnh */
+  material_ids?: string[] | null;
   is_active: boolean;
 }
 
@@ -208,8 +214,10 @@ export interface WorkTypeRow {
   ov?: Record<string, CatalogOverride>;
   /** Bản chỉnh biểu mẫu theo loại: mã cơ sở → loại (crop/livestock/aquatic/other) → bản chỉnh */
   ovk?: Record<string, Record<string, CatalogOverride>>;
-  /** Đầu việc áp dụng cho loại nào (null/thiếu = mọi loại) */
+  /** Việc áp dụng cho đối tượng sản xuất nào (null/thiếu = mọi loại) */
   applies_to?: string[] | null;
+  /** Vật tư sử dụng gợi ý khi ghi việc */
+  material_ids?: string[];
 }
 
 /** Một trường của form động (D96). Chỉ `key`, `label`, `type` là bắt buộc; nhật ký cũ không có các thuộc tính mới vẫn hiển thị bình thường. */

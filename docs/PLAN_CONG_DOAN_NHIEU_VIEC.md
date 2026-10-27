@@ -15,3 +15,10 @@ Một công đoạn (`template_stages`, `cycle_stages`) hiện chỉ gắn **m�
 3. Chi tiết vụ: mỗi công đoạn hiện các việc cần làm, hôm nay đến hạn việc nào; bấm một việc mở thẳng Ghi việc với việc và công đoạn đã chọn sẵn.
 4. Dữ liệu cũ: mỗi công đoạn cũ tự thành công đoạn có đúng một việc (không mất gì).
 Cỡ L, có migration; làm theo từng bước dùng được riêng.
+
+## Tiến độ (28/10/2026) — thiết kế đã chốt với chủ sản phẩm
+- Quy trình → **Công đoạn** (số thứ tự/mã, tên, mô tả) → **Việc** (chọn từ danh mục Việc, số ngày, mức độ quan trọng Cao/Trung bình/Thấp, ghi chú).
+- Mỗi việc vẫn là một hàng `template_stages` (có thêm `phase_id`, `importance`); công đoạn là bảng `template_phases`. Tạo vụ chụp công đoạn và mức độ vào `production_stages` (migration 0109). Nhờ vậy lịch, tiến độ, Ghi việc không đổi cách chạy.
+- **Việc** (Khai báo): thêm Vật tư sử dụng (gợi ý khi Ghi việc); đối tượng sản xuất chỉ chọn MỘT (việc riêng của cơ sở). Việc dùng chung có sẵn nhiều đối tượng (Cho ăn, Thu hoạch…) giữ nguyên, tách riêng để sau vì mã việc đang gắn với tính Tăng trọng/FCR và biểu mẫu chuẩn.
+- Đã làm: migration 0109, trình soạn quy trình 2 cấp, form Việc (đối tượng một, vật tư), Ghi việc nạp sẵn vật tư.
+- Còn lại: chi tiết vụ/lịch/tiến độ hiện việc theo nhóm công đoạn (hiện vẫn danh sách phẳng, dùng chữ "công đoạn" cho từng việc); bước 2 (lặp lại, từ ngày–đến ngày, hướng dẫn, vật tư dự kiến kèm lượng cho từng việc trong quy trình); tách việc dùng chung theo từng đối tượng.

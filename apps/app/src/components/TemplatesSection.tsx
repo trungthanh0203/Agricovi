@@ -52,7 +52,7 @@ export function TemplatesSection() {
   }
 
   function onDelete(t: TemplateRow) {
-    if (!window.confirm(`Xóa quy trình "${t.name}" cùng ${t.template_stages.length} công đoạn? Không khôi phục được. Nếu đã có vụ dùng quy trình này thì chỉ có thể ngừng dùng.`)) return;
+    if (!window.confirm(`Xóa quy trình "${t.name}" cùng ${t.template_stages.length} việc? Không khôi phục được. Nếu đã có vụ dùng quy trình này thì chỉ có thể ngừng dùng.`)) return;
     setBusy(true);
     setError(null);
     deleteTemplate(t.id)
@@ -84,7 +84,7 @@ export function TemplatesSection() {
       ))}
 
       <table className="grid">
-        <thead><tr><th>Quy trình ({rows.length})</th><th className="num">Công đoạn</th><th className="num">Ngày</th><th></th></tr></thead>
+        <thead><tr><th>Quy trình ({rows.length})</th><th className="num">Việc</th><th className="num">Ngày</th><th></th></tr></thead>
         <tbody>
           {rows.length === 0 && (
             <tr><td colSpan={4} className="muted">Chưa có quy trình mẫu. Phải có mẫu cho sản phẩm nào thì mới tạo được vụ của sản phẩm đó.</td></tr>

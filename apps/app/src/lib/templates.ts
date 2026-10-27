@@ -26,7 +26,12 @@ export interface TemplateRow {
   template_stages: { id: string; duration_days: number }[];
 }
 /** Giai đoạn = một việc chọn từ danh mục + số ngày. `name` là tên việc lúc chọn (máy chủ tự điền). */
-export interface StageRow { id: string; template_id: string; seq: number; name: string; work_type_id: string | null; duration_days: number; note: string | null }
+export interface StageRow { id: string; template_id: string; seq: number; name: string; work_type_id: string | null; duration_days: number; note: string | null; phase_id?: string | null; importance?: Importance }
+/** Mức độ quan trọng của một việc trong quy trình */
+export type Importance = 'high' | 'normal' | 'low';
+export const IMPORTANCE_LABEL: Record<Importance, string> = { high: 'Cao', normal: 'Trung bình', low: 'Thấp' };
+/** Công đoạn của quy trình: nhóm các việc; chỉ có số thứ tự (mã), tên và mô tả */
+export interface PhaseRow { id: string; template_id: string; seq: number; code: string | null; name: string; description: string | null }
 
 // ------------------------------------------------------------------ bản lưu trên máy (dùng khi ghi việc, tạo vụ, hiển thị)
 /**
@@ -39,14 +44,17 @@ export async function refreshCatalogCache(): Promise<void> {
     return r.error ? client().from('crop_types').select('id, code, name, description, kind, image, organization_id, is_active') : r; // chưa db push 0098
   };
   const ovrQ = async () => {
-    const r = await client().from('org_catalog_overrides').select('organization_id, kind, item_kind, item_id, display_name, description, image, field_schema, is_active');
+    const r0 = await client().from('org_catalog_overrides').select('organization_id, kind, item_kind, item_id, display_name, description, image, field_schema, is_active, material_ids');
+    const r = r0.error ? await client().from('org_catalog_overrides').select('organization_id, kind, item_kind, item_id, display_name, description, image, field_schema, is_active') : r0; // chưa db push 0109
     return r.error ? client().from('org_catalog_overrides').select('organization_id, item_kind, item_id, display_name, description, image, field_schema, is_active') : r; // chưa db push 0107
   };
   const [crops, types, ovr] = await Promise.all([
     cropsQ(),
     (async () => {
-      const r = await client().from('work_types').select('id, code, name, description, field_schema, organization_id, is_active, applies_to');
-      return r.error ? client().from('work_types').select('id, code, name, description, field_schema, organization_id, is_active') : r; // chưa db push 0107
+      const r = await client().from('work_types').select('id, code, name, description, field_schema, organization_id, is_active, applies_to, material_ids');
+      if (!r.error) return r;
+      const r2 = await client().from('work_types').select('id, code, name, description, field_schema, organization_id, is_active, applies_to'); // chưa db push 0109
+      return r2.error ? client().from('work_types').select('id, code, name, description, field_schema, organization_id, is_active') : r2; // chưa db push 0107
     })(),
     ovrQ(),
   ]);
@@ -55,7 +63,7 @@ export async function refreshCatalogCache(): Promise<void> {
   const ov = { crop_type: new Map<string, Record<string, CatalogOverride>>(), work_type: new Map<string, Record<string, CatalogOverride>>() };
   const ovk = new Map<string, Record<string, Record<string, CatalogOverride>>>(); // loại việc: mục → cơ sở → loại → bản chỉnh theo loại
   for (const o of (ovr.error ? [] : ovr.data ?? []) as unknown as Array<{ organization_id: string; kind?: string; item_kind: 'crop_type' | 'work_type'; item_id: string } & CatalogOverride>) {
-    const one: CatalogOverride = { display_name: o.display_name, description: o.description ?? null, image: o.image ?? null, field_schema: o.field_schema, is_active: o.is_active };
+    const one: CatalogOverride = { display_name: o.display_name, description: o.description ?? null, image: o.image ?? null, field_schema: o.field_schema, material_ids: o.material_ids ?? null, is_active: o.is_active };
     if (o.kind) {
       const byOrg = ovk.get(o.item_id) ?? {};
       byOrg[o.organization_id] = { ...(byOrg[o.organization_id] ?? {}), [o.kind]: one };
@@ -80,11 +88,11 @@ export async function refreshCatalogCache(): Promise<void> {
  */
 export async function saveOverride(
   orgId: string, kind: 'crop_type' | 'work_type', itemId: string,
-  patch: { display_name?: string | null; description?: string | null; image?: string | null; field_schema?: FieldDef[] | null; is_active?: boolean },
+  patch: { display_name?: string | null; description?: string | null; image?: string | null; field_schema?: FieldDef[] | null; material_ids?: string[] | null; is_active?: boolean },
   fieldKind = '',
 ): Promise<void> {
   needOnline('chỉnh mục có sẵn');
-  const sel = () => client().from('org_catalog_overrides').select('display_name, description, image, field_schema, is_active')
+  const sel = () => client().from('org_catalog_overrides').select('*')
     .eq('organization_id', orgId).eq('item_kind', kind).eq('item_id', itemId);
   let cur = await sel().eq('kind', fieldKind).maybeSingle();
   if (cur.error && fieldKind === '') cur = await sel().maybeSingle();
@@ -96,6 +104,7 @@ export async function saveOverride(
     description: patch.description === undefined ? base.description ?? null : (patch.description?.trim() || null),
     image: patch.image === undefined ? base.image ?? null : (patch.image || null),
     field_schema: patch.field_schema === undefined ? base.field_schema : patch.field_schema,
+    ...(patch.material_ids !== undefined ? { material_ids: patch.material_ids } : base.material_ids !== undefined ? { material_ids: base.material_ids } : {}),
     is_active: patch.is_active ?? base.is_active,
   };
   let up = await client().from('org_catalog_overrides').upsert({ ...row, kind: fieldKind }, { onConflict: 'organization_id,item_kind,item_id,kind' });
@@ -140,13 +149,13 @@ export async function updateCrop(id: string, c: { name?: string; kind?: ProductK
 }
 
 // ------------------------------------------------------------------ loại việc
-export async function createWorkType(orgId: string, name: string, fields: FieldDef[], description = '', appliesTo: string[] | null = null): Promise<void> {
+export async function createWorkType(orgId: string, name: string, fields: FieldDef[], description = '', appliesTo: string[] | null = null, materialIds: string[] = []): Promise<void> {
   needOnline('thêm loại việc');
-  await ok(client().from('work_types').insert({ organization_id: orgId, name: name.trim(), description: description.trim() || null, field_schema: fields, ...(appliesTo && appliesTo.length > 0 ? { applies_to: appliesTo } : {}) }));
+  await ok(client().from('work_types').insert({ organization_id: orgId, name: name.trim(), description: description.trim() || null, field_schema: fields, ...(appliesTo && appliesTo.length > 0 ? { applies_to: appliesTo } : {}), ...(materialIds.length > 0 ? { material_ids: materialIds } : {}) }));
   await refreshCatalogCache().catch(() => undefined);
 }
 
-export async function updateWorkType(id: string, c: { name?: string; description?: string | null; field_schema?: FieldDef[]; is_active?: boolean; applies_to?: string[] | null }): Promise<void> {
+export async function updateWorkType(id: string, c: { name?: string; description?: string | null; field_schema?: FieldDef[]; is_active?: boolean; applies_to?: string[] | null; material_ids?: string[] }): Promise<void> {
   needOnline('sửa loại việc');
   const patch: Record<string, unknown> = {};
   if (c.name !== undefined) patch.name = c.name.trim();
@@ -154,6 +163,7 @@ export async function updateWorkType(id: string, c: { name?: string; description
   if (c.field_schema !== undefined) patch.field_schema = c.field_schema;
   if (c.is_active !== undefined) patch.is_active = c.is_active;
   if (c.applies_to !== undefined) patch.applies_to = c.applies_to && c.applies_to.length > 0 ? c.applies_to : null;
+  if (c.material_ids !== undefined) patch.material_ids = c.material_ids;
   await ok(client().from('work_types').update(patch).eq('id', id));
   await refreshCatalogCache().catch(() => undefined);
 }
@@ -201,33 +211,81 @@ export async function duplicateTemplate(id: string, name: string): Promise<strin
   return (await ok(client().rpc('duplicate_cycle_template', { p_template: id, p_name: name.trim() }))) as string;
 }
 
-export async function loadTemplate(id: string): Promise<{ template: TemplateRow; stages: StageRow[] }> {
+export async function loadTemplate(id: string): Promise<{ template: TemplateRow; stages: StageRow[]; phases: PhaseRow[] }> {
   const c = client();
-  const [t, st] = await Promise.all([
+  const [t, st, ph] = await Promise.all([
     ok(c.from('cycle_templates').select('id, organization_id, crop_type_id, name, note, version, is_active, updated_at, template_stages(id, duration_days)').eq('id', id).single()),
-    ok(c.from('template_stages').select('id, template_id, seq, name, work_type_id, duration_days, note').eq('template_id', id).order('seq')),
+    (async () => {
+      const r = await c.from('template_stages').select('id, template_id, seq, name, work_type_id, duration_days, note, phase_id, importance').eq('template_id', id).order('seq');
+      if (!r.error) return r.data;
+      return ok(c.from('template_stages').select('id, template_id, seq, name, work_type_id, duration_days, note').eq('template_id', id).order('seq')); // chưa db push 0109
+    })(),
+    (async () => {
+      const r = await c.from('template_phases').select('id, template_id, seq, code, name, description').eq('template_id', id).order('seq');
+      return r.error ? [] : r.data; // chưa db push 0109
+    })(),
   ]);
-  return { template: t as unknown as TemplateRow, stages: (st ?? []) as StageRow[] };
+  return { template: t as unknown as TemplateRow, stages: (st ?? []) as StageRow[], phases: (ph ?? []) as PhaseRow[] };
 }
 
-export async function addStage(templateId: string, s: { work_type_id: string; duration_days: number; note?: string }): Promise<void> {
-  needOnline('thêm giai đoạn');
-  await ok(client().from('template_stages').insert({ template_id: templateId, work_type_id: s.work_type_id, duration_days: s.duration_days, note: s.note?.trim() || null }));
+export async function addStage(templateId: string, s: { work_type_id: string; duration_days: number; note?: string; phase_id?: string | null; importance?: Importance }): Promise<string> {
+  needOnline('thêm việc');
+  const r = await ok(client().from('template_stages').insert({ template_id: templateId, work_type_id: s.work_type_id, duration_days: s.duration_days, note: s.note?.trim() || null, ...(s.phase_id ? { phase_id: s.phase_id } : {}), ...(s.importance ? { importance: s.importance } : {}) }).select('id').single());
+  return (r as { id: string }).id;
 }
 /** Đổi việc (chọn từ danh mục) và/hoặc số ngày của giai đoạn */
-export async function updateStage(id: string, s: { work_type_id?: string; duration_days?: number; note?: string | null }): Promise<void> {
-  needOnline('sửa giai đoạn');
+export async function updateStage(id: string, s: { work_type_id?: string; duration_days?: number; note?: string | null; importance?: Importance; phase_id?: string | null }): Promise<void> {
+  needOnline('sửa việc');
   const patch = { ...s, ...(s.note !== undefined ? { note: s.note?.trim() || null } : {}) };
   await ok(client().from('template_stages').update(patch).eq('id', id));
 }
 export async function deleteStage(id: string): Promise<void> {
-  needOnline('xóa giai đoạn');
+  needOnline('xóa việc');
   await ok(client().from('template_stages').delete().eq('id', id));
 }
 /** Sắp xếp lại toàn bộ giai đoạn (kéo thả hoặc nút lên/xuống): ids theo thứ tự mới */
 export async function reorderStages(templateId: string, ids: string[]): Promise<void> {
   needOnline('đổi thứ tự giai đoạn');
   await ok(client().rpc('reorder_template_stages', { p_template: templateId, p_order: ids }));
+}
+
+// ------------------------------------------------------------------ công đoạn của quy trình (migration 0109)
+export async function addPhase(templateId: string, p: { code?: string; name: string; description?: string }): Promise<string> {
+  needOnline('thêm công đoạn');
+  const r = await ok(client().from('template_phases').insert({ template_id: templateId, code: p.code?.trim() || null, name: p.name.trim(), description: p.description?.trim() || null }).select('id').single());
+  return (r as { id: string }).id;
+}
+export async function updatePhase(id: string, p: { code?: string | null; name?: string; description?: string | null }): Promise<void> {
+  needOnline('sửa công đoạn');
+  const patch: Record<string, unknown> = {};
+  if (p.code !== undefined) patch.code = p.code?.trim() || null;
+  if (p.name !== undefined) patch.name = p.name.trim();
+  if (p.description !== undefined) patch.description = p.description?.trim() || null;
+  await ok(client().from('template_phases').update(patch).eq('id', id));
+}
+/** Xóa công đoạn: các việc bên trong không mất, chỉ thành "chưa xếp công đoạn" */
+export async function deletePhase(id: string): Promise<void> {
+  needOnline('xóa công đoạn');
+  await ok(client().from('template_phases').delete().eq('id', id));
+}
+/** Đổi chỗ hai công đoạn kề nhau */
+export async function swapPhases(a: { id: string; seq: number }, b: { id: string; seq: number }): Promise<void> {
+  needOnline('đổi thứ tự công đoạn');
+  await ok(client().from('template_phases').update({ seq: b.seq }).eq('id', a.id));
+  await ok(client().from('template_phases').update({ seq: a.seq }).eq('id', b.id));
+}
+
+/**
+ * Thứ tự toàn bộ việc của quy trình: theo công đoạn (đúng thứ tự công đoạn), trong công đoạn theo thứ tự hiện có, việc chưa xếp công đoạn ở cuối.
+ * Tạo vụ sao chép việc theo thứ tự này nên mọi thay đổi cấu trúc đều gọi reorderStages với kết quả của hàm này.
+ */
+export function flatOrder(phases: { id: string; seq: number }[], stages: { id: string; seq: number; phase_id?: string | null }[]): string[] {
+  const bySeq = <T extends { seq: number }>(a: T[]) => [...a].sort((x, y) => x.seq - y.seq);
+  const known = new Set(phases.map((p) => p.id));
+  const out: string[] = [];
+  for (const p of bySeq(phases)) for (const s of bySeq(stages.filter((x) => x.phase_id === p.id))) out.push(s.id);
+  for (const s of bySeq(stages.filter((x) => !x.phase_id || !known.has(x.phase_id)))) out.push(s.id);
+  return out;
 }
 
 // ------------------------------------------------------------------ tính ngày (dùng cả để xem trước ở trình soạn)
