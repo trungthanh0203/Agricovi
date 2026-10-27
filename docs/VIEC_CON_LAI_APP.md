@@ -15,7 +15,7 @@
 | # | Việc | Cỡ | Quyết |
 |---|---|---|---|
 | ~~B1~~ ✔ | **Mô hình E**: "Việc cần làm tiếp" của vụ theo mô hình; nhắc cách ly cho mô hình 1–2 (dựa mốc ngưng thuốc của quy trình) | M | |
-| ~~B2~~ ✔ | **Mô hình G**: lối tắt "Ghi tiền công" ở Chi phí cho mô hình 1 (nhóm Nhân công, chọn người nhà) | S | |
+| ~~B2~~ ✔ (bỏ: dùng nhóm Nhân công) | **Mô hình G**: lối tắt "Ghi tiền công" ở Chi phí cho mô hình 1 (nhóm Nhân công, chọn người nhà) | S | |
 | ~~B3~~ ✔ | Mục "tùy chọn" của mô hình hiện chỉ là hiện/ẩn; cho chủ **bật/tắt riêng** từng mục tùy chọn theo vụ | S–M | |
 | ~~B4~~ ✔ | Cập nhật **Hướng dẫn trong app** và `HUONG_DAN_THU.md` cho cấu trúc mới (Khai báo gộp nhân sự, Cấu hình, Phân khu, mô hình theo vụ, Kho mới) | M | |
 | B5 | Siết chính sách "xuất dùng" của nhân viên: chỉ ghi kèm nhật ký (cần sửa vài test cũ) | S | |

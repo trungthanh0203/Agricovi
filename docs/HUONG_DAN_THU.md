@@ -305,7 +305,7 @@ Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng m�
 3. Chi tiết vụ → Cách quản lý vụ này → bật "Ghi việc" (mục tùy chọn): nút ＋ Ghi việc hiện lại. Đổi sang "Có người quản lý điều hành": hiện Kho, Chấm công.
 4. Có hai vụ chạy hai cách khác nhau: menu hiện theo tổng của hai vụ.
 5. Chi tiết vụ có khối **Việc cần làm tiếp** (tối đa 3 dòng); làm xong bước thì dòng biến mất.
-6. Mô hình 1: Sản xuất → Chi phí → **Ghi tiền công** (nhập tên người nhận, số tiền); xem Tổng kết vụ có khoản Nhân công.
+6. Mô hình 1: Sản xuất → Chi phí → Ghi chi phí, chọn nhóm **Nhân công** (ghi tên người nhận ở ô ghi chú); xem Tổng kết vụ có khoản Nhân công.
 7. Mô hình 1 hoặc 2 (chưa bật Ghi việc): mở Thu hoạch thấy khung **Nhắc an toàn thực phẩm** kèm các mốc ngưng thuốc/phân của quy trình.
 
 ### Thử D: Chi phí, thu hoạch

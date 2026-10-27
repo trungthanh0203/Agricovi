@@ -30,7 +30,7 @@ export function ExpenseSection() {
   const { cropTypes } = useCatalog();
   const cfg = useConfig();
 
-  const [mode, setMode] = useState<{ kind: 'list' } | { kind: 'new'; wage?: boolean } | { kind: 'edit'; id: string }>({ kind: 'list' });
+  const [mode, setMode] = useState<{ kind: 'list' } | { kind: 'new' } | { kind: 'edit'; id: string }>({ kind: 'list' });
   const [cycleFilter, setCycleFilter] = useState(''); // '' = tất cả, 'none' = chi phí chung
   const [showVoided, setShowVoided] = useState(false);
   const [voiding, setVoiding] = useState<string | null>(null);
@@ -71,12 +71,7 @@ export function ExpenseSection() {
     }
   }
 
-  // người đã nhận tiền công trước đây (từ ghi chú "Tiền công: tên") để chọn nhanh
-  const payees = useMemo(() => [...new Set(expenses.filter((e) => e.category === 'labor' && e.note?.startsWith(WAGE_PREFIX)).map((e) => e.note!.slice(WAGE_PREFIX.length).split(' — ')[0]!.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi')), [expenses]);
-
   if (!active) return null;
-  // mô hình không dùng Nhân sự/Bảng lương (Tự làm trong gia đình): tiền công người nhà nhập thẳng vào Chi phí nên đưa lên đầu
-  const wageFirst = (active.features?.payroll ?? 'on') === 'off';
 
   if (mode.kind !== 'list') {
     return (
@@ -85,8 +80,6 @@ export function ExpenseSection() {
         cycles={ownCycles.filter((c) => c.status !== 'cancelled')}
         cycleLabel={cycleLabel}
         editing={mode.kind === 'edit' ? expenses.find((e) => e.id === mode.id) ?? null : null}
-        wage={mode.kind === 'new' && Boolean(mode.wage)}
-        payees={payees}
         userId={session?.user.id ?? ''}
         onClose={() => setMode({ kind: 'list' })}
       />
@@ -96,10 +89,7 @@ export function ExpenseSection() {
   return (
     <>
       {canWrite ? (
-        <div className="actions">
-          <button className={wageFirst ? 'secondary' : 'primary'} onClick={() => setMode({ kind: 'new' })} disabled={!online}>Ghi chi phí</button>
-          <button className={wageFirst ? 'primary' : 'secondary'} onClick={() => setMode({ kind: 'new', wage: true })} disabled={!online}>Ghi tiền công</button>
-        </div>
+        <button className="primary" onClick={() => setMode({ kind: 'new' })} disabled={!online}>Ghi chi phí</button>
       ) : (
         <p className="muted">Bạn chỉ được xem chi phí. Chủ cơ sở cấp quyền nhập liệu cho từng người.</p>
       )}
@@ -172,16 +162,11 @@ export function ExpenseSection() {
   );
 }
 
-const WAGE_PREFIX = 'Tiền công: ';
-
-function ExpenseForm({ orgId, cycles, cycleLabel, editing, wage, payees, userId, onClose }: {
+function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
   orgId: string;
   cycles: { id: string; status: keyof typeof CYCLE_STATUS_LABEL_VI }[];
   cycleLabel: (id: string | null) => string;
   editing: ExpenseRow | null;
-  /** Ghi nhanh tiền công cho một người (nhóm Nhân công, tiền thực chi) */
-  wage: boolean;
-  payees: string[];
   userId: string;
   onClose: () => void;
 }) {
@@ -197,7 +182,6 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, wage, payees, userId,
   const [amount, setAmount] = useState(editing ? String(editing.amount) : '');
   const [date, setDate] = useState(editing?.expense_date ?? todayLocal());
   const [note, setNote] = useState(editing?.note ?? '');
-  const [payee, setPayee] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [draftId, setDraftId] = useState(() => crypto.randomUUID());
@@ -208,9 +192,7 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, wage, payees, userId,
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const a = parseNumber(amount);
-    if (wage && payee.trim().length < 2) return setError('Hãy nhập tên người nhận tiền công.');
-    const finalNote = wage ? `${WAGE_PREFIX}${payee.trim()}${note.trim() ? ` — ${note.trim()}` : ''}` : note;
-    const bad = validateExpense(a, wage ? 'cash_paid' : kind, finalNote);
+    const bad = validateExpense(a, kind, note);
     if (bad) return setError(bad);
     setError(null);
     setBusy(true);
@@ -222,8 +204,8 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, wage, payees, userId,
         return;
       }
       const cycle = effCycle === 'none' ? null : allCycles.find((c) => c.id === effCycle) ?? null;
-      const g = cfg.resolve('expense_groups', wage ? 'labor' : category);
-      const id = await recordExpense({ id: draftId, organizationId: orgId, cycle, category: g.base, categoryItem: g.item, kind: wage ? 'cash_paid' : kind, amount: a!, date, note: finalNote, userId });
+      const g = cfg.resolve('expense_groups', category);
+      const id = await recordExpense({ id: draftId, organizationId: orgId, cycle, category: g.base, categoryItem: g.item, kind, amount: a!, date, note, userId });
       setSavedId(id);
     } catch (err) {
       setError(friendlyError(err));
@@ -237,7 +219,6 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, wage, payees, userId,
     setDraftId(crypto.randomUUID());
     setAmount('');
     setNote('');
-    setPayee('');
     setError(null);
   }
 
@@ -254,7 +235,7 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, wage, payees, userId,
 
   return (
     <section>
-      <h1>{editing ? 'Sửa khoản chi' : wage ? 'Ghi tiền công' : 'Ghi chi phí'}</h1>
+      <h1>{editing ? 'Sửa khoản chi' : 'Ghi chi phí'}</h1>
       <form className="inline-form" onSubmit={onSubmit} noValidate>
         {editing ? (
           <p className="muted">{cycleLabel(editing.cycle_id)} — không đổi được vụ; muốn đổi hãy hủy khoản chi và ghi lại. Mọi thay đổi được lưu lịch sử.</p>
@@ -268,15 +249,6 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, wage, payees, userId,
             <small>Chi phí gắn vụ mới vào được tổng kết vụ.</small>
           </label>
         )}
-        {wage ? (
-          <label>
-            Người nhận tiền công
-            <input value={payee} list="payee-list" maxLength={80} onChange={(e) => setPayee(e.target.value)} placeholder="Ví dụ: Chị Hoa, anh Ba (người nhà)" />
-            <datalist id="payee-list">{payees.map((p) => <option key={p} value={p} />)}</datalist>
-            <small>Ghi vào nhóm Nhân công, tính là tiền thực chi của vụ. Không cần tạo hồ sơ nhân sự hay chấm công.</small>
-          </label>
-        ) : (
-          <>
         <label>
           Nhóm chi phí
           <select value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -290,8 +262,6 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, wage, payees, userId,
           </select>
           <small>{EXPENSE_KIND_HINT[kind]}</small>
         </label>
-          </>
-        )}
         <label>
           Số tiền (đồng)
           <input value={amount} inputMode="numeric" onChange={(e) => setAmount(e.target.value)} />
@@ -301,7 +271,7 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, wage, payees, userId,
           <input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} />
         </label>
         <label>
-          {!wage && NEEDS_ASSUMPTION.has(kind) ? (kind === 'estimated' ? 'Cách ước tính (bắt buộc)' : 'Cách phân bổ (bắt buộc)') : 'Ghi chú (không bắt buộc)'}
+          {NEEDS_ASSUMPTION.has(kind) ? (kind === 'estimated' ? 'Cách ước tính (bắt buộc)' : 'Cách phân bổ (bắt buộc)') : 'Ghi chú (không bắt buộc)'}
           <input value={note} onChange={(e) => setNote(e.target.value)}
             placeholder={NEEDS_ASSUMPTION.has(kind) ? 'Ví dụ: nhà/chuồng 50 triệu chia 10 vụ' : ''} />
         </label>
