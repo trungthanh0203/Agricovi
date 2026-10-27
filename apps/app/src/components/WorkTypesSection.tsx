@@ -164,7 +164,41 @@ export function WorkTypesSection() {
         </select>
       </label>
 
-      {canManage && (
+      {editingRow && (
+        <div className="card">
+          <h2>Sửa giai đoạn việc: {editingRow.name}</h2>
+          <div className="inline-form">
+            <label>Tên giai đoạn việc<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
+            <label>Mô tả<input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} /></label>
+            {editingRow.shared ? (
+              <label>Sửa biểu mẫu cho đối tượng sản xuất
+                <select value={editKind} onChange={(e) => {
+                  const k = e.target.value;
+                  setEditKind(k);
+                  const raw = rawTypes.find((r) => r.id === editingRow.id);
+                  setEditFields(raw ? fieldsForKind(raw, org, k || undefined) : editingRow.field_schema);
+                }}>
+                  <option value="">Tất cả (mặc định)</option>
+                  {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+                </select>
+                <small>Một việc có thể có biểu mẫu riêng cho từng loại. Loại chưa chỉnh thì dùng biểu mẫu chuẩn (vật nuôi, thủy sản) hoặc "Tất cả".</small>
+              </label>
+            ) : (
+              <AppliesPicker value={editApplies} onChange={setEditApplies} groups={groups} />
+            )}
+            <FieldsEditor fields={editFields} onChange={setEditFields} />
+            <div className="btnrow">
+              <button className="primary" disabled={busy || !online} onClick={() => void run(() => save(editingRow))}>Lưu thay đổi</button>
+              {editingRow.shared && editingRow.overridden && (
+                <button className="secondary" disabled={busy || !online} onClick={() => void run(async () => { await clearOverride(org, 'work_type', editingRow.id, editKind); setEditing(null); })}>Khôi phục mặc định</button>
+              )}
+              <button type="button" className="secondary" onClick={() => setEditing(null)}>Hủy</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {canManage && !editingRow && (
         <Collapsible inline title="＋ Thêm giai đoạn việc">
           <form className="inline-form" onSubmit={onAdd} noValidate>
             <label>Tên giai đoạn việc<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Phun thuốc" /></label>
@@ -216,40 +250,6 @@ export function WorkTypesSection() {
       </table>
       <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả việc đã dừng</label>
       <p className="muted">Bấm ⏸ để dừng (không chọn được cho việc mới, lịch sử vẫn giữ) và ▶ để dùng lại; ✎ để đổi tên hoặc thêm thông tin cần ghi. Việc có sẵn chỉnh ở đây chỉ áp dụng cho cơ sở của bạn.</p>
-
-      {editingRow && (
-        <div className="card">
-          <h2>Sửa giai đoạn việc: {editingRow.name}</h2>
-          <div className="inline-form">
-            <label>Tên việc<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
-            <label>Mô tả<input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} /></label>
-            {editingRow.shared ? (
-              <label>Sửa biểu mẫu cho đối tượng sản xuất
-                <select value={editKind} onChange={(e) => {
-                  const k = e.target.value;
-                  setEditKind(k);
-                  const raw = rawTypes.find((r) => r.id === editingRow.id);
-                  setEditFields(raw ? fieldsForKind(raw, org, k || undefined) : editingRow.field_schema);
-                }}>
-                  <option value="">Tất cả (mặc định)</option>
-                  {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
-                </select>
-                <small>Một việc có thể có biểu mẫu riêng cho từng loại. Loại chưa chỉnh thì dùng biểu mẫu chuẩn (vật nuôi, thủy sản) hoặc "Mọi loại".</small>
-              </label>
-            ) : (
-              <AppliesPicker value={editApplies} onChange={setEditApplies} groups={groups} />
-            )}
-            <FieldsEditor fields={editFields} onChange={setEditFields} />
-            <div className="btnrow">
-              <button className="primary" disabled={busy || !online} onClick={() => void run(() => save(editingRow))}>Lưu thay đổi</button>
-              {editingRow.shared && editingRow.overridden && (
-                <button className="secondary" disabled={busy || !online} onClick={() => void run(async () => { await clearOverride(org, 'work_type', editingRow.id, editKind); setEditing(null); })}>Khôi phục mặc định</button>
-              )}
-              <button type="button" className="secondary" onClick={() => setEditing(null)}>Hủy</button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
