@@ -9,6 +9,8 @@ import { friendlyError } from '../lib/errors';
 import { formatMoney } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { countPendingForSummary, downloadCsv, fetchCycleSummary, getCachedSummary } from '../lib/summary';
+import { countSummary } from '../lib/countLogic';
+import { perHeadSummary } from '../lib/summaryByKind';
 import { buildSummaryCsv, canCompare, summaryNotes, vnNumber, type CycleSummary } from '../lib/summaryReport';
 import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
@@ -25,6 +27,8 @@ export function SummarySection() {
   const areas = useTable('areas');
   const { cropTypes } = useCatalog();
   const outbox = useTable('outbox');
+  const countEvents = useTable('countEvents');
+  const harvestRows = useTable('harvests');
 
   // chỉ vụ do cơ sở này sở hữu (quyền xem tổng kết theo chủ vụ)
   const own = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id), [cycles, active]);
@@ -101,6 +105,15 @@ export function SummarySection() {
 
   const notes = summary ? summaryNotes(summary, pending) : [];
   const compare = summary ? canCompare(summary) : false;
+  const kindOfCycle = cropTypes.find((t) => t.id === cycleRow?.crop_type_id)?.kind;
+  const animal = kindOfCycle === 'livestock' || kindOfCycle === 'aquatic';
+  // vật nuôi, thủy sản: chỉ số theo con (số con ghi ở phiếu thu hoạch cũng tính là xuất)
+  const perHead = summary && cycleRow && animal
+    ? perHeadSummary({
+      counts: countSummary(cycleRow, countEvents.filter((e) => e.cycle_id === cycleId), harvestRows.filter((h) => h.cycle_id === cycleId && !h.voided_at).reduce((n, h) => n + (h.unit_count ?? 0), 0)),
+      netKg: summary.harvested_net_qty, totalCost: summary.total_cost, revenue: summary.revenue_recorded, compare,
+    })
+    : null;
   // các khoản cấu thành tổng chi phí (cho vòng cơ cấu): cộng lại đúng bằng tổng chi phí đã ghi
   const costParts = summary ? [
     { label: 'Thực chi không phải vật tư', value: summary.cash_paid_other },
@@ -178,7 +191,24 @@ export function SummarySection() {
             <Row k="Doanh thu đã ghi" v={formatMoney(summary.revenue_recorded)} />
           </div>
 
-          {areaM2 ? (
+          {perHead && (
+            <div className="card">
+              <h2>Theo {cnt}</h2>
+              {areaM2 ? <Row k={infoLabels(kindOfCycle).area} v={fmtArea(areaM2, areaUnit)} /> : null}
+              <Row k={`Số ${cnt} nhập`} v={perHead.entered !== null ? vnNumber(perHead.entered) : 'chưa có'} />
+              <Row k={`Chết và loại thải`} v={`${vnNumber(perHead.lost)} ${cnt}${perHead.lossPct !== null ? ` (hao ${vnNumber(perHead.lossPct)}%)` : ''}`} />
+              <Row k={`Số ${cnt} đã xuất`} v={perHead.out > 0 ? vnNumber(perHead.out) : 'chưa có'} />
+              <Row k="Khối lượng xuất (sau hao hụt)" v={`${vnNumber(perHead.netKg)} kg`} />
+              <Row k={`Khối lượng trung bình mỗi ${cnt} xuất`} v={perHead.kgPerHead !== null ? `${vnNumber(perHead.kgPerHead)} kg` : '—'} />
+              <Row k={`Chi phí đã ghi mỗi ${cnt} xuất`} v={perHead.costPerHead !== null ? formatMoney(perHead.costPerHead) : '—'} />
+              <Row k={`Doanh thu đã ghi mỗi ${cnt} xuất`} v={perHead.revenuePerHead !== null ? formatMoney(perHead.revenuePerHead) : '—'} />
+              <Row k={perHead.profitPerHead !== null && perHead.profitPerHead < 0 ? `Lỗ mỗi ${cnt}` : `Lãi mỗi ${cnt}`} v={perHead.profitPerHead !== null ? formatMoney(Math.abs(perHead.profitPerHead)) : 'Chưa đủ dữ liệu'} />
+              {perHead.missing.length > 0 && <p className="msg warn" role="status">Còn thiếu: {perHead.missing.join('; ')}. Bổ sung để các chỉ số trên đầy đủ.</p>}
+              <p className="muted">Tăng trọng và FCR xem ở Chi tiết vụ → Tăng trọng và FCR. Giá thành mỗi kg ở khối bên dưới.</p>
+            </div>
+          )}
+
+          {areaM2 && !animal ? (
             <div className="card">
               <h2>Diện tích và năng suất</h2>
               <Row k={infoLabels(cropTypes.find((t) => t.id === cycleRow?.crop_type_id)?.kind).area} v={fmtArea(areaM2, areaUnit)} />

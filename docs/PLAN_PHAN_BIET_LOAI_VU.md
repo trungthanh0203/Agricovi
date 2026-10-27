@@ -52,3 +52,10 @@
 2. Điểm 5: danh sách chỉ số "Theo con" ở trên đã đủ chưa, cần thêm/bớt gì?
 3. Điểm 2: cơ sở đang có đầu việc/biểu mẫu đã chỉnh thì cho thành "mọi loại" (không đổi gì), và chỉ khi chạy lại gói mới tách theo loại; đồng ý?
 4. Thứ tự: 4 → 5 → 2 hay theo thứ tự cũ?
+
+## Quyết định của chủ sản phẩm (27/10/2026) và tiến độ
+1. **Ghi việc luôn hiện ở mọi mô hình** (không ẩn). Việc nào bắt buộc phải có ghi việc thì app nhắc nhập (đã làm: khung "Nhắc an toàn thực phẩm" ở Thu hoạch khi vụ chưa ghi việc nào).
+2. **Đầu việc cơ bản định nghĩa sẵn theo chuẩn từng loại** (trồng trọt, vật nuôi, thủy sản) để dùng ngay, người dùng tự thêm việc khác nếu cần → thuộc điểm 2 (làm sau cùng).
+3. Điểm 4: **bật Ghi việc, vẫn thêm ô nhập cân và cám riêng** → ĐÃ XONG (migration 0105: ô "Ghi lần cân", "Ghi cám đã dùng"; bật Tăng trọng/FCR cho thủy sản).
+4. Điểm 5: danh sách chỉ số "Theo con" đủ → ĐÃ XONG (khối "Theo con" ở Tổng kết vụ cho vật nuôi và thủy sản).
+5. Điểm 2: cơ sở đã chỉnh sẵn giữ thành "mọi loại", chỉ tách khi chạy lại gói; thứ tự 4 → 5 → 2 → còn lại điểm 2.
