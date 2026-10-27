@@ -4,7 +4,7 @@ import type { FieldDef } from './db';
  * Biểu mẫu CHUẨN của các đầu việc theo loại vụ (vật nuôi, thủy sản), dùng sẵn không cần "Áp dụng gói" (điểm 2, PLAN_PHAN_BIET_LOAI_VU.md).
  * Khóa theo MÃ đầu việc dùng chung (work_types.code, migration 0107). Thứ tự ưu tiên khi chọn form cho một vụ (xem catalog.ts):
  * bản chỉnh của cơ sở cho đúng loại → bản chỉnh "mọi loại" → biểu mẫu chuẩn ở đây → form gốc của đầu việc.
- * Cây trồng không có biểu mẫu chuẩn ở đây: giữ form gốc, bộ dưa lưới vẫn là gói tùy chọn.
+ * Cây trồng cũng có biểu mẫu chuẩn (thay cho "bộ mẫu theo loại hình" cũ đã bỏ); muốn khác thì sửa ở màn Giai đoạn việc.
  * Các khóa pigs, avg_kg, feed_kg được tính Tăng trọng/FCR đọc (get_cycle_growth) nên KHÔNG đổi khóa. Nội dung là bản dự kiến, "cần đối chiếu" với đơn vị chứng nhận.
  */
 const CHECKER: FieldDef = { key: 'checker', label: 'Người kiểm tra', type: 'text' };
@@ -128,7 +128,60 @@ const AQUATIC: Record<string, FieldDef[]> = {
   ],
 };
 
-export const STANDARD_FIELDS: Partial<Record<string, Record<string, FieldDef[]>>> = { livestock: LIVESTOCK, aquatic: AQUATIC };
+const PEST = ['Rệp', 'Bọ trĩ', 'Nhện đỏ', 'Ruồi đục quả', 'Sâu xanh', 'Sương mai', 'Phấn trắng', 'Héo rũ / thối gốc', 'Khác'];
+
+/** Cây trồng (lấy từ bộ dưa lưới nhà màng cũ, hướng VietGAP). Phân/thuốc cụ thể chọn ở ô "Vật tư đã dùng" (trừ kho, tính cách ly). */
+const CROP: Record<string, FieldDef[]> = {
+  spraying: [
+    { key: 'target', label: 'Đối tượng phòng trừ', type: 'multiselect', options: PEST, required: true },
+    { key: 'reason', label: 'Lý do phun', type: 'select', options: ['Phòng bệnh', 'Phát hiện sâu bệnh', 'Theo quy trình'] },
+    { key: 'dose', label: 'Liều lượng / nồng độ', type: 'text', hint: 'Ví dụ: 20 ml pha bình 16 lít' },
+    { key: 'tool', label: 'Dụng cụ phun', type: 'select', options: ['Bình đeo vai', 'Máy phun điện', 'Máy phun động cơ'] },
+    { key: 'water_l', label: 'Lượng nước phun', type: 'number', unit: 'lít', min: 0 },
+    { key: 'sprayed_m2', label: 'Diện tích đã phun', type: 'number', unit: 'm²', min: 0 },
+    { key: 'ppe', label: 'Có dùng đồ bảo hộ', type: 'bool' },
+    { key: 'effect', label: 'Đánh giá hiệu quả (sau phun)', type: 'select', options: ['Tốt', 'Trung bình', 'Chưa hiệu quả'] },
+  ],
+  fertilizing: [
+    { key: 'method', label: 'Cách bón', type: 'select', options: ['Bón gốc', 'Qua nước tưới nhỏ giọt', 'Phun qua lá'], required: true },
+    { key: 'stage', label: 'Giai đoạn dinh dưỡng', type: 'select', options: ['Bón lót', 'Cây con', 'Ra hoa', 'Nuôi quả', 'Trước thu hoạch'] },
+    { key: 'dose', label: 'Liều lượng', type: 'text', hint: 'Ví dụ: 5 kg / 1.000 m²' },
+    { key: 'ec', label: 'EC dung dịch', type: 'number', unit: 'mS/cm', min: 0, max: 10 },
+    { key: 'ph', label: 'pH dung dịch', type: 'number', min: 0, max: 14 },
+    { key: 'fert_m2', label: 'Diện tích đã bón', type: 'number', unit: 'm²', min: 0 },
+  ],
+  irrigation: [
+    { key: 'duration_min', label: 'Thời gian tưới', type: 'number', unit: 'phút', min: 0 },
+    { key: 'ec', label: 'EC dung dịch tưới', type: 'number', unit: 'mS/cm', min: 0, max: 10 },
+    { key: 'ph', label: 'pH dung dịch tưới', type: 'number', min: 0, max: 14 },
+  ],
+  pollination: [{ key: 'flowers', label: 'Số hoa đã thụ phấn', type: 'number', min: 0 }],
+  pruning: [{ key: 'plants', label: 'Số cây đã tỉa / bấm ngọn', type: 'number', min: 0 }],
+  harvesting: [
+    { key: 'brix', label: 'Độ Brix (độ ngọt)', type: 'number', min: 0, max: 30 },
+    { key: 'grade_note', label: 'Phân loại (theo kích cỡ / hình thức)', type: 'select', options: ['Loại 1', 'Loại 2', 'Loại 3', 'Loại bỏ'] },
+    { key: 'buyer', label: 'Nơi nhận / khách', type: 'text' },
+    { key: 'fruit_kg', label: 'Cân quả mẫu', type: 'number', unit: 'kg', min: 0 },
+  ],
+  seed_soaking: [
+    { key: 'method', label: 'Cách xử lý', type: 'text', hint: 'Ví dụ: ngâm nước ấm 3 giờ' },
+    { key: 'hours', label: 'Thời gian ngâm ủ', type: 'number', unit: 'giờ', min: 0 },
+    { key: 'seeds', label: 'Số hạt', type: 'number', min: 0 },
+  ],
+  tray_sowing: [
+    { key: 'trays', label: 'Số khay', type: 'number', min: 0 },
+    { key: 'seeds', label: 'Số hạt', type: 'number', min: 0 },
+    { key: 'substrate', label: 'Giá thể', type: 'text' },
+  ],
+  transplanting: [
+    { key: 'plants', label: 'Số cây trồng', type: 'number', min: 0, required: true },
+    { key: 'spacing', label: 'Khoảng cách trồng', type: 'text', hint: 'Ví dụ: 40 cm × 1 m' },
+  ],
+  replanting: [{ key: 'plants', label: 'Số cây dặm', type: 'number', min: 0, required: true }],
+  trellising: [{ key: 'plants', label: 'Số cây đã treo', type: 'number', min: 0 }],
+};
+
+export const STANDARD_FIELDS: Partial<Record<string, Record<string, FieldDef[]>>> = { crop: CROP, livestock: LIVESTOCK, aquatic: AQUATIC };
 
 /** Biểu mẫu chuẩn của đầu việc dùng chung `code` cho loại `kind`; không có thì undefined */
 export const standardFieldsFor = (kind: string | undefined, code: string): FieldDef[] | undefined => (kind ? STANDARD_FIELDS[kind]?.[code] : undefined);

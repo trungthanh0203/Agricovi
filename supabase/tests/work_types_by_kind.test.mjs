@@ -16,6 +16,7 @@ test('biểu mẫu chuẩn: hợp lệ, khóa không trùng, giữ khóa mà Tă
       assert.equal(new Set(fields.map((x) => x.key)).size, fields.length, `${kind}/${code}: khóa trùng`);
       assert.equal(checkSchemaDraft(fields), null, `${kind}/${code}`);
     }
+    if (kind === 'crop') continue; // cây trồng không có Cân mẫu / Cho ăn
     const keys = (c) => byCode[c].map((x) => x.key);
     assert.ok(keys('weighing').includes('avg_kg'), `${kind}: Cân mẫu cần khóa avg_kg`);
     assert.ok(keys('feeding').includes('feed_kg'), `${kind}: Cho ăn cần khóa feed_kg`);
@@ -69,6 +70,15 @@ test('CSDL: đầu việc chuẩn có sẵn đúng loại; bản chỉnh theo lo
   assert.deepEqual((await code('feeding')).applies_to.sort(), ['aquatic', 'livestock']);
   assert.deepEqual((await code('spraying')).applies_to, ['crop']);
   assert.equal((await code('harvesting')).applies_to, null); // mọi loại
+  // mọi mã có biểu mẫu chuẩn đều có việc dùng chung đúng loại (migration 0107/0108), và CSDL nhận biểu mẫu đó
+  for (const [kind, byCode] of Object.entries(STANDARD_FIELDS)) {
+    for (const [c, fields] of Object.entries(byCode)) {
+      const w = await code(c);
+      assert.ok(w, `${kind}/${c}: thiếu việc dùng chung`);
+      if (c !== 'harvesting') assert.ok((w.applies_to ?? []).includes(kind), `${kind}/${c}: applies_to không có ${kind}`);
+      assert.equal((await db.query(`select valid_field_schema($1::jsonb) ok`, [JSON.stringify(fields)])).rows[0].ok, true, `${kind}/${c}`);
+    }
+  }
   assert.match(await expectError(db.query(`insert into work_types (organization_id, code, name, applies_to) values ($1,'x1','Việc X','{xyz}')`, [org])), /check|applies_to/i);
 
   // cùng một việc, cùng cơ sở: bản chỉnh "mọi loại" và bản chỉnh riêng cho từng loại cùng tồn tại

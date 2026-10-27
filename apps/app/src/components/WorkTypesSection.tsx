@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import type { FieldDef } from '../lib/db';
 import { Collapsible } from './Collapsible';
-import { FIELD_PACKS, planPackApply, type FieldPack } from '../lib/fieldPacks';
 import { checkSchemaDraft, FIELD_TYPES, FIELD_TYPE_LABEL } from '../lib/fieldsLogic';
 import { fieldsForKind, useCatalog, type EffWorkType } from '../lib/catalog';
 import { useConfig } from '../lib/config';
@@ -117,21 +116,6 @@ export function WorkTypesSection() {
     void run(async () => { await createWorkType(org, name, f, desc, addApplies); setName(''); setDesc(''); setAddFields([]); setAddApplies([]); });
   }
 
-  /** Áp dụng bộ mẫu: đặt trường cho từng loại việc theo gói (việc có sẵn thì thành "bản chỉnh" của cơ sở, việc riêng thì sửa trực tiếp) */
-  async function applyPack(pack: FieldPack) {
-    const { steps, missing, creates } = planPackApply(pack, workTypes);
-    if (steps.length + creates.length === 0) throw new Error('Chưa tải được danh sách việc để áp dụng bộ mẫu. Hãy kết nối mạng rồi thử lại.');
-    const lost = steps.reduce((n, s) => n + s.replaces, 0);
-    const text = `Áp dụng bộ mẫu "${pack.name}": ${[...steps.map((s) => s.name), ...creates.map((c) => `${c.name} (việc mới)`)].join(', ')}.` +
-      (lost > 0 ? ` Có ${lost} trường tự thêm trước đây sẽ bị thay (nhật ký cũ vẫn giữ nguyên số liệu).` : '') + (missing.length ? ` Không tìm thấy việc: ${missing.join(', ')}.` : '') + ' Tiếp tục?';
-    if (!window.confirm(text)) return;
-    for (const s of steps) {
-      if (s.shared) await saveOverride(org, 'work_type', s.id, { field_schema: s.fields }, pack.kind ?? ''); // gói theo loại: chỉ ghi cho loại của gói
-      else await updateWorkType(s.id, { field_schema: s.fields });
-    }
-    for (const c of creates) await createWorkType(org, c.name, c.fields, c.description, pack.kind ? [pack.kind] : null);
-  }
-
   async function save(t: EffWorkType) {
     const f = cleanFields(editFields);
     const bad = checkSchemaDraft(f);
@@ -207,18 +191,6 @@ export function WorkTypesSection() {
             <FieldsEditor fields={addFields} onChange={setAddFields} />
             <div className="btnrow"><button type="submit" className="primary" disabled={busy || !online}>Thêm</button></div>
           </form>
-        </Collapsible>
-      )}
-
-      {canManage && (
-        <Collapsible inline title="Bộ mẫu theo loại hình" summary="đặt sẵn các thông tin cần ghi">
-          <p className="muted">Chọn một bộ mẫu để tự điền các thông tin cần ghi cho từng giai đoạn việc, sau đó sửa lại cho đúng với cơ sở của bạn. Đây là bản dự kiến.</p>
-          {FIELD_PACKS.map((p) => (
-            <div className="inline-form" key={p.id}>
-              <p><strong>{p.name}</strong><br /><small className="muted">{p.description}</small></p>
-              <div className="btnrow"><button className="secondary" disabled={busy || !online} onClick={() => void run(() => applyPack(p))}>Áp dụng</button></div>
-            </div>
-          ))}
         </Collapsible>
       )}
 
