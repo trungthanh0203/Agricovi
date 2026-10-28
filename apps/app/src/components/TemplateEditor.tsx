@@ -207,11 +207,11 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
             {p.description && <p className="muted">{p.description}</p>}
             {canEdit && (
               <div className="actions">
-                <button className="secondary" disabled={!editable} onClick={() => { setEditPhase(p.id); setEditStage(null); }}>Sửa công đoạn</button>
+                <button className="secondary" disabled={!editable} onClick={() => { setEditPhase(p.id); setEditStage(null); }}>✎ Sửa</button>
                 <button className="secondary" disabled={!editable || i === 0} onClick={() => void run(async () => { await swapPhases(p, orderedPhases[i - 1]!); await resequence(); })}>↑ Lên</button>
                 <button className="secondary" disabled={!editable || i === orderedPhases.length - 1} onClick={() => void run(async () => { await swapPhases(p, orderedPhases[i + 1]!); await resequence(); })}>↓ Xuống</button>
                 <button className="secondary" disabled={!editable}
-                  onClick={() => { if (window.confirm(`Xóa công đoạn "${p.name}"? Các việc bên trong không bị xóa, chỉ thành "chưa xếp công đoạn".`)) void run(async () => { await deletePhase(p.id); await resequence(); }); }}>Xóa công đoạn</button>
+                  onClick={() => { if (window.confirm(`Xóa công đoạn "${p.name}"? Các việc bên trong không bị xóa, chỉ thành "chưa xếp công đoạn".`)) void run(async () => { await deletePhase(p.id); await resequence(); }); }}>🗑 Xóa</button>
               </div>
             )}
             {canEdit && editStage === null && (

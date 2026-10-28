@@ -161,7 +161,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   }
 
   return (
-    <div className="auth">
+    <section>
       <button type="button" className="link" onClick={onCancel}>← Quay lại</button>
       <h1>Tạo vụ mới</h1>
       <p className="muted">Cơ sở: {active.name}</p>
@@ -172,7 +172,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           <button className="secondary" onClick={onCancel}>Quay lại</button>
         </>
       ) : (
-        <form onSubmit={onSubmit} noValidate>
+        <div className="card">
+        <form className="inline-form" onSubmit={onSubmit} noValidate>
           {choices && (
             <fieldset>
               <legend>Vụ này ghi theo</legend>
@@ -298,7 +299,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
             <button type="button" className="secondary" onClick={onCancel}>Hủy</button>
           </div>
         </form>
+        </div>
       )}
-    </div>
+    </section>
   );
 }

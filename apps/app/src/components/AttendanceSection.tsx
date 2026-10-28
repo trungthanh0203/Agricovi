@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Collapsible } from './Collapsible';
+import { RowMenu } from './RowMenu';
 import { AttendanceOverview } from './AttendanceOverview';
 import { db } from '../lib/db';
 import { useAuth } from '../lib/auth';
@@ -187,24 +188,17 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
                 <span className={a.status === 'confirmed' ? 'pill ok' : a.status === 'rejected' ? 'pill err' : 'pill warn'}>{ATT_STATUS_LABEL[a.status]}</span>
               </td>
               <td className="act">
-                <div className="iconrows">
-                  <span>
-                {a.ended_at && a.status !== 'rejected' && (a.worker_id === me?.id || canConfirm(a)) && (
-                  <button className="icon" disabled={busy || !online} aria-label="Đề nghị sửa công" title="Đề nghị sửa giờ" onClick={() => setAdjFor(adjFor === a.id ? null : a.id)}>✎</button>
-                )}
-                  </span>
-                  <span>
-                {a.ended_at && a.status === 'needs_confirmation' && canConfirm(a) && (
-                  <>
-                    <button className="icon" disabled={busy || !online} aria-label="Xác nhận công" title="Xác nhận" onClick={() => void run(() => confirmAttendance(a.id))}>✔</button>{' '}
-                    <button className="icon" disabled={busy || !online} aria-label="Từ chối công" title="Từ chối" onClick={() => {
+                <RowMenu label={`Công ${nameOf(a.worker_id)} ${fmtDate(a.work_date)}`} items={[
+                  ...(a.ended_at && a.status !== 'rejected' && (a.worker_id === me?.id || canConfirm(a))
+                    ? [{ label: 'Đề nghị sửa giờ', icon: '✎', disabled: busy || !online, onClick: () => setAdjFor(adjFor === a.id ? null : a.id) }] : []),
+                  ...(a.ended_at && a.status === 'needs_confirmation' && canConfirm(a) ? [
+                    { label: 'Xác nhận công', icon: '✔', disabled: busy || !online, onClick: () => void run(() => confirmAttendance(a.id)) },
+                    { label: 'Từ chối công', icon: '✕', danger: true, disabled: busy || !online, onClick: () => {
                       const r = window.prompt('Lý do từ chối công này?');
                       if (r) void run(() => rejectAttendance(a.id, r));
-                    }}>✕</button>
-                  </>
-                )}
-                  </span>
-                </div>
+                    } },
+                  ] : []),
+                ]} />
               </td>
             </tr>
           ))}

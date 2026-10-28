@@ -20,7 +20,8 @@ Hầu hết lưới dùng **nút biểu tượng** (✎ ✕ 🗑 ↑ ↓ ⏸ ▶
 - **Chức vụ**: hàng trên ⏸/▶, hàng dưới ✎ 🗑.
 - **Khách hàng**: hàng trên ⏸/▶, hàng dưới ✎ 🕶 (ẩn danh).
 - **Hộ thành viên (HTX)**: hàng trên ➜ (làm việc ở hộ), hàng dưới ✎ 🗑 (gỡ khỏi HTX).
-- **Chấm công**: hàng trên ✎ (đề nghị sửa giờ), hàng dưới ✔ ✕ (xác nhận, từ chối).
+- **Chấm công**: dùng ⋮ với chữ rõ nghĩa (Đề nghị sửa giờ, Xác nhận công, Từ chối công) vì biểu tượng khó hiểu.
+- **Công đoạn trong Tạo quy trình**: nút chữ kèm biểu tượng ✎ Sửa, ↑ Lên, ↓ Xuống, 🗑 Xóa.
 - Các lưới chỉ có 1–2 nút (Phân khu, Sản phẩm, Việc, Vật tư, Kho, Nhà cung ứng, Giấy phép, Phòng/Tổ, Nhân sự, Hồ sơ web, Sự cố) giữ **một hàng**.
 
 ## Quy ước cho lưới mới
