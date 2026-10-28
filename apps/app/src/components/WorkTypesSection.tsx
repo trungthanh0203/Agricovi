@@ -3,7 +3,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import type { FieldDef } from '../lib/db';
 import { Collapsible } from './Collapsible';
-import { RowMenu } from './RowMenu';
 import { checkSchemaDraft, FIELD_TYPES, FIELD_TYPE_LABEL } from '../lib/fieldsLogic';
 import { fieldsForKind, useCatalog, type EffWorkType } from '../lib/catalog';
 import { useConfig } from '../lib/config';
@@ -261,10 +260,8 @@ export function WorkTypesSection() {
               <td className="muted">{fieldsOf(t).length > 0 ? fieldsOf(t).map((f) => f.label).join(', ') : '—'}</td>
               {canManage && (
                 <td className="act">
-                  <RowMenu label={t.name} items={[
-                    { label: 'Chỉnh sửa', icon: '✎', onClick: () => { setEditing(editing === t.id ? null : t.id); setEditName(t.name); setEditDesc(t.description ?? ''); setEditFields(fieldsOf(t)); setEditKind(t.shared ? t.applies_to?.[0] ?? '' : ''); setEditApplies(t.applies_to ?? []); setEditMaterials(t.material_ids ?? []);  } },
-                    { label: t.is_active ? 'Dừng việc này' : 'Dùng lại', icon: t.is_active ? '⏸' : '▶', disabled: busy || !online, onClick: () => void run(() => setActiveFlag(t)) },
-                  ]} />
+                  <button className="icon" disabled={busy || !online} aria-label={t.is_active ? `Dừng ${t.name}` : `Dùng lại ${t.name}`} onClick={() => void run(() => setActiveFlag(t))}>{t.is_active ? '⏸' : '▶'}</button>{' '}
+                  <button className="icon" aria-label={`Sửa ${t.name}`} onClick={() => { setEditing(editing === t.id ? null : t.id); setEditName(t.name); setEditDesc(t.description ?? ''); setEditFields(fieldsOf(t)); setEditKind(t.shared ? t.applies_to?.[0] ?? '' : ''); setEditApplies(t.applies_to ?? []); setEditMaterials(t.material_ids ?? []); }}>✎</button>
                 </td>
               )}
             </tr>
