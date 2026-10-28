@@ -36,9 +36,9 @@ function PhasesOption({ orgId, on }: { orgId: string | undefined; on: boolean })
   const { busy, msg, run } = useSaver();
   useEffect(() => { setVal(on); }, [on]);
   return (
-    <Collapsible title="Quy trình mẫu" summary={on ? 'Dùng công đoạn' : 'Chỉ danh sách việc'}>
+    <Collapsible title="Tạo quy trình" summary={on ? 'Dùng công đoạn' : 'Chỉ danh sách việc'}>
       <div className="inline-form">
-        <label className="check"><input type="checkbox" checked={val} onChange={(e) => setVal(e.target.checked)} /> <span>Dùng Công đoạn trong Quy trình mẫu</span></label>
+        <label className="check"><input type="checkbox" checked={val} onChange={(e) => setVal(e.target.checked)} /> <span>Dùng Công đoạn khi tạo quy trình</span></label>
         <p className="muted">Bật: mỗi quy trình gồm các công đoạn (Chuẩn bị, Ươm, Trồng…) và mỗi công đoạn có các việc. Tắt: quy trình chỉ là một danh sách việc, gọn hơn cho cơ sở nhỏ. Đổi lúc nào cũng được, không mất dữ liệu.</p>
         {msg && <p className={msg.ok ? 'msg ok' : 'msg error'} role={msg.ok ? 'status' : 'alert'}>{msg.text}</p>}
         {!online && <p className="msg warn" role="status">Cần có mạng để lưu.</p>}

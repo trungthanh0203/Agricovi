@@ -211,7 +211,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           </label>
           {templates !== null && templates.length === 0 && (
             <p className="msg warn">
-              Cơ sở này chưa có quy trình nào có việc. Hãy vào tab Khai báo → Quy trình mẫu để tạo quy trình trước.
+              Cơ sở này chưa có quy trình nào có việc. Hãy vào tab Khai báo → Tạo quy trình để tạo quy trình trước.
             </p>
           )}
           {picked?.note && <p className="muted">{picked.note}</p>}

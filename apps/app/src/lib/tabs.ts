@@ -70,7 +70,7 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
     canPerm(org.perms, 'declare') ? { id: 'areas' as const, label: 'Phân khu' } : null,
     canPerm(org.perms, 'declare') ? { id: 'crops' as const, label: 'Sản phẩm' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'places' as const, label: 'Kho' } : null,
-    canPerm(org.perms, 'declare') ? { id: 'templates' as const, label: 'Quy trình mẫu' } : null,
+    canPerm(org.perms, 'declare') ? { id: 'templates' as const, label: 'Tạo quy trình' } : null,
     canPerm(org.perms, 'declare') ? { id: 'worktypes' as const, label: 'Việc' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'partners' as const, label: 'Nhà cung ứng' } : null,

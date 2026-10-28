@@ -67,7 +67,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Các mục trong app dùng để làm gì',
         details: [
-          'Thanh dưới cùng: Trang chủ (tổng quan, sơ đồ luồng công việc, nhắc việc) · Khai báo (Phân khu, Sản phẩm, Kho, Quy trình mẫu, Vật tư, Nhân sự, Phòng/Tổ, Chức vụ, Giấy phép…) · Ghi việc (nút ＋ ở giữa) · Sản xuất (Mùa vụ, Chấm công, Thu hoạch, Kho, Chi phí, Nhật ký việc) · Báo cáo (Báo cáo tuần, Công nợ, Doanh thu, Bảng lương, Tổng kết vụ, Sổ nhật ký, Bảng kiểm, Hồ sơ website…).',
+          'Thanh dưới cùng: Trang chủ (tổng quan, sơ đồ luồng công việc, nhắc việc) · Khai báo (Phân khu, Sản phẩm, Kho, Tạo quy trình, Vật tư, Nhân sự, Phòng/Tổ, Chức vụ, Giấy phép…) · Ghi việc (nút ＋ ở giữa) · Sản xuất (Mùa vụ, Chấm công, Thu hoạch, Kho, Chi phí, Nhật ký việc) · Báo cáo (Báo cáo tuần, Công nợ, Doanh thu, Bảng lương, Tổng kết vụ, Sổ nhật ký, Bảng kiểm, Hồ sơ website…).',
           'Menu ☰ góc trên bên trái: Tài khoản · Cấu hình (nhóm loại sản phẩm, nhóm vật tư, nhóm chi phí, loại khách, kiểu nhà/chuồng, đơn vị tính riêng) · Hướng dẫn sử dụng · Chia sẻ hệ thống.',
           'Mục nào không có trong menu là do cách quản lý của các vụ đang chạy không dùng đến; đổi cách quản lý ở Chi tiết vụ nếu cần.',
           'Chạm vào ô chức năng để vào; bấm "‹ Menu" để quay lại.',
@@ -116,7 +116,7 @@ export const GUIDES: Guide[] = [
     label: 'Hướng dẫn Hộ nuôi trồng',
     icon: '🌾',
     flow: [
-      { title: 'Làm một lần đầu', tone: 'info', nodes: [{ icon: '📝', label: 'Đăng ký', step: 0 }, { icon: '🏡', label: 'Phân khu', step: 1 }, { icon: '🌾', label: 'Sản phẩm', step: 2 }, { icon: '📦', label: 'Kho và vật tư', step: 3 }, { icon: '📋', label: 'Quy trình mẫu', step: 4 }] },
+      { title: 'Làm một lần đầu', tone: 'info', nodes: [{ icon: '📝', label: 'Đăng ký', step: 0 }, { icon: '🏡', label: 'Phân khu', step: 1 }, { icon: '🌾', label: 'Sản phẩm', step: 2 }, { icon: '📦', label: 'Kho và vật tư', step: 3 }, { icon: '📋', label: 'Tạo quy trình', step: 4 }] },
       { title: 'Mỗi vụ', tone: 'ok', nodes: [{ icon: '📥', label: 'Nhập kho', step: 5 }, { icon: '🌱', label: 'Tạo vụ', step: 6 }, { icon: '📈', label: 'Theo dõi vụ', step: 7 }] },
       { title: 'Mỗi ngày', tone: 'ok', nodes: [{ icon: '⏱', label: 'Vào ca → Ghi việc → Ra ca', step: 8 }] },
       { title: 'Khi có thu và chi', tone: 'warn', nodes: [{ icon: '🧺', label: 'Thu hoạch và bán', step: 9 }, { icon: '💳', label: 'Chi phí và công nợ', step: 10 }] },
@@ -160,11 +160,11 @@ export const GUIDES: Guide[] = [
       {
         title: 'Lập quy trình mẫu',
         details: [
-          'Quy trình mẫu là danh sách các công đoạn và công việc cho một loại sản phẩm (ví dụ: làm đất → gieo → chăm sóc → thu hoạch).',
+          'Quy trình là danh sách các công đoạn và công việc cho một loại sản phẩm (ví dụ: làm đất → gieo → chăm sóc → thu hoạch).',
           'Làm một lần, dùng cho nhiều vụ. Có thể nhân bản một mẫu rồi sửa.',
           'Việc là danh mục các việc để chọn khi ghi nhật ký (phun thuốc, bón phân…); thêm việc riêng nếu cần. Mỗi công đoạn của quy trình gồm các việc này.',
         ],
-        go: { tab: 'declare', section: 'templates', label: 'Mở Quy trình mẫu' },
+        go: { tab: 'declare', section: 'templates', label: 'Mở Tạo quy trình' },
       },
       {
         title: 'Nhập kho vật tư ban đầu',
@@ -179,7 +179,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Tạo vụ theo quy trình mẫu',
         details: [
-          'Vào Sản xuất → Mùa vụ, bấm + Tạo vụ mới: chọn Sản phẩm (cây trồng, vật nuôi…), rồi Quy trình mẫu, rồi Phân khu (app ưu tiên phân khu đúng loại và cảnh báo nếu khác loại), sau đó ngày bắt đầu.',
+          'Vào Sản xuất → Mùa vụ, bấm + Tạo vụ mới: chọn Sản phẩm (cây trồng, vật nuôi…), rồi quy trình, rồi Phân khu (app ưu tiên phân khu đúng loại và cảnh báo nếu khác loại), sau đó ngày bắt đầu.',
           'Tạo xong, app hỏi bạn muốn quản lý vụ này thế nào (5 cách: Tự làm trong gia đình · Chủ và người làm công tháng · Có người quản lý điều hành · Có nhiều nhân viên · Chuẩn VietGAP). Mỗi vụ chọn riêng, đổi lúc nào cũng được ở Chi tiết vụ → Cách quản lý vụ này, không mất dữ liệu. Chọn cách đơn giản thì app chỉ hiện các mục cần dùng (menu hiện theo tổng các vụ đang chạy).',
           'Vụ vật nuôi, thủy sản: nên nhập Số con nhập chuồng/thả giống ngay khi tạo (không bắt buộc) để app tính hao hụt, mật độ và FCR.',
           'Có thể nhập Giống, Diện tích trồng (m², ha, sào hoặc công), Số cây, nguồn giống, số lô giống, ngày gieo/trồng: app tự tính mật độ, năng suất, chi phí và lãi trên 1.000 m² (hoặc trên sào/công/ha bạn chọn).',
@@ -303,7 +303,7 @@ export const GUIDES: Guide[] = [
           'Hợp tác xã khai báo danh mục sản phẩm, vật tư và quy trình mẫu chuẩn để các hộ làm theo một cách.',
           'Mỗi hộ có thể điều chỉnh riêng cho phù hợp với vườn của mình.',
         ],
-        go: { tab: 'declare', section: 'templates', label: 'Mở Quy trình mẫu' },
+        go: { tab: 'declare', section: 'templates', label: 'Mở Tạo quy trình' },
       },
       {
         title: 'Theo dõi mùa vụ và sản lượng',
