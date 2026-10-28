@@ -43,7 +43,7 @@ const MATERIAL_BUILTINS = [
 export const CONFIG_DEFS: ConfigDef[] = [
   {
     id: 'product_groups', title: 'Nhóm loại sản phẩm', mode: 'entries', builtins: PRODUCT_BUILTINS, defaults: [],
-    hint: 'Dùng để chọn loại khi khai báo Sản phẩm và Loại khu của Phân khu. Mục có sẵn đổi tên hoặc dừng được, không xóa. Mục tự thêm phải chọn "tính như" một nhóm có sẵn (ví dụ Gia cầm tính như Vật nuôi) để các chức năng vẫn chạy đúng.',
+    hint: 'Tích "Sử dụng" cho loại cơ sở của bạn làm (ví dụ chỉ Cây trồng; sau này làm thêm chăn nuôi thì tích thêm Vật nuôi). Các mục khác trong app chỉ hiện lựa chọn của loại đang sử dụng. Mục có sẵn đổi tên được, không xóa. Mục tự thêm phải chọn "tính như" một nhóm có sẵn (ví dụ Gia cầm tính như Vật nuôi) để các chức năng vẫn chạy đúng.',
   },
   {
     id: 'material_groups', title: 'Nhóm vật tư', mode: 'entries', builtins: MATERIAL_BUILTINS, defaults: [],
@@ -101,6 +101,12 @@ export function validateEntries(list: ConfigEntry[]): string | null {
   if (!list.some((e) => e.active)) return 'Cần ít nhất một mục đang dùng.';
   return null;
 }
+
+/** Các loại gốc (crop/livestock/aquatic/other) cơ sở đang SỬ DỤNG: nhóm loại sản phẩm đang bật, tính theo nhóm gốc */
+export const activeKinds = (list: ConfigEntry[]): Set<string> => new Set(list.filter((e) => e.active).map((e) => e.base));
+
+/** Nhóm vật tư chỉ có ý nghĩa với một số loại: thức ăn/thuốc thú y/vaccine cần vật nuôi hoặc thủy sản; thuốc BVTV/phân bón cần cây trồng */
+export const MATERIAL_NEEDS: Record<string, string[]> = { feed: ['livestock', 'aquatic'], vet_drug: ['livestock', 'aquatic'], vaccine: ['livestock', 'aquatic'], pesticide: ['crop'], fertilizer: ['crop'] };
 
 /** Danh sách mục mặc định (chưa lưu gì) của một cấu hình dạng 'entries' */
 export const defaultEntries = (def: ConfigDef): ConfigEntry[] => (def.builtins ?? []).map((b) => ({ code: b.code, label: b.label, base: b.code, active: true }));
@@ -205,8 +211,13 @@ export function useConfig() {
     return entries(listId).find((e) => e.code === c)?.label ?? base ?? '';
   };
 
+  const kindsOn = activeKinds(entries('product_groups'));
+  /** Loại gốc có đang sử dụng không ('growing' cũ = cây trồng; khu cơ sở vật chất và chưa rõ loại luôn coi là có) */
+  const kindOn = (k: string | null | undefined) => !k || k === 'facility' || kindsOn.has(k === 'growing' ? 'crop' : k);
+  const animalsOn = kindsOn.has('livestock') || kindsOn.has('aquatic');
   return {
     org,
+    kindsOn, kindOn, animalsOn,
     items: (id: string) => itemsOf(org, defById(id)),
     entries, choices, resolve, choiceOf, labelOf,
     /** Nhóm loại sản phẩm chọn được (id là mã mục) */
@@ -214,7 +225,9 @@ export function useConfig() {
     groupLabel: (kind: string | null | undefined, item?: string | null) => labelOf('product_groups', kind, item),
     housing: (): string[] => itemsOf(org, defById('housing')),
     customerKinds: (): string[] => itemsOf(org, defById('customer_kinds')),
-    materialGroups: (current?: string | null) => choices('material_groups', current).map((e) => ({ id: e.code, label: e.label })),
+    materialGroups: (current?: string | null) => choices('material_groups', current)
+      .filter((e) => { const need = MATERIAL_NEEDS[e.base]; return !need || e.code === current || need.some((k) => kindsOn.has(k)); })
+      .map((e) => ({ id: e.code, label: e.label })),
     expenseGroups: (current?: string | null) => choices('expense_groups', current).map((e) => ({ id: e.code, label: e.label })),
     expenseGroupLabel: (category: string | null | undefined, item?: string | null) => (category ? labelOf('expense_groups', category, item) : ''),
     materialGroupLabel: (group: string | null | undefined, item?: string | null) => (group ? labelOf('material_groups', group, item) : ''),

@@ -1,3 +1,4 @@
+import { useConfig } from '../lib/config';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { TemplateEditor } from './TemplateEditor';
 import { friendlyError } from '../lib/errors';
@@ -16,6 +17,7 @@ export function TemplatesSection() {
   const online = useOnline();
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const { cropTypes: crops } = useCatalog();
+  const cfg = useConfig();
   const [openId, setOpenId] = useState<string | null>(null);
   const [cropId, setCropId] = useState('');
   const [name, setName] = useState('');
@@ -35,7 +37,7 @@ export function TemplatesSection() {
   if (!active) return null;
   const canManage = canPerm(active.perms, 'declare', 'edit');
   const cropName = (id: string) => crops.find((c) => c.id === id)?.name ?? '—';
-  const activeCrops = crops.filter((c) => c.is_active);
+  const activeCrops = crops.filter((c) => c.is_active && cfg.kindOn(c.kind));
   const effCrop = cropId || activeCrops[0]?.id || '';
   const rows = [...templates].sort((a, b) => cropName(a.crop_type_id).localeCompare(cropName(b.crop_type_id), 'vi') || a.name.localeCompare(b.name, 'vi'));
 

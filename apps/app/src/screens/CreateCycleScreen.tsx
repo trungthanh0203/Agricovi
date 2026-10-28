@@ -89,7 +89,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
 
   const cropName = (id: string) => cropTypes.find((c) => c.id === id)?.name ?? '—';
   // Sản phẩm chọn được: sản phẩm đang dùng có ít nhất một quy trình có công đoạn; quy trình hiện theo sản phẩm đã chọn
-  const productsWithTpl = cropTypes.filter((c) => c.is_active && (templates ?? []).some((t) => t.crop_type_id === c.id)).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const productsWithTpl = cropTypes.filter((c) => c.is_active && cfg.kindOn(c.kind) && (templates ?? []).some((t) => t.crop_type_id === c.id)).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const templatesFor = (templates ?? []).filter((t) => t.crop_type_id === productId);
   function pickProduct(id: string) {
     setProductId(id);

@@ -123,7 +123,7 @@ function FarmForm({ title, initial, busy, onSave, onClose }: {
           <label>Mã khu / chuồng<input value={code} maxLength={40} onChange={(e) => setCode(e.target.value)} placeholder="Ví dụ: C-THIT-02" /></label>
         </div>
         {isFacility && <p className="muted">Cơ sở vật chất (cổng, kho, biogas, hố sát trùng…) chỉ để ghi việc, không tạo vụ.</p>}
-        {!isFacility && (
+        {!isFacility && (cfg.animalsOn || !!initial?.housing) && (
           <label>Kiểu Nhà/Chuồng
             <select value={housing} onChange={(e) => setHousing(e.target.value)}>
               <option value="">— Không áp dụng —</option>

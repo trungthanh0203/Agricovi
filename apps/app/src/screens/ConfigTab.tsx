@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTable } from '../lib/tables';
 import { Collapsible } from '../components/Collapsible';
 import { UnitsConfig } from '../components/UnitsConfig';
 import {
@@ -84,6 +85,18 @@ function EntriesRow({ def, orgId }: { def: ConfigDef; orgId: string | undefined 
   const dirty = JSON.stringify(rows) !== savedKey;
   const patch = (i: number, p: Partial<ConfigEntry>) => setRows((cur) => cur.map((r, j) => (j === i ? { ...r, ...p } : r)));
   // tên nhóm gốc để chọn "tính như": lấy theo tên đang đặt của mục có sẵn
+  // không cho bỏ sử dụng loại đang có sản phẩm của cơ sở
+  const crops = useTable('cropTypes');
+  const inUse = (list: ConfigEntry[]): string | null => {
+    for (const r of list) {
+      if (r.active) continue;
+      const was = saved.find((s) => s.code === r.code);
+      if (!was?.active) continue;
+      const used = crops.filter((c) => c.organization_id === orgId && c.is_active !== false && (c.kind_item ? c.kind_item === r.code : c.kind === r.code));
+      if (used.length > 0) return `Không bỏ "${r.label}" được vì cơ sở đang có sản phẩm thuộc loại này (${used.slice(0, 3).map((c) => c.name).join(', ')}). Hãy dừng các sản phẩm đó trước.`;
+    }
+    return null;
+  };
   const baseOptions = (def.builtins ?? []).map((b) => ({ code: b.code, label: rows.find((r) => r.code === b.code)?.label || b.label }));
 
   return (
@@ -92,11 +105,11 @@ function EntriesRow({ def, orgId }: { def: ConfigDef; orgId: string | undefined 
         <p className="muted">{def.hint}</p>
         <div className="tablewrap">
           <table className="grid">
-            <thead><tr><th>Tên mục</th><th>Tính như</th><th></th></tr></thead>
+            <thead><tr><th>Tên mục</th><th>Tính như</th><th>Sử dụng</th><th></th></tr></thead>
             <tbody>
               {rows.map((r, i) => (
                 <tr key={r.code} className={r.active ? '' : 'off'}>
-                  <td><input aria-label="Tên mục" value={r.label} maxLength={40} onChange={(e) => patch(i, { label: e.target.value })} />{!r.active && <span className="sub">Đã dừng</span>}</td>
+                  <td><input aria-label="Tên mục" value={r.label} maxLength={40} onChange={(e) => patch(i, { label: e.target.value })} /></td>
                   <td>
                     {isBuiltin(r.code)
                       ? <span className="muted">Mục có sẵn</span>
@@ -107,8 +120,9 @@ function EntriesRow({ def, orgId }: { def: ConfigDef; orgId: string | undefined 
                       )}
                   </td>
                   <td className="act">
-                    <button className="icon" type="button" aria-label={r.active ? `Dừng ${r.label}` : `Dùng lại ${r.label}`} title={r.active ? 'Dừng (ẩn khỏi danh sách chọn)' : 'Dùng lại'}
-                      onClick={() => patch(i, { active: !r.active })}>{r.active ? '⏸' : '▶'}</button>{' '}
+                    <input type="checkbox" aria-label={`Sử dụng ${r.label}`} checked={r.active} onChange={(e) => patch(i, { active: e.target.checked })} />
+                  </td>
+                  <td className="act">
                     {!isBuiltin(r.code) && (
                       <button className="icon" type="button" aria-label={`Xóa ${r.label}`} title="Xóa (chỉ được khi chưa ai dùng)"
                         onClick={() => setRows((cur) => cur.filter((_, j) => j !== i))}>🗑</button>
@@ -120,13 +134,13 @@ function EntriesRow({ def, orgId }: { def: ConfigDef; orgId: string | undefined 
           </table>
         </div>
         <button type="button" className="secondary" onClick={() => setRows((cur) => [...cur, { code: newCode(), label: '', base: def.builtins?.[0]?.code ?? '', active: true }])}>+ Thêm mục</button>
-        <p className="muted">⏸ dừng (ẩn khỏi danh sách chọn mới, dữ liệu cũ vẫn giữ tên), ▶ dùng lại, 🗑 xóa mục tự thêm chưa ai dùng. Mục có sẵn không xóa được.</p>
+        <p className="muted">Bỏ tích "Sử dụng" thì mục ẩn khỏi các danh sách chọn mới (dữ liệu cũ vẫn giữ tên); tích lại khi cần dùng. 🗑 xóa mục tự thêm chưa ai dùng. Mục có sẵn không xóa được.</p>
         {msg && <p className={msg.ok ? 'msg ok' : 'msg error'} role={msg.ok ? 'status' : 'alert'}>{msg.text}</p>}
         {!online && <p className="msg warn" role="status">Cần có mạng để lưu.</p>}
         <div className="btnrow">
           <button className="primary" disabled={busy || !online || !dirty} onClick={() => {
             if (!orgId) return;
-            const bad = validateEntries(rows);
+            const bad = validateEntries(rows) ?? (def.id === 'product_groups' ? inUse(rows) : null);
             if (bad) return setMsg({ ok: false, text: bad });
             void run(() => saveEntries(orgId, def.id, rows));
           }}>Lưu</button>

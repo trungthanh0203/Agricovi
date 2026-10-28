@@ -30,7 +30,7 @@ export function CropsSection() {
   if (!active) return null;
   const org = active.id;
   const canManage = canPerm(active.perms, 'declare', 'edit');
-  const rows = cropTypes.filter((c) => showOff || c.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const rows = cropTypes.filter((c) => (showOff || c.is_active) && (cfg.kindOn(c.kind) || c.id === editing)).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const editRow = cropTypes.find((c) => c.id === editing) ?? null;
 
   async function run(fn: () => Promise<void>) {

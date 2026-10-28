@@ -124,7 +124,7 @@ export function WorkTypesSection() {
   const canManage = canPerm(active.perms, 'declare', 'edit');
   const groups = cfg.productGroups();
   const rank = (t: EffWorkType) => { const k = t.applies_to?.[0]; const n = k ? groups.findIndex((g) => g.id === k) : -1; return n < 0 ? 999 : n; };
-  const rows = workTypes.filter((t) => (showOff || t.is_active) && (!filterKind || !t.applies_to || t.applies_to.length === 0 || t.applies_to.includes(filterKind))).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'vi'));
+  const rows = workTypes.filter((t) => (showOff || t.is_active) && (!t.applies_to || t.applies_to.length === 0 || t.applies_to.some((k) => cfg.kindOn(k))) && (!filterKind || !t.applies_to || t.applies_to.length === 0 || t.applies_to.includes(filterKind))).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'vi'));
   const editingRow = workTypes.find((t) => t.id === editing) ?? null;
 
   async function run(fn: () => Promise<void>) {
@@ -224,12 +224,12 @@ export function WorkTypesSection() {
         </Collapsible>
       )}
 
-      <label>Lọc theo Đối tượng áp dụng
+      {groups.length > 1 && <label>Lọc theo Đối tượng áp dụng
         <select value={filterKind} onChange={(e) => setFilterKind(e.target.value)}>
           <option value="">Tất cả</option>
           {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
         </select>
-      </label>
+      </label>}
 
       <table className="grid">
         <thead><tr><th>Việc ({rows.length})</th><th>Đối tượng áp dụng</th><th>Thông tin cần ghi</th>{canManage && <th></th>}</tr></thead>
