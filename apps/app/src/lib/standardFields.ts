@@ -178,6 +178,13 @@ const CROP: Record<string, FieldDef[]> = {
     { key: 'buyer', label: 'Nơi nhận / khách', type: 'text' },
     { key: 'fruit_kg', label: 'Cân quả mẫu', type: 'number', unit: 'kg', min: 0 },
   ],
+  substrate_prep: [
+    { key: 'substrate', label: 'Loại giá thể', type: 'select', options: ['Mụn dừa đã xử lý', 'Trấu hun', 'Đất', 'Hỗn hợp', 'Khác'], required: true },
+    { key: 'bags', label: 'Số bầu / bịch giá thể', type: 'number', min: 0 },
+    { key: 'treatment', label: 'Cách xử lý', type: 'text', hint: 'Ví dụ: xả chát tanin, lignin; khử trùng' },
+    { key: 'ph', label: 'pH giá thể', type: 'number', min: 0, max: 14 },
+    { key: 'ec', label: 'EC giá thể', type: 'number', unit: 'mS/cm', min: 0, max: 10 },
+  ],
   seed_soaking: [
     { key: 'method', label: 'Cách xử lý', type: 'text', hint: 'Ví dụ: ngâm nước ấm 3 giờ' },
     { key: 'hours', label: 'Thời gian ngâm ủ', type: 'number', unit: 'giờ', min: 0 },

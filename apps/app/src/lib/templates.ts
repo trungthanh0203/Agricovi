@@ -249,6 +249,26 @@ export async function reorderStages(templateId: string, ids: string[]): Promise<
   await ok(client().rpc('reorder_template_stages', { p_template: templateId, p_order: ids }));
 }
 
+// ------------------------------------------------------------------ quy trình mẫu hệ thống (migration 0113)
+export interface SystemTemplate {
+  id: string; code: string; kind: string; crop_type_id: string | null; name: string; description: string | null; source: string | null; version: number;
+  system_template_phases: { id: string; seq: number; code: string | null; name: string; description: string | null }[];
+  system_template_stages: { id: string; phase_id: string | null; seq: number; work_type_id: string; duration_days: number; importance: Importance; note: string | null }[];
+}
+/** Các mẫu hệ thống đang dùng (mọi người đăng nhập xem được); CSDL chưa cập nhật thì trả danh sách rỗng */
+export async function listSystemTemplates(): Promise<SystemTemplate[]> {
+  const r = await client().from('system_templates')
+    .select('id, code, kind, crop_type_id, name, description, source, version, system_template_phases(id, seq, code, name, description), system_template_stages(id, phase_id, seq, work_type_id, duration_days, importance, note)')
+    .eq('is_active', true).order('name');
+  return r.error ? [] : ((r.data ?? []) as unknown as SystemTemplate[]);
+}
+/** Áp dụng mẫu hệ thống cho cơ sở: sao thành quy trình riêng, trả về mã quy trình mới */
+export async function applySystemTemplate(orgId: string, systemId: string, cropTypeId: string, name?: string): Promise<string> {
+  needOnline('áp dụng quy trình mẫu');
+  const r = await ok(client().rpc('apply_system_template', { p_org: orgId, p_system: systemId, p_crop_type: cropTypeId, p_name: name?.trim() || null, p_id: crypto.randomUUID() }));
+  return r as unknown as string;
+}
+
 // ------------------------------------------------------------------ công đoạn của quy trình (migration 0109)
 export async function addPhase(templateId: string, p: { code?: string; name: string; description?: string }): Promise<string> {
   needOnline('thêm công đoạn');

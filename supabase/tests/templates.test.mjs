@@ -50,7 +50,7 @@ test('loại việc riêng: chủ/quản lý định nghĩa, mã tự sinh, nhâ
   assert.equal(await seen(owner), 1);
   assert.equal(await seen(worker), 1);
   assert.equal(await seen(owner2), 0);
-  assert.equal((await asUser(db, owner2, `select count(*)::int n from work_types where organization_id is null`)).rows[0].n, 39); // việc dùng chung còn nguyên (7 gốc + 16 chuẩn vật nuôi, thủy sản của 0107 + 5 cây trồng của 0108 + 9 tách theo đối tượng của 0111 + 2 chuẩn bị nền của 0112)
+  assert.equal((await asUser(db, owner2, `select count(*)::int n from work_types where organization_id is null`)).rows[0].n, 40); // việc dùng chung còn nguyên (7 gốc + 16 chuẩn vật nuôi, thủy sản của 0107 + 5 cây trồng của 0108 + 9 tách theo đối tượng của 0111 + 2 chuẩn bị nền của 0112 + 1 giá thể của 0113)
 });
 
 test('quy trình mẫu: quyền ghi/đọc theo cơ sở; cơ sở khác không thấy; organization_id không giả mạo được', async () => {

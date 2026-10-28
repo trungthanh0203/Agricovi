@@ -6,7 +6,11 @@ import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { useCatalog } from '../lib/catalog';
-import { createTemplate, deleteTemplate, listTemplates, refreshCatalogCache, totalDays, type TemplateRow } from '../lib/templates';
+import { Collapsible } from './Collapsible';
+import {
+  applySystemTemplate, createTemplate, deleteTemplate, IMPORTANCE_LABEL, listSystemTemplates, listTemplates, refreshCatalogCache, totalDays,
+  type SystemTemplate, type TemplateRow,
+} from '../lib/templates';
 
 /**
  * Quy trình mùa vụ mẫu của cơ sở: một bảng gọn (quy trình, số công đoạn, số ngày), bấm "Mở" để soạn.
@@ -24,11 +28,14 @@ export function TemplatesSection() {
   const [desc, setDesc] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<'org' | 'system'>('org');
+  const [systems, setSystems] = useState<SystemTemplate[]>([]);
 
   const load = useCallback(async () => {
     if (!active || !navigator.onLine) return;
     try {
       setTemplates(await listTemplates(active.id));
+      setSystems(await listSystemTemplates());
       void refreshCatalogCache().catch(() => undefined);
     } catch (e) { setError(friendlyError(e)); }
   }, [active]);
@@ -72,6 +79,20 @@ export function TemplatesSection() {
       {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Soạn mẫu cần có mạng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
+      <div className="chips" role="tablist">
+        <button role="tab" aria-selected={tab === 'org'} className={tab === 'org' ? 'chip active' : 'chip'} onClick={() => setTab('org')}>Quy trình của cơ sở</button>{' '}
+        <button role="tab" aria-selected={tab === 'system'} className={tab === 'system' ? 'chip active' : 'chip'} onClick={() => setTab('system')}>Mẫu hệ thống</button>
+      </div>
+
+      {tab === 'system' ? (
+        <SystemTemplates systems={systems.filter((s) => cfg.kindOn(s.kind))} crops={activeCrops} canManage={canManage} online={online} busy={busy}
+          onApply={(sys, cropId, nm) => {
+            setBusy(true); setError(null);
+            applySystemTemplate(active!.id, sys.id, cropId, nm).then((id) => { setTab('org'); setOpenId(id); }).catch((err) => setError(friendlyError(err))).finally(() => setBusy(false));
+          }} />
+      ) : (
+      <>
+
       {canManage && (activeCrops.length === 0 ? (
         <p className="msg warn">Chưa có sản phẩm nào. Hãy thêm ở mục "Sản phẩm" trước.</p>
       ) : (
@@ -111,7 +132,67 @@ export function TemplatesSection() {
           ))}
         </tbody>
       </table>
-      <p className="muted">Mỗi hộ/HTX có bộ mẫu riêng. Sửa mẫu không đổi các vụ đã tạo.</p>
+      <p className="muted">Mỗi hộ/HTX có bộ mẫu riêng. Sửa mẫu không đổi các vụ đã tạo. Chưa có quy trình? Xem tab "Mẫu hệ thống" rồi bấm "Áp dụng cho cơ sở của tôi".</p>
+      </>
+      )}
     </>
   );
 }
+
+/** Tab "Mẫu hệ thống": xem trước dạng công đoạn → việc và áp dụng (sao) thành quy trình riêng của cơ sở, sau đó sửa tùy ý */
+function SystemTemplates({ systems, crops, canManage, online, busy, onApply }: {
+  systems: SystemTemplate[]; crops: { id: string; name: string; kind?: string | null }[]; canManage: boolean; online: boolean; busy: boolean;
+  onApply: (sys: SystemTemplate, cropId: string, name: string) => void;
+}) {
+  const { workTypes } = useCatalog();
+  const wtName = (id: string) => workTypes.find((w) => w.id === id)?.name ?? 'Việc';
+  if (systems.length === 0) return <p className="muted">Chưa có mẫu hệ thống nào cho loại đối tượng cơ sở đang sử dụng (xem Cấu hình → Nhóm loại sản phẩm).</p>;
+  return (
+    <>
+      <p className="muted">Mẫu do hệ thống soạn theo đúng đối tượng của cơ sở. Bấm "Áp dụng cho cơ sở của tôi" để tạo một quy trình riêng từ mẫu, rồi sửa lại tùy ý; sửa sau đó không ảnh hưởng mẫu hệ thống.</p>
+      {systems.map((s) => <SystemTemplateCard key={s.id} sys={s} crops={crops.filter((c) => c.kind === s.kind)} canManage={canManage} online={online} busy={busy} wtName={wtName} onApply={onApply} />)}
+    </>
+  );
+}
+
+function SystemTemplateCard({ sys, crops, canManage, online, busy, wtName, onApply }: {
+  sys: SystemTemplate; crops: { id: string; name: string }[]; canManage: boolean; online: boolean; busy: boolean; wtName: (id: string) => string;
+  onApply: (sys: SystemTemplate, cropId: string, name: string) => void;
+}) {
+  const phases = [...sys.system_template_phases].sort((a, b) => a.seq - b.seq);
+  const stages = [...sys.system_template_stages].sort((a, b) => a.seq - b.seq);
+  const days = stages.reduce((n, s) => n + s.duration_days, 0);
+  const [cropId, setCropId] = useState(sys.crop_type_id && crops.some((c) => c.id === sys.crop_type_id) ? sys.crop_type_id : crops[0]?.id ?? '');
+  const [name, setName] = useState('');
+  return (
+    <Collapsible title={sys.name} summary={`${phases.length} công đoạn · ${stages.length} việc · ${days} ngày`}>
+      {sys.description && <p>{sys.description}</p>}
+      {sys.source && <p className="muted">Nguồn: {sys.source}. Bản tham khảo, hãy đối chiếu với kỹ thuật của cơ sở.</p>}
+      {phases.map((p, i) => (
+        <div className="card slim" key={p.id}>
+          <strong>{p.code?.trim() || i + 1}. {p.name}</strong>
+          {p.description && <span className="sub">{p.description}</span>}
+          {stages.filter((s) => s.phase_id === p.id).map((s, j) => (
+            <p key={s.id} className="muted">
+              {p.code?.trim() || i + 1}.{j + 1} {wtName(s.work_type_id)} · {s.duration_days} ngày · Quan trọng: {IMPORTANCE_LABEL[s.importance]}{s.note ? ` · ${s.note}` : ''}
+            </p>
+          ))}
+        </div>
+      ))}
+      {canManage && (
+        crops.length === 0 ? (
+          <p className="msg warn">Cơ sở chưa có sản phẩm cùng loại với mẫu này. Hãy thêm sản phẩm ở mục "Sản phẩm" trước.</p>
+        ) : (
+          <div className="inline-form">
+            <label>Áp dụng cho sản phẩm
+              <select value={cropId} onChange={(e) => setCropId(e.target.value)}>{crops.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+            </label>
+            <label>Tên quy trình của cơ sở (không bắt buộc)<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder={sys.name} /></label>
+            <div className="btnrow"><button className="primary" disabled={busy || !online || !cropId} onClick={() => onApply(sys, cropId, name)}>Áp dụng cho cơ sở của tôi</button></div>
+          </div>
+        )
+      )}
+    </Collapsible>
+  );
+}
+
