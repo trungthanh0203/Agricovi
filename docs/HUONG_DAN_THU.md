@@ -254,9 +254,9 @@ Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng m�
 3. Tắt mạng rồi ghi một lần chết: bản ghi nằm trên máy, bật mạng thì tự gửi. Hủy bản ghi thì cần mạng và lý do.
 4. Vụ vật nuôi: ghi thu hoạch/xuất có "Số con" thì số còn lại tự trừ, không phải ghi "Xuất" thêm.
 
-## Thử P4: mốc nhắc việc an toàn (cần `db push` 0086)
-1. Khai báo → Quy trình mẫu → mở một quy trình dưa → "Mốc nhắc việc an toàn" → bấm "+ Ngưng bón phân (7 ngày trước thu)" và "+ Ngưng tưới". Với heo: "+ Thêm mốc nhắc" theo lịch vaccine của thú y (ví dụ "Tiêm vaccine lần 1", tính từ ngày bắt đầu, sau 21 ngày).
-2. Tạo vụ mới từ quy trình đó. Trong chi tiết vụ có mục **Mốc nhắc việc** kèm ngày đến hạn; quản lý thêm/xóa mốc riêng cho vụ.
+## Thử P4: mốc an toàn cho ngày bắt đầu/thu hoạch (cần `db push` 0086)
+1. Khai báo → Tạo quy trình → mở một quy trình dưa → "Mốc an toàn cho ngày bắt đầu/thu hoạch" → bấm "+ Ngưng bón phân (7 ngày trước thu)" và "+ Ngưng tưới". Với heo: "+ Thêm mốc nhắc" theo lịch vaccine của thú y (ví dụ "Tiêm vaccine lần 1", tính từ ngày bắt đầu, sau 21 ngày).
+2. Tạo vụ mới từ quy trình đó. Trong chi tiết vụ (Quản lý vụ) có mục **Mốc an toàn cho ngày bắt đầu/thu hoạch** kèm ngày đến hạn; quản lý thêm/xóa mốc riêng cho vụ.
 3. Đổi ngày bắt đầu hoặc ngày thu dự kiến của vụ: ngày đến hạn của các mốc tự dời.
 4. Khi mốc đến hạn trong 3 ngày hoặc quá hạn, Trang chủ có thẻ **Việc cần nhớ**; bấm "Đã làm xong" (cần mạng).
 5. Tạo vụ mới ở khu vừa kết thúc vụ trước chưa đủ 7 ngày: app hiện dòng vàng nhắc trống chuồng (chỉ cảnh báo, không chặn).

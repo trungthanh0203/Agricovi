@@ -38,7 +38,7 @@ export function HomeReminders() {
   const late = rows.filter((r) => r.status === 'overdue').length;
   const label = (c: CycleRow) => `${c.code ?? c.name ?? cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? 'Vụ'}`;
   return (
-    <Collapsible title="Việc cần nhớ" summary={`${rows.length} mốc${late > 0 ? ` · ${late} quá hạn` : ''}`} warn={late > 0} defaultOpen={late > 0}>
+    <Collapsible title="Mốc an toàn đến hạn" summary={`${rows.length} mốc${late > 0 ? ` · ${late} quá hạn` : ''}`} warn={late > 0} defaultOpen={late > 0}>
       {error && <p className="msg error" role="alert">{error}</p>}
       {rows.map(({ m, c, status, due }) => (
         <div className="card slim" key={m.id}>
@@ -72,7 +72,7 @@ export function CycleMilestones({ cycle, canManage, canMark }: { cycle: CycleRow
   const run = async (fn: () => Promise<unknown>) => { setBusy(true); setError(null); try { await fn(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); } };
 
   return (
-    <Collapsible title="Mốc nhắc việc" summary={items.length === 0 ? 'chưa có' : `${open} chưa làm / ${items.length}`}>
+    <Collapsible title="Mốc an toàn cho ngày bắt đầu/thu hoạch" summary={items.length === 0 ? 'chưa có' : `${open} chưa làm / ${items.length}`}>
       {error && <p className="msg error" role="alert">{error}</p>}
       {sorted.map((i) => {
         const s = milestoneStatus(i, cycle, today);
@@ -82,12 +82,12 @@ export function CycleMilestones({ cycle, canManage, canMark }: { cycle: CycleRow
             <p className="muted">{milestoneWhen(i)}{i.note ? ` · ${i.note}` : ''}{i.done_at ? ` · ${i.done_name ?? ''} ${new Date(i.done_at).toLocaleDateString('vi-VN')}` : ''}</p>
             <div className="btnrow">
               {canMark && <button className="secondary" disabled={busy || !online} onClick={() => void run(() => setMilestoneDone(i.id, !i.done_at))}>{i.done_at ? 'Bỏ đánh dấu' : 'Đã làm xong'}</button>}
-              {canManage && <button className="link inline" disabled={busy || !online} onClick={() => { if (window.confirm('Xóa mốc nhắc này khỏi vụ?')) void run(() => deleteCycleMilestone(i.id)); }}>Xóa</button>}
+              {canManage && <button className="link inline" disabled={busy || !online} onClick={() => { if (window.confirm('Xóa mốc an toàn này khỏi vụ?')) void run(() => deleteCycleMilestone(i.id)); }}>Xóa</button>}
             </div>
           </div>
         );
       })}
-      {canManage && !form && <button className="secondary" disabled={!online} onClick={() => setForm(true)}>+ Thêm mốc nhắc</button>}
+      {canManage && !form && <button className="secondary" disabled={!online} onClick={() => setForm(true)}>+ Thêm mốc an toàn</button>}
       {canManage && form && (
         <MilestoneForm m={m} offset={offset} setM={setM} setOffset={setOffset} busy={busy || !online}
           onSave={(v) => run(async () => { await addCycleMilestone(cycle.id, v); setForm(false); setM({ title: '', anchor: 'start', offset: 0, note: '' }); setOffset('0'); })}
@@ -144,7 +144,7 @@ export function TemplateMilestones({ templateId, kind, canEdit }: { templateId: 
   const suggestions = MILESTONE_SUGGESTIONS[kind === 'livestock' || kind === 'aquatic' ? 'livestock' : 'crop'].filter((s) => !(items ?? []).some((i) => i.title === s.title));
 
   return (
-    <Collapsible title="Mốc nhắc việc an toàn" summary={items ? `${items.length} mốc` : online ? 'Đang tải…' : 'Cần có mạng'}>
+    <Collapsible title="Mốc an toàn cho ngày bắt đầu/thu hoạch" summary={items ? `${items.length} mốc` : online ? 'Đang tải…' : 'Cần có mạng'}>
       <p className="muted">Mốc tự sinh nhắc ở Trang chủ cho mỗi vụ tạo từ quy trình này. Mốc "trước ngày thu" tự dời khi ngày thu dự kiến đổi. {kind === 'livestock' ? 'Lịch vaccine, tẩy giun do thú y của trại chốt: hãy tự thêm theo lịch đó.' : kind === 'aquatic' ? 'Lịch xử lý nước, thuốc và thu tỉa theo hướng dẫn kỹ thuật của bạn: hãy tự thêm mốc.' : ''}</p>
       {error && <p className="msg error" role="alert">{error}</p>}
       {(items ?? []).map((i) => (
@@ -158,7 +158,7 @@ export function TemplateMilestones({ templateId, kind, canEdit }: { templateId: 
           {suggestions.map((s) => <button key={s.title} className="secondary" disabled={busy || !online} onClick={() => void run(() => addTemplateMilestone(templateId, s))}>+ {s.title} ({s.offset} ngày trước thu)</button>)}
         </div>
       )}
-      {canEdit && !form && <button className="secondary" disabled={!online} onClick={() => setForm(true)}>+ Thêm mốc nhắc</button>}
+      {canEdit && !form && <button className="secondary" disabled={!online} onClick={() => setForm(true)}>+ Thêm mốc an toàn</button>}
       {canEdit && form && (
         <MilestoneForm m={m} offset={offset} setM={setM} setOffset={setOffset} busy={busy || !online}
           onSave={(v) => run(async () => { await addTemplateMilestone(templateId, v); setForm(false); setM({ title: '', anchor: 'start', offset: 0, note: '' }); setOffset('0'); })}

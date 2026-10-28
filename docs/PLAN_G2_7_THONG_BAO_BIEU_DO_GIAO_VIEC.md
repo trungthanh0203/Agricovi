@@ -105,3 +105,7 @@ Lý do: giao việc và chuông trong app dùng được ngay, không phụ thu�
 7. **Báo cáo định kỳ hằng tuần** (sáng thứ Hai 7 giờ): làm ở lát cuối, đồng ý?
 8. **Biểu đồ tự vẽ bằng SVG**, không dùng thư viện biểu đồ ngoài?
 9. Bạn sẵn sàng làm các việc thiết lập ở lát N2 (khóa VAPID, bật `pg_cron` và `pg_net`, deploy hàm, thử trên Android và iPhone)?
+
+## Quyết định 28/10/2026 về nhắc việc
+- **Mốc nhắc việc** đổi tên thành **Mốc an toàn cho ngày bắt đầu/thu hoạch** (tính theo số ngày so với ngày bắt đầu hoặc ngày thu dự kiến, tự dời theo vụ); khối trên Trang chủ là **Mốc an toàn đến hạn**. Giữ tách riêng với **Ghi chú theo ngày**.
+- **Giao việc** (T1–T2) sẽ hiện chung khối **Nhắc việc** của Trang chủ với ghi chú theo ngày và việc khắc phục sự cố.

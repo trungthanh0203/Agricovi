@@ -92,7 +92,7 @@ export async function syncDown(): Promise<void> {
     syncFinanceDown().catch((e) => console.warn('Không tải được chi phí/doanh thu', e)),
     syncIncidentsDown().catch((e) => console.warn('Không tải được sự cố', e)),
     syncCountEventsDown().catch((e) => console.warn('Không tải được số lượng', e)),
-    syncMilestonesDown().catch((e) => console.warn('Không tải được mốc nhắc việc', e)),
+    syncMilestonesDown().catch((e) => console.warn('Không tải được mốc an toàn', e)),
     syncWithdrawalsDown().catch((e) => console.warn('Không tải được thời gian cách ly', e)),
   ]);
 

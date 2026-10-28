@@ -64,7 +64,7 @@ export function auditGaps(d: LogbookData, today: string): Gap[] {
 
   const lateMs = d.milestones.filter((m) => !m.done_at && c && ((m.anchor === 'end' ? c.expected_end_date : c.start_date) ?? '9999') !== '9999'
     && addDays((m.anchor === 'end' ? c.expected_end_date : c.start_date) as string, m.anchor === 'end' ? -m.offset_days : m.offset_days) < today);
-  if (lateMs.length > 0) warn(`${lateMs.length} mốc nhắc việc (ngưng phân, vaccine…) đã quá hạn mà chưa đánh dấu đã làm.`);
+  if (lateMs.length > 0) warn(`${lateMs.length} mốc an toàn (ngưng phân, vaccine…) đã quá hạn mà chưa đánh dấu đã làm.`);
 
   const yearAgo = addDays(today, -365);
   if (!d.audits.some((a) => a.status === 'final' && !a.voided_at && a.audit_date >= yearAgo)) info('Chưa có lần tự đánh giá bảng kiểm nào được chốt trong 12 tháng qua (Báo cáo → Bảng kiểm).');

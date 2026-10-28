@@ -25,7 +25,7 @@ function client() {
 }
 
 export async function setMilestoneDone(id: string, done: boolean): Promise<void> {
-  requireOnline('đánh dấu mốc nhắc');
+  requireOnline('đánh dấu mốc an toàn');
   const { data, error } = await client().rpc('set_milestone_done', { p_id: id, p_done: done });
   if (error) throw new Error(error.message);
   await db.milestones.put(data as MilestoneRow);
@@ -34,14 +34,14 @@ export async function setMilestoneDone(id: string, done: boolean): Promise<void>
 export interface MilestoneInput { title: string; anchor: 'start' | 'end'; offset: number; note: string }
 
 export async function addCycleMilestone(cycleId: string, m: MilestoneInput): Promise<void> {
-  requireOnline('thêm mốc nhắc');
+  requireOnline('thêm mốc an toàn');
   const { data, error } = await client().rpc('add_cycle_milestone', { p_cycle: cycleId, p_title: m.title, p_anchor: m.anchor, p_offset: m.offset, p_note: m.note || null });
   if (error) throw new Error(error.message);
   await db.milestones.put(data as MilestoneRow);
 }
 
 export async function deleteCycleMilestone(id: string): Promise<void> {
-  requireOnline('xóa mốc nhắc');
+  requireOnline('xóa mốc an toàn');
   const { error } = await client().rpc('delete_cycle_milestone', { p_id: id });
   if (error) throw new Error(error.message);
   await db.milestones.delete(id);
@@ -56,12 +56,12 @@ export async function listTemplateMilestones(templateId: string): Promise<Templa
   return (data ?? []) as TemplateMilestone[];
 }
 export async function addTemplateMilestone(templateId: string, m: MilestoneInput): Promise<void> {
-  requireOnline('thêm mốc nhắc');
+  requireOnline('thêm mốc an toàn');
   const { error } = await client().from('template_milestones').insert({ template_id: templateId, title: m.title.trim(), anchor: m.anchor, offset_days: m.offset, note: m.note.trim() || null });
   if (error) throw new Error(error.message);
 }
 export async function deleteTemplateMilestone(id: string): Promise<void> {
-  requireOnline('xóa mốc nhắc');
+  requireOnline('xóa mốc an toàn');
   const { error } = await client().from('template_milestones').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
