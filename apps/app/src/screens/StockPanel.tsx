@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { ExpiringLots } from '../components/ExpiringLots';
 import { PurchaseEntry } from '../components/PurchaseEntry';
 import { StockEntry } from '../components/StockEntry';
-import { StockIssue, StockTransfer } from '../components/StockMove';
+import { StockIssue, StockReturn, StockTransfer } from '../components/StockMove';
 import { Thumb } from '../components/ImagePicker';
 import { useConfig } from '../lib/config';
 import { db } from '../lib/db';
@@ -16,7 +16,7 @@ import { canPerm } from '../lib/permissions';
 import { authorLabel } from '../lib/roles';
 import { useTable } from '../lib/tables';
 
-type Mode = 'list' | 'receipt' | 'adjustment' | 'purchase' | 'issue' | 'transfer';
+type Mode = 'list' | 'receipt' | 'adjustment' | 'purchase' | 'issue' | 'transfer' | 'return';
 
 /**
  * Kho (mục con của Sản xuất): tồn kho dạng lưới có tìm kiếm và bộ lọc, sổ kho từng vật tư (nhập – xuất – điều chỉnh kèm tồn sau mỗi dòng),
@@ -32,8 +32,9 @@ export function StockPanel() {
   if (mode === 'purchase') return <PurchaseEntry orgId={active.id} onClose={() => setMode('list')} />;
   if (mode === 'issue') return <StockIssue orgId={active.id} onClose={() => setMode('list')} />;
   if (mode === 'transfer') return <StockTransfer orgId={active.id} onClose={() => setMode('list')} />;
+  if (mode === 'return') return <StockReturn orgId={active.id} onClose={() => setMode('list')} />;
   if (mode !== 'list') return <StockEntry orgId={active.id} mode={mode} onClose={() => setMode('list')} />;
-  return <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setMode('receipt')} onAdjust={() => setMode('adjustment')} onIssue={() => setMode('issue')} onTransfer={() => setMode('transfer')} onPurchase={canPurchase ? () => setMode('purchase') : undefined} />;
+  return <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setMode('receipt')} onAdjust={() => setMode('adjustment')} onIssue={() => setMode('issue')} onTransfer={() => setMode('transfer')} onReturn={() => setMode('return')} onPurchase={canPurchase ? () => setMode('purchase') : undefined} />;
 }
 
 function useStockData(orgId: string) {
@@ -52,7 +53,7 @@ function useStockData(orgId: string) {
 
 type View = 'stock' | 'txns';
 
-function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, onPurchase }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void; onIssue: () => void; onTransfer: () => void; onPurchase?: () => void }) {
+function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, onReturn, onPurchase }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void; onIssue: () => void; onTransfer: () => void; onReturn: () => void; onPurchase?: () => void }) {
   const d = useStockData(orgId);
   const [view, setView] = useState<View>('stock');
   const [ledgerOf, setLedgerOf] = useState<string | null>(null);
@@ -70,6 +71,7 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, 
           <button className={onPurchase ? 'secondary' : 'primary'} onClick={onReceipt}>Nhập kho</button>
           <button className="secondary" onClick={onIssue}>Xuất kho</button>
           <button className="secondary" onClick={onTransfer}>Chuyển kho</button>
+          <button className="secondary" onClick={onReturn}>Trả về kho</button>
           <button className="secondary" onClick={onAdjust}>Điều chỉnh tồn</button>
         </div>
       )}

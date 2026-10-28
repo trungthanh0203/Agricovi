@@ -125,6 +125,58 @@ export async function recordIssue(t: { id?: string; organizationId: string; loca
   return id;
 }
 
+/**
+ * Chia một lượng xuất dùng chung cho nhiều vụ: theo diện tích (m²) khi vụ nào cũng có diện tích, không thì chia đều; làm tròn 3 số lẻ,
+ * phần dư dồn vào vụ cuối. Phải khớp hàm issue_shared_to_cycles của máy chủ (dùng để xem trước, máy chủ mới là nơi tính thật).
+ */
+export function splitShares(total: number, areasM2: (number | null | undefined)[]): { shares: number[]; byArea: boolean } {
+  const n = areasM2.length;
+  const byArea = n > 0 && areasM2.every((a) => a != null && a > 0);
+  const w = byArea ? (areasM2 as number[]) : areasM2.map(() => 1);
+  const sum = w.reduce((s, x) => s + x, 0);
+  const shares: number[] = [];
+  let given = 0;
+  for (let i = 0; i < n; i++) {
+    const s = i === n - 1 ? Math.round((total - given) * 1000) / 1000 : Math.round((total * w[i]! / sum) * 1000) / 1000;
+    shares.push(s);
+    given += s;
+  }
+  return { shares, byArea };
+}
+
+/** Xuất dùng chung chia cho các vụ đã chọn (cần mạng; máy chủ chia theo diện tích hoặc đều và tạo mỗi vụ một giao dịch) */
+export async function issueSharedToCycles(t: { organizationId: string; locationId: string; materialId: string; quantity: number; date: string; cycleIds: string[]; note: string }): Promise<number> {
+  requireOnline('xuất kho');
+  const { data, error } = await client().rpc('issue_shared_to_cycles', {
+    p_org: t.organizationId, p_material: t.materialId, p_location: t.locationId, p_qty: t.quantity, p_date: t.date, p_cycles: t.cycleIds, p_note: t.note.trim() || null,
+  });
+  if (error) throw error;
+  await syncInventoryDown().catch(() => undefined);
+  return Number(data ?? 0);
+}
+
+/** Lượng vật tư đang tính cho một vụ (đã xuất trừ đã trả), theo từng vật tư: dùng để chọn vật tư và giới hạn lượng khi trả về kho */
+export async function fetchCycleMaterialNet(cycleId: string): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (!supabase || !navigator.onLine) return out;
+  const { data, error } = await supabase.from('inventory_issue_costs').select('material_id, quantity').eq('cycle_id', cycleId);
+  if (error) return out;
+  for (const r of (data ?? []) as { material_id: string; quantity: number | string }[]) out.set(r.material_id, (out.get(r.material_id) ?? 0) + Number(r.quantity));
+  return out;
+}
+
+/** Trả vật tư về kho từ một vụ (cần mạng; máy chủ tự tính đơn giá và chặn trả quá lượng đã xuất cho vụ) */
+export async function returnToStock(t: { id?: string; organizationId: string; locationId: string; materialId: string; cycleId: string; quantity: number; date: string; reason: string }): Promise<string> {
+  requireOnline('trả vật tư về kho');
+  const id = t.id ?? crypto.randomUUID();
+  await insertRow('inventory_transactions', {
+    id, organization_id: t.organizationId, location_id: t.locationId, material_id: t.materialId, txn_type: 'adjustment',
+    quantity_delta: t.quantity, txn_date: t.date, reason: t.reason.trim() || null, is_return: true, cycle_id: t.cycleId, source: 'online',
+  });
+  await syncInventoryDown().catch(() => undefined);
+  return id;
+}
+
 /** Chuyển kho giữa hai kho (theo lô, hạn gần nhất trước): cần mạng; máy chủ tạo hai giao dịch liên kết */
 export async function transferStock(t: { organizationId: string; materialId: string; fromId: string; toId: string; quantity: number; date: string; note: string }): Promise<void> {
   requireOnline('chuyển kho');
