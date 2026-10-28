@@ -139,8 +139,14 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
 
   // Nhập nhanh các chỉ số đo lặp lại: ô đánh dấu "điền sẵn" lấy giá trị của lần ghi trước cùng việc (ở vụ hoặc khu này), sửa được
   const lastLog = useLiveQuery(
-    () => (workTypeId ? db.logs.where('work_type_id').equals(workTypeId).filter((l) => !l.voided_at && (areaMode ? l.area_id === siteArea?.id : l.cycle_id === effectiveCycleId)).toArray().then((a) => a.sort((x, y) => y.performed_at.localeCompare(x.performed_at))[0] ?? null) : null),
-    [workTypeId, areaMode, siteArea?.id, effectiveCycleId], null);
+    () => {
+      if (!workTypeId) return null;
+      // chỉ dùng cột đã lập chỉ mục (cycle_id, organization_id); lọc loại việc ở bước sau
+      const base = areaMode ? db.logs.where('organization_id').equals(active?.id ?? '') : db.logs.where('cycle_id').equals(effectiveCycleId);
+      return base.filter((l) => !l.voided_at && l.work_type_id === workTypeId && (!areaMode || l.area_id === siteArea?.id)).toArray()
+        .then((a) => a.sort((x, y) => y.performed_at.localeCompare(x.performed_at))[0] ?? null);
+    },
+    [workTypeId, areaMode, siteArea?.id, effectiveCycleId, active?.id], null);
   const prefillKey = workType && lastLog ? JSON.stringify(prefillValues(workType.field_schema, lastLog.data)) : '';
   useEffect(() => { if (prefillKey && prefillKey !== '{}') setValues((cur) => ({ ...JSON.parse(prefillKey) as Record<string, string>, ...cur })); }, [prefillKey, workTypeId]);
 
