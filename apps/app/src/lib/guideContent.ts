@@ -198,7 +198,7 @@ export const GUIDES: Guide[] = [
         details: [
           'Bấm "Bắt đầu sản xuất" khi vụ thật sự chạy: ngày bắt đầu thành ngày thực tế và lịch các công đoạn tự dời theo.',
           'Bắt đầu hoặc hoàn thành một công đoạn sớm/trễ so với kế hoạch, hoặc sửa ngày kết thúc của một công đoạn: các công đoạn phía sau tự dời theo số ngày lệch (công đoạn đang chạy hay đã xong không bị đổi).',
-          'Bấm Quy trình & Lịch để xem hôm nay cần làm gì; có thể ghi chú theo ngày và được nhắc ở Trang chủ.',
+          'Bấm Quản lý vụ để xem hôm nay cần làm gì; có thể ghi chú theo ngày và được nhắc ở Trang chủ.',
           'Mỗi thẻ vụ có dòng số liệu: Chi phí · Thu hoạch · Doanh thu · Lãi/Lỗ tạm tính, và thanh so với ngân sách, sản lượng dự kiến. Có diện tích thì hiện thêm Năng suất trên diện tích. Bấm "Xem thêm số liệu" để xem chi phí chia theo vật tư/tiền công/khác, hao hụt, còn tồn, giá thành mỗi kg, ngày chạy, giờ công, tiền khách còn nợ.',
           'Chỉ hiện số bạn có quyền xem (tiền cần quyền Tổng kết vụ).',
         ],

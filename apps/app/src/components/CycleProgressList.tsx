@@ -19,7 +19,7 @@ export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<str
         <div className="card slim" key={c.id}>
           <div className="row">
             <strong className="grow">{c.name || c.template_name || 'Vụ'}</strong>
-            <button className="secondary mini" onClick={() => onOpenCycle(c.id)}>Quy trình &amp; Lịch</button>
+            <button className="secondary mini" onClick={() => onOpenCycle(c.id)}>Quản lý vụ</button>
           </div>
           {p.total > 0 ? (
             <>
