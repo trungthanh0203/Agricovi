@@ -206,7 +206,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                   {newPhase && <tr><td colSpan={4}><strong>{s.phase_code ? `${s.phase_code}. ` : ''}{s.phase_name}</strong></td></tr>}
                   <tr>
                     <td>
-                      <i className="swatch" style={{ background: stageColor(i) }} />{s.name}
+                      <i className="swatch" style={{ background: stageColor(i) }} />{s.name}{s.duration_days ? ` (${s.duration_days} ngày)` : ''}
                       {s.note && <span className="sub">{s.note}</span>}
                       <span className="sub">
                         {s.importance === 'high' ? 'Quan trọng · ' : ''}{s.repeat_every_days ? `Lặp mỗi ${s.repeat_every_days} ngày · ` : ''}{STAGE_STATUS_LABEL_VI[s.status]}{late > 0 && s.status !== 'pending' ? ` · trễ ${late} ngày` : ''}
@@ -216,21 +216,22 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                     </td>
                     <td>{fmtDate(s.planned_start)}<span className="sub">→ {fmtDate(s.planned_end)}</span></td>
                     <td>{s.actual_start ? fmtDate(s.actual_start) : '—'}<span className="sub">{s.actual_end ? `→ ${fmtDate(s.actual_end)}` : ''}</span></td>
-                    <td className="act">
+                    <td className="act"><div className="stack">
                       {isActive && canLogHere && s.status === 'in_progress' && (
-                        <button className="secondary" style={{ minHeight: 40, width: 'auto', margin: 0, padding: '0 10px' }}
+                        <button className="secondary" style={{ minHeight: 40, width: '100%', margin: 0, padding: '0 8px' }}
                           onClick={() => onLog({ cycleId, workTypeId: s.work_type_id, stageId: s.id })}>Ghi việc</button>
                       )}
                       {canManage && isActive && (
                         <>
-                          {s.status === 'pending' && <button className="primary" style={{ minHeight: 40, width: 'auto', margin: '0 0 0 4px', padding: '0 10px' }} disabled={busy || !online} onClick={() => void act(s.id, 'start')}>Bắt đầu</button>}
-                          {s.status === 'in_progress' && <button className="primary" style={{ minHeight: 40, width: 'auto', margin: '0 0 0 4px', padding: '0 10px' }} disabled={busy || !online} onClick={() => void act(s.id, 'complete')}>Xong</button>}
+                          {s.status === 'pending' && <button className="primary" style={{ minHeight: 40, width: '100%', margin: 0, padding: '0 8px' }} disabled={busy || !online} onClick={() => void act(s.id, 'start')}>Bắt đầu</button>}
+                          {s.status === 'in_progress' && <button className="primary" style={{ minHeight: 40, width: '100%', margin: 0, padding: '0 8px' }} disabled={busy || !online} onClick={() => void act(s.id, 'complete')}>Xong</button>}
                           {s.status === 'done' && <button className="icon" disabled={busy || !online} aria-label={`Mở lại ${s.name}`} title="Mở lại" onClick={() => void act(s.id, 'reopen')}>↺</button>}
                         </>
                       )}
                       {canEditStages && (
                         <button className="icon" aria-label={`Sửa việc ${s.name}`} onClick={() => { setAdding(false); setEditing(editing === s.id ? null : s.id); }}>✎</button>
                       )}
+                      </div>
                     </td>
                   </tr>
                   </Fragment>

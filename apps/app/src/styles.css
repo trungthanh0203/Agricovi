@@ -588,3 +588,7 @@ button.range-btn:disabled { opacity: .35; cursor: default; }
 .filters label { margin: 0; }
 .num.pos { color: var(--green); }
 .num.neg { color: var(--err, #b3261e); }
+
+/* Cột nút của bảng việc trong vụ: các nút xếp dọc (Ghi việc trên, Xong/Bắt đầu dưới) cho cột hẹp, nhường chỗ cho nội dung việc */
+td.act .stack { display: flex; flex-direction: column; gap: 4px; align-items: stretch; min-width: 76px; }
+td.act .stack .icon { align-self: flex-end; }
