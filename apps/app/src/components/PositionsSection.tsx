@@ -91,12 +91,18 @@ export function PositionsSection({ org }: { org: MyOrg }) {
               </td>
               <td className="num">{holders(p)}</td>
               <td className="act">
+                <div className="iconrows">
+                  <span>
                 <button className="icon" disabled={busy || !online} aria-label={p.is_active ? `Dừng ${p.name}` : `Dùng lại ${p.name}`}
                   onClick={() => void run(() => savePosition(org.id, p.id, { name: p.name, description: p.description ?? '', perms: p.perms, workTypeIds: p.work_type_ids, canManageStages: p.can_manage_stages, isActive: !p.is_active, baseRole: p.base_role })).catch(() => undefined)}>{p.is_active ? '⏸' : '▶'}</button>{' '}
+                  </span>
+                  <span>
                 <button className="icon" aria-label={`Sửa ${p.name}`} onClick={() => setEditing(editing === p.id ? null : p.id)}>✎</button>{' '}
                 <button className="icon" disabled={busy || !online} aria-label={`Xóa ${p.name}`} onClick={() => {
                   if (window.confirm(`Xóa chức vụ "${p.name}"? Chỉ xóa được khi không ai đang giữ.`)) void run(() => deletePosition(p.id)).catch(() => undefined);
                 }}>🗑</button>
+                  </span>
+                </div>
               </td>
             </tr>
           ))}

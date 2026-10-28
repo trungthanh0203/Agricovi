@@ -16,5 +16,12 @@ Hầu hết lưới dùng **nút biểu tượng** (✎ ✕ 🗑 ↑ ↓ ⏸ ▶
 - Thẻ việc trong Tạo quy trình: hai hàng ↑ ↓ và ✎ ✕.
 - Đã **bỏ** thử nghiệm ⋮ cho Việc, Vật tư/Kho (đợt 1 cũ): giữ nút biểu tượng như trước.
 
-## Việc còn lại
-Rà các lưới còn nhiều nút trên một dòng cho đúng nguyên tắc (nhóm liên quan chung hàng): Nhân sự, Phòng/Tổ, Chức vụ, Giấy phép, Nhà cung ứng, Khách hàng, Hộ thành viên, Chấm công, Sự cố, Hồ sơ web. Chỉ đổi bố cục, không đổi SQL.
+## Đã rà các lưới (28/10/2026)
+- **Chức vụ**: hàng trên ⏸/▶, hàng dưới ✎ 🗑.
+- **Khách hàng**: hàng trên ⏸/▶, hàng dưới ✎ 🕶 (ẩn danh).
+- **Hộ thành viên (HTX)**: hàng trên ➜ (làm việc ở hộ), hàng dưới ✎ 🗑 (gỡ khỏi HTX).
+- **Chấm công**: hàng trên ✎ (đề nghị sửa giờ), hàng dưới ✔ ✕ (xác nhận, từ chối).
+- Các lưới chỉ có 1–2 nút (Phân khu, Sản phẩm, Việc, Vật tư, Kho, Nhà cung ứng, Giấy phép, Phòng/Tổ, Nhân sự, Hồ sơ web, Sự cố) giữ **một hàng**.
+
+## Quy ước cho lưới mới
+Dòng có từ 3 nút biểu tượng thì dùng `.iconrows` (mỗi `<span>` là một hàng: nút trạng thái hoặc điều hướng ở hàng trên, sửa/xóa ở hàng dưới); từ 2 nút trở xuống để chung một hàng.

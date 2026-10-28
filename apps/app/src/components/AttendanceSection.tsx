@@ -187,9 +187,13 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
                 <span className={a.status === 'confirmed' ? 'pill ok' : a.status === 'rejected' ? 'pill err' : 'pill warn'}>{ATT_STATUS_LABEL[a.status]}</span>
               </td>
               <td className="act">
+                <div className="iconrows">
+                  <span>
                 {a.ended_at && a.status !== 'rejected' && (a.worker_id === me?.id || canConfirm(a)) && (
                   <button className="icon" disabled={busy || !online} aria-label="Đề nghị sửa công" title="Đề nghị sửa giờ" onClick={() => setAdjFor(adjFor === a.id ? null : a.id)}>✎</button>
-                )}{' '}
+                )}
+                  </span>
+                  <span>
                 {a.ended_at && a.status === 'needs_confirmation' && canConfirm(a) && (
                   <>
                     <button className="icon" disabled={busy || !online} aria-label="Xác nhận công" title="Xác nhận" onClick={() => void run(() => confirmAttendance(a.id))}>✔</button>{' '}
@@ -199,6 +203,8 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
                     }}>✕</button>
                   </>
                 )}
+                  </span>
+                </div>
               </td>
             </tr>
           ))}

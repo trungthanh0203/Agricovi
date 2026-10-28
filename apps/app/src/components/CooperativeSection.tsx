@@ -171,12 +171,17 @@ function ForCooperative({ org }: { org: MyOrg }) {
                 <td className="num">{h.active_coop_cycles}</td>
                 <td>{h.activity_status === 'paused' ? <span className="pill warn">Tạm ngưng</span> : <span className="pill ok">Đang hoạt động</span>}</td>
                 <td className="act">
-                  {canManage && <button className="icon" aria-label={`Sửa ${h.name}`} onClick={() => openForm(h)}>✎</button>}{' '}
-                  {h.managed && <button className="icon" aria-label={`Làm việc ở hộ ${h.name}`} title="Làm việc ở hộ này" onClick={() => setActive(h.household_org_id)}>➜</button>}{' '}
-                  {isOwner(org.roles) && !h.managed && (
+                  <div className="iconrows">
+                    <span>
+                  {h.managed && <button className="icon" aria-label={`Làm việc ở hộ ${h.name}`} title="Làm việc ở hộ này" onClick={() => setActive(h.household_org_id)}>➜</button>}
+                    </span>
+                    <span>
+                  {canManage && <button className="icon" aria-label={`Sửa ${h.name}`} onClick={() => openForm(h)}>✎</button>}                   {isOwner(org.roles) && !h.managed && (
                     <button className="icon" disabled={r.busy} aria-label={`Gỡ ${h.name} khỏi HTX`}
                       onClick={() => window.confirm(`Gỡ hộ "${h.name}" khỏi HTX?`) && void r.run(() => removeHousehold(org.id, h.household_org_id))}>🗑</button>
                   )}
+                    </span>
+                  </div>
                 </td>
               </tr>
             ))}

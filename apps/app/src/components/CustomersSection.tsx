@@ -105,11 +105,13 @@ export function CustomersSection() {
                 <td>{p.phone ? <a href={`tel:${p.phone}`}>{p.phone}</a> : '—'}</td>
                 <td className="act">
                   {canEdit && (
-                    <>
-                      <button className="icon" disabled={busy || !online} aria-label={`Sửa ${p.name}`} onClick={() => { setAdding(false); setEditing(p.id); }}>✎</button>{' '}
+                    <div className="iconrows">
+                      <span>
                       <button className="icon" disabled={busy || !online} aria-label={p.is_active ? `Dừng ${p.name}` : `Dùng lại ${p.name}`}
-                        onClick={() => void run(() => updateCustomer(p, { is_active: !p.is_active }))}>{p.is_active ? '⏸' : '▶'}</button>{' '}
-                      <button className="icon" disabled={busy || !online} aria-label={`Ẩn danh ${p.name}`} title="Ẩn danh theo yêu cầu xóa dữ liệu"
+                        onClick={() => void run(() => updateCustomer(p, { is_active: !p.is_active }))}>{p.is_active ? '⏸' : '▶'}</button>
+                      </span>
+                      <span>
+                      <button className="icon" disabled={busy || !online} aria-label={`Sửa ${p.name}`} onClick={() => { setAdding(false); setEditing(p.id); }}>✎</button>                       <button className="icon" disabled={busy || !online} aria-label={`Ẩn danh ${p.name}`} title="Ẩn danh theo yêu cầu xóa dữ liệu"
                         onClick={() => {
                           if (!window.confirm(`Ẩn danh "${p.name}"?
 
@@ -117,7 +119,8 @@ Tên, điện thoại, địa chỉ, ghi chú sẽ bị xóa và KHÔNG khôi ph
                           const r = window.prompt('Lý do ẩn danh (ví dụ: khách yêu cầu xóa dữ liệu):');
                           if (r && r.trim().length >= 3) void run(() => anonymizeCustomer(p.id, r.trim()));
                         }}>🕶</button>
-                    </>
+                      </span>
+                    </div>
                   )}
                 </td>
               </tr>
