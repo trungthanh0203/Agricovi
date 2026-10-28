@@ -303,7 +303,7 @@ function StageForm({ title, stage, defaults, workTypes, busy, canDelete, onSave,
     <div className="card">
       <h2>{title}</h2>
       <div className="inline-form">
-        <label>Đầu việc
+        <label>Việc
           <select value={wt} onChange={(e) => { setWt(e.target.value); if (!name.trim() || workTypes.some((w) => w.name === name)) setName(workTypes.find((w) => w.id === e.target.value)?.name ?? name); }}>
             <option value="">— Không chọn —</option>
             {workTypes.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
