@@ -1,5 +1,6 @@
 import type { FieldDef } from '../lib/db';
 import { joinMulti, splitMulti } from '../lib/fieldsLogic';
+import { alertOf } from '../lib/fieldAlerts';
 
 /** Một ô của form động (D96), dựng theo kiểu trường; giá trị luôn là chuỗi (xem lib/fieldsLogic.ts) */
 export function DynamicField({ def, value, onChange }: { def: FieldDef; value: string; onChange: (v: string) => void }) {
@@ -46,6 +47,7 @@ export function DynamicField({ def, value, onChange }: { def: FieldDef; value: s
     <label>
       {def.label}{def.required ? ' *' : ''}{def.unit && def.type === 'number' ? ` (${def.unit})` : ''}
       <input value={value} inputMode={def.type === 'number' ? 'decimal' : undefined} placeholder={def.hint} onChange={(e) => onChange(e.target.value)} />
+      {alertOf(def, value) && <small className="alert-text" role="status">⚠ {alertOf(def, value)}</small>}
     </label>
   );
 }

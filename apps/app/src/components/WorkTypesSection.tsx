@@ -40,6 +40,15 @@ function FieldsEditor({ fields, onChange }: { fields: FieldDef[]; onChange: (f: 
               <input value={f.max ?? ''} inputMode="decimal" onChange={(e) => set(i, { max: numOrUndef(e.target.value) })} placeholder="Lớn nhất" aria-label="Giá trị lớn nhất" />
             </div>
           )}
+          {f.type === 'number' && (
+            <>
+              <div className="pair">
+                <input value={f.alert_low ?? ''} inputMode="decimal" onChange={(e) => set(i, { alert_low: numOrUndef(e.target.value) })} placeholder="Cảnh báo nếu thấp hơn" aria-label="Cảnh báo nếu thấp hơn" />
+                <input value={f.alert_high ?? ''} inputMode="decimal" onChange={(e) => set(i, { alert_high: numOrUndef(e.target.value) })} placeholder="Cảnh báo nếu cao hơn" aria-label="Cảnh báo nếu cao hơn" />
+              </div>
+              <label className="check"><input type="checkbox" checked={!!f.prefill} onChange={(e) => set(i, { prefill: e.target.checked || undefined })} /><span>Điền sẵn giá trị lần trước</span></label>
+            </>
+          )}
           <button type="button" className="icon" aria-label="Xóa trường" onClick={() => onChange(fields.filter((_, j) => j !== i))}>✕</button>
         </div>
       ))}

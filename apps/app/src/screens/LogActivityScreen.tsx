@@ -6,6 +6,7 @@ import { SyncBadge } from '../components/SyncBadge';
 import { db } from '../lib/db';
 import { DynamicField } from '../components/DynamicField';
 import { fieldsToData, initialValues, validateFields } from '../lib/fieldsLogic';
+import { prefillValues } from '../lib/fieldAlerts';
 import { toLocalInput, useRecordSync } from '../lib/hooks';
 import { useAuth } from '../lib/auth';
 import { formatQty, parseNumber } from '../lib/inventory';
@@ -107,6 +108,13 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   };
 
   const workType = workTypes.find((w) => w.id === workTypeId) ?? null;
+
+  // Nhập nhanh các chỉ số đo lặp lại: ô đánh dấu "điền sẵn" lấy giá trị của lần ghi trước cùng việc (ở vụ hoặc khu này), sửa được
+  const lastLog = useLiveQuery(
+    () => (workTypeId ? db.logs.where('work_type_id').equals(workTypeId).filter((l) => !l.voided_at && (areaMode ? l.area_id === siteArea?.id : l.cycle_id === effectiveCycleId)).toArray().then((a) => a.sort((x, y) => y.performed_at.localeCompare(x.performed_at))[0] ?? null) : null),
+    [workTypeId, areaMode, siteArea?.id, effectiveCycleId], null);
+  const prefillKey = workType && lastLog ? JSON.stringify(prefillValues(workType.field_schema, lastLog.data)) : '';
+  useEffect(() => { if (prefillKey && prefillKey !== '{}') setValues((cur) => ({ ...JSON.parse(prefillKey) as Record<string, string>, ...cur })); }, [prefillKey, workTypeId]);
 
   // Vật tư sử dụng đã khai báo cho việc này hiện sẵn thành các dòng "Vật tư đã dùng" (chỉ cần nhập số lượng; dòng để trống thì bỏ qua)
   // vật tư dự kiến của việc trong quy trình của vụ (nếu mở từ "Việc đến hạn") cũng được nạp sẵn

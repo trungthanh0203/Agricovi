@@ -106,12 +106,33 @@ const AQUATIC: Record<string, FieldDef[]> = {
     { key: 'avg_kg', label: 'Cân nặng trung bình', type: 'number', unit: 'kg/con', min: 0, required: true, hint: 'Cá, tôm nhỏ: ghi bằng kg (ví dụ 0,025 = 25 g)' },
   ],
   disinfecting: LIVESTOCK.disinfecting!,
+  // Phiếu đo môi trường nước: ngưỡng cảnh báo là mức tham khảo cho tôm thẻ chân trắng (chỉnh ở Khai báo → Việc theo loài và vùng nuôi);
+  // "điền sẵn" lấy giá trị lần đo trước để nhập nhanh, chỉ sửa chỉ số thay đổi.
   water_measuring: [
-    { key: 'ph', label: 'pH', type: 'number', min: 0, max: 14 },
-    { key: 'temperature', label: 'Nhiệt độ nước', type: 'number', unit: '°C' },
-    { key: 'oxygen', label: 'Oxy hòa tan', type: 'number', unit: 'mg/l', min: 0 },
-    { key: 'salinity', label: 'Độ mặn', type: 'number', unit: '‰', min: 0 },
-    { key: 'transparency', label: 'Độ trong', type: 'number', unit: 'cm', min: 0 },
+    { key: 'ph', label: 'pH', type: 'number', min: 0, max: 14, alert_low: 7.5, alert_high: 8.5, prefill: true },
+    { key: 'temperature', label: 'Nhiệt độ nước', type: 'number', unit: '°C', alert_low: 26, alert_high: 32, prefill: true },
+    { key: 'oxygen', label: 'Oxy hòa tan', type: 'number', unit: 'mg/l', min: 0, alert_low: 4, prefill: true },
+    { key: 'salinity', label: 'Độ mặn', type: 'number', unit: '‰', min: 0, prefill: true },
+    { key: 'transparency', label: 'Độ trong', type: 'number', unit: 'cm', min: 0, alert_low: 25, alert_high: 50, prefill: true },
+    CHECKER,
+  ],
+  stocking: [
+    { key: 'seed_count', label: 'Số lượng giống thả', type: 'number', unit: 'con', min: 0, required: true },
+    { key: 'seed_source', label: 'Nơi mua giống (trại giống)', type: 'text' },
+    { key: 'seed_lot', label: 'Mã lô / kết quả kiểm dịch giống', type: 'text', hint: 'Ví dụ: PCR âm tính bệnh đốm trắng' },
+    { key: 'seed_size', label: 'Cỡ giống', type: 'text', hint: 'Ví dụ: PL12 hoặc 3 cm' },
+    { key: 'density', label: 'Mật độ thả', type: 'number', unit: 'con/m²', min: 0 },
+    { key: 'acclimated', label: 'Đã thuần giống (cân bằng nước, nhiệt độ)', type: 'bool' },
+  ],
+  feed_tray_checking: [
+    { key: 'trays', label: 'Số sàng kiểm tra', type: 'number', min: 0 },
+    { key: 'leftover', label: 'Thức ăn còn lại trên sàng', type: 'select', options: ['Hết sạch', 'Còn ít', 'Còn nhiều'], required: true },
+    { key: 'adjust', label: 'Điều chỉnh lượng cho ăn', type: 'select', options: ['Giữ nguyên', 'Tăng', 'Giảm'] },
+  ],
+  health_checking: [
+    { key: 'signs', label: 'Dấu hiệu quan sát', type: 'multiselect', options: ['Bình thường', 'Đứt râu, mòn đuôi', 'Đỏ thân', 'Ruột trống hoặc đứt ruột', 'Bơi lờ đờ, nổi đầu', 'Chết nổi hoặc chết đáy', 'Khác'], required: true },
+    { key: 'dead_est', label: 'Số con chết ước tính', type: 'number', unit: 'con', min: 0 },
+    { key: 'action', label: 'Cách xử lý', type: 'text' },
     CHECKER,
   ],
   water_changing: [
@@ -137,6 +158,7 @@ const AQUATIC: Record<string, FieldDef[]> = {
     CHECKER,
   ],
   harvesting: [
+    { key: 'harvest_kind', label: 'Hình thức thu', type: 'select', options: ['Thu tỉa', 'Thu toàn bộ'] },
     { key: 'size_grade', label: 'Cỡ thu', type: 'text', hint: 'Ví dụ: 30 con/kg' },
     { key: 'buyer', label: 'Nơi nhận / khách', type: 'text' },
     { key: 'avg_kg', label: 'Khối lượng trung bình', type: 'number', unit: 'kg/con', min: 0 },

@@ -622,3 +622,6 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 .gframe { margin: 10px 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); box-shadow: 0 1px 3px rgba(16, 40, 26, .08); }
 .gframe .tiles { margin: 0; }
 .gframe .tile { border: none; box-shadow: none; background: transparent; }
+
+/* Cảnh báo mềm dưới ô số khi ngoài ngưỡng (phiếu đo môi trường nước) */
+.alert-text { color: var(--warn); font-weight: 600; }

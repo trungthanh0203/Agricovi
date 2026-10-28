@@ -11,6 +11,7 @@ import { authorLabel, canManageProduction } from '../lib/roles';
 import { loadOlderLogs, voidLog } from '../lib/production';
 import { EditLogScreen } from './EditLogScreen';
 import { summarizeFields } from '../lib/fieldsLogic';
+import { fieldAlerts } from '../lib/fieldAlerts';
 import { useTable } from '../lib/tables';
 import { CycleWord } from '../components/CycleWord';
 
@@ -179,6 +180,7 @@ export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedde
             </div>
             <p className="muted">{cycleLabel(l.cycle_id, l.area_id)}</p>
             {summarize(wtRaw, l.data, active?.id, kindOfLog(l)) && <p>{summarize(wtRaw, l.data, active?.id, kindOfLog(l))}</p>}
+            {wtRaw && fieldAlerts(fieldsForKind(wtRaw, active?.id, kindOfLog(l)), l.data).map((a) => <span key={a.key} className="pill warn">⚠ {a.text}</span>)}
             {l.note && <p>{l.note}</p>}
             <div className="badges">
               {l.version > 1 && !l.voided_at && <span className="pill">Đã chỉnh sửa</span>}

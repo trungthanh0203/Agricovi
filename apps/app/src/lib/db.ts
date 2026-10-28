@@ -239,6 +239,11 @@ export interface FieldDef {
   hint?: string;
   /** Giá trị điền sẵn khi ghi mới */
   default?: string;
+  /** Ô số: cảnh báo mềm khi giá trị thấp hơn / cao hơn ngưỡng (vẫn lưu được), dùng cho phiếu đo môi trường */
+  alert_low?: number;
+  alert_high?: number;
+  /** Điền sẵn giá trị của lần ghi trước cùng việc (nhập nhanh các chỉ số đo lặp lại) */
+  prefill?: boolean;
 }
 
 export interface CropTypeRow {
