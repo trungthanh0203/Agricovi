@@ -8,6 +8,7 @@ import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { parseNumber } from '../lib/inventory';
 import { Collapsible } from './Collapsible';
+import { RowMenu } from './RowMenu';
 import { TemplateMilestones } from './MilestonePanels';
 import {
   addPhase, addStage, deletePhase, deleteStage, duplicateTemplate, flatOrder, IMPORTANCE_LABEL, loadTemplate, refreshCatalogCache, reorderStages,
@@ -108,13 +109,12 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
         <div className="row">
           <span className="grow"><strong>{label} {s.name}</strong></span>
           {canEdit && (
-            <span>
-              <button className="icon" disabled={!editable} aria-label={`Sửa việc ${label}`} onClick={() => { setEditStage(editStage === s.id ? null : s.id); setEditPhase(null); }}>✎</button>{' '}
-              <button className="icon" disabled={!editable || idx === 0} aria-label="Lên" onClick={() => move(-1)}>↑</button>{' '}
-              <button className="icon" disabled={!editable || idx === list.length - 1} aria-label="Xuống" onClick={() => move(1)}>↓</button>{' '}
-              <button className="icon" disabled={!editable} aria-label={`Xóa việc ${label}`}
-                onClick={() => { if (window.confirm(`Xóa việc "${s.name}" khỏi quy trình?`)) void run(() => deleteStage(s.id)); }}>✕</button>
-            </span>
+            <RowMenu label={s.name} items={[
+              { label: 'Chỉnh sửa', icon: '✎', disabled: !editable, onClick: () => { setEditStage(editStage === s.id ? null : s.id); setEditPhase(null); } },
+              { label: 'Đưa lên trên', icon: '↑', disabled: !editable || idx === 0, onClick: () => move(-1) },
+              { label: 'Đưa xuống dưới', icon: '↓', disabled: !editable || idx === list.length - 1, onClick: () => move(1) },
+              { label: 'Xóa việc', icon: '🗑', danger: true, disabled: !editable, onClick: () => { if (window.confirm(`Xóa việc "${s.name}" khỏi quy trình?`)) void run(() => deleteStage(s.id)); } },
+            ]} />
           )}
         </div>
         <p className="muted">
@@ -202,12 +202,14 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
           <Collapsible key={p.id} title={`${phaseNo(p, i)}. ${p.name}`} summary={`${list.length} việc · ${phaseDays(p.id)} ngày`} defaultOpen={openPhase === p.id}>
             {p.description && <p className="muted">{p.description}</p>}
             {canEdit && (
-              <div className="actions">
-                <button className="secondary" disabled={!editable} onClick={() => { setEditPhase(p.id); setEditStage(null); }}>Sửa công đoạn</button>
-                <button className="secondary" disabled={!editable || i === 0} onClick={() => void run(async () => { await swapPhases(p, orderedPhases[i - 1]!); await resequence(); })}>↑ Lên</button>
-                <button className="secondary" disabled={!editable || i === orderedPhases.length - 1} onClick={() => void run(async () => { await swapPhases(p, orderedPhases[i + 1]!); await resequence(); })}>↓ Xuống</button>
-                <button className="secondary" disabled={!editable}
-                  onClick={() => { if (window.confirm(`Xóa công đoạn "${p.name}"? Các việc bên trong không bị xóa, chỉ thành "chưa xếp công đoạn".`)) void run(async () => { await deletePhase(p.id); await resequence(); }); }}>Xóa công đoạn</button>
+              <div className="row">
+                <span className="grow muted">Công đoạn {phaseNo(p, i)}</span>
+                <RowMenu label={`Công đoạn ${p.name}`} items={[
+                  { label: 'Sửa công đoạn', icon: '✎', disabled: !editable, onClick: () => { setEditPhase(p.id); setEditStage(null); } },
+                  { label: 'Đưa lên trên', icon: '↑', disabled: !editable || i === 0, onClick: () => void run(async () => { await swapPhases(p, orderedPhases[i - 1]!); await resequence(); }) },
+                  { label: 'Đưa xuống dưới', icon: '↓', disabled: !editable || i === orderedPhases.length - 1, onClick: () => void run(async () => { await swapPhases(p, orderedPhases[i + 1]!); await resequence(); }) },
+                  { label: 'Xóa công đoạn', icon: '🗑', danger: true, disabled: !editable, hint: '(các việc giữ lại)', onClick: () => { if (window.confirm(`Xóa công đoạn "${p.name}"? Các việc bên trong không bị xóa, chỉ thành "chưa xếp công đoạn".`)) void run(async () => { await deletePhase(p.id); await resequence(); }); } },
+                ]} />
               </div>
             )}
             {canEdit && editStage === null && (

@@ -1,3 +1,4 @@
+import { RowMenu } from './RowMenu';
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type LocationRow, type MaterialRow, type UnitRow } from '../lib/db';
@@ -75,9 +76,10 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
               <td className="num">{m.reorder_threshold != null ? `${formatQty(m.reorder_threshold)} ${unitName(m.base_unit_id)}` : '—'}</td>
               {canWrite && (
                 <td className="act">
-                  <button className="icon" disabled={busy || !writable} aria-label={m.is_active ? `Dừng ${m.name}` : `Dùng lại ${m.name}`}
-                    onClick={() => void run(() => updateMaterial(m.id, { is_active: !m.is_active }))}>{m.is_active ? '⏸' : '▶'}</button>{' '}
-                  <button className="icon" aria-label={`Sửa ${m.name}`} onClick={() => setFormMat(m.id)}>✎</button>
+                  <RowMenu label={m.name} items={[
+                    { label: 'Chỉnh sửa', icon: '✎', onClick: () => setFormMat(m.id) },
+                    { label: m.is_active ? 'Dừng' : 'Dùng lại', icon: m.is_active ? '⏸' : '▶', disabled: busy || !writable, onClick: () => void run(() => updateMaterial(m.id, { is_active: !m.is_active })) },
+                  ]} />
                 </td>
               )}
             </tr>
@@ -114,9 +116,10 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
               <td>{areaText(l)}</td>
               {canWrite && (
                 <td className="act">
-                  <button className="icon" disabled={busy || !writable} aria-label={l.is_active ? `Dừng ${l.name}` : `Dùng lại ${l.name}`}
-                    onClick={() => void run(() => updateLocation(l.id, { is_active: !l.is_active }))}>{l.is_active ? '⏸' : '▶'}</button>{' '}
-                  <button className="icon" aria-label={`Sửa ${l.name}`} onClick={() => setFormLoc(l.id)}>✎</button>
+                  <RowMenu label={l.name} items={[
+                    { label: 'Chỉnh sửa', icon: '✎', onClick: () => setFormLoc(l.id) },
+                    { label: l.is_active ? 'Dừng' : 'Dùng lại', icon: l.is_active ? '⏸' : '▶', disabled: busy || !writable, onClick: () => void run(() => updateLocation(l.id, { is_active: !l.is_active })) },
+                  ]} />
                 </td>
               )}
             </tr>
