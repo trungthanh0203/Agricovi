@@ -174,7 +174,7 @@ export const GUIDES: Guide[] = [
           'Mua vật tư thì ghi vào Kho, không ghi thêm vào Chi phí: tiền vật tư được tính vào chi phí của vụ lúc bạn DÙNG nó.',
           'Kiểm kho lệch thì dùng "Điều chỉnh": app ghi lại lý do, không sửa đè.',
         ],
-        go: { tab: 'production', section: 'stock', label: 'Mở Kho' },
+        go: { tab: 'production', section: 'stock', label: 'Mở Quản lý kho' },
       },
       {
         title: 'Tạo vụ theo quy trình mẫu',

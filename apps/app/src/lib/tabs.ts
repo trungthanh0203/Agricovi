@@ -57,7 +57,7 @@ export function productionSections(org: MyOrg | null): Section<ProductionSection
     { id: 'cycles' as const, label: 'Vụ nuôi trồng' },
     hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,
     canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
-    canPerm(org.perms, 'inventory') ? { id: 'stock' as const, label: 'Kho' } : null,
+    canPerm(org.perms, 'inventory') ? { id: 'stock' as const, label: 'Quản lý kho' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'expense' as const, label: 'Chi phí' } : null, // ghi chi phí hằng ngày: cùng nhóm với Thu hoạch, Kho (D92)
     { id: 'logs' as const, label: 'Nhật ký việc' }, // luôn để cuối
   ].filter((x): x is Section<ProductionSection> => x !== null));
