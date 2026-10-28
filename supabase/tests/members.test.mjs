@@ -195,3 +195,14 @@ test('khách chưa đăng nhập không gọi được các hàm quản lý thà
     assert.match(await expectError(asAnon(db, sql)), /permission denied/);
   }
 });
+
+test('danh sách nhân sự trả Tên người dùng (display_name) của thành viên đã đặt tên (migration 0118)', async () => {
+  const db = await createDb();
+  const owner = await addUser(db, 1);
+  const org = (await asUser(db, owner, `select create_organization('household','Hộ A') id`)).rows[0].id;
+  let me = (await asUser(db, owner, `select * from list_org_members($1)`, [org])).rows.find((r) => r.is_self);
+  assert.equal(me.display_name, null);
+  await asUser(db, owner, `select set_display_name('Trung Thành')`);
+  me = (await asUser(db, owner, `select * from list_org_members($1)`, [org])).rows.find((r) => r.is_self);
+  assert.equal(me.display_name, 'Trung Thành');
+});

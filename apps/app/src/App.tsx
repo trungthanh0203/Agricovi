@@ -35,7 +35,7 @@ const GuideTab = lazyRetry(() => import('./screens/GuideTab').then((m) => ({ def
 const ReportsTab = lazyRetry(() => import('./screens/ReportsTab').then((m) => ({ default: m.ReportsTab })));
 const Loading = () => <p className="center muted">Đang tải…</p>;
 
-const TAB_ICON: Record<TabId, string> = { home: '🏠', production: '🌱', reports: '📊', declare: '🧰', config: '⚙️', guide: '📖', profile: '👤' };
+const TAB_ICON: Record<TabId, string> = { home: '🏠', production: '🚜', reports: '📊', declare: '🧰', config: '⚙️', guide: '📖', profile: '👤' };
 
 export function App() {
   if (!supabase) return <SetupNotice />;

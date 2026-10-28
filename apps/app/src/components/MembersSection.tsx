@@ -164,18 +164,18 @@ export function MembersSection({ org }: { org: MyOrg }) {
 
       <div className="tablewrap">
         <table className="grid">
-          <thead><tr><th>Họ tên</th><th>Điện thoại</th><th>Chức vụ</th><th>Phòng / Tổ</th><th>Phân khu</th>{isOwner && <th></th>}</tr></thead>
+          <thead><tr><th>Họ tên</th><th>Điện thoại</th><th>Chức vụ</th>{isOwner && <th></th>}</tr></thead>
           <tbody>
-            {members.length === 0 && offlineWorkers.length === 0 && <tr><td colSpan={isOwner ? 6 : 5} className="muted">Chưa có nhân sự.</td></tr>}
+            {members.length === 0 && offlineWorkers.length === 0 && <tr><td colSpan={isOwner ? 4 : 3} className="muted">Chưa có nhân sự.</td></tr>}
             {members.map((m) => {
-              const label = m.is_staff ? m.full_name ?? m.phone ?? '' : m.email;
+              const label = m.is_staff ? m.full_name ?? m.phone ?? '' : m.display_name || m.email; // chủ cơ sở: Tên người dùng, chưa đặt thì dùng email
               const owner = m.roles.includes('owner');
               const pos = positionOf(m.user_id);
               const team = teamOf(m.user_id);
               return (
                 <tr key={m.user_id} className={m.status === 'suspended' ? 'off' : ''}>
                   <td>
-                    <strong>{label}{m.is_self && ' (bạn)'}</strong>
+                    <strong>{label}</strong>
                     {m.description && <span className="sub">{m.description}</span>}
                     {m.status === 'suspended' && <span className="pill err">Tạm dừng</span>}
                     {m.is_staff && m.must_change_password && <span className="pill warn">Chưa đổi mật khẩu</span>}
@@ -183,8 +183,6 @@ export function MembersSection({ org }: { org: MyOrg }) {
                   </td>
                   <td>{m.phone ?? ''}</td>
                   <td>{owner ? 'Chủ cơ sở' : pos?.name ?? roleSummary(m.roles)}</td>
-                  <td>{team?.name ?? ''}</td>
-                  <td>{owner ? 'Tất cả' : areaText(m.user_id)}</td>
                   {isOwner && (
                     <td className="act">
                       {!owner && <button className="icon" aria-label={`Sửa ${label}`} onClick={() => { setOpen(m.user_id); setError(null); setInfo(null); }}>✎</button>}
@@ -200,8 +198,6 @@ export function MembersSection({ org }: { org: MyOrg }) {
                   <td><strong>{w.full_name}</strong><span className="pill">Không tài khoản</span></td>
                   <td>{w.phone ?? ''}</td>
                   <td className="muted">{w.work_mode === 'monthly_salary' ? 'Lương tháng' : 'Người làm'}</td>
-                  <td>{link ? teams.find((t) => t.id === link.team_id)?.name ?? '' : ''}</td>
-                  <td></td>
                   {isOwner && <td className="act"><button className="icon" aria-label={`Sửa ${w.full_name}`} onClick={() => { setOpenWorker(w.id); setError(null); setInfo(null); }}>✎</button></td>}
                 </tr>
               );

@@ -41,6 +41,8 @@ export interface Member {
   work_mode: string | null;
   leads_teams: string[] | null;
   description?: string | null;
+  /** Tên người dùng tự đặt (Tài khoản); trống nếu chưa đặt hoặc CSDL chưa cập nhật */
+  display_name?: string | null;
 }
 export interface PendingInvite {
   id: string;

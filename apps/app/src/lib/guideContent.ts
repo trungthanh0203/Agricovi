@@ -179,7 +179,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Tạo vụ theo quy trình mẫu',
         details: [
-          'Vào Sản xuất → Mùa vụ, bấm + Tạo vụ mới: chọn Sản phẩm (cây trồng, vật nuôi…), rồi quy trình, rồi Phân khu (app ưu tiên phân khu đúng loại và cảnh báo nếu khác loại), sau đó ngày bắt đầu.',
+          'Vào Sản xuất → Vụ nuôi trồng, bấm + Tạo vụ mới: chọn Sản phẩm (cây trồng, vật nuôi…), rồi quy trình, rồi Phân khu (app ưu tiên phân khu đúng loại và cảnh báo nếu khác loại), sau đó ngày bắt đầu.',
           'Tạo xong, app hỏi bạn muốn quản lý vụ này thế nào (5 cách: Tự làm trong gia đình · Chủ và người làm công tháng · Có người quản lý điều hành · Có nhiều nhân viên · Chuẩn VietGAP). Mỗi vụ chọn riêng, đổi lúc nào cũng được ở Chi tiết vụ → Cách quản lý vụ này, không mất dữ liệu. Chọn cách đơn giản thì app chỉ hiện các mục cần dùng (menu hiện theo tổng các vụ đang chạy).',
           'Vụ vật nuôi, thủy sản: nên nhập Số con nhập chuồng/thả giống ngay khi tạo (không bắt buộc) để app tính hao hụt, mật độ và FCR.',
           'Có thể nhập Giống, Diện tích trồng (m², ha, sào hoặc công), Số cây, nguồn giống, số lô giống, ngày gieo/trồng: app tự tính mật độ, năng suất, chi phí và lãi trên 1.000 m² (hoặc trên sào/công/ha bạn chọn).',
@@ -191,7 +191,7 @@ export const GUIDES: Guide[] = [
           'Mục "Thông tin quản lý" (không bắt buộc) cho nhập mã vụ/lô, đơn vị đếm (cây, con…) và cán bộ kỹ thuật/thú y phụ trách. Khu loại "Cơ sở vật chất" (cổng, kho, biogas…) không tạo vụ; việc ở đó ghi bằng Ghi việc → "Khu vực".',
           'Nhập kho và Mua có hóa đơn có ô số lô và hạn dùng; khi xuất dùng, app tự lấy lô hạn gần nhất (hoặc bạn chọn lô). Lô sắp hết hạn hiện ở Trang chủ và Kho.',
         ],
-        go: { tab: 'production', section: 'cycles', label: 'Mở Mùa vụ' },
+        go: { tab: 'production', section: 'cycles', label: 'Mở Vụ nuôi trồng' },
       },
       {
         title: 'Theo dõi vụ: lịch và số liệu',
@@ -203,7 +203,7 @@ export const GUIDES: Guide[] = [
           'Chỉ hiện số bạn có quyền xem (tiền cần quyền Tổng kết vụ).',
         ],
         tip: 'Muốn so với kế hoạch: bấm Sửa vụ để nhập sản lượng và ngân sách dự kiến.',
-        go: { tab: 'production', section: 'cycles', label: 'Mở Mùa vụ' },
+        go: { tab: 'production', section: 'cycles', label: 'Mở Vụ nuôi trồng' },
       },
       {
         title: 'Hằng ngày: vào ca, ghi việc, ra ca',
@@ -308,10 +308,10 @@ export const GUIDES: Guide[] = [
       {
         title: 'Theo dõi mùa vụ và sản lượng',
         details: [
-          'Xem tiến độ các vụ đang chạy, vụ trễ tiến độ ở Trang chủ và Sản xuất → Mùa vụ; lịch công đoạn tự dời theo thực tế.',
+          'Xem tiến độ các vụ đang chạy, vụ trễ tiến độ ở Trang chủ và Sản xuất → Vụ nuôi trồng; lịch công đoạn tự dời theo thực tế.',
           'Mỗi thẻ vụ có dòng số liệu (chi phí, thu hoạch, doanh thu, lãi lỗ) và so với ngân sách, sản lượng dự kiến. Tổng hợp theo vụ ở Tổng kết vụ và Báo cáo theo nhu cầu.',
         ],
-        go: { tab: 'production', section: 'cycles', label: 'Mở Mùa vụ' },
+        go: { tab: 'production', section: 'cycles', label: 'Mở Vụ nuôi trồng' },
       },
       {
         title: 'Nhân sự, chấm công và tiền công của hợp tác xã',
@@ -374,7 +374,7 @@ export const GUIDES: Guide[] = [
           'Khai báo từng phân khu, tạo nhiều vụ cho từng sản phẩm; đặt sản lượng và ngân sách dự kiến cho từng vụ.',
           'Thẻ mỗi vụ có dòng số liệu và thanh so với kế hoạch; theo dõi vụ trễ tiến độ và vật tư sắp hết ở Trang chủ.',
         ],
-        go: { tab: 'production', section: 'cycles', label: 'Mở Mùa vụ' },
+        go: { tab: 'production', section: 'cycles', label: 'Mở Vụ nuôi trồng' },
       },
       {
         title: 'Nhà cung ứng, khách hàng và công nợ',

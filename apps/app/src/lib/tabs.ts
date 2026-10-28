@@ -54,7 +54,7 @@ function simpleFilter<T extends string>(org: MyOrg, tab: keyof typeof SIMPLE_HID
 export function productionSections(org: MyOrg | null): Section<ProductionSection>[] {
   if (!org) return [];
   return simpleFilter(org, 'production', [
-    { id: 'cycles' as const, label: 'Mùa vụ' },
+    { id: 'cycles' as const, label: 'Vụ nuôi trồng' },
     hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,
     canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'stock' as const, label: 'Kho' } : null,
