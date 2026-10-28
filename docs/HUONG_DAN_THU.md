@@ -328,3 +328,12 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 4. Việc do cơ sở tự thêm: ✎ → chọn "Việc này áp dụng cho" loại nào (mặc định mọi loại).
 5. Phần Thu hoạch: vụ vật nuôi hiện ô Thẻ tai, Số giấy kiểm dịch…; vụ thủy sản hiện Cỡ thu…; vụ trồng trọt giữ form cũ.
 6. Cơ sở đã chỉnh sẵn biểu mẫu trước đây: giữ nguyên thành "Mọi loại", không đổi gì cho tới khi bạn chỉnh riêng cho một loại.
+
+### Thử H: Việc, Tạo quy trình và mẫu hệ thống (cần `db push` đến 0115)
+1. **Cấu hình → Nhóm loại sản phẩm**: tích hoặc bỏ **Sử dụng** cho Cây trồng, Vật nuôi, Thủy sản. Các màn Sản phẩm, Tạo quy trình, Tạo vụ, Việc chỉ còn lựa chọn của loại đang sử dụng; không bỏ được loại đang có sản phẩm.
+2. **Khai báo → Việc**: thanh **Thêm việc** ở trên cùng; chọn **một** Đối tượng áp dụng; thêm "Các việc chi tiết" (ô cần ghi, tích Bắt buộc) và Vật tư sử dụng. Ô **Xem theo** lọc danh sách. Việc riêng cũ chưa chọn đối tượng có nhãn vàng "Chưa chọn".
+3. **Khai báo → Tạo quy trình → Mẫu hệ thống**: mở "Dưa lưới nhà màng", xem công đoạn → việc, chọn sản phẩm rồi **Áp dụng cho cơ sở của tôi**; quy trình mới mở ra để sửa.
+4. Trong quy trình: **＋ Thêm công đoạn** (mã, tên, mô tả); trong từng công đoạn **＋ Thêm việc** (Việc, Mức độ quan trọng, Số ngày, **Bắt đầu từ ngày** và **Lặp lại mỗi (ngày)**, Hướng dẫn, Vật tư dự kiến, Ghi chú). Bỏ trống "Bắt đầu từ ngày" thì việc nối tiếp; điền ngày thì chạy song song (tưới mỗi ngày trong lúc bón phân mỗi 5 ngày).
+5. **Cấu hình → Tạo quy trình → Dùng Công đoạn**: tắt thì quy trình chỉ là danh sách việc; bật lại thì hiện theo công đoạn.
+6. Tạo vụ từ quy trình vừa áp dụng: chi tiết vụ nhóm việc theo công đoạn; thẻ **Việc đến hạn hôm nay** liệt kê các việc đúng chu kỳ, bấm **Ghi việc** là mở sẵn đúng việc, công đoạn và vật tư gợi ý.
+7. **Khai báo → Chức vụ**: giới hạn việc được ghi nay chia theo đối tượng, có "Chọn cả nhóm".

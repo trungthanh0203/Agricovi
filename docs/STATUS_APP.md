@@ -3,6 +3,7 @@
 Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi tiết từng mốc cũ (bước C, Giai đoạn 2, lương, Đợt 1…): `STATUS_APP_LICHSU.md` (chỉ tra cứu khi cần, không đọc hết).
 
 ## Đang làm
+- **28/10/2026 (D104–D108, migration 0108–0115, cần `db push`)**: khái niệm Quy trình → Công đoạn → Việc; trang **Việc** (một đối tượng, vật tư, tách theo đối tượng); **Tạo quy trình** 2 tab (của cơ sở, mẫu hệ thống dưa lưới) với việc chạy song song/lặp lại, hướng dẫn, vật tư dự kiến; cơ sở chọn **đối tượng sử dụng**; chi tiết vụ nhóm theo công đoạn + **Việc đến hạn hôm nay**. Còn lại: bộ heo/thủy sản, màn soạn mẫu cho quản trị nền tảng, giao việc, thông báo đẩy (xem `KE_HOACH_HOAN_THIEN_APP.md`).
 - Lộ trình: `KE_HOACH_TONG_THE.md` (P1–P9). **P1** theo `PLAN_P1_NEN_DU_LIEU.md` (D98), 3 mốc:
   - **M1 xong về code (25/10/2026)**: migration 0080 (mã/loại khu/kiểu chuồng; mã vụ, đơn vị đếm, cán bộ phụ trách; ghi việc cho khu không gắn vụ); test `areas_fields`.
   - **M2 xong về code (25/10/2026)**: migration 0081 (nhóm/hoạt chất/số đăng ký/nhà sản xuất của vật tư; số lô + hạn dùng khi nhập kho; tự gắn lô FIFO khi xuất, bỏ qua lô hết hạn; chỉ định lô hết hạn phải có lý do; đảo kho mang đúng lô; `get_lot_status`); test `material_lots`; app: sửa vật tư, Nhập kho có lô/hạn, lịch sử hiện lô, thẻ "Lô sắp hết hạn" ở Trang chủ và Kho. Chưa làm: chọn lô tay khi Ghi việc; nhập lô trong "Mua có hóa đơn" (nhập kho từ hóa đơn chưa có ô lô).
