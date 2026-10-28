@@ -19,7 +19,7 @@ function FieldsEditor({ fields, onChange }: { fields: FieldDef[]; onChange: (f: 
   const numOrUndef = (v: string) => { const n = Number(v.replace(',', '.')); return v.trim() === '' || Number.isNaN(n) ? undefined : n; };
   return (
     <fieldset className="roles">
-      <legend>Thông tin cần ghi khi làm việc này</legend>
+      <legend>Các việc chi tiết (nếu có)</legend>
       {fields.map((f, i) => (
         <div className="quickadd" key={f.key}>
           <label className="check"><input type="checkbox" checked={!!f.required} onChange={(e) => set(i, { required: e.target.checked || undefined })} /><span>Bắt buộc</span></label>
@@ -183,7 +183,7 @@ export function WorkTypesSection() {
             <label>Tên việc<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
             <label>Mô tả<input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} /></label>
             {editingRow.shared ? (
-              <label>Việc chi tiết cho Đối tượng áp dụng (không bắt buộc)
+              <label>Đối tượng áp dụng
                 <select value={editKind} onChange={(e) => {
                   const k = e.target.value;
                   setEditKind(k);
