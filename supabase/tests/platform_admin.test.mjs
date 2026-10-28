@@ -119,3 +119,16 @@ test('công khai vụ: chỉ chủ bấm; website (anon) chỉ đọc khi đang 
   await call(db, owner, `select publish_cycle($1)`, [cyc]);
   assert.equal((await asAnon(db, `select count(*)::int n from public_cycles`)).rows[0].n, 1);
 });
+
+test('trạng thái gói ưu tiên gói đang hiệu lực: dòng hết hạn có hạn muộn hơn không làm cơ sở hiện "Hết hạn" (migration 0116)', async () => {
+  const { db, admin, org } = await setup();
+  const plan = (await db.query(`select id, max_cycles, price_per_quarter, ranking_weight from plan_tiers where org_type='household' and not is_trial_default and is_active limit 1`)).rows[0];
+  await db.query(`update subscriptions set period_end = now() where organization_id=$1`, [org]); // gói dùng thử cũ đã hết
+  const ins = (status, from, to) => db.query(`insert into subscriptions (organization_id, plan_tier_id, status, max_cycles, price_per_quarter, ranking_weight, period_start, period_end) values ($1,$2,$3,$4,$5,$6, now() + $7::interval, now() + $8::interval)`,
+    [org, plan.id, status, plan.max_cycles, plan.price_per_quarter, plan.ranking_weight, from, to]);
+  await ins('active', '-1 day', '1500 days');   // gói đang chạy
+  await ins('expired', '1 day', '1900 days');   // dòng đã đánh dấu hết hạn nhưng hạn muộn hơn
+  assert.equal((await db.query(`select org_sub_status($1) s`, [org])).rows[0].s, 'active');
+  const row = (await call(db, admin, `select admin_list_orgs(null,null,10,0) l`)).rows[0].l.rows.find((r) => r.name === 'Vườn Thành Công');
+  assert.equal(row.status, 'active');
+});
