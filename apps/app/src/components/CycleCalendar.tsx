@@ -41,9 +41,13 @@ export function CycleCalendar({ stages, logs, today, notes, canAdd, userId, canM
     return m;
   }, [notes]);
 
-  const stageOn = (day: string) => {
-    const i = sorted.findIndex((s) => s.planned_start && s.planned_end && day >= s.planned_start && day <= s.planned_end);
-    return i < 0 ? null : { s: sorted[i]!, i };
+  /** Mọi việc có kế hoạch bao trùm ngày này (việc chạy song song cùng ngày thì nhiều việc) */
+  const stagesOn = (day: string) => sorted.map((s, i) => ({ s, i })).filter(({ s }) => s.planned_start && s.planned_end && day >= s.planned_start && day <= s.planned_end);
+  /** Nền ô ngày: một việc = một màu; nhiều việc = các dải màu nằm ngang xếp chồng, mỗi việc một dải */
+  const bandBackground = (list: { i: number }[]): string => {
+    const n = list.length;
+    if (n === 1) return `${stageColor(list[0]!.i)}33`;
+    return `linear-gradient(to bottom, ${list.map((x, k) => `${stageColor(x.i)}66 ${(k * 100) / n}% ${((k + 1) * 100) / n}%`).join(', ')})`;
   };
 
   const [y, m] = month.split('-').map(Number) as [number, number];
@@ -61,7 +65,7 @@ export function CycleCalendar({ stages, logs, today, notes, canAdd, userId, canM
     setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
     setPicked(null);
   };
-  const info = picked ? stageOn(picked) : null;
+  const info = picked ? stagesOn(picked) : [];
 
   return (
     <div className="cal">
@@ -74,16 +78,16 @@ export function CycleCalendar({ stages, logs, today, notes, canAdd, userId, canM
         {WEEKDAYS.map((w) => <div key={w} className="cal-h" role="columnheader">{w}</div>)}
         {cells.map((d, i) => {
           if (!d) return <div key={`e${i}`} className="cal-c empty" />;
-          const st = stageOn(d);
+          const st = stagesOn(d);
           const n = logDays.get(d) ?? 0;
           return (
             <button
               key={d}
               role="gridcell"
               className={`cal-c${d === today ? ' today' : ''}${picked === d ? ' picked' : ''}${noteDays.has(d) ? ' has-note' : ''}`}
-              style={st ? { background: `${stageColor(st.i)}33`, borderColor: stageColor(st.i) } : undefined}
+              style={st.length > 0 ? { background: bandBackground(st), borderColor: stageColor(st[0]!.i) } : undefined}
               onClick={() => setPicked(d === picked ? null : d)}
-              aria-label={`${fmtDate(d)}${st ? `, việc ${st.s.name}` : ''}${n ? `, ${n} việc đã ghi` : ''}${noteDays.has(d) ? ', có ghi chú' : ''}`}
+              aria-label={`${fmtDate(d)}${st.length > 0 ? `, việc ${st.map((x) => x.s.name).join(', ')}` : ''}${n ? `, ${n} việc đã ghi` : ''}${noteDays.has(d) ? ', có ghi chú' : ''}`}
             >
               <span>{Number(d.slice(8))}</span>
               {n > 0 && <i className="dot" />}
@@ -101,7 +105,7 @@ export function CycleCalendar({ stages, logs, today, notes, canAdd, userId, canM
       {picked && (
         <>
         <p className="muted">
-          {fmtDate(picked)}: {info ? `việc "${info.s.name}" (kế hoạch ${fmtDate(info.s.planned_start)} – ${fmtDate(info.s.planned_end)})` : 'ngoài kế hoạch của vụ'}
+          {fmtDate(picked)}: {info.length > 0 ? info.map(({ s }) => `việc "${s.name}" (kế hoạch ${fmtDate(s.planned_start)} – ${fmtDate(s.planned_end)}${s.repeat_every_days ? `, lặp mỗi ${s.repeat_every_days} ngày` : ''})`).join('; ') : 'ngoài kế hoạch của vụ'}
           {logDays.get(picked) ? `, đã ghi ${logDays.get(picked)} việc.` : ', chưa ghi việc.'}
         </p>
         <h3 className="sub">Ghi chú ngày {fmtDate(picked)}</h3>
