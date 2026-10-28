@@ -78,7 +78,7 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
     manager ? { id: 'licenses' as const, label: 'Giấy phép' } : null, // giấy phép, chứng chỉ của cơ sở (trước đây ở tab Tài khoản)
     // Nhân sự và tổ chức (trước đây ở tab Tổ chức)
     hasRole(org.roles, 'owner') ? { id: 'positions' as const, label: 'Chức vụ' } : null,
-    manager ? { id: 'teams' as const, label: 'Phòng / Tổ' } : null,
+    manager ? { id: 'teams' as const, label: 'Tổ chức' } : null,
     manager ? { id: 'members' as const, label: 'Nhân sự' } : null,
     canPerm(org.perms, 'coop') ? { id: 'coop' as const, label: org.type === 'cooperative' ? 'Hộ thành viên' : 'Hợp tác xã' } : null,
   ].filter((x): x is Section<DeclareSection> => x !== null));
@@ -88,7 +88,7 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
 export interface DeclareGroup { id: string; label: string; icon: string; items: Section<DeclareSection>[] }
 const DECLARE_GROUPS: { id: string; label: string; icon: string; ids: DeclareSection[] }[] = [
   { id: 'base', label: 'Cơ sở & vật tư', icon: '🏡', ids: ['areas', 'crops', 'places', 'materials', 'partners'] },
-  { id: 'org', label: 'Tổ chức', icon: '👥', ids: ['positions', 'teams', 'members'] },
+  { id: 'org', label: 'Nhân sự', icon: '👥', ids: ['positions', 'teams', 'members'] },
   { id: 'process', label: 'Quy trình', icon: '📋', ids: ['worktypes', 'templates'] },
   { id: 'legal', label: 'Giấy phép & đối tác', icon: '🤝', ids: ['licenses', 'coop', 'customers'] },
 ];

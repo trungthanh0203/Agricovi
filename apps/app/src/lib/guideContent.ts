@@ -241,7 +241,7 @@ export const GUIDES: Guide[] = [
           'Khai báo → Nhân sự: bấm "＋ Tạo tài khoản nhân viên" (đăng nhập bằng số điện thoại) hoặc mời người đã có email; chọn chức vụ và phân khu làm việc. Lần đầu họ phải đổi mật khẩu tạm.',
           'Bấm vào một người để mở hồ sơ: Thông tin và tài khoản · Chức vụ và quyền · Phân khu làm việc · Phòng / Tổ · Trả công.',
           'Trả công: đặt riêng cho từng người, theo giờ làm (đồng/giờ) hoặc lương cố định theo tháng, có ngày hiệu lực và ngày hết hiệu lực. Thêm dòng mới thì dòng cũ cùng loại tự kết thúc hôm trước.',
-          'Khai báo → Phòng / Tổ: lập tổ, chọn tổ trưởng.',
+          'Khai báo → Tổ chức: lập tổ, chọn tổ trưởng.',
         ],
         go: { tab: 'declare', section: 'members', label: 'Mở Nhân sự' },
       },
@@ -352,10 +352,10 @@ export const GUIDES: Guide[] = [
       {
         title: 'Chia phòng / tổ và đặt chức vụ',
         details: [
-          'Khai báo → Phòng / Tổ: lập phòng ban, tổ sản xuất, chọn tổ trưởng.',
+          'Khai báo → Tổ chức: lập phòng ban, tổ sản xuất, chọn tổ trưởng.',
           'Khai báo → Chức vụ: đặt tên chức vụ riêng của công ty (ví dụ Thủ kho, Kế toán), chọn vai trò (Nhân viên hoặc Quản lý) và quyền thêm cho chức vụ đó.',
         ],
-        go: { tab: 'declare', section: 'teams', label: 'Mở Phòng / Tổ' },
+        go: { tab: 'declare', section: 'teams', label: 'Mở Tổ chức' },
       },
       {
         title: 'Phân quyền theo từng mục',

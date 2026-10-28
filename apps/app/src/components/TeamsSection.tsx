@@ -98,7 +98,7 @@ export function TeamsSection({ org }: { org: MyOrg }) {
 
   return (
     <>
-      <h2 className="sect">Phòng / Tổ{orphans.length > 0 ? ` (${orphans.length} người cần xử lý)` : teams.length > 0 ? ` (${teams.length} tổ)` : ''}</h2>
+      <h2 className="sect">Tổ chức{orphans.length > 0 ? ` (${orphans.length} người cần xử lý)` : teams.length > 0 ? ` (${teams.length} tổ)` : ''}</h2>
       <p className="muted">Tổ trưởng chấm công và ghi sản lượng hộ người trong tổ. Công của chính tổ trưởng do quản lý hoặc chủ xác nhận.</p>
       {!navigator.onLine && <p className="msg warn">Cần có mạng để quản lý tổ.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}

@@ -45,7 +45,7 @@ export function StaffCreateForm({
     if (needTeam && !teamId) {
       return setError(
         teamsWithLeader.length === 0
-          ? 'Kiểu này cần chọn một tổ. Hãy tạo tổ ở mục Phòng / Tổ trước.'
+          ? 'Kiểu này cần chọn một tổ. Hãy tạo tổ ở mục Tổ chức trước.'
           : 'Hãy chọn một tổ lao động.',
       );
     }
@@ -95,7 +95,7 @@ export function StaffCreateForm({
             <option value="">— Không chọn —</option>
             {teamsWithLeader.map((t) => <option key={t.id} value={t.id}>{t.name} · {t.leader_worker_id ? `tổ trưởng ${leaderName(t)}` : 'chưa có tổ trưởng'}</option>)}
           </select>
-          {teamsWithLeader.length === 0 && <small>Chưa có tổ nào. Hãy tạo ở mục Phòng / Tổ.</small>}
+          {teamsWithLeader.length === 0 && <small>Chưa có tổ nào. Hãy tạo ở mục Tổ chức.</small>}
         </label>
         <fieldset className="roles">
           <legend>Phân khu làm việc</legend>
