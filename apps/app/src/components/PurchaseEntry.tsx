@@ -3,7 +3,7 @@ import { SupplierForm } from './PartnersSection';
 import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
-import { formatMoney, formatQty, parseNumber } from '../lib/inventory';
+import { formatMoney, formatQty, parseNumber, recordTransaction } from '../lib/inventory';
 import {
   createSupplier, linesTotal, listSuppliers, recordPurchase, validatePurchase, type Partner, type PurchaseInput,
 } from '../lib/partners';
@@ -15,10 +15,13 @@ interface DraftLine { key: string; id: string; materialId: string; qty: string; 
 const newLine = (materialId = ''): DraftLine => ({ key: crypto.randomUUID(), id: crypto.randomUUID(), materialId, qty: '', cost: '', lotNo: '', lotExpiry: '' });
 
 /**
- * Mua theo hóa đơn (G2-2): chọn nhà cung ứng, ghi số hóa đơn, nhiều dòng vật tư, số tiền đã trả và hạn thanh toán.
- * Một lần Lưu tạo hóa đơn + nhập kho các dòng + lần trả đầu cùng lúc (lỗi thì không lưu gì). Cần mạng; cần quyền sửa Chi phí và Kho.
+ * NHẬP KHO (một màn chung, nhiều dòng vật tư; mỗi dòng có số lượng, đơn giá không bắt buộc, số lô và hạn dùng).
+ * Mặc định chỉ nhập kho (không cần nhà cung ứng, dùng được cả khi offline). Tích "Mua có hóa đơn" thì ghi thêm nhà cung ứng, số hóa đơn,
+ * tổng tiền, số tiền đã trả và hạn thanh toán (G2-2): một lần Lưu tạo hóa đơn + nhập kho các dòng + lần trả đầu cùng lúc (lỗi thì không lưu gì);
+ * phần hóa đơn cần mạng và quyền sửa Chi phí.
  */
-export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () => void }) {
+export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: string; onClose: () => void; canInvoice?: boolean }) {
+  const [hasInvoice, setHasInvoice] = useState(false);
   const online = useOnline();
   const materialsAll = useTable('materials');
   const locationsAll = useTable('locations');
@@ -42,6 +45,7 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<{ partner: string; invoice: string; total: number; paid: number; due: string | null } | null>(null);
+  const [savedPlain, setSavedPlain] = useState<number | null>(null); // nhập kho không hóa đơn: số dòng đã nhập
 
   const reloadPartners = useCallback(async () => {
     if (!navigator.onLine) return;
@@ -64,8 +68,39 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
   const changeBillDate = (v: string) => setBillDate(v);
   const setLine = (key: string, patch: Partial<DraftLine>) => setLines((s) => s.map((l) => (l.key === key ? { ...l, ...patch } : l)));
 
+  async function onSubmitPlain() {
+    setError(null);
+    if (!effLocation) return setError('Hãy chọn kho.');
+    if (billDate > todayLocal()) return setError('Ngày nhập kho không được sau ngày hôm nay.');
+    const used = parsed.filter((l) => l.materialId || l.qty.trim() || l.cost.trim());
+    if (used.length === 0) return setError('Hãy nhập ít nhất một dòng vật tư.');
+    for (const l of used) {
+      const name = mats.find((m) => m.id === l.materialId)?.name ?? 'Dòng vật tư';
+      if (!l.materialId) return setError('Hãy chọn vật tư cho mọi dòng, hoặc xóa dòng thừa.');
+      if (l.quantity === null || Number.isNaN(l.quantity) || l.quantity <= 0) return setError(`${name}: số lượng phải là số lớn hơn 0.`);
+      if (l.unitCost !== null && (Number.isNaN(l.unitCost) || l.unitCost < 0 || !Number.isInteger(l.unitCost))) return setError(`${name}: đơn giá phải là số tiền (đồng), không có phần lẻ.`);
+      if (l.lotExpiry && !l.lotNo.trim()) return setError(`${name}: đã nhập hạn dùng thì cần nhập cả số lô.`);
+    }
+    setBusy(true);
+    try {
+      for (const l of used) {
+        await recordTransaction({
+          id: l.id, organizationId: orgId, locationId: effLocation, materialId: l.materialId, type: 'receipt', quantity: l.quantity!, direction: 'increase',
+          unitCost: l.unitCost, date: billDate, reason: note, lotNo: l.lotNo, lotExpiry: l.lotExpiry || null,
+        });
+      }
+      try { localStorage.setItem(LAST_LOCATION_KEY, effLocation); } catch { /* bỏ qua */ }
+      setSavedPlain(used.length);
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!hasInvoice) return onSubmitPlain();
     setError(null);
     const input: PurchaseInput = {
       id: draftId, orgId, partnerId, invoiceNo: invoice, billDate, dueDate: due || null, total, note, locationId: effLocation,
@@ -89,6 +124,7 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
 
   function again() {
     setSaved(null);
+    setSavedPlain(null);
     setDraftId(crypto.randomUUID());
     setInvoice('');
     setLines([newLine()]);
@@ -121,10 +157,21 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
     );
   }
 
+  if (savedPlain !== null) {
+    return (
+      <section>
+        <h1>Đã nhập kho</h1>
+        <p className="msg ok" role="status">Đã nhập {savedPlain} dòng vật tư vào kho{navigator.onLine ? '' : '; sẽ tự gửi lên máy chủ khi có mạng'}.</p>
+        <button className="primary" onClick={again}>Nhập tiếp</button>
+        <button className="secondary" onClick={onClose}>Xong</button>
+      </section>
+    );
+  }
+
   if (mats.length === 0 || locs.length === 0) {
     return (
       <section>
-        <h1>Mua theo hóa đơn</h1>
+        <h1>Nhập kho</h1>
         <p className="msg warn">
           {mats.length === 0 ? 'Chưa có vật tư nào. ' : ''}{locs.length === 0 ? 'Chưa có kho nào. ' : ''}
           Hãy tạo trong tab Khai báo (Vật tư, Kho và đơn vị) rồi quay lại đây.
@@ -136,9 +183,14 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
 
   return (
     <section>
-      <h1>Mua theo hóa đơn</h1>
-      {!online && <p className="msg warn" role="status">Đang offline: lưu hóa đơn cần có mạng.</p>}
+      <h1>Nhập kho</h1>
+      {hasInvoice && !online && <p className="msg warn" role="status">Đang offline: lưu hóa đơn cần có mạng. Bỏ tích "Mua có hóa đơn" để nhập kho không cần mạng.</p>}
       <form className="inline-form" onSubmit={onSubmit} noValidate>
+        <label className="check">
+          <input type="checkbox" checked={hasInvoice} disabled={!canInvoice} onChange={(e) => setHasInvoice(e.target.checked)} />
+          <span>Mua có hóa đơn (ghi nhà cung ứng, công nợ){!canInvoice ? ' — cần quyền sửa Chi phí' : ''}</span>
+        </label>
+        {hasInvoice && (<>
         <label>
           Nhà cung ứng
           <select value={partnerId} onChange={(e) => setPartnerId(e.target.value)}>
@@ -163,6 +215,8 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
           <label>Số hóa đơn<input value={invoice} maxLength={60} onChange={(e) => setInvoice(e.target.value)} placeholder="Nếu có" /></label>
           <label>Ngày mua<input type="date" value={billDate} max={todayLocal()} onChange={(e) => changeBillDate(e.target.value)} /></label>
         </div>
+        </>)}
+        {!hasInvoice && <label>Ngày nhập<input type="date" value={billDate} max={todayLocal()} onChange={(e) => changeBillDate(e.target.value)} /></label>}
 
         {locs.length > 1 && (
           <label>
@@ -174,7 +228,7 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
         )}
 
         <fieldset className="roles">
-          <legend>Hàng đã mua</legend>
+          <legend>{hasInvoice ? 'Hàng đã mua' : 'Vật tư nhập kho'}</legend>
           {parsed.map((l) => (
             <div className="member" key={l.key}>
               <select aria-label="Vật tư" value={l.materialId} onChange={(e) => setLine(l.key, { materialId: e.target.value })}>
@@ -185,7 +239,7 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
                 <label>Số lượng{l.materialId ? ` (${unitOf(l.materialId)})` : ''}
                   <input value={lines.find((x) => x.key === l.key)!.qty} inputMode="decimal" onChange={(e) => setLine(l.key, { qty: e.target.value })} />
                 </label>
-                <label>Đơn giá (đ){l.materialId && unitOf(l.materialId) ? ` / ${unitOf(l.materialId)}` : ''}
+                <label>Đơn giá (đ){l.materialId && unitOf(l.materialId) ? ` / ${unitOf(l.materialId)}` : ''}{hasInvoice ? '' : ' (không bắt buộc)'}
                   <input value={lines.find((x) => x.key === l.key)!.cost} inputMode="numeric" onChange={(e) => setLine(l.key, { cost: e.target.value })} />
                 </label>
               </div>
@@ -202,6 +256,7 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
           <button type="button" className="secondary" onClick={() => setLines((s) => [...s, newLine()])}>+ Thêm dòng vật tư</button>
         </fieldset>
 
+        {hasInvoice && (<>
         <label>
           Tổng tiền hóa đơn (đ)
           <input value={totalText ?? String(sum)} inputMode="numeric" onChange={(e) => setTotalText(e.target.value)} />
@@ -231,11 +286,12 @@ export function PurchaseEntry({ orgId, onClose }: { orgId: string; onClose: () =
           <input type="date" value={due} min={billDate} onChange={(e) => setDue(e.target.value)} />
           <small>{owed > 0 && !due ? 'Còn nợ mà chưa nhập hạn: app sẽ không nhắc quá hạn cho hóa đơn này.' : 'Ngày phải trả hết nợ cho nhà cung ứng; để trống nếu không có hạn.'}</small>
         </label>
+        </>)}
         <label>Ghi chú<input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} /></label>
 
         {error && <p className="msg error" role="alert">{error}</p>}
         <div className="btnrow">
-          <button type="submit" className="primary" disabled={busy || !online}>{busy ? 'Đang lưu…' : 'Lưu hóa đơn'}</button>
+          <button type="submit" className="primary" disabled={busy || (hasInvoice && !online)}>{busy ? 'Đang lưu…' : hasInvoice ? 'Lưu hóa đơn' : 'Lưu nhập kho'}</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>
       </form>

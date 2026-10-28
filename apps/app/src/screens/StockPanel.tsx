@@ -29,12 +29,12 @@ export function StockPanel() {
   const canWrite = canPerm(active.perms, 'inventory', 'edit');
   // mua có hóa đơn tạo cả hóa đơn (quyền sửa Chi phí) lẫn nhập kho (quyền sửa Kho)
   const canPurchase = canWrite && canPerm(active.perms, 'expenses', 'edit');
-  if (mode === 'purchase') return <PurchaseEntry orgId={active.id} onClose={() => setMode('list')} />;
+  if (mode === 'purchase') return <PurchaseEntry orgId={active.id} canInvoice={canPurchase} onClose={() => setMode('list')} />;
   if (mode === 'issue') return <StockIssue orgId={active.id} onClose={() => setMode('list')} />;
   if (mode === 'transfer') return <StockTransfer orgId={active.id} onClose={() => setMode('list')} />;
   if (mode === 'return') return <StockReturn orgId={active.id} onClose={() => setMode('list')} />;
   if (mode !== 'list') return <StockEntry orgId={active.id} mode={mode} onClose={() => setMode('list')} />;
-  return <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setMode('receipt')} onAdjust={() => setMode('adjustment')} onIssue={() => setMode('issue')} onTransfer={() => setMode('transfer')} onReturn={() => setMode('return')} onPurchase={canPurchase ? () => setMode('purchase') : undefined} />;
+  return <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setMode('purchase')} onAdjust={() => setMode('adjustment')} onIssue={() => setMode('issue')} onTransfer={() => setMode('transfer')} onReturn={() => setMode('return')} />;
 }
 
 function useStockData(orgId: string) {
@@ -53,7 +53,7 @@ function useStockData(orgId: string) {
 
 type View = 'stock' | 'txns';
 
-function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, onReturn, onPurchase }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void; onIssue: () => void; onTransfer: () => void; onReturn: () => void; onPurchase?: () => void }) {
+function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, onReturn }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void; onIssue: () => void; onTransfer: () => void; onReturn: () => void; onPurchase?: () => void }) {
   const d = useStockData(orgId);
   const [view, setView] = useState<View>('stock');
   const [ledgerOf, setLedgerOf] = useState<string | null>(null);
@@ -67,8 +67,7 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, 
     <>
       {canWrite && (
         <div className="actions">
-          {onPurchase && <button className="primary" onClick={onPurchase}>Mua theo hóa đơn</button>}
-          <button className={onPurchase ? 'secondary' : 'primary'} onClick={onReceipt}>Nhập kho</button>
+          <button className="primary" onClick={onReceipt}>Nhập kho</button>
           <button className="secondary" onClick={onIssue}>Xuất kho</button>
           <button className="secondary" onClick={onTransfer}>Chuyển kho</button>
           <button className="secondary" onClick={onReturn}>Trả về kho</button>

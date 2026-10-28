@@ -85,7 +85,7 @@ export function PayablesSection() {
       {rows !== null && groups.length === 0 && (
         <div className="card">
           <p>{showPaid ? 'Chưa có hóa đơn mua nào.' : 'Hiện không còn khoản nợ nào.'}</p>
-          <p className="muted">Hóa đơn được tạo ở Sản xuất → Kho → Mua theo hóa đơn.</p>
+          <p className="muted">Hóa đơn mua được tạo ở Sản xuất → Quản lý kho → Nhập kho (tích "Mua có hóa đơn").</p>
         </div>
       )}
 
