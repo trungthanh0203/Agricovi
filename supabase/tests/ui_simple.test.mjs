@@ -24,8 +24,8 @@ test('chế độ đầy đủ giữ nguyên mọi mục; chế độ đơn gi�
 });
 
 test('từ gọi vụ/lứa theo sản phẩm của cơ sở và nhãn thông tin theo loại sản phẩm', () => {
-  assert.equal(cycleNoun(['crop', 'crop']), 'vụ nuôi trồng');
-  assert.equal(cycleNoun(['livestock']), 'vụ nuôi trồng');
+  assert.equal(cycleNoun(['crop', 'crop']), 'vụ trồng');
+  assert.equal(cycleNoun(['livestock']), 'vụ nuôi');
   assert.equal(cycleNoun(['crop', 'livestock']), 'vụ nuôi trồng');
   assert.equal(cycleNoun([]), 'vụ nuôi trồng');
   assert.equal(infoLabels('livestock').sowing, 'Ngày nhập chuồng');
