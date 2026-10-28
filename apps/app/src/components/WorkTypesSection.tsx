@@ -22,6 +22,7 @@ function FieldsEditor({ fields, onChange }: { fields: FieldDef[]; onChange: (f: 
       <legend>Thông tin cần ghi khi làm việc này</legend>
       {fields.map((f, i) => (
         <div className="quickadd" key={f.key}>
+          <label className="check"><input type="checkbox" checked={!!f.required} onChange={(e) => set(i, { required: e.target.checked || undefined })} /><span>Bắt buộc</span></label>
           <input value={f.label} onChange={(e) => set(i, { label: e.target.value })} placeholder="Tên trường, ví dụ: Độ Brix" aria-label="Tên trường" />
           <select value={f.type} onChange={(e) => set(i, { type: e.target.value as FieldDef['type'] })} aria-label="Kiểu">
             {FIELD_TYPES.map((t) => <option key={t} value={t}>{FIELD_TYPE_LABEL[t]}</option>)}
@@ -30,7 +31,6 @@ function FieldsEditor({ fields, onChange }: { fields: FieldDef[]; onChange: (f: 
             <input value={(f.options ?? []).join(', ')} aria-label="Các lựa chọn" placeholder="Lựa chọn, cách nhau bằng dấu phẩy"
               onChange={(e) => set(i, { options: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) })} />
           )}
-          <label className="check"><input type="checkbox" checked={!!f.required} onChange={(e) => set(i, { required: e.target.checked || undefined })} /><span>Bắt buộc ghi</span></label>
           {(f.type === 'number' || f.type === 'text') && (
             <input value={f.unit ?? ''} maxLength={20} onChange={(e) => set(i, { unit: e.target.value || undefined })} placeholder="Đơn vị (ml, lít, kg…)" aria-label="Đơn vị" />
           )}
@@ -52,7 +52,7 @@ function FieldsEditor({ fields, onChange }: { fields: FieldDef[]; onChange: (f: 
 function AppliesPicker({ value, onChange, groups }: { value: string[]; onChange: (v: string[]) => void; groups: { id: string; label: string }[] }) {
   return (
     <fieldset className="roles">
-      <legend>Áp dụng cho đối tượng sản xuất (chọn một)</legend>
+      <legend>Đối tượng áp dụng (chọn một)</legend>
       {groups.map((g) => (
         <label className="check" key={g.id}>
           <input type="radio" name="applies-one" checked={value[0] === g.id} onChange={() => onChange([g.id])} /> {g.label}
@@ -77,7 +77,7 @@ function MaterialsPicker({ ids, onChange, materials }: { ids: string[]; onChange
       ))}
       {left.length > 0 ? (
         <select value="" aria-label="Thêm vật tư" onChange={(e) => { if (e.target.value) onChange([...ids, e.target.value]); }}>
-          <option value="">＋ Thêm vật tư…</option>
+          <option value="">Chọn để thêm vật tư</option>
           {left.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
         </select>
       ) : ids.length === 0 && <p className="muted">Chưa có vật tư trong danh mục (thêm ở Khai báo → Vật tư).</p>}
@@ -123,7 +123,8 @@ export function WorkTypesSection() {
   const org = active.id;
   const canManage = canPerm(active.perms, 'declare', 'edit');
   const groups = cfg.productGroups();
-  const rows = workTypes.filter((t) => (showOff || t.is_active) && (!filterKind || !t.applies_to || t.applies_to.length === 0 || t.applies_to.includes(filterKind))).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const rank = (t: EffWorkType) => { const k = t.applies_to?.[0]; const n = k ? groups.findIndex((g) => g.id === k) : -1; return n < 0 ? 999 : n; };
+  const rows = workTypes.filter((t) => (showOff || t.is_active) && (!filterKind || !t.applies_to || t.applies_to.length === 0 || t.applies_to.includes(filterKind))).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'vi'));
   const editingRow = workTypes.find((t) => t.id === editing) ?? null;
 
   async function run(fn: () => Promise<void>) {
@@ -174,12 +175,6 @@ export function WorkTypesSection() {
       {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Thêm và sửa cần có mạng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
-      <label>Đối tượng sản xuất
-        <select value={filterKind} onChange={(e) => setFilterKind(e.target.value)}>
-          <option value="">Tất cả</option>
-          {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
-        </select>
-      </label>
 
       {editingRow && (
         <div className="card">
@@ -188,7 +183,7 @@ export function WorkTypesSection() {
             <label>Tên việc<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
             <label>Mô tả<input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} /></label>
             {editingRow.shared ? (
-              <label>Sửa biểu mẫu cho đối tượng sản xuất
+              <label>Việc chi tiết cho Đối tượng áp dụng (không bắt buộc)
                 <select value={editKind} onChange={(e) => {
                   const k = e.target.value;
                   setEditKind(k);
@@ -229,8 +224,15 @@ export function WorkTypesSection() {
         </Collapsible>
       )}
 
+      <label>Lọc theo Đối tượng áp dụng
+        <select value={filterKind} onChange={(e) => setFilterKind(e.target.value)}>
+          <option value="">Tất cả</option>
+          {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+        </select>
+      </label>
+
       <table className="grid">
-        <thead><tr><th>Việc ({rows.length})</th><th>Áp dụng cho</th><th>Thông tin cần ghi</th>{canManage && <th></th>}</tr></thead>
+        <thead><tr><th>Việc ({rows.length})</th><th>Đối tượng áp dụng</th><th>Thông tin cần ghi</th>{canManage && <th></th>}</tr></thead>
         <tbody>
           {rows.length === 0 && <tr><td colSpan={4} className="muted">{online ? 'Chưa có việc nào.' : 'Cần mạng để tải danh sách.'}</td></tr>}
           {rows.map((t) => (
