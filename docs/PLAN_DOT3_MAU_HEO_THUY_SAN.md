@@ -52,3 +52,8 @@ Hai hướng chỉ chạy gối đầu ở phần kỹ thuật (B2), không so�
 2. Heo: cho tôi soạn nháp từ tài liệu có sẵn rồi bạn/thú y duyệt, hay chờ bạn gửi bảng kiểm và mẫu sổ chính thức trước?
 3. Thủy sản: loài đầu tiên là gì, và có hộ thí điểm cung cấp quy trình thực tế không?
 4. Ai duyệt chuyên môn từng bộ (thú y cho heo, kỹ sư thủy sản cho cá/tôm)?
+
+## Tiến độ (28/10/2026)
+- **Quyết định**: Heo trước, Thủy sản sau (loài đầu tiên: **tôm**); heo do tôi soạn nháp từ tài liệu có sẵn; chuyên môn tạm tham khảo thông tin trên mạng làm chuẩn cơ bản (bạn sẽ đối chiếu).
+- **A1–A3 xong về code**: migration 0119, mẫu `pig_fattening_vietgap` (5 công đoạn, 25 việc, 129 ngày; cho ăn mỗi ngày, cân mẫu mỗi 15 ngày, sát trùng mỗi 7 ngày; vaccine và tẩy giun chỉ là việc có hướng dẫn, không cài lịch cứng); test `system_template_pig`.
+- Còn lại: A4 (hộ thí điểm dùng thử một lứa), A5 (cảnh báo trống chuồng 7 ngày, bảng kiểm gắn mẫu); Hướng B (tôm): B1 rà việc thủy sản, B2 phiếu đo môi trường nước.
