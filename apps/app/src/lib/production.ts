@@ -313,6 +313,9 @@ export interface StageEdit {
   planned_start?: string;
   planned_end?: string;
   note?: string;
+  /** Công đoạn của việc (chuỗi rỗng = bỏ khỏi công đoạn); phase_code đi kèm phase_name */
+  phase_name?: string;
+  phase_code?: string;
 }
 
 async function stageRpc(fn: string, args: Record<string, unknown>, cycleId: string, action: string): Promise<void> {
@@ -326,6 +329,14 @@ async function stageRpc(fn: string, args: Record<string, unknown>, cycleId: stri
 /** Sửa thông tin một giai đoạn của vụ (tên, việc, ngày kế hoạch, ghi chú) */
 export const updateCycleStage = (cycleId: string, stageId: string, c: StageEdit) =>
   stageRpc('update_cycle_stage', { p_stage: stageId, p_changes: c }, cycleId, 'sửa giai đoạn');
+
+/** Đổi số thứ tự (mã) và tên một công đoạn của vụ: áp cho mọi việc trong công đoạn */
+export const updateCyclePhase = (cycleId: string, oldName: string, code: string, name: string) =>
+  stageRpc('update_cycle_phase', { p_cycle: cycleId, p_old_name: oldName, p_new_code: code, p_new_name: name }, cycleId, 'sửa công đoạn');
+
+/** Xóa công đoạn khỏi vụ: giữ các việc (chỉ bỏ khỏi công đoạn) hoặc xóa luôn các việc */
+export const deleteCyclePhase = (cycleId: string, name: string, withItems: boolean) =>
+  stageRpc('delete_cycle_phase', { p_cycle: cycleId, p_name: name, p_with_items: withItems }, cycleId, 'xóa công đoạn');
 
 /** Thêm giai đoạn vào cuối quy trình của vụ */
 export const addCycleStage = (cycleId: string, s: { workTypeId: string | null; name: string; start: string; end: string; note?: string }) =>

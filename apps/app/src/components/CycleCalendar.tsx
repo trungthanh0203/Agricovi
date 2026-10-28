@@ -104,10 +104,16 @@ export function CycleCalendar({ stages, logs, today, notes, canAdd, userId, canM
       </div>
       {picked && (
         <>
-        <p className="muted">
-          {fmtDate(picked)}: {info.length > 0 ? info.map(({ s }) => `việc "${s.name}" (kế hoạch ${fmtDate(s.planned_start)} – ${fmtDate(s.planned_end)}${s.repeat_every_days ? `, lặp mỗi ${s.repeat_every_days} ngày` : ''})`).join('; ') : 'ngoài kế hoạch của vụ'}
-          {logDays.get(picked) ? `, đã ghi ${logDays.get(picked)} việc.` : ', chưa ghi việc.'}
-        </p>
+        <h3 className="sub">Ngày {fmtDate(picked)}</h3>
+        {info.length === 0 && <p className="muted">Ngoài kế hoạch của vụ.</p>}
+        {info.map(({ s, i }) => (
+          <div className="card slim" key={s.id} style={{ borderLeft: `6px solid ${stageColor(i)}` }}>
+            <strong>{s.phase_name ? `${s.phase_name} › ` : ''}{s.name}{s.duration_days ? ` (${s.duration_days} ngày)` : ''}</strong>
+            <span className="sub">Kế hoạch {fmtDate(s.planned_start)} – {fmtDate(s.planned_end)}{s.repeat_every_days ? ` · lặp mỗi ${s.repeat_every_days} ngày` : ''}{s.importance === 'high' ? ' · Quan trọng' : ''}</span>
+            {s.note && <span className="sub">{s.note}</span>}
+          </div>
+        ))}
+        <p className="muted">{logDays.get(picked) ? `Hôm đó đã ghi ${logDays.get(picked)} việc.` : 'Hôm đó chưa ghi việc.'}</p>
         <h3 className="sub">Ghi chú ngày {fmtDate(picked)}</h3>
         {(noteDays.get(picked) ?? []).length === 0 && <p className="muted">Chưa có ghi chú. Ghi chú sẽ hiện nhắc ở Trang chủ khi gần đến ngày.</p>}
         {(noteDays.get(picked) ?? []).map((n) => (

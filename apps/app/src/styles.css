@@ -592,3 +592,15 @@ button.range-btn:disabled { opacity: .35; cursor: default; }
 /* Cột nút của bảng việc trong vụ: các nút xếp dọc (Ghi việc trên, Xong/Bắt đầu dưới) cho cột hẹp, nhường chỗ cho nội dung việc */
 td.act .stack { display: flex; flex-direction: column; gap: 4px; align-items: stretch; min-width: 76px; }
 td.act .stack .icon { align-self: flex-end; }
+
+/* Bảng "Tuỳ chọn" của nút ⋮ trên mỗi dòng (components/RowMenu.tsx) */
+.rowmenu-btn { font-size: 1.4rem; line-height: 1; }
+.sheet-back { position: fixed; inset: 0; background: rgba(0, 0, 0, .45); z-index: 80; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 81; background: var(--bg); border-radius: 16px 16px 0 0; padding: 0 0 calc(12px + env(safe-area-inset-bottom)); max-height: 80vh; overflow-y: auto; box-shadow: 0 -4px 18px rgba(0, 0, 0, .25); }
+.sheet-head { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: var(--green); color: #fff; border-radius: 16px 16px 0 0; font-size: 1.1rem; }
+.sheet-x { width: 36px; min-height: 36px; border-radius: 50%; border: 2px solid #fff; background: transparent; color: #fff; font-size: 1.1rem; padding: 0; margin: 0; cursor: pointer; }
+.sheet-sub { margin: 8px 16px 4px; color: var(--muted); font-size: 14px; }
+.sheet-item { display: flex; align-items: center; gap: 12px; width: calc(100% - 24px); margin: 8px 12px 0; min-height: 52px; padding: 0 14px; text-align: left; font: inherit; font-size: 1.05rem; font-weight: 600; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
+.sheet-item.danger { color: var(--err, #b3261e); }
+.sheet-item:disabled { opacity: .5; cursor: default; }
+td.act .stack .rowmenu-btn { align-self: flex-end; }

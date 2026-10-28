@@ -23,11 +23,12 @@ import { useOrgs } from '../lib/orgs';
 import { ModelPicker } from '../components/ModelPicker';
 import { CycleNextSteps } from '../components/CycleNextSteps';
 import { dueToday } from '../lib/dueTasks';
+import { RowMenu } from '../components/RowMenu';
 import { toLocalInput } from '../lib/hooks';
 import type { TabId } from '../lib/tabs';
 import { effectiveModel, featuresOf, modelName } from '../lib/models';
 import {
-  addCycleStage, addNote, advanceStage, deleteCycleStage, deleteNote, refreshCycle, setNoteDone, updateCycleStage,
+  addCycleStage, addNote, advanceStage, deleteCycleStage, deleteCyclePhase, deleteNote, refreshCycle, setNoteDone, updateCyclePhase, updateCycleStage,
 } from '../lib/production';
 import { canManageProduction, isOwner } from '../lib/roles';
 
@@ -82,6 +83,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
     setError(null);
     try { await fn(); } catch (e) { setError(friendlyError(e)); throw e; } finally { setBusy(false); }
   }
+  const [editingPhase, setEditingPhase] = useState<string | null>(null); // tên công đoạn đang sửa
   const act = (stageId: string, action: 'start' | 'complete' | 'reopen') => run(() => advanceStage(stageId, action)).catch(() => undefined);
   const lastEnd = stages.reduce<string>((m, s) => (s.planned_end && s.planned_end > m ? s.planned_end : m), cycle.start_date ?? today);
 
@@ -203,7 +205,24 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                 const newPhase = s.phase_name && s.phase_name !== stages[i - 1]?.phase_name; // quy trình có việc: tiêu đề nhóm
                 return (
                   <Fragment key={s.id}>
-                  {newPhase && <tr><td colSpan={4}><strong>{s.phase_code ? `${s.phase_code}. ` : ''}{s.phase_name}</strong></td></tr>}
+                  {newPhase && (
+                    <tr className="phase-row">
+                      <td colSpan={3}><strong>{s.phase_code ? `${s.phase_code}. ` : ''}{s.phase_name}</strong></td>
+                      <td className="act">
+                        {canEditStages && (
+                          <RowMenu label={`Công đoạn ${s.phase_name}`} items={[
+                            { label: 'Sửa công đoạn', icon: '✎', disabled: !online, onClick: () => { setEditing(null); setAdding(false); setEditingPhase(s.phase_name!); } },
+                            { label: 'Xóa công đoạn (giữ các việc)', icon: '🗑', danger: true, disabled: !online, onClick: () => {
+                              if (window.confirm(`Xóa công đoạn "${s.phase_name}"? Các việc bên trong được giữ lại, chỉ bỏ khỏi công đoạn.`)) void run(() => deleteCyclePhase(cycleId, s.phase_name!, false)).catch(() => undefined);
+                            } },
+                            { label: 'Xóa công đoạn và các việc', icon: '🗑', danger: true, disabled: !online, onClick: () => {
+                              if (window.confirm(`Xóa công đoạn "${s.phase_name}" cùng toàn bộ việc bên trong? Chỉ làm được khi mọi việc chưa bắt đầu và chưa có nhật ký.`)) void run(() => deleteCyclePhase(cycleId, s.phase_name!, true)).catch(() => undefined);
+                            } },
+                          ]} />
+                        )}
+                      </td>
+                    </tr>
+                  )}
                   <tr>
                     <td>
                       <i className="swatch" style={{ background: stageColor(i) }} />{s.name}{s.duration_days ? ` (${s.duration_days} ngày)` : ''}
@@ -225,12 +244,17 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                         <>
                           {s.status === 'pending' && <button className="primary" style={{ minHeight: 40, width: '100%', margin: 0, padding: '0 8px' }} disabled={busy || !online} onClick={() => void act(s.id, 'start')}>Bắt đầu</button>}
                           {s.status === 'in_progress' && <button className="primary" style={{ minHeight: 40, width: '100%', margin: 0, padding: '0 8px' }} disabled={busy || !online} onClick={() => void act(s.id, 'complete')}>Xong</button>}
-                          {s.status === 'done' && <button className="icon" disabled={busy || !online} aria-label={`Mở lại ${s.name}`} title="Mở lại" onClick={() => void act(s.id, 'reopen')}>↺</button>}
                         </>
                       )}
-                      {canEditStages && (
-                        <button className="icon" aria-label={`Sửa việc ${s.name}`} onClick={() => { setAdding(false); setEditing(editing === s.id ? null : s.id); }}>✎</button>
-                      )}
+                      <RowMenu label={s.name} items={[
+                        ...(canManage && isActive && s.status === 'done' ? [{ label: 'Mở lại việc', icon: '↺', disabled: busy || !online, onClick: () => void act(s.id, 'reopen') }] : []),
+                        ...(canEditStages ? [
+                          { label: 'Chỉnh sửa', icon: '✎', disabled: !online, onClick: () => { setAdding(false); setEditingPhase(null); setEditing(s.id); } },
+                          { label: 'Xóa việc', icon: '🗑', danger: true, disabled: !online || s.status !== 'pending', hint: s.status !== 'pending' ? '(chỉ khi chưa làm)' : undefined, onClick: () => {
+                            if (window.confirm(`Xóa việc "${s.name}" khỏi vụ?`)) void run(() => deleteCycleStage(cycleId, s.id)).catch(() => undefined);
+                          } },
+                        ] : []),
+                      ]} />
                       </div>
                     </td>
                   </tr>
@@ -240,14 +264,23 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
             </tbody>
           </table>
 
+          {editingPhase && stages.some((x) => x.phase_name === editingPhase) && (
+            <PhaseEditForm
+              key={editingPhase} name={editingPhase} code={stages.find((x) => x.phase_name === editingPhase)?.phase_code ?? ''} busy={busy || !online}
+              onClose={() => setEditingPhase(null)}
+              onSave={(code, name) => run(async () => { await updateCyclePhase(cycleId, editingPhase, code, name); setEditingPhase(null); })}
+            />
+          )}
+
           {editing && stages.find((s) => s.id === editing) && (
             <StageForm
               key={editing} title="Sửa việc" stage={stages.find((s) => s.id === editing)!} busy={busy || !online}
+              phases={[...new Map(stages.filter((x) => x.phase_name).map((x) => [x.phase_name!, x.phase_code ?? ''])).entries()].map(([name, code]) => ({ name, code }))}
               workTypes={workTypes.filter((w) => w.is_active || w.id === stages.find((s) => s.id === editing)!.work_type_id)}
               canDelete={stages.find((s) => s.id === editing)!.status === 'pending'}
               onClose={() => setEditing(null)}
               onSave={(v) => run(async () => {
-                await updateCycleStage(cycleId, editing, { name: v.name, work_type_id: v.workTypeId, planned_start: v.start, planned_end: v.end, note: v.note });
+                await updateCycleStage(cycleId, editing, { name: v.name, work_type_id: v.workTypeId, planned_start: v.start, planned_end: v.end, note: v.note, ...(v.phase !== undefined ? { phase_name: v.phase.name, phase_code: v.phase.code } : {}) });
                 setEditing(null);
               })}
               onDelete={() => {
@@ -283,14 +316,15 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
 }
 
 /** Biểu mẫu thêm/sửa một việc của vụ: việc (từ danh mục), tên, ngày kế hoạch, ghi chú */
-function StageForm({ title, stage, defaults, workTypes, busy, canDelete, onSave, onDelete, onClose }: {
+function StageForm({ title, stage, defaults, workTypes, busy, canDelete, phases, onSave, onDelete, onClose }: {
   title: string;
   stage?: StageRow;
   defaults?: { start: string; end: string };
   workTypes: { id: string; name: string }[];
   busy: boolean;
   canDelete?: boolean;
-  onSave: (v: { name: string; workTypeId: string | null; start: string; end: string; note: string }) => Promise<unknown>;
+  phases?: { name: string; code: string }[];
+  onSave: (v: { name: string; workTypeId: string | null; start: string; end: string; note: string; phase?: { name: string; code: string } }) => Promise<unknown>;
   onDelete?: () => void;
   onClose: () => void;
 }) {
@@ -299,6 +333,7 @@ function StageForm({ title, stage, defaults, workTypes, busy, canDelete, onSave,
   const [start, setStart] = useState(stage?.planned_start ?? defaults?.start ?? '');
   const [end, setEnd] = useState(stage?.planned_end ?? defaults?.end ?? '');
   const [note, setNote] = useState(stage?.note ?? '');
+  const [phaseName, setPhaseName] = useState(stage?.phase_name ?? '');
   const [err, setErr] = useState<string | null>(null);
   return (
     <div className="card">
@@ -315,6 +350,14 @@ function StageForm({ title, stage, defaults, workTypes, busy, canDelete, onSave,
           <label>Từ ngày<input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></label>
           <label>Đến ngày<input type="date" value={end} onChange={(e) => setEnd(e.target.value)} /></label>
         </div>
+        {phases && phases.length > 0 && (
+          <label>Công đoạn
+            <select value={phaseName} onChange={(e) => setPhaseName(e.target.value)}>
+              <option value="">— Chưa xếp công đoạn —</option>
+              {phases.map((p) => <option key={p.name} value={p.name}>{p.code ? `${p.code}. ` : ''}{p.name}</option>)}
+            </select>
+          </label>
+        )}
         <label>Ghi chú / mô tả<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
@@ -323,9 +366,32 @@ function StageForm({ title, stage, defaults, workTypes, busy, canDelete, onSave,
             if (!start || !end) return setErr('Hãy chọn ngày bắt đầu và kết thúc.');
             if (end < start) return setErr('Ngày kết thúc không thể trước ngày bắt đầu.');
             setErr(null);
-            void onSave({ name, workTypeId: wt || null, start, end, note }).catch(() => undefined);
+            const ph = phases && phases.length > 0 && phaseName !== (stage?.phase_name ?? '') ? { name: phaseName, code: phases.find((p) => p.name === phaseName)?.code ?? '' } : undefined;
+            void onSave({ name, workTypeId: wt || null, start, end, note, ...(ph ? { phase: ph } : {}) }).catch(() => undefined);
           }}>Lưu</button>
           {canDelete && onDelete && <button className="secondary" disabled={busy} onClick={onDelete}>Xóa việc</button>}
+          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Sửa số thứ tự (mã) và tên một công đoạn của vụ (áp cho mọi việc trong công đoạn) */
+function PhaseEditForm({ name, code, busy, onSave, onClose }: { name: string; code: string; busy: boolean; onSave: (code: string, name: string) => Promise<unknown>; onClose: () => void }) {
+  const [c, setC] = useState(code);
+  const [n, setN] = useState(name);
+  const [err, setErr] = useState<string | null>(null);
+  return (
+    <div className="card">
+      <h2>Sửa công đoạn</h2>
+      <div className="inline-form">
+        <label>Số thứ tự (mã)<input value={c} maxLength={20} onChange={(e) => setC(e.target.value)} /></label>
+        <label>Tên công đoạn<input value={n} maxLength={120} onChange={(e) => setN(e.target.value)} /></label>
+        <small className="muted">Chỉ đổi vụ này, không đổi quy trình mẫu.</small>
+        {err && <p className="msg error" role="alert">{err}</p>}
+        <div className="btnrow">
+          <button className="primary" disabled={busy} onClick={() => { if (n.trim().length < 1) return setErr('Hãy nhập tên công đoạn.'); setErr(null); void onSave(c, n).catch(() => undefined); }}>Lưu thay đổi</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>
       </div>
