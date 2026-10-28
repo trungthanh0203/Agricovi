@@ -512,8 +512,8 @@ button.member-btn .sub { display: block; }
 .member-profile { display: grid; gap: 4px; }
 
 /* Biểu mẫu: nhãn đổi màu, dữ liệu nhập chữ nhỏ hơn; ô nhập/ô chọn rộng vừa màn hình, ô nhiều dòng cao vừa nội dung */
-.inline-form label:not(.check), .inline-form legend { color: var(--label); font-weight: 600; font-size: .95rem; }
-.inline-form input:not([type='radio']):not([type='checkbox']), .inline-form select, .inline-form textarea { font-size: .88rem; font-weight: 400; color: var(--fg); width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
+.inline-form label:not(.check), .inline-form legend, .filters label:not(.check) { color: var(--label); font-weight: 600; font-size: .95rem; }
+.inline-form input:not([type='radio']):not([type='checkbox']), .inline-form select, .inline-form textarea, .filters input:not([type='radio']):not([type='checkbox']), .filters select { font-size: .88rem; font-weight: 400; color: var(--fg); width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
 .inline-form select { text-overflow: ellipsis; }
 .inline-form textarea { font-family: inherit; min-height: 48px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--field); line-height: 1.35; resize: none; overflow: hidden; display: block; }
 .inline-form .pair > label { min-width: 0; }
@@ -625,3 +625,6 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 
 /* Cảnh báo mềm dưới ô số khi ngoài ngưỡng (phiếu đo môi trường nước) */
 .alert-text { color: var(--warn); font-weight: 600; }
+
+/* Khi mở form thêm/sửa, trang tự cuộn tới form; chừa chỗ cho thanh trên cùng */
+.card:has(> .inline-form), .inline-form, details.fold.inline { scroll-margin-top: 76px; }

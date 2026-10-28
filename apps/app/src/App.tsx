@@ -1,4 +1,5 @@
 import { db } from './lib/db';
+import { useAutoScrollToForm } from './lib/autoScrollToForm';
 import { Fragment, Suspense, useCallback, useEffect, useState } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { lazyRetry } from './lib/lazyRetry';
@@ -39,6 +40,7 @@ const Loading = () => <p className="center muted">Đang tải…</p>;
 const TAB_ICON: Record<TabId, string> = { home: '🏠', production: '🌱', reports: '📊', declare: '🧰', config: '⚙️', guide: '📖', profile: '👤' };
 
 export function App() {
+  useAutoScrollToForm(); // bấm Sửa/Thêm mới thì cuộn tới form
   if (!supabase) return <SetupNotice />;
   return (
     <AuthProvider>

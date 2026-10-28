@@ -20,3 +20,4 @@ Chat này chỉ làm **APP**: app PWA quản lý cơ sở và trang quản trị
 4. Form: `components/AreasSection.tsx` (trang trại), `components/CycleInfoFields.tsx` + `screens/CreateCycleScreen.tsx`/`screens/ProductionTab.tsx` (vụ), `screens/LogActivityScreen.tsx` (ghi việc). Hiển thị: `CycleStatsStrip`, `SummarySection`, `LogsScreen`.
 5. Lỗi thân thiện: `lib/errors.ts`. Tìm đúng dòng bằng Grep rồi đọc một khoảng; đừng đọc cả file lớn.
 6. Tài liệu: `STATUS_APP.md` ngắn; lịch sử ở `STATUS_APP_LICHSU.md`; `DECISIONS_APP.md` có mục lục đầu file.
+- Form nhập liệu mới luôn dùng khung `.inline-form` (có thẻ `.card` bao ngoài khi sửa): app tự **cuộn tới form** khi người dùng bấm Sửa/Thêm mới (`lib/autoScrollToForm.ts`, gắn một lần ở `App.tsx`); ô lọc dùng `.filters` (cùng kiểu chữ với form). Form thêm và form sửa đặt cùng chỗ, cùng trường.
