@@ -608,3 +608,6 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 /* Nút biểu tượng của một dòng: các nút liên quan nằm chung một hàng; nhóm khác xuống hàng dưới (ví dụ ↑ ↓ rồi ✎ ✕) */
 .iconrows { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .iconline { display: flex; justify-content: flex-end; gap: 4px; }
+
+/* Dòng phụ trong thẻ (card): xuống dòng riêng, có khoảng cách với tên phía trên, không dính chữ liền nhau */
+.card .sub { display: block; color: var(--muted); font-size: 13px; }

@@ -3,7 +3,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { CycleCalendar } from '../components/CycleCalendar';
 import { Collapsible } from '../components/Collapsible';
-import { CycleQr } from '../components/CycleQr';
 import { CycleCounts } from '../components/CycleCounts';
 import { CycleGrowth } from '../components/CycleGrowth';
 import { CycleMilestones } from '../components/MilestonePanels';
@@ -111,9 +110,6 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
           <ModelPicker cycleId={cycleId} onDone={() => undefined} />
         </Collapsible>
       )}
-      <Collapsible title="Mã QR của vụ" summary="tên vụ, nơi trồng, thời gian, vật tư đã dùng" defaultOpen={openQr}>
-        <CycleQr cycleId={cycleId} label={cycle.name || crop} />
-      </Collapsible>
 
       {(() => {
         const w = withdrawals.find((x) => x.cycle_id === cycleId);
@@ -142,9 +138,9 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
             {due.map(({ stage: s, doneToday }) => (
               <div className="row" key={s.id}>
                 <span className="grow">
-                  {s.phase_name ? `${s.phase_name} › ` : ''}{s.name}
-                  <span className="sub">{s.repeat_every_days ? `Lặp mỗi ${s.repeat_every_days} ngày · ` : ''}{s.importance === 'high' ? 'Quan trọng · ' : ''}{s.note ?? ''}</span>
-                  {s.guide && <span className="sub">Hướng dẫn: {s.guide}</span>}
+                  {s.phase_name ? `${s.phase_name} › ` : ''}{s.name}{' '}
+                  <span className="sub">{s.repeat_every_days ? `Lặp mỗi ${s.repeat_every_days} ngày · ` : ''}{s.importance === 'high' ? 'Quan trọng · ' : ''}{s.note ?? ''}</span>{' '}
+                  {s.guide && <span className="sub">Hướng dẫn: {s.guide}</span>}{' '}
                   {(s.materials ?? []).length > 0 && <span className="sub">Vật tư: {(s.materials ?? []).map((m) => `${m.name}${m.amount ? ` (${m.amount})` : ''}`).join('; ')}</span>}
                 </span>
                 {doneToday ? <span className="pill ok">Đã ghi</span>
