@@ -611,3 +611,11 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 
 /* Dòng phụ trong thẻ (card): xuống dòng riêng, có khoảng cách với tên phía trên, không dính chữ liền nhau */
 .card .sub { display: block; color: var(--muted); font-size: 13px; }
+
+/* Menu Khai báo: các khung (nhóm chức năng liên quan), mỗi khung một ô lớn có dòng tóm tắt các mục bên trong */
+.gtiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 8px 0; }
+.gtile { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px; min-height: 108px; text-align: left; font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 1px 3px rgba(16, 40, 26, .1); cursor: pointer; }
+.gtile:active { transform: scale(.98); background: var(--tint); }
+.gtile-ico { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; font-size: 1.4rem; background: var(--tint); }
+.gtile-title { font-weight: 700; font-size: 1.02rem; }
+.gtile-sub { color: var(--muted); font-size: 12.5px; line-height: 1.3; }

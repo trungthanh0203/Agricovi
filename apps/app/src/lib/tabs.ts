@@ -84,6 +84,28 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
   ].filter((x): x is Section<DeclareSection> => x !== null));
 }
 
+/** Khung gom các mục của tab Khai báo theo chức năng liên quan (menu Khai báo hiện 4 khung, trong khung là thanh chọn mục) */
+export interface DeclareGroup { id: string; label: string; icon: string; items: Section<DeclareSection>[] }
+const DECLARE_GROUPS: { id: string; label: string; icon: string; ids: DeclareSection[] }[] = [
+  { id: 'base', label: 'Cơ sở & vật tư', icon: '🏡', ids: ['areas', 'crops', 'places', 'materials', 'partners'] },
+  { id: 'org', label: 'Tổ chức', icon: '👥', ids: ['positions', 'teams', 'members'] },
+  { id: 'process', label: 'Quy trình', icon: '📋', ids: ['worktypes', 'templates'] },
+  { id: 'legal', label: 'Giấy phép & đối tác', icon: '🤝', ids: ['licenses', 'coop', 'customers'] },
+];
+/** Các khung của tab Khai báo mà người dùng có ít nhất một mục (đã lọc theo quyền và chế độ hiển thị); mục nào chưa xếp khung thì vào khung "Khác" */
+export function declareGroups(org: MyOrg | null): DeclareGroup[] {
+  const all = declareSections(org);
+  const used = new Set<string>();
+  const groups: DeclareGroup[] = DECLARE_GROUPS.map((g) => {
+    const items = g.ids.map((id) => all.find((s) => s.id === id)).filter((x): x is Section<DeclareSection> => !!x);
+    items.forEach((i) => used.add(i.id));
+    return { id: g.id, label: g.label, icon: g.icon, items };
+  }).filter((g) => g.items.length > 0);
+  const rest = all.filter((s) => !used.has(s.id));
+  if (rest.length > 0) groups.push({ id: 'other', label: 'Khác', icon: '🧰', items: rest });
+  return groups;
+}
+
 /** Tab Cấu hình (chủ và quản lý): các danh sách mặc định của hệ thống, xem lib/config.ts */
 export const canSeeConfig = (org: MyOrg | null) => !!org && hasRole(org.roles, 'manager');
 
