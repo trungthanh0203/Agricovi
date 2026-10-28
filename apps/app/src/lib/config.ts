@@ -218,6 +218,8 @@ export function useConfig() {
   return {
     org,
     kindsOn, kindOn, animalsOn,
+    /** Cơ sở có dùng Công đoạn trong Quy trình mẫu không (mặc định có) */
+    usePhases: (): boolean => read(org ?? '').items['use_phases']?.[0] !== 'no',
     items: (id: string) => itemsOf(org, defById(id)),
     entries, choices, resolve, choiceOf, labelOf,
     /** Nhóm loại sản phẩm chọn được (id là mã mục) */

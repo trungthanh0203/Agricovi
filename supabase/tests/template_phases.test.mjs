@@ -87,3 +87,12 @@ test('thứ tự việc của quy trình: theo công đoạn, việc chưa xếp
   ];
   assert.deepEqual(flatOrder(phases, stages), ['c', 'a', 'd', 'b', 'e']);
 });
+
+test('tùy chọn dùng công đoạn (migration 0110): chủ đặt yes/no, giá trị khác bị từ chối, nhân viên không đặt được', async () => {
+  const { db, owner, worker, org } = await setup();
+  await asUser(db, owner, `select set_org_config($1,'use_phases',array['no'])`, [org]);
+  assert.deepEqual((await asUser(db, worker, `select items from org_config where organization_id=$1 and key='use_phases'`, [org])).rows[0].items, ['no']);
+  await asUser(db, owner, `select set_org_config($1,'use_phases',array['yes'])`, [org]);
+  assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'use_phases',array['có'])`, [org])), /INVALID_ITEMS/);
+  assert.match(await expectError(asUser(db, worker, `select set_org_config($1,'use_phases',array['no'])`, [org])), /FORBIDDEN/);
+});

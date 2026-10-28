@@ -182,7 +182,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   }
 
   async function remove(c: CycleRow) {
-    if (!window.confirm(`Xóa vụ "${c.name || cropName(c.crop_type_id)}" cùng các công đoạn và ghi chú? Không khôi phục được. Vụ đã có nhật ký, thu hoạch, chi phí… thì không xóa được, hãy chọn Kết thúc vụ.`)) return;
+    if (!window.confirm(`Xóa vụ "${c.name || cropName(c.crop_type_id)}" cùng các việc và ghi chú? Không khôi phục được. Vụ đã có nhật ký, thu hoạch, chi phí… thì không xóa được, hãy chọn Kết thúc vụ.`)) return;
     setActionError(null);
     try { await deleteCycle(c.id); } catch (err) { setActionError(friendlyError(err)); }
   }
@@ -233,7 +233,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
               <>
                 <div className="progress" role="progressbar" aria-valuenow={prog.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Tiến độ vụ"><i style={{ width: `${prog.percent}%` }} /></div>
                 <p className="muted">
-                  {prog.done}/{prog.total} công đoạn
+                  {prog.done}/{prog.total} việc
                   {prog.current ? ` · Hiện tại: ${prog.current.name} (${fmtDate(prog.current.planned_start)} – ${fmtDate(prog.current.planned_end)})` : ' · Đã hoàn tất'}
                   {c.status === 'active' && prog.delay > 0 && <span className="pill warn"> Trễ {prog.delay} ngày</span>}
                 </p>

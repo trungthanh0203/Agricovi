@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCatalog, workTypesForKind } from '../lib/catalog';
+import { useConfig } from '../lib/config';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { parseNumber } from '../lib/inventory';
@@ -24,6 +25,8 @@ interface Props { templateId: string; canEdit: boolean; onBack: () => void; onOp
  */
 export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Props) {
   const online = useOnline();
+  const cfg = useConfig();
+  const flat = !cfg.usePhases(); // cơ sở không dùng công đoạn: quy trình chỉ là danh sách việc
   const { workTypes: allTypes, cropTypes } = useCatalog();
   const [tpl, setTpl] = useState<TemplateRow | null>(null);
   const [stages, setStages] = useState<StageRow[]>([]);
@@ -58,6 +61,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
   const ranges = useMemo(() => stageRanges([...stages].sort((a, b) => a.seq - b.seq)), [stages]);
   const days = totalDays(stages);
   const inPhase = (phaseId: string | null) => stages.filter((s) => (s.phase_id ?? null) === phaseId).sort((a, b) => a.seq - b.seq);
+  const allStages = [...stages].sort((a, b) => a.seq - b.seq);
   const orphans = stages.filter((s) => !s.phase_id || !phases.some((p) => p.id === s.phase_id)).sort((a, b) => a.seq - b.seq);
 
   async function run(fn: () => Promise<unknown>) {
@@ -84,6 +88,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
       const ids = list.map((x) => x.id);
       [ids[idx], ids[idx + d]] = [ids[idx + d]!, ids[idx]!];
       // đổi chỗ hai việc kề nhau trong cùng nhóm: gán lại thứ tự cho cả quy trình
+      if (flat) { void run(() => reorderStages(templateId, ids)); return; }
       void run(async () => {
         const all = flatOrder(phases, stages).filter((id) => !ids.includes(id));
         const firstOfGroup = flatOrder(phases, stages).findIndex((id) => ids.includes(id));
@@ -110,9 +115,9 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
         </p>
         {s.note && <p>{s.note}</p>}
         {canEdit && editStage === s.id && (
-          <StageForm key={s.id} title={`Sửa việc: ${s.name}`} stage={s} phaseId={phaseId} phases={orderedPhases} types={types} busy={busy || !online}
+          <StageForm key={s.id} title={`Sửa việc: ${s.name}`} stage={s} phaseId={phaseId} phases={flat ? [] : orderedPhases} types={types} busy={busy || !online}
             onClose={() => setEditStage(null)}
-            onSave={(v) => run(async () => { await updateStage(s.id, { ...v.fields, phase_id: v.phaseId }); await resequence(); setEditStage(null); })} />
+            onSave={(v) => run(async () => { await updateStage(s.id, flat ? v.fields : { ...v.fields, phase_id: v.phaseId }); if (!flat) await resequence(); setEditStage(null); })} />
         )}
       </div>
     );
@@ -127,7 +132,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
           {!tpl.is_active && <span className="pill warn">Ngừng dùng</span>}
         </div>
         {tpl.note && <p>{tpl.note}</p>}
-        <p className="muted">{phases.length} công đoạn · {stages.length} việc · tổng {days} ngày · bản {tpl.version}</p>
+        <p className="muted">{flat ? '' : `${phases.length} công đoạn · `}{stages.length} việc · tổng {days} ngày · bản {tpl.version}</p>
         {stages.length > 0 && (
           <div className="timeline" role="img" aria-label={`Tổng quan ${stages.length} việc, ${days} ngày`}>
             {[...stages].sort((a, b) => a.seq - b.seq).map((s, i) => <div key={s.id} className="seg" style={{ flexGrow: s.duration_days, background: COLORS[i % COLORS.length] }} title={`${s.name}: ${s.duration_days} ngày`} />)}
@@ -153,7 +158,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
       {!canEdit && <p className="muted">Bạn chỉ xem được quy trình này.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
-      {canEdit && (editPhase && phases.find((p) => p.id === editPhase)
+      {canEdit && !flat && (editPhase && phases.find((p) => p.id === editPhase)
         ? (
           <PhaseForm key={editPhase} title="Sửa công đoạn" phase={phases.find((p) => p.id === editPhase)!} busy={busy || !online}
             onClose={() => setEditPhase(null)}
@@ -166,9 +171,23 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
           </Collapsible>
         ))}
 
-      {orderedPhases.length === 0 && orphans.length === 0 && <p className="muted">Chưa có công đoạn nào. Bấm "＋ Thêm công đoạn", rồi thêm các việc vào công đoạn.</p>}
+      {flat && (
+        <>
+          {phases.length > 0 && <p className="muted">Quy trình này đã có công đoạn; đang tắt "Dùng Công đoạn" ở Cấu hình nên chỉ hiện danh sách việc. Bật lại để xem theo công đoạn.</p>}
+          {canEdit && editStage === null && (
+            <Collapsible inline title="＋ Thêm việc">
+              <StageForm title="" stage={null} phaseId={null} phases={[]} types={types} busy={busy || !online}
+                onSave={(v) => run(async () => { await addStage(templateId, { work_type_id: v.fields.work_type_id!, duration_days: v.fields.duration_days!, note: v.fields.note ?? '', importance: v.fields.importance }); })} />
+            </Collapsible>
+          )}
+          {allStages.length === 0 && <p className="muted">Chưa có việc nào. Bấm "＋ Thêm việc".</p>}
+          {allStages.map((s, j) => stageCard(s, `${j + 1}.`, allStages, j, s.phase_id ?? null))}
+        </>
+      )}
 
-      {orderedPhases.map((p, i) => {
+      {!flat && orderedPhases.length === 0 && orphans.length === 0 && <p className="muted">Chưa có công đoạn nào. Bấm "＋ Thêm công đoạn", rồi thêm các việc vào công đoạn.</p>}
+
+      {!flat && orderedPhases.map((p, i) => {
         const list = inPhase(p.id);
         return (
           <Collapsible key={p.id} title={`${phaseNo(p, i)}. ${p.name}`} summary={`${list.length} việc · ${phaseDays(p.id)} ngày`} defaultOpen={openPhase === p.id}>
@@ -198,7 +217,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
         );
       })}
 
-      {orphans.length > 0 && (
+      {!flat && orphans.length > 0 && (
         <Collapsible title="Việc chưa xếp công đoạn" summary={`${orphans.length} việc · ${phaseDays(null) || orphans.reduce((n, s) => n + s.duration_days, 0)} ngày`} defaultOpen>
           <p className="muted">Các việc này còn từ quy trình cũ. Bấm ✎ rồi chọn công đoạn để xếp vào.</p>
           {orphans.map((s, j) => stageCard(s, `${j + 1}.`, orphans, j, null))}
@@ -258,7 +277,7 @@ function StageForm({ title, stage, phaseId, phases, types, busy, onSave, onClose
           {types.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
         </select>
       </label>
-      {stage && (
+      {stage && phases.length > 0 && (
         <label>Công đoạn
           <select value={phase} onChange={(e) => setPhase(e.target.value)}>
             <option value={NO_PHASE}>— Chưa xếp công đoạn —</option>

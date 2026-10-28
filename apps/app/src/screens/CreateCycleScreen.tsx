@@ -15,8 +15,8 @@ import { useConfig } from '../lib/config';
 import type { AreaRow } from '../lib/db';
 
 /**
- * Tạo vụ mới (P2): BẮT BUỘC chọn quy trình mẫu của cơ sở sở hữu vụ. Công đoạn và ngày kế hoạch của vụ
- * được sao từ mẫu lúc tạo; sau này theo dõi vụ đúng theo các công đoạn đó.
+ * Tạo vụ mới (P2): BẮT BUỘC chọn quy trình mẫu của cơ sở sở hữu vụ. Việc và ngày kế hoạch của vụ
+ * được sao từ mẫu lúc tạo; sau này theo dõi vụ đúng theo các việc đó.
  */
 export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: string) => void; onCancel: () => void }) {
   const { active } = useOrgs();
@@ -88,7 +88,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   }, [templateId]);
 
   const cropName = (id: string) => cropTypes.find((c) => c.id === id)?.name ?? '—';
-  // Sản phẩm chọn được: sản phẩm đang dùng có ít nhất một quy trình có công đoạn; quy trình hiện theo sản phẩm đã chọn
+  // Sản phẩm chọn được: sản phẩm đang dùng có ít nhất một quy trình có việc; quy trình hiện theo sản phẩm đã chọn
   const productsWithTpl = cropTypes.filter((c) => c.is_active && cfg.kindOn(c.kind) && (templates ?? []).some((t) => t.crop_type_id === c.id)).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const templatesFor = (templates ?? []).filter((t) => t.crop_type_id === productId);
   function pickProduct(id: string) {
@@ -211,7 +211,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           </label>
           {templates !== null && templates.length === 0 && (
             <p className="msg warn">
-              Cơ sở này chưa có quy trình nào có công đoạn. Hãy vào tab Khai báo → Quy trình mẫu để tạo quy trình trước.
+              Cơ sở này chưa có quy trình nào có việc. Hãy vào tab Khai báo → Quy trình mẫu để tạo quy trình trước.
             </p>
           )}
           {picked?.note && <p className="muted">{picked.note}</p>}
@@ -279,9 +279,9 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
 
           {plan.length > 0 && (
             <div className="card slim">
-              <strong>Các công đoạn của vụ ({plan.length} công đoạn · {total} ngày)</strong>
+              <strong>Các việc của vụ ({plan.length} việc · {total} ngày)</strong>
               <table className="grid">
-                <thead><tr><th>Công đoạn</th><th>Từ</th><th>Đến</th></tr></thead>
+                <thead><tr><th>Việc</th><th>Từ</th><th>Đến</th></tr></thead>
                 <tbody>
                   {plan.map((s) => (
                     <tr key={s.id}><td>{s.name}<span className="sub">{s.duration_days} ngày</span></td><td>{fmtDate(s.start)}</td><td>{fmtDate(s.end)}</td></tr>

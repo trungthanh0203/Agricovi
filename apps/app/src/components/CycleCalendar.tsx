@@ -7,8 +7,8 @@ import { toLocalInput } from '../lib/hooks';
 const WEEKDAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
 /**
- * Lịch của vụ theo tháng: mỗi ngày tô màu công đoạn theo KẾ HOẠCH, chấm tròn nếu hôm đó có nhật ký,
- * viền đậm là hôm nay. Bấm một ngày để xem công đoạn và số việc đã ghi. Một màn nhìn là nắm cả quy trình của vụ.
+ * Lịch của vụ theo tháng: mỗi ngày tô màu việc theo KẾ HOẠCH, chấm tròn nếu hôm đó có nhật ký,
+ * viền đậm là hôm nay. Bấm một ngày để xem việc và số việc đã ghi. Một màn nhìn là nắm cả quy trình của vụ.
  */
 export function CycleCalendar({ stages, logs, today, notes, canAdd, userId, canManage, busy, onAddNote, onToggleNote, onDeleteNote }: {
   stages: StageRow[]; logs: LogRow[]; today: string;
@@ -83,7 +83,7 @@ export function CycleCalendar({ stages, logs, today, notes, canAdd, userId, canM
               className={`cal-c${d === today ? ' today' : ''}${picked === d ? ' picked' : ''}${noteDays.has(d) ? ' has-note' : ''}`}
               style={st ? { background: `${stageColor(st.i)}33`, borderColor: stageColor(st.i) } : undefined}
               onClick={() => setPicked(d === picked ? null : d)}
-              aria-label={`${fmtDate(d)}${st ? `, công đoạn ${st.s.name}` : ''}${n ? `, ${n} việc đã ghi` : ''}${noteDays.has(d) ? ', có ghi chú' : ''}`}
+              aria-label={`${fmtDate(d)}${st ? `, việc ${st.s.name}` : ''}${n ? `, ${n} việc đã ghi` : ''}${noteDays.has(d) ? ', có ghi chú' : ''}`}
             >
               <span>{Number(d.slice(8))}</span>
               {n > 0 && <i className="dot" />}
@@ -101,7 +101,7 @@ export function CycleCalendar({ stages, logs, today, notes, canAdd, userId, canM
       {picked && (
         <>
         <p className="muted">
-          {fmtDate(picked)}: {info ? `công đoạn "${info.s.name}" (kế hoạch ${fmtDate(info.s.planned_start)} – ${fmtDate(info.s.planned_end)})` : 'ngoài kế hoạch của vụ'}
+          {fmtDate(picked)}: {info ? `việc "${info.s.name}" (kế hoạch ${fmtDate(info.s.planned_start)} – ${fmtDate(info.s.planned_end)})` : 'ngoài kế hoạch của vụ'}
           {logDays.get(picked) ? `, đã ghi ${logDays.get(picked)} việc.` : ', chưa ghi việc.'}
         </p>
         <h3 className="sub">Ghi chú ngày {fmtDate(picked)}</h3>

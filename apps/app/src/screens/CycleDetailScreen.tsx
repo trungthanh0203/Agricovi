@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { CycleCalendar } from '../components/CycleCalendar';
@@ -32,8 +32,8 @@ import { canManageProduction, isOwner } from '../lib/roles';
 export interface LogPreset { cycleId: string; workTypeId?: string | null; stageId?: string | null }
 
 /**
- * Chi tiết một vụ: các công đoạn theo quy trình đã chọn (kế hoạch và thực tế), tiến độ, và xem dạng lịch.
- * Người quản lý bấm Bắt đầu / Hoàn thành, sửa/thêm/xóa công đoạn của vụ này; mọi người ghi việc thẳng vào công đoạn đang làm
+ * Chi tiết một vụ: các việc theo quy trình đã chọn (kế hoạch và thực tế), tiến độ, và xem dạng lịch.
+ * Người quản lý bấm Bắt đầu / Hoàn thành, sửa/thêm/xóa việc của vụ này; mọi người ghi việc thẳng vào việc đang làm
  * và thêm ghi chú cho từng ngày ở dạng lịch (hiện nhắc ở Trang chủ).
  */
 export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openCalendar, notice }: { cycleId: string; onClose: () => void; onLog: (p: LogPreset) => void; onGo?: (tab: TabId, section?: string) => void; openQr?: boolean; openCalendar?: boolean; notice?: string | null }) {
@@ -55,7 +55,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
   const [adding, setAdding] = useState(false);
   const today = todayLocal();
 
-  // mở màn này là làm mới công đoạn từ máy chủ (người khác có thể vừa đổi)
+  // mở màn này là làm mới việc từ máy chủ (người khác có thể vừa đổi)
   useEffect(() => { if (navigator.onLine) void refreshCycle(cycleId).catch(() => undefined); }, [cycleId]);
 
   const prog = useMemo(() => cycleProgress(stages, today), [stages, today]);
@@ -139,7 +139,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
       {prog.total > 0 ? (
         <div className="card slim">
           <div className="row">
-            <strong>Tiến độ: {prog.done}/{prog.total} công đoạn</strong>
+            <strong>Tiến độ: {prog.done}/{prog.total} việc</strong>
             <span className="grow" />
             {prog.delay > 0 ? <span className="pill warn">Trễ {prog.delay} ngày</span> : prog.current ? <span className="pill ok">Đúng tiến độ</span> : <span className="pill ok">Hoàn tất</span>}
           </div>
@@ -147,11 +147,11 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
           {prog.current && <p className="muted">Hiện tại: <strong>{prog.current.name}</strong> ({STAGE_STATUS_LABEL_VI[prog.current.status].toLowerCase()}, kế hoạch {fmtDate(prog.current.planned_start)} – {fmtDate(prog.current.planned_end)})</p>}
         </div>
       ) : (
-        <p className="msg warn">Vụ này chưa có công đoạn nào.{canEditStages ? ' Bấm "+ Thêm công đoạn" bên dưới để thêm.' : ''}</p>
+        <p className="msg warn">Vụ này chưa có việc nào.{canEditStages ? ' Bấm "+ Thêm việc" bên dưới để thêm.' : ''}</p>
       )}
 
-      {!isActive && prog.total > 0 && !closed && <p className="muted">Chỉ vụ đang sản xuất mới bắt đầu/hoàn thành công đoạn và ghi việc được.</p>}
-      {!online && canManage && <p className="msg warn" role="status">Đang offline: đổi công đoạn và ghi chú cần có mạng. Ghi việc vẫn dùng được.</p>}
+      {!isActive && prog.total > 0 && !closed && <p className="muted">Chỉ vụ đang sản xuất mới bắt đầu/hoàn thành việc và ghi việc được.</p>}
+      {!online && canManage && <p className="msg warn" role="status">Đang offline: đổi việc và ghi chú cần có mạng. Ghi việc vẫn dùng được.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
       <div className="chips" role="tablist" aria-label="Cách xem">
@@ -170,18 +170,21 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
       ) : (
         <>
           <table className="grid">
-            <thead><tr><th>Công đoạn</th><th>Kế hoạch</th><th>Thực tế</th><th></th></tr></thead>
+            <thead><tr><th>Việc</th><th>Kế hoạch</th><th>Thực tế</th><th></th></tr></thead>
             <tbody>
-              {stages.length === 0 && <tr><td colSpan={4} className="muted">Chưa có công đoạn.</td></tr>}
+              {stages.length === 0 && <tr><td colSpan={4} className="muted">Chưa có việc nào.</td></tr>}
               {stages.map((s, i) => {
                 const late = stageDelayDays(s, today);
+                const newPhase = s.phase_name && s.phase_name !== stages[i - 1]?.phase_name; // quy trình có việc: tiêu đề nhóm
                 return (
-                  <tr key={s.id}>
+                  <Fragment key={s.id}>
+                  {newPhase && <tr><td colSpan={4}><strong>{s.phase_code ? `${s.phase_code}. ` : ''}{s.phase_name}</strong></td></tr>}
+                  <tr>
                     <td>
                       <i className="swatch" style={{ background: stageColor(i) }} />{s.name}
                       {s.note && <span className="sub">{s.note}</span>}
                       <span className="sub">
-                        {STAGE_STATUS_LABEL_VI[s.status]}{late > 0 && s.status !== 'pending' ? ` · trễ ${late} ngày` : ''}
+                        {s.importance === 'high' ? 'Quan trọng · ' : ''}{STAGE_STATUS_LABEL_VI[s.status]}{late > 0 && s.status !== 'pending' ? ` · trễ ${late} ngày` : ''}
                         {late > 0 && s.status === 'pending' ? ` · chưa bắt đầu, trễ ${late} ngày` : ''}
                         {logCount.get(s.id) ? ` · ${logCount.get(s.id)} việc đã ghi` : ''}
                       </span>
@@ -201,10 +204,11 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                         </>
                       )}
                       {canEditStages && (
-                        <button className="icon" aria-label={`Sửa công đoạn ${s.name}`} onClick={() => { setAdding(false); setEditing(editing === s.id ? null : s.id); }}>✎</button>
+                        <button className="icon" aria-label={`Sửa việc ${s.name}`} onClick={() => { setAdding(false); setEditing(editing === s.id ? null : s.id); }}>✎</button>
                       )}
                     </td>
                   </tr>
+                  </Fragment>
                 );
               })}
             </tbody>
@@ -212,7 +216,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
 
           {editing && stages.find((s) => s.id === editing) && (
             <StageForm
-              key={editing} title="Sửa công đoạn" stage={stages.find((s) => s.id === editing)!} busy={busy || !online}
+              key={editing} title="Sửa việc" stage={stages.find((s) => s.id === editing)!} busy={busy || !online}
               workTypes={workTypes.filter((w) => w.is_active || w.id === stages.find((s) => s.id === editing)!.work_type_id)}
               canDelete={stages.find((s) => s.id === editing)!.status === 'pending'}
               onClose={() => setEditing(null)}
@@ -221,18 +225,18 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                 setEditing(null);
               })}
               onDelete={() => {
-                if (!window.confirm('Xóa công đoạn này khỏi vụ?')) return;
+                if (!window.confirm('Xóa việc này khỏi vụ?')) return;
                 void run(async () => { await deleteCycleStage(cycleId, editing); setEditing(null); }).catch(() => undefined);
               }}
             />
           )}
 
           {canEditStages && !adding && !editing && (
-            <button className="secondary" disabled={!online} onClick={() => setAdding(true)}>+ Thêm công đoạn</button>
+            <button className="secondary" disabled={!online} onClick={() => setAdding(true)}>+ Thêm việc</button>
           )}
           {canEditStages && adding && (
             <StageForm
-              title="Thêm công đoạn vào cuối quy trình của vụ" busy={busy || !online} workTypes={workTypes.filter((w) => w.is_active)}
+              title="Thêm việc vào cuối quy trình của vụ" busy={busy || !online} workTypes={workTypes.filter((w) => w.is_active)}
               defaults={{ start: addDays(lastEnd, 1), end: addDays(lastEnd, 3) }}
               onClose={() => setAdding(false)}
               onSave={(v) => run(async () => {
@@ -252,7 +256,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
   );
 }
 
-/** Biểu mẫu thêm/sửa một công đoạn của vụ: việc (từ danh mục), tên, ngày kế hoạch, ghi chú */
+/** Biểu mẫu thêm/sửa một việc của vụ: việc (từ danh mục), tên, ngày kế hoạch, ghi chú */
 function StageForm({ title, stage, defaults, workTypes, busy, canDelete, onSave, onDelete, onClose }: {
   title: string;
   stage?: StageRow;
@@ -280,7 +284,7 @@ function StageForm({ title, stage, defaults, workTypes, busy, canDelete, onSave,
             {workTypes.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
           </select>
         </label>
-        <label>Tên công đoạn<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
+        <label>Tên việc<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
         <div className="pair">
           <label>Từ ngày<input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></label>
           <label>Đến ngày<input type="date" value={end} onChange={(e) => setEnd(e.target.value)} /></label>
@@ -289,13 +293,13 @@ function StageForm({ title, stage, defaults, workTypes, busy, canDelete, onSave,
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {
-            if (!name.trim()) return setErr('Hãy nhập tên công đoạn hoặc chọn việc.');
+            if (!name.trim()) return setErr('Hãy nhập tên việc hoặc chọn việc.');
             if (!start || !end) return setErr('Hãy chọn ngày bắt đầu và kết thúc.');
             if (end < start) return setErr('Ngày kết thúc không thể trước ngày bắt đầu.');
             setErr(null);
             void onSave({ name, workTypeId: wt || null, start, end, note }).catch(() => undefined);
           }}>Lưu</button>
-          {canDelete && onDelete && <button className="secondary" disabled={busy} onClick={onDelete}>Xóa công đoạn</button>}
+          {canDelete && onDelete && <button className="secondary" disabled={busy} onClick={onDelete}>Xóa việc</button>}
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>
       </div>

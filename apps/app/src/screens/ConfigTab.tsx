@@ -23,8 +23,30 @@ export function ConfigTab() {
       {CONFIG_DEFS.map((d) => (d.mode === 'entries'
         ? <EntriesRow key={d.id} def={d} orgId={cfg.org} />
         : <FreeRow key={d.id} def={d} orgId={cfg.org} items={cfg.items(d.id)} />))}
+      <PhasesOption orgId={cfg.org} on={cfg.usePhases()} />
       <UnitsConfig />
     </section>
+  );
+}
+
+/** Chọn có dùng Công đoạn trong Quy trình mẫu: tắt thì quy trình chỉ là danh sách việc, bật thì gom việc theo công đoạn */
+function PhasesOption({ orgId, on }: { orgId: string | undefined; on: boolean }) {
+  const online = useOnline();
+  const [val, setVal] = useState(on);
+  const { busy, msg, run } = useSaver();
+  useEffect(() => { setVal(on); }, [on]);
+  return (
+    <Collapsible title="Quy trình mẫu" summary={on ? 'Dùng công đoạn' : 'Chỉ danh sách việc'}>
+      <div className="inline-form">
+        <label className="check"><input type="checkbox" checked={val} onChange={(e) => setVal(e.target.checked)} /> <span>Dùng Công đoạn trong Quy trình mẫu</span></label>
+        <p className="muted">Bật: mỗi quy trình gồm các công đoạn (Chuẩn bị, Ươm, Trồng…) và mỗi công đoạn có các việc. Tắt: quy trình chỉ là một danh sách việc, gọn hơn cho cơ sở nhỏ. Đổi lúc nào cũng được, không mất dữ liệu.</p>
+        {msg && <p className={msg.ok ? 'msg ok' : 'msg error'} role={msg.ok ? 'status' : 'alert'}>{msg.text}</p>}
+        {!online && <p className="msg warn" role="status">Cần có mạng để lưu.</p>}
+        <div className="btnrow">
+          <button className="primary" disabled={busy || !online || val === on} onClick={() => { if (orgId) void run(() => saveConfig(orgId, 'use_phases', [val ? 'yes' : 'no'])); }}>Lưu</button>
+        </div>
+      </div>
+    </Collapsible>
   );
 }
 
