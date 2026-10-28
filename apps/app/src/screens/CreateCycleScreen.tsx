@@ -131,7 +131,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     if (startNow && chosen && (!chosen.is_current || (chosen.max_cycles !== null && chosen.used_cycles >= chosen.max_cycles))) {
       return setError(
         chosen.is_current
-          ? `Đã dùng ${chosen.used_cycles}/${chosen.max_cycles} vụ của gói. Kết thúc một vụ, nâng gói, hoặc chọn "Chưa bắt đầu" để lưu ở trạng thái Chuẩn bị.`
+          ? `Đã dùng ${chosen.used_cycles}/${chosen.max_cycles} vụ của gói (vụ đang sản xuất và vụ đang tạm dừng đều được tính). Hãy kết thúc hoặc hủy một vụ, nâng gói, hoặc chọn "Chưa bắt đầu" để lưu ở trạng thái Chuẩn bị.`
           : 'Gói đã hết hạn nên chưa tạo được vụ đang sản xuất. Hãy gia hạn, hoặc chọn "Chưa bắt đầu".',
       );
     }
@@ -162,6 +162,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
 
   return (
     <div className="auth">
+      <button type="button" className="link" onClick={onCancel}>← Quay lại</button>
       <h1>Tạo vụ mới</h1>
       <p className="muted">Cơ sở: {active.name}</p>
 
@@ -181,7 +182,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
                   <span>
                     <strong>{ownerLabel(c)}</strong>
                     <small>
-                      Đã dùng {c.used_cycles}/{c.max_cycles ?? '—'} vụ{c.plan_name ? ` · ${c.plan_name}` : ''}
+                      Đã dùng {c.used_cycles}/{c.max_cycles ?? '—'} vụ (tính cả vụ tạm dừng){c.plan_name ? ` · ${c.plan_name}` : ''}
                       {!c.is_current && ' · Gói đã hết hạn'}
                     </small>
                   </span>

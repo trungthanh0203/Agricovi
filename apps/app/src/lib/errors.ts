@@ -16,7 +16,7 @@ export function friendlyError(err: unknown): string {
   if (/production_cycles_code_uq/.test(msg)) return 'Mã này đã được dùng cho vụ khác trong cơ sở. Hãy đặt mã khác.';
   if (/duplicate key|already exists/i.test(msg)) return 'Tên này đã có trong danh sách. Hãy dùng tên khác.';
   if (/INVALID_NAME/.test(msg)) return 'Tên cơ sở cần ít nhất 2 ký tự.';
-  if (/QUOTA_EXCEEDED/.test(msg)) return 'Đã dùng hết số vụ của gói. Hãy kết thúc một vụ hoặc nâng gói để tạo thêm.';
+  if (/QUOTA_EXCEEDED/.test(msg)) return 'Đã dùng hết số vụ của gói (vụ đang sản xuất và vụ đang tạm dừng đều được tính). Hãy kết thúc hoặc hủy một vụ, nâng gói, hoặc lưu vụ mới ở trạng thái "Chưa bắt đầu".';
   if (/QUOTA_NO_SUBSCRIPTION/.test(msg)) return 'Gói dịch vụ đã hết hạn. Hãy gia hạn để tạo vụ mới. Dữ liệu của bạn vẫn được giữ nguyên.';
   // Các hàm máy chủ trả lỗi dạng "MÃ_LỖI: nội dung tiếng Việt" -> hiển thị phần nội dung
   const coded = /^([A-Z][A-Z_]{3,}): (.+)$/s.exec(msg);
