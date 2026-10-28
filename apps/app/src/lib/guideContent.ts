@@ -169,7 +169,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Nhập kho vật tư ban đầu',
         details: [
-          'Vào Sản xuất → Kho, chọn Nhập kho: chọn vật tư, số lượng, giá, ngày nhập.',
+          'Vào Sản xuất → Quản lý kho, chọn Nhập kho: chọn vật tư, số lượng, giá, ngày nhập.',
           'Kho tính giá vốn bình quân và tự trừ khi bạn ghi vật tư đã dùng.',
           'Mua vật tư thì ghi vào Kho, không ghi thêm vào Chi phí: tiền vật tư được tính vào chi phí của vụ lúc bạn DÙNG nó.',
           'Kiểm kho lệch thì dùng "Điều chỉnh": app ghi lại lý do, không sửa đè.',
