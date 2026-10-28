@@ -342,3 +342,9 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 1. Sản xuất → Quản lý kho → Xuất kho: lý do mặc định là **Dùng cho vụ**; chọn vụ đang chạy, vật tư, số lượng; ghi chú không bắt buộc.
 2. Mở Tổng kết vụ của vụ đó: giá vốn vật tư đã dùng tăng đúng số vừa xuất. Với vụ nuôi, cám nhóm Thức ăn xuất cho vụ được tính vào FCR (khối Tăng trọng và FCR).
 3. Chọn vụ đã kết thúc hoặc đã hủy: không xuất được. Nhân viên không có quyền sửa Kho: không vào được màn Xuất kho.
+
+### Thử J: Xong việc chỉ khi đã Ghi việc đủ (cần `db push` đến 0125)
+1. Vào Quản lý vụ của một vụ đang sản xuất, bấm **Bắt đầu** một việc có chu kỳ lặp (ví dụ Tưới nước lặp mỗi ngày). Dòng việc hiện "Đã ghi 0/N lần".
+2. Bấm **Xong** khi chưa ghi đủ: app báo "cần Ghi việc đủ N lần (đã ghi M lần)". Ghi việc còn thiếu (mỗi ngày đến hạn một lần), rồi bấm Xong lại: được.
+3. Ghi hai lần trong cùng một ngày chỉ tính một lần; khi ghi trùng app hỏi lại "Bạn vẫn muốn ghi thêm?" và nhắc vật tư sẽ bị trừ kho thêm.
+4. **Ra ca** không còn đòi phải đã Ghi việc.

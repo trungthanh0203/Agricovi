@@ -38,8 +38,6 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
   const [adjFor, setAdjFor] = useState<string | null>(null);
   const [adjs, setAdjs] = useState<AdjustmentRequest[]>([]);
   const localShift = useLiveQuery(async () => (active ? (await db.localShifts.where('org').equals(active.id).toArray())[0] ?? null : null), [active?.id], null);
-  const logs = useTable('logs');
-  const [needLog, setNeedLog] = useState(false);
   const cycles = useTable('cycles').filter((c) => c.status === 'active' && c.owner_org_id === active?.id);
   const recalled = active && uid ? recalledMyWorker(active.id, uid) : null;
 
@@ -71,17 +69,11 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
   const openShift = useMemo(() => att.find((a) => a.worker_id === me?.id && !a.ended_at && a.status !== 'rejected') ?? null, [att, me?.id]);
 
 
-  /** Từ lúc vào ca đến giờ, tôi đã ghi việc nào chưa (tính cả bản ghi còn chờ gửi trên máy). Có chọn vụ thì chỉ tính việc của vụ đó. */
-  function hasLoggedSince(startIso: string): boolean {
-    return logs.some((l) => !l.voided_at && (l.created_by === uid || l.performed_by === uid) && new Date(l.performed_at).getTime() >= new Date(startIso).getTime() && (!cycleId || l.cycle_id === cycleId));
-  }
-
   /** Vào ca; nếu có chọn vụ thì báo giai đoạn của hôm nay và chuyển tới Lịch của vụ đó */
   async function startShift() {
     if (!active) return;
     setBusy(true);
     setError(null);
-    setNeedLog(false);
     try {
       await clockIn(active.id, me?.id ?? recalled, cycleId || null);
       await load();
@@ -100,10 +92,8 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
     } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
 
-  /** Ra ca: bắt buộc đã ghi việc đã làm trong ca (chỉ kiểm khi cơ sở có vụ đang sản xuất để ghi) */
-  async function endShift(startIso: string, doOut: () => Promise<unknown>) {
-    if (cycles.length > 0 && !hasLoggedSince(startIso)) { setNeedLog(true); return; }
-    setNeedLog(false);
+  /** Ra ca không còn bắt buộc đã Ghi việc: việc được kiểm khi bấm Xong ở Quản lý vụ (người quản lý ghi việc theo quy định) */
+  async function endShift(_startIso: string, doOut: () => Promise<unknown>) {
     await run(doOut);
   }
 
@@ -121,13 +111,6 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
     <>
       {!online && <p className="msg warn" role="status">Đang offline: chấm công cần có mạng. Hãy kết nối mạng rồi thử lại.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
-      {needLog && (
-        <div className="card alert-warn" role="alert">
-          <strong>Chưa thể Ra ca</strong>
-          <p>Bạn chưa ghi công việc nào đã làm trong ca này{cycleId ? ' cho vụ đã chọn' : ''}. Hãy ghi công việc hôm nay vào hệ thống rồi quay lại bấm Ra ca.</p>
-          {onLogFor && <button className="primary" onClick={() => onLogFor(cycleId || cycles[0]?.id || null)}>Ghi việc vừa làm</button>}
-        </div>
-      )}
 
       {me || recalled ? (
         <div className="card">

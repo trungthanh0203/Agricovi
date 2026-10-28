@@ -2,6 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDb, addUser, asUser } from './harness.mjs';
 
+// Hoàn thành việc cần đã Ghi việc đủ (migration 0125): ghi một bản nhật ký gắn việc vào ngày cho trước
+const logOf = (db, stageId, ts) => db.query(`insert into activity_logs (id, organization_id, cycle_id, work_type_id, stage_id, performed_at) select gen_random_uuid(), s.organization_id, s.cycle_id, s.work_type_id, s.id, $2::timestamptz from production_stages s where s.id = $1 and s.work_type_id is not null`, [stageId, ts]);
+
 // Migration 0073 (D91): lịch giai đoạn của vụ tự đổi theo thực tế (bắt đầu chạy muộn, bắt đầu/hoàn thành lệch kế hoạch, sửa lịch một giai đoạn).
 
 const wt = (code) => `(select id from work_types where organization_id is null and code='${code}')`;
@@ -62,10 +65,12 @@ test('bắt đầu giai đoạn lệch ngày: giai đoạn đó đúng ngày th�
   await asUser(c.db, c.owner, `select advance_stage($1,'start','2026-11-03')`, [s1.id]);
   assert.deepEqual(plan(await stages(c.db)), ['2026-11-03→2026-11-05', '2026-11-06→2026-11-09', '2026-11-10→2026-11-14']);
   // hoàn thành giai đoạn 1 trễ thêm 2 ngày (7/11 thay vì 5/11): giai đoạn sau dời +2
+  await logOf(c.db, s1.id, '2026-11-07T03:00:00Z');
   await asUser(c.db, c.owner, `select advance_stage($1,'complete','2026-11-07')`, [s1.id]);
   assert.deepEqual(plan(await stages(c.db)).slice(1), ['2026-11-08→2026-11-11', '2026-11-12→2026-11-16']);
   // bắt đầu giai đoạn 2 đúng ngày kế hoạch (8/11): không đổi; hoàn thành sớm 1 ngày (10/11 thay vì 11/11): giai đoạn 3 dời -1
   await asUser(c.db, c.owner, `select advance_stage($1,'start','2026-11-08')`, [s2.id]);
+  await logOf(c.db, s2.id, '2026-11-10T03:00:00Z');
   await asUser(c.db, c.owner, `select advance_stage($1,'complete','2026-11-10')`, [s2.id]);
   assert.equal((await stages(c.db))[2].s, '2026-11-11');
   assert.equal((await cyc(c.db)).e, '2026-11-15');

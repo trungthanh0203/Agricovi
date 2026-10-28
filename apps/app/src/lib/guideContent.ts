@@ -211,7 +211,7 @@ export const GUIDES: Guide[] = [
           'Vào ca khi bắt đầu làm; app có thể nhắc công đoạn của hôm nay.',
           'Bấm nút ＋ Ghi việc ở giữa thanh dưới: chọn vụ, loại việc, nhập "Nội dung việc" (có thể bấm micro để nói), thêm vật tư đã dùng và ảnh.',
           'Ghi sai thì vào Nhật ký việc để sửa hoặc hủy (có lịch sử). Mất mạng vẫn ghi được.',
-          'Xong việc thì Ra ca.',
+          'Ra ca không cần ghi việc. Người quản lý ghi việc theo quy định (một việc, một bản ghi); bấm Xong ở Quản lý vụ chỉ được khi đã ghi đủ.',
         ],
         tip: 'Ghi ngay sau khi làm xong, số liệu chi phí và giá thành sẽ đúng hơn.',
         go: { tab: 'production', section: 'logs', label: 'Mở Nhật ký việc' },

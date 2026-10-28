@@ -19,7 +19,7 @@ import { todayLocal, useOnline } from '../lib/hooks';
 import { useAuth } from '../lib/auth';
 import { useOrgs } from '../lib/orgs';
 import { ModelPicker } from '../components/ModelPicker';
-import { dueToday } from '../lib/dueTasks';
+import { dueToday, stageLogProgress } from '../lib/dueTasks';
 import { RowMenu } from '../components/RowMenu';
 import { toLocalInput } from '../lib/hooks';
 import type { TabId } from '../lib/tabs';
@@ -44,6 +44,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
   const stages = useLiveQuery(() => db.stages.where('cycle_id').equals(cycleId).sortBy('seq'), [cycleId], []);
   const logs = useLiveQuery(() => db.logs.where('cycle_id').equals(cycleId).toArray(), [cycleId], []);
   const notes = useLiveQuery(() => db.notes.where('cycle_id').equals(cycleId).toArray(), [cycleId], []);
+  const harvestsAll = useTable('harvests'); // phiếu thu hoạch của vụ (việc Thu hoạch tính cả phiếu này khi kiểm đã ghi đủ)
   const area = useLiveQuery(async () => (cycle ? db.areas.get(cycle.area_id) : undefined), [cycle?.area_id]);
   const { cropTypes, workTypes } = useCatalog();
   const withdrawals = useTable('withdrawals');
@@ -81,7 +82,20 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
     setError(null);
     try { await fn(); } catch (e) { setError(friendlyError(e)); throw e; } finally { setBusy(false); }
   }
-  const act = (stageId: string, action: 'start' | 'complete' | 'reopen') => run(() => advanceStage(stageId, action)).catch(() => undefined);
+  const harvestCount = harvestsAll.filter((h) => h.cycle_id === cycleId && !h.voided_at).length;
+  const progressOf = (s: StageRow) => stageLogProgress(s, logs, harvestCount, /^harvesting/.test(workTypes.find((w) => w.id === s.work_type_id)?.code ?? ''), today, (iso) => toLocalInput(new Date(iso)).slice(0, 10));
+  const act = (stageId: string, action: 'start' | 'complete' | 'reopen') => {
+    if (action === 'complete') {
+      // Xong chỉ khi đã Ghi việc đủ (máy chủ cũng kiểm lại)
+      const st = stages.find((x) => x.id === stageId);
+      const p = st ? progressOf(st) : null;
+      if (st && p && p.logged < p.expected) {
+        setError(`Việc "${st.name}" cần Ghi việc đủ ${p.expected} lần mới bấm Xong được (hiện đã ghi ${p.logged} lần). Hãy bấm Ghi việc để ghi phần còn thiếu rồi bấm Xong lại.`);
+        return Promise.resolve();
+      }
+    }
+    return run(() => advanceStage(stageId, action)).catch(() => undefined);
+  };
   const lastEnd = stages.reduce<string>((m, s) => (s.planned_end && s.planned_end > m ? s.planned_end : m), cycle.start_date ?? today);
 
   return (
@@ -130,7 +144,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
 
       {isActive && (() => {
         const todayLogs = logs.filter((l) => !l.voided_at && toLocalInput(new Date(l.performed_at)).slice(0, 10) === today);
-        const due = dueToday(stages, todayLogs, today);
+        const due = dueToday(stages, todayLogs, today, logs.filter((l) => !l.voided_at));
         if (due.length === 0) return null;
         return (
           <div className="card slim">
@@ -218,7 +232,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                       <span className="sub">
                         {s.importance === 'high' ? 'Quan trọng · ' : ''}{s.repeat_every_days ? `Lặp mỗi ${s.repeat_every_days} ngày · ` : ''}{STAGE_STATUS_LABEL_VI[s.status]}{late > 0 && s.status !== 'pending' ? ` · trễ ${late} ngày` : ''}
                         {late > 0 && s.status === 'pending' ? ` · chưa bắt đầu, trễ ${late} ngày` : ''}
-                        {logCount.get(s.id) ? ` · ${logCount.get(s.id)} việc đã ghi` : ''}
+                        {s.work_type_id && s.status !== 'pending' ? ` · Đã ghi ${progressOf(s).logged}/${progressOf(s).expected} lần` : logCount.get(s.id) ? ` · ${logCount.get(s.id)} việc đã ghi` : ''}
                       </span>
                     </td>
                     <td>{fmtDate(s.planned_start)}<span className="sub">→ {fmtDate(s.planned_end)}</span></td>

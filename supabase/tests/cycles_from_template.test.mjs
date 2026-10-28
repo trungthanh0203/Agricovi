@@ -2,6 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDb, addUser, asUser, expectError } from './harness.mjs';
 
+// Hoàn thành việc cần đã Ghi việc đủ (migration 0125): ghi một bản nhật ký gắn việc vào ngày cho trước
+const logOf = (db, stageId, ts) => db.query(`insert into activity_logs (id, organization_id, cycle_id, work_type_id, stage_id, performed_at) select gen_random_uuid(), s.organization_id, s.cycle_id, s.work_type_id, s.id, $2::timestamptz from production_stages s where s.id = $1 and s.work_type_id is not null`, [stageId, ts]);
+
 // Migrations 0023–0024 (P2): mô tả cho mọi đối tượng khai báo; tạo vụ BẮT BUỘC theo quy trình mẫu; giám sát từng giai đoạn.
 
 const wt = (code) => `(select id from work_types where organization_id is null and code='${code}')`;
@@ -116,6 +119,8 @@ test('bắt đầu / hoàn thành / mở lại giai đoạn: đúng thứ tự, 
   assert.equal(r.status, 'in_progress');
   assert.match(await expectError(adv(mgr, s1, 'start')), /đã bắt đầu/);
   assert.match(await expectError(adv(mgr, s1, 'complete', '2026-10-30')), /không thể trước/);
+  assert.match(await expectError(adv(owner, s1, 'complete', '2026-11-04')), /LOG_INCOMPLETE/); // chưa Ghi việc thì chưa Xong được
+  await logOf(db, s1, '2026-11-04T03:00:00Z');
   const done = (await adv(owner, s1, 'complete', '2026-11-04')).rows[0];
   assert.equal(done.status, 'done');
   assert.equal(String(done.actual_end).slice(0, 10) >= '2026-11-04', true);

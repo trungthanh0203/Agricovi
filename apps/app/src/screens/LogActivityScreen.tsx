@@ -30,6 +30,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const { cropTypes } = useCatalog();
   const cycles = useTable('cycles');
   const areas = useTable('areas');
+  const allLogs = useTable('logs'); // để cảnh báo ghi trùng
 
   const areaName = (id: string) => areas.find((a) => a.id === id)?.name ?? '—';
   const cropName = (id: string) => cropTypes.find((c) => c.id === id)?.name ?? '—';
@@ -145,6 +146,15 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
       if (q === null || Number.isNaN(q) || q <= 0) return setError('Số lượng vật tư đã dùng phải là số lớn hơn 0.');
       if (row.lotId && !(row.lotReason ?? '').trim() && row.lotExpired) return setError('Lô đã chọn đã hết hạn: hãy ghi lý do dùng, hoặc chọn lô khác.');
       items.push({ materialId: row.materialId, quantity: q, lotId: row.lotId || undefined, reason: row.lotReason });
+    }
+    // Cảnh báo ghi trùng: cùng loại việc, cùng vụ (hoặc khu), cùng ngày đã có bản ghi (quy định: một việc, một người phụ trách ghi)
+    const sameDay = allLogs.filter((l) => !l.voided_at && l.work_type_id === workType.id && (areaMode ? l.area_id === siteArea?.id : l.cycle_id === cycle?.id) && toLocalInput(new Date(l.performed_at)).slice(0, 10) === when.slice(0, 10));
+    if (sameDay.length > 0) {
+      const who = sameDay.map((l) => `${new Date(l.performed_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}${l.author_name ? ` (${l.author_name})` : ''}`).join(', ');
+      const msg = `Ngày này đã có ${sameDay.length} bản ghi "${workType.name}" của ${areaMode ? 'khu' : 'vụ'} này, ghi lúc ${who}.${items.length > 0 ? ' Ghi thêm thì vật tư bạn vừa chọn sẽ bị trừ kho thêm một lần nữa.' : ''}
+
+Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn vẫn muốn ghi thêm?`;
+      if (!window.confirm(msg)) return;
     }
     if (items.length > 0 && !effLocation) return setError('Chưa có kho để trừ vật tư. Hãy nhờ chủ cơ sở thêm kho ở mục "Vật tư & chi phí".');
     setError(null);
