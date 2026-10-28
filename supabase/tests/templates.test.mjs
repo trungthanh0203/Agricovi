@@ -50,7 +50,7 @@ test('loại việc riêng: chủ/quản lý định nghĩa, mã tự sinh, nhâ
   assert.equal(await seen(owner), 1);
   assert.equal(await seen(worker), 1);
   assert.equal(await seen(owner2), 0);
-  assert.equal((await asUser(db, owner2, `select count(*)::int n from work_types where organization_id is null`)).rows[0].n, 28); // việc dùng chung còn nguyên (7 gốc + 16 chuẩn vật nuôi, thủy sản của 0107 + 5 chuẩn cây trồng của 0108)
+  assert.equal((await asUser(db, owner2, `select count(*)::int n from work_types where organization_id is null`)).rows[0].n, 37); // việc dùng chung còn nguyên (7 gốc + 16 chuẩn vật nuôi, thủy sản của 0107 + 5 chuẩn cây trồng của 0108 + 9 việc tách theo đối tượng của 0111)
 });
 
 test('quy trình mẫu: quyền ghi/đọc theo cơ sở; cơ sở khác không thấy; organization_id không giả mạo được', async () => {
@@ -108,15 +108,15 @@ test('sắp xếp giai đoạn: dời lên/xuống và sắp lại cả danh sá
   const order = async () => (await db.query(`select name from template_stages where template_id=$1 order by seq`, [t])).rows.map((r) => r.name);
 
   await asUser(db, owner, `select move_template_stage($1, -1)`, [s3]);
-  assert.deepEqual(await order(), ['Tưới nước', 'Thu hoạch', 'Bón phân']);
+  assert.deepEqual(await order(), ['Tưới nước', 'Thu hoạch cây trồng', 'Bón phân']);
   await asUser(db, owner, `select reorder_template_stages($1, $2::uuid[])`, [t, [s3, s2, s1]]);
-  assert.deepEqual(await order(), ['Thu hoạch', 'Bón phân', 'Tưới nước']);
+  assert.deepEqual(await order(), ['Thu hoạch cây trồng', 'Bón phân', 'Tưới nước']);
   assert.equal((await db.query(`select sum(duration_days)::int n from template_stages where template_id=$1`, [t])).rows[0].n, 44);
 
   assert.match(await expectError(asUser(db, owner, `select reorder_template_stages($1, $2::uuid[])`, [t, [s1, s2]])), /INVALID_ARGUMENT/);        // thiếu một giai đoạn
   assert.match(await expectError(asUser(db, owner, `select reorder_template_stages($1, $2::uuid[])`, [t, [s1, s1, s2]])), /INVALID_ARGUMENT/);    // lặp mã
   assert.match(await expectError(asUser(db, worker, `select reorder_template_stages($1, $2::uuid[])`, [t, [s1, s2, s3]])), /FORBIDDEN|INVALID_ARGUMENT/);
-  assert.deepEqual(await order(), ['Thu hoạch', 'Bón phân', 'Tưới nước']);
+  assert.deepEqual(await order(), ['Thu hoạch cây trồng', 'Bón phân', 'Tưới nước']);
 });
 
 test('việc chi tiết (bảng cũ, giao diện không dùng): vẫn ràng buộc ngày trong giai đoạn; phiên bản mẫu tăng khi giai đoạn đổi', async () => {

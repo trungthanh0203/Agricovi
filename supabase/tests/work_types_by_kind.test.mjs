@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDb, addUser, asUser, expectError } from './harness.mjs';
 import { effectiveWorkTypes, fieldsForKind, workTypesForKind } from '../../apps/app/src/lib/catalog.ts';
-import { STANDARD_FIELDS } from '../../apps/app/src/lib/standardFields.ts';
+import { STANDARD_FIELDS, sharedCodeFor } from '../../apps/app/src/lib/standardFields.ts';
 import { checkSchemaDraft } from '../../apps/app/src/lib/fieldsLogic.ts';
 
 // Điểm 2 (migration 0107): đầu việc và biểu mẫu theo loại vụ. Phần thuần (chọn biểu mẫu, lọc việc) + phần CSDL.
@@ -67,15 +67,17 @@ test('CSDL: đầu việc chuẩn có sẵn đúng loại; bản chỉnh theo lo
 
   assert.deepEqual((await code('vaccinating')).applies_to, ['livestock']);
   assert.deepEqual((await code('water_measuring')).applies_to, ['aquatic']);
-  assert.deepEqual((await code('feeding')).applies_to.sort(), ['aquatic', 'livestock']);
+  assert.deepEqual((await code('feeding')).applies_to, ['livestock']); // tách riêng từng đối tượng (migration 0111)
+  assert.deepEqual((await code('feeding_aq')).applies_to, ['aquatic']);
   assert.deepEqual((await code('spraying')).applies_to, ['crop']);
-  assert.equal((await code('harvesting')).applies_to, null); // mọi loại
+  assert.deepEqual((await code('harvesting')).applies_to, ['crop']); // không còn việc dùng chung mọi loại
+  assert.equal((await db.query(`select count(*)::int n from work_types where organization_id is null and (applies_to is null or cardinality(applies_to) <> 1)`)).rows[0].n, 0);
   // mọi mã có biểu mẫu chuẩn đều có việc dùng chung đúng loại (migration 0107/0108), và CSDL nhận biểu mẫu đó
   for (const [kind, byCode] of Object.entries(STANDARD_FIELDS)) {
     for (const [c, fields] of Object.entries(byCode)) {
-      const w = await code(c);
+      const w = await code(sharedCodeFor(kind, c));
       assert.ok(w, `${kind}/${c}: thiếu việc dùng chung`);
-      if (c !== 'harvesting') assert.ok((w.applies_to ?? []).includes(kind), `${kind}/${c}: applies_to không có ${kind}`);
+      assert.deepEqual(w.applies_to, [kind], `${kind}/${c}: mỗi việc dùng chung chỉ áp dụng cho một đối tượng`);
       assert.equal((await db.query(`select valid_field_schema($1::jsonb) ok`, [JSON.stringify(fields)])).rows[0].ok, true, `${kind}/${c}`);
     }
   }

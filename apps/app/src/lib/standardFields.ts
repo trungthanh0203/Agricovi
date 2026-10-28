@@ -183,5 +183,15 @@ const CROP: Record<string, FieldDef[]> = {
 
 export const STANDARD_FIELDS: Partial<Record<string, Record<string, FieldDef[]>>> = { crop: CROP, livestock: LIVESTOCK, aquatic: AQUATIC };
 
+/** Mã gốc của việc dùng chung: bỏ hậu tố của việc tách riêng theo đối tượng (feeding_aq → feeding, harvesting_lv → harvesting; migration 0111) */
+export const baseCode = (code: string): string => code.replace(/_(aq|lv)$/, '');
+
+/** Mã việc dùng chung của một biểu mẫu chuẩn (mã gốc, loại) theo cách đã tách riêng từng đối tượng (migration 0111) */
+export function sharedCodeFor(kind: string, code: string): string {
+  if (kind === 'aquatic' && ['feeding', 'feed_mixing', 'treating', 'weighing', 'disinfecting', 'harvesting', 'other'].includes(code)) return `${code}_aq`;
+  if (kind === 'livestock' && ['harvesting', 'other'].includes(code)) return `${code}_lv`;
+  return code;
+}
+
 /** Biểu mẫu chuẩn của đầu việc dùng chung `code` cho loại `kind`; không có thì undefined */
-export const standardFieldsFor = (kind: string | undefined, code: string): FieldDef[] | undefined => (kind ? STANDARD_FIELDS[kind]?.[code] : undefined);
+export const standardFieldsFor = (kind: string | undefined, code: string): FieldDef[] | undefined => (kind ? STANDARD_FIELDS[kind]?.[baseCode(code)] : undefined);

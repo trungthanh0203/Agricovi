@@ -126,6 +126,8 @@ export function WorkTypesSection() {
   const rank = (t: EffWorkType) => { const k = t.applies_to?.[0]; const n = k ? groups.findIndex((g) => g.id === k) : -1; return n < 0 ? 999 : n; };
   const rows = workTypes.filter((t) => (showOff || t.is_active) && (!t.applies_to || t.applies_to.length === 0 || t.applies_to.some((k) => cfg.kindOn(k))) && (!filterKind || !t.applies_to || t.applies_to.length === 0 || t.applies_to.includes(filterKind))).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'vi'));
   const editingRow = workTypes.find((t) => t.id === editing) ?? null;
+  /** Các việc chi tiết của một việc theo đối tượng áp dụng của nó (kể cả biểu mẫu chuẩn có sẵn) */
+  const fieldsOf = (t: EffWorkType): FieldDef[] => { const raw = rawTypes.find((r) => r.id === t.id); return raw ? fieldsForKind(raw, org, t.applies_to?.[0]) : t.field_schema; };
 
   async function run(fn: () => Promise<void>) {
     setBusy(true);
@@ -154,9 +156,15 @@ export function WorkTypesSection() {
     if (editName.trim().length < 2) throw new Error('Tên việc cần ít nhất 2 ký tự.');
     const matChanged = JSON.stringify([...editMaterials].sort()) !== JSON.stringify([...(t.material_ids ?? [])].sort());
     if (t.shared && editKind) {
-      // biểu mẫu riêng cho MỘT loại vụ; tên và mô tả vẫn là của việc (chung mọi loại)
+      // việc có sẵn chỉ áp dụng cho MỘT đối tượng: biểu mẫu lưu theo đối tượng đó; tên và mô tả lưu riêng cho cơ sở
+      const named = editName.trim() !== t.name || editDesc.trim() !== (t.description ?? '');
+      if (named || matChanged) {
+        await saveOverride(org, 'work_type', t.id, {
+          ...(named ? { display_name: editName.trim() === t.base_name ? null : editName, description: editDesc } : {}),
+          ...(matChanged ? { material_ids: editMaterials } : {}),
+        }, '');
+      }
       await saveOverride(org, 'work_type', t.id, { field_schema: f }, editKind);
-      if (matChanged) await saveOverride(org, 'work_type', t.id, { material_ids: editMaterials }, '');
     } else if (t.shared) {
       await saveOverride(org, 'work_type', t.id, {
         display_name: editName.trim() === t.base_name ? null : editName,
@@ -176,6 +184,7 @@ export function WorkTypesSection() {
       {error && <p className="msg error" role="alert">{error}</p>}
 
 
+      <h2 className="sect band">{editingRow ? 'Sửa việc' : 'Thêm việc'}</h2>
       {editingRow && (
         <div className="card">
           <h2>Sửa việc: {editingRow.name}</h2>
@@ -183,18 +192,7 @@ export function WorkTypesSection() {
             <label>Tên việc<input value={editName} onChange={(e) => setEditName(e.target.value)} /></label>
             <label>Mô tả<input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} /></label>
             {editingRow.shared ? (
-              <label>Đối tượng áp dụng
-                <select value={editKind} onChange={(e) => {
-                  const k = e.target.value;
-                  setEditKind(k);
-                  const raw = rawTypes.find((r) => r.id === editingRow.id);
-                  setEditFields(raw ? fieldsForKind(raw, org, k || undefined) : editingRow.field_schema);
-                }}>
-                  <option value="">Tất cả (mặc định)</option>
-                  {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
-                </select>
-                <small>Một việc có thể có biểu mẫu riêng cho từng loại. Loại chưa chỉnh thì dùng biểu mẫu chuẩn (vật nuôi, thủy sản) hoặc "Tất cả".</small>
-              </label>
+              <p>Đối tượng áp dụng: <strong>{(editingRow.applies_to ?? []).map((k) => cfg.groupLabel(k, null)).join(', ') || 'Tất cả'}</strong> <small className="muted">(việc có sẵn, không đổi đối tượng; muốn khác hãy thêm việc riêng)</small></p>
             ) : (
               <AppliesPicker value={editApplies} onChange={setEditApplies} groups={groups} />
             )}
@@ -212,7 +210,8 @@ export function WorkTypesSection() {
       )}
 
       {canManage && !editingRow && (
-        <Collapsible inline title="＋ Thêm việc">
+        <div className="card slim">
+        <Collapsible inline title="＋ Thêm việc mới">
           <form className="inline-form" onSubmit={onAdd} noValidate>
             <label>Tên việc<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Phun thuốc" /></label>
             <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Làm thế nào, lưu ý…" /></label>
@@ -222,14 +221,19 @@ export function WorkTypesSection() {
             <div className="btnrow"><button type="submit" className="primary" disabled={busy || !online}>Thêm</button></div>
           </form>
         </Collapsible>
+        </div>
       )}
 
-      {groups.length > 1 && <label>Lọc theo Đối tượng áp dụng
-        <select value={filterKind} onChange={(e) => setFilterKind(e.target.value)}>
-          <option value="">Tất cả</option>
-          {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
-        </select>
-      </label>}
+      <h2 className="sect band">Danh sách việc</h2>
+      {groups.length > 1 && (
+        <div className="row">
+          <label htmlFor="wt-view" className="grow" style={{ margin: 0 }}>Xem theo</label>
+          <select id="wt-view" value={filterKind} onChange={(e) => setFilterKind(e.target.value)} style={{ flex: '0 1 60%' }}>
+            <option value="">Tất cả</option>
+            {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+          </select>
+        </div>
+      )}
 
       <table className="grid">
         <thead><tr><th>Việc ({rows.length})</th><th>Đối tượng áp dụng</th><th>Thông tin cần ghi</th>{canManage && <th></th>}</tr></thead>
@@ -247,11 +251,11 @@ export function WorkTypesSection() {
                 {!t.is_active && <span className="sub">Đã dừng</span>}
               </td>
               <td className="muted">{t.applies_to && t.applies_to.length > 0 ? t.applies_to.map((k) => cfg.groupLabel(k, null)).join(', ') : 'Tất cả'}</td>
-              <td className="muted">{t.field_schema.length > 0 ? t.field_schema.map((f) => f.label).join(', ') : '—'}</td>
+              <td className="muted">{fieldsOf(t).length > 0 ? fieldsOf(t).map((f) => f.label).join(', ') : '—'}</td>
               {canManage && (
                 <td className="act">
                   <button className="icon" disabled={busy || !online} aria-label={t.is_active ? `Dừng ${t.name}` : `Dùng lại ${t.name}`} onClick={() => void run(() => setActiveFlag(t))}>{t.is_active ? '⏸' : '▶'}</button>{' '}
-                  <button className="icon" aria-label={`Sửa ${t.name}`} onClick={() => { setEditing(editing === t.id ? null : t.id); setEditName(t.name); setEditDesc(t.description ?? ''); setEditFields(t.field_schema); setEditKind(''); setEditApplies(t.applies_to ?? []); setEditMaterials(t.material_ids ?? []); }}>✎</button>
+                  <button className="icon" aria-label={`Sửa ${t.name}`} onClick={() => { setEditing(editing === t.id ? null : t.id); setEditName(t.name); setEditDesc(t.description ?? ''); setEditFields(fieldsOf(t)); setEditKind(t.shared ? t.applies_to?.[0] ?? '' : ''); setEditApplies(t.applies_to ?? []); setEditMaterials(t.material_ids ?? []); }}>✎</button>
                 </td>
               )}
             </tr>

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { db, type CropTypeRow, type FieldDef, type WorkTypeRow } from './db';
 import { useOrgs } from './orgs';
-import { standardFieldsFor } from './standardFields';
+import { sharedCodeFor, standardFieldsFor } from './standardFields';
 import { useTable } from './tables';
 
 /**
@@ -82,7 +82,11 @@ export function useKindWorkTypes(kind: string | undefined, filter = false) {
 
 /** Biểu mẫu Thu hoạch (đầu việc dùng chung mã 'harvesting') cho một loại vụ */
 export const harvestSchemaFor = (types: WorkTypeRow[], orgId: string | undefined, kind: string | undefined): FieldDef[] =>
-  effectiveWorkTypes(types, orgId, kind).find((w) => w.code === 'harvesting')?.field_schema ?? [];
+  (() => {
+    const all = effectiveWorkTypes(types, orgId, kind);
+    // việc Thu hoạch riêng cho từng đối tượng (mã harvesting / harvesting_lv / harvesting_aq); CSDL chưa cập nhật thì dùng mã cũ
+    return (all.find((w) => w.code === sharedCodeFor(kind ?? 'crop', 'harvesting')) ?? all.find((w) => w.code === 'harvesting'))?.field_schema ?? [];
+  })();
 
 /** Loại sản phẩm (crop/livestock/aquatic/other) của khu: khu cơ sở vật chất không có loại; mã cũ 'growing' coi như trồng trọt */
 export const productKindOfArea = (k: string | null | undefined): string | undefined => (!k || k === 'facility' ? undefined : k === 'growing' ? 'crop' : k);
