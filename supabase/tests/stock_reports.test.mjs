@@ -65,7 +65,7 @@ test('vật tư dùng theo vụ: lượng ròng và giá vốn trong kỳ, tính
 test('CSV báo cáo kho: có BOM, tiêu đề, dòng tổng; chữ có dấu phẩy hoặc ngoặc kép được bọc; tổng giá vốn cộng đúng', () => {
   const csv = buildStockCsv('Vật tư dùng theo vụ', 'Trại "A", Hộ', '2026-10-01', '2026-10-31', ['Vụ', 'Giá vốn'], [['Dưa, vụ 1', 500000], ['Heo', 20000]], ['Tổng', 520000]);
   assert.equal(csv.charCodeAt(0), 0xfeff);
-  assert.ok(csv.includes('"Trại ""A"", Hộ"'));
+  assert.ok(csv.includes('"Vật tư dùng theo vụ - Trại ""A"", Hộ"'));
   assert.ok(csv.includes('"Dưa, vụ 1",500000'));
   assert.ok(csv.trimEnd().endsWith('Tổng,520000'));
   assert.deepEqual(useTotals([{ cost: 500000, cost_unknown: 1 }, { cost: 20000, cost_unknown: 0 }]), { cost: 520000, unknown: 1 });
