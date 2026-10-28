@@ -157,7 +157,7 @@ function StockGrid({ canWrite, d, onLedger }: { orgId: string; canWrite: boolean
 
       <div className="tablewrap">
         <table className="grid">
-          <thead><tr><th>Vật tư</th><th>Nhóm</th><th className="num">Tồn</th><th>Nhập cuối</th></tr></thead>
+          <thead><tr><th>Vật tư <small className="muted">(Bấm tên vật tư để xem chi tiết)</small></th><th>Nhóm</th><th className="num">Tồn</th><th>Nhập cuối</th></tr></thead>
           <tbody>
             {rows.length === 0 && (
               <tr><td colSpan={4} className="muted">
