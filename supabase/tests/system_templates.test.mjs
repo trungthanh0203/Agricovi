@@ -27,7 +27,7 @@ test('mẫu dưa lưới có sẵn: 7 công đoạn, 17 việc chạy song song/
   assert.equal(rows.length, 17);
   assert.equal(totalDays(rows), 79); // ngày kết thúc muộn nhất, không phải tổng thời lượng
   assert.ok(rows.some((r) => r.start_day === 32 && r.repeat_every_days === 5));
-  assert.equal((await asUser(db, worker, `select count(*)::int n from system_templates`)).rows[0].n, 2);
+  assert.equal((await asUser(db, worker, `select count(*)::int n from system_templates`)).rows[0].n, 3);
   assert.match(await expectError(asUser(db, owner, `insert into system_templates (code, kind, name) values ('x','crop','X')`)), /row-level security/);
   await asUser(db, owner, `update system_templates set name='Đổi' where id=$1`, [sys.id]); // RLS: không có dòng nào được sửa
   assert.equal((await db.query(`select name from system_templates where id=$1`, [sys.id])).rows[0].name, 'Dưa lưới nhà màng (bản tham khảo)');
