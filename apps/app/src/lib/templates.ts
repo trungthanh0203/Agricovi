@@ -23,10 +23,10 @@ async function ok<T>(p: PromiseLike<{ data: T; error: { message: string } | null
 export interface TemplateRow {
   id: string; organization_id: string; crop_type_id: string; name: string; note: string | null;
   version: number; is_active: boolean; updated_at: string;
-  template_stages: { id: string; duration_days: number }[];
+  template_stages: { id: string; duration_days: number; start_day?: number | null }[];
 }
 /** Giai đoạn = một việc chọn từ danh mục + số ngày. `name` là tên việc lúc chọn (máy chủ tự điền). */
-export interface StageRow { id: string; template_id: string; seq: number; name: string; work_type_id: string | null; duration_days: number; note: string | null; phase_id?: string | null; importance?: Importance }
+export interface StageRow { id: string; template_id: string; seq: number; name: string; work_type_id: string | null; duration_days: number; note: string | null; phase_id?: string | null; importance?: Importance; start_day?: number | null; repeat_every_days?: number | null }
 /** Mức độ quan trọng của một việc trong quy trình */
 export type Importance = 'high' | 'normal' | 'low';
 export const IMPORTANCE_LABEL: Record<Importance, string> = { high: 'Cao', normal: 'Trung bình', low: 'Thấp' };
@@ -173,12 +173,10 @@ export const newFieldKey = () => `f${Math.random().toString(36).slice(2, 8)}`;
 
 // ------------------------------------------------------------------ quy trình mẫu
 export async function listTemplates(orgId: string): Promise<TemplateRow[]> {
-  const rows = await ok(
-    client().from('cycle_templates')
-      .select('id, organization_id, crop_type_id, name, note, version, is_active, updated_at, template_stages(id, duration_days)')
-      .eq('organization_id', orgId).order('name'),
-  );
-  return (rows ?? []) as unknown as TemplateRow[];
+  const q = (cols: string) => client().from('cycle_templates').select(cols).eq('organization_id', orgId).order('name');
+  const r = await q('id, organization_id, crop_type_id, name, note, version, is_active, updated_at, template_stages(id, duration_days, start_day)');
+  if (!r.error) return (r.data ?? []) as unknown as TemplateRow[];
+  return ((await ok(q('id, organization_id, crop_type_id, name, note, version, is_active, updated_at, template_stages(id, duration_days)'))) ?? []) as unknown as TemplateRow[]; // chưa db push 0114
 }
 
 export async function createTemplate(orgId: string, cropTypeId: string, name: string, note: string): Promise<string> {
@@ -216,7 +214,9 @@ export async function loadTemplate(id: string): Promise<{ template: TemplateRow;
   const [t, st, ph] = await Promise.all([
     ok(c.from('cycle_templates').select('id, organization_id, crop_type_id, name, note, version, is_active, updated_at, template_stages(id, duration_days)').eq('id', id).single()),
     (async () => {
-      const r = await c.from('template_stages').select('id, template_id, seq, name, work_type_id, duration_days, note, phase_id, importance').eq('template_id', id).order('seq');
+      const r0 = await c.from('template_stages').select('id, template_id, seq, name, work_type_id, duration_days, note, phase_id, importance, start_day, repeat_every_days').eq('template_id', id).order('seq');
+      if (!r0.error) return r0.data;
+      const r = await c.from('template_stages').select('id, template_id, seq, name, work_type_id, duration_days, note, phase_id, importance').eq('template_id', id).order('seq'); // chưa db push 0114
       if (!r.error) return r.data;
       return ok(c.from('template_stages').select('id, template_id, seq, name, work_type_id, duration_days, note').eq('template_id', id).order('seq')); // chưa db push 0109
     })(),
@@ -228,13 +228,13 @@ export async function loadTemplate(id: string): Promise<{ template: TemplateRow;
   return { template: t as unknown as TemplateRow, stages: (st ?? []) as StageRow[], phases: (ph ?? []) as PhaseRow[] };
 }
 
-export async function addStage(templateId: string, s: { work_type_id: string; duration_days: number; note?: string; phase_id?: string | null; importance?: Importance }): Promise<string> {
+export async function addStage(templateId: string, s: { work_type_id: string; duration_days: number; note?: string; phase_id?: string | null; importance?: Importance; start_day?: number | null; repeat_every_days?: number | null }): Promise<string> {
   needOnline('thêm việc');
-  const r = await ok(client().from('template_stages').insert({ template_id: templateId, work_type_id: s.work_type_id, duration_days: s.duration_days, note: s.note?.trim() || null, ...(s.phase_id ? { phase_id: s.phase_id } : {}), ...(s.importance ? { importance: s.importance } : {}) }).select('id').single());
+  const r = await ok(client().from('template_stages').insert({ template_id: templateId, work_type_id: s.work_type_id, duration_days: s.duration_days, note: s.note?.trim() || null, ...(s.phase_id ? { phase_id: s.phase_id } : {}), ...(s.importance ? { importance: s.importance } : {}), ...(s.start_day ? { start_day: s.start_day } : {}), ...(s.repeat_every_days ? { repeat_every_days: s.repeat_every_days } : {}) }).select('id').single());
   return (r as { id: string }).id;
 }
 /** Đổi việc (chọn từ danh mục) và/hoặc số ngày của giai đoạn */
-export async function updateStage(id: string, s: { work_type_id?: string; duration_days?: number; note?: string | null; importance?: Importance; phase_id?: string | null }): Promise<void> {
+export async function updateStage(id: string, s: { work_type_id?: string; duration_days?: number; note?: string | null; importance?: Importance; phase_id?: string | null; start_day?: number | null; repeat_every_days?: number | null }): Promise<void> {
   needOnline('sửa việc');
   const patch = { ...s, ...(s.note !== undefined ? { note: s.note?.trim() || null } : {}) };
   await ok(client().from('template_stages').update(patch).eq('id', id));
@@ -253,14 +253,18 @@ export async function reorderStages(templateId: string, ids: string[]): Promise<
 export interface SystemTemplate {
   id: string; code: string; kind: string; crop_type_id: string | null; name: string; description: string | null; source: string | null; version: number;
   system_template_phases: { id: string; seq: number; code: string | null; name: string; description: string | null }[];
-  system_template_stages: { id: string; phase_id: string | null; seq: number; work_type_id: string; duration_days: number; importance: Importance; note: string | null }[];
+  system_template_stages: { id: string; phase_id: string | null; seq: number; work_type_id: string; duration_days: number; importance: Importance; note: string | null; start_day?: number | null; repeat_every_days?: number | null }[];
 }
 /** Các mẫu hệ thống đang dùng (mọi người đăng nhập xem được); CSDL chưa cập nhật thì trả danh sách rỗng */
 export async function listSystemTemplates(): Promise<SystemTemplate[]> {
   const r = await client().from('system_templates')
+    .select('id, code, kind, crop_type_id, name, description, source, version, system_template_phases(id, seq, code, name, description), system_template_stages(id, phase_id, seq, work_type_id, duration_days, importance, note, start_day, repeat_every_days)')
+    .eq('is_active', true).order('name');
+  if (!r.error) return (r.data ?? []) as unknown as SystemTemplate[];
+  const r2 = await client().from('system_templates') // chưa db push 0114
     .select('id, code, kind, crop_type_id, name, description, source, version, system_template_phases(id, seq, code, name, description), system_template_stages(id, phase_id, seq, work_type_id, duration_days, importance, note)')
     .eq('is_active', true).order('name');
-  return r.error ? [] : ((r.data ?? []) as unknown as SystemTemplate[]);
+  return r2.error ? [] : ((r2.data ?? []) as unknown as SystemTemplate[]);
 }
 /** Áp dụng mẫu hệ thống cho cơ sở: sao thành quy trình riêng, trả về mã quy trình mới */
 export async function applySystemTemplate(orgId: string, systemId: string, cropTypeId: string, name?: string): Promise<string> {
@@ -309,16 +313,29 @@ export function flatOrder(phases: { id: string; seq: number }[], stages: { id: s
 }
 
 // ------------------------------------------------------------------ tính ngày (dùng cả để xem trước ở trình soạn)
-/** Tổng số ngày của quy trình */
-export const totalDays = (stages: { duration_days: number }[]) => stages.reduce((s, x) => s + x.duration_days, 0);
+/** Việc có `start_day` chạy song song từ ngày đó (không làm các việc nối tiếp sau nó dời); việc không có `start_day` nối tiếp ngay sau việc nối tiếp trước. Khớp create_cycle_from_template. */
+type Sched = { id?: string; seq?: number; duration_days: number; start_day?: number | null };
 
-/** Khoảng ngày (tính từ ngày 1 của cả quy trình) của từng giai đoạn */
-export function stageRanges(stages: { id: string; duration_days: number }[]): Map<string, { from: number; to: number }> {
+/** Khoảng ngày (tính từ ngày 1 của cả quy trình) của từng việc, theo thứ tự `seq` */
+export function stageRanges(stages: (Sched & { id: string })[]): Map<string, { from: number; to: number }> {
   const m = new Map<string, { from: number; to: number }>();
-  let day = 1;
-  for (const s of stages) {
-    m.set(s.id, { from: day, to: day + s.duration_days - 1 });
-    day += s.duration_days;
+  let cur = 1;
+  for (const s of [...stages].sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0))) {
+    const from = s.start_day ?? cur;
+    const to = from + s.duration_days - 1;
+    m.set(s.id, { from, to });
+    if (s.start_day == null) cur = to + 1;
   }
   return m;
+}
+
+/** Tổng số ngày của quy trình = ngày kết thúc muộn nhất */
+export function totalDays(stages: Sched[]): number {
+  let cur = 1, max = 0;
+  for (const s of [...stages].sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0))) {
+    const to = (s.start_day ?? cur) + s.duration_days - 1;
+    max = Math.max(max, to);
+    if (s.start_day == null) cur = to + 1;
+  }
+  return max;
 }

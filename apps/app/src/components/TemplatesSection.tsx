@@ -161,7 +161,7 @@ function SystemTemplateCard({ sys, crops, canManage, online, busy, wtName, onApp
 }) {
   const phases = [...sys.system_template_phases].sort((a, b) => a.seq - b.seq);
   const stages = [...sys.system_template_stages].sort((a, b) => a.seq - b.seq);
-  const days = stages.reduce((n, s) => n + s.duration_days, 0);
+  const days = totalDays(stages);
   const [cropId, setCropId] = useState(sys.crop_type_id && crops.some((c) => c.id === sys.crop_type_id) ? sys.crop_type_id : crops[0]?.id ?? '');
   const [name, setName] = useState('');
   return (
@@ -174,7 +174,7 @@ function SystemTemplateCard({ sys, crops, canManage, online, busy, wtName, onApp
           {p.description && <span className="sub">{p.description}</span>}
           {stages.filter((s) => s.phase_id === p.id).map((s, j) => (
             <p key={s.id} className="muted">
-              {p.code?.trim() || i + 1}.{j + 1} {wtName(s.work_type_id)} · {s.duration_days} ngày · Quan trọng: {IMPORTANCE_LABEL[s.importance]}{s.note ? ` · ${s.note}` : ''}
+              {p.code?.trim() || i + 1}.{j + 1} {wtName(s.work_type_id)} · {s.duration_days} ngày{s.start_day ? ` từ ngày ${s.start_day}` : ''}{s.repeat_every_days ? ` · lặp mỗi ${s.repeat_every_days} ngày` : ''} · Quan trọng: {IMPORTANCE_LABEL[s.importance]}{s.note ? ` · ${s.note}` : ''}
             </p>
           ))}
         </div>

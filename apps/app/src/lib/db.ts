@@ -188,6 +188,8 @@ export interface StageRow {
   phase_code?: string | null;
   phase_name?: string | null;
   importance?: 'high' | 'normal' | 'low';
+  /** Lặp lại mỗi N ngày trong khoảng thực hiện (bản chụp từ quy trình mẫu) */
+  repeat_every_days?: number | null;
 }
 
 /** Bản chỉnh của một cơ sở lên mục có sẵn dùng chung (D32) */

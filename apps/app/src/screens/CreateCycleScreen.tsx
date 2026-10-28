@@ -9,7 +9,7 @@ import { Collapsible } from '../components/Collapsible';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
 import { createCycle, fetchQuotaContexts, type QuotaContext } from '../lib/production';
 import { addDays, fmtDate } from '../lib/dates';
-import { listTemplates, loadTemplate, type StageRow, type TemplateRow } from '../lib/templates';
+import { listTemplates, loadTemplate, stageRanges, totalDays, type StageRow, type TemplateRow } from '../lib/templates';
 import { useTable } from '../lib/tables';
 import { useConfig } from '../lib/config';
 import type { AreaRow } from '../lib/db';
@@ -98,12 +98,11 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   }
   useEffect(() => { if (!productId && productsWithTpl.length === 1) pickProduct(productsWithTpl[0]!.id); }, [productsWithTpl.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const plan = useMemo(() => {
-    let from = startDate || todayLocal();
-    return stages.map((s) => {
-      const start = from;
-      const end = addDays(start, s.duration_days - 1);
-      from = addDays(end, 1);
-      return { ...s, start, end };
+    const base = startDate || todayLocal();
+    const ranges = stageRanges(stages); // việc song song có ngày bắt đầu riêng
+    return [...stages].sort((a, b) => a.seq - b.seq).map((s) => {
+      const r = ranges.get(s.id)!;
+      return { ...s, start: addDays(base, r.from - 1), end: addDays(base, r.to - 1) };
     });
   }, [stages, startDate]);
 
@@ -120,7 +119,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const ownerLabel = (c: QuotaContext) => (c.kind === 'own' ? `Hộ riêng (${c.org_name})` : `HTX ${c.org_name}`);
   const picked = templates?.find((t) => t.id === templateId) ?? null;
   const defaultUnit = defaultCountUnit(prodKind);
-  const total = stages.reduce((s, x) => s + x.duration_days, 0);
+  const total = totalDays(stages);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

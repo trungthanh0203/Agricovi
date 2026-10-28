@@ -79,7 +79,11 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
   if (!tpl) return <p className="muted">{error ?? 'Đang tải…'}</p>;
   const editable = canEdit && online && !busy;
   const phaseNo = (p: PhaseRow, i: number) => p.code?.trim() || String(i + 1);
-  const phaseDays = (id: string | null) => inPhase(id).reduce((n, s) => n + s.duration_days, 0);
+  /** Số ngày của một nhóm việc = từ ngày bắt đầu sớm nhất đến ngày kết thúc muộn nhất của nhóm (việc song song không cộng dồn) */
+  const phaseDays = (id: string | null) => {
+    const rs = inPhase(id).map((s) => ranges.get(s.id)).filter((x): x is { from: number; to: number } => !!x);
+    return rs.length === 0 ? 0 : Math.max(...rs.map((r) => r.to)) - Math.min(...rs.map((r) => r.from)) + 1;
+  };
 
   function stageCard(s: StageRow, label: string, list: StageRow[], idx: number, phaseId: string | null) {
     const r = ranges.get(s.id);
@@ -111,7 +115,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
           )}
         </div>
         <p className="muted">
-          {s.duration_days} ngày{r ? ` (ngày ${r.from}–${r.to})` : ''} · Quan trọng: {IMPORTANCE_LABEL[imp]}
+          {s.duration_days} ngày{r ? ` (ngày ${r.from}–${r.to})` : ''}{s.repeat_every_days ? ` · lặp mỗi ${s.repeat_every_days} ngày` : ''}{s.start_day ? ' · chạy song song' : ''} · Quan trọng: {IMPORTANCE_LABEL[imp]}
         </p>
         {s.note && <p>{s.note}</p>}
         {canEdit && editStage === s.id && (
@@ -133,7 +137,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
         </div>
         {tpl.note && <p>{tpl.note}</p>}
         <p className="muted">{flat ? '' : `${phases.length} công đoạn · `}{stages.length} việc · tổng {days} ngày · bản {tpl.version}</p>
-        {stages.length > 0 && (
+        {stages.length > 0 && !stages.some((s) => s.start_day) && (
           <div className="timeline" role="img" aria-label={`Tổng quan ${stages.length} việc, ${days} ngày`}>
             {[...stages].sort((a, b) => a.seq - b.seq).map((s, i) => <div key={s.id} className="seg" style={{ flexGrow: s.duration_days, background: COLORS[i % COLORS.length] }} title={`${s.name}: ${s.duration_days} ngày`} />)}
           </div>
@@ -177,7 +181,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
           {canEdit && editStage === null && (
             <Collapsible inline title="＋ Thêm việc">
               <StageForm title="" stage={null} phaseId={null} phases={[]} types={types} busy={busy || !online}
-                onSave={(v) => run(async () => { await addStage(templateId, { work_type_id: v.fields.work_type_id!, duration_days: v.fields.duration_days!, note: v.fields.note ?? '', importance: v.fields.importance }); })} />
+                onSave={(v) => run(async () => { await addStage(templateId, { work_type_id: v.fields.work_type_id!, duration_days: v.fields.duration_days!, note: v.fields.note ?? '', importance: v.fields.importance, start_day: v.fields.start_day, repeat_every_days: v.fields.repeat_every_days }); })} />
             </Collapsible>
           )}
           {allStages.length === 0 && <p className="muted">Chưa có việc nào. Bấm "＋ Thêm việc".</p>}
@@ -205,7 +209,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
               <Collapsible inline title="＋ Thêm việc vào công đoạn này">
                 <StageForm title="" stage={null} phaseId={p.id} phases={orderedPhases} types={types} busy={busy || !online}
                   onSave={(v) => run(async () => {
-                    await addStage(templateId, { work_type_id: v.fields.work_type_id!, duration_days: v.fields.duration_days!, note: v.fields.note ?? '', importance: v.fields.importance, phase_id: v.phaseId });
+                    await addStage(templateId, { work_type_id: v.fields.work_type_id!, duration_days: v.fields.duration_days!, note: v.fields.note ?? '', importance: v.fields.importance, start_day: v.fields.start_day, repeat_every_days: v.fields.repeat_every_days, phase_id: v.phaseId });
                     await resequence();
                     setOpenPhase(p.id);
                   })} />
@@ -218,7 +222,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
       })}
 
       {!flat && orphans.length > 0 && (
-        <Collapsible title="Việc chưa xếp công đoạn" summary={`${orphans.length} việc · ${phaseDays(null) || orphans.reduce((n, s) => n + s.duration_days, 0)} ngày`} defaultOpen>
+        <Collapsible title="Việc chưa xếp công đoạn" summary={`${orphans.length} việc · ${totalDays(orphans)} ngày`} defaultOpen>
           <p className="muted">Các việc này còn từ quy trình cũ. Bấm ✎ rồi chọn công đoạn để xếp vào.</p>
           {orphans.map((s, j) => stageCard(s, `${j + 1}.`, orphans, j, null))}
         </Collapsible>
@@ -261,12 +265,14 @@ function PhaseForm({ title, phase, busy, onSave, onClose }: {
 /** Thêm / sửa một việc của công đoạn: việc (từ danh mục), công đoạn, mức độ quan trọng, số ngày, ghi chú. Không lưu tự động để tránh nhầm. */
 function StageForm({ title, stage, phaseId, phases, types, busy, onSave, onClose }: {
   title: string; stage: StageRow | null; phaseId: string | null; phases: PhaseRow[]; types: { id: string; name: string }[]; busy: boolean;
-  onSave: (v: { phaseId: string | null; fields: { work_type_id?: string; duration_days?: number; note?: string; importance?: Importance } }) => Promise<void>; onClose?: () => void;
+  onSave: (v: { phaseId: string | null; fields: { work_type_id?: string; duration_days?: number; note?: string; importance?: Importance; start_day?: number | null; repeat_every_days?: number | null } }) => Promise<void>; onClose?: () => void;
 }) {
   const [wt, setWt] = useState(stage?.work_type_id ?? '');
   const [phase, setPhase] = useState(phaseId ?? NO_PHASE);
   const [importance, setImportance] = useState<Importance>((stage?.importance ?? 'normal') as Importance);
   const [days, setDays] = useState(stage ? String(stage.duration_days) : '');
+  const [startDay, setStartDay] = useState(stage?.start_day ? String(stage.start_day) : '');
+  const [repeat, setRepeat] = useState(stage?.repeat_every_days ? String(stage.repeat_every_days) : '');
   const [note, setNote] = useState(stage?.note ?? '');
   const [err, setErr] = useState<string | null>(null);
   const body = (
@@ -293,6 +299,11 @@ function StageForm({ title, stage, phaseId, phases, types, busy, onSave, onClose
         </label>
         <label>Số ngày<input value={days} inputMode="numeric" onChange={(e) => setDays(e.target.value)} /></label>
       </div>
+      <div className="pair">
+        <label>Bắt đầu từ ngày<input value={startDay} inputMode="numeric" onChange={(e) => setStartDay(e.target.value)} placeholder="Trống = nối tiếp" /></label>
+        <label>Lặp lại mỗi (ngày)<input value={repeat} inputMode="numeric" onChange={(e) => setRepeat(e.target.value)} placeholder="Không bắt buộc" /></label>
+      </div>
+      <small className="muted">Ngày tính từ ngày 1 của quy trình. Để trống "Bắt đầu từ ngày" thì việc làm ngay sau việc trước; điền ngày thì việc chạy song song từ ngày đó (ví dụ tưới mỗi ngày trong lúc bón phân).</small>
       <label>Ghi chú<input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} placeholder="Không bắt buộc" /></label>
       {err && <p className="msg error" role="alert">{err}</p>}
       <div className="btnrow">
@@ -301,10 +312,14 @@ function StageForm({ title, stage, phaseId, phases, types, busy, onSave, onClose
           const wtId = wt || (stage ? stage.work_type_id ?? '' : types[0]?.id ?? '');
           if (!wtId && !stage) return setErr('Hãy chọn một việc.');
           if (d === null || !Number.isInteger(d) || d < 1) return setErr('Số ngày phải là số nguyên từ 1 trở lên.');
+          const sd = startDay.trim() ? parseNumber(startDay) : null, rp = repeat.trim() ? parseNumber(repeat) : null;
+          if (sd !== null && (Number.isNaN(sd) || !Number.isInteger(sd) || sd < 1)) return setErr('Ngày bắt đầu phải là số nguyên từ 1 trở lên, hoặc để trống.');
+          if (rp !== null && (Number.isNaN(rp) || !Number.isInteger(rp) || rp < 1)) return setErr('Số ngày lặp lại phải là số nguyên từ 1 trở lên, hoặc để trống.');
+          if (rp !== null && rp > d) return setErr('Lặp lại mỗi bao nhiêu ngày không được lớn hơn số ngày của việc.');
           setErr(null);
           void onSave({
             phaseId: phase || null,
-            fields: { ...(wtId && wtId !== stage?.work_type_id ? { work_type_id: wtId } : {}), duration_days: d, note, importance },
+            fields: { ...(wtId && wtId !== stage?.work_type_id ? { work_type_id: wtId } : {}), duration_days: d, note, importance, start_day: sd, repeat_every_days: rp },
           }).then(() => { if (!stage) { setDays(''); setNote(''); } }).catch(() => undefined);
         }}>{stage ? 'Lưu thay đổi' : 'Thêm'}</button>
         {onClose && <button type="button" className="secondary" onClick={onClose}>Hủy</button>}

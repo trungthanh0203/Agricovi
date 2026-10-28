@@ -22,6 +22,8 @@ import { useAuth } from '../lib/auth';
 import { useOrgs } from '../lib/orgs';
 import { ModelPicker } from '../components/ModelPicker';
 import { CycleNextSteps } from '../components/CycleNextSteps';
+import { dueToday } from '../lib/dueTasks';
+import { toLocalInput } from '../lib/hooks';
 import type { TabId } from '../lib/tabs';
 import { effectiveModel, featuresOf, modelName } from '../lib/models';
 import {
@@ -136,6 +138,27 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
 
       {active && <IncidentsSection cycleId={cycleId} orgId={active.id} stages={stages} canManage={canManage} userId={session?.user.id} online={online} today={today} />}
 
+      {isActive && (() => {
+        const todayLogs = logs.filter((l) => !l.voided_at && toLocalInput(new Date(l.performed_at)).slice(0, 10) === today);
+        const due = dueToday(stages, todayLogs, today);
+        if (due.length === 0) return null;
+        return (
+          <div className="card slim">
+            <strong>Việc đến hạn hôm nay ({due.filter((d) => !d.doneToday).length}/{due.length} chưa ghi)</strong>
+            {due.map(({ stage: s, doneToday }) => (
+              <div className="row" key={s.id}>
+                <span className="grow">
+                  {s.phase_name ? `${s.phase_name} › ` : ''}{s.name}
+                  <span className="sub">{s.repeat_every_days ? `Lặp mỗi ${s.repeat_every_days} ngày · ` : ''}{s.importance === 'high' ? 'Quan trọng · ' : ''}{s.note ?? ''}</span>
+                </span>
+                {doneToday ? <span className="pill ok">Đã ghi</span>
+                  : canLogHere && <button className="secondary" style={{ minHeight: 40, width: 'auto', margin: 0, padding: '0 10px' }} onClick={() => onLog({ cycleId, workTypeId: s.work_type_id, stageId: s.id })}>Ghi việc</button>}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
       {prog.total > 0 ? (
         <div className="card slim">
           <div className="row">
@@ -184,7 +207,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                       <i className="swatch" style={{ background: stageColor(i) }} />{s.name}
                       {s.note && <span className="sub">{s.note}</span>}
                       <span className="sub">
-                        {s.importance === 'high' ? 'Quan trọng · ' : ''}{STAGE_STATUS_LABEL_VI[s.status]}{late > 0 && s.status !== 'pending' ? ` · trễ ${late} ngày` : ''}
+                        {s.importance === 'high' ? 'Quan trọng · ' : ''}{s.repeat_every_days ? `Lặp mỗi ${s.repeat_every_days} ngày · ` : ''}{STAGE_STATUS_LABEL_VI[s.status]}{late > 0 && s.status !== 'pending' ? ` · trễ ${late} ngày` : ''}
                         {late > 0 && s.status === 'pending' ? ` · chưa bắt đầu, trễ ${late} ngày` : ''}
                         {logCount.get(s.id) ? ` · ${logCount.get(s.id)} việc đã ghi` : ''}
                       </span>

@@ -96,3 +96,33 @@ test('tùy chọn dùng công đoạn (migration 0110): chủ đặt yes/no, gi�
   assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'use_phases',array['có'])`, [org])), /INVALID_ITEMS/);
   assert.match(await expectError(asUser(db, worker, `select set_org_config($1,'use_phases',array['no'])`, [org])), /FORBIDDEN/);
 });
+
+import { stageRanges, totalDays } from '../../apps/app/src/lib/templates.ts';
+import { dueToday } from '../../apps/app/src/lib/dueTasks.ts';
+
+test('lịch quy trình có việc song song: nối tiếp xếp liền, việc có ngày bắt đầu không làm việc sau dời; tổng ngày là ngày kết thúc muộn nhất', () => {
+  const st = [
+    { id: 'a', seq: 1, duration_days: 5 }, { id: 'b', seq: 2, duration_days: 3 },
+    { id: 'c', seq: 3, duration_days: 10, start_day: 4 }, // song song từ ngày 4
+    { id: 'd', seq: 4, duration_days: 2 }, // nối tiếp sau b: ngày 9–10
+  ];
+  const r = stageRanges(st);
+  assert.deepEqual(r.get('b'), { from: 6, to: 8 });
+  assert.deepEqual(r.get('c'), { from: 4, to: 13 });
+  assert.deepEqual(r.get('d'), { from: 9, to: 10 });
+  assert.equal(totalDays(st), 13);
+  assert.equal(totalDays([]), 0);
+});
+
+test('việc đến hạn hôm nay: trong khoảng, đúng chu kỳ lặp, chưa xong; đã ghi hôm nay thì đánh dấu', () => {
+  const s = (id, a, b, rep, status = 'pending', wt = 'W') => ({ id, seq: Number(id), planned_start: a, planned_end: b, repeat_every_days: rep, status, work_type_id: wt, name: id, cycle_id: 'C' });
+  const stages = [s('1', '2026-12-02', '2026-12-11', 5), s('2', '2026-12-02', '2026-12-11', 1, 'pending', 'T'), s('3', '2026-12-02', '2026-12-11', 7, 'pending', 'P'), s('4', '2026-12-12', '2026-12-20', 1), s('5', '2026-12-01', '2026-12-30', null, 'done')];
+  const ids = (today) => dueToday(stages, [], today).map((d) => d.stage.id);
+  assert.deepEqual(ids('2026-12-02'), ['1', '2', '3']);  // ngày 0 của mọi chu kỳ
+  assert.deepEqual(ids('2026-12-03'), ['2']);            // chỉ việc hằng ngày
+  assert.deepEqual(ids('2026-12-07'), ['1', '2']);       // ngày 5: chu kỳ 5 đến hạn
+  assert.deepEqual(ids('2026-12-09'), ['2', '3']);       // ngày 7: chu kỳ 7 đến hạn
+  assert.deepEqual(ids('2026-12-15'), ['4']);            // ngoài khoảng của việc 1–3; việc xong bị bỏ
+  const done = dueToday(stages, [{ stage_id: '2', work_type_id: 'T' }], '2026-12-03');
+  assert.deepEqual(done.map((d) => [d.stage.id, d.doneToday]), [['2', true]]);
+});
