@@ -108,12 +108,16 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
         <div className="row">
           <span className="grow"><strong>{label} {s.name}</strong></span>
           {canEdit && (
-            <span>
-              <button className="icon" disabled={!editable} aria-label={`Sửa việc ${label}`} onClick={() => { setEditStage(editStage === s.id ? null : s.id); setEditPhase(null); }}>✎</button>{' '}
-              <button className="icon" disabled={!editable || idx === 0} aria-label="Lên" onClick={() => move(-1)}>↑</button>{' '}
-              <button className="icon" disabled={!editable || idx === list.length - 1} aria-label="Xuống" onClick={() => move(1)}>↓</button>{' '}
-              <button className="icon" disabled={!editable} aria-label={`Xóa việc ${label}`}
-                onClick={() => { if (window.confirm(`Xóa việc "${s.name}" khỏi quy trình?`)) void run(() => deleteStage(s.id)); }}>✕</button>
+            <span className="iconrows">
+              <span>
+                <button className="icon" disabled={!editable || idx === 0} aria-label="Lên" onClick={() => move(-1)}>↑</button>{' '}
+                <button className="icon" disabled={!editable || idx === list.length - 1} aria-label="Xuống" onClick={() => move(1)}>↓</button>
+              </span>
+              <span>
+                <button className="icon" disabled={!editable} aria-label={`Sửa việc ${label}`} onClick={() => { setEditStage(editStage === s.id ? null : s.id); setEditPhase(null); }}>✎</button>{' '}
+                <button className="icon" disabled={!editable} aria-label={`Xóa việc ${label}`}
+                  onClick={() => { if (window.confirm(`Xóa việc "${s.name}" khỏi quy trình?`)) void run(() => deleteStage(s.id)); }}>✕</button>
+              </span>
             </span>
           )}
         </div>

@@ -246,15 +246,18 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                           {s.status === 'in_progress' && <button className="primary" style={{ minHeight: 40, width: '100%', margin: 0, padding: '0 8px' }} disabled={busy || !online} onClick={() => void act(s.id, 'complete')}>Xong</button>}
                         </>
                       )}
-                      <RowMenu label={s.name} items={[
-                        ...(canManage && isActive && s.status === 'done' ? [{ label: 'Mở lại việc', icon: '↺', disabled: busy || !online, onClick: () => void act(s.id, 'reopen') }] : []),
-                        ...(canEditStages ? [
-                          { label: 'Chỉnh sửa', icon: '✎', disabled: !online, onClick: () => { setAdding(false); setEditingPhase(null); setEditing(s.id); } },
-                          { label: 'Xóa việc', icon: '🗑', danger: true, disabled: !online || s.status !== 'pending', hint: s.status !== 'pending' ? '(chỉ khi chưa làm)' : undefined, onClick: () => {
-                            if (window.confirm(`Xóa việc "${s.name}" khỏi vụ?`)) void run(() => deleteCycleStage(cycleId, s.id)).catch(() => undefined);
-                          } },
-                        ] : []),
-                      ]} />
+                      <span className="iconline">
+                        {canManage && isActive && s.status === 'done' && (
+                          <button className="icon" disabled={busy || !online} aria-label={`Mở lại ${s.name}`} title="Mở lại" onClick={() => void act(s.id, 'reopen')}>↺</button>
+                        )}
+                        {canEditStages && (
+                          <>
+                            <button className="icon" disabled={!online} aria-label={`Sửa việc ${s.name}`} title="Chỉnh sửa" onClick={() => { setAdding(false); setEditingPhase(null); setEditing(editing === s.id ? null : s.id); }}>✎</button>
+                            <button className="icon" disabled={busy || !online || s.status !== 'pending'} aria-label={`Xóa việc ${s.name}`} title={s.status !== 'pending' ? 'Chỉ xóa được việc chưa làm' : 'Xóa việc'}
+                              onClick={() => { if (window.confirm(`Xóa việc "${s.name}" khỏi vụ?`)) void run(() => deleteCycleStage(cycleId, s.id)).catch(() => undefined); }}>🗑</button>
+                          </>
+                        )}
+                      </span>
                       </div>
                     </td>
                   </tr>
