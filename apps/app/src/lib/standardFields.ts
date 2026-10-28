@@ -74,6 +74,13 @@ const LIVESTOCK: Record<string, FieldDef[]> = {
     { key: 'empty_days', label: 'Số ngày để trống', type: 'number', min: 0 },
     CHECKER,
   ],
+  bedding_prep: [
+    { key: 'bedding', label: 'Loại đệm lót', type: 'select', options: ['Trấu', 'Mùn cưa', 'Đệm lót sinh học', 'Rơm', 'Khác'], required: true },
+    { key: 'thickness_cm', label: 'Độ dày lớp đệm lót', type: 'number', unit: 'cm', min: 0 },
+    { key: 'area_m2', label: 'Diện tích đã lót', type: 'number', unit: 'm²', min: 0 },
+    { key: 'probiotic', label: 'Chế phẩm sinh học', type: 'text', hint: 'Chọn thêm ở ô "Vật tư đã dùng" nếu có trong kho' },
+    CHECKER,
+  ],
   harvesting: [
     { key: 'ear_tags', label: 'Thẻ tai / mã con', type: 'text', hint: 'Ví dụ: A101–A150' },
     { key: 'quarantine_no', label: 'Số giấy kiểm dịch', type: 'text' },
@@ -119,6 +126,14 @@ const AQUATIC: Record<string, FieldDef[]> = {
   pond_cleaning: [
     { key: 'area_m2', label: 'Diện tích đã vệ sinh', type: 'number', unit: 'm²', min: 0 },
     { key: 'method', label: 'Cách làm', type: 'text' },
+    CHECKER,
+  ],
+  pond_preparing: [
+    { key: 'steps', label: 'Các bước đã làm', type: 'multiselect', options: ['Tát cạn / xả nước', 'Vét bùn', 'Phơi đáy ao', 'Bón vôi', 'Lấy nước vào', 'Gây màu nước', 'Khác'], required: true },
+    { key: 'dry_days', label: 'Số ngày phơi đáy', type: 'number', unit: 'ngày', min: 0 },
+    { key: 'lime_kg', label: 'Lượng vôi đã bón', type: 'number', unit: 'kg', min: 0, hint: 'Chọn thêm ở ô "Vật tư đã dùng" nếu có trong kho' },
+    { key: 'water_depth_m', label: 'Mực nước sau khi lấy', type: 'number', unit: 'm', min: 0 },
+    { key: 'area_m2', label: 'Diện tích ao / bể', type: 'number', unit: 'm²', min: 0 },
     CHECKER,
   ],
   harvesting: [
