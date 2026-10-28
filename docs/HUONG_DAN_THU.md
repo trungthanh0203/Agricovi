@@ -337,3 +337,8 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 5. **Cấu hình → Tạo quy trình → Dùng Công đoạn**: tắt thì quy trình chỉ là danh sách việc; bật lại thì hiện theo công đoạn.
 6. Tạo vụ từ quy trình vừa áp dụng: chi tiết vụ nhóm việc theo công đoạn; thẻ **Việc đến hạn hôm nay** liệt kê các việc đúng chu kỳ, bấm **Ghi việc** là mở sẵn đúng việc, công đoạn và vật tư gợi ý.
 7. **Khai báo → Chức vụ**: giới hạn việc được ghi nay chia theo đối tượng, có "Chọn cả nhóm".
+
+### Thử I: Xuất kho cho vụ (cần `db push` đến 0122)
+1. Sản xuất → Quản lý kho → Xuất kho: lý do mặc định là **Dùng cho vụ**; chọn vụ đang chạy, vật tư, số lượng; ghi chú không bắt buộc.
+2. Mở Tổng kết vụ của vụ đó: giá vốn vật tư đã dùng tăng đúng số vừa xuất. Với vụ nuôi, cám nhóm Thức ăn xuất cho vụ được tính vào FCR (khối Tăng trọng và FCR).
+3. Chọn vụ đã kết thúc hoặc đã hủy: không xuất được. Nhân viên không có quyền sửa Kho: không vào được màn Xuất kho.

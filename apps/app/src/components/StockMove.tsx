@@ -5,6 +5,7 @@ import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { formatQty, ISSUE_KIND_LABEL, parseNumber, recordIssue, transferStock } from '../lib/inventory';
 import { useTable } from '../lib/tables';
+import { useCatalog } from '../lib/catalog';
 
 /** Dữ liệu chung của hai biểu mẫu: vật tư, kho đang dùng và tồn hiện có để nhắc người nhập */
 function useStockChoices(orgId: string) {
@@ -36,7 +37,15 @@ export function StockIssue({ orgId, onClose }: { orgId: string; onClose: () => v
   const { mats, locs, stockAt, unitOf } = useStockChoices(orgId);
   const [materialId, setMaterialId] = useState('');
   const [locationId, setLocationId] = useState('');
-  const [kind, setKind] = useState('loss');
+  const cycles = useTable('cycles');
+  const areas = useTable('areas');
+  const { cropTypes } = useCatalog();
+  // vụ của cơ sở chưa kết thúc: chọn để xuất vật tư cho vụ (không cần nhật ký)
+  const openCycles = cycles.filter((c) => c.owner_org_id === orgId && c.status !== 'ended' && c.status !== 'cancelled');
+  const cycleLabel = (c: (typeof cycles)[number]) => `${c.name || cropTypes.find((t) => t.id === c.crop_type_id)?.name || 'Vụ'} · ${areas.find((a) => a.id === c.area_id)?.name ?? '—'}`;
+  const [kind, setKind] = useState('cycle');
+  const [cycleId, setCycleId] = useState('');
+  const cyc = cycleId || openCycles[0]?.id || '';
   const [qty, setQty] = useState('');
   const [date, setDate] = useState(todayLocal());
   const [reason, setReason] = useState('');
@@ -56,11 +65,13 @@ export function StockIssue({ orgId, onClose }: { orgId: string; onClose: () => v
     if (!loc) return setError('Hãy chọn kho.');
     const q = parseNumber(qty);
     if (q === null || Number.isNaN(q) || q <= 0) return setError('Số lượng phải là số lớn hơn 0.');
-    if (reason.trim().length < 3) return setError('Xuất kho cần ghi lý do (ví dụ: chuột cắn, bán cho anh Ba, mượn cho hộ bên cạnh).');
+    if (kind === 'cycle' && !cyc) return setError('Chưa có vụ nào đang chạy để xuất vật tư. Chọn lý do khác hoặc tạo vụ trước.');
+    if (kind !== 'cycle' && reason.trim().length < 3) return setError('Xuất kho cần ghi lý do (ví dụ: chuột cắn, bán cho anh Ba, mượn cho hộ bên cạnh).');
     if (q > have && !window.confirm(`Kho chỉ còn ${formatQty(have)} ${unitOf(mat)}, xuất ${formatQty(q)} sẽ làm tồn âm. Vẫn xuất?`)) return;
     setBusy(true);
     try {
-      await recordIssue({ id: draftId, organizationId: orgId, locationId: loc, materialId: mat, quantity: q, kind, date, reason });
+      const rsn = kind === 'cycle' ? (reason.trim().length >= 3 ? reason : `Xuất cho vụ ${cycleLabel(openCycles.find((c) => c.id === cyc)!)}`) : reason;
+      await recordIssue({ id: draftId, organizationId: orgId, locationId: loc, materialId: mat, quantity: q, kind, date, reason: rsn, ...(kind === 'cycle' ? { cycleId: cyc } : {}) });
       setSaved(true);
     } catch (err) { setError(friendlyError(err)); } finally { setBusy(false); }
   }
@@ -78,7 +89,7 @@ export function StockIssue({ orgId, onClose }: { orgId: string; onClose: () => v
   return (
     <section>
       <h1>Xuất kho</h1>
-      <p className="muted">Dùng khi vật tư ra khỏi kho mà không gắn với một việc trong nhật ký (hao hụt, hỏng, bán, cho mượn). Xuất để dùng cho việc đồng áng thì ghi ở Ghi việc.</p>
+      <p className="muted">Dùng khi vật tư ra khỏi kho mà không đi kèm một việc trong nhật ký: phát vật tư cho một vụ, hao hụt, hỏng, bán, dùng chung. Vật tư xuất cho vụ được tính vào giá thành của vụ (và cám vào FCR). Nếu đang làm việc ngoài đồng thì ghi ở Ghi việc.</p>
       <form className="inline-form" onSubmit={onSubmit} noValidate>
         <label>Vật tư
           <select value={mat} onChange={(e) => setMaterialId(e.target.value)}>{mats.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
@@ -93,12 +104,20 @@ export function StockIssue({ orgId, onClose }: { orgId: string; onClose: () => v
             {Object.entries(ISSUE_KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </label>
+        {kind === 'cycle' && (
+          <label>Vụ
+            <select value={cyc} onChange={(e) => setCycleId(e.target.value)}>
+              {openCycles.length === 0 && <option value="">Chưa có vụ nào</option>}
+              {openCycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c)}</option>)}
+            </select>
+          </label>
+        )}
         <label>Số lượng{unitOf(mat) ? ` (${unitOf(mat)})` : ''}
           <input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} />
           <small>Tồn hiện có ở kho này: {formatQty(have)} {unitOf(mat)}</small>
         </label>
         <label>Ngày<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
-        <label>Ghi rõ lý do (bắt buộc)<input value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+        <label>{kind === 'cycle' ? 'Ghi chú (không bắt buộc)' : 'Ghi rõ lý do (bắt buộc)'}<input value={reason} onChange={(e) => setReason(e.target.value)} /></label>
         {error && <p className="msg error" role="alert">{error}</p>}
         {!online && <p className="msg warn">Đang offline. Xuất kho cần có mạng; hãy kết nối mạng rồi bấm Lưu.</p>}
         <div className="btnrow">

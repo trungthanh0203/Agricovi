@@ -37,3 +37,9 @@ Hệ quả: giá thành vụ và **FCR** (chỉ đọc cám xuất cho vụ) có
 2. "Xuất cho vụ" có **bắt buộc chọn công đoạn/việc** không, hay chỉ chọn vụ (đề xuất: chỉ chọn vụ, việc không bắt buộc)?
 3. Ai được xuất cho vụ: chỉ người có quyền sửa Kho (đề xuất), hay cả tổ trưởng/nhân viên khi xuất cho vụ của mình?
 4. Vật tư dùng chung (K2): chia theo cách nào mặc định (đều, theo diện tích)?
+
+## Quyết định và tiến độ (28/10/2026)
+- Chủ sản phẩm duyệt: làm **K1** trước; **chỉ cần chọn vụ** (công đoạn/việc không bắt buộc); **người có quyền sửa Kho** được xuất cho vụ; vật tư dùng chung chia cho các vụ **theo diện tích** (K2, làm sau).
+- **K1 xong về code (migration 0122)**: Quản lý kho → Xuất kho có lý do **Dùng cho vụ** (mặc định), chọn vụ chưa kết thúc, ghi chú không bắt buộc (tự ghi "Xuất cho vụ …"). Giao dịch mang mã vụ nên vào giá vốn vật tư của Tổng kết vụ và cám vào Tăng trọng/FCR; chặn vụ đã kết thúc hoặc hủy, vụ cơ sở khác, người không có quyền sửa Kho. Test `stock_issue_cycle`.
+- **K6 đã có từ trước**: khối "Lô vật tư sắp hết hạn" (hết hạn và sắp hết hạn trong 30 ngày) ở Trang chủ và Quản lý kho (`ExpiringLots`); đề xuất K6 ban đầu của tôi bỏ sót điều này. Nếu muốn mốc 7 ngày hoặc cảnh báo khi xuất lô sắp hết hạn thì làm thêm nhỏ.
+- Còn lại: K3 (trả về kho), K2 (chia dùng chung theo diện tích), K5, K7, K4, K8, K9.
