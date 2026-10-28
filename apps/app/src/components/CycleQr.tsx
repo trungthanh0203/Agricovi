@@ -18,13 +18,14 @@ export function CycleQr({ cycleId, label }: { cycleId: string; label: string }) 
   }, [cycleId]);
   useEffect(() => { if (navigator.onLine) void load(); }, [load]);
 
+  const refresh = <button type="button" className="secondary" disabled={busy || !online} onClick={() => void load()}>{busy ? 'Đang tải…' : 'Cập nhật mã vụ'}</button>;
   return (
     <>
       {error && <p className="msg error" role="alert">{error}</p>}
       {!online && !text && <p className="msg warn">Cần có mạng để lấy thông tin mới nhất của vụ.</p>}
-      {text && <QrCard text={text} filename={`qr-vu-${label.replace(/[^a-zA-Z0-9]+/g, '-').slice(0, 30) || 'vu'}.png`} />}
-      <button type="button" className="secondary" disabled={busy || !online} onClick={() => void load()}>{busy ? 'Đang tải…' : 'Cập nhật mã vụ (thêm vật tư mới)'}</button>
-      <p className="muted">Mã chứa thông tin tại thời điểm tạo; vật tư dùng thêm sau này cần bấm "Cập nhật mã vụ" rồi in lại.</p>
+      {text
+        ? <QrCard text={text} filename={`qr-vu-${label.replace(/[^a-zA-Z0-9]+/g, '-').slice(0, 30) || 'vu'}.png`} actions={refresh} />
+        : <div className="btnrow">{refresh}</div>}
     </>
   );
 }

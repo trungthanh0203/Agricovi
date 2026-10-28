@@ -241,7 +241,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
             )}
             {hasAnyStat(statById.get(c.id)) && <CycleStatsStrip s={statById.get(c.id)!} countUnit={cycleCountUnit(c, cropTypes)} areaLabel={infoLabels(cropTypes.find((t) => t.id === c.crop_type_id)?.kind).area} />}
             <div className="actions">
-              <button className="secondary" onClick={() => onOpenCycle(c.id)}>Quy trình &amp; Lịch</button>
+              <button className="secondary" onClick={() => onOpenCycle(c.id)}>Quản lý vụ</button>
               <button className="secondary" aria-expanded={qrId === c.id} onClick={() => setQrId(qrId === c.id ? null : c.id)}>{qrId === c.id ? 'Ẩn mã QR' : 'Mã QR của vụ'}</button>
               {isOwner(active.roles) && c.owner_org_id === active.id && !active.simple && (
                 <button className="secondary" aria-expanded={pubId === c.id} onClick={() => setPubId(pubId === c.id ? null : c.id)}>{pubId === c.id ? 'Ẩn mục công khai' : '🌐 Mở công khai website'}</button>

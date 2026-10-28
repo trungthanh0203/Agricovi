@@ -10,7 +10,6 @@ import { CycleMilestones } from '../components/MilestonePanels';
 import { IncidentsSection } from '../components/IncidentsSection';
 import { useTable } from '../lib/tables';
 import { withdrawalMessage } from '../lib/withdrawalLogic';
-import { PublishCycle } from '../components/PublishCycle';
 import { cycleCode } from '../lib/qr';
 import { useCatalog } from '../lib/catalog';
 import { cycleProgress, stageColor, stageDelayDays, STAGE_STATUS_LABEL_VI } from '../lib/cycles';
@@ -21,7 +20,6 @@ import { todayLocal, useOnline } from '../lib/hooks';
 import { useAuth } from '../lib/auth';
 import { useOrgs } from '../lib/orgs';
 import { ModelPicker } from '../components/ModelPicker';
-import { CycleNextSteps } from '../components/CycleNextSteps';
 import { dueToday } from '../lib/dueTasks';
 import { RowMenu } from '../components/RowMenu';
 import { toLocalInput } from '../lib/hooks';
@@ -108,12 +106,6 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
       <p className="muted">Mã vụ: <strong>{cycleCode(cycleId)}</strong></p>
       <p className="muted">Quy trình: {cycle.template_name ?? 'không có (vụ cũ)'}{cycle.template_version ? ` · bản ${cycle.template_version}` : ''}</p>
       {cycle.note && <p>{cycle.note}</p>}
-      {isOwner(active?.roles) && cycle.owner_org_id === active?.id && !active?.simple && (
-        <Collapsible title="Mở công khai website" summary="chủ cơ sở tự chọn công khai">
-          <PublishCycle cycleId={cycleId} />
-        </Collapsible>
-      )}
-      <CycleNextSteps cycleId={cycleId} onGo={onGo} />
       {canManage && cycle.owner_org_id === active?.id && (
         <Collapsible title="Cách quản lý vụ này" summary={modelName(cycle.mgmt_model, active?.mgmtModel)}>
           <ModelPicker cycleId={cycleId} onDone={() => undefined} />

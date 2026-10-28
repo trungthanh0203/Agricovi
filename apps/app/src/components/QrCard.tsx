@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { qrPng, qrSvg } from '../lib/qr';
 
-/** Mã QR + nút tải ảnh PNG, sao chép nội dung và xem nội dung trong mã */
-export function QrCard({ text, filename }: { text: string; filename: string }) {
+/** Mã QR, xem nội dung trong mã, rồi một hàng nút: các nút thêm của màn gọi (`actions`) và Tải ảnh QR */
+export function QrCard({ text, filename, actions }: { text: string; filename: string; actions?: ReactNode }) {
   const [msg, setMsg] = useState<string | null>(null);
   const qr = useMemo(() => {
     try { return qrSvg(text); } catch (e) { return { error: e instanceof Error ? e.message : 'Lỗi' }; }
@@ -28,12 +28,15 @@ export function QrCard({ text, filename }: { text: string; filename: string }) {
     <div className="qrcard">
       <div className="qrbox" role="img" aria-label="Mã QR" dangerouslySetInnerHTML={{ __html: qr.svg }} />
       {qr.truncated && <p className="msg warn">Nội dung dài nên mã chỉ chứa phần đầu.</p>}
-      <button type="button" className="secondary" onClick={() => void download()}>Tải ảnh QR</button>
-      {msg && <p className="muted" role="status">{msg}</p>}
       <details className="fold inline"><summary><span className="fold-title">Xem nội dung trong mã</span></summary><div className="fold-body">
         <button type="button" className="secondary" onClick={() => void copy()}>Chép nội dung</button>
         <pre className="qrtext">{qr.text}</pre>
       </div></details>
+      {msg && <p className="muted" role="status">{msg}</p>}
+      <div className="btnrow">
+        {actions}
+        <button type="button" className="secondary" onClick={() => void download()}>Tải ảnh QR</button>
+      </div>
     </div>
   );
 }
