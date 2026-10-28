@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../lib/db';
+import { useOrgs } from '../lib/orgs';
 import { useCatalog, workTypesForKind } from '../lib/catalog';
 import { useConfig } from '../lib/config';
 import { friendlyError } from '../lib/errors';
@@ -9,7 +12,7 @@ import { TemplateMilestones } from './MilestonePanels';
 import {
   addPhase, addStage, deletePhase, deleteStage, duplicateTemplate, flatOrder, IMPORTANCE_LABEL, loadTemplate, refreshCatalogCache, reorderStages,
   stageRanges, swapPhases, totalDays, updatePhase, updateStage, updateTemplate,
-  type Importance, type PhaseRow, type StageRow, type TemplateRow,
+  type Importance, type PhaseRow, type StageMaterial, type StageRow, type TemplateRow,
 } from '../lib/templates';
 
 /** Màu cho thanh tổng quan (tên luôn hiện bằng chữ, màu chỉ để phân biệt) */
@@ -118,6 +121,8 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
           {s.duration_days} ngày{r ? ` (ngày ${r.from}–${r.to})` : ''}{s.repeat_every_days ? ` · lặp mỗi ${s.repeat_every_days} ngày` : ''}{s.start_day ? ' · chạy song song' : ''} · Quan trọng: {IMPORTANCE_LABEL[imp]}
         </p>
         {s.note && <p>{s.note}</p>}
+        {s.guide && <p className="muted">Hướng dẫn: {s.guide}</p>}
+        {(s.materials ?? []).length > 0 && <p className="muted">Vật tư: {(s.materials ?? []).map((m) => `${m.name}${m.amount ? ` (${m.amount})` : ''}`).join('; ')}</p>}
         {canEdit && editStage === s.id && (
           <StageForm key={s.id} title={`Sửa việc: ${s.name}`} stage={s} phaseId={phaseId} phases={flat ? [] : orderedPhases} types={types} busy={busy || !online}
             onClose={() => setEditStage(null)}
@@ -181,7 +186,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
           {canEdit && editStage === null && (
             <Collapsible inline title="＋ Thêm việc">
               <StageForm title="" stage={null} phaseId={null} phases={[]} types={types} busy={busy || !online}
-                onSave={(v) => run(async () => { await addStage(templateId, { work_type_id: v.fields.work_type_id!, duration_days: v.fields.duration_days!, note: v.fields.note ?? '', importance: v.fields.importance, start_day: v.fields.start_day, repeat_every_days: v.fields.repeat_every_days }); })} />
+                onSave={(v) => run(async () => { await addStage(templateId, { work_type_id: v.fields.work_type_id!, duration_days: v.fields.duration_days!, note: v.fields.note ?? '', importance: v.fields.importance, start_day: v.fields.start_day, repeat_every_days: v.fields.repeat_every_days, guide: v.fields.guide, materials: v.fields.materials }); })} />
             </Collapsible>
           )}
           {allStages.length === 0 && <p className="muted">Chưa có việc nào. Bấm "＋ Thêm việc".</p>}
@@ -209,7 +214,7 @@ export function TemplateEditor({ templateId, canEdit, onBack, onOpenOther }: Pro
               <Collapsible inline title="＋ Thêm việc vào công đoạn này">
                 <StageForm title="" stage={null} phaseId={p.id} phases={orderedPhases} types={types} busy={busy || !online}
                   onSave={(v) => run(async () => {
-                    await addStage(templateId, { work_type_id: v.fields.work_type_id!, duration_days: v.fields.duration_days!, note: v.fields.note ?? '', importance: v.fields.importance, start_day: v.fields.start_day, repeat_every_days: v.fields.repeat_every_days, phase_id: v.phaseId });
+                    await addStage(templateId, { work_type_id: v.fields.work_type_id!, duration_days: v.fields.duration_days!, note: v.fields.note ?? '', importance: v.fields.importance, start_day: v.fields.start_day, repeat_every_days: v.fields.repeat_every_days, guide: v.fields.guide, materials: v.fields.materials, phase_id: v.phaseId });
                     await resequence();
                     setOpenPhase(p.id);
                   })} />
@@ -265,7 +270,7 @@ function PhaseForm({ title, phase, busy, onSave, onClose }: {
 /** Thêm / sửa một việc của công đoạn: việc (từ danh mục), công đoạn, mức độ quan trọng, số ngày, ghi chú. Không lưu tự động để tránh nhầm. */
 function StageForm({ title, stage, phaseId, phases, types, busy, onSave, onClose }: {
   title: string; stage: StageRow | null; phaseId: string | null; phases: PhaseRow[]; types: { id: string; name: string }[]; busy: boolean;
-  onSave: (v: { phaseId: string | null; fields: { work_type_id?: string; duration_days?: number; note?: string; importance?: Importance; start_day?: number | null; repeat_every_days?: number | null } }) => Promise<void>; onClose?: () => void;
+  onSave: (v: { phaseId: string | null; fields: { work_type_id?: string; duration_days?: number; note?: string; importance?: Importance; start_day?: number | null; repeat_every_days?: number | null; guide?: string; materials?: StageMaterial[] } }) => Promise<void>; onClose?: () => void;
 }) {
   const [wt, setWt] = useState(stage?.work_type_id ?? '');
   const [phase, setPhase] = useState(phaseId ?? NO_PHASE);
@@ -273,6 +278,11 @@ function StageForm({ title, stage, phaseId, phases, types, busy, onSave, onClose
   const [days, setDays] = useState(stage ? String(stage.duration_days) : '');
   const [startDay, setStartDay] = useState(stage?.start_day ? String(stage.start_day) : '');
   const [repeat, setRepeat] = useState(stage?.repeat_every_days ? String(stage.repeat_every_days) : '');
+  const [guide, setGuide] = useState(stage?.guide ?? '');
+  const [mats, setMats] = useState<StageMaterial[]>(stage?.materials ?? []);
+  const { active } = useOrgs();
+  const orgMaterials = useLiveQuery(() => (active ? db.materials.where('organization_id').equals(active.id).toArray() : []), [active?.id], [])
+    .filter((m) => m.is_active).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const [note, setNote] = useState(stage?.note ?? '');
   const [err, setErr] = useState<string | null>(null);
   const body = (
@@ -304,6 +314,21 @@ function StageForm({ title, stage, phaseId, phases, types, busy, onSave, onClose
         <label>Lặp lại mỗi (ngày)<input value={repeat} inputMode="numeric" onChange={(e) => setRepeat(e.target.value)} placeholder="Không bắt buộc" /></label>
       </div>
       <small className="muted">Ngày tính từ ngày 1 của quy trình. Để trống "Bắt đầu từ ngày" thì việc làm ngay sau việc trước; điền ngày thì việc chạy song song từ ngày đó (ví dụ tưới mỗi ngày trong lúc bón phân).</small>
+      <label>Hướng dẫn thực hiện<textarea value={guide} maxLength={1000} rows={2} onChange={(e) => setGuide(e.target.value)} placeholder="Không bắt buộc. Ví dụ: có thể hòa tan lượng phân đủ cung cấp trong 3-5 ngày" /></label>
+      <fieldset className="roles">
+        <legend>Vật tư dự kiến (không bắt buộc)</legend>
+        {mats.map((m, i) => (
+          <div className="quickadd" key={i}>
+            <select value={m.material_id ?? ''} aria-label="Vật tư" onChange={(e) => { const mat = orgMaterials.find((x) => x.id === e.target.value); setMats((cur) => cur.map((r, j) => (j === i ? { ...r, material_id: mat?.id, name: mat?.name ?? r.name } : r))); }}>
+              <option value="">{m.name && !m.material_id ? `${m.name} (nhập tay)` : '— Chọn vật tư —'}</option>
+              {orgMaterials.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+            </select>
+            <input value={m.amount ?? ''} aria-label="Lượng dùng" maxLength={80} placeholder="Lượng, ví dụ 12.5 kg / phuy 200 lít" onChange={(e) => setMats((cur) => cur.map((r, j) => (j === i ? { ...r, amount: e.target.value } : r)))} />
+            <button type="button" className="icon" aria-label="Xóa vật tư" onClick={() => setMats((cur) => cur.filter((_, j) => j !== i))}>✕</button>
+          </div>
+        ))}
+        {mats.length < 20 && <button type="button" className="secondary" onClick={() => setMats((cur) => [...cur, { name: '' }])}>＋ Chọn để thêm vật tư</button>}
+      </fieldset>
       <label>Ghi chú<input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} placeholder="Không bắt buộc" /></label>
       {err && <p className="msg error" role="alert">{err}</p>}
       <div className="btnrow">
@@ -319,7 +344,7 @@ function StageForm({ title, stage, phaseId, phases, types, busy, onSave, onClose
           setErr(null);
           void onSave({
             phaseId: phase || null,
-            fields: { ...(wtId && wtId !== stage?.work_type_id ? { work_type_id: wtId } : {}), duration_days: d, note, importance, start_day: sd, repeat_every_days: rp },
+            fields: { ...(wtId && wtId !== stage?.work_type_id ? { work_type_id: wtId } : {}), duration_days: d, note, importance, start_day: sd, repeat_every_days: rp, guide, materials: mats.filter((m) => m.name.trim()).map((m) => ({ name: m.name.trim(), ...(m.amount?.trim() ? { amount: m.amount.trim() } : {}), ...(m.material_id ? { material_id: m.material_id } : {}) })) },
           }).then(() => { if (!stage) { setDays(''); setNote(''); } }).catch(() => undefined);
         }}>{stage ? 'Lưu thay đổi' : 'Thêm'}</button>
         {onClose && <button type="button" className="secondary" onClick={onClose}>Hủy</button>}

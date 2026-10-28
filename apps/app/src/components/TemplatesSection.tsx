@@ -175,6 +175,8 @@ function SystemTemplateCard({ sys, crops, canManage, online, busy, wtName, onApp
           {stages.filter((s) => s.phase_id === p.id).map((s, j) => (
             <p key={s.id} className="muted">
               {p.code?.trim() || i + 1}.{j + 1} {wtName(s.work_type_id)} · {s.duration_days} ngày{s.start_day ? ` từ ngày ${s.start_day}` : ''}{s.repeat_every_days ? ` · lặp mỗi ${s.repeat_every_days} ngày` : ''} · Quan trọng: {IMPORTANCE_LABEL[s.importance]}{s.note ? ` · ${s.note}` : ''}
+              {s.guide ? <span className="sub">Hướng dẫn: {s.guide}</span> : null}
+              {(s.materials ?? []).length > 0 ? <span className="sub">Vật tư: {(s.materials ?? []).map((m) => `${m.name}${m.amount ? ` (${m.amount})` : ''}`).join('; ')}</span> : null}
             </p>
           ))}
         </div>

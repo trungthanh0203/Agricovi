@@ -150,6 +150,8 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                 <span className="grow">
                   {s.phase_name ? `${s.phase_name} › ` : ''}{s.name}
                   <span className="sub">{s.repeat_every_days ? `Lặp mỗi ${s.repeat_every_days} ngày · ` : ''}{s.importance === 'high' ? 'Quan trọng · ' : ''}{s.note ?? ''}</span>
+                  {s.guide && <span className="sub">Hướng dẫn: {s.guide}</span>}
+                  {(s.materials ?? []).length > 0 && <span className="sub">Vật tư: {(s.materials ?? []).map((m) => `${m.name}${m.amount ? ` (${m.amount})` : ''}`).join('; ')}</span>}
                 </span>
                 {doneToday ? <span className="pill ok">Đã ghi</span>
                   : canLogHere && <button className="secondary" style={{ minHeight: 40, width: 'auto', margin: 0, padding: '0 10px' }} onClick={() => onLog({ cycleId, workTypeId: s.work_type_id, stageId: s.id })}>Ghi việc</button>}

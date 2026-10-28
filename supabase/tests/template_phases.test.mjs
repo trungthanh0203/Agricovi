@@ -126,3 +126,20 @@ test('việc đến hạn hôm nay: trong khoảng, đúng chu kỳ lặp, chưa
   const done = dueToday(stages, [{ stage_id: '2', work_type_id: 'T' }], '2026-12-03');
   assert.deepEqual(done.map((d) => [d.stage.id, d.doneToday]), [['2', true]]);
 });
+
+test('hướng dẫn và vật tư dự kiến của việc (migration 0115): nhân bản và tạo vụ đều giữ; quá 20 vật tư bị từ chối', async () => {
+  const { db, owner, org, tpl } = await setup();
+  const t = await tpl('Dưa D');
+  const mats = [{ name: 'Phân Canxi nitrat', amount: '12.5 kg / phuy 200 lít' }, { name: 'Phân vi lượng', amount: '0.5 kg' }];
+  await asUser(db, owner, `insert into template_stages (template_id, work_type_id, duration_days, guide, materials) values ($1, ${wt('fertilizing')}, 4, 'Hòa tan đủ cung cấp trong 3-5 ngày.', $2::jsonb)`, [t, JSON.stringify(mats)]);
+  assert.match(await expectError(asUser(db, owner, `insert into template_stages (template_id, work_type_id, duration_days, materials) values ($1, ${wt('irrigation')}, 1, $2::jsonb)`, [t, JSON.stringify(Array.from({ length: 21 }, (_, i) => ({ name: `v${i}` })))])), /check|materials/i);
+  assert.match(await expectError(asUser(db, owner, `insert into template_stages (template_id, work_type_id, duration_days, materials) values ($1, ${wt('irrigation')}, 1, '{"a":1}'::jsonb)`, [t])), /check|materials/i);
+  const copy = (await asUser(db, owner, `select duplicate_cycle_template($1,'Dưa D (bản sao)') id`, [t])).rows[0].id;
+  const c = (await db.query(`select guide, materials from template_stages where template_id=$1`, [copy])).rows[0];
+  assert.equal(c.guide, 'Hòa tan đủ cung cấp trong 3-5 ngày.'); assert.deepEqual(c.materials, mats);
+  const area = (await asUser(db, owner, `insert into production_areas (id, organization_id, name) values (gen_random_uuid(), $1,'Nhà màng') returning id`, [org])).rows[0].id;
+  const cyc = '9aaaaaaa-0000-4000-8000-000000000001';
+  await asUser(db, owner, `select create_cycle_from_template($1,$2,$3,$4,'2026-11-01')`, [cyc, org, area, t]);
+  const v = (await db.query(`select guide, materials from production_stages where cycle_id=$1`, [cyc])).rows[0];
+  assert.equal(v.guide, 'Hòa tan đủ cung cấp trong 3-5 ngày.'); assert.deepEqual(v.materials, mats);
+});

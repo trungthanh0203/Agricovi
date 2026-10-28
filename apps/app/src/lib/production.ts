@@ -44,7 +44,9 @@ const STAGE_COLUMNS =
 /** Việc của vụ kèm công đoạn và mức độ quan trọng (migration 0109); CSDL chưa cập nhật thì dùng bộ cột cũ */
 async function selectStages(cycleId?: string) {
   const q = (cols: string) => { const b = supabase!.from('production_stages').select(cols); return cycleId ? b.eq('cycle_id', cycleId) : b; };
-  const r = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days');
+  const r0 = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials');
+  if (!r0.error) return r0;
+  const r = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days'); // chưa db push 0115
   if (!r.error) return r;
   const r2 = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance'); // chưa db push 0114
   return r2.error ? q(STAGE_COLUMNS) : r2;

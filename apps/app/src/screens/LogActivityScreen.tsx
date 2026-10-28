@@ -109,7 +109,9 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const workType = workTypes.find((w) => w.id === workTypeId) ?? null;
 
   // Vật tư sử dụng đã khai báo cho việc này hiện sẵn thành các dòng "Vật tư đã dùng" (chỉ cần nhập số lượng; dòng để trống thì bỏ qua)
-  const suggestedKey = canIssue && workType ? (workType.material_ids ?? []).join(',') : '';
+  // vật tư dự kiến của việc trong quy trình của vụ (nếu mở từ "Việc đến hạn") cũng được nạp sẵn
+  const stageMats = (stages.find((s) => s.id === effStage)?.materials ?? []).map((m) => m.material_id).filter((x): x is string => !!x);
+  const suggestedKey = canIssue && workType ? [...new Set([...(workType.material_ids ?? []), ...stageMats])].join(',') : '';
   useEffect(() => {
     const ids = suggestedKey ? suggestedKey.split(',') : [];
     setUsed(ids.map((materialId) => ({ materialId, qty: '', suggested: true })));

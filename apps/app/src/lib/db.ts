@@ -190,6 +190,9 @@ export interface StageRow {
   importance?: 'high' | 'normal' | 'low';
   /** Lặp lại mỗi N ngày trong khoảng thực hiện (bản chụp từ quy trình mẫu) */
   repeat_every_days?: number | null;
+  /** Hướng dẫn thực hiện và vật tư dự kiến (bản chụp từ quy trình mẫu) */
+  guide?: string | null;
+  materials?: { name: string; amount?: string; material_id?: string }[];
 }
 
 /** Bản chỉnh của một cơ sở lên mục có sẵn dùng chung (D32) */

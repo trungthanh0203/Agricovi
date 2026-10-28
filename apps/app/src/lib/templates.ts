@@ -26,9 +26,11 @@ export interface TemplateRow {
   template_stages: { id: string; duration_days: number; start_day?: number | null }[];
 }
 /** Giai đoạn = một việc chọn từ danh mục + số ngày. `name` là tên việc lúc chọn (máy chủ tự điền). */
-export interface StageRow { id: string; template_id: string; seq: number; name: string; work_type_id: string | null; duration_days: number; note: string | null; phase_id?: string | null; importance?: Importance; start_day?: number | null; repeat_every_days?: number | null }
+export interface StageRow { id: string; template_id: string; seq: number; name: string; work_type_id: string | null; duration_days: number; note: string | null; phase_id?: string | null; importance?: Importance; start_day?: number | null; repeat_every_days?: number | null; guide?: string | null; materials?: StageMaterial[] }
 /** Mức độ quan trọng của một việc trong quy trình */
 export type Importance = 'high' | 'normal' | 'low';
+/** Một vật tư dự kiến của việc: lấy từ danh mục vật tư của cơ sở (`material_id`) hoặc chỉ ghi tên (mẫu hệ thống); `amount` là lượng/liều dùng, ví dụ "12.5 kg / phuy 200 lít" */
+export interface StageMaterial { name: string; amount?: string; material_id?: string }
 export const IMPORTANCE_LABEL: Record<Importance, string> = { high: 'Cao', normal: 'Trung bình', low: 'Thấp' };
 /** Công đoạn của quy trình: nhóm các việc; chỉ có số thứ tự (mã), tên và mô tả */
 export interface PhaseRow { id: string; template_id: string; seq: number; code: string | null; name: string; description: string | null }
@@ -214,7 +216,9 @@ export async function loadTemplate(id: string): Promise<{ template: TemplateRow;
   const [t, st, ph] = await Promise.all([
     ok(c.from('cycle_templates').select('id, organization_id, crop_type_id, name, note, version, is_active, updated_at, template_stages(id, duration_days)').eq('id', id).single()),
     (async () => {
-      const r0 = await c.from('template_stages').select('id, template_id, seq, name, work_type_id, duration_days, note, phase_id, importance, start_day, repeat_every_days').eq('template_id', id).order('seq');
+      const rg = await c.from('template_stages').select('id, template_id, seq, name, work_type_id, duration_days, note, phase_id, importance, start_day, repeat_every_days, guide, materials').eq('template_id', id).order('seq');
+      if (!rg.error) return rg.data;
+      const r0 = await c.from('template_stages').select('id, template_id, seq, name, work_type_id, duration_days, note, phase_id, importance, start_day, repeat_every_days').eq('template_id', id).order('seq'); // chưa db push 0115
       if (!r0.error) return r0.data;
       const r = await c.from('template_stages').select('id, template_id, seq, name, work_type_id, duration_days, note, phase_id, importance').eq('template_id', id).order('seq'); // chưa db push 0114
       if (!r.error) return r.data;
@@ -228,15 +232,15 @@ export async function loadTemplate(id: string): Promise<{ template: TemplateRow;
   return { template: t as unknown as TemplateRow, stages: (st ?? []) as StageRow[], phases: (ph ?? []) as PhaseRow[] };
 }
 
-export async function addStage(templateId: string, s: { work_type_id: string; duration_days: number; note?: string; phase_id?: string | null; importance?: Importance; start_day?: number | null; repeat_every_days?: number | null }): Promise<string> {
+export async function addStage(templateId: string, s: { work_type_id: string; duration_days: number; note?: string; phase_id?: string | null; importance?: Importance; start_day?: number | null; repeat_every_days?: number | null; guide?: string; materials?: StageMaterial[] }): Promise<string> {
   needOnline('thêm việc');
-  const r = await ok(client().from('template_stages').insert({ template_id: templateId, work_type_id: s.work_type_id, duration_days: s.duration_days, note: s.note?.trim() || null, ...(s.phase_id ? { phase_id: s.phase_id } : {}), ...(s.importance ? { importance: s.importance } : {}), ...(s.start_day ? { start_day: s.start_day } : {}), ...(s.repeat_every_days ? { repeat_every_days: s.repeat_every_days } : {}) }).select('id').single());
+  const r = await ok(client().from('template_stages').insert({ template_id: templateId, work_type_id: s.work_type_id, duration_days: s.duration_days, note: s.note?.trim() || null, ...(s.phase_id ? { phase_id: s.phase_id } : {}), ...(s.importance ? { importance: s.importance } : {}), ...(s.start_day ? { start_day: s.start_day } : {}), ...(s.repeat_every_days ? { repeat_every_days: s.repeat_every_days } : {}), ...(s.guide?.trim() ? { guide: s.guide.trim() } : {}), ...(s.materials && s.materials.length > 0 ? { materials: s.materials } : {}) }).select('id').single());
   return (r as { id: string }).id;
 }
 /** Đổi việc (chọn từ danh mục) và/hoặc số ngày của giai đoạn */
-export async function updateStage(id: string, s: { work_type_id?: string; duration_days?: number; note?: string | null; importance?: Importance; phase_id?: string | null; start_day?: number | null; repeat_every_days?: number | null }): Promise<void> {
+export async function updateStage(id: string, s: { work_type_id?: string; duration_days?: number; note?: string | null; importance?: Importance; phase_id?: string | null; start_day?: number | null; repeat_every_days?: number | null; guide?: string | null; materials?: StageMaterial[] }): Promise<void> {
   needOnline('sửa việc');
-  const patch = { ...s, ...(s.note !== undefined ? { note: s.note?.trim() || null } : {}) };
+  const patch = { ...s, ...(s.note !== undefined ? { note: s.note?.trim() || null } : {}), ...(s.guide !== undefined ? { guide: s.guide?.trim() || null } : {}) };
   await ok(client().from('template_stages').update(patch).eq('id', id));
 }
 export async function deleteStage(id: string): Promise<void> {
@@ -253,14 +257,18 @@ export async function reorderStages(templateId: string, ids: string[]): Promise<
 export interface SystemTemplate {
   id: string; code: string; kind: string; crop_type_id: string | null; name: string; description: string | null; source: string | null; version: number;
   system_template_phases: { id: string; seq: number; code: string | null; name: string; description: string | null }[];
-  system_template_stages: { id: string; phase_id: string | null; seq: number; work_type_id: string; duration_days: number; importance: Importance; note: string | null; start_day?: number | null; repeat_every_days?: number | null }[];
+  system_template_stages: { id: string; phase_id: string | null; seq: number; work_type_id: string; duration_days: number; importance: Importance; note: string | null; start_day?: number | null; repeat_every_days?: number | null; guide?: string | null; materials?: StageMaterial[] }[];
 }
 /** Các mẫu hệ thống đang dùng (mọi người đăng nhập xem được); CSDL chưa cập nhật thì trả danh sách rỗng */
 export async function listSystemTemplates(): Promise<SystemTemplate[]> {
   const r = await client().from('system_templates')
-    .select('id, code, kind, crop_type_id, name, description, source, version, system_template_phases(id, seq, code, name, description), system_template_stages(id, phase_id, seq, work_type_id, duration_days, importance, note, start_day, repeat_every_days)')
+    .select('id, code, kind, crop_type_id, name, description, source, version, system_template_phases(id, seq, code, name, description), system_template_stages(id, phase_id, seq, work_type_id, duration_days, importance, note, start_day, repeat_every_days, guide, materials)')
     .eq('is_active', true).order('name');
   if (!r.error) return (r.data ?? []) as unknown as SystemTemplate[];
+  const r1 = await client().from('system_templates') // chưa db push 0115
+    .select('id, code, kind, crop_type_id, name, description, source, version, system_template_phases(id, seq, code, name, description), system_template_stages(id, phase_id, seq, work_type_id, duration_days, importance, note, start_day, repeat_every_days)')
+    .eq('is_active', true).order('name');
+  if (!r1.error) return (r1.data ?? []) as unknown as SystemTemplate[];
   const r2 = await client().from('system_templates') // chưa db push 0114
     .select('id, code, kind, crop_type_id, name, description, source, version, system_template_phases(id, seq, code, name, description), system_template_stages(id, phase_id, seq, work_type_id, duration_days, importance, note)')
     .eq('is_active', true).order('name');
