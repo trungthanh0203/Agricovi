@@ -250,7 +250,7 @@ export function WorkTypesSection() {
                 {t.shared && !t.overridden && <span className="sub">Có sẵn</span>}
                 {!t.is_active && <span className="sub">Đã dừng</span>}
               </td>
-              <td className="muted">{t.applies_to && t.applies_to.length > 0 ? t.applies_to.map((k) => cfg.groupLabel(k, null)).join(', ') : 'Tất cả'}</td>
+              <td className="muted">{t.applies_to && t.applies_to.length > 0 ? t.applies_to.map((k) => cfg.groupLabel(k, null)).join(', ') : t.shared ? 'Tất cả' : <span className="pill warn">Chưa chọn</span>}</td>
               <td className="muted">{fieldsOf(t).length > 0 ? fieldsOf(t).map((f) => f.label).join(', ') : '—'}</td>
               {canManage && (
                 <td className="act">
