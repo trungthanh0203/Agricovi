@@ -18,8 +18,8 @@ Hầu hết lưới dùng **nút biểu tượng** (✎ ✕ 🗑 ↑ ↓ ⏸ ▶
 
 ## Đã rà các lưới (28/10/2026)
 - **Chức vụ**: hàng trên ⏸/▶, hàng dưới ✎ 🗑.
-- **Khách hàng**: hàng trên ⏸/▶, hàng dưới ✎ 🕶 (ẩn danh).
-- **Hộ thành viên (HTX)**: hàng trên ➜ (làm việc ở hộ), hàng dưới ✎ 🗑 (gỡ khỏi HTX).
+- **Khách hàng**: dùng ⋮ (Chỉnh sửa, Dừng/Dùng lại, Ẩn danh theo yêu cầu xóa dữ liệu).
+- **Hộ thành viên (HTX)**: dùng ⋮ (Làm việc ở hộ này, Chỉnh sửa, Gỡ khỏi HTX).
 - **Chấm công**: dùng ⋮ với chữ rõ nghĩa (Đề nghị sửa giờ, Xác nhận công, Từ chối công) vì biểu tượng khó hiểu.
 - **Công đoạn trong Tạo quy trình**: nút chữ kèm biểu tượng ✎ Sửa, ↑ Lên, ↓ Xuống, 🗑 Xóa.
 - Các lưới chỉ có 1–2 nút (Phân khu, Sản phẩm, Việc, Vật tư, Kho, Nhà cung ứng, Giấy phép, Phòng/Tổ, Nhân sự, Hồ sơ web, Sự cố) giữ **một hàng**.

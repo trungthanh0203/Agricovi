@@ -1,4 +1,5 @@
 import { customerKindText, useConfig } from '../lib/config';
+import { RowMenu } from './RowMenu';
 import { useCallback, useEffect, useState } from 'react';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
@@ -105,22 +106,17 @@ export function CustomersSection() {
                 <td>{p.phone ? <a href={`tel:${p.phone}`}>{p.phone}</a> : '—'}</td>
                 <td className="act">
                   {canEdit && (
-                    <div className="iconrows">
-                      <span>
-                      <button className="icon" disabled={busy || !online} aria-label={p.is_active ? `Dừng ${p.name}` : `Dùng lại ${p.name}`}
-                        onClick={() => void run(() => updateCustomer(p, { is_active: !p.is_active }))}>{p.is_active ? '⏸' : '▶'}</button>
-                      </span>
-                      <span>
-                      <button className="icon" disabled={busy || !online} aria-label={`Sửa ${p.name}`} onClick={() => { setAdding(false); setEditing(p.id); }}>✎</button>                       <button className="icon" disabled={busy || !online} aria-label={`Ẩn danh ${p.name}`} title="Ẩn danh theo yêu cầu xóa dữ liệu"
-                        onClick={() => {
-                          if (!window.confirm(`Ẩn danh "${p.name}"?
+                    <RowMenu label={p.name} items={[
+                      { label: 'Chỉnh sửa', icon: '✎', disabled: busy || !online, onClick: () => { setAdding(false); setEditing(p.id); } },
+                      { label: p.is_active ? 'Dừng khách này' : 'Dùng lại', icon: p.is_active ? '⏸' : '▶', disabled: busy || !online, onClick: () => void run(() => updateCustomer(p, { is_active: !p.is_active })) },
+                      { label: 'Ẩn danh (theo yêu cầu xóa dữ liệu)', icon: '🕶', danger: true, disabled: busy || !online, onClick: () => {
+                        if (!window.confirm(`Ẩn danh "${p.name}"?
 
 Tên, điện thoại, địa chỉ, ghi chú sẽ bị xóa và KHÔNG khôi phục được. Số tiền và công nợ vẫn được giữ.`)) return;
-                          const r = window.prompt('Lý do ẩn danh (ví dụ: khách yêu cầu xóa dữ liệu):');
-                          if (r && r.trim().length >= 3) void run(() => anonymizeCustomer(p.id, r.trim()));
-                        }}>🕶</button>
-                      </span>
-                    </div>
+                        const r = window.prompt('Lý do ẩn danh (ví dụ: khách yêu cầu xóa dữ liệu):');
+                        if (r && r.trim().length >= 3) void run(() => anonymizeCustomer(p.id, r.trim()));
+                      } },
+                    ]} />
                   )}
                 </td>
               </tr>

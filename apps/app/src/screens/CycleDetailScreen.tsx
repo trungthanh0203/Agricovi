@@ -56,6 +56,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [editingPhase, setEditingPhase] = useState<string | null>(null); // tên công đoạn đang sửa
   const today = todayLocal();
 
   // mở màn này là làm mới việc từ máy chủ (người khác có thể vừa đổi)
@@ -83,7 +84,6 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
     setError(null);
     try { await fn(); } catch (e) { setError(friendlyError(e)); throw e; } finally { setBusy(false); }
   }
-  const [editingPhase, setEditingPhase] = useState<string | null>(null); // tên công đoạn đang sửa
   const act = (stageId: string, action: 'start' | 'complete' | 'reopen') => run(() => advanceStage(stageId, action)).catch(() => undefined);
   const lastEnd = stages.reduce<string>((m, s) => (s.planned_end && s.planned_end > m ? s.planned_end : m), cycle.start_date ?? today);
 

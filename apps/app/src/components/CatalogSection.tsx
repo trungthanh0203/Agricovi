@@ -64,14 +64,13 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
       {canWrite && <button className="secondary" disabled={!writable} onClick={() => setFormMat('new')}>+ Thêm vật tư</button>}
       <div className="tablewrap">
       <table className="grid">
-        <thead><tr><th>Tên vật tư</th><th>Nhóm vật tư</th><th>Nhà sản xuất</th><th className="num">Báo sắp hết ≤</th>{canWrite && <th></th>}</tr></thead>
+        <thead><tr><th>Tên vật tư</th><th>Nhóm vật tư</th><th className="num">Báo sắp hết ≤</th>{canWrite && <th></th>}</tr></thead>
         <tbody>
-          {mats.length === 0 && <tr><td colSpan={5} className="muted">Chưa có vật tư nào.</td></tr>}
+          {mats.length === 0 && <tr><td colSpan={4} className="muted">Chưa có vật tư nào.</td></tr>}
           {mats.map((m) => (
             <tr key={m.id} className={m.is_active ? '' : 'off'}>
               <td><Thumb src={m.image} />{m.name}{m.is_active ? '' : <span className="sub">Đã dừng</span>}</td>
               <td className="muted">{cfg.materialGroupLabel(m.material_group, m.group_item)}</td>
-              <td className="muted">{m.manufacturer ?? ''}</td>
               <td className="num">{m.reorder_threshold != null ? `${formatQty(m.reorder_threshold)} ${unitName(m.base_unit_id)}` : '—'}</td>
               {canWrite && (
                 <td className="act">
