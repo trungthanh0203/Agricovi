@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { MemberRole } from '@agriconnect/shared';
 import { useCatalog } from '../lib/catalog';
+import { useConfig } from '../lib/config';
 import { AutoTextarea } from './AutoTextarea';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
@@ -112,6 +113,7 @@ function RoleForm({ initial, busy, onSave, onClose }: {
   onClose: () => void;
 }) {
   const { workTypes } = useCatalog();
+  const cfg = useConfig();
   const [name, setName] = useState(initial?.name ?? '');
   const [desc, setDesc] = useState(initial?.description ?? '');
   const [role, setRole] = useState<MemberRole>(initial?.base_role ?? 'worker'); // chức vụ mới mặc định vai trò Nhân viên
@@ -155,11 +157,24 @@ function RoleForm({ initial, busy, onSave, onClose }: {
           <label className="check"><input type="radio" checked={!limited} onChange={() => setLimited(false)} /> Mọi loại việc</label>
           <label className="check"><input type="radio" checked={limited} onChange={() => setLimited(true)} /> Chỉ những việc được chọn</label>
           {limited && (
-            <div className="cols2">
-              {workTypes.filter((w) => w.is_active).map((w) => (
-                <label className="check" key={w.id}><input type="checkbox" checked={wts.includes(w.id)} onChange={() => toggleWt(w.id)} /> {w.name}</label>
-              ))}
-            </div>
+            <>
+              {[...['crop', 'livestock', 'aquatic', 'other'].filter((k) => cfg.kindOn(k)).map((k) => ({ id: k, label: cfg.groupLabel(k, null) })), { id: '', label: 'Chưa chọn đối tượng' }].map((g) => {
+                const list = workTypes.filter((w) => w.is_active && (g.id ? w.applies_to?.[0] === g.id : !w.applies_to?.length));
+                if (list.length === 0) return null;
+                const allOn = list.every((w) => wts.includes(w.id));
+                return (
+                  <div key={g.id || 'none'}>
+                    <div className="row"><strong className="grow">{g.label}</strong>
+                      <button type="button" className="link inline" onClick={() => setWts((cur) => (allOn ? cur.filter((id) => !list.some((w) => w.id === id)) : [...new Set([...cur, ...list.map((w) => w.id)])]))}>{allOn ? 'Bỏ chọn nhóm' : 'Chọn cả nhóm'}</button>
+                    </div>
+                    <div className="cols2">
+                      {list.map((w) => <label className="check" key={w.id}><input type="checkbox" checked={wts.includes(w.id)} onChange={() => toggleWt(w.id)} /> {w.name}</label>)}
+                    </div>
+                  </div>
+                );
+              })}
+              <small>Việc mới thêm sau này không tự có trong danh sách giới hạn của chức vụ: hãy vào đây tích thêm.</small>
+            </>
           )}
         </fieldset>
         {err && <p className="msg error" role="alert">{err}</p>}

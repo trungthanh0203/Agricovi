@@ -126,6 +126,7 @@ export function WorkTypesSection() {
   const rank = (t: EffWorkType) => { const k = t.applies_to?.[0]; const n = k ? groups.findIndex((g) => g.id === k) : -1; return n < 0 ? 999 : n; };
   const rows = workTypes.filter((t) => (showOff || t.is_active) && (!t.applies_to || t.applies_to.length === 0 || t.applies_to.some((k) => cfg.kindOn(k))) && (!filterKind || !t.applies_to || t.applies_to.length === 0 || t.applies_to.includes(filterKind))).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'vi'));
   const editingRow = workTypes.find((t) => t.id === editing) ?? null;
+  const unset = workTypes.filter((t) => !t.shared && t.is_active && (!t.applies_to || t.applies_to.length === 0));
   /** Các việc chi tiết của một việc theo đối tượng áp dụng của nó (kể cả biểu mẫu chuẩn có sẵn) */
   const fieldsOf = (t: EffWorkType): FieldDef[] => { const raw = rawTypes.find((r) => r.id === t.id); return raw ? fieldsForKind(raw, org, t.applies_to?.[0]) : t.field_schema; };
 
@@ -184,6 +185,11 @@ export function WorkTypesSection() {
       {error && <p className="msg error" role="alert">{error}</p>}
 
 
+      {canManage && unset.length > 0 && !editingRow && (
+        <p className="msg warn" role="status">
+          Có {unset.length} việc riêng chưa chọn Đối tượng áp dụng ({unset.slice(0, 3).map((t) => t.name).join(', ')}{unset.length > 3 ? '…' : ''}). Bấm ✎ ở từng việc để chọn, nếu không việc sẽ hiện ở mọi loại vụ.
+        </p>
+      )}
       <h2 className="sect band">{editingRow ? 'Sửa việc' : 'Thêm việc'}</h2>
       {editingRow && (
         <div className="card">
