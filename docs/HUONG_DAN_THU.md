@@ -348,3 +348,6 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 2. Bấm **Xong** khi chưa ghi đủ: app báo "cần Ghi việc đủ N lần (đã ghi M lần)". Ghi việc còn thiếu (mỗi ngày đến hạn một lần), rồi bấm Xong lại: được.
 3. Ghi hai lần trong cùng một ngày chỉ tính một lần; khi ghi trùng app hỏi lại "Bạn vẫn muốn ghi thêm?" và nhắc vật tư sẽ bị trừ kho thêm.
 4. **Ra ca** không còn đòi phải đã Ghi việc.
+5. **Lối thoát cho chủ cơ sở** (cần `db push` đến 0126): đăng nhập bằng chủ cơ sở, bấm Xong khi chưa ghi đủ: app hỏi lý do; nhập lý do (ít nhất 3 ký tự) thì việc Xong, dòng việc ghi "Xong khi chưa ghi đủ, lý do: …". Tài khoản quản lý không có lối thoát này.
+6. **Ghi bù**: ở Ghi việc bấm Hôm qua hoặc Hôm kia (hoặc chọn ngày giờ) để ghi cho ngày đã làm; chọn thời điểm ở tương lai thì app báo lỗi.
+7. **Nhân bản**: Sản xuất → Nhật ký việc → một bản ghi → Nhân bản: Ghi việc mở ra đã điền sẵn nội dung, vật tư; chỉ chọn lại ngày rồi Lưu.

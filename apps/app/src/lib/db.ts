@@ -193,6 +193,8 @@ export interface StageRow {
   /** Hướng dẫn thực hiện và vật tư dự kiến (bản chụp từ quy trình mẫu) */
   guide?: string | null;
   materials?: { name: string; amount?: string; material_id?: string }[];
+  /** Chủ cơ sở bấm Xong khi chưa Ghi việc đủ: lý do (migration 0126) */
+  log_waived_reason?: string | null;
 }
 
 /** Bản chỉnh của một cơ sở lên mục có sẵn dùng chung (D32) */

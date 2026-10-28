@@ -29,7 +29,7 @@ import {
 } from '../lib/production';
 import { canManageProduction, isOwner } from '../lib/roles';
 
-export interface LogPreset { cycleId: string; workTypeId?: string | null; stageId?: string | null }
+export interface LogPreset { cycleId: string; workTypeId?: string | null; stageId?: string | null; areaId?: string; copyFromLogId?: string }
 
 /**
  * Chi tiết một vụ: các việc theo quy trình đã chọn (kế hoạch và thực tế), tiến độ, và xem dạng lịch.
@@ -84,13 +84,20 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
   }
   const harvestCount = harvestsAll.filter((h) => h.cycle_id === cycleId && !h.voided_at).length;
   const progressOf = (s: StageRow) => stageLogProgress(s, logs, harvestCount, /^harvesting/.test(workTypes.find((w) => w.id === s.work_type_id)?.code ?? ''), today, (iso) => toLocalInput(new Date(iso)).slice(0, 10));
-  const act = (stageId: string, action: 'start' | 'complete' | 'reopen') => {
+  const act = (stageId: string, action: 'start' | 'complete' | 'reopen'): Promise<void> => {
     if (action === 'complete') {
       // Xong chỉ khi đã Ghi việc đủ (máy chủ cũng kiểm lại)
       const st = stages.find((x) => x.id === stageId);
       const p = st ? progressOf(st) : null;
       if (st && p && p.logged < p.expected) {
-        setError(`Việc "${st.name}" cần Ghi việc đủ ${p.expected} lần mới bấm Xong được (hiện đã ghi ${p.logged} lần). Hãy bấm Ghi việc để ghi phần còn thiếu rồi bấm Xong lại.`);
+        // chủ cơ sở có lối thoát: bấm Xong kèm lý do (máy chủ lưu lý do, người bấm, thời điểm)
+        if (isOwner(active?.roles)) {
+          const why = window.prompt(`Việc "${st.name}" mới ghi ${p.logged}/${p.expected} lần.\n\nChủ cơ sở có thể bấm Xong kèm lý do (ít nhất 3 ký tự), lý do được lưu lại. Bấm Hủy để quay lại ghi việc.`);
+          if (why && why.trim().length >= 3) return run(() => advanceStage(stageId, action, undefined, why.trim())).catch(() => undefined);
+          if (why !== null) setError('Lý do cần ít nhất 3 ký tự.');
+          return Promise.resolve();
+        }
+        setError(`Việc "${st.name}" cần Ghi việc đủ ${p.expected} lần mới bấm Xong được (hiện đã ghi ${p.logged} lần). Hãy bấm Ghi việc để ghi phần còn thiếu rồi bấm Xong lại. Nếu không thể ghi bù, nhờ chủ cơ sở bấm Xong kèm lý do.`);
         return Promise.resolve();
       }
     }
@@ -232,7 +239,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                       <span className="sub">
                         {s.importance === 'high' ? 'Quan trọng · ' : ''}{s.repeat_every_days ? `Lặp mỗi ${s.repeat_every_days} ngày · ` : ''}{STAGE_STATUS_LABEL_VI[s.status]}{late > 0 && s.status !== 'pending' ? ` · trễ ${late} ngày` : ''}
                         {late > 0 && s.status === 'pending' ? ` · chưa bắt đầu, trễ ${late} ngày` : ''}
-                        {s.work_type_id && s.status !== 'pending' ? ` · Đã ghi ${progressOf(s).logged}/${progressOf(s).expected} lần` : logCount.get(s.id) ? ` · ${logCount.get(s.id)} việc đã ghi` : ''}
+                        {s.work_type_id && s.status !== 'pending' ? ` · Đã ghi ${progressOf(s).logged}/${progressOf(s).expected} lần` : logCount.get(s.id) ? ` · ${logCount.get(s.id)} việc đã ghi` : ''}{s.log_waived_reason ? ` · Xong khi chưa ghi đủ, lý do: ${s.log_waived_reason}` : ''}
                       </span>
                     </td>
                     <td>{fmtDate(s.planned_start)}<span className="sub">→ {fmtDate(s.planned_end)}</span></td>

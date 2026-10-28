@@ -23,7 +23,7 @@ function summarize(wt: WorkTypeRow | undefined, data: Record<string, unknown>, o
 }
 
 /** Lịch sử nhật ký có lọc theo vụ / loại việc / ngày; sửa và hủy theo quyền (FR-LOG-004/005). */
-export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedded?: boolean }) {
+export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void; embedded?: boolean; onClone?: (logId: string) => void }) {
   const { session } = useAuth();
   const { active } = useOrgs();
   const sync = useRecordSync();
@@ -189,6 +189,11 @@ export function LogsScreen({ onClose, embedded }: { onClose: () => void; embedde
             </div>
             {l.voided_at && l.void_reason && <p className="muted">Lý do hủy: {l.void_reason}</p>}
 
+            {onClone && !l.voided_at && voiding !== l.id && (
+              <div className="actions">
+                <button className="secondary" onClick={() => onClone(l.id)}>Nhân bản</button>
+              </div>
+            )}
             {canEdit(l) && voiding !== l.id && (
               <div className="actions">
                 <button className="secondary" onClick={() => setEditing(l.id)}>Sửa</button>

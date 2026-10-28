@@ -44,7 +44,9 @@ const STAGE_COLUMNS =
 /** Việc của vụ kèm công đoạn và mức độ quan trọng (migration 0109); CSDL chưa cập nhật thì dùng bộ cột cũ */
 async function selectStages(cycleId?: string) {
   const q = (cols: string) => { const b = supabase!.from('production_stages').select(cols); return cycleId ? b.eq('cycle_id', cycleId) : b; };
-  const r0 = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials');
+  const rw = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials, log_waived_reason');
+  if (!rw.error) return rw;
+  const r0 = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials'); // chưa db push 0126
   if (!r0.error) return r0;
   const r = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days'); // chưa db push 0115
   if (!r.error) return r;
@@ -373,10 +375,10 @@ export async function deleteNote(id: string): Promise<void> {
 }
 
 /** Bắt đầu / hoàn thành / mở lại một giai đoạn của vụ (cần mạng, người quản lý vụ). Ngày thực tế mặc định là hôm nay. */
-export async function advanceStage(stageId: string, action: 'start' | 'complete' | 'reopen', date?: string): Promise<void> {
+export async function advanceStage(stageId: string, action: 'start' | 'complete' | 'reopen', date?: string, waiverReason?: string): Promise<void> {
   requireOnline('đổi giai đoạn');
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  const { data, error } = await supabase.rpc('advance_stage', { p_stage: stageId, p_action: action, p_date: date ?? null });
+  const { data, error } = await supabase.rpc('advance_stage', { p_stage: stageId, p_action: action, p_date: date ?? null, ...(waiverReason ? { p_reason: waiverReason } : {}) });
   if (error) throw new Error(error.message);
   const row = data as unknown as StageRow | null;
   if (row) await db.stages.put({ ...(await db.stages.get(stageId)), ...row });

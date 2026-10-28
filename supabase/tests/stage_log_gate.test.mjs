@@ -92,3 +92,21 @@ test('bản máy khớp máy chủ: số lần cần ghi theo chu kỳ lặp, m�
   assert.equal(dueToday([stage], [], '2026-09-15', [])[0].doneToday, false);
   assert.equal(dueToday([stage], [], '2026-09-15', [{ stage_id: 'S' }])[0].doneToday, true);
 });
+
+test('lối thoát (migration 0126): chỉ chủ cơ sở bấm Xong khi chưa ghi đủ kèm lý do; lý do được lưu; mở lại thì xóa dấu; người khác vẫn bị chặn', async () => {
+  const { db, owner, cyc, stage } = await setup();
+  const mgr = await addUser(db, 2);
+  const org = (await db.query(`select owner_org_id o from production_cycles where id=$1`, [cyc])).rows[0].o;
+  await db.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['manager']::member_role[])`, [org, mgr]);
+  const s1 = await stage(1);
+  await asUser(db, owner, `select advance_stage($1,'start',$2::date)`, [s1.id, s1.a]);
+  const done = (who, reason) => asUser(db, who, `select advance_stage($1,'complete',$2::date,$3)`, [s1.id, s1.b, reason]);
+  assert.match(await expectError(done(owner, null)), /LOG_INCOMPLETE/);
+  assert.match(await expectError(done(owner, 'ab')), /LOG_INCOMPLETE/);          // lý do quá ngắn
+  assert.match(await expectError(done(mgr, 'Quên ghi, đã làm xong')), /FORBIDDEN/); // người quản lý không được bỏ qua
+  await done(owner, 'Quên ghi, đã làm xong');
+  const r = (await db.query(`select status, log_waived_reason r, log_waived_by b, log_waived_at is not null t from production_stages where id=$1`, [s1.id])).rows[0];
+  assert.equal(r.status, 'done'); assert.equal(r.r, 'Quên ghi, đã làm xong'); assert.equal(r.b, owner); assert.equal(r.t, true);
+  await asUser(db, owner, `select advance_stage($1,'reopen',null)`, [s1.id]);
+  assert.equal((await db.query(`select log_waived_reason r from production_stages where id=$1`, [s1.id])).rows[0].r, null);
+});

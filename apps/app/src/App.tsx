@@ -1,3 +1,4 @@
+import { db } from './lib/db';
 import { Fragment, Suspense, useCallback, useEffect, useState } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { lazyRetry } from './lib/lazyRetry';
@@ -193,6 +194,7 @@ function Shell() {
             onSection={setSub('production')}
             onLog={() => { setLogPreset(null); setOverlay('log'); }}
             onHistory={() => goTo('production', 'logs')}
+            onClone={(logId) => { void db.logs.get(logId).then((l) => { if (!l) return; setDetailId(null); setLogPreset({ cycleId: l.cycle_id ?? '', areaId: l.cycle_id ? undefined : l.area_id ?? undefined, workTypeId: l.work_type_id, stageId: l.stage_id, copyFromLogId: l.id }); setOverlay('log'); }); }}
             onCreateCycle={() => setOverlay('cycle')}
             onOpenCycle={(id, opts) => { setDetailId(id); setQrFirst(false); setDetailOpts(opts ?? {}); setOverlay('detail'); }}
             onLogFor={(cycleId) => { if (cycleId) setDetailId(cycleId); setLogPreset(cycleId ? { cycleId } : null); setOverlay('log'); }}

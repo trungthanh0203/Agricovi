@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { productKindOfArea, useCatalog, useKindWorkTypes } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
@@ -18,11 +18,17 @@ import { VoiceNote } from '../components/VoiceNote';
 import { LotPicker } from '../components/LotPicker';
 import { CycleWord } from '../components/CycleWord';
 
+import type { LogPreset } from './CycleDetailScreen';
+import { supabase } from '../lib/supabase';
+
+/** Ngày (YYYY-MM-DD, giờ máy) cách hôm nay `back` ngày */
+const dayAgo = (back: number) => { const d = new Date(); d.setDate(d.getDate() - back); return toLocalInput(d).slice(0, 10); };
+
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 const LAST_LOCATION_KEY = 'agriconnect.lastLocation'; // dùng chung với màn nhập kho
 
 /** Luồng "Ghi việc vừa làm" (v1.1 mục 3.4): chọn loại việc -> xác nhận vụ -> lưu. Dùng được offline. */
-export function LogActivityScreen({ onClose, preset }: { onClose: () => void; preset?: { cycleId: string; workTypeId?: string | null; stageId?: string | null } | null }) {
+export function LogActivityScreen({ onClose, preset }: { onClose: () => void; preset?: LogPreset | null }) {
   const { session } = useAuth();
   const { active } = useOrgs();
   const sync = useRecordSync();
@@ -59,9 +65,9 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
 
   // Ghi cho khu vực không gắn vụ (cổng, kho, biogas, hố sát trùng...): mọi khu đang dùng của cơ sở
   const siteAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-  const [forArea, setForArea] = useState<boolean | null>(null); // null = tự chọn: không có vụ nào thì ghi cho khu
+  const [forArea, setForArea] = useState<boolean | null>(preset?.areaId ? true : null); // null = tự chọn: không có vụ nào thì ghi cho khu
   const areaMode = forArea ?? (options.length === 0 && siteAreas.length > 0);
-  const [areaPick, setAreaPick] = useState('');
+  const [areaPick, setAreaPick] = useState(preset?.areaId ?? '');
   const siteArea = siteAreas.find((a) => a.id === areaPick) ?? siteAreas[0] ?? null;
 
   // Loại của việc đang ghi (theo vụ đã chọn, hoặc theo loại khu khi ghi cho khu không gắn vụ) quyết định đầu việc hiện ra và biểu mẫu (điểm 2)
@@ -74,12 +80,15 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const stages = useLiveQuery(() => db.stages.where('cycle_id').equals(effectiveCycleId).sortBy('seq'), [effectiveCycleId], []);
   // công đoạn gắn với việc: mặc định theo preset, nếu không thì công đoạn đang làm có cùng loại việc
   const [stageSel, setStageSel] = useState<string | null | undefined>(preset?.stageId);
-  // mặc định theo loại việc đã chọn: công đoạn đang làm cùng loại việc, nếu không thì công đoạn cùng loại việc chưa xong
-  const sameType = stages.filter((s) => s.work_type_id === workTypeId);
-  const autoStage = (sameType.find((s) => s.status === 'in_progress') ?? sameType.find((s) => s.status !== 'done'))?.id ?? null;
-  const effStage = stageSel === undefined ? autoStage : stageSel;
   const [when, setWhen] = useState(toLocalInput(new Date()));
   const [endWhen, setEndWhen] = useState(''); // thời điểm kết thúc (không bắt buộc)
+  // mặc định theo loại việc đã chọn và NGÀY LÀM: công đoạn cùng loại việc có khoảng kế hoạch bao trùm ngày đó (ghi bù cho ngày trước thì gắn đúng công đoạn của ngày đó),
+  // nếu không thì công đoạn đang làm cùng loại việc, rồi công đoạn cùng loại việc chưa xong
+  const sameType = stages.filter((s) => s.work_type_id === workTypeId);
+  const dayOfWhen = when.slice(0, 10);
+  const byDate = sameType.find((s) => s.planned_start && s.planned_end && dayOfWhen >= s.planned_start && dayOfWhen <= s.planned_end && s.status !== 'done');
+  const autoStage = (byDate ?? sameType.find((s) => s.status === 'in_progress') ?? sameType.find((s) => s.status !== 'done'))?.id ?? null;
+  const effStage = stageSel === undefined ? autoStage : stageSel;
   const [values, setValues] = useState<Record<string, string>>({});
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +119,24 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
 
   const workType = workTypes.find((w) => w.id === workTypeId) ?? null;
 
+  // Nhân bản từ một bản ghi cũ (Nhật ký việc → Nhân bản): điền sẵn nội dung, ô thông tin, vật tư; ngày mặc định là bây giờ, chỉ cần chọn lại ngày nếu khác
+  const copySrc = useLiveQuery(() => (preset?.copyFromLogId ? db.logs.get(preset.copyFromLogId) : undefined), [preset?.copyFromLogId]);
+  const cloned = useRef(false);
+  useEffect(() => {
+    if (!copySrc || !workType || cloned.current) return;
+    cloned.current = true;
+    setValues(initialValues(workType.field_schema, copySrc.data));
+    setNote(copySrc.note ?? '');
+    const ended = typeof copySrc.data?.ended_at === 'string' ? new Date(copySrc.data.ended_at).getTime() - new Date(copySrc.performed_at).getTime() : 0;
+    if (ended > 0) setEndWhen(toLocalInput(new Date(Date.now() + ended)));
+    if (supabase && navigator.onLine) {
+      void supabase.from('inventory_transactions').select('material_id, quantity_delta').eq('activity_log_id', copySrc.id).eq('txn_type', 'issue').then(({ data }) => {
+        const rows = (data ?? []) as { material_id: string; quantity_delta: number | string }[];
+        if (rows.length > 0) { setUsed(rows.map((t) => ({ materialId: t.material_id, qty: String(-Number(t.quantity_delta)).replace('.', ',') }))); setUsedOpen(true); }
+      });
+    }
+  }, [copySrc, workType]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Nhập nhanh các chỉ số đo lặp lại: ô đánh dấu "điền sẵn" lấy giá trị của lần ghi trước cùng việc (ở vụ hoặc khu này), sửa được
   const lastLog = useLiveQuery(
     () => (workTypeId ? db.logs.where('work_type_id').equals(workTypeId).filter((l) => !l.voided_at && (areaMode ? l.area_id === siteArea?.id : l.cycle_id === effectiveCycleId)).toArray().then((a) => a.sort((x, y) => y.performed_at.localeCompare(x.performed_at))[0] ?? null) : null),
@@ -134,6 +161,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
     const merged = { ...initialValues(workType.field_schema), ...values };
     const bad = validateFields(workType.field_schema, merged);
     if (bad) return setError(bad);
+    if (new Date(when).getTime() > Date.now() + 5 * 60_000) return setError('Thời điểm làm không được ở tương lai. Chọn hôm nay hoặc ngày đã làm (ghi bù được cho những ngày trước).');
     if (endWhen && new Date(endWhen).getTime() < new Date(when).getTime()) return setError('Thời điểm kết thúc không được trước thời điểm bắt đầu.');
     const data = fieldsToData(workType.field_schema, merged, endWhen ? { ended_at: new Date(endWhen).toISOString() } : {});
     // dòng vật tư: bỏ dòng trống hoàn toàn; dòng đã nhập dở thì báo để người dùng sửa, không âm thầm bỏ
@@ -287,6 +315,11 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
           </label>
           )}
 
+          <div className="btnrow">
+            {[[0, 'Hôm nay'], [1, 'Hôm qua'], [2, 'Hôm kia']].map(([back, label]) => (
+              <button key={label as string} type="button" className={dayOfWhen === dayAgo(back as number) ? 'chip active' : 'chip'} onClick={() => { setWhen(`${dayAgo(back as number)}${back === 0 ? toLocalInput(new Date()).slice(10) : when.slice(10)}`); setEndWhen(''); setStageSel(undefined); }}>{label}</button>
+            ))}
+          </div>
           <div className="pair">
             <label>
               Thời điểm bắt đầu làm
