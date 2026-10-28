@@ -4,6 +4,7 @@ import { ExpiringLots } from '../components/ExpiringLots';
 import { PurchaseEntry } from '../components/PurchaseEntry';
 import { StockEntry } from '../components/StockEntry';
 import { StockIssue, StockReturn, StockTransfer } from '../components/StockMove';
+import { StockReports } from '../components/StockReports';
 import { Thumb } from '../components/ImagePicker';
 import { useConfig } from '../lib/config';
 import { db } from '../lib/db';
@@ -51,7 +52,7 @@ function useStockData(orgId: string) {
   return { materials, locations, balances, outbox, pending, unitOf, matName, matUnit, locName };
 }
 
-type View = 'stock' | 'txns';
+type View = 'stock' | 'txns' | 'report';
 
 function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, onReturn }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void; onIssue: () => void; onTransfer: () => void; onReturn: () => void; onPurchase?: () => void }) {
   const d = useStockData(orgId);
@@ -78,10 +79,11 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, 
       <div className="seg" role="tablist" aria-label="Chế độ xem kho">
         <button role="tab" aria-selected={view === 'stock'} className={view === 'stock' ? 'on' : ''} onClick={() => setView('stock')}>Tồn kho</button>
         <button role="tab" aria-selected={view === 'txns'} className={view === 'txns' ? 'on' : ''} onClick={() => setView('txns')}>Giao dịch</button>
+        <button role="tab" aria-selected={view === 'report'} className={view === 'report' ? 'on' : ''} onClick={() => setView('report')}>Báo cáo</button>
       </div>
       {view === 'stock'
         ? <StockGrid orgId={orgId} canWrite={canWrite} d={d} onLedger={setLedgerOf} />
-        : <TxnList orgId={orgId} d={d} refreshKey={d.outbox.length} />}
+        : view === 'txns' ? <TxnList orgId={orgId} d={d} refreshKey={d.outbox.length} /> : <StockReports orgId={orgId} />}
     </>
   );
 }
