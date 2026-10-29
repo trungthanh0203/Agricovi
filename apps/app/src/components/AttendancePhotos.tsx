@@ -31,11 +31,11 @@ export function AttendancePhotos({ orgId, onCount }: { orgId: string; onCount?: 
   const isToday = day >= todayLocal();
   return (
     <>
-      <div className="filters">
+      <div className="filters att-filters">
         <label>Ngày<input type="date" value={day} max={todayLocal()} onChange={(e) => setDay(e.target.value || todayLocal())} /></label>
         <div className="btnrow">
-          <button className="secondary" onClick={() => setDay(addDays(day, -1))}>◀ Hôm trước</button>
-          <button className="secondary" disabled={isToday} onClick={() => setDay(addDays(day, 1))}>Hôm sau ▶</button>
+          <button className="secondary" onClick={() => setDay(addDays(day, -1))}>◀ Ngày trước</button>
+          <button className="secondary" disabled={isToday} onClick={() => setDay(addDays(day, 1))}>Ngày sau ▶</button>
         </div>
       </div>
       {error && <p className="msg error" role="alert">{error}</p>}

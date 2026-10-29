@@ -96,12 +96,12 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
 
   return (
     <>
-      <div className="filters">
-        <div className="chips" role="tablist" aria-label="Khoảng ngày">
-          {RANGES.map((r) => (
-            <button key={r.id} role="tab" aria-selected={range === r.id} className={range === r.id ? 'chip active' : 'chip'} onClick={() => { setRange(r.id as typeof range); setPage(0); }}>{r.label}</button>
-          ))}
-        </div>
+      <div className="chips" role="tablist" aria-label="Khoảng ngày">
+        {RANGES.map((r) => (
+          <button key={r.id} role="tab" aria-selected={range === r.id} className={range === r.id ? 'chip active' : 'chip'} onClick={() => { setRange(r.id as typeof range); setPage(0); }}>{r.label}</button>
+        ))}
+      </div>
+      <div className="filters att-filters">
         <label>Trạng thái
           <select value={status} onChange={(e) => { setStatus(e.target.value as AttStatusFilter); setPage(0); }}>
             {STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}

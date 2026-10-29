@@ -656,3 +656,9 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 .kiosk-name { font-size: 22px; font-weight: 700; margin: 4px 0 0; }
 .kiosk-time { font-size: 56px; font-weight: 800; margin: 0; letter-spacing: 1px; }
 .kiosk-result .kiosk-photo { width: 40%; max-width: 160px; }
+/* Bộ lọc mục Công (chấm công): ô Trạng thái và ô Tìm theo tên đứng cạnh nhau trên máy tính, xếp dọc trên điện thoại */
+.att-filters { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: end; }
+.att-filters select { min-height: 44px; }
+.searchrow { display: flex; gap: 8px; align-items: flex-end; }
+.searchrow label { flex: 1 1 auto; min-width: 0; }
+.searchrow button { flex: none; width: auto; min-height: 44px; padding: 0 18px; margin: 0; }
