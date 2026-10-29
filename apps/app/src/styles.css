@@ -673,3 +673,5 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 .icon-img { width: 1.15em; height: 1.15em; vertical-align: -0.2em; object-fit: contain; }
 .tile-ico .icon-img { width: 1.5em; height: 1.5em; vertical-align: middle; }
 .flow-circle .icon-img { width: 40px; height: 40px; }
+
+.stl-ic { display: inline-block; width: 1.5em; font-size: 14px; }

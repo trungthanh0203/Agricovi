@@ -187,9 +187,9 @@ export function MembersSection({ org }: { org: MyOrg }) {
                   </td>
                   <td>
                     {/* ba dòng theo thứ tự: mật khẩu, PIN, khuôn mặt (không ghi nhãn cho gọn; rê chuột/đọc màn hình có tên) */}
-                    <span className="stl"><span className={pwText[0] ? `pill ${pwText[0]}` : 'pill'} title="Mật khẩu" aria-label={`Mật khẩu: ${pwText[1]}`}>{pwText[1]}</span></span>
-                    <span className="stl"><span className={pinText[0] ? `pill ${pinText[0]}` : 'pill'} title="PIN" aria-label={`PIN: ${pinText[1]}`}>{pinText[1]}</span></span>
-                    {w && <span className="stl"><span className={ps?.has_face ? 'pill ok' : 'pill'} title="Khuôn mặt" aria-label={`Khuôn mặt: ${ps?.has_face ? 'Đã đăng ký' : 'Chưa đăng ký'}`}>{ps?.has_face ? 'Đã đăng ký' : 'Chưa đăng ký'}</span></span>}
+                    <span className="stl"><span className="stl-ic" aria-hidden>🔑</span><span className={pwText[0] ? `pill ${pwText[0]}` : 'pill'} title="Mật khẩu" aria-label={`Mật khẩu: ${pwText[1]}`}>{pwText[1]}</span></span>
+                    <span className="stl"><span className="stl-ic" aria-hidden>🔢</span><span className={pinText[0] ? `pill ${pinText[0]}` : 'pill'} title="PIN" aria-label={`PIN: ${pinText[1]}`}>{pinText[1]}</span></span>
+                    {w && <span className="stl"><span className="stl-ic" aria-hidden>🙂</span><span className={ps?.has_face ? 'pill ok' : 'pill'} title="Khuôn mặt" aria-label={`Khuôn mặt: ${ps?.has_face ? 'Đã đăng ký' : 'Chưa đăng ký'}`}>{ps?.has_face ? 'Đã đăng ký' : 'Chưa đăng ký'}</span></span>}
                   </td>
                   {isOwner && (
                     <td className="act">
