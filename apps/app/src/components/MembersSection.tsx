@@ -171,24 +171,25 @@ export function MembersSection({ org }: { org: MyOrg }) {
           <tbody>
             {members.length === 0 && offlineWorkers.length === 0 && <tr><td colSpan={isOwner ? 3 : 2} className="muted">Chưa có nhân sự.</td></tr>}
             {members.map((m) => {
-              const label = m.is_staff ? m.full_name ?? m.phone ?? '' : m.display_name || m.email; // chủ cơ sở: Tên người dùng, chưa đặt thì dùng email
+              const label = m.is_staff ? m.full_name ?? m.phone ?? '' : m.display_name || m.email.split('@')[0]; // chủ cơ sở: tên hiển thị (chưa đặt thì dùng phần đầu email, không hiện cả email)
               const owner = m.roles.includes('owner');
               const pos = positionOf(m.user_id);
               const w = workerOf(m.user_id);
               const ps = w ? pins[w.id] : undefined;
-              const pwText = m.status === 'suspended' ? ['err', 'Đã khóa đăng nhập'] : !m.is_staff ? ['', 'Đăng nhập bằng email'] : m.must_change_password ? ['warn', 'Mật khẩu tạm (chưa đổi)'] : ['ok', 'Đã đặt'];
-              const pinText = !w ? ['', 'Chưa có hồ sơ lao động'] : ps?.is_locked ? ['err', 'Đang bị khóa'] : ps?.has_pin ? ['ok', 'Đã đặt'] : ps?.code_pending ? ['warn', 'Chờ đặt (đã cấp mã)'] : ['', 'Chưa có'];
+              const pwText = m.status === 'suspended' ? ['err', 'Đã khóa'] : m.is_staff && m.must_change_password ? ['warn', 'Chờ đặt lại'] : ['ok', 'Đã đặt'];
+              const pinText = !w ? ['', 'Chưa có'] : ps?.is_locked ? ['err', 'Bị khóa'] : ps?.has_pin ? ['ok', 'Đã đặt'] : ps?.code_pending ? ['warn', 'Chờ đặt lại'] : ['', 'Chưa có'];
               return (
                 <tr key={m.user_id} className={m.status === 'suspended' ? 'off' : ''}>
                   <td>
                     <strong>{label}</strong>
-                    <span className="sub">{m.phone ?? m.email}</span>
+                    {m.phone && <span className="sub">{m.phone}</span>}
                     <span className="sub">{owner ? 'Chủ cơ sở' : pos?.name ?? roleSummary(m.roles)}{m.leads_teams && m.leads_teams.length > 0 ? ` · Tổ trưởng: ${m.leads_teams.join(', ')}` : ''}</span>
                   </td>
                   <td>
-                    <span className="stl"><span className="stl-k">Mật khẩu</span> <span className={pwText[0] ? `pill ${pwText[0]}` : 'pill'}>{pwText[1]}</span></span>
-                    <span className="stl"><span className="stl-k">PIN</span> <span className={pinText[0] ? `pill ${pinText[0]}` : 'pill'}>{pinText[1]}</span></span>
-                    {w && <span className="stl"><span className="stl-k">Khuôn mặt</span> <span className={ps?.has_face ? 'pill ok' : 'pill'}>{ps?.has_face ? 'Đã đăng ký' : 'Chưa đăng ký'}</span></span>}
+                    {/* ba dòng theo thứ tự: mật khẩu, PIN, khuôn mặt (không ghi nhãn cho gọn; rê chuột/đọc màn hình có tên) */}
+                    <span className="stl"><span className={pwText[0] ? `pill ${pwText[0]}` : 'pill'} title="Mật khẩu" aria-label={`Mật khẩu: ${pwText[1]}`}>{pwText[1]}</span></span>
+                    <span className="stl"><span className={pinText[0] ? `pill ${pinText[0]}` : 'pill'} title="PIN" aria-label={`PIN: ${pinText[1]}`}>{pinText[1]}</span></span>
+                    {w && <span className="stl"><span className={ps?.has_face ? 'pill ok' : 'pill'} title="Khuôn mặt" aria-label={`Khuôn mặt: ${ps?.has_face ? 'Đã đăng ký' : 'Chưa đăng ký'}`}>{ps?.has_face ? 'Đã đăng ký' : 'Chưa đăng ký'}</span></span>}
                   </td>
                   {isOwner && (
                     <td className="act">
