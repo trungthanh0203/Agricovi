@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useAuth } from '../lib/auth';
 import { countFaces, describeFace, faceDistance, loadFace } from '../lib/face';
-import { kioskCheck, kioskCycles, kioskFaceCheck, kioskPunch, kioskSetPin, type KioskCycle, type KioskInfo } from '../lib/kiosk';
+import { kioskCheck, kioskCycles, kioskFaceCheck, kioskPunch, kioskSetPin, rememberKioskOnDevice, type KioskCycle, type KioskInfo } from '../lib/kiosk';
 
 type Step = 'login' | 'setpin' | 'enroll' | 'punch' | 'done';
 type FaceApi = typeof import('@vladmandic/face-api');
@@ -109,6 +109,7 @@ function useCamera(on: boolean, attempt: number, api: FaceApi | null) {
 export function KioskScreen({ info }: { info: KioskInfo }) {
   const { signOut } = useAuth();
   const model = useFaceModel();
+  useEffect(() => { rememberKioskOnDevice(info.kiosk_id, info.name); }, [info.kiosk_id, info.name]); // lần sau chủ liên kết lại máy này chỉ cần một lần bấm
   const [step, setStep] = useState<Step>('login');
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');

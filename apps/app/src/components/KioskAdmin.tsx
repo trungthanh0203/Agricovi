@@ -3,7 +3,7 @@ import { Collapsible } from './Collapsible';
 import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import {
-  deleteWorkerFace, issuePinCode, linkThisDeviceAsKiosk, setKioskAskCycle, setWorkerPhone, listKiosks, listPinStatus, revokeKiosk,
+  deleteWorkerFace, issuePinCode, lastKioskOnDevice, linkThisDeviceAsKiosk, relinkThisDeviceToKiosk, setKioskAskCycle, setWorkerPhone, listKiosks, listPinStatus, revokeKiosk,
   type KioskRow, type PinStatus,
 } from '../lib/kiosk';
 import { useOrgs } from '../lib/orgs';
@@ -29,6 +29,8 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
   const [name, setName] = useState('');
   const [areaId, setAreaId] = useState('');
   const [consent, setConsent] = useState(false);
+  const [reuse, setReuse] = useState(''); // id máy đã có cần liên kết lại; '' = máy mới
+  const [reuseTouched, setReuseTouched] = useState(false);
   const [phones, setPhones] = useState<Record<string, string>>({}); // số điện thoại đang nhập cho người chưa có
 
   const load = useCallback(async () => {
@@ -40,6 +42,12 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
     } catch (e) { setError(friendlyError(e)); }
   }, [orgId]);
   useEffect(() => { void load(); }, [load]);
+  // Điện thoại này từng làm máy chấm công nào thì chọn sẵn máy đó
+  useEffect(() => {
+    if (reuseTouched) return;
+    const last = lastKioskOnDevice();
+    if (last && kiosks.some((k) => k.id === last.id)) setReuse(last.id);
+  }, [kiosks, reuseTouched]);
 
   if (!orgId) return null;
   const activeKiosks = kiosks.filter((k) => k.active);
@@ -54,6 +62,14 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
     if (!window.confirm('Điện thoại này sẽ chuyển thành MÁY CHẤM CÔNG và bạn sẽ bị đăng xuất khỏi máy. Muốn thoát chế độ này sau đó phải nhập mật khẩu chủ cơ sở. Tiếp tục?')) return;
     setBusy(true); setError(null);
     try { await linkThisDeviceAsKiosk(orgId, areaId || null, name.trim()); } // thành công: phiên đổi sang tài khoản thiết bị, app tự chuyển sang màn máy chấm công
+    catch (e) { setError(friendlyError(e)); setBusy(false); }
+  }
+
+  async function relink() {
+    if (busy || !orgId || !reuse) return;
+    if (!window.confirm('Điện thoại này sẽ chuyển thành MÁY CHẤM CÔNG đã chọn và bạn sẽ bị đăng xuất khỏi máy. Muốn thoát chế độ này sau đó, chủ nhập số điện thoại và PIN của chủ ở máy chấm công. Tiếp tục?')) return;
+    setBusy(true); setError(null);
+    try { await relinkThisDeviceToKiosk(orgId, reuse); } // thành công: phiên đổi sang tài khoản thiết bị, app tự chuyển sang màn máy chấm công
     catch (e) { setError(friendlyError(e)); setBusy(false); }
   }
 
@@ -115,6 +131,21 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
         {isOwner ? (
           <Collapsible inline title="＋ Liên kết điện thoại này làm máy chấm công">
             <div className="inline-form">
+              {kiosks.length > 0 && (
+                <label>
+                  Máy chấm công
+                  <select value={reuse} onChange={(e) => { setReuse(e.target.value); setReuseTouched(true); }}>
+                    <option value="">Máy mới (nhập thông tin bên dưới)</option>
+                    {kiosks.map((k) => <option key={k.id} value={k.id}>{k.name} · {areaName(k.area_id)}{k.active ? '' : ' (đã ngừng)'}</option>)}
+                  </select>
+                  <small>Điện thoại này đã từng làm máy chấm công thì chọn máy đó, bấm một lần là xong. Điện thoại khác thì chọn “Máy mới”.</small>
+                </label>
+              )}
+              {reuse ? (
+                <div className="btnrow">
+                  <button className="primary" disabled={busy} onClick={() => void relink()}>{busy ? 'Đang liên kết…' : 'Liên kết lại máy này'}</button>
+                </div>
+              ) : (<>
               <label>Tên máy<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Máy cổng nhà màng" /></label>
               <label>
                 Phân khu
@@ -130,6 +161,7 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
               <div className="btnrow">
                 <button className="primary" disabled={busy} onClick={() => void link()}>{busy ? 'Đang liên kết…' : 'Liên kết máy này'}</button>
               </div>
+              </>)}
             </div>
           </Collapsible>
         ) : <p className="muted">Chỉ chủ cơ sở được liên kết hoặc ngừng máy chấm công.</p>}

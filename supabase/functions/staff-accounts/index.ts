@@ -12,6 +12,7 @@
 //   POST { action: 'reset_password', organization_id, user_id }
 //        -> { phone?, temp_password, expires_at }
 //   POST { action: 'create_kiosk', organization_id, area_id?, name, consent: true } -> { kiosk_id, email, password }  (máy chấm công)
+//   POST { action: 'relink_kiosk', organization_id, kiosk_id } -> { kiosk_id, email, password }  (liên kết lại máy đã có)
 //   POST { action: 'revoke_kiosk', organization_id, kiosk_id } -> { ok: true }
 // Lỗi: HTTP 400 { error: "MÃ_LỖI: nội dung tiếng Việt" }. Mật khẩu tạm CHỈ có trong phản hồi này, không lưu ở đâu khác.
 
@@ -177,6 +178,19 @@ Deno.serve(async (req) => {
         return fail(fin.error.message);
       }
       return json({ kiosk_id: fin.data, email, password });
+    }
+
+    // Liên kết lại máy chấm công đã có: đặt mật khẩu mới cho tài khoản thiết bị (và mở khóa nếu máy đã ngừng), trả về một lần cho máy đang liên kết
+    if (body.action === 'relink_kiosk') {
+      const kiosk = String(body.kiosk_id ?? '');
+      if (!/^[0-9a-f-]{36}$/i.test(kiosk)) return fail('BAD_REQUEST: Thiếu máy chấm công');
+      const rel = await admin.rpc('kiosk_relink', { p_actor: actor, p_kiosk: kiosk });
+      if (rel.error) return fail(rel.error.message);
+      const row = (rel.data as { device_user: string; auth_email: string }[])[0];
+      const password = tempPassword(32);
+      const upd = await admin.auth.admin.updateUserById(row.device_user, { password, ban_duration: 'none' });
+      if (upd.error) return fail(cleanMessage(upd.error));
+      return json({ kiosk_id: kiosk, email: row.auth_email, password });
     }
 
     if (body.action === 'revoke_kiosk') {

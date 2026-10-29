@@ -83,6 +83,22 @@ export async function linkThisDeviceAsKiosk(orgId: string, areaId: string | null
   if (error) throw error;
 }
 
+/** Liên kết lại một máy chấm công ĐÃ CÓ (không nhập lại tên, phân khu, đồng ý): đặt mật khẩu mới cho tài khoản thiết bị rồi chuyển phiên của máy sang đó. */
+export async function relinkThisDeviceToKiosk(orgId: string, kioskId: string): Promise<void> {
+  const res = await callFunction<{ kiosk_id: string; email: string; password: string }>({ action: 'relink_kiosk', organization_id: orgId, kiosk_id: kioskId });
+  const { error } = await client().auth.signInWithPassword({ email: res.email, password: res.password });
+  if (error) throw error;
+}
+
+// Điện thoại nhớ máy chấm công nó từng làm (chỉ tên và mã, không có mật khẩu) để lần sau chủ chọn lại ngay
+const LAST_KIOSK_KEY = 'agri.lastKiosk';
+export function rememberKioskOnDevice(id: string, name: string): void {
+  try { localStorage.setItem(LAST_KIOSK_KEY, JSON.stringify({ id, name })); } catch { /* bỏ qua */ }
+}
+export function lastKioskOnDevice(): { id: string; name: string } | null {
+  try { const raw = localStorage.getItem(LAST_KIOSK_KEY); return raw ? (JSON.parse(raw) as { id: string; name: string }) : null; } catch { return null; }
+}
+
 export const revokeKiosk = (orgId: string, kioskId: string) => callFunction<{ ok: boolean }>({ action: 'revoke_kiosk', organization_id: orgId, kiosk_id: kioskId });
 
 export async function issuePinCode(workerId: string): Promise<string> {
