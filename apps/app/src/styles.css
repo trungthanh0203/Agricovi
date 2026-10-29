@@ -662,3 +662,10 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 .searchrow { display: flex; gap: 8px; align-items: flex-end; }
 .searchrow label { flex: 1 1 auto; min-width: 0; }
 .searchrow button { flex: none; width: auto; min-height: 44px; padding: 0 18px; margin: 0; }
+
+/* Lưới nhân sự: cột Trạng thái gồm Mật khẩu / PIN / Khuôn mặt, mỗi dòng một thông tin */
+.stl { display: block; margin: 3px 0; font-size: 13px; }
+.stl-k { color: var(--muted); display: inline-block; min-width: 4.8em; }
+.stl .pill { font-size: 12px; padding: 2px 8px; }
+.btn4 { flex-wrap: wrap; }
+.btn4 > button { flex: 1 1 calc(50% - 8px); }

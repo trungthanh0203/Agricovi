@@ -4,7 +4,6 @@ import { AttendanceList, type ListPreset } from './AttendanceList';
 import { AttendancePhotos } from './AttendancePhotos';
 import { ChartCard, HBarList } from './charts';
 import { KpiTile } from './HomeStats';
-import { KioskAdmin } from './KioskAdmin';
 import { getAttendanceSummary, type AttSummary } from '../lib/attendanceAdmin';
 import { useAuth } from '../lib/auth';
 import { friendlyError } from '../lib/errors';
@@ -19,14 +18,14 @@ import { useTable } from '../lib/tables';
 
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
-type Tab = 'today' | 'list' | 'photos' | 'setup';
+type Tab = 'today' | 'list' | 'photos';
 
 /**
  * Chấm công (D42, D115). Bốn mục, mỗi mục một việc:
  *  - Hôm nay: số liệu trong ngày, việc cần xử lý, chấm công cho người làm (cho hộ nhỏ không dùng máy chấm công).
  *  - Công: danh sách phân trang, lọc, xác nhận (cả hàng loạt).
  *  - Ảnh cần xem: ảnh cờ đỏ từ máy chấm công (chỉ chủ/quản lý).
- *  - Thiết lập: máy chấm công và mã PIN (chỉ chủ/quản lý).
+ * (Máy chấm công và mã PIN nằm ở Khai báo → Máy chấm công.)
  * Không còn Vào/Ra ca bằng tài khoản đăng nhập (D117): công đến từ máy chấm công hoặc do chủ/quản lý (tổ trưởng với người trong tổ) nhập.
  * Số liệu và danh sách do máy chủ tính (không tải cả danh sách công về máy). Cần mạng.
  */
@@ -80,7 +79,6 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
     { id: 'list', label: 'Công' },
     ...(isAdmin ? [
       { id: 'photos' as Tab, label: `Ảnh cần xem${sum && sum.flagged > 0 ? ` (${sum.flagged})` : ''}` },
-      { id: 'setup' as Tab, label: 'Máy chấm công' },
     ] : []),
   ];
   const hours = (m: number) => `${(m / 60).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} giờ`;
@@ -148,7 +146,6 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
 
       {tab === 'photos' && isAdmin && <AttendancePhotos orgId={active.id} />}
 
-      {tab === 'setup' && isAdmin && <KioskAdmin workers={workers} onChanged={() => void load()} />}
     </>
   );
 }

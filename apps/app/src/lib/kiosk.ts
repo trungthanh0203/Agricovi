@@ -162,3 +162,10 @@ export async function setKioskAskCycle(kioskId: string, on: boolean): Promise<vo
   const { error } = await client().rpc('set_kiosk_ask_cycle', { p_kiosk: kioskId, p_on: on });
   if (error) throw new Error(error.message);
 }
+
+/** Cấp mã đặt PIN cho người có tài khoản (theo mã người dùng) ngay khi tạo nhân sự; null nếu chưa cấp được (ví dụ thiếu số điện thoại) */
+export async function issuePinCodeForUser(orgId: string, userId: string): Promise<string | null> {
+  const { data } = await client().from('worker_profiles').select('id').eq('organization_id', orgId).eq('user_id', userId).maybeSingle();
+  if (!data) return null;
+  try { return await issuePinCode((data as { id: string }).id); } catch { return null; }
+}

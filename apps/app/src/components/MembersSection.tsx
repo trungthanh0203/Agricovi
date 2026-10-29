@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { friendlyError } from '../lib/errors';
+import { listPinStatus, type PinStatus } from '../lib/kiosk';
 import {
   fetchMemberAreas, fetchPermissionOverrides, listMembers, pendingOrgInvites, revokeInvitation, type Member, type PendingInvite,
 } from '../lib/members';
@@ -44,6 +45,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [creds, setCreds] = useState<StaffCredentials | null>(null);
+  const [pins, setPins] = useState<Record<string, PinStatus>>({}); // trạng thái PIN và khuôn mặt theo mã hồ sơ lao động
 
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
@@ -57,6 +59,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
       ]);
       setAreaMap(ar); setHeld(h); setCatalog(cat);
       if (ownerOf(org.roles)) setOverrides(await fetchPermissionOverrides(org.id));
+      setPins(Object.fromEntries((await listPinStatus(org.id).catch(() => [] as PinStatus[])).map((p) => [p.wid, p])));
     } catch (e) {
       setError(friendlyError(e));
     }
@@ -96,7 +99,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
       <>
         {creds && <CredentialsCard creds={creds} onClose={() => setCreds(null)} />}
         <MemberProfile org={org} member={sel} worker={workerOf(sel.user_id)} team={teamOf(sel.user_id)} teams={teams} position={positionOf(sel.user_id)}
-          overrides={overrides[sel.user_id] ?? {}} areas={areaMap[sel.user_id] ?? null} onBack={() => setOpen(null)} onChanged={() => void load()} onCreds={setCreds} />
+          overrides={overrides[sel.user_id] ?? {}} areas={areaMap[sel.user_id] ?? null} pin={workerOf(sel.user_id) ? pins[workerOf(sel.user_id)!.id] ?? null : null} onBack={() => setOpen(null)} onChanged={() => void load()} onCreds={setCreds} />
       </>
     );
   }
@@ -164,25 +167,29 @@ export function MembersSection({ org }: { org: MyOrg }) {
 
       <div className="tablewrap">
         <table className="grid">
-          <thead><tr><th>Họ tên</th><th>Điện thoại</th><th>Chức vụ</th>{isOwner && <th></th>}</tr></thead>
+          <thead><tr><th>Nhân sự</th><th>Trạng thái</th>{isOwner && <th></th>}</tr></thead>
           <tbody>
-            {members.length === 0 && offlineWorkers.length === 0 && <tr><td colSpan={isOwner ? 4 : 3} className="muted">Chưa có nhân sự.</td></tr>}
+            {members.length === 0 && offlineWorkers.length === 0 && <tr><td colSpan={isOwner ? 3 : 2} className="muted">Chưa có nhân sự.</td></tr>}
             {members.map((m) => {
               const label = m.is_staff ? m.full_name ?? m.phone ?? '' : m.display_name || m.email; // chủ cơ sở: Tên người dùng, chưa đặt thì dùng email
               const owner = m.roles.includes('owner');
               const pos = positionOf(m.user_id);
-              const team = teamOf(m.user_id);
+              const w = workerOf(m.user_id);
+              const ps = w ? pins[w.id] : undefined;
+              const pwText = m.status === 'suspended' ? ['err', 'Đã khóa đăng nhập'] : !m.is_staff ? ['', 'Đăng nhập bằng email'] : m.must_change_password ? ['warn', 'Mật khẩu tạm (chưa đổi)'] : ['ok', 'Đã đặt'];
+              const pinText = !w ? ['', 'Chưa có hồ sơ lao động'] : ps?.is_locked ? ['err', 'Đang bị khóa'] : ps?.has_pin ? ['ok', 'Đã đặt'] : ps?.code_pending ? ['warn', 'Chờ đặt (đã cấp mã)'] : ['', 'Chưa có'];
               return (
                 <tr key={m.user_id} className={m.status === 'suspended' ? 'off' : ''}>
                   <td>
                     <strong>{label}</strong>
-                    {m.description && <span className="sub">{m.description}</span>}
-                    {m.status === 'suspended' && <span className="pill err">Tạm dừng</span>}
-                    {m.is_staff && m.must_change_password && <span className="pill warn">Chưa đổi mật khẩu</span>}
-                    {m.leads_teams && m.leads_teams.length > 0 && <span className="pill ok">Tổ trưởng — {m.leads_teams.join(', ')}</span>}
+                    <span className="sub">{m.phone ?? m.email}</span>
+                    <span className="sub">{owner ? 'Chủ cơ sở' : pos?.name ?? roleSummary(m.roles)}{m.leads_teams && m.leads_teams.length > 0 ? ` · Tổ trưởng: ${m.leads_teams.join(', ')}` : ''}</span>
                   </td>
-                  <td>{m.phone ?? ''}</td>
-                  <td>{owner ? 'Chủ cơ sở' : pos?.name ?? roleSummary(m.roles)}</td>
+                  <td>
+                    <span className="stl"><span className="stl-k">Mật khẩu</span> <span className={pwText[0] ? `pill ${pwText[0]}` : 'pill'}>{pwText[1]}</span></span>
+                    <span className="stl"><span className="stl-k">PIN</span> <span className={pinText[0] ? `pill ${pinText[0]}` : 'pill'}>{pinText[1]}</span></span>
+                    {w && <span className="stl"><span className="stl-k">Khuôn mặt</span> <span className={ps?.has_face ? 'pill ok' : 'pill'}>{ps?.has_face ? 'Đã đăng ký' : 'Chưa đăng ký'}</span></span>}
+                  </td>
                   {isOwner && (
                     <td className="act">
                       {!owner && <button className="icon" aria-label={`Sửa ${label}`} onClick={() => { setOpen(m.user_id); setError(null); setInfo(null); }}>✎</button>}
@@ -191,17 +198,17 @@ export function MembersSection({ org }: { org: MyOrg }) {
                 </tr>
               );
             })}
-            {offlineWorkers.map((w) => {
-              const link = teamLinks.find((l) => l.worker_id === w.id);
-              return (
-                <tr key={w.id}>
-                  <td><strong>{w.full_name}</strong><span className="pill">Không tài khoản</span></td>
-                  <td>{w.phone ?? ''}</td>
-                  <td className="muted">{w.work_mode === 'monthly_salary' ? 'Lương tháng' : 'Người làm'}</td>
-                  {isOwner && <td className="act"><button className="icon" aria-label={`Sửa ${w.full_name}`} onClick={() => { setOpenWorker(w.id); setError(null); setInfo(null); }}>✎</button></td>}
-                </tr>
-              );
-            })}
+            {offlineWorkers.map((w) => (
+              <tr key={w.id}>
+                <td>
+                  <strong>{w.full_name}</strong>
+                  <span className="sub">{w.phone ?? ''}</span>
+                  <span className="sub">{w.work_mode === 'monthly_salary' ? 'Lương tháng' : 'Người làm'}</span>
+                </td>
+                <td><span className="pill">Không tài khoản</span></td>
+                {isOwner && <td className="act"><button className="icon" aria-label={`Sửa ${w.full_name}`} onClick={() => { setOpenWorker(w.id); setError(null); setInfo(null); }}>✎</button></td>}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

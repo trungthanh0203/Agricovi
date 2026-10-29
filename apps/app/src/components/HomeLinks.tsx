@@ -29,7 +29,7 @@ export function HomeLinks({ org, onGo }: { org: MyOrg; onGo: (tab: TabId, sectio
     out.push({ key: 'production', label: 'Sản xuất', icon: '🌱', tab: 'production' });
     if (reportSections(org).length > 0) out.push({ key: 'reports', label: 'Báo cáo', icon: '📊', tab: 'reports' });
     if (reportSections(org).some((s) => s.id === 'commerce')) out.push({ key: 'web', label: 'Hồ sơ web', icon: '🌐', tab: 'reports', section: 'commerce' });
-    out.push({ key: 'site', label: 'Website', icon: '🔗', href: SITE_URL });
+    out.push({ key: 'site', label: 'Website', icon: '🏪', href: SITE_URL });
     return out.slice(0, POS.length);
   }, [org]);
 

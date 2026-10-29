@@ -27,7 +27,7 @@ export interface Section<Id extends string = string> {
 }
 
 export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'expense' | 'attendance' | 'logs';
-export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'customers' | 'positions' | 'teams' | 'members' | 'coop' | 'licenses';
+export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'kiosks' | 'customers' | 'positions' | 'teams' | 'members' | 'coop' | 'licenses';
 export type ReportSection = 'payables' | 'sales' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist' | 'logbook';
 
 /**
@@ -36,7 +36,7 @@ export type ReportSection = 'payables' | 'sales' | 'summary' | 'weekly' | 'paybo
  */
 export const SIMPLE_HIDDEN: Record<'production' | 'declare' | 'reports', string[]> = {
   production: ['attendance'],
-  declare: ['worktypes', 'partners', 'customers', 'positions', 'teams', 'coop'],
+  declare: ['worktypes', 'partners', 'kiosks', 'customers', 'positions', 'teams', 'coop'],
   reports: ['custom', 'paybook', 'website', 'commerce', 'checklist', 'logbook'],
 };
 
@@ -74,6 +74,7 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
     canPerm(org.perms, 'declare') ? { id: 'worktypes' as const, label: 'Việc' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'partners' as const, label: 'Nhà cung ứng' } : null,
+    manager ? { id: 'kiosks' as const, label: 'Máy chấm công' } : null, // máy chấm công và mã PIN (trước đây trong Sản xuất → Chấm công)
     canPerm(org.perms, 'sales') ? { id: 'customers' as const, label: 'Khách hàng' } : null,
     manager ? { id: 'licenses' as const, label: 'Giấy phép' } : null, // giấy phép, chứng chỉ của cơ sở (trước đây ở tab Tài khoản)
     // Nhân sự và tổ chức (trước đây ở tab Tổ chức)
@@ -87,7 +88,7 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
 /** Khung gom các mục của tab Khai báo theo chức năng liên quan (menu Khai báo hiện 4 khung, trong khung là thanh chọn mục) */
 export interface DeclareGroup { id: string; label: string; icon: string; items: Section<DeclareSection>[] }
 const DECLARE_GROUPS: { id: string; label: string; icon: string; ids: DeclareSection[] }[] = [
-  { id: 'base', label: 'Cơ sở & vật tư', icon: '🏡', ids: ['areas', 'crops', 'places', 'materials', 'partners'] },
+  { id: 'base', label: 'Cơ sở & vật tư', icon: '🏡', ids: ['areas', 'crops', 'places', 'materials', 'partners', 'kiosks'] },
   { id: 'org', label: 'Nhân sự', icon: '👥', ids: ['positions', 'teams', 'members'] },
   { id: 'process', label: 'Quy trình', icon: '📋', ids: ['worktypes', 'templates'] },
   { id: 'legal', label: 'Giấy phép & đối tác', icon: '🤝', ids: ['licenses', 'coop', 'customers'] },

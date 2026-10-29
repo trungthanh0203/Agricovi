@@ -413,7 +413,7 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
       {step === 'ownerLogin' && (
         <>
           <h1>Đăng nhập app quản lý</h1>
-          <p className="muted">Nhập email (hoặc số điện thoại) và mật khẩu của chủ cơ sở. Dùng xong, vào Sản xuất → Chấm công → Máy chấm công → “Liên kết lại máy này” để trả điện thoại về chấm công.</p>
+          <p className="muted">Nhập email (hoặc số điện thoại) và mật khẩu của chủ cơ sở. Dùng xong, vào Khai báo → Máy chấm công → “Liên kết lại máy này” để trả điện thoại về chấm công.</p>
           <form onSubmit={onOwnerLogin} noValidate className="inline-form">
             <label>Email hoặc số điện thoại<input autoComplete="username" value={ownerId} onChange={(e) => setOwnerId(e.target.value)} /></label>
             <label>Mật khẩu<input type="password" autoComplete="current-password" value={ownerPw} onChange={(e) => setOwnerPw(e.target.value)} /></label>

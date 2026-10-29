@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { friendlyError } from '../lib/errors';
+import { deleteWorkerFace, issuePinCode, type PinStatus } from '../lib/kiosk';
 import { removeMember, setMemberAreas, setMemberDescription, setMemberSuspended, type Member } from '../lib/members';
 import type { MyOrg } from '../lib/orgs';
 import type { PermOverrides } from '../lib/permissions';
@@ -14,10 +15,10 @@ import { PositionPicker } from './PositionPicker';
 import { ResetPasswordButton } from './StaffAccountsSection';
 
 /**
- * Hồ sơ một nhân sự (D85, chỉ chủ): ba nút Đặt lại mật khẩu / Tạm dừng / Gỡ khỏi cơ sở ở TRÊN CÙNG; dưới là MỘT biểu mẫu
+ * Hồ sơ một nhân sự (D85, chỉ chủ): bốn nút Đổi mật khẩu / Khóa đăng nhập / Gỡ khỏi cơ sở / Xóa khuôn mặt ở TRÊN CÙNG; dưới là MỘT biểu mẫu
  * (họ tên, điện thoại, chức vụ, phòng/tổ, phân khu, mô tả) với một nút Lưu; quyền cấp riêng và Trả công để thu gọn.
  */
-export function MemberProfile({ org, member, worker, team, teams, position, overrides, areas, onBack, onChanged, onCreds }: {
+export function MemberProfile({ org, member, worker, team, teams, position, overrides, areas, pin, onBack, onChanged, onCreds }: {
   org: MyOrg;
   member: Member;
   worker: WorkerRow | null;
@@ -26,6 +27,7 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
   position: PositionRow | null;
   overrides: PermOverrides;
   areas: string[] | null;
+  pin: PinStatus | null;
   onBack: () => void;
   onChanged: () => void;
   onCreds: (c: StaffCredentials) => void;
@@ -41,6 +43,7 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
   const [teamId, setTeamId] = useState(team?.id ?? '');
   const [areaSel, setAreaSel] = useState<string[] | null>(areas);
   const [desc, setDesc] = useState(member.description ?? '');
+  const [pinCode, setPinCode] = useState<string | null>(null); // mã đặt PIN vừa cấp, chỉ hiện một lần
   useEffect(() => { setPosId(position?.id ?? ''); }, [position?.id]);
   useEffect(() => { setTeamId(team?.id ?? ''); }, [team?.id]);
 
@@ -80,16 +83,20 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
       {info && <p className="msg ok" role="status">{info}</p>}
       {suspended && <p className="msg warn" role="status">Đang tạm dừng: người này không đăng nhập được.</p>}
 
-      <div className="btnrow">
-        {member.is_staff && <ResetPasswordButton org={org} userId={member.user_id} onDone={(c) => { onCreds(c); onChanged(); }} />}
+      <div className="btnrow btn4">
+        {member.is_staff && <ResetPasswordButton org={org} userId={member.user_id} label="Đổi mật khẩu" className="secondary" onDone={(c) => { onCreds(c); onChanged(); }} />}
         <button type="button" className="secondary" disabled={busy} onClick={() => {
-          if (suspended || window.confirm(`Tạm dừng ${label}? Người này sẽ không đăng nhập hay xem được dữ liệu cơ sở cho tới khi bạn bấm Dùng lại.`))
+          if (suspended || window.confirm(`Khóa đăng nhập của ${label}? Người này sẽ không đăng nhập hay xem được dữ liệu cơ sở cho tới khi bạn bấm Mở khóa.`))
             void run(() => setMemberSuspended(org.id, member.user_id, !suspended));
-        }}>{suspended ? 'Dùng lại (cho đăng nhập)' : 'Tạm dừng (không cho đăng nhập)'}</button>
+        }}>{suspended ? 'Mở khóa đăng nhập' : 'Khóa đăng nhập'}</button>
         <button type="button" className="secondary" disabled={busy} onClick={() => {
           if (window.confirm(`Gỡ ${label} khỏi cơ sở? Người này sẽ không vào được nữa; lịch sử đã ghi vẫn được giữ.`))
             void run(() => removeMember(org.id, member.user_id), undefined, onBack);
         }}>Gỡ khỏi cơ sở</button>
+        <button type="button" className="secondary" disabled={busy || !worker || !pin?.has_face} onClick={() => {
+          if (worker && window.confirm(`Xóa dữ liệu khuôn mặt của ${label}? Người này sẽ phải đăng ký lại khuôn mặt ở máy chấm công (bạn cấp mã PIN mới).`))
+            void run(() => deleteWorkerFace(worker.id), 'Đã xóa dữ liệu khuôn mặt.');
+        }}>Xóa khuôn mặt</button>
       </div>
       {member.is_staff && member.must_change_password && <p className="msg warn">Chưa đổi mật khẩu tạm — chưa dùng được dữ liệu.</p>}
 
@@ -126,6 +133,16 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
           <button type="button" className="secondary" disabled={busy} onClick={reset}>Hủy</button>
         </div>
       </div>
+
+      <Collapsible title="Mã PIN và khuôn mặt (máy chấm công)" summary={pin?.has_pin ? (pin.has_face ? 'đã có PIN và khuôn mặt' : 'đã có PIN, chưa có khuôn mặt') : 'chưa có PIN'}>
+        {!worker ? <p className="muted">Người này chưa có hồ sơ lao động nên chưa dùng được máy chấm công.</p> : (
+          <>
+            <p className="muted">PIN do người làm tự đặt ở máy chấm công (bạn không biết PIN). Quên PIN, bị khóa hoặc cần đăng ký lại khuôn mặt: cấp mã mới rồi đưa mã 6 số cho người đó (dùng một lần, hạn 24 giờ).</p>
+            {pinCode && <p className="msg ok">Mã đặt PIN: <strong className="mono">{pinCode}</strong> (chỉ hiện một lần)</p>}
+            <button type="button" className="secondary" disabled={busy} onClick={() => void run(async () => { setPinCode(await issuePinCode(worker.id)); })}>Cấp mã PIN mới</button>
+          </>
+        )}
+      </Collapsible>
 
       <Collapsible title="Quyền cấp riêng (ngoại lệ)" summary={Object.keys(overrides).length > 0 ? 'Đã cấp riêng' : 'Theo chức vụ'}>
         <MemberPermissions key={JSON.stringify(overrides)} orgId={org.id} userId={member.user_id} roles={member.roles} overrides={overrides} onSaved={onChanged} />

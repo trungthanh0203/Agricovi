@@ -9,18 +9,20 @@ import {
 import { useOrgs } from '../lib/orgs';
 import { hasRole } from '../lib/roles';
 import { useTable } from '../lib/tables';
-import type { WorkerLite } from '../lib/work';
+import { listWorkers, type WorkerLite } from '../lib/work';
 
 
 /**
  * Máy chấm công (D111) cho chủ/quản lý: liên kết điện thoại cố định ở phân khu, cấp mã đặt PIN cho người làm, xem ảnh chấm công.
  * Chủ liên kết/ngừng máy; quản lý được cấp mã và xem ảnh. Cần mạng.
  */
-export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onChanged?: () => void }) {
+export function KioskAdmin({ workers: workersProp, onChanged }: { workers?: WorkerLite[]; onChanged?: () => void }) {
   const { active } = useOrgs();
   const orgId = active?.id;
   const isOwner = hasRole(active?.roles, 'owner');
   const areas = useTable('areas').filter((a) => a.organization_id === orgId);
+  const [own, setOwn] = useState<WorkerLite[]>([]);
+  const workers = workersProp ?? own;
   const [kiosks, setKiosks] = useState<KioskRow[]>([]);
   const [pins, setPins] = useState<PinStatus[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -39,8 +41,9 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
       const [k, p] = await Promise.all([listKiosks(orgId), listPinStatus(orgId)]);
       setKiosks(k);
       setPins(p);
+      if (!workersProp) setOwn(await listWorkers(orgId));
     } catch (e) { setError(friendlyError(e)); }
-  }, [orgId]);
+  }, [orgId, workersProp]);
   useEffect(() => { void load(); }, [load]);
   // Điện thoại này từng làm máy chấm công nào thì chọn sẵn máy đó
   useEffect(() => {
@@ -98,7 +101,7 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
   async function savePhone(w: WorkerLite) {
     if (busy) return;
     setBusy(true); setError(null);
-    try { await setWorkerPhone(w.id, phones[w.id] ?? ''); onChanged?.(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+    try { await setWorkerPhone(w.id, phones[w.id] ?? ''); onChanged?.(); await load(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
 
   async function dropFace(w: WorkerLite) {

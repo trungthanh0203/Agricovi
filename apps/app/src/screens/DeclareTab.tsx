@@ -6,6 +6,7 @@ import { PositionsSection } from '../components/PositionsSection';
 import { TeamsSection } from '../components/TeamsSection';
 import { AreasSection } from '../components/AreasSection';
 import { CatalogSection } from '../components/CatalogSection';
+import { KioskAdmin } from '../components/KioskAdmin';
 import { canPerm } from '../lib/permissions';
 import { CustomersSection } from '../components/CustomersSection';
 import { PartnersSection } from '../components/PartnersSection';
@@ -57,6 +58,8 @@ export function DeclareTab({ section, onSection }: { section?: string; onSection
         <CatalogSection orgId={active.id} part={current} canWrite={canPerm(active.perms, 'inventory', 'edit')} />
       ) : current === 'partners' ? (
         <PartnersSection />
+      ) : current === 'kiosks' ? (
+        <KioskAdmin />
       ) : current === 'customers' ? (
         <CustomersSection />
       ) : current === 'crops' ? (

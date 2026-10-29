@@ -15,7 +15,7 @@ export const isLeaderMode = (m: WorkMode) => m === 'leader_hourly' || m === 'lea
 
 /** [GIẢ ĐỊNH] 4 kiểu phân hệ khởi đầu (docs/DECISIONS.md D10); mở rộng bằng migration + danh sách này. */
 export const WORK_MODE_LABEL: Record<WorkMode, string> = {
-  self_hourly: 'Tự chấm công bằng điện thoại, tính theo giờ',
+  self_hourly: 'Chấm công ở máy chấm công (hoặc chủ nhập), tính theo giờ',
   leader_hourly: 'Tổ trưởng chấm công, tính theo giờ',
   leader_output: 'Tổ trưởng ghi sản lượng, tính theo sản lượng',
   mixed: 'Kết hợp giờ và sản lượng',
@@ -66,6 +66,8 @@ export interface StaffCredentials {
   phone: string;
   temp_password: string;
   expires_at: string;
+  /** Mã đặt PIN 6 số (dùng ở máy chấm công, hạn 24 giờ), cấp cùng lúc tạo tài khoản */
+  pin_code?: string;
 }
 
 export async function callFunction<T>(body: Record<string, unknown>): Promise<T> {
