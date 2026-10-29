@@ -74,8 +74,7 @@ function Gate() {
   const [kiosk, setKiosk] = useState<KioskInfo | null | undefined>(undefined);
   useEffect(() => {
     if (!uid) return setKiosk(undefined);
-    const cached = readCachedKiosk(uid);
-    if (cached !== undefined) setKiosk(cached);
+    setKiosk(readCachedKiosk(uid)); // tài khoản mới đăng nhập (chủ vào app quản lý từ máy chấm công): chưa biết thì chờ, không hiện lại màn máy chấm công
     let live = true;
     void fetchKioskInfo(uid).then((k) => { if (live) setKiosk(k); });
     return () => { live = false; };

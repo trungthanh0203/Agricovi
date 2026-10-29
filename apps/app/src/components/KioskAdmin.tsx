@@ -59,7 +59,7 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
     if (busy || !orgId) return;
     if (!name.trim()) return setError('Hãy đặt tên máy, ví dụ "Máy cổng nhà màng".');
     if (!consent) return setError('Hãy xác nhận đã báo và được người làm đồng ý cho chụp ảnh khi chấm công.');
-    if (!window.confirm('Điện thoại này sẽ chuyển thành MÁY CHẤM CÔNG và bạn sẽ bị đăng xuất khỏi máy. Muốn thoát chế độ này sau đó phải nhập mật khẩu chủ cơ sở. Tiếp tục?')) return;
+    if (!window.confirm('Điện thoại này sẽ chuyển thành MÁY CHẤM CÔNG và bạn sẽ bị đăng xuất khỏi máy. Khi chủ cần vào app quản lý: nhập số điện thoại + PIN của chủ ở máy chấm công, chọn “Vào app quản lý” rồi đăng nhập. Tiếp tục?')) return;
     setBusy(true); setError(null);
     try { await linkThisDeviceAsKiosk(orgId, areaId || null, name.trim()); } // thành công: phiên đổi sang tài khoản thiết bị, app tự chuyển sang màn máy chấm công
     catch (e) { setError(friendlyError(e)); setBusy(false); }
@@ -67,7 +67,7 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
 
   async function relink() {
     if (busy || !orgId || !reuse) return;
-    if (!window.confirm('Điện thoại này sẽ chuyển thành MÁY CHẤM CÔNG đã chọn và bạn sẽ bị đăng xuất khỏi máy. Muốn thoát chế độ này sau đó, chủ nhập số điện thoại và PIN của chủ ở máy chấm công. Tiếp tục?')) return;
+    if (!window.confirm('Điện thoại này sẽ chuyển thành MÁY CHẤM CÔNG đã chọn và bạn sẽ bị đăng xuất khỏi máy. Khi chủ cần vào app quản lý: nhập số điện thoại + PIN của chủ ở máy chấm công, chọn “Vào app quản lý” rồi đăng nhập. Tiếp tục?')) return;
     setBusy(true); setError(null);
     try { await relinkThisDeviceToKiosk(orgId, reuse); } // thành công: phiên đổi sang tài khoản thiết bị, app tự chuyển sang màn máy chấm công
     catch (e) { setError(friendlyError(e)); setBusy(false); }

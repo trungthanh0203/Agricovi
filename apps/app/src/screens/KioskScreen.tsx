@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useAuth } from '../lib/auth';
+import { friendlyError } from '../lib/errors';
 import { countFaces, describeFace, faceDistance, loadFace } from '../lib/face';
 import { kioskCheck, kioskCycles, kioskFaceCheck, kioskPunch, kioskSetPin, rememberKioskOnDevice, type KioskCycle, type KioskInfo } from '../lib/kiosk';
 
-type Step = 'login' | 'setpin' | 'enroll' | 'punch' | 'done';
+type Step = 'login' | 'setpin' | 'enroll' | 'owner' | 'ownerLogin' | 'punch' | 'done';
 type FaceApi = typeof import('@vladmandic/face-api');
 type ModelState = 'loading' | 'ready' | 'failed';
 interface Who { name: string; state: 'in' | 'out'; since: string | null; stale: boolean; isOwner: boolean; cycleName: string | null; lastCycle: string | null }
@@ -107,7 +108,9 @@ function useCamera(on: boolean, attempt: number, api: FaceApi | null) {
  * thiết bị, máy chủ chỉ cho gọi các hàm kiosk_*. Muốn thoát phải nhập mật khẩu chủ cơ sở.
  */
 export function KioskScreen({ info }: { info: KioskInfo }) {
-  const { signOut } = useAuth();
+  const { signIn } = useAuth();
+  const [ownerId, setOwnerId] = useState('');
+  const [ownerPw, setOwnerPw] = useState('');
   const model = useFaceModel();
   useEffect(() => { rememberKioskOnDevice(info.kiosk_id, info.name); }, [info.kiosk_id, info.name]); // lần sau chủ liên kết lại máy này chỉ cần một lần bấm
   const [step, setStep] = useState<Step>('login');
@@ -145,13 +148,14 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
   }, []);
 
   const reset = useCallback(() => {
+    setOwnerId(''); setOwnerPw('');
     setStep('login'); setPhone(''); setPin(''); setCode(''); setPin2(''); setConsent(false); setWho(null); setShots([]); setTries(1);
     setError(null); setDone(null); setBusy(false);
   }, []);
   // Bước chụp ảnh bỏ dở thì quay về màn đầu (xóa PIN khỏi bộ nhớ); màn kết quả tự đóng sau 6 giây
   useEffect(() => {
     if (step === 'login' || step === 'setpin') return;
-    const t = window.setTimeout(reset, step === 'done' ? 12000 : step === 'enroll' ? 180000 : 90000);
+    const t = window.setTimeout(reset, step === 'done' ? 12000 : step === 'enroll' || step === 'ownerLogin' ? 180000 : 90000);
     return () => window.clearTimeout(t);
   }, [step, reset]);
 
@@ -191,7 +195,17 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
     setPunchId(crypto.randomUUID());
     setTries(1);
     setDone(null);
-    setStep('punch');
+    setStep(w.isOwner ? 'owner' : 'punch');   // chủ cơ sở được hỏi: chấm công hay vào app quản lý
+  }
+
+  // Chủ chọn vào app quản lý: đăng nhập bằng email/số điện thoại + mật khẩu. Thành công thì phiên của máy chuyển sang tài khoản chủ và app quản lý mở như bình thường.
+  async function onOwnerLogin(e: FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    if (!ownerId.trim() || !ownerPw) return setError('Hãy nhập email (hoặc số điện thoại) và mật khẩu.');
+    setBusy(true);
+    setError(null);
+    try { await signIn(ownerId, ownerPw); } catch (err) { setError(friendlyError(err)); setBusy(false); }
   }
 
   async function savePin(face?: { descriptors: number[][]; photo: string }) {
@@ -386,6 +400,32 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
         </>
       )}
 
+      {step === 'owner' && who && (
+        <>
+          <h1>Xin chào {who.name}</h1>
+          <p className="msg ok">Bạn là chủ cơ sở. Bạn muốn làm gì?</p>
+          <button className="primary kiosk-big" onClick={() => { setError(null); setStep('punch'); }}>{who.state === 'in' ? 'Chấm công: RA CA' : 'Chấm công: VÀO CA'}</button>
+          <button className="secondary kiosk-big" onClick={() => { setError(null); setStep('ownerLogin'); }}>Vào app quản lý</button>
+          <button className="link" onClick={reset}>Hủy</button>
+        </>
+      )}
+
+      {step === 'ownerLogin' && (
+        <>
+          <h1>Đăng nhập app quản lý</h1>
+          <p className="muted">Nhập email (hoặc số điện thoại) và mật khẩu của chủ cơ sở. Dùng xong, vào Sản xuất → Chấm công → Máy chấm công → “Liên kết lại máy này” để trả điện thoại về chấm công.</p>
+          <form onSubmit={onOwnerLogin} noValidate className="inline-form">
+            <label>Email hoặc số điện thoại<input autoComplete="username" value={ownerId} onChange={(e) => setOwnerId(e.target.value)} /></label>
+            <label>Mật khẩu<input type="password" autoComplete="current-password" value={ownerPw} onChange={(e) => setOwnerPw(e.target.value)} /></label>
+            {error && <p className="msg error" role="alert">{error}</p>}
+            <div className="btnrow">
+              <button type="submit" className="primary" disabled={busy}>{busy ? 'Đang đăng nhập…' : 'Đăng nhập'}</button>
+              <button type="button" className="secondary" onClick={reset}>Quay lại</button>
+            </div>
+          </form>
+        </>
+      )}
+
       {step === 'punch' && who && (
         <>
           <h1>Xin chào {who.name}</h1>
@@ -411,11 +451,6 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
             {busy ? 'Đang ghi…' : who.state === 'in' ? 'RA CA' : 'VÀO CA'}
           </button>
           <button className="link" onClick={reset}>Hủy</button>
-          {who.isOwner && (
-            <button className="secondary kiosk-leave" disabled={busy} onClick={() => {
-              if (window.confirm('Thoát chế độ máy chấm công trên điện thoại này? Muốn dùng lại phải liên kết lại từ tài khoản chủ.')) void signOut();
-            }}>Thoát chế độ máy chấm công (chủ cơ sở)</button>
-          )}
         </>
       )}
 

@@ -378,3 +378,8 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 1. Trang chủ không còn nút Vào ca/Ra ca. Sản xuất → Chấm công → Hôm nay không còn “Chấm công của tôi”.
 2. Chủ/quản lý: **Hôm nay → ＋ Chấm công cho người làm** → chọn người (có cả tên của bạn), ngày, giờ → Lưu. Công ở trạng thái Chờ xác nhận; xác nhận ở mục Công (bạn xác nhận được công của chính mình).
 3. Người làm thường (không phải chủ/quản lý/tổ trưởng) đăng nhập: không còn chỗ chấm công; chỉ xem công của mình ở mục Công. Chấm công bằng máy chấm công như trước.
+
+## Thử chủ vào app quản lý từ máy chấm công (29/10/2026; chỉ cần cập nhật app)
+1. Ở máy chấm công, chủ nhập số điện thoại + PIN của chủ → màn hỏi **Chấm công: VÀO CA/RA CA** hoặc **Vào app quản lý**.
+2. Chọn chấm công: chấm như bình thường. Chọn vào app quản lý: nhập email (hoặc số điện thoại) + mật khẩu → vào app quản lý.
+3. Dùng xong: Sản xuất → Chấm công → Máy chấm công → ＋ Liên kết điện thoại này → chọn máy cũ (đã chọn sẵn) → **Liên kết lại máy này**.
