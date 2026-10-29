@@ -167,9 +167,9 @@ test('ảnh đối chiếu: gắn cờ không thấy mặt, máy không kiểm �
   await punch('0912345678', '2468', 'out', undefined, PHOTO, null);   // máy không kiểm được
   const rows = (await asUser(db, owner, `select wk_name, ph_kind, ph_flags from attendance_photo_review($1, current_date - 1, current_date + 1) order by ph_at`, [org])).rows;
   const f = (name, kind) => rows.find((r) => r.wk_name === name && r.ph_kind === kind).ph_flags;
-  assert.deepEqual(f('Mai', 'in'), ['no_face', 'fast_pair']);        // không thấy mặt; sát với lượt Ra ca của Lan trên cùng máy
-  assert.deepEqual(f('Lan', 'out'), ['unchecked', 'fast_pair']);
-  assert.deepEqual(f('Lan', 'in'), []);
+  assert.deepEqual(f('Mai', 'in'), ['no_face', 'fast_pair', 'no_ref']);        // không thấy mặt; sát với lượt Ra ca của Lan trên cùng máy
+  assert.deepEqual(f('Lan', 'out'), ['unchecked', 'fast_pair', 'no_ref']);
+  assert.deepEqual(f('Lan', 'in'), ['no_ref']);                         // chưa đăng ký khuôn mặt (Đợt 3)
   assert.match(await expectError(asUser(db, owner, `select * from attendance_photo_review($1, current_date - 60, current_date)`, [org])), /INVALID_ARGUMENT/);
 
   await db.query(`update attendance_photos set taken_at = now() - interval '90 days' where kind='in'`);
