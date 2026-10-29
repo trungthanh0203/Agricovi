@@ -12,7 +12,7 @@ export function IconGlyph({ icon }: { icon: string }) {
 export const SECTION_ICONS: Record<string, string> = {
   cycles: '🌱', logs: '📒', harvest: '🧺', stock: '📦', attendance: '⏱',
   areas: '🏡', partners: '🚚', customers: '🛒', website: '📬', payables: '💳', crops: '🌾', worktypes: '🧰', templates: '📋', materials: '🧪', places: '🏬',
-  commerce: HO_SO_WEB_ICON, kiosks: '📲', members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
+  commerce: HO_SO_WEB_ICON, kiosks: '📲', process: '📋', staff: '👥', members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
   intro: '📖', household: '🌾', company: '🏢',
   expense: '💸', sales: '💰', summary: '📊', weekly: '🗓️', paybook: '💼', custom: '🔎', licenses: '📜', logbook: '📔', checklist: '✅',
 };
