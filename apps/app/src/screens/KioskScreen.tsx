@@ -124,6 +124,8 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
   const [cycleChoice, setCycleChoice] = useState(''); // id vụ, GENERAL, hoặc '' (chưa chọn)
   const [shots, setShots] = useState<Shot[]>([]);
   const [done, setDone] = useState<{ text: string; photo: string } | null>(null);
+  // Kết quả Vào/Ra ca gần nhất: hiện to ở màn kết quả và nhắc lại ở màn đầu một lúc để người làm chắc chắn đã được ghi
+  const [result, setResult] = useState<{ action: 'in' | 'out'; name: string; time: string; day: string; late: boolean; photo: string; at: number } | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [attempt, setAttempt] = useState(0); // tăng số này để bật lại camera
   const cam = useCamera(step === 'punch' || step === 'enroll', attempt, model.api);
@@ -147,9 +149,19 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
   // Bước chụp ảnh bỏ dở thì quay về màn đầu (xóa PIN khỏi bộ nhớ); màn kết quả tự đóng sau 6 giây
   useEffect(() => {
     if (step === 'login' || step === 'setpin') return;
-    const t = window.setTimeout(reset, step === 'done' ? 6000 : step === 'enroll' ? 180000 : 90000);
+    const t = window.setTimeout(reset, step === 'done' ? 12000 : step === 'enroll' ? 180000 : 90000);
     return () => window.clearTimeout(t);
   }, [step, reset]);
+
+  // Đổi bước thì cuộn lên đầu để người dùng luôn thấy nội dung mới (kết quả, lỗi)
+  useEffect(() => { window.scrollTo({ top: 0 }); }, [step]);
+  // Dòng nhắc kết quả gần nhất ở màn đầu tự mất sau 1 phút
+  useEffect(() => {
+    if (!result) return;
+    const left = result.at + 60000 - Date.now();
+    const t = window.setTimeout(() => setResult((cur) => (cur && cur.at === result.at && step !== 'done' ? null : cur)), Math.max(left, 1000));
+    return () => window.clearTimeout(t);
+  }, [result, step]);
 
   async function onLogin(e: FormEvent) {
     e.preventDefault();
@@ -251,8 +263,11 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
       }
       return setError(r.message ?? 'Có lỗi, hãy thử lại.');
     }
-    const late = r.stale ? ' Ca hôm trước chưa kết thúc, chủ cơ sở sẽ xem lại giờ.' : '';
-    setDone({ text: `${who.name}: đã ${action === 'in' ? 'VÀO ca' : 'RA ca'} lúc ${hhmm(String(r.at))}.${late}`, photo: s.photo });
+    setDone(null);
+    setResult({
+      action, name: who.name, time: hhmm(String(r.at)), late: Boolean(r.stale), photo: s.photo, at: Date.now(),
+      day: new Date(String(r.at)).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' }),
+    });
     setPin('');
     setStep('done');
   }
@@ -297,6 +312,11 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
         <>
           <h1>Chấm công</h1>
           {done && <p className="msg ok" role="status">{done.text}</p>}
+          {result && (
+            <p className="msg ok" role="status">
+              ✔ Vừa ghi: {result.name} đã <strong>{result.action === 'in' ? 'VÀO' : 'RA'} ca lúc {result.time}</strong>
+            </p>
+          )}
           <form onSubmit={onLogin} noValidate className="inline-form">
             <label>
               Số điện thoại
@@ -383,13 +403,17 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
         </>
       )}
 
-      {step === 'done' && done && (
-        <>
-          <h1>Đã ghi nhận</h1>
-          {done.photo && <img className="kiosk-photo" alt="Ảnh vừa chụp" src={`data:image/jpeg;base64,${done.photo}`} />}
-          <p className="msg ok" role="status">{done.text}</p>
-          <button className="secondary" onClick={reset}>Xong</button>
-        </>
+      {step === 'done' && result && (
+        <div className="kiosk-result" role="status" aria-live="polite">
+          <div className="kiosk-tick">✔</div>
+          <h1>{result.action === 'in' ? 'ĐÃ VÀO CA' : 'ĐÃ RA CA'}</h1>
+          <p className="kiosk-name">{result.name}</p>
+          <p className="kiosk-time">{result.time}</p>
+          <p className="muted">{result.day}</p>
+          {result.late && <p className="msg warn">Ca hôm trước chưa kết thúc, chủ cơ sở sẽ xem lại giờ.</p>}
+          {result.photo && <img className="kiosk-photo" alt="Ảnh vừa chụp" src={`data:image/jpeg;base64,${result.photo}`} />}
+          <button className="primary kiosk-big" onClick={reset}>Xong</button>
+        </div>
       )}
 
     </main>

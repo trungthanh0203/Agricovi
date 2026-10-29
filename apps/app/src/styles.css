@@ -650,3 +650,9 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 .kiosk-cycles { border: 1px solid var(--line, #d9ded9); border-radius: 10px; padding: 8px 12px; margin: 12px 0; }
 .kiosk-cycles legend { font-weight: 600; padding: 0 6px; }
 .kiosk-leave { margin-top: 24px; }
+.kiosk-result { text-align: center; background: #e8f5e9; border: 2px solid var(--green); border-radius: 16px; padding: 24px 16px; margin: 12px 0; display: grid; gap: 4px; }
+.kiosk-result h1 { color: var(--green); margin: 0; font-size: 28px; }
+.kiosk-tick { font-size: 56px; line-height: 1; color: var(--green); }
+.kiosk-name { font-size: 22px; font-weight: 700; margin: 4px 0 0; }
+.kiosk-time { font-size: 56px; font-weight: 800; margin: 0; letter-spacing: 1px; }
+.kiosk-result .kiosk-photo { width: 40%; max-width: 160px; }

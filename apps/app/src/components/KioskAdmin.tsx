@@ -4,7 +4,7 @@ import { addDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal } from '../lib/hooks';
 import {
-  FLAG_LABEL, SOFT_FLAGS, deleteWorkerFace, issuePinCode, linkThisDeviceAsKiosk, setWorkerPhone, listFaceRefPhotos, listKiosks, listPhotoReview, listPinStatus, revokeKiosk,
+  FLAG_LABEL, SOFT_FLAGS, deleteWorkerFace, issuePinCode, linkThisDeviceAsKiosk, setKioskAskCycle, setWorkerPhone, listFaceRefPhotos, listKiosks, listPhotoReview, listPinStatus, revokeKiosk,
   type KioskRow, type PhotoReviewRow, type PinStatus,
 } from '../lib/kiosk';
 import { useOrgs } from '../lib/orgs';
@@ -59,6 +59,12 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
     catch (e) { setError(friendlyError(e)); setBusy(false); }
   }
 
+  async function toggleCycle(k: KioskRow) {
+    if (busy) return;
+    setBusy(true); setError(null);
+    try { await setKioskAskCycle(k.id, !k.ask_cycle); await load(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+  }
+
   async function stop(k: KioskRow) {
     if (!orgId || busy || !window.confirm(`Ngừng "${k.name}"? Điện thoại đó sẽ không chấm công được nữa.`)) return;
     setBusy(true); setError(null);
@@ -98,6 +104,12 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
               <li key={k.id}>
                 <strong>{k.name}</strong> · {areaName(k.area_id)} <span className="muted">· từ {fmtDate(k.created_at.slice(0, 10))}</span>
                 {isOwner && <button className="link" disabled={busy} onClick={() => void stop(k)}>Ngừng dùng</button>}
+                {isOwner && (
+                  <label className="check">
+                    <input type="checkbox" checked={k.ask_cycle} disabled={busy} onChange={() => void toggleCycle(k)} />
+                    Hỏi “làm cho vụ nào” khi Vào ca (để trống nếu người làm không theo một vụ; chi phí nhân công khi đó tính chung cho cơ sở)
+                  </label>
+                )}
               </li>
             ))}
           </ul>
@@ -115,7 +127,7 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
               </label>
               <label className="check">
                 <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-                Tôi đã báo và được người làm đồng ý cho chụp ảnh khi chấm công (ảnh chỉ chủ và quản lý xem, giữ 60 ngày).
+                Tôi đã báo và được người làm đồng ý cho chụp ảnh khi chấm công. Máy chỉ lưu ảnh khi nghi ngờ (không thấy mặt, không khớp, chưa có mẫu…); ảnh chỉ chủ và quản lý xem, giữ 60 ngày.
               </label>
               <div className="btnrow">
                 <button className="primary" disabled={busy} onClick={() => void link()}>{busy ? 'Đang liên kết…' : 'Liên kết máy này'}</button>
@@ -221,7 +233,7 @@ function PhotoReview({ orgId }: { orgId: string }) {
             </figure>
           ))}
         </div>
-        <p className="muted">Ảnh nhỏ góc dưới là ảnh mẫu khi đăng ký. “Cách mẫu” càng nhỏ càng giống (dưới 0,50 là khớp, từ 0,60 là có thể khác người). Ảnh được giữ 60 ngày. Thấy ảnh không đúng người: tìm công đó ở “Công gần đây” và từ chối kèm lý do.</p>
+        <p className="muted">Chỉ ảnh nghi ngờ mới được lưu; người đúng thì không có ảnh ở đây. Ảnh nhỏ góc dưới là ảnh mẫu khi đăng ký. “Cách mẫu” càng nhỏ càng giống (dưới 0,50 là khớp, từ 0,60 là có thể khác người). Ảnh được giữ 60 ngày. Thấy ảnh không đúng người: tìm công đó ở “Công gần đây” và từ chối kèm lý do.</p>
       </div>
     </details>
   );

@@ -80,10 +80,11 @@ test('so khớp: ba mức, kiểm trước khi ghi, máy chủ lưu khoảng cá
   assert.equal(b.ok, true); assert.equal(b.face, 'mismatch');
   assert.equal((await db.query(`select status::text s from attendance_records where worker_id=$1`, [w1])).rows[0].s, 'needs_confirmation');
   const rows = await review();
-  const f = (kind) => rows.find((r) => r.ph_kind === kind);
-  assert.deepEqual(f('in').ph_flags, []);
-  assert.ok(Math.abs(f('in').ph_distance - 0.3) < 0.01);
-  assert.deepEqual(f('out').ph_flags, ['face_mismatch', 'retries']);
+  assert.equal(rows.length, 1);                                              // lượt khớp rõ ràng không giữ ảnh nên không có ở màn xem
+  assert.deepEqual(rows[0].ph_flags, ['face_mismatch', 'retries']);
+  const kept = (await db.query(`select kind, photo is null np, face_distance d from attendance_photos order by taken_at`)).rows;
+  assert.deepEqual(kept.map((x) => x.np), [true, false]);                    // vẫn giữ dòng số liệu của lượt khớp
+  assert.ok(Math.abs(kept[0].d - 0.3) < 0.01);
 
   // khớp chưa chắc; có mẫu nhưng máy không gửi được dấu vân
   await db.query(`update attendance_photos set taken_at = taken_at - interval '5 minutes'`);

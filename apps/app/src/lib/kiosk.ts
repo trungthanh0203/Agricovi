@@ -66,10 +66,10 @@ export const kioskSetPin = (phone: string, code: string, pin: string, face?: { d
 // ---------------------------------------------------------------------------
 // Phía chủ / quản lý
 // ---------------------------------------------------------------------------
-export interface KioskRow { id: string; area_id: string | null; name: string; active: boolean; created_at: string }
+export interface KioskRow { id: string; area_id: string | null; name: string; active: boolean; created_at: string; ask_cycle: boolean }
 
 export async function listKiosks(orgId: string): Promise<KioskRow[]> {
-  const { data, error } = await client().from('attendance_kiosks').select('id, area_id, name, active, created_at').eq('organization_id', orgId).order('created_at');
+  const { data, error } = await client().from('attendance_kiosks').select('id, area_id, name, active, created_at, ask_cycle').eq('organization_id', orgId).order('created_at');
   if (error) throw new Error(error.message);
   return (data ?? []) as KioskRow[];
 }
@@ -140,4 +140,9 @@ export async function setWorkerPhone(workerId: string, phone: string): Promise<s
   const { data, error } = await client().rpc('set_worker_phone', { p_worker: workerId, p_phone: phone });
   if (error) throw new Error(error.message);
   return data as string;
+}
+
+export async function setKioskAskCycle(kioskId: string, on: boolean): Promise<void> {
+  const { error } = await client().rpc('set_kiosk_ask_cycle', { p_kiosk: kioskId, p_on: on });
+  if (error) throw new Error(error.message);
 }

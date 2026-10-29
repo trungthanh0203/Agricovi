@@ -23,7 +23,8 @@ async function setup(kioskArea = true) {
   const c1 = await cycle(a1, 'Dưa lưới vụ 1');
   const c2 = await cycle(a2, 'Dưa lưới vụ 2');
   await cycle(a1, 'Vụ đã xong', 'preparing');                       // không phải vụ đang sản xuất
-  await db.query(`select kiosk_finalize($1,$2,$3,$4,'Máy cổng')`, [owner, org, kioskArea ? a1 : null, kioskUser]);
+  const kid = (await db.query(`select kiosk_finalize($1,$2,$3,$4,'Máy cổng') id`, [owner, org, kioskArea ? a1 : null, kioskUser])).rows[0].id;
+  await db.query(`update attendance_kiosks set ask_cycle = true where id = $1`, [kid]);   // các bài dưới thử chế độ hỏi vụ
   const dev = (sql, params) => asUser(db, kioskUser, sql, params);
   const worker = async (name, phone, userId = null) => (await db.query(`insert into worker_profiles (organization_id, full_name, phone, user_id) values ($1,$2,$3,$4) returning id`, [org, name, phone, userId])).rows[0].id;
   const setPin = async (w, phone, pin) => {

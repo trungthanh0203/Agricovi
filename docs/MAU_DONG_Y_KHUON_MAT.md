@@ -4,7 +4,7 @@ Chủ cơ sở nên cho người làm xem và ký (hoặc ghi nhận bằng tin 
 
 **Mục đích:** xác nhận đúng người vào ca, ra ca để tính công cho chính xác và công bằng. Không dùng vào việc khác.
 
-**Dữ liệu thu thập:** (1) ảnh chụp mỗi lần vào ca, ra ca; (2) dữ liệu số đặc trưng khuôn mặt tạo từ 3 ảnh mẫu lúc đăng ký (không thể dùng để dựng lại ảnh khuôn mặt); (3) 1 ảnh mẫu nhỏ.
+**Dữ liệu thu thập:** (1) ảnh chụp lúc vào ca, ra ca (chỉ được lưu khi máy nghi ngờ, ví dụ không nhận ra khuôn mặt; nếu nhận ra đúng người thì không lưu ảnh); (2) dữ liệu số đặc trưng khuôn mặt tạo từ 3 ảnh mẫu lúc đăng ký (không thể dùng để dựng lại ảnh khuôn mặt); (3) 1 ảnh mẫu nhỏ.
 
 **Ai xem được:** chủ cơ sở và quản lý được chủ giao. Người khác không xem được.
 
