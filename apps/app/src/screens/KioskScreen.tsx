@@ -122,6 +122,7 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
   const [tries, setTries] = useState(1);
   const [cycles, setCycles] = useState<KioskCycle[]>([]);
   const [cycleChoice, setCycleChoice] = useState(''); // id vụ, GENERAL, hoặc '' (chưa chọn)
+  const [armed, setArmed] = useState(true); // cho phép tự chụp khi thấy mặt; tắt sau mỗi lần chụp, bật lại khi người đó rời khung
   const [shots, setShots] = useState<Shot[]>([]);
   const [done, setDone] = useState<{ text: string; photo: string } | null>(null);
   // Kết quả Vào/Ra ca gần nhất: hiện to ở màn kết quả và nhắc lại ở màn đầu một lúc để người làm chắc chắn đã được ghi
@@ -177,6 +178,7 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
       isOwner: Boolean(r.is_owner), cycleName: (r.cycle_name as string | null) ?? null, lastCycle: (r.last_cycle as string | null) ?? null,
     };
     setWho(w);
+    setArmed(true);
     setCycleChoice('');
     if (w.state === 'out') {
       // Vào ca: chọn vụ đang làm để tính chi phí nhân công theo vụ. Chọn sẵn vụ lần trước, hoặc vụ duy nhất.
@@ -272,10 +274,23 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
     setStep('done');
   }
 
+  // Tự chụp: thấy đúng một khuôn mặt giữ yên khoảng 1 giây thì chụp luôn, người làm không phải bấm nút (nút vẫn còn để bấm tay)
+  const punchRef = useRef(onPunch);
+  punchRef.current = onPunch;
+  useEffect(() => {
+    if (step === 'punch' && cam.faces === 0) setArmed(true);
+  }, [step, cam.faces]);
+  const autoReady = step === 'punch' && armed && !busy && cam.ready && model.state === 'ready' && cam.faces === 1 && !(who?.state === 'out' && cycleChoice === '');
+  useEffect(() => {
+    if (!autoReady) return;
+    const t = window.setTimeout(() => { setArmed(false); void punchRef.current(); }, 1200);
+    return () => window.clearTimeout(t);
+  }, [autoReady]);
+
   const faceHint =
     model.state !== 'ready' || cam.faces === null ? null
       : cam.faces === 0 ? 'Hãy đưa khuôn mặt vào khung.'
-        : cam.faces > 1 ? 'Chỉ một người đứng trước camera.' : null;
+        : cam.faces > 1 ? 'Chỉ một người đứng trước camera.' : step === 'punch' && armed ? 'Giữ yên, máy sắp tự chụp…' : null;
   // Mô hình đang tải thì chờ; tải lỗi thì vẫn chấm công được (không kiểm khuôn mặt, chủ xem ảnh bằng mắt)
   const needCycle = who?.state === 'out' && cycleChoice === '';
   const canShoot = cam.ready && !busy && !needCycle && model.state !== 'loading' && (cam.faces === null || cam.faces === 1);

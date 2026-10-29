@@ -39,9 +39,11 @@ export function ShiftButton({ orgId, uid, onClick }: { orgId: string; uid: strin
     let alive = true;
     void (async () => {
       try {
-        const [att, workers] = await Promise.all([listAttendance(orgId, addDays(todayLocal(), -31)), listWorkers(orgId)]);
+        const workers = await listWorkers(orgId);
         const me = workers.find((w) => w.user_id === uid);
-        if (alive) setServerOpen(att.some((a) => !a.ended_at && a.worker_id === me?.id && a.status !== 'rejected'));
+        if (!me) { if (alive) setServerOpen(false); return; }
+        const att = await listAttendance(orgId, addDays(todayLocal(), -31), me.id);   // chỉ công của mình (cơ sở đông người không bị cắt)
+        if (alive) setServerOpen(att.some((a) => !a.ended_at && a.status !== 'rejected'));
       } catch { /* giữ trạng thái cũ */ }
     })();
     return () => { alive = false; };

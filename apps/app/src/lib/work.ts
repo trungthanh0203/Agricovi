@@ -71,10 +71,12 @@ export async function listWorkers(orgId: string): Promise<WorkerLite[]> {
 }
 
 // ------------------------------------------------------------------ chấm công
-export async function listAttendance(orgId: string, fromDate: string): Promise<AttendanceRow[]> {
-  const rows = await ok(client().from('attendance_records')
+export async function listAttendance(orgId: string, fromDate: string, workerId?: string): Promise<AttendanceRow[]> {
+  let qy = client().from('attendance_records')
     .select('id, worker_id, work_date, started_at, ended_at, break_minutes, declared_minutes, approved_minutes, status, source, exception_reason, note, start_lat')
-    .eq('organization_id', orgId).gte('work_date', fromDate).order('started_at', { ascending: false }).limit(300));
+    .eq('organization_id', orgId).gte('work_date', fromDate);
+  if (workerId) qy = qy.eq('worker_id', workerId);
+  const rows = await ok(qy.order('started_at', { ascending: false }).limit(300));
   return (rows ?? []) as AttendanceRow[];
 }
 

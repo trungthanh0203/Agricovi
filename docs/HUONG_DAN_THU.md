@@ -366,3 +366,10 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 3. Vào ca: nhìn thẳng → ghi công. Thử đưa người khác vào khung (hoặc người đứng thay): máy báo “Chưa nhận ra bạn”, cho chụp lại; lần thứ 3 vẫn ghi công nhưng ảnh bị cờ đỏ.
 4. Chủ: **Ảnh chấm công** → ảnh có ảnh mẫu nhỏ ở góc, “cách mẫu x,xx” (dưới 0,50 khớp, từ 0,60 có thể khác người). Ghi lại các số này vài ngày để chỉnh ngưỡng.
 5. **Xóa khuôn mặt** ở danh sách Mã đặt PIN: người đó phải đăng ký lại.
+
+## Thử trang Chấm công mới (29/10/2026; cần `db push` 0129–0131)
+1. **Sản xuất → Chấm công** có 4 nút ngang: **Hôm nay**, **Công**, **Ảnh cần xem**, **Máy chấm công** (hai nút sau chỉ chủ/quản lý thấy).
+2. **Hôm nay**: các ô số (đang trong ca, đã ra ca, công chờ xác nhận, quên Ra ca, ảnh cờ đỏ, giờ công tháng); bấm ô có số để nhảy sang danh sách đã lọc. “Chấm công của tôi” và “＋ Chấm công hộ” nằm ở đây.
+3. **Công**: chọn Hôm nay / 7 ngày / 30 ngày, trạng thái, gõ tên rồi **Tìm**. Mỗi trang 50 dòng, có nút Trước/Sau. Nút **✔ Xác nhận các công hợp lệ** hỏi lại số lượng rồi xác nhận một lượt; công có ngoại lệ hoặc ảnh cờ đỏ được giữ lại để xem từng cái.
+4. **Ảnh cần xem**: chỉ có ảnh khi có cờ đỏ; người đúng thì không có ảnh. Thử bằng cách để người khác chấm công hộ trên máy.
+5. **Máy chấm công**: liên kết máy, tích “Hỏi làm cho vụ nào khi Vào ca” nếu cần, cấp mã PIN. Ở máy: nhìn thẳng vào camera, giữ yên khoảng 1 giây, máy tự chụp và ghi (vẫn bấm tay được).

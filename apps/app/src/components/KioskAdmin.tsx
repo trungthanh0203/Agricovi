@@ -1,18 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Collapsible } from './Collapsible';
-import { addDays, fmtDate } from '../lib/dates';
+import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
-import { todayLocal } from '../lib/hooks';
 import {
-  FLAG_LABEL, SOFT_FLAGS, deleteWorkerFace, issuePinCode, linkThisDeviceAsKiosk, setKioskAskCycle, setWorkerPhone, listFaceRefPhotos, listKiosks, listPhotoReview, listPinStatus, revokeKiosk,
-  type KioskRow, type PhotoReviewRow, type PinStatus,
+  deleteWorkerFace, issuePinCode, linkThisDeviceAsKiosk, setKioskAskCycle, setWorkerPhone, listKiosks, listPinStatus, revokeKiosk,
+  type KioskRow, type PinStatus,
 } from '../lib/kiosk';
 import { useOrgs } from '../lib/orgs';
 import { hasRole } from '../lib/roles';
 import { useTable } from '../lib/tables';
 import type { WorkerLite } from '../lib/work';
 
-const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
 /**
  * Máy chấm công (D111) cho chủ/quản lý: liên kết điện thoại cố định ở phân khu, cấp mã đặt PIN cho người làm, xem ảnh chấm công.
@@ -170,71 +168,6 @@ export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onCh
         </table>
       </Collapsible>
 
-      <PhotoReview orgId={orgId} />
     </>
-  );
-}
-
-function PhotoReview({ orgId }: { orgId: string }) {
-  const [day, setDay] = useState(todayLocal());
-  const [rows, setRows] = useState<PhotoReviewRow[] | null>(null);
-  const [refs, setRefs] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [onlyFlag, setOnlyFlag] = useState(false);
-  const [open, setOpen] = useState(false);
-
-  const load = useCallback(async () => {
-    if (!navigator.onLine) return;
-    try {
-      const r = await listPhotoReview(orgId, day, day);
-      setRows(r);
-      setRefs(await listFaceRefPhotos([...new Set(r.map((x) => x.wk_id))]).catch(() => ({})));
-      setError(null);
-    } catch (e) { setError(friendlyError(e)); }
-  }, [orgId, day]);
-  useEffect(() => { if (open) void load(); }, [open, load]);
-
-  // Cờ nhẹ (chưa kiểm được, chưa có mẫu, khớp chưa chắc) chỉ là ghi chú, không tính là đáng ngờ
-  const suspicious = (r: PhotoReviewRow) => r.ph_flags.some((f) => !SOFT_FLAGS.includes(f));
-  const shown = (rows ?? []).filter((r) => !onlyFlag || suspicious(r));
-  const nFlag = (rows ?? []).filter(suspicious).length;
-
-  return (
-    <details className="fold" onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
-      <summary>
-        <span className="fold-title">Ảnh chấm công</span>
-        <span className={nFlag ? 'fold-sum warn' : 'fold-sum'}>{rows ? (nFlag ? `${nFlag} ảnh cần xem` : `${rows.length} ảnh`) : 'đối chiếu người vào/ra ca'}</span>
-      </summary>
-      <div className="fold-body">
-        <div className="filters">
-          <label>Ngày<input type="date" value={day} max={todayLocal()} onChange={(e) => setDay(e.target.value || todayLocal())} /></label>
-          <div className="btnrow">
-            <button className="secondary" onClick={() => setDay(addDays(day, -1))}>◀ Hôm trước</button>
-            <button className="secondary" disabled={day >= todayLocal()} onClick={() => setDay(addDays(day, 1))}>Hôm sau ▶</button>
-          </div>
-          <label className="check"><input type="checkbox" checked={onlyFlag} onChange={(e) => setOnlyFlag(e.target.checked)} />Chỉ ảnh cần xem</label>
-        </div>
-        {error && <p className="msg error" role="alert">{error}</p>}
-        {rows && shown.length === 0 && <p className="muted">Không có ảnh nào{onlyFlag ? ' cần xem' : ''} trong ngày này.</p>}
-        <div className="photo-grid">
-          {shown.map((r) => (
-            <figure key={r.ph_id} className={suspicious(r) ? 'photo flag' : 'photo'}>
-              <div className="photo-pair">
-                <img loading="lazy" alt={`${r.wk_name} ${r.ph_kind === 'in' ? 'vào ca' : 'ra ca'}`} src={`data:image/jpeg;base64,${r.ph_photo}`} />
-                {refs[r.wk_id] && <img className="ref" loading="lazy" alt={`Ảnh mẫu của ${r.wk_name}`} title="Ảnh mẫu" src={`data:image/jpeg;base64,${refs[r.wk_id]}`} />}
-              </div>
-              <figcaption>
-                <strong>{r.wk_name}</strong><br />
-                {r.ph_kind === 'in' ? 'Vào ca' : 'Ra ca'} {hhmm(r.ph_at)}
-                {r.ph_distance !== null && <span className="muted"> · cách mẫu {r.ph_distance.toFixed(2)}</span>}
-                {r.area_name ? <><br /><span className="muted">{r.area_name}</span></> : null}
-                {r.ph_flags.map((f) => <span key={f} className={SOFT_FLAGS.includes(f) ? 'pill' : 'pill warn'}>{FLAG_LABEL[f] ?? f}</span>)}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-        <p className="muted">Chỉ ảnh nghi ngờ mới được lưu; người đúng thì không có ảnh ở đây. Ảnh nhỏ góc dưới là ảnh mẫu khi đăng ký. “Cách mẫu” càng nhỏ càng giống (dưới 0,50 là khớp, từ 0,60 là có thể khác người). Ảnh được giữ 60 ngày. Thấy ảnh không đúng người: tìm công đó ở “Công gần đây” và từ chối kèm lý do.</p>
-      </div>
-    </details>
   );
 }
