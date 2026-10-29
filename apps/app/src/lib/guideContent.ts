@@ -160,7 +160,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Đăng ký tài khoản và tạo cơ sở',
         details: [
-          'Chủ Hộ đăng ký bằng email. Nhân viên không tự đăng ký: chủ cơ sở tạo tài khoản và đưa số điện thoại + mật khẩu tạm (đăng nhập lần đầu phải đổi).',
+          'Chủ Hộ đăng ký bằng email. Không có email thì chọn tab "Không có email": nhập họ tên, tên cơ sở, số điện thoại có Zalo và mật khẩu rồi gửi; Agricovi liên hệ qua Zalo xác nhận (miễn phí) và duyệt thì cơ sở được mở, màn hình tự chuyển vào app. Nhân viên không tự đăng ký: chủ cơ sở tạo tài khoản và đưa số điện thoại + mật khẩu tạm (đăng nhập lần đầu phải đổi).',
           'Chọn loại cơ sở "Hộ" và đặt tên, ví dụ "Vườn nhà màng Thành Công".',
           'Một người có thể có nhiều cơ sở; đổi cơ sở ở đầu menu ☰. Mỗi cơ sở dữ liệu riêng.',
         ],

@@ -70,9 +70,9 @@ export interface StaffCredentials {
   pin_code?: string;
 }
 
-export async function callFunction<T>(body: Record<string, unknown>): Promise<T> {
+export async function callFunction<T>(body: Record<string, unknown>, fn = 'staff-accounts'): Promise<T> {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  const { data, error } = await supabase.functions.invoke('staff-accounts', { body });
+  const { data, error } = await supabase.functions.invoke(fn, { body });
   if (error) {
     // Lỗi HTTP: nội dung nằm trong phản hồi { error: "MÃ: nội dung" }
     const ctx = (error as { context?: Response }).context;

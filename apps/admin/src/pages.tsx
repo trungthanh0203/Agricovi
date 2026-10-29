@@ -396,3 +396,69 @@ export function RolesPage() {
     </>
   );
 }
+
+// ============================================================ Đăng ký bằng số điện thoại (chờ duyệt)
+interface SignupRow { id: string; phone: string; full_name: string; org_name: string; org_type: string; status: 'pending' | 'approved' | 'rejected'; note: string | null; created_at: string; decided_at: string | null }
+const SIGNUP_LABEL: Record<string, string> = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Đã từ chối' };
+const SIGNUP_CLS: Record<string, string> = { pending: 'warn', approved: 'ok', rejected: 'bad' };
+export function SignupsPage() {
+  const [status, setStatus] = useState('pending');
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const { data: rows, error: err2, reload } = useLoad(() => rpc<SignupRow[]>('admin_list_signups', { p_status: status }), [status]);
+
+  async function decide(r: SignupRow, approve: boolean) {
+    let reason: string | null = null;
+    if (!approve) {
+      reason = window.prompt(`Lý do từ chối ${r.full_name} (${r.phone})? (hiện cho người đăng ký)`);
+      if (!reason) return;
+    } else if (!window.confirm(`Đã liên hệ qua Zalo ${r.phone} và xác nhận đúng người? Duyệt sẽ tạo cơ sở "${r.org_name}".`)) return;
+    setBusy(true); setMsg(null);
+    try { await rpc('admin_decide_signup', { p_id: r.id, p_approve: approve, p_reason: reason }); setMsg(approve ? 'Đã duyệt và tạo cơ sở.' : 'Đã từ chối.'); reload(); }
+    catch (e) { setMsg(clean((e as Error).message)); } finally { setBusy(false); }
+  }
+  async function resetPw(r: SignupRow) {
+    if (!window.confirm(`Đặt lại mật khẩu cho ${r.full_name} (${r.phone})? Mật khẩu cũ sẽ không dùng được nữa.`)) return;
+    setBusy(true); setMsg(null);
+    try {
+      const { data: res, error: e } = await supabase!.functions.invoke('owner-signup', { body: { action: 'admin_reset_password', signup_id: r.id } });
+      if (e) throw new Error((await (e as { context?: Response }).context?.json?.().then((j: { error?: string }) => j.error).catch(() => null)) ?? e.message);
+      const d = res as { phone: string; temp_password: string };
+      setMsg(`Mật khẩu mới của ${d.phone}: ${d.temp_password} (gửi qua Zalo và dặn đổi mật khẩu ngay).`);
+    } catch (e) { setMsg(clean((e as Error).message)); } finally { setBusy(false); }
+  }
+
+  return (
+    <>
+      <div className="toolbar">
+        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+          {Object.entries(SIGNUP_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <span className="muted">{rows ? `${rows.length} đăng ký` : ''}</span>
+      </div>
+      <Err e={err2} />
+      {msg && <p className="msg ok" role="status">{msg}</p>}
+      <p className="muted">Hộ không có email đăng ký bằng số điện thoại (Zalo). Hãy nhắn hoặc gọi Zalo đúng số đó để xác nhận người thật, rồi bấm Duyệt.</p>
+      <table className="list"><thead><tr><th>Ngày đăng ký</th><th>Người đăng ký</th><th>Số điện thoại (Zalo)</th><th>Cơ sở</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+          {(rows ?? []).length === 0 && <tr><td colSpan={6} className="muted">Không có đăng ký nào.</td></tr>}
+          {(rows ?? []).map((r) => (
+            <tr key={r.id}>
+              <td>{fmtDateTime(r.created_at)}</td>
+              <td>{r.full_name}</td>
+              <td><strong>{r.phone}</strong></td>
+              <td>{r.org_name}<br /><small className="muted">{r.org_type === 'cooperative' ? 'Hợp tác xã' : 'Hộ'}</small></td>
+              <td><span className={`badge ${SIGNUP_CLS[r.status]}`}>{SIGNUP_LABEL[r.status]}</span>{r.note && <><br /><small className="muted">{r.note}</small></>}</td>
+              <td>
+                {r.status === 'pending' && (<>
+                  <button className="primary" disabled={busy} onClick={() => void decide(r, true)}>Duyệt</button>{' '}
+                  <button disabled={busy} onClick={() => void decide(r, false)}>Từ chối</button>
+                </>)}
+                {r.status === 'approved' && <button disabled={busy} onClick={() => void resetPw(r)}>Đặt lại mật khẩu</button>}
+              </td>
+            </tr>
+          ))}
+        </tbody></table>
+    </>
+  );
+}

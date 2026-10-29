@@ -25,6 +25,8 @@ import { WelcomeScreen } from './screens/WelcomeScreen';
 import { ForcePasswordScreen } from './screens/ForcePasswordScreen';
 import { fetchStaffStatus, readCachedStaffStatus, type StaffStatus } from './lib/staff';
 import { fetchKioskInfo, readCachedKiosk, type KioskInfo } from './lib/kiosk';
+import { fetchOwnerSignup, type OwnerSignup } from './lib/phoneSignup';
+import { OwnerPendingScreen } from './screens/OwnerPendingScreen';
 import { KioskScreen } from './screens/KioskScreen';
 
 // Các màn ngoài Trang chủ tải khi mở lần đầu (giảm dung lượng phải tải lúc vào app); bản dựng vẫn được lưu sẵn để dùng offline
@@ -70,6 +72,14 @@ function Gate() {
   }, [uid]);
   useEffect(() => { void loadStaff(); }, [loadStaff]);
 
+  // Chủ đăng ký bằng số điện thoại đang chờ duyệt (undefined = đang tải; null = không phải kiểu đăng ký này)
+  const [signup, setSignup] = useState<OwnerSignup | null | undefined>(undefined);
+  const checkSignup = useCallback(() => {
+    if (!uid) return;
+    void fetchOwnerSignup().then((s) => { setSignup(s); if (s?.status === 'approved') void refresh(); }).catch(() => setSignup((cur) => cur ?? null));
+  }, [uid, refresh]);
+  useEffect(() => { if (!uid) setSignup(undefined); else checkSignup(); }, [uid, checkSignup]);
+
   // Điện thoại làm MÁY CHẤM CÔNG (tài khoản thiết bị) chỉ thấy màn chấm công, không có đường vào app quản lý. undefined = đang tải.
   const [kiosk, setKiosk] = useState<KioskInfo | null | undefined>(undefined);
   useEffect(() => {
@@ -92,7 +102,11 @@ function Gate() {
     return <ForcePasswordScreen status={staff} onDone={() => { void loadStaff(); void refresh(); }} />;
   }
   if (orgsLoading && orgs.length === 0) return <p className="center muted">Đang tải cơ sở…</p>;
-  if (orgs.length === 0) return <WelcomeScreen isStaff={Boolean(staff?.is_staff)} />;
+  if (orgs.length === 0) {
+    if (signup === undefined) return <p className="center muted">Đang tải…</p>;
+    if (signup && signup.status !== 'approved') return <OwnerPendingScreen signup={signup} onCheck={checkSignup} />;
+    return <WelcomeScreen isStaff={Boolean(staff?.is_staff)} />;
+  }
   return <Shell />;
 }
 

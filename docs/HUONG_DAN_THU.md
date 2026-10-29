@@ -383,3 +383,9 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 1. Ở máy chấm công, chủ nhập số điện thoại + PIN của chủ → màn hỏi **Chấm công: VÀO CA/RA CA** hoặc **Vào app quản lý**.
 2. Chọn chấm công: chấm như bình thường. Chọn vào app quản lý: nhập email (hoặc số điện thoại) + mật khẩu → vào app quản lý.
 3. Dùng xong: Sản xuất → Chấm công → Máy chấm công → ＋ Liên kết điện thoại này → chọn máy cũ (đã chọn sẵn) → **Liên kết lại máy này**.
+
+## Thử đăng ký bằng số điện thoại (29/10/2026; cần `db push` 0134, `npx supabase functions deploy owner-signup`, xem DEPLOY_CLOUDFLARE mục 2b)
+1. Trang đăng nhập → **Tạo tài khoản** → tab **Không có email**: nhập họ tên, tên cơ sở, loại, số điện thoại, mật khẩu → **Gửi đăng ký**. Vào màn “Đã nhận đăng ký” (đăng xuất rồi đăng nhập lại bằng số điện thoại + mật khẩu vẫn vào màn này).
+2. Trang quản trị nền tảng → **Đăng ký chờ duyệt** → bấm **Duyệt**. Trên điện thoại của người đăng ký, trong tối đa 20 giây (hoặc bấm Kiểm tra lại) app tự vào cơ sở vừa tạo.
+3. Thử **Từ chối** kèm lý do: người đăng ký thấy lý do ở màn “Đăng ký chưa được duyệt”.
+4. Thử đăng ký 4 lần liên tiếp từ cùng một mạng: lần thứ 4 báo giới hạn.

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 
-/** Thông tin liên hệ hỗ trợ cài đặt (đổi bằng biến môi trường VITE_SUPPORT_CONTACT khi build nếu cần) */
-const SUPPORT = (import.meta.env.VITE_SUPPORT_CONTACT as string | undefined) || 'Liên hệ Mr.Thành - 0989.099.454 (Zalo)';
+import { SUPPORT_CONTACT as SUPPORT } from '../lib/brand';
 
 type Platform = 'desktop' | 'android' | 'ios';
 

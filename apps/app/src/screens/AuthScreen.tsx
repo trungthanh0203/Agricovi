@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../lib/auth';
 import { InstallGuide } from '../components/InstallGuide';
+import { PhoneSignupForm } from '../components/PhoneSignupForm';
 import { friendlyError } from '../lib/errors';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'newpass';
@@ -12,6 +13,7 @@ export function AuthScreen() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [showPw, setShowPw] = useState(false);
+  const [byPhone, setByPhone] = useState(false); // đăng ký bằng số điện thoại (không có email)
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
@@ -33,7 +35,7 @@ export function AuthScreen() {
     if ((effective === 'signup' || effective === 'forgot') && !id.includes('@')) {
       return setError(
         effective === 'forgot' && id
-          ? 'Số điện thoại là tài khoản nhân viên do chủ cơ sở tạo. Hãy nhờ chủ cơ sở đặt lại mật khẩu cho bạn.'
+          ? 'Số điện thoại: nhân viên hãy nhờ chủ cơ sở đặt lại mật khẩu; chủ hộ đăng ký bằng số điện thoại hãy liên hệ Agricovi qua Zalo để được đặt lại.'
           : 'Chủ Hộ/HTX đăng ký bằng email. Hãy nhập email của bạn.',
       );
     }
@@ -97,9 +99,16 @@ export function AuthScreen() {
         ) : (
           <h2>{title}</h2>
         )}
-        {effective === 'signup' && <p className="muted auth-hint">Dành cho chủ Hộ / Hợp tác xã. Nhân viên dùng tài khoản do chủ cơ sở cấp.</p>}
+        {effective === 'signup' && (
+          <div className="chips" role="tablist" aria-label="Cách đăng ký">
+            <button type="button" role="tab" aria-selected={!byPhone} className={!byPhone ? 'chip active' : 'chip'} onClick={() => { setByPhone(false); setError(null); }}>Có email</button>
+            <button type="button" role="tab" aria-selected={byPhone} className={byPhone ? 'chip active' : 'chip'} onClick={() => { setByPhone(true); setError(null); }}>Không có email</button>
+          </div>
+        )}
+        {effective === 'signup' && byPhone && <PhoneSignupForm />}
+        {effective === 'signup' && !byPhone && <p className="muted auth-hint">Dành cho chủ Hộ / Hợp tác xã. Nhân viên dùng tài khoản do chủ cơ sở cấp.</p>}
 
-        <form onSubmit={onSubmit} noValidate>
+        <form onSubmit={onSubmit} noValidate style={effective === 'signup' && byPhone ? { display: 'none' } : undefined}>
           {effective !== 'newpass' && (
             <label>
               {effective === 'signin' ? 'Email hoặc số điện thoại' : 'Email'}

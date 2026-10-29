@@ -68,6 +68,15 @@ Supabase → **Authentication → URL Configuration**:
 
 Nếu quên bước này, thư xác nhận email và thư đặt lại mật khẩu sẽ dẫn về địa chỉ sai.
 
+## 2b. Đăng ký bằng số điện thoại (cho hộ không có email, D121)
+1. Đưa Edge Function lên (một lần, và mỗi khi đổi): `npx supabase functions deploy owner-signup`.
+2. (Khuyên bật, miễn phí) Chống đăng ký ồ ạt bằng Cloudflare Turnstile: vào Cloudflare → Turnstile → Add widget (tên miền của app, kiểu Managed). Lấy **Site key** và **Secret key**.
+   - Site key (công khai): thêm biến build `VITE_TURNSTILE_SITE_KEY` cho dự án app trên Cloudflare, rồi build lại.
+   - Secret key (bí mật, KHÔNG đưa vào app): `npx supabase secrets set TURNSTILE_SECRET_KEY=<secret>`.
+   - Chưa làm bước này vẫn chạy được (còn giới hạn theo mạng và bước duyệt tay), nhưng dễ bị đăng ký rác.
+3. Duyệt đăng ký: trang quản trị nền tảng (`/quan-tri/`) → mục **Đăng ký chờ duyệt**. Nhắn hoặc gọi Zalo đúng số điện thoại để xác nhận rồi bấm Duyệt; hộ quên mật khẩu thì bấm Đặt lại mật khẩu rồi gửi mật khẩu mới qua Zalo.
+4. Đổi dòng liên hệ hiện trong app (mặc định “Liên hệ Mr.Thành - 0989.099.454 (Zalo)”) bằng biến build `VITE_SUPPORT_CONTACT`.
+
 ## 3. (Sau này) Admin và website
 
 Làm tương tự, **mỗi cái một dự án Pages riêng**:
