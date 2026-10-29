@@ -86,14 +86,16 @@ test('so khớp: ba mức, kiểm trước khi ghi, máy chủ lưu khoảng cá
   assert.deepEqual(kept.map((x) => x.np), [true, false]);                    // vẫn giữ dòng số liệu của lượt khớp
   assert.ok(Math.abs(kept[0].d - 0.3) < 0.01);
 
-  // khớp chưa chắc; có mẫu nhưng máy không gửi được dấu vân
+  // khớp chưa chắc; có mẫu nhưng máy không gửi được dấu vân: chỉ cờ nhẹ, không giữ ảnh (vẫn giữ số liệu)
   await db.query(`update attendance_photos set taken_at = taken_at - interval '5 minutes'`);
   await punch('0912345678', '2468', 'in', near(0.55));
+  await db.query(`update attendance_photos set taken_at = taken_at - interval '1 minute' where taken_at > now() - interval '30 seconds'`); // tránh cờ "bấm sát nhau"
   await enroll(w2, '0987654321', '1357', [vec(0.9)]);
   await punch('0987654321', '1357', 'in', null);
-  const r2 = await review();
-  assert.deepEqual(r2.find((r) => r.wk_name === 'Lan' && r.ph_distance > 0.5 && r.ph_distance < 0.6).ph_flags.filter((x) => x !== 'fast_pair'), ['face_maybe']);
-  assert.ok(r2.find((r) => r.wk_name === 'Mai').ph_flags.includes('no_descriptor'));
+  assert.equal((await review()).length, 1);
+  const soft = (await db.query(`select photo is null np, face_distance d from attendance_photos where taken_at > now() - interval '2 minutes' order by taken_at`)).rows;
+  assert.deepEqual(soft.map((x) => x.np), [true, true]);
+  assert.ok(soft[0].d > 0.5 && soft[0].d < 0.6 && soft[1].d === null);
 });
 
 test('chủ xóa dữ liệu khuôn mặt; nghỉ việc thì tự xóa; người khác không xóa được; cờ "chưa có mẫu"', async () => {
@@ -103,7 +105,7 @@ test('chủ xóa dữ liệu khuôn mặt; nghỉ việc thì tự xóa; ngườ
   await asUser(db, owner, `select delete_worker_face($1)`, [w1]);
   assert.equal(await faceRows(db), 0);
   await punch('0912345678', '2468', 'in', near(0));
-  assert.ok((await review())[0].ph_flags.includes('no_ref'));
+  assert.equal((await review()).length, 0);                                  // chưa có mẫu chỉ là cờ nhẹ: không giữ ảnh
   // nghỉ việc -> xóa
   await enroll(w1, '0912345678', '8642', [vec(0.1)]);
   assert.equal((await db.query(`select count(*)::int c from worker_face_profiles`)).rows[0].c, 1);

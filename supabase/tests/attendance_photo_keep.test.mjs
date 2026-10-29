@@ -30,35 +30,46 @@ async function setup() {
   return { db, owner, mgr, org, kid, dev, w, punch, lastKept };
 }
 
-test('đúng người thì không giữ ảnh; nghi ngờ thì giữ ảnh', async () => {
+test('chỉ cờ đỏ mới giữ ảnh: không thấy mặt, không khớp, chụp lại từ 3 lần; khớp rõ, khớp chưa chắc, không so được thì không giữ', async () => {
   const { w, punch, lastKept, db } = await setup();
   await w('Lan', '0912345678', '2468', true);
   await punch('0912345678', '2468', 'in', { desc: vec(0.1, 0.2) });          // khớp rõ ràng
   assert.equal(await lastKept(), false);
-  await punch('0912345678', '2468', 'out', { desc: vec(0.1, 0.3) });         // vẫn khớp
+  await punch('0912345678', '2468', 'out', { desc: vec(0.1, 0.3) });
   assert.equal(await lastKept(), false);
-  await punch('0912345678', '2468', 'in', { desc: vec(0.1, 0.55) });         // khớp chưa chắc -> giữ
-  assert.equal(await lastKept(), true);
+  await punch('0912345678', '2468', 'in', { desc: vec(0.1, 0.55) });         // khớp chưa chắc: cờ nhẹ, không giữ
+  assert.equal(await lastKept(), false);
   await punch('0912345678', '2468', 'out', { desc: vec(0.1, 0.8) });         // không khớp -> giữ
   assert.equal(await lastKept(), true);
   await punch('0912345678', '2468', 'in', { desc: vec(0.1, 0.2), faceOk: false }); // máy không thấy mặt -> giữ
   assert.equal(await lastKept(), true);
   await punch('0912345678', '2468', 'out', { desc: vec(0.1, 0.2), attempts: 3 });  // phải chụp lại nhiều lần -> giữ
   assert.equal(await lastKept(), true);
-  await punch('0912345678', '2468', 'in', { desc: null });                   // không so được -> giữ
-  assert.equal(await lastKept(), true);
-  assert.equal((await db.query(`select count(*)::int c from attendance_photos where photo is null`)).rows[0].c, 2);
+  await punch('0912345678', '2468', 'in', { desc: null });                   // không so được: cờ nhẹ, không giữ
+  assert.equal(await lastKept(), false);
+  assert.equal((await db.query(`select count(*)::int c from attendance_photos where photo is null`)).rows[0].c, 4);
+  assert.equal((await db.query(`select count(*)::int c from attendance_photos where photo is not null`)).rows[0].c, 3);
 });
 
-test('người chưa đăng ký khuôn mặt luôn giữ ảnh (không có gì để đối chiếu); quên Ra ca hôm trước giữ ảnh', async () => {
+test('chưa có mẫu thì không giữ ảnh; hai người khác nhau bấm cùng máy trong 6 giây thì giữ ảnh', async () => {
   const { db, w, punch, lastKept } = await setup();
   await w('Mai', '0987654321', '1357', false);
   await punch('0987654321', '1357', 'in', { desc: vec(0.1) });
+  assert.equal(await lastKept(), false);                                     // lượt đầu: chưa ai bấm sát trước đó
+  await w('Lan', '0912345678', '2468', true);
+  await punch('0912345678', '2468', 'in', { desc: vec(0.1) });               // ngay sau Mai, cùng máy, dưới 6 giây -> giữ
   assert.equal(await lastKept(), true);
-  await punch('0987654321', '1357', 'out', { desc: vec(0.1) });
+  await db.query(`update attendance_photos set taken_at = taken_at - interval '1 minute'`);
+  await punch('0987654321', '1357', 'out', { desc: vec(0.1) });              // cách xa các lượt khác -> không giữ
+  assert.equal(await lastKept(), false);
+});
+
+test('quên Ra ca hôm trước thì giữ ảnh dù khớp mặt', async () => {
+  const { db, w, punch, lastKept } = await setup();
   const w1 = await w('Lan', '0912345678', '2468', true);
-  await db.query(`insert into attendance_records (id, worker_id, work_date, started_at, source) values ('eeeeeeee-0000-4000-8000-000000000002', $1, vn_today() - 1, now() - interval '30 hours', 'admin')`, [w1]);
-  await punch('0912345678', '2468', 'out', { desc: vec(0.1) });             // khớp nhưng ca quên từ hôm trước
+  await db.query(`insert into attendance_records (id, worker_id, work_date, started_at, source, status) values ('eeeeeeee-0000-4000-8000-000000000002', $1, vn_today() - 1, now() - interval '30 hours', 'admin', 'open')`, [w1]);
+  const r = await punch('0912345678', '2468', 'out', { desc: vec(0.1) });
+  assert.equal(r.stale, true);
   assert.equal(await lastKept(), true);
 });
 

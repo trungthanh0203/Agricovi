@@ -133,7 +133,7 @@ test('phân quyền: tài khoản thiết bị không đọc được dữ liệ
 
   // quản lý được cấp mã và xem ảnh, nhưng không tạo/ngừng máy (hàm này chỉ service_role gọi được)
   assert.match((await asUser(db, mgr, `select issue_pin_code($1) c`, [w1])).rows[0].c, /^[0-9]{6}$/);
-  assert.equal((await asUser(db, mgr, `select count(*)::int c from attendance_photo_review($1, current_date - 1, current_date)`, [org])).rows[0].c, 1);
+  assert.equal((await asUser(db, mgr, `select count(*)::int c from attendance_photo_review($1, current_date - 1, current_date)`, [org])).rows[0].c, 0); // quản lý xem được (chưa có ảnh cờ đỏ)
   assert.match(await expectError(asUser(db, mgr, `select kiosk_revoke($1,$2)`, [mgr, kioskId])), /permission denied/);
   assert.match(await expectError(db.query(`select kiosk_revoke($1,$2)`, [mgr, kioskId])), /FORBIDDEN/);
   assert.match(await expectError(asAnon(db, `select kiosk_me()`)), /permission denied/);
@@ -161,15 +161,12 @@ test('ảnh đối chiếu: gắn cờ không thấy mặt, máy không kiểm �
   const { db, owner, org, w1, w2, setPin, punch } = await setup();
   await setPin(w1, '0912345678', '2468');
   await setPin(w2, '0987654321', '1357');
-  await punch('0912345678', '2468', 'in', undefined, PHOTO, true);
-  await punch('0987654321', '1357', 'in', undefined, PHOTO, false);   // không thấy mặt, lại sát nhau
-  await db.query(`update attendance_photos set taken_at = taken_at - interval '2 minutes' where worker_id=$1`, [w1]);
-  await punch('0912345678', '2468', 'out', undefined, PHOTO, null);   // máy không kiểm được
+  await punch('0912345678', '2468', 'in', undefined, PHOTO, true);    // máy không so được nhưng không phải cờ đỏ: không giữ ảnh
+  await punch('0987654321', '1357', 'in', undefined, PHOTO, false);   // không thấy mặt, lại sát lượt của Lan trên cùng máy: cờ đỏ, giữ ảnh
   const rows = (await asUser(db, owner, `select wk_name, ph_kind, ph_flags from attendance_photo_review($1, current_date - 1, current_date + 1) order by ph_at`, [org])).rows;
-  const f = (name, kind) => rows.find((r) => r.wk_name === name && r.ph_kind === kind).ph_flags;
-  assert.deepEqual(f('Mai', 'in'), ['no_face', 'fast_pair', 'no_ref']);        // không thấy mặt; sát với lượt Ra ca của Lan trên cùng máy
-  assert.deepEqual(f('Lan', 'out'), ['unchecked', 'fast_pair', 'no_ref']);
-  assert.deepEqual(f('Lan', 'in'), ['no_ref']);                         // chưa đăng ký khuôn mặt (Đợt 3)
+  assert.equal(rows.length, 1);
+  assert.deepEqual(rows[0].ph_flags, ['no_face', 'fast_pair', 'no_ref']);
+  assert.equal(rows[0].wk_name, 'Mai');
   assert.match(await expectError(asUser(db, owner, `select * from attendance_photo_review($1, current_date - 60, current_date)`, [org])), /INVALID_ARGUMENT/);
 
   await db.query(`update attendance_photos set taken_at = now() - interval '90 days' where kind='in'`);
