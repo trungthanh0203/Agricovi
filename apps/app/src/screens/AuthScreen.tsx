@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../lib/auth';
+import { InstallGuide } from '../components/InstallGuide';
 import { friendlyError } from '../lib/errors';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'newpass';
@@ -137,6 +138,7 @@ export function AuthScreen() {
           </div>
         )}
       </main>
+      {tabbed && <InstallGuide />}
       <p className="auth-foot">Dữ liệu của bạn riêng tư và được bảo vệ</p>
     </div>
   );
