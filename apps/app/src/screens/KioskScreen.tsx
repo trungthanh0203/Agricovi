@@ -1,25 +1,43 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useAuth } from '../lib/auth';
 import { friendlyError } from '../lib/errors';
-import { kioskCheck, kioskPunch, kioskSetPin, verifyOwnerToExit, type KioskInfo } from '../lib/kiosk';
+import { countFaces, describeFace, faceDistance, loadFace } from '../lib/face';
+import { kioskCheck, kioskFaceCheck, kioskPunch, kioskSetPin, verifyOwnerToExit, type KioskInfo } from '../lib/kiosk';
 
-type Step = 'login' | 'setpin' | 'punch' | 'done';
+type Step = 'login' | 'setpin' | 'enroll' | 'punch' | 'done';
+type FaceApi = typeof import('@vladmandic/face-api');
+type ModelState = 'loading' | 'ready' | 'failed';
 interface Who { name: string; state: 'in' | 'out'; since: string | null; stale: boolean }
-interface Detector { detect(source: CanvasImageSource): Promise<unknown[]> }
+interface Shot { photo: string; descriptor: number[] | null }
 
 const hhmm = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '');
+const ENROLL_PROMPTS = ['Nhìn thẳng vào camera', 'Hơi nghiêng mặt sang trái', 'Hơi nghiêng mặt sang phải'];
+const MAX_TRIES = 3; // số lần chụp tối đa khi khuôn mặt chưa khớp; lần cuối vẫn ghi công nhưng gắn cờ
 
-/** Camera trước + (nếu trình duyệt hỗ trợ) đếm số khuôn mặt trong khung. faces = null: máy không kiểm được. */
-function useCamera(on: boolean, attempt: number) {
+/** Tải mô hình nhận diện khuôn mặt ngay khi mở máy chấm công (để lúc chấm công không phải chờ). */
+function useFaceModel() {
+  const [api, setApi] = useState<FaceApi | null>(null);
+  const [state, setState] = useState<ModelState>('loading');
+  useEffect(() => {
+    let live = true;
+    const timeout = window.setTimeout(() => { if (live) setState((s) => (s === 'loading' ? 'failed' : s)); }, 150000);
+    loadFace().then((a) => { if (live) { setApi(a); setState('ready'); } }).catch(() => { if (live) setState('failed'); });
+    return () => { live = false; window.clearTimeout(timeout); };
+  }, []);
+  return { api, state };
+}
+
+/** Camera trước + đếm số khuôn mặt trong khung (khi mô hình đã sẵn sàng). faces = null: chưa/không kiểm được. */
+function useCamera(on: boolean, attempt: number, api: FaceApi | null) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [faces, setFaces] = useState<number | null>(null);
+  const warmed = useRef(false);
 
   useEffect(() => {
     if (!on) return;
     let stream: MediaStream | null = null;
-    let timer = 0;
     let dead = false;
     setError(null);
     void (async () => {
@@ -30,33 +48,41 @@ function useCamera(on: boolean, attempt: number) {
         if (dead || !v) { stream.getTracks().forEach((t) => t.stop()); return; }
         v.srcObject = stream;
         await v.play();
-        setReady(true);
-        const Det = (window as unknown as { FaceDetector?: new (o?: { fastMode?: boolean; maxDetectedFaces?: number }) => Detector }).FaceDetector;
-        if (Det) {
-          const det = new Det({ fastMode: true, maxDetectedFaces: 3 });
-          setFaces(0);
-          const tick = async () => {
-            if (dead) return;
-            try { setFaces((await det.detect(v)).length); } catch { setFaces(null); return; } // không hỗ trợ: bỏ kiểm khuôn mặt
-            timer = window.setTimeout(() => void tick(), 600);
-          };
-          void tick();
-        } else setFaces(null);
+        if (!dead) setReady(true);
       } catch {
         if (!dead) setError('Chưa dùng được camera. Hãy cho phép trang này dùng camera (biểu tượng ổ khóa cạnh địa chỉ), rồi bấm Thử lại.');
       }
     })();
     return () => {
       dead = true;
-      window.clearTimeout(timer);
       stream?.getTracks().forEach((t) => t.stop());
       setReady(false);
       setFaces(null);
     };
   }, [on, attempt]);
 
-  /** Chụp một khung hình thành JPEG nhỏ (base64, không có tiền tố) */
-  const capture = useCallback((): string | null => {
+  // Đếm khuôn mặt mỗi ~0,7 giây khi camera và mô hình đều sẵn sàng
+  useEffect(() => {
+    if (!on || !ready || !api) return;
+    let dead = false;
+    let timer = 0;
+    const tick = async () => {
+      const v = videoRef.current;
+      if (dead || !v) return;
+      try {
+        const n = await countFaces(api, v);
+        setFaces(n);
+        // Lần đầu thấy một khuôn mặt: tính thử dấu vân ngay (lần đầu chậm), để lúc bấm Chụp không phải chờ lâu
+        if (n === 1 && !warmed.current) { warmed.current = true; void describeFace(api, v).catch(() => undefined); }
+      } catch { setFaces(null); }
+      timer = window.setTimeout(() => void tick(), 700);
+    };
+    void tick();
+    return () => { dead = true; window.clearTimeout(timer); };
+  }, [on, ready, api]);
+
+  /** Chụp một khung hình thành JPEG nhỏ (base64, không tiền tố) và tính dấu vân khuôn mặt */
+  const shoot = useCallback(async (): Promise<Shot | null> => {
     const v = videoRef.current;
     if (!v || !v.videoWidth) return null;
     const w = 320;
@@ -67,31 +93,38 @@ function useCamera(on: boolean, attempt: number) {
     const ctx = c.getContext('2d');
     if (!ctx) return null;
     ctx.drawImage(v, 0, 0, w, h);
-    return c.toDataURL('image/jpeg', 0.6).split(',')[1] ?? null;
-  }, []);
+    const photo = c.toDataURL('image/jpeg', 0.6).split(',')[1];
+    if (!photo) return null;
+    const descriptor = api ? await describeFace(api, v).catch(() => null) : null;
+    return { photo, descriptor };
+  }, [api]);
 
-  return { videoRef, ready, error, faces, capture };
+  return { videoRef, ready, error, faces, shoot };
 }
 
 /**
- * Giao diện duy nhất của điện thoại làm MÁY CHẤM CÔNG (D111). Không có đường vào các màn quản lý: thiết bị đăng nhập bằng tài khoản
+ * Giao diện duy nhất của điện thoại làm MÁY CHẤM CÔNG (D111, D112). Không có đường vào các màn quản lý: thiết bị đăng nhập bằng tài khoản
  * thiết bị, máy chủ chỉ cho gọi các hàm kiosk_*. Muốn thoát phải nhập mật khẩu chủ cơ sở.
  */
 export function KioskScreen({ info }: { info: KioskInfo }) {
   const { signOut } = useAuth();
+  const model = useFaceModel();
   const [step, setStep] = useState<Step>('login');
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
   const [code, setCode] = useState('');
   const [pin2, setPin2] = useState('');
+  const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [who, setWho] = useState<Who | null>(null);
   const [punchId, setPunchId] = useState('');
+  const [tries, setTries] = useState(1);
+  const [shots, setShots] = useState<Shot[]>([]);
   const [done, setDone] = useState<{ text: string; photo: string } | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [attempt, setAttempt] = useState(0); // tăng số này để bật lại camera
-  const cam = useCamera(step === 'punch', attempt);
+  const cam = useCamera(step === 'punch' || step === 'enroll', attempt, model.api);
 
   useEffect(() => {
     const t = window.setInterval(() => setNow(new Date()), 15000);
@@ -106,12 +139,13 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
   }, []);
 
   const reset = useCallback(() => {
-    setStep('login'); setPhone(''); setPin(''); setCode(''); setPin2(''); setWho(null); setError(null); setDone(null); setBusy(false);
+    setStep('login'); setPhone(''); setPin(''); setCode(''); setPin2(''); setConsent(false); setWho(null); setShots([]); setTries(1);
+    setError(null); setDone(null); setBusy(false);
   }, []);
-  // Bước chụp ảnh bỏ dở thì quay về màn đầu sau 90 giây (xóa PIN khỏi bộ nhớ); màn kết quả tự đóng sau 6 giây
+  // Bước chụp ảnh bỏ dở thì quay về màn đầu (xóa PIN khỏi bộ nhớ); màn kết quả tự đóng sau 6 giây
   useEffect(() => {
-    if (step !== 'punch' && step !== 'done') return;
-    const t = window.setTimeout(reset, step === 'punch' ? 90000 : 6000);
+    if (step === 'login' || step === 'setpin') return;
+    const t = window.setTimeout(reset, step === 'done' ? 6000 : step === 'enroll' ? 180000 : 90000);
     return () => window.clearTimeout(t);
   }, [step, reset]);
 
@@ -126,31 +160,73 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
     if (!r.ok) return setError(r.message ?? 'Có lỗi, hãy thử lại.');
     setWho({ name: String(r.name), state: r.state as 'in' | 'out', since: (r.since as string | null) ?? null, stale: Boolean(r.stale) });
     setPunchId(crypto.randomUUID());
+    setTries(1);
     setDone(null);
     setStep('punch');
   }
 
-  async function onSetPin(e: FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setError(null);
-    if (pin !== pin2) return setError('Hai lần nhập PIN chưa giống nhau.');
+  async function savePin(face?: { descriptors: number[][]; photo: string }) {
     setBusy(true);
-    const r = await kioskSetPin(phone, code, pin);
+    const r = await kioskSetPin(phone, code, pin, face);
     setBusy(false);
-    if (!r.ok) return setError(r.message ?? 'Có lỗi, hãy thử lại.');
+    if (!r.ok) {
+      setShots([]);
+      setStep('setpin');
+      return setError(r.message ?? 'Có lỗi, hãy thử lại.');
+    }
     reset();
     setDone({ text: 'Đã đặt PIN. Bây giờ bạn nhập số điện thoại và PIN để vào ca.', photo: '' });
   }
 
-  async function onPunch() {
-    if (busy || !who) return;
-    const photo = cam.capture();
-    if (!photo) return setError('Chưa chụp được ảnh. Hãy đợi camera sáng lên rồi bấm lại.');
+  function onSetPin(e: FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setError(null);
+    if (!/^\d{4,6}$/.test(pin)) return setError('PIN gồm 4 đến 6 chữ số.');
+    if (pin !== pin2) return setError('Hai lần nhập PIN chưa giống nhau.');
+    if (model.state === 'failed') return void savePin(); // máy không nhận diện được khuôn mặt: chỉ đặt PIN
+    if (!consent) return setError('Hãy tích đồng ý cho lưu dữ liệu khuôn mặt để chấm công.');
+    setShots([]);
+    setStep('enroll');
+  }
+
+  async function onEnrollShot() {
+    if (busy) return;
     setBusy(true);
     setError(null);
+    const s = await cam.shoot();
+    setBusy(false);
+    if (!s || !s.descriptor) return setError('Chưa thấy rõ khuôn mặt của bạn. Hãy nhìn thẳng vào camera, đủ sáng, rồi chụp lại.');
+    const next = [...shots, s];
+    if (next.length < 3) { setShots(next); return; }
+    // ba ảnh phải là cùng một người
+    const d = next.map((x) => x.descriptor as number[]);
+    const [d0, d1, d2] = d;
+    if (!d0 || !d1 || !d2 || Math.max(faceDistance(d0, d1), faceDistance(d0, d2), faceDistance(d1, d2)) > 0.5) {
+      setShots([]);
+      return setError('Ba ảnh chưa giống nhau (có thể có người khác vào khung hình). Hãy chụp lại từ đầu.');
+    }
+    setShots(next);
+    await savePin({ descriptors: d, photo: next[0]?.photo ?? '' });
+  }
+
+  async function onPunch() {
+    if (busy || !who) return;
+    setBusy(true);
+    setError(null);
+    const s = await cam.shoot();
+    if (!s) { setBusy(false); return setError('Chưa chụp được ảnh. Hãy đợi camera sáng lên rồi bấm lại.'); }
+    // Khuôn mặt chưa khớp thì cho chụp lại (tối đa MAX_TRIES lần); lần cuối vẫn ghi công và gắn cờ cho chủ xem
+    if (s.descriptor && tries < MAX_TRIES) {
+      const f = await kioskFaceCheck(phone, pin, s.descriptor);
+      if (f.ok && f.state === 'mismatch') {
+        setTries(tries + 1);
+        setBusy(false);
+        return setError('Chưa nhận ra bạn. Hãy nhìn thẳng vào camera, đủ sáng, bỏ khẩu trang/nón rồi bấm lại.');
+      }
+    }
     const action = who.state === 'in' ? 'out' : 'in';
-    const r = await kioskPunch(phone, pin, action, punchId, photo, cam.faces === null ? null : cam.faces === 1);
+    const r = await kioskPunch(phone, pin, action, punchId, s.photo, cam.faces === null ? null : cam.faces === 1, s.descriptor, tries);
     setBusy(false);
     if (!r.ok) {
       // PIN hoặc trạng thái đã đổi: quay về màn đầu để nhập lại
@@ -161,18 +237,39 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
       }
       return setError(r.message ?? 'Có lỗi, hãy thử lại.');
     }
-    const at = hhmm(String(r.at));
     const late = r.stale ? ' Ca hôm trước chưa kết thúc, chủ cơ sở sẽ xem lại giờ.' : '';
-    setDone({ text: `${who.name}: đã ${action === 'in' ? 'VÀO ca' : 'RA ca'} lúc ${at}.${late}`, photo });
+    setDone({ text: `${who.name}: đã ${action === 'in' ? 'VÀO ca' : 'RA ca'} lúc ${hhmm(String(r.at))}.${late}`, photo: s.photo });
     setPin('');
     setStep('done');
   }
 
   const faceHint =
-    cam.faces === null ? null
+    model.state !== 'ready' || cam.faces === null ? null
       : cam.faces === 0 ? 'Hãy đưa khuôn mặt vào khung.'
         : cam.faces > 1 ? 'Chỉ một người đứng trước camera.' : null;
-  const canShoot = cam.ready && !busy && (cam.faces === null || cam.faces === 1);
+  // Mô hình đang tải thì chờ; tải lỗi thì vẫn chấm công được (không kiểm khuôn mặt, chủ xem ảnh bằng mắt)
+  const canShoot = cam.ready && !busy && model.state !== 'loading' && (cam.faces === null || cam.faces === 1);
+
+  const camera = (
+    <>
+      <div className="kiosk-cam">
+        <video ref={cam.videoRef} playsInline muted />
+        {!cam.ready && !cam.error && <p className="muted">Đang bật camera…</p>}
+      </div>
+      {cam.error ? (
+        <>
+          <p className="msg error" role="alert">{cam.error}</p>
+          <button className="secondary" onClick={() => setAttempt((n) => n + 1)}>Thử lại</button>
+        </>
+      ) : (
+        <>
+          {model.state === 'loading' && <p className="muted">Đang chuẩn bị nhận diện khuôn mặt (lần đầu mất vài chục giây)…</p>}
+          {model.state === 'failed' && <p className="msg warn">Máy này chưa nhận diện được khuôn mặt. Vẫn chấm công được, chủ cơ sở sẽ xem ảnh để đối chiếu.</p>}
+          {faceHint && <p className="msg warn">{faceHint}</p>}
+        </>
+      )}
+    </>
+  );
 
   return (
     <main className="auth kiosk">
@@ -204,18 +301,37 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
       {step === 'setpin' && (
         <>
           <h1>Đặt PIN</h1>
-          <p className="muted">Nhờ chủ cơ sở cấp mã (6 số, dùng một lần trong 24 giờ). PIN gồm 4 đến 6 chữ số, chỉ mình bạn biết, đừng cho ai mượn.</p>
+          <p className="muted">Nhờ chủ cơ sở cấp mã (6 số, dùng một lần trong 24 giờ). PIN gồm 4 đến 6 chữ số, chỉ mình bạn biết, đừng cho ai mượn. Sau đó máy sẽ chụp 3 ảnh khuôn mặt của bạn để làm mẫu.</p>
           <form onSubmit={onSetPin} noValidate className="inline-form">
             <label>Số điện thoại<input type="tel" inputMode="tel" autoComplete="off" value={phone} onChange={(e) => setPhone(e.target.value)} /></label>
             <label>Mã chủ cấp<input inputMode="numeric" autoComplete="off" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} /></label>
             <label>PIN mới<input type="password" inputMode="numeric" autoComplete="off" maxLength={6} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} /></label>
             <label>Nhập lại PIN mới<input type="password" inputMode="numeric" autoComplete="off" maxLength={6} value={pin2} onChange={(e) => setPin2(e.target.value.replace(/\D/g, ''))} /></label>
+            {model.state !== 'failed' && (
+              <label className="check">
+                <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+                Tôi đồng ý cho cơ sở lưu dữ liệu khuôn mặt của tôi để chấm công. Chủ cơ sở xóa dữ liệu này khi tôi nghỉ việc hoặc khi tôi yêu cầu.
+              </label>
+            )}
             {error && <p className="msg error" role="alert">{error}</p>}
             <div className="btnrow">
-              <button type="submit" className="primary" disabled={busy}>{busy ? 'Đang lưu…' : 'Lưu PIN'}</button>
+              <button type="submit" className="primary" disabled={busy}>{busy ? 'Đang lưu…' : model.state === 'failed' ? 'Lưu PIN' : 'Tiếp: chụp khuôn mặt'}</button>
               <button type="button" className="secondary" onClick={reset}>Quay lại</button>
             </div>
           </form>
+        </>
+      )}
+
+      {step === 'enroll' && (
+        <>
+          <h1>Chụp khuôn mặt làm mẫu</h1>
+          <p className="muted">Ảnh {Math.min(shots.length + 1, 3)}/3: <strong>{ENROLL_PROMPTS[Math.min(shots.length, 2)]}</strong>. Bỏ khẩu trang, nón; đứng nơi đủ sáng.</p>
+          {camera}
+          {error && <p className="msg error" role="alert">{error}</p>}
+          <button className="primary kiosk-big" disabled={!canShoot} onClick={() => void onEnrollShot()}>
+            {busy ? 'Đang xử lý…' : `Chụp ảnh ${Math.min(shots.length + 1, 3)}/3`}
+          </button>
+          <button className="link" onClick={reset}>Hủy</button>
         </>
       )}
 
@@ -227,18 +343,7 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
               {who.stale ? `Ca hôm trước (vào lúc ${hhmm(who.since)}) chưa kết thúc. Bấm Ra ca để đóng; chủ cơ sở sẽ xem lại giờ.` : `Bạn vào ca lúc ${hhmm(who.since)}.`}
             </p>
           )}
-          <div className="kiosk-cam">
-            <video ref={cam.videoRef} playsInline muted />
-            {!cam.ready && !cam.error && <p className="muted">Đang bật camera…</p>}
-          </div>
-          {cam.error ? (
-            <>
-              <p className="msg error" role="alert">{cam.error}</p>
-              <button className="secondary" onClick={() => setAttempt((n) => n + 1)}>Thử lại</button>
-            </>
-          ) : (
-            faceHint && <p className="msg warn">{faceHint}</p>
-          )}
+          {camera}
           {error && <p className="msg error" role="alert">{error}</p>}
           {/* Chỉ một nút, theo trạng thái thật của người này */}
           <button className="primary kiosk-big" disabled={!canShoot} onClick={() => void onPunch()}>

@@ -21,6 +21,7 @@ export default defineConfig({
           react: ['react', 'react-dom'],
           supabase: ['@supabase/supabase-js'],
           dexie: ['dexie', 'dexie-react-hooks'],
+          'face-api': ['@vladmandic/face-api'], // chỉ tải khi mở Máy chấm công
         },
       },
     },
@@ -47,6 +48,11 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webp}'],
+        // Thư viện + mô hình nhận diện khuôn mặt (~8 MB) không nạp sẵn cho mọi người dùng: chỉ máy chấm công tải, rồi trình duyệt lưu lại dùng offline
+        globIgnores: ['**/face-api-*.js'],
+        runtimeCaching: [
+          { urlPattern: /\/(assets\/face-api-[^/]+\.js|models\/.+)$/, handler: 'CacheFirst', options: { cacheName: 'face-models', expiration: { maxEntries: 12 } } },
+        ],
         // trang quản trị (/quan-tri/) là bản dựng riêng, không để app chặn điều hướng vào đó
         navigateFallbackDenylist: [/^\/quan-tri/],
       },

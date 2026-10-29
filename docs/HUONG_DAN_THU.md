@@ -359,3 +359,10 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 4. Thử sai PIN 5 lần: máy khóa 15 phút. Thử PIN yếu (1234, 1111): bị từ chối.
 5. Chủ trên máy khác: **Chấm công → Ảnh chấm công** chọn ngày: thấy ảnh, tên, giờ; ảnh có cờ được viền.
 6. Thoát máy: kéo xuống cuối màn Chấm công, mở “Thoát chế độ máy chấm công”, nhập email/số điện thoại và mật khẩu của chủ. Ngừng hẳn một máy: Máy chấm công → Ngừng dùng.
+
+## Thử đối chiếu khuôn mặt (29/10/2026; cần `db push` 0128, redeploy app, có mạng và camera)
+1. Chủ cấp mã cho một người (Chấm công → Mã đặt PIN). Ở máy chấm công: **Đặt PIN lần đầu / quên PIN** → nhập số điện thoại, mã, PIN, tích đồng ý → **Tiếp: chụp khuôn mặt**. Lần đầu mở máy chấm công, màn báo “đang chuẩn bị nhận diện” (tải khoảng 8 MB, có thể mất vài chục giây); các lần sau nhanh hơn.
+2. Chụp 3 ảnh theo hướng dẫn (thẳng, nghiêng trái, nghiêng phải). Trong danh sách “Mã đặt PIN” người đó hiện “Đã có PIN + khuôn mặt”.
+3. Vào ca: nhìn thẳng → ghi công. Thử đưa người khác vào khung (hoặc người đứng thay): máy báo “Chưa nhận ra bạn”, cho chụp lại; lần thứ 3 vẫn ghi công nhưng ảnh bị cờ đỏ.
+4. Chủ: **Ảnh chấm công** → ảnh có ảnh mẫu nhỏ ở góc, “cách mẫu x,xx” (dưới 0,50 khớp, từ 0,60 có thể khác người). Ghi lại các số này vài ngày để chỉnh ngưỡng.
+5. **Xóa khuôn mặt** ở danh sách Mã đặt PIN: người đó phải đăng ký lại.

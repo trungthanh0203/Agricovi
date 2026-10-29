@@ -4,7 +4,7 @@ import { addDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal } from '../lib/hooks';
 import {
-  FLAG_LABEL, issuePinCode, linkThisDeviceAsKiosk, listKiosks, listPhotoReview, listPinStatus, revokeKiosk,
+  FLAG_LABEL, SOFT_FLAGS, deleteWorkerFace, issuePinCode, linkThisDeviceAsKiosk, listFaceRefPhotos, listKiosks, listPhotoReview, listPinStatus, revokeKiosk,
   type KioskRow, type PhotoReviewRow, type PinStatus,
 } from '../lib/kiosk';
 import { useOrgs } from '../lib/orgs';
@@ -74,6 +74,12 @@ export function KioskAdmin({ workers }: { workers: WorkerLite[] }) {
     } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
 
+  async function dropFace(w: WorkerLite) {
+    if (busy || !window.confirm(`Xóa dữ liệu khuôn mặt của ${w.full_name}? Người này sẽ phải đăng ký lại (chủ cấp mã mới).`)) return;
+    setBusy(true); setError(null);
+    try { await deleteWorkerFace(w.id); await load(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+  }
+
   return (
     <>
       <Collapsible title="Máy chấm công" summary={activeKiosks.length ? `${activeKiosks.length} máy đang dùng` : 'chưa có máy'}>
@@ -112,8 +118,8 @@ export function KioskAdmin({ workers }: { workers: WorkerLite[] }) {
         ) : <p className="muted">Chỉ chủ cơ sở được liên kết hoặc ngừng máy chấm công.</p>}
       </Collapsible>
 
-      <Collapsible title="Mã đặt PIN cho người làm" summary={`${pins.filter((p) => p.has_pin).length}/${staff.length} người đã có PIN`}>
-        <p className="muted">Người làm cần số điện thoại trong hồ sơ. Bấm “Cấp mã”, đưa mã 6 số cho họ; họ tự đặt PIN riêng ở máy chấm công (bạn không biết PIN). Mã dùng một lần, hạn 24 giờ. Quên PIN hoặc bị khóa: cấp mã mới.</p>
+      <Collapsible title="Mã đặt PIN cho người làm" summary={`${pins.filter((p) => p.has_pin).length}/${staff.length} có PIN, ${pins.filter((p) => p.has_face).length} có khuôn mặt`}>
+        <p className="muted">Người làm cần số điện thoại trong hồ sơ. Bấm “Cấp mã”, đưa mã 6 số cho họ; họ tự đặt PIN riêng và chụp 3 ảnh khuôn mặt làm mẫu ở máy chấm công (bạn không biết PIN). Mã dùng một lần, hạn 24 giờ. Quên PIN, bị khóa hoặc cần đăng ký lại khuôn mặt: cấp mã mới.</p>
         <table className="grid">
           <thead><tr><th>Người làm</th><th>Trạng thái</th><th></th></tr></thead>
           <tbody>
@@ -124,9 +130,12 @@ export function KioskAdmin({ workers }: { workers: WorkerLite[] }) {
                 <tr key={w.id}>
                   <td>{w.full_name}</td>
                   <td>
-                    {code ? <strong>Mã: {code}</strong> : p?.is_locked ? 'Đang bị khóa' : p?.code_pending ? 'Chờ đặt PIN' : p?.has_pin ? 'Đã có PIN' : 'Chưa có PIN'}
+                    {code ? <strong>Mã: {code}</strong> : p?.is_locked ? 'Đang bị khóa' : p?.code_pending ? 'Chờ đặt PIN' : p?.has_pin ? (p.has_face ? 'Đã có PIN + khuôn mặt' : 'Đã có PIN, chưa có khuôn mặt') : 'Chưa có PIN'}
                   </td>
-                  <td><button className="secondary" disabled={busy} onClick={() => void giveCode(w)}>Cấp mã</button></td>
+                  <td>
+                    <button className="secondary" disabled={busy} onClick={() => void giveCode(w)}>Cấp mã</button>
+                    {p?.has_face && <button className="link" disabled={busy} onClick={() => void dropFace(w)}>Xóa khuôn mặt</button>}
+                  </td>
                 </tr>
               );
             })}
@@ -142,18 +151,24 @@ export function KioskAdmin({ workers }: { workers: WorkerLite[] }) {
 function PhotoReview({ orgId }: { orgId: string }) {
   const [day, setDay] = useState(todayLocal());
   const [rows, setRows] = useState<PhotoReviewRow[] | null>(null);
+  const [refs, setRefs] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [onlyFlag, setOnlyFlag] = useState(false);
   const [open, setOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
-    try { setRows(await listPhotoReview(orgId, day, day)); setError(null); } catch (e) { setError(friendlyError(e)); }
+    try {
+      const r = await listPhotoReview(orgId, day, day);
+      setRows(r);
+      setRefs(await listFaceRefPhotos([...new Set(r.map((x) => x.wk_id))]).catch(() => ({})));
+      setError(null);
+    } catch (e) { setError(friendlyError(e)); }
   }, [orgId, day]);
   useEffect(() => { if (open) void load(); }, [open, load]);
 
-  // “Chưa kiểm được mặt” chỉ là ghi chú nhẹ, không tính là đáng ngờ
-  const suspicious = (r: PhotoReviewRow) => r.ph_flags.some((f) => f !== 'unchecked');
+  // Cờ nhẹ (chưa kiểm được, chưa có mẫu, khớp chưa chắc) chỉ là ghi chú, không tính là đáng ngờ
+  const suspicious = (r: PhotoReviewRow) => r.ph_flags.some((f) => !SOFT_FLAGS.includes(f));
   const shown = (rows ?? []).filter((r) => !onlyFlag || suspicious(r));
   const nFlag = (rows ?? []).filter(suspicious).length;
 
@@ -177,17 +192,21 @@ function PhotoReview({ orgId }: { orgId: string }) {
         <div className="photo-grid">
           {shown.map((r) => (
             <figure key={r.ph_id} className={suspicious(r) ? 'photo flag' : 'photo'}>
-              <img loading="lazy" alt={`${r.wk_name} ${r.ph_kind === 'in' ? 'vào ca' : 'ra ca'}`} src={`data:image/jpeg;base64,${r.ph_photo}`} />
+              <div className="photo-pair">
+                <img loading="lazy" alt={`${r.wk_name} ${r.ph_kind === 'in' ? 'vào ca' : 'ra ca'}`} src={`data:image/jpeg;base64,${r.ph_photo}`} />
+                {refs[r.wk_id] && <img className="ref" loading="lazy" alt={`Ảnh mẫu của ${r.wk_name}`} title="Ảnh mẫu" src={`data:image/jpeg;base64,${refs[r.wk_id]}`} />}
+              </div>
               <figcaption>
                 <strong>{r.wk_name}</strong><br />
                 {r.ph_kind === 'in' ? 'Vào ca' : 'Ra ca'} {hhmm(r.ph_at)}
+                {r.ph_distance !== null && <span className="muted"> · cách mẫu {r.ph_distance.toFixed(2)}</span>}
                 {r.area_name ? <><br /><span className="muted">{r.area_name}</span></> : null}
-                {r.ph_flags.map((f) => <span key={f} className={f === 'unchecked' ? 'pill' : 'pill warn'}>{FLAG_LABEL[f] ?? f}</span>)}
+                {r.ph_flags.map((f) => <span key={f} className={SOFT_FLAGS.includes(f) ? 'pill' : 'pill warn'}>{FLAG_LABEL[f] ?? f}</span>)}
               </figcaption>
             </figure>
           ))}
         </div>
-        <p className="muted">Ảnh được giữ 60 ngày. Thấy ảnh không đúng người: tìm công đó ở “Công gần đây” và từ chối kèm lý do.</p>
+        <p className="muted">Ảnh nhỏ góc dưới là ảnh mẫu khi đăng ký. “Cách mẫu” càng nhỏ càng giống (dưới 0,50 là khớp, từ 0,60 là có thể khác người). Ảnh được giữ 60 ngày. Thấy ảnh không đúng người: tìm công đó ở “Công gần đây” và từ chối kèm lý do.</p>
       </div>
     </details>
   );

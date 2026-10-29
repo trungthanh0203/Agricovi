@@ -47,9 +47,13 @@ async function call(fn: string, args: Record<string, unknown>): Promise<KioskRep
 }
 
 export const kioskCheck = (phone: string, pin: string) => call('kiosk_check', { p_phone: phone, p_pin: pin });
-export const kioskPunch = (phone: string, pin: string, action: 'in' | 'out', id: string, photo: string, faceOk: boolean | null) =>
-  call('kiosk_punch', { p_phone: phone, p_pin: pin, p_action: action, p_id: id, p_photo: photo, p_face_ok: faceOk });
-export const kioskSetPin = (phone: string, code: string, pin: string) => call('kiosk_set_pin', { p_phone: phone, p_code: code, p_new_pin: pin });
+export const kioskPunch = (phone: string, pin: string, action: 'in' | 'out', id: string, photo: string, faceOk: boolean | null, descriptor: number[] | null = null, attempts = 1) =>
+  call('kiosk_punch', { p_phone: phone, p_pin: pin, p_action: action, p_id: id, p_photo: photo, p_face_ok: faceOk, p_descriptor: descriptor, p_attempts: attempts });
+/** Mức khớp khuôn mặt (match | maybe | mismatch | no_ref | none), không ghi gì: để máy cho chụp lại khi không khớp */
+export const kioskFaceCheck = (phone: string, pin: string, descriptor: number[]) => call('kiosk_face_check', { p_phone: phone, p_pin: pin, p_descriptor: descriptor });
+/** Đặt PIN; kèm khuôn mặt (1–3 dấu vân + ảnh mẫu) thì cần người làm đã đồng ý */
+export const kioskSetPin = (phone: string, code: string, pin: string, face?: { descriptors: number[][]; photo: string }) =>
+  call('kiosk_set_pin', { p_phone: phone, p_code: code, p_new_pin: pin, p_descriptors: face?.descriptors ?? null, p_photo: face?.photo ?? null, p_consent: Boolean(face) });
 
 /** Thoát chế độ máy chấm công: phải đăng nhập lại bằng tài khoản CHỦ cơ sở. Kiểm tra bằng máy khách riêng để không đổi phiên của máy. */
 export async function verifyOwnerToExit(identifier: string, password: string, orgId: string): Promise<void> {
@@ -101,7 +105,7 @@ export async function issuePinCode(workerId: string): Promise<string> {
   return data as string;
 }
 
-export interface PinStatus { wid: string; has_pin: boolean; code_pending: boolean; is_locked: boolean }
+export interface PinStatus { wid: string; has_pin: boolean; code_pending: boolean; is_locked: boolean; has_face: boolean }
 export async function listPinStatus(orgId: string): Promise<PinStatus[]> {
   const { data, error } = await client().rpc('list_kiosk_pin_status', { p_org: orgId });
   if (error) throw new Error(error.message);
@@ -110,7 +114,7 @@ export async function listPinStatus(orgId: string): Promise<PinStatus[]> {
 
 export interface PhotoReviewRow {
   ph_id: string; att_id: string; wk_id: string; wk_name: string; ph_kind: 'in' | 'out'; ph_at: string; ph_photo: string;
-  ph_face_ok: boolean | null; ph_flags: string[]; kiosk_name: string | null; area_name: string | null;
+  ph_face_ok: boolean | null; ph_flags: string[]; kiosk_name: string | null; area_name: string | null; ph_distance: number | null;
 }
 export async function listPhotoReview(orgId: string, from: string, to: string): Promise<PhotoReviewRow[]> {
   const { data, error } = await client().rpc('attendance_photo_review', { p_org: orgId, p_from: from, p_to: to });
@@ -118,7 +122,28 @@ export async function listPhotoReview(orgId: string, from: string, to: string): 
   return (data ?? []) as PhotoReviewRow[];
 }
 
+export async function deleteWorkerFace(workerId: string): Promise<void> {
+  const { error } = await client().rpc('delete_worker_face', { p_worker: workerId });
+  if (error) throw new Error(error.message);
+}
+
+/** Ảnh mẫu khuôn mặt (nhỏ) của các người làm, để chủ nhìn cạnh ảnh chấm công */
+export async function listFaceRefPhotos(workerIds: string[]): Promise<Record<string, string>> {
+  if (workerIds.length === 0) return {};
+  const { data, error } = await client().from('worker_face_profiles').select('worker_id, photo').in('worker_id', workerIds);
+  if (error) throw new Error(error.message);
+  return Object.fromEntries(((data ?? []) as { worker_id: string; photo: string }[]).map((r) => [r.worker_id, r.photo]));
+}
+
+/** Cờ chỉ để nhắc nhẹ (không tính là đáng ngờ) */
+export const SOFT_FLAGS = ['unchecked', 'no_ref', 'no_descriptor', 'face_maybe'];
+
 export const FLAG_LABEL: Record<string, string> = {
+  face_mismatch: 'Có thể không phải đúng người',
+  face_maybe: 'Khớp chưa chắc',
+  no_ref: 'Chưa đăng ký khuôn mặt',
+  no_descriptor: 'Máy chưa so được khuôn mặt',
+  retries: 'Phải chụp nhiều lần',
   no_face: 'Không thấy khuôn mặt',
   unchecked: 'Máy chưa kiểm được mặt',
   fast_pair: 'Hai người bấm sát nhau',
