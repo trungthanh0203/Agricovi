@@ -11,6 +11,8 @@
 //        -> { phone, full_name }   (đổi họ tên và số điện thoại = tên đăng nhập)
 //   POST { action: 'reset_password', organization_id, user_id }
 //        -> { phone?, temp_password, expires_at }
+//   POST { action: 'create_kiosk', organization_id, area_id?, name, consent: true } -> { kiosk_id, email, password }  (máy chấm công)
+//   POST { action: 'revoke_kiosk', organization_id, kiosk_id } -> { ok: true }
 // Lỗi: HTTP 400 { error: "MÃ_LỖI: nội dung tiếng Việt" }. Mật khẩu tạm CHỈ có trong phản hồi này, không lưu ở đâu khác.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -155,6 +157,36 @@ Deno.serve(async (req) => {
       const res = await admin.rpc('staff_reset', { p_actor: actor, p_org: org, p_user: userId });
       if (res.error) return fail(res.error.message);
       return json({ phone: check.data.phone, temp_password: password, expires_at: res.data });
+    }
+
+    // Máy chấm công: tài khoản thiết bị không có vai trò nào trong cơ sở; mật khẩu chỉ trả về một lần cho máy đang liên kết (không lưu).
+    if (body.action === 'create_kiosk') {
+      const area = body.area_id ? String(body.area_id) : null;
+      if (area && !/^[0-9a-f-]{36}$/i.test(area)) return fail('BAD_REQUEST: Phân khu không hợp lệ');
+      const pre = await admin.rpc('kiosk_precheck', {
+        p_actor: actor, p_org: org, p_area: area, p_name: String(body.name ?? ''), p_consent: body.consent === true,
+      });
+      if (pre.error) return fail(pre.error.message);
+      const email = (pre.data as { auth_email: string }[])[0].auth_email;
+      const password = tempPassword(32);
+      const created = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { kiosk: true } });
+      if (created.error || !created.data.user) return fail(cleanMessage(created.error));
+      const fin = await admin.rpc('kiosk_finalize', { p_actor: actor, p_org: org, p_area: area, p_user: created.data.user.id, p_name: String(body.name ?? '') });
+      if (fin.error) {
+        await admin.auth.admin.deleteUser(created.data.user.id);
+        return fail(fin.error.message);
+      }
+      return json({ kiosk_id: fin.data, email, password });
+    }
+
+    if (body.action === 'revoke_kiosk') {
+      const kiosk = String(body.kiosk_id ?? '');
+      if (!/^[0-9a-f-]{36}$/i.test(kiosk)) return fail('BAD_REQUEST: Thiếu máy chấm công');
+      const rev = await admin.rpc('kiosk_revoke', { p_actor: actor, p_kiosk: kiosk });
+      if (rev.error) return fail(rev.error.message);
+      // khóa đăng nhập của tài khoản thiết bị (không xóa để giữ lịch sử chấm công)
+      await admin.auth.admin.updateUserById(String(rev.data), { ban_duration: '876000h' });
+      return json({ ok: true });
     }
 
     return fail('BAD_REQUEST: Hành động không hợp lệ');

@@ -10,3 +10,8 @@ export const missingEnv = [!url && 'VITE_SUPABASE_URL', !anonKey && 'VITE_SUPABA
 
 /** null khi chưa cấu hình .env - app hiện màn hướng dẫn cài đặt. */
 export const supabase = url && anonKey ? createClient(url, anonKey) : null;
+
+/** Máy khách riêng, không lưu phiên đăng nhập: dùng để kiểm tra mật khẩu chủ mà không đổi tài khoản đang dùng trên máy (thoát máy chấm công). */
+export function createIsolatedClient() {
+  return url && anonKey ? createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false, storageKey: 'agri-isolated' } }) : null;
+}

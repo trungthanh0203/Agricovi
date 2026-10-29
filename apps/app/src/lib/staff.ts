@@ -68,7 +68,7 @@ export interface StaffCredentials {
   expires_at: string;
 }
 
-async function callFunction<T>(body: Record<string, unknown>): Promise<T> {
+export async function callFunction<T>(body: Record<string, unknown>): Promise<T> {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   const { data, error } = await supabase.functions.invoke('staff-accounts', { body });
   if (error) {

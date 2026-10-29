@@ -351,3 +351,11 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 5. **Lối thoát cho chủ cơ sở** (cần `db push` đến 0126): đăng nhập bằng chủ cơ sở, bấm Xong khi chưa ghi đủ: app hỏi lý do; nhập lý do (ít nhất 3 ký tự) thì việc Xong, dòng việc ghi "Xong khi chưa ghi đủ, lý do: …". Tài khoản quản lý không có lối thoát này.
 6. **Ghi bù**: ở Ghi việc bấm Hôm qua hoặc Hôm kia (hoặc chọn ngày giờ) để ghi cho ngày đã làm; chọn thời điểm ở tương lai thì app báo lỗi.
 7. **Nhân bản**: Sản xuất → Nhật ký việc → một bản ghi → Nhân bản: Ghi việc mở ra đã điền sẵn nội dung, vật tư; chỉ chọn lại ngày rồi Lưu.
+
+## Thử Máy chấm công (29/10/2026; cần `db push` 0127 và `npx supabase functions deploy staff-accounts`, có mạng)
+1. Chủ: **Sản xuất → Chấm công**. Mục **Mã đặt PIN cho người làm**: bấm **Cấp mã** cho một người có số điện thoại; ghi lại mã 6 số (chỉ hiện một lần).
+2. Mục **Máy chấm công → ＋ Liên kết điện thoại này**: đặt tên, chọn phân khu, tích đồng ý chụp ảnh, bấm Liên kết. Điện thoại tự chuyển sang màn **Chấm công** (chủ bị đăng xuất khỏi máy này).
+3. Ở màn Chấm công: **Đặt PIN lần đầu** → nhập số điện thoại, mã chủ cấp, PIN mới (4–6 số). Rồi nhập số điện thoại + PIN → **Tiếp tục** → cho phép camera → chỉ có nút **VÀO CA**. Bấm → thấy ảnh và giờ. Làm lại: chỉ còn nút **RA CA**.
+4. Thử sai PIN 5 lần: máy khóa 15 phút. Thử PIN yếu (1234, 1111): bị từ chối.
+5. Chủ trên máy khác: **Chấm công → Ảnh chấm công** chọn ngày: thấy ảnh, tên, giờ; ảnh có cờ được viền.
+6. Thoát máy: kéo xuống cuối màn Chấm công, mở “Thoát chế độ máy chấm công”, nhập email/số điện thoại và mật khẩu của chủ. Ngừng hẳn một máy: Máy chấm công → Ngừng dùng.

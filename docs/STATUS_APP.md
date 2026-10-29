@@ -3,6 +3,7 @@
 Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi tiết từng mốc cũ (bước C, Giai đoạn 2, lương, Đợt 1…): `STATUS_APP_LICHSU.md` (chỉ tra cứu khi cần, không đọc hết).
 
 ## Đang làm
+- **29/10/2026 (D111, migration 0127, cần `db push` + deploy lại `staff-accounts`)**: **Máy chấm công** Đợt 1 (điện thoại cố định, số điện thoại + PIN, một nút Vào/Ra, ảnh kèm theo, màn Ảnh chấm công cho chủ). Test `attendance_kiosk`. Chưa kiểm trên điện thoại thật (camera, `FaceDetector`). Việc lên lịch dọn ảnh 60 ngày (`purge_attendance_photos`, pg_cron) còn lại.
 - **28/10/2026 (D104–D108, migration 0108–0115, cần `db push`)**: khái niệm Quy trình → Công đoạn → Việc; trang **Việc** (một đối tượng, vật tư, tách theo đối tượng); **Tạo quy trình** 2 tab (của cơ sở, mẫu hệ thống dưa lưới) với việc chạy song song/lặp lại, hướng dẫn, vật tư dự kiến; cơ sở chọn **đối tượng sử dụng**; chi tiết vụ nhóm theo công đoạn + **Việc đến hạn hôm nay**. Còn lại: bộ heo/thủy sản, màn soạn mẫu cho quản trị nền tảng, giao việc, thông báo đẩy (xem `KE_HOACH_HOAN_THIEN_APP.md`).
 - Lộ trình: `KE_HOACH_TONG_THE.md` (P1–P9). **P1** theo `PLAN_P1_NEN_DU_LIEU.md` (D98), 3 mốc:
   - **M1 xong về code (25/10/2026)**: migration 0080 (mã/loại khu/kiểu chuồng; mã vụ, đơn vị đếm, cán bộ phụ trách; ghi việc cho khu không gắn vụ); test `areas_fields`.

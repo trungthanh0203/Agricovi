@@ -24,6 +24,8 @@ import { SetupNotice } from './screens/SetupNotice';
 import { WelcomeScreen } from './screens/WelcomeScreen';
 import { ForcePasswordScreen } from './screens/ForcePasswordScreen';
 import { fetchStaffStatus, readCachedStaffStatus, type StaffStatus } from './lib/staff';
+import { fetchKioskInfo, readCachedKiosk, type KioskInfo } from './lib/kiosk';
+import { KioskScreen } from './screens/KioskScreen';
 
 // Các màn ngoài Trang chủ tải khi mở lần đầu (giảm dung lượng phải tải lúc vào app); bản dựng vẫn được lưu sẵn để dùng offline
 const CreateCycleScreen = lazyRetry(() => import('./screens/CreateCycleScreen').then((m) => ({ default: m.CreateCycleScreen })));
@@ -68,12 +70,24 @@ function Gate() {
   }, [uid]);
   useEffect(() => { void loadStaff(); }, [loadStaff]);
 
+  // Điện thoại làm MÁY CHẤM CÔNG (tài khoản thiết bị) chỉ thấy màn chấm công, không có đường vào app quản lý. undefined = đang tải.
+  const [kiosk, setKiosk] = useState<KioskInfo | null | undefined>(undefined);
+  useEffect(() => {
+    if (!uid) return setKiosk(undefined);
+    const cached = readCachedKiosk(uid);
+    if (cached !== undefined) setKiosk(cached);
+    let live = true;
+    void fetchKioskInfo(uid).then((k) => { if (live) setKiosk(k); });
+    return () => { live = false; };
+  }, [uid]);
+
   // Tài khoản khác đăng nhập trên thiết bị này: bỏ bản lưu offline của người trước
   useEffect(() => { if (uid) void purgeCachesIfUserChanged(uid); }, [uid]);
 
   if (loading) return <p className="center muted">Đang tải…</p>;
   if (!session || recovering) return <AuthScreen />;
-  if (staff === undefined) return <p className="center muted">Đang tải…</p>;
+  if (staff === undefined || kiosk === undefined) return <p className="center muted">Đang tải…</p>;
+  if (kiosk) return <KioskScreen info={kiosk} />;
   // Nhân viên chưa đổi mật khẩu tạm: bắt buộc đổi trước khi vào (máy chủ cũng chặn dữ liệu tới lúc đó)
   if (staff?.must_change) {
     return <ForcePasswordScreen status={staff} onDone={() => { void loadStaff(); void refresh(); }} />;

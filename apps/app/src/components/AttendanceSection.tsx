@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Collapsible } from './Collapsible';
 import { RowMenu } from './RowMenu';
 import { AttendanceOverview } from './AttendanceOverview';
+import { KioskAdmin } from './KioskAdmin';
 import { db } from '../lib/db';
 import { useAuth } from '../lib/auth';
 import { addDays, fmtDate } from '../lib/dates';
@@ -154,6 +155,8 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
       )}
 
       {canRecordFor.length > 0 && <AttendanceOverview orgId={active.id} workers={workers} att={att} isAdmin={isAdmin} />}
+
+      {isAdmin && <KioskAdmin workers={workers} />}
 
       <h2 className="sect">Công gần đây ({recent.length})</h2>
       <table className="grid">

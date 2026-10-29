@@ -24,7 +24,7 @@ export interface WorkerLite { id: string; full_name: string; user_id: string | n
 export interface AttendanceRow {
   id: string; worker_id: string; work_date: string; started_at: string; ended_at: string | null; break_minutes: number;
   declared_minutes: number | null; approved_minutes: number | null; status: 'open' | 'needs_confirmation' | 'confirmed' | 'rejected';
-  source: 'self' | 'team_leader' | 'admin'; exception_reason: string | null; note: string | null; start_lat: number | null;
+  source: 'self' | 'team_leader' | 'admin' | 'kiosk'; exception_reason: string | null; note: string | null; start_lat: number | null;
 }
 export interface OutputRow {
   id: string; worker_id: string; work_date: string; quantity: number; unit: string; status: 'draft' | 'confirmed' | 'approved' | 'rejected';
