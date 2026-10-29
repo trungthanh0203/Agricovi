@@ -26,7 +26,7 @@ export interface Section<Id extends string = string> {
   label: string;
 }
 
-export type ProductionSection = 'cycles' | 'harvest' | 'stock' | 'expense' | 'attendance' | 'logs';
+export type ProductionSection = 'cycles' | 'log' | 'logs' | 'stock' | 'expense' | 'harvest' | 'attendance';
 export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'kiosks' | 'customers' | 'positions' | 'teams' | 'members' | 'coop' | 'licenses';
 export type ReportSection = 'payables' | 'sales' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist' | 'logbook';
 
@@ -55,11 +55,12 @@ export function productionSections(org: MyOrg | null): Section<ProductionSection
   if (!org) return [];
   return simpleFilter(org, 'production', [
     { id: 'cycles' as const, label: 'Vụ nuôi trồng' },
-    hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,
-    canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
+    (org.features?.logs ?? 'on') !== 'off' ? { id: 'log' as const, label: 'Ghi việc' } : null, // mở thẳng màn Ghi việc (cùng nút ＋ ở giữa thanh dưới)
+    { id: 'logs' as const, label: 'Nhật ký việc' },
     canPerm(org.perms, 'inventory') ? { id: 'stock' as const, label: 'Quản lý kho' } : null,
-    canPerm(org.perms, 'expenses') ? { id: 'expense' as const, label: 'Chi phí' } : null, // ghi chi phí hằng ngày: cùng nhóm với Thu hoạch, Kho (D92)
-    { id: 'logs' as const, label: 'Nhật ký việc' }, // luôn để cuối
+    canPerm(org.perms, 'expenses') ? { id: 'expense' as const, label: 'Chi phí' } : null,
+    canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
+    hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,
   ].filter((x): x is Section<ProductionSection> => x !== null));
 }
 

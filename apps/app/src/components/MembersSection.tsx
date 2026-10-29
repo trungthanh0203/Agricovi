@@ -183,7 +183,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
                   <td>
                     <strong>{label}</strong>
                     {m.phone && <span className="sub">{m.phone}</span>}
-                    <span className="sub">{owner ? 'Chủ cơ sở' : pos?.name ?? roleSummary(m.roles)}{m.leads_teams && m.leads_teams.length > 0 ? ` · Tổ trưởng: ${m.leads_teams.join(', ')}` : ''}</span>
+                    <span className="sub">{owner ? 'Chủ cơ sở' : pos?.name ?? roleSummary(m.roles)}</span>
                   </td>
                   <td>
                     {/* ba dòng theo thứ tự: mật khẩu, PIN, khuôn mặt (không ghi nhãn cho gọn; rê chuột/đọc màn hình có tên) */}

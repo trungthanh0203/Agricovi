@@ -10,7 +10,7 @@ export function IconGlyph({ icon }: { icon: string }) {
 
 /** Biểu tượng cho từng mục */
 export const SECTION_ICONS: Record<string, string> = {
-  cycles: '🌱', logs: '📒', harvest: '🧺', stock: '📦', attendance: '⏱',
+  cycles: '🌱', log: '📝', logs: '📒', harvest: '🧺', stock: '📦', attendance: '⏱',
   areas: '🏡', partners: '🚚', customers: '🛒', website: '📬', payables: '💳', crops: '🌾', worktypes: '🧰', templates: '📋', materials: '🧪', places: '🏬',
   commerce: HO_SO_WEB_ICON, kiosks: '📲', process: '📋', staff: '👥', members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
   intro: '📖', household: '🌾', company: '🏢',

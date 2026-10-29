@@ -51,7 +51,7 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
   return (
     <section>
       <h1>Sản xuất</h1>
-      <SubTabs items={items} value={current} onChange={onSection} onBack={() => onSection('' as ProductionSection)} label="Sản xuất" />
+      <SubTabs items={items} value={current} onChange={(id) => (id === 'log' ? onLog() : onSection(id))} onBack={() => onSection('' as ProductionSection)} label="Sản xuất" />
       {current === 'harvest' ? (
         <HarvestSection />
       ) : current === 'stock' ? (

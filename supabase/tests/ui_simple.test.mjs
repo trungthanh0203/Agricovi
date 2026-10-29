@@ -17,7 +17,7 @@ test('chế độ đầy đủ giữ nguyên mọi mục; chế độ đơn gi�
     for (const h of hidden) assert.ok(!got.includes(h), `đơn giản phải ẩn ${h}`);
   }
   // việc hằng ngày và việc cần để tạo vụ vẫn còn
-  assert.deepEqual(ids(productionSections(simple)), ['cycles', 'harvest', 'stock', 'expense', 'logs']);
+  assert.deepEqual(ids(productionSections(simple)), ['cycles', 'log', 'logs', 'stock', 'expense', 'harvest']);   // thứ tự menu Sản xuất
   for (const k of ['areas', 'crops', 'templates', 'materials']) assert.ok(ids(declareSections(simple)).includes(k), k);
   for (const k of ['weekly', 'summary', 'sales', 'payables']) assert.ok(ids(reportSections(simple)).includes(k), k);
   assert.ok(ids(declareSections(simple)).includes('members'));
