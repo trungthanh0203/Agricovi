@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { daysLeft, listLicenses } from '../lib/licenses';
 import { hasRole } from '../lib/roles';
 import { getAttendanceSummary } from '../lib/attendanceAdmin';
-import { listAdjustments, listAttendance, listWorkers } from '../lib/work';
+import { listAdjustments } from '../lib/work';
 import { cycleProgress } from '../lib/cycles';
 import { addDays } from '../lib/dates';
 import { todayLocal, toLocalInput } from '../lib/hooks';
@@ -66,7 +66,6 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
   const [pendingAdj, setPendingAdj] = useState(0);
   const [photoFlags, setPhotoFlags] = useState(0); // ảnh chấm công cờ đỏ 7 ngày gần nhất
   const [staleShifts, setStaleShifts] = useState(0);
-  const [openShiftAt, setOpenShiftAt] = useState<string | null>(null);
   const [licSoon, setLicSoon] = useState(0);
   const [licExpired, setLicExpired] = useState(0);
   const [debt, setDebt] = useState<ReturnType<typeof summarizePayables> | null>(null);
@@ -81,17 +80,11 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
     let alive = true;
     void (async () => {
       try {
-        const w = await listWorkers(orgId);
-        const me = w.find((x) => x.user_id === uid);
-        const [sum, mine] = await Promise.all([
-          getAttendanceSummary(orgId, todayLocal()).catch(() => null),
-          me ? listAttendance(orgId, addDays(todayLocal(), -31), me.id) : Promise.resolve([]),   // số liệu do máy chủ tính, công của mình lọc theo người
-        ]);
+        const sum = await getAttendanceSummary(orgId, todayLocal()).catch(() => null);   // số liệu do máy chủ tính
         if (!alive) return;
         setPendingAtt(sum?.pending ?? 0);
         setPhotoFlags(sum?.flagged_week ?? 0);
         setStaleShifts(sum?.stale ?? 0);
-        setOpenShiftAt(mine.find((a) => !a.ended_at && a.status !== 'rejected')?.started_at ?? null);
       } catch { /* bỏ qua */ }
       try {
         const adj = await listAdjustments(orgId);
@@ -159,11 +152,10 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
 
   return (
     <>
-      {(canConfirmAtt || openShiftAt || licSoon + licExpired > 0 || (debt !== null && debt.overdueCount + debt.soonCount > 0) || (recv !== null && recv.overdueCount + recv.soonCount > 0)) && (
+      {(canConfirmAtt || licSoon + licExpired > 0 || (debt !== null && debt.overdueCount + debt.soonCount > 0) || (recv !== null && recv.overdueCount + recv.soonCount > 0)) && (
         <>
           <h2 className="sect">Tôi cần làm</h2>
           <div className="kpis">
-            {openShiftAt && <KpiTile label="Bạn đang trong ca" value={new Date(openShiftAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} tone="info" note="bấm để Ra ca" onClick={() => onGo('production', 'attendance')} />}
             {canConfirmAtt && <KpiTile label="Chờ xác nhận chấm công" value={String(pendingAtt)} tone={pendingAtt > 0 ? 'warn' : 'ok'} note={pendingAtt > 0 ? 'bấm để xem và xác nhận' : 'đã xong'} onClick={() => onGo('production', 'attendance')} />}
             {isAdminRole && photoFlags > 0 && <KpiTile label="Ảnh chấm công cần xem" value={String(photoFlags)} tone="bad" note="cờ đỏ 7 ngày qua" onClick={() => onGo('production', 'attendance')} />}
             {isAdminRole && staleShifts > 0 && <KpiTile label="Quên Ra ca" value={String(staleShifts)} tone="bad" note="bấm để xem" onClick={() => onGo('production', 'attendance')} />}

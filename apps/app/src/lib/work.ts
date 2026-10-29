@@ -104,51 +104,6 @@ export function recalledMyWorker(org: string, uid: string): string | null {
   try { return localStorage.getItem(WORKER_KEY(org, uid)); } catch { return null; }
 }
 
-/**
- * Vào ca. Có mạng: ghi lên máy chủ ngay (người khác thấy "đang trong ca"). Mất mạng: giữ ca trên máy, khi ra ca sẽ gửi
- * MỘT bản ghi hoàn chỉnh qua hàng đợi (máy chủ tự quyết định trạng thái/ngày công, không tin giờ máy để tự xác nhận).
- */
-export async function clockIn(orgId: string, workerId: string | null, cycleId: string | null): Promise<'server' | 'local'> {
-  const pos = await getPosition();
-  if (navigator.onLine) {
-    await ok(client().rpc('clock_in', {
-      p_id: crypto.randomUUID(), p_org: orgId, p_cycle: cycleId, p_lat: pos?.lat ?? null, p_lng: pos?.lng ?? null, p_acc: pos?.acc ?? null,
-    }));
-    return 'server';
-  }
-  if (!workerId) throw new Error('OFFLINE: Cần mở app khi có mạng ít nhất một lần để vào ca khi mất mạng. Hãy kết nối mạng rồi thử lại.');
-  await db.localShifts.put({
-    id: crypto.randomUUID(), org: orgId, worker_id: workerId, started_at: new Date().toISOString(), cycle_id: cycleId,
-    lat: pos?.lat ?? null, lng: pos?.lng ?? null, acc: pos?.acc ?? null,
-  });
-  return 'local';
-}
-
-/** Ra ca của ca đã mở trên máy chủ (cần mạng) */
-export async function clockOut(attendanceId: string, breakMinutes: number, cycleId: string | null = null): Promise<void> {
-  if (!navigator.onLine) throw new Error('OFFLINE: Ca này đã mở trên máy chủ nên cần có mạng để ra ca. Hãy kết nối mạng rồi bấm lại; giờ vào ca của bạn vẫn được giữ.');
-  const pos = await getPosition();
-  await ok(client().rpc('clock_out', {
-    p_id: attendanceId, p_break: breakMinutes, p_lat: pos?.lat ?? null, p_lng: pos?.lng ?? null, p_acc: pos?.acc ?? null, p_cycle: cycleId,
-  }));
-}
-
-/** Ra ca của ca bắt đầu khi mất mạng: gửi một bản ghi hoàn chỉnh qua hàng đợi (dùng được cả khi vẫn mất mạng) */
-export async function clockOutLocal(shift: LocalShift, breakMinutes: number, cycleId: string | null): Promise<void> {
-  const pos = await getPosition(5000);
-  const now = new Date().toISOString();
-  await db.transaction('rw', db.localShifts, db.outbox, async () => {
-    await enqueue('attendance_records', {
-      id: shift.id, worker_id: shift.worker_id, work_date: shift.started_at.slice(0, 10), started_at: shift.started_at, ended_at: now,
-      break_minutes: breakMinutes, source: 'self', device_recorded_at: now, cycle_id: cycleId ?? shift.cycle_id,
-      start_lat: shift.lat, start_lng: shift.lng, start_accuracy_m: shift.acc,
-      end_lat: pos?.lat ?? null, end_lng: pos?.lng ?? null, end_accuracy_m: pos?.acc ?? null,
-    });
-    await db.localShifts.delete(shift.id);
-  });
-  void flushOutbox();
-}
-
 /** Đề nghị sửa công (giờ vào/ra/phút nghỉ); quản lý hoặc chủ duyệt */
 export async function requestAdjustment(attendanceId: string, proposed: { started_at?: string; ended_at?: string; break_minutes?: number }, reason: string): Promise<void> {
   needOnline('đề nghị sửa công');

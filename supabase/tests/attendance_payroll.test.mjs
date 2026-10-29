@@ -21,18 +21,16 @@ async function setup() {
 const shiftOtherDay = `select * from record_shift($1,$2,now() - interval '5 days', now() - interval '5 days' + interval '4 hours', 30, null, null)`;
 const shiftSql = `select * from record_shift($1,$2,now() - interval '2 days', now() - interval '2 days' + interval '4 hours', 30, null, null)`;
 
-test('vào ca / ra ca của chính mình: không mở hai ca; bấm lặp không nhân đôi; người không có hồ sơ bị chặn', async () => {
-  const { db, wk, org, mgr } = await setup();
-  const a = (await asUser(db, wk, `select * from clock_in($1,$2)`, [id(1), org])).rows[0];
-  assert.equal(a.source, 'self');
-  assert.equal((await asUser(db, wk, `select * from clock_in($1,$2)`, [id(1), org])).rows.length, 1);
-  assert.match(await expectError(asUser(db, wk, `select * from clock_in($1,$2)`, [id(2), org])), /SHIFT_OPEN/);
-  const out = (await asUser(db, wk, `select * from clock_out($1, 5)`, [id(1)])).rows[0];
-  assert.ok(out.ended_at);
-  assert.equal((await db.query(`select count(*)::int n from attendance_records`)).rows[0].n, 1);
-  assert.match(await expectError(asUser(db, mgr, `select * from clock_in($1,$2)`, [id(3), org])), /NO_WORKER/);
-  // không tự xác nhận công của mình
-  assert.match(await expectError(asUser(db, wk, `select * from confirm_attendance($1)`, [id(1)])), /FORBIDDEN/);
+test('chấm công cho chính mình: chủ/quản lý nhập được (chờ xác nhận, tự xác nhận được); người làm thường không tự chấm, không tự xác nhận (D117)', async () => {
+  const { db, wk, org, mgr, owner } = await setup();
+  assert.match(await expectError(asUser(db, wk, `select * from clock_in($1,$2)`, [id(1), org])), /DISABLED/);
+  const mw = (await asUser(db, mgr, `select ensure_my_worker($1) id`, [org])).rows[0].id;
+  const a = (await asUser(db, mgr, `select * from record_shift($1,$2,now() - interval '6 hours', now() - interval '2 hours', 0)`, [id(1), mw])).rows[0];
+  assert.deepEqual([a.status, a.source], ['needs_confirmation', 'admin']);
+  assert.equal((await asUser(db, mgr, `select * from confirm_attendance($1)`, [id(1)])).rows[0].status, 'confirmed');    // quản lý xác nhận công của mình
+  const ww = (await db.query(`select id from worker_profiles where user_id = $1 and organization_id = $2`, [wk, org])).rows[0].id;
+  assert.match(await expectError(asUser(db, wk, `select * from record_shift($1,$2,now() - interval '6 hours', now() - interval '2 hours', 0)`, [id(2), ww])), /row-level security/);
+  assert.ok(owner);
 });
 
 test('tổ trưởng chấm hộ chờ xác nhận, tổ trưởng xác nhận được; quản lý nhập cũng chờ xác nhận; chặn trùng giờ; người ngoài tổ bị chặn', async () => {

@@ -1,23 +1,19 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Collapsible } from './Collapsible';
 import { AttendanceList, type ListPreset } from './AttendanceList';
 import { AttendancePhotos } from './AttendancePhotos';
 import { ChartCard, HBarList } from './charts';
 import { KpiTile } from './HomeStats';
 import { KioskAdmin } from './KioskAdmin';
-import { db } from '../lib/db';
 import { getAttendanceSummary, type AttSummary } from '../lib/attendanceAdmin';
 import { useAuth } from '../lib/auth';
-import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { hasRole } from '../lib/roles';
-import { stageForDay } from '../lib/cycles';
 import {
-  clockIn, clockOut, clockOutLocal, ensureMyWorker, listAttendance, listOrphans, listWorkers, recalledMyWorker, recordShift, rememberMyWorker,
-  type AttendanceRow, type WorkerLite,
+  ensureMyWorker, listOrphans, listWorkers, recordShift,
+  type WorkerLite,
 } from '../lib/work';
 import { useTable } from '../lib/tables';
 
@@ -27,82 +23,48 @@ type Tab = 'today' | 'list' | 'photos' | 'setup';
 
 /**
  * Chấm công (D42, D115). Bốn mục, mỗi mục một việc:
- *  - Hôm nay: số liệu trong ngày, việc cần xử lý, chấm công của tôi, chấm công hộ.
+ *  - Hôm nay: số liệu trong ngày, việc cần xử lý, chấm công cho người làm (cho hộ nhỏ không dùng máy chấm công).
  *  - Công: danh sách phân trang, lọc, xác nhận (cả hàng loạt).
  *  - Ảnh cần xem: ảnh cờ đỏ từ máy chấm công (chỉ chủ/quản lý).
  *  - Thiết lập: máy chấm công và mã PIN (chỉ chủ/quản lý).
+ * Không còn Vào/Ra ca bằng tài khoản đăng nhập (D117): công đến từ máy chấm công hoặc do chủ/quản lý (tổ trưởng với người trong tổ) nhập.
  * Số liệu và danh sách do máy chủ tính (không tải cả danh sách công về máy). Cần mạng.
  */
-export function AttendanceSection({ onOpenCycle }: { onOpenCycle?: (id: string, opts?: { calendar?: boolean; notice?: string }) => void; onLogFor?: (cycleId: string | null) => void }) {
+export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { calendar?: boolean; notice?: string }) => void; onLogFor?: (cycleId: string | null) => void }) {
   const { active } = useOrgs();
   const { session } = useAuth();
   const online = useOnline();
   const uid = session?.user.id;
   const [tab, setTab] = useState<Tab>('today');
   const [workers, setWorkers] = useState<WorkerLite[]>([]);
-  const [mine, setMine] = useState<AttendanceRow[]>([]);
   const [sum, setSum] = useState<AttSummary | null>(null);
   const [orphans, setOrphans] = useState<{ worker_id: string; full_name: string; team_name: string | null }[]>([]);
   const [preset, setPreset] = useState<ListPreset | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [brk, setBrk] = useState('0');
-  const [cycleId, setCycleId] = useState('');
-  const localShift = useLiveQuery(async () => (active ? (await db.localShifts.where('org').equals(active.id).toArray())[0] ?? null : null), [active?.id], null);
   const cycles = useTable('cycles').filter((c) => c.status === 'active' && c.owner_org_id === active?.id);
-  const recalled = active && uid ? recalledMyWorker(active.id, uid) : null;
 
   const orgId = active?.id;
   const isAdmin = hasRole(active?.roles, 'manager');
   const me = workers.find((w) => w.user_id === uid) ?? null;
-  const others = workers.filter((w) => w.id !== me?.id && w.status === 'active');
-  const canRecordFor = isAdmin ? workers.filter((w) => w.status === 'active') : others; // tổ trưởng chỉ thấy người trong tổ (máy chủ lọc)
+  // Chủ/quản lý chấm công cho mọi người làm, kể cả chính mình; tổ trưởng chỉ cho người trong tổ (máy chủ lọc), không cho mình
+  const canRecordFor = isAdmin ? workers.filter((w) => w.status === 'active') : workers.filter((w) => w.id !== me?.id && w.status === 'active');
 
   const load = useCallback(async () => {
     if (!orgId || !navigator.onLine) return;
     try {
       let w = await listWorkers(orgId);
-      // chủ/quản lý/nhân viên chưa có hồ sơ lao động: tự tạo để chấm công như nhân sự khác
-      if (uid && !w.some((x) => x.user_id === uid) && hasRole(active?.roles, 'manager', 'worker')) {
+      // chủ/quản lý chưa có hồ sơ lao động: tự tạo để chấm công cho chính mình ở mục “Chấm công cho người làm”
+      if (uid && !w.some((x) => x.user_id === uid) && hasRole(active?.roles, 'manager')) {
         await ensureMyWorker(orgId).catch(() => undefined);
         w = await listWorkers(orgId);
       }
-      const mineW = w.find((x) => x.user_id === uid);
       setWorkers(w);
-      if (mineW && uid) rememberMyWorker(orgId, uid, mineW.id);
-      // chỉ công của chính mình (để biết đang trong ca hay chưa); danh sách đầy đủ ở mục "Công" do máy chủ phân trang
-      const wid = mineW?.id ?? (uid ? recalledMyWorker(orgId, uid) : null);
-      setMine(wid ? await listAttendance(orgId, todayLocal().slice(0, 8) + '01', wid) : []);
       setSum(await getAttendanceSummary(orgId, todayLocal()).catch(() => null));
       if (isAdmin) void listOrphans(orgId).then(setOrphans).catch(() => setOrphans([]));
     } catch (e) { setError(friendlyError(e)); }
   }, [orgId, uid, active?.roles, isAdmin]);
   useEffect(() => { void load(); }, [load]);
-
-  const openShift = useMemo(() => mine.find((a) => !a.ended_at && a.status !== 'rejected') ?? null, [mine]);
-
-  /** Vào ca; nếu có chọn vụ thì báo giai đoạn của hôm nay và chuyển tới Lịch của vụ đó */
-  async function startShift() {
-    if (!active) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await clockIn(active.id, me?.id ?? recalled, cycleId || null);
-      await load();
-      if (cycleId && onOpenCycle) {
-        const st = await db.stages.where('cycle_id').equals(cycleId).toArray();
-        const today = todayLocal();
-        const stage = stageForDay(st, today);
-        const cyc = cycles.find((c) => c.id === cycleId);
-        const name = cyc?.name || cyc?.template_name || 'Vụ';
-        const when = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        const what = stage
-          ? `Hôm nay vụ "${name}" đang ở giai đoạn "${stage.name}"${stage.planned_start && stage.planned_end ? ` (${fmtDate(stage.planned_start)} – ${fmtDate(stage.planned_end)})` : ''}. Hãy làm việc theo giai đoạn này.`
-          : `Vụ "${name}" hiện chưa có giai đoạn nào cho hôm nay.`;
-        onOpenCycle(cycleId, { calendar: true, notice: `Bạn đã vào ca lúc ${when}. ${what}` });
-      }
-    } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
-  }
 
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -122,7 +84,6 @@ export function AttendanceSection({ onOpenCycle }: { onOpenCycle?: (id: string, 
     ] : []),
   ];
   const hours = (m: number) => `${(m / 60).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} giờ`;
-  const myState = localShift ? `đang trong ca từ ${hhmm(localShift.started_at)}` : openShift ? `đang trong ca từ ${hhmm(openShift.started_at)}` : 'chưa vào ca';
 
   return (
     <>
@@ -161,42 +122,12 @@ export function AttendanceSection({ onOpenCycle }: { onOpenCycle?: (id: string, 
             </div>
           )}
 
-          {me || recalled ? (
-            <Collapsible title="Chấm công của tôi" summary={myState} defaultOpen={!isAdmin}>
-              {cycles.length > 0 && (
-                <label>Làm cho vụ (không bắt buộc)
-                  <select value={cycleId} onChange={(e) => setCycleId(e.target.value)}>
-                    <option value="">— Không gắn vụ —</option>
-                    {cycles.map((c) => <option key={c.id} value={c.id}>{c.name || c.template_name || 'Vụ'}</option>)}
-                  </select>
-                </label>
-              )}
-              {localShift ? (
-                <>
-                  <p>Bạn vào ca lúc <strong>{hhmm(localShift.started_at)}</strong> (lưu trên máy{online ? '' : ', đang mất mạng'}).</p>
-                  <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
-                  <button className="primary" disabled={busy}
-                    onClick={() => void run(() => clockOutLocal(localShift, Math.max(0, parseInt(brk || '0', 10) || 0), cycleId || null))}>Ra ca</button>
-                  <p className="muted">Ca sẽ được gửi lên khi có mạng, rồi chờ tổ trưởng hoặc quản lý xác nhận.</p>
-                </>
-              ) : openShift ? (
-                <>
-                  <p>Bạn vào ca lúc <strong>{hhmm(openShift.started_at)}</strong> ngày {fmtDate(openShift.work_date)}{openShift.start_lat != null ? ' · đã ghi vị trí' : ''}.</p>
-                  <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
-                  <button className="primary" disabled={busy || !online}
-                    onClick={() => void run(() => clockOut(openShift.id, Math.max(0, parseInt(brk || '0', 10) || 0), cycleId || null))}>Ra ca</button>
-                </>
-              ) : (
-                <button className="primary" disabled={busy} onClick={() => void startShift()}>Vào ca</button>
-              )}
-              <p className="muted">Vị trí chỉ được ghi lúc bạn bấm Vào ca/Ra ca (nếu bạn cho phép), không theo dõi liên tục. Công được xác nhận trước khi tính tiền.</p>
-            </Collapsible>
-          ) : (
-            <p className="muted">Bạn chưa có hồ sơ lao động ở cơ sở này nên không tự chấm công được{canRecordFor.length > 0 ? ', nhưng có thể chấm công hộ người trong tổ' : ''}.</p>
+          {canRecordFor.length === 0 && (
+            <p className="muted">Chấm công do máy chấm công ghi, hoặc do chủ, quản lý, tổ trưởng nhập cho người làm. Bạn xem công của mình ở mục “Công”.</p>
           )}
 
           {canRecordFor.length > 0 && (
-            <Collapsible inline title="＋ Chấm công hộ" summary="nhập ca đã làm của người khác">
+            <Collapsible inline title="＋ Chấm công cho người làm" summary={isAdmin ? 'nhập ca đã làm, kể cả của bạn (dành cho hộ không dùng máy chấm công)' : 'nhập ca đã làm của người trong tổ'}>
               <ShiftForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
             </Collapsible>
           )}

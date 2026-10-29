@@ -373,3 +373,8 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 3. **Công**: chọn Hôm nay / 7 ngày / 30 ngày, trạng thái, gõ tên rồi **Tìm**. Mỗi trang 50 dòng, có nút Trước/Sau. Nút **✔ Xác nhận các công hợp lệ** hỏi lại số lượng rồi xác nhận một lượt; công có ngoại lệ hoặc ảnh cờ đỏ được giữ lại để xem từng cái.
 4. **Ảnh cần xem**: chỉ có ảnh khi có cờ đỏ; người đúng thì không có ảnh. Thử bằng cách để người khác chấm công hộ trên máy.
 5. **Máy chấm công**: liên kết máy, tích “Hỏi làm cho vụ nào khi Vào ca” nếu cần, cấp mã PIN. Ở máy: nhìn thẳng vào camera, giữ yên khoảng 1 giây, máy tự chụp và ghi (vẫn bấm tay được).
+
+## Thử bỏ Vào/Ra ca bằng tài khoản (29/10/2026; cần `db push` 0133)
+1. Trang chủ không còn nút Vào ca/Ra ca. Sản xuất → Chấm công → Hôm nay không còn “Chấm công của tôi”.
+2. Chủ/quản lý: **Hôm nay → ＋ Chấm công cho người làm** → chọn người (có cả tên của bạn), ngày, giờ → Lưu. Công ở trạng thái Chờ xác nhận; xác nhận ở mục Công (bạn xác nhận được công của chính mình).
+3. Người làm thường (không phải chủ/quản lý/tổ trưởng) đăng nhập: không còn chỗ chấm công; chỉ xem công của mình ở mục Công. Chấm công bằng máy chấm công như trước.

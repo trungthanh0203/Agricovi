@@ -90,18 +90,21 @@ async function workforce() {
   return { ...s, wA, wB, wC, team };
 }
 
-test('chấm công: tự chấm, ca mở thứ hai bị chặn, ghi lặp không trùng', async () => {
-  const { db, worker1, wA } = await workforce();
+test('chấm công: người làm không tự chấm (D117); ca mở thứ hai bị chặn, ghi lặp không trùng với bản ghi do tổ trưởng nhập', async () => {
+  const { db, worker1, leader, wA, wC } = await workforce();
   const id1 = 'c0000000-0000-4000-8000-000000000001';
   const ins = `insert into attendance_records (id,organization_id,worker_id,work_date,started_at,source,start_lat,start_lng,start_accuracy_m)
                values ($1,$2,$3,current_date,now(),'self',10.1,106.2,12) on conflict (id) do nothing`;
-  await asUser(db, worker1, ins, [id1, ORG, wA]);
-  await asUser(db, worker1, ins, [id1, ORG, wA]); // đồng bộ lặp
+  assert.match(await expectError(asUser(db, worker1, ins, [id1, ORG, wA])), /row-level security/);   // người làm tự gửi bản ghi bị chặn
+  const lead = `insert into attendance_records (id,organization_id,worker_id,work_date,started_at,source)
+               values ($1,$2,$3,current_date,now(),'team_leader') on conflict (id) do nothing`;
+  await asUser(db, leader, lead, [id1, ORG, wC]);
+  await asUser(db, leader, lead, [id1, ORG, wC]); // đồng bộ lặp
   assert.equal((await db.query(`select count(*)::int n from attendance_records`)).rows[0].n, 1);
   // ca thứ hai khi ca trước chưa kết thúc
-  assert.match(await expectError(asUser(db, worker1, ins, ['c0000000-0000-4000-8000-000000000002', ORG, wA])), /one_open_shift|duplicate/);
+  assert.match(await expectError(asUser(db, leader, lead, ['c0000000-0000-4000-8000-000000000002', ORG, wC])), /one_open_shift|duplicate/);
   // kết thúc ca -> tính số phút khai báo
-  await asUser(db, worker1, `update attendance_records set ended_at = started_at + interval '8 hours', break_minutes = 60 where id=$1`, [id1]);
+  await asUser(db, leader, `update attendance_records set ended_at = started_at + interval '8 hours', break_minutes = 60 where id=$1`, [id1]);
   assert.equal((await db.query(`select declared_minutes from attendance_records where id=$1`, [id1])).rows[0].declared_minutes, 420);
 });
 
@@ -124,10 +127,10 @@ test('chấm công: không chấm hộ người khác khi không phải tổ tr�
   assert.ok(wA);
 });
 
-test('ngoại lệ GPS: tạo bản ghi ngoại lệ vẫn được, chuyển chờ xác nhận', async () => {
-  const { db, worker1, wA } = await workforce();
-  await asUser(db, worker1, `insert into attendance_records (id,organization_id,worker_id,work_date,started_at,source,exception_reason)
-     values ('c0000000-0000-4000-8000-000000000020',$1,$2,current_date,now(),'self','Không có GPS')`, [ORG, wA]);
+test('ngoại lệ khi tổ trưởng nhập: bản ghi có lý do ngoại lệ vẫn được, chuyển chờ xác nhận', async () => {
+  const { db, leader, wC } = await workforce();
+  await asUser(db, leader, `insert into attendance_records (id,organization_id,worker_id,work_date,started_at,source,exception_reason)
+     values ('c0000000-0000-4000-8000-000000000020',$1,$2,current_date,now(),'team_leader','Không có GPS')`, [ORG, wC]);
   assert.equal((await db.query(`select status from attendance_records where id='c0000000-0000-4000-8000-000000000020'`)).rows[0].status, 'needs_confirmation');
 });
 

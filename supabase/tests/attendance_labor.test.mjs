@@ -18,26 +18,13 @@ async function setup() {
   return { db, owner, mgr, wk, org, ww, cyc };
 }
 
-test('vào/ra ca lưu vị trí; ra ca chuyển sang chờ xác nhận', async () => {
-  const { db, wk, org } = await setup();
-  const a = (await asUser(db, wk, `select * from clock_in($1,$2,null,10.5,106.7,12)`, [id(1), org])).rows[0];
-  assert.deepEqual([a.status, a.start_lat, a.start_lng, a.start_accuracy_m], ['open', 10.5, 106.7, 12]);
-  const o = (await asUser(db, wk, `select * from clock_out($1,15,10.6,106.8,20)`, [id(1)])).rows[0];
-  assert.deepEqual([o.status, o.break_minutes, o.end_lat, o.end_accuracy_m], ['needs_confirmation', 15, 10.6, 20]);
-});
-
-test('ca tự ghi gửi từ hàng đợi offline: máy chủ ép trạng thái, ngày công, không cho tự xác nhận hay giờ tương lai', async () => {
+test('không còn chấm công bằng tài khoản đăng nhập (D117): clock_in/clock_out báo lỗi, người làm không tự thêm công của mình', async () => {
   const { db, wk, org, ww } = await setup();
-  const ins = (n, extra) => asUser(db, wk, `insert into attendance_records (id,worker_id,work_date,started_at,ended_at,source,status,approved_minutes,confirmed_by ${extra.cols ?? ''})
-    values ($1,$2,'2000-01-01', ${extra.start}, ${extra.end}, 'self', 'confirmed', 999, $3 ${extra.vals ?? ''}) on conflict (id) do nothing`, [id(n), ww, wk]);
-  await ins(10, { start: `now() - interval '5 hours'`, end: `now() - interval '1 hour'` });
-  const r = (await db.query(`select status, approved_minutes, confirmed_by, work_date::text d, organization_id from attendance_records where id=$1`, [id(10)])).rows[0];
-  assert.deepEqual([r.status, r.approved_minutes, r.confirmed_by], ['needs_confirmation', null, null]);
-  assert.notEqual(r.d, '2000-01-01');
-  assert.equal(r.organization_id, org);
-  await ins(10, { start: `now() - interval '5 hours'`, end: `now() - interval '1 hour'` }); // gửi lặp không nhân đôi
-  assert.equal((await db.query(`select count(*)::int n from attendance_records`)).rows[0].n, 1);
-  assert.match(await expectError(ins(11, { start: `now() + interval '3 hours'`, end: `now() + interval '5 hours'` })), /INVALID_TIME/);
+  assert.match(await expectError(asUser(db, wk, `select * from clock_in($1,$2,null,10.5,106.7,12)`, [id(1), org])), /DISABLED/);
+  assert.match(await expectError(asUser(db, wk, `select * from clock_out($1,15,10.6,106.8,20)`, [id(1)])), /DISABLED/);
+  // gửi thẳng bản ghi (cách cũ của hàng đợi offline) cũng bị chặn bởi chính sách bảo mật hàng
+  assert.match(await expectError(asUser(db, wk, `insert into attendance_records (id,worker_id,work_date,started_at,ended_at,source) values ($1,$2,current_date, now() - interval '5 hours', now() - interval '1 hour','self')`, [id(10), ww])), /row-level security/);
+  assert.equal((await db.query(`select count(*)::int n from attendance_records`)).rows[0].n, 0);
 });
 
 test('yêu cầu sửa công: người lao động đề nghị, quản lý duyệt cập nhật giờ và giữ giá trị trước/sau; kỳ khóa chặn', async () => {

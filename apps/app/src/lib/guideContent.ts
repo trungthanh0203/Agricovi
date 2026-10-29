@@ -118,7 +118,7 @@ export const GUIDES: Guide[] = [
     flow: [
       { title: 'Làm một lần đầu', tone: 'info', nodes: [{ icon: '📝', label: 'Đăng ký', step: 0 }, { icon: '🏡', label: 'Phân khu', step: 1 }, { icon: '🌾', label: 'Sản phẩm', step: 2 }, { icon: '📦', label: 'Kho và vật tư', step: 3 }, { icon: '📋', label: 'Tạo quy trình', step: 4 }] },
       { title: 'Mỗi vụ', tone: 'ok', nodes: [{ icon: '📥', label: 'Nhập kho', step: 5 }, { icon: '🌱', label: 'Tạo vụ', step: 6 }, { icon: '📈', label: 'Theo dõi vụ', step: 7 }] },
-      { title: 'Mỗi ngày', tone: 'ok', nodes: [{ icon: '⏱', label: 'Vào ca → Ghi việc → Ra ca', step: 8 }] },
+      { title: 'Mỗi ngày', tone: 'ok', nodes: [{ icon: '⏱', label: 'Chấm công → Ghi việc', step: 8 }] },
       { title: 'Khi có thu và chi', tone: 'warn', nodes: [{ icon: '🧺', label: 'Thu hoạch và bán', step: 9 }, { icon: '💳', label: 'Chi phí và công nợ', step: 10 }] },
       { title: 'Nhân sự và lương', tone: 'info', nodes: [{ icon: '👥', label: 'Nhân sự, chức vụ, trả công', step: 11 }, { icon: '💼', label: 'Chấm công, bảng lương', step: 12 }] },
       { title: 'Kết quả', tone: 'neutral', nodes: [{ icon: '📊', label: 'Báo cáo và website', step: 13 }] },
@@ -206,12 +206,12 @@ export const GUIDES: Guide[] = [
         go: { tab: 'production', section: 'cycles', label: 'Mở Vụ nuôi trồng' },
       },
       {
-        title: 'Hằng ngày: vào ca, ghi việc, ra ca',
+        title: 'Hằng ngày: chấm công, ghi việc',
         details: [
-          'Vào ca khi bắt đầu làm; app có thể nhắc công đoạn của hôm nay.',
+          'Chấm công: người làm bấm Vào ca / Ra ca ở máy chấm công của cơ sở (số điện thoại + PIN, máy chụp ảnh khi nghi ngờ). Hộ nhỏ không dùng máy thì chủ hoặc quản lý nhập ở Sản xuất → Chấm công → Hôm nay → “＋ Chấm công cho người làm” (kể cả công của chính mình).',
           'Bấm nút ＋ Ghi việc ở giữa thanh dưới: chọn vụ, loại việc, nhập "Nội dung việc" (có thể bấm micro để nói), thêm vật tư đã dùng và ảnh.',
           'Ghi sai thì vào Nhật ký việc để sửa hoặc hủy (có lịch sử). Mất mạng vẫn ghi được.',
-          'Ra ca không cần ghi việc. Người quản lý ghi việc theo quy định (một việc, một bản ghi); bấm Xong ở Quản lý vụ chỉ được khi đã ghi đủ.',
+          'Chấm công và ghi việc là hai việc riêng; Ra ca không cần ghi việc. Người quản lý ghi việc theo quy định (một việc, một bản ghi); bấm Xong ở Quản lý vụ chỉ được khi đã ghi đủ.',
         ],
         tip: 'Ghi ngay sau khi làm xong, số liệu chi phí và giá thành sẽ đúng hơn.',
         go: { tab: 'production', section: 'logs', label: 'Mở Nhật ký việc' },
@@ -248,7 +248,7 @@ export const GUIDES: Guide[] = [
       {
         title: 'Chấm công, bảng lương và chốt lương',
         details: [
-          'Sản xuất → Chấm công: người làm Vào ca / Ra ca; quản lý hoặc tổ trưởng xác nhận ca công, chấm công hộ khi cần.',
+          'Sản xuất → Chấm công: công đến từ máy chấm công (Vào ca / Ra ca bằng số điện thoại + PIN) hoặc do chủ, quản lý, tổ trưởng nhập ở “Chấm công cho người làm”; chủ hoặc quản lý xác nhận (cả hàng loạt các công hợp lệ). Không còn Vào/Ra ca bằng tài khoản đăng nhập.',
           'Báo cáo → Bảng lương: mỗi người xem lương và công của MÌNH theo tháng/quý/năm: thực nhận, giờ công, công từng ngày (giờ vào ra), lương cố định, thưởng, phạt, tạm ứng. Số "Ước tính" hiện cả khi chủ chưa chốt.',
           'Chủ (và người được cấp quyền Tiền công) chọn xem Tất cả, Phòng / Tổ hoặc Một người; lọc "Cần xử lý"; xuất CSV; chia sẻ phiếu lương một người qua Zalo.',
           'Chốt lương: xem một THÁNG, thanh "Chốt lương tháng này" ở đầu trang. Bấm Tính lương; nhập thưởng / phạt / tạm ứng ở chi tiết từng người (có lý do, tự tính lại); xử lý hết việc còn dang dở (công chờ xác nhận, ca chưa ra ca, yêu cầu sửa công, người chưa có cách trả công) thì chủ bấm Khóa kỳ. Còn việc dang dở thì chưa khóa được.',

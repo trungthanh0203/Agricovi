@@ -7,7 +7,6 @@ import { ExpiringLots } from '../components/ExpiringLots';
 import { HomeReminders } from '../components/MilestonePanels';
 import { HomeStats } from '../components/HomeStats';
 import { CycleProgressList } from '../components/CycleProgressList';
-import { ShiftButton } from '../components/ShiftButton';
 import { HomeLinks } from '../components/HomeLinks';
 import { useMyName } from '../lib/profile';
 import { WebInboxCard } from '../components/WebInboxCard';
@@ -39,7 +38,6 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
   const { workTypes, cropTypes } = useCatalog();
   if (!active) return null;
   const canManage = canManageProduction(active.roles);
-  const canClock = hasRole(active.roles, 'manager', 'worker'); // chủ/quản lý/nhân viên tự chấm công
 
   const mine = cycles.filter(
     (c) => c.owner_org_id === active.id || areas.find((a) => a.id === c.area_id)?.organization_id === active.id,
@@ -68,7 +66,6 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
         <h1>Xin chào{myName ? `, ${myName}` : ''}</h1>
         <div className="hero-top">
           <small>{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}</small>
-          {canClock && uid && <ShiftButton orgId={active.id} uid={uid} onClick={() => onGo('production', 'attendance')} />}
         </div>
       </div>
 

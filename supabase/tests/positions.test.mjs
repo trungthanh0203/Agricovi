@@ -103,7 +103,7 @@ test('chủ và nhân viên có hồ sơ lao động tự tạo để chấm cô
   const { db, owner, wk, org } = await setup();
   const w1 = (await asUser(db, owner, `select ensure_my_worker($1) id`, [org])).rows[0].id;
   assert.equal((await asUser(db, owner, `select ensure_my_worker($1) id`, [org])).rows[0].id, w1); // lặp không tạo thêm
-  await asUser(db, owner, `select * from clock_in($1,$2)`, [id(50), org]); // chủ chấm công được
+  await asUser(db, owner, `select * from record_shift($1,$2,now() - interval '5 hours', now() - interval '1 hour', 0)`, [id(50), w1]); // chủ chấm công cho chính mình được
   assert.ok((await asUser(db, wk, `select ensure_my_worker($1) id`, [org])).rows[0].id);
   const fin = await addUser(db, 9);
   await db.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['inventory_finance']::member_role[])`, [org, fin]);

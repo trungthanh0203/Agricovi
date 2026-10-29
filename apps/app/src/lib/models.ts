@@ -44,7 +44,7 @@ export const MODELS: ModelDef[] = [
   },
   {
     id: 'managed', name: 'Có người quản lý điều hành', who: 'Một quản lý có tài khoản, nhập hộ mọi dữ liệu',
-    uses: 'Như trên, thêm kho, chấm công hộ người làm, báo cáo tuần, chức vụ',
+    uses: 'Như trên, thêm kho, chấm công cho người làm, báo cáo tuần, chức vụ',
     hidden: 'vào/ra ca của từng người, tổ nhiều cấp',
     features: F({ logs: 'on', stock: 'on', partners: 'on', people: 'on', payroll: 'on', attendance: 'on', positions: 'on', weekly: 'on', web: 'on', licenses: 'on' }),
   },
