@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useAuth } from '../lib/auth';
-import { friendlyError } from '../lib/errors';
 import { countFaces, describeFace, faceDistance, loadFace } from '../lib/face';
-import { kioskCheck, kioskFaceCheck, kioskPunch, kioskSetPin, verifyOwnerToExit, type KioskInfo } from '../lib/kiosk';
+import { kioskCheck, kioskCycles, kioskFaceCheck, kioskPunch, kioskSetPin, type KioskCycle, type KioskInfo } from '../lib/kiosk';
 
 type Step = 'login' | 'setpin' | 'enroll' | 'punch' | 'done';
 type FaceApi = typeof import('@vladmandic/face-api');
 type ModelState = 'loading' | 'ready' | 'failed';
-interface Who { name: string; state: 'in' | 'out'; since: string | null; stale: boolean }
+interface Who { name: string; state: 'in' | 'out'; since: string | null; stale: boolean; isOwner: boolean; cycleName: string | null; lastCycle: string | null }
+const GENERAL = 'general'; // “Việc chung”: không thuộc vụ nào
 interface Shot { photo: string; descriptor: number[] | null }
 
 const hhmm = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '');
@@ -120,6 +120,8 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
   const [who, setWho] = useState<Who | null>(null);
   const [punchId, setPunchId] = useState('');
   const [tries, setTries] = useState(1);
+  const [cycles, setCycles] = useState<KioskCycle[]>([]);
+  const [cycleChoice, setCycleChoice] = useState(''); // id vụ, GENERAL, hoặc '' (chưa chọn)
   const [shots, setShots] = useState<Shot[]>([]);
   const [done, setDone] = useState<{ text: string; photo: string } | null>(null);
   const [now, setNow] = useState(() => new Date());
@@ -158,7 +160,19 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
     const r = await kioskCheck(phone, pin);
     setBusy(false);
     if (!r.ok) return setError(r.message ?? 'Có lỗi, hãy thử lại.');
-    setWho({ name: String(r.name), state: r.state as 'in' | 'out', since: (r.since as string | null) ?? null, stale: Boolean(r.stale) });
+    const w: Who = {
+      name: String(r.name), state: r.state as 'in' | 'out', since: (r.since as string | null) ?? null, stale: Boolean(r.stale),
+      isOwner: Boolean(r.is_owner), cycleName: (r.cycle_name as string | null) ?? null, lastCycle: (r.last_cycle as string | null) ?? null,
+    };
+    setWho(w);
+    setCycleChoice('');
+    if (w.state === 'out') {
+      // Vào ca: chọn vụ đang làm để tính chi phí nhân công theo vụ. Chọn sẵn vụ lần trước, hoặc vụ duy nhất.
+      const list = await kioskCycles();
+      setCycles(list);
+      const prev = list.find((c) => c.id === w.lastCycle);
+      setCycleChoice(prev ? prev.id : list.length === 1 && list[0] ? list[0].id : list.length === 0 ? GENERAL : '');
+    }
     setPunchId(crypto.randomUUID());
     setTries(1);
     setDone(null);
@@ -226,7 +240,7 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
       }
     }
     const action = who.state === 'in' ? 'out' : 'in';
-    const r = await kioskPunch(phone, pin, action, punchId, s.photo, cam.faces === null ? null : cam.faces === 1, s.descriptor, tries);
+    const r = await kioskPunch(phone, pin, action, punchId, s.photo, cam.faces === null ? null : cam.faces === 1, s.descriptor, tries, action === 'in' && cycleChoice !== GENERAL ? cycleChoice || null : null);
     setBusy(false);
     if (!r.ok) {
       // PIN hoặc trạng thái đã đổi: quay về màn đầu để nhập lại
@@ -248,7 +262,8 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
       : cam.faces === 0 ? 'Hãy đưa khuôn mặt vào khung.'
         : cam.faces > 1 ? 'Chỉ một người đứng trước camera.' : null;
   // Mô hình đang tải thì chờ; tải lỗi thì vẫn chấm công được (không kiểm khuôn mặt, chủ xem ảnh bằng mắt)
-  const canShoot = cam.ready && !busy && model.state !== 'loading' && (cam.faces === null || cam.faces === 1);
+  const needCycle = who?.state === 'out' && cycleChoice === '';
+  const canShoot = cam.ready && !busy && !needCycle && model.state !== 'loading' && (cam.faces === null || cam.faces === 1);
 
   const camera = (
     <>
@@ -343,6 +358,16 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
               {who.stale ? `Ca hôm trước (vào lúc ${hhmm(who.since)}) chưa kết thúc. Bấm Ra ca để đóng; chủ cơ sở sẽ xem lại giờ.` : `Bạn vào ca lúc ${hhmm(who.since)}.`}
             </p>
           )}
+          {who.state === 'in' && who.cycleName && <p className="muted">Đang làm cho: <strong>{who.cycleName}</strong></p>}
+          {who.state === 'out' && cycles.length > 0 && (
+            <fieldset className="kiosk-cycles">
+              <legend>Hôm nay bạn làm cho vụ nào?</legend>
+              {cycles.map((c) => (
+                <label key={c.id} className="check"><input type="radio" name="cycle" checked={cycleChoice === c.id} onChange={() => setCycleChoice(c.id)} />{c.name}</label>
+              ))}
+              <label className="check"><input type="radio" name="cycle" checked={cycleChoice === GENERAL} onChange={() => setCycleChoice(GENERAL)} />Việc chung (không thuộc vụ nào)</label>
+            </fieldset>
+          )}
           {camera}
           {error && <p className="msg error" role="alert">{error}</p>}
           {/* Chỉ một nút, theo trạng thái thật của người này */}
@@ -350,6 +375,11 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
             {busy ? 'Đang ghi…' : who.state === 'in' ? 'RA CA' : 'VÀO CA'}
           </button>
           <button className="link" onClick={reset}>Hủy</button>
+          {who.isOwner && (
+            <button className="secondary kiosk-leave" disabled={busy} onClick={() => {
+              if (window.confirm('Thoát chế độ máy chấm công trên điện thoại này? Muốn dùng lại phải liên kết lại từ tài khoản chủ.')) void signOut();
+            }}>Thoát chế độ máy chấm công (chủ cơ sở)</button>
+          )}
         </>
       )}
 
@@ -362,39 +392,6 @@ export function KioskScreen({ info }: { info: KioskInfo }) {
         </>
       )}
 
-      <ExitKiosk orgId={info.organization_id} onExit={() => void signOut()} />
     </main>
-  );
-}
-
-function ExitKiosk({ orgId, onExit }: { orgId: string; onExit: () => void }) {
-  const [id, setId] = useState('');
-  const [pw, setPw] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await verifyOwnerToExit(id, pw, orgId);
-      onExit();
-    } catch (err) {
-      setError(friendlyError(err));
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <details className="kiosk-exit">
-      <summary>Thoát chế độ máy chấm công (chỉ chủ cơ sở)</summary>
-      <form onSubmit={submit} noValidate className="inline-form">
-        <label>Email hoặc số điện thoại của chủ<input autoComplete="off" value={id} onChange={(e) => setId(e.target.value)} /></label>
-        <label>Mật khẩu<input type="password" autoComplete="off" value={pw} onChange={(e) => setPw(e.target.value)} /></label>
-        {error && <p className="msg error" role="alert">{error}</p>}
-        <button type="submit" className="secondary" disabled={busy}>{busy ? 'Đang kiểm tra…' : 'Thoát'}</button>
-      </form>
-    </details>
   );
 }

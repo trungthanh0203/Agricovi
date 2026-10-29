@@ -41,7 +41,7 @@ test('luồng đầy đủ: cấp mã, đặt PIN, chỉ hiện đúng một nú
 
   assert.equal((await check('0912345678', '2468')).code, 'NO_PIN');
   assert.equal((await setPin(w1, '0912345678', '2468')).ok, true);
-  assert.deepEqual({ ...(await check('0912345678', '2468')), since: null, name: 'x' }, { ok: true, name: 'x', state: 'out', since: null, stale: false });
+  assert.deepEqual({ ...(await check('0912345678', '2468')), since: null, name: 'x' }, { ok: true, name: 'x', state: 'out', since: null, stale: false, cycle_name: null, is_owner: false, last_cycle: null });
 
   assert.equal((await punch('0912345678', '2468', 'out')).code, 'NOT_IN');           // chưa vào ca thì không Ra ca
   const r1 = await punch('0912345678', '2468', 'in');

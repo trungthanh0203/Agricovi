@@ -20,7 +20,7 @@ async function ok<T>(p: PromiseLike<{ data: T; error: { message: string } | null
   return data;
 }
 
-export interface WorkerLite { id: string; full_name: string; user_id: string | null; work_mode: string | null; status: string }
+export interface WorkerLite { id: string; full_name: string; user_id: string | null; work_mode: string | null; status: string; phone?: string | null }
 export interface AttendanceRow {
   id: string; worker_id: string; work_date: string; started_at: string; ended_at: string | null; break_minutes: number;
   declared_minutes: number | null; approved_minutes: number | null; status: 'open' | 'needs_confirmation' | 'confirmed' | 'rejected';
@@ -66,7 +66,7 @@ export async function ensureMyWorker(orgId: string): Promise<string> {
 
 // ------------------------------------------------------------------ hồ sơ lao động
 export async function listWorkers(orgId: string): Promise<WorkerLite[]> {
-  const rows = await ok(client().from('worker_profiles').select('id, full_name, user_id, work_mode, status').eq('organization_id', orgId).order('full_name'));
+  const rows = await ok(client().from('worker_profiles').select('id, full_name, user_id, work_mode, status, phone').eq('organization_id', orgId).order('full_name'));
   return (rows ?? []) as WorkerLite[];
 }
 

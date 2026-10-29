@@ -4,7 +4,7 @@ import { addDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal } from '../lib/hooks';
 import {
-  FLAG_LABEL, SOFT_FLAGS, deleteWorkerFace, issuePinCode, linkThisDeviceAsKiosk, listFaceRefPhotos, listKiosks, listPhotoReview, listPinStatus, revokeKiosk,
+  FLAG_LABEL, SOFT_FLAGS, deleteWorkerFace, issuePinCode, linkThisDeviceAsKiosk, setWorkerPhone, listFaceRefPhotos, listKiosks, listPhotoReview, listPinStatus, revokeKiosk,
   type KioskRow, type PhotoReviewRow, type PinStatus,
 } from '../lib/kiosk';
 import { useOrgs } from '../lib/orgs';
@@ -18,7 +18,7 @@ const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: 
  * Máy chấm công (D111) cho chủ/quản lý: liên kết điện thoại cố định ở phân khu, cấp mã đặt PIN cho người làm, xem ảnh chấm công.
  * Chủ liên kết/ngừng máy; quản lý được cấp mã và xem ảnh. Cần mạng.
  */
-export function KioskAdmin({ workers }: { workers: WorkerLite[] }) {
+export function KioskAdmin({ workers, onChanged }: { workers: WorkerLite[]; onChanged?: () => void }) {
   const { active } = useOrgs();
   const orgId = active?.id;
   const isOwner = hasRole(active?.roles, 'owner');
@@ -31,6 +31,7 @@ export function KioskAdmin({ workers }: { workers: WorkerLite[] }) {
   const [name, setName] = useState('');
   const [areaId, setAreaId] = useState('');
   const [consent, setConsent] = useState(false);
+  const [phones, setPhones] = useState<Record<string, string>>({}); // số điện thoại đang nhập cho người chưa có
 
   const load = useCallback(async () => {
     if (!orgId || !navigator.onLine) return;
@@ -72,6 +73,12 @@ export function KioskAdmin({ workers }: { workers: WorkerLite[] }) {
       setCodes((cur) => ({ ...cur, [w.id]: c }));
       await load();
     } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+  }
+
+  async function savePhone(w: WorkerLite) {
+    if (busy) return;
+    setBusy(true); setError(null);
+    try { await setWorkerPhone(w.id, phones[w.id] ?? ''); onChanged?.(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
 
   async function dropFace(w: WorkerLite) {
@@ -128,12 +135,20 @@ export function KioskAdmin({ workers }: { workers: WorkerLite[] }) {
               const code = codes[w.id];
               return (
                 <tr key={w.id}>
-                  <td>{w.full_name}</td>
+                  <td>
+                    {w.full_name}
+                    {w.phone ? <span className="sub">{w.phone}</span> : (
+                      <span className="sub">
+                        <input inputMode="tel" placeholder="Nhập số điện thoại" value={phones[w.id] ?? ''} onChange={(e) => setPhones((cur) => ({ ...cur, [w.id]: e.target.value }))} />
+                        <button className="secondary" disabled={busy} onClick={() => void savePhone(w)}>Lưu số</button>
+                      </span>
+                    )}
+                  </td>
                   <td>
                     {code ? <strong>Mã: {code}</strong> : p?.is_locked ? 'Đang bị khóa' : p?.code_pending ? 'Chờ đặt PIN' : p?.has_pin ? (p.has_face ? 'Đã có PIN + khuôn mặt' : 'Đã có PIN, chưa có khuôn mặt') : 'Chưa có PIN'}
                   </td>
                   <td>
-                    <button className="secondary" disabled={busy} onClick={() => void giveCode(w)}>Cấp mã</button>
+                    <button className="secondary" disabled={busy || !w.phone} onClick={() => void giveCode(w)}>Cấp mã</button>
                     {p?.has_face && <button className="link" disabled={busy} onClick={() => void dropFace(w)}>Xóa khuôn mặt</button>}
                   </td>
                 </tr>

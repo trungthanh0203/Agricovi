@@ -1,5 +1,5 @@
 import { callFunction } from './staff';
-import { createIsolatedClient, supabase } from './supabase';
+import { supabase } from './supabase';
 
 /**
  * Máy chấm công (D111): một điện thoại cố định ở phân khu, đăng nhập bằng TÀI KHOẢN THIẾT BỊ (không có vai trò trong cơ sở).
@@ -47,35 +47,21 @@ async function call(fn: string, args: Record<string, unknown>): Promise<KioskRep
 }
 
 export const kioskCheck = (phone: string, pin: string) => call('kiosk_check', { p_phone: phone, p_pin: pin });
-export const kioskPunch = (phone: string, pin: string, action: 'in' | 'out', id: string, photo: string, faceOk: boolean | null, descriptor: number[] | null = null, attempts = 1) =>
-  call('kiosk_punch', { p_phone: phone, p_pin: pin, p_action: action, p_id: id, p_photo: photo, p_face_ok: faceOk, p_descriptor: descriptor, p_attempts: attempts });
+export const kioskPunch = (phone: string, pin: string, action: 'in' | 'out', id: string, photo: string, faceOk: boolean | null, descriptor: number[] | null = null, attempts = 1, cycleId: string | null = null) =>
+  call('kiosk_punch', { p_phone: phone, p_pin: pin, p_action: action, p_id: id, p_photo: photo, p_face_ok: faceOk, p_descriptor: descriptor, p_attempts: attempts, p_cycle: cycleId });
+
+export interface KioskCycle { id: string; name: string; in_area: boolean }
+/** Các vụ chọn được khi Vào ca ở máy này (để tính chi phí nhân công theo vụ) */
+export async function kioskCycles(): Promise<KioskCycle[]> {
+  const { data, error } = await client().rpc('kiosk_cycles');
+  if (error) return [];
+  return (data ?? []) as KioskCycle[];
+}
 /** Mức khớp khuôn mặt (match | maybe | mismatch | no_ref | none), không ghi gì: để máy cho chụp lại khi không khớp */
 export const kioskFaceCheck = (phone: string, pin: string, descriptor: number[]) => call('kiosk_face_check', { p_phone: phone, p_pin: pin, p_descriptor: descriptor });
 /** Đặt PIN; kèm khuôn mặt (1–3 dấu vân + ảnh mẫu) thì cần người làm đã đồng ý */
 export const kioskSetPin = (phone: string, code: string, pin: string, face?: { descriptors: number[][]; photo: string }) =>
   call('kiosk_set_pin', { p_phone: phone, p_code: code, p_new_pin: pin, p_descriptors: face?.descriptors ?? null, p_photo: face?.photo ?? null, p_consent: Boolean(face) });
-
-/** Thoát chế độ máy chấm công: phải đăng nhập lại bằng tài khoản CHỦ cơ sở. Kiểm tra bằng máy khách riêng để không đổi phiên của máy. */
-export async function verifyOwnerToExit(identifier: string, password: string, orgId: string): Promise<void> {
-  const tmp = createIsolatedClient();
-  if (!tmp) throw new Error('Supabase chưa được cấu hình');
-  let email = identifier.trim();
-  if (!email.includes('@')) {
-    const { data, error } = await tmp.rpc('login_email_for_phone', { p_phone: email });
-    if (error) throw error;
-    if (!data) throw new Error('INVALID_PHONE: Số điện thoại chưa đúng.');
-    email = data as string;
-  }
-  const { error } = await tmp.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  try {
-    const { data, error: e2 } = await tmp.rpc('kiosk_can_exit', { p_org: orgId });
-    if (e2) throw e2;
-    if (data !== true) throw new Error('FORBIDDEN: Chỉ chủ cơ sở được thoát chế độ máy chấm công.');
-  } finally {
-    await tmp.auth.signOut().catch(() => undefined);
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Phía chủ / quản lý
@@ -149,3 +135,9 @@ export const FLAG_LABEL: Record<string, string> = {
   fast_pair: 'Hai người bấm sát nhau',
   forgot_out: 'Quên Ra ca hôm trước',
 };
+
+export async function setWorkerPhone(workerId: string, phone: string): Promise<string> {
+  const { data, error } = await client().rpc('set_worker_phone', { p_worker: workerId, p_phone: phone });
+  if (error) throw new Error(error.message);
+  return data as string;
+}

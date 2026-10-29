@@ -156,7 +156,7 @@ export function AttendanceSection({ onOpenCycle, onLogFor }: { onOpenCycle?: (id
 
       {canRecordFor.length > 0 && <AttendanceOverview orgId={active.id} workers={workers} att={att} isAdmin={isAdmin} />}
 
-      {isAdmin && <KioskAdmin workers={workers} />}
+      {isAdmin && <KioskAdmin workers={workers} onChanged={() => void load()} />}
 
       <h2 className="sect">Công gần đây ({recent.length})</h2>
       <table className="grid">
