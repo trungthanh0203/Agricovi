@@ -13,7 +13,7 @@ import { PartnersSection } from '../components/PartnersSection';
 import { CropsSection } from '../components/CropsSection';
 import { TemplatesSection } from '../components/TemplatesSection';
 import { WorkTypesSection } from '../components/WorkTypesSection';
-import { pickSection, SECTION_ICONS } from '../components/SubTabs';
+import { IconGlyph, pickSection, SECTION_ICONS } from '../components/SubTabs';
 import { useOrgs } from '../lib/orgs';
 import { declareGroups, declareSections, type DeclareSection } from '../lib/tabs';
 
@@ -39,7 +39,7 @@ export function DeclareTab({ section, onSection }: { section?: string; onSection
               <div className="tiles">
                 {g.items.map((x) => (
                   <button key={x.id} className="tile" onClick={() => onSection(x.id)}>
-                    <span className="tile-ico" aria-hidden>{SECTION_ICONS[x.id] ?? '•'}</span>
+                    <span className="tile-ico" aria-hidden><IconGlyph icon={SECTION_ICONS[x.id] ?? '•'} /></span>
                     <span className="tile-label">{x.label}</span>
                   </button>
                 ))}
@@ -51,7 +51,7 @@ export function DeclareTab({ section, onSection }: { section?: string; onSection
       {current !== null && groups.length > 0 && (
         <div className="menubar">
           {groups.length > 1 && <button className="menu-back" onClick={() => onSection('' as DeclareSection)} aria-label="Quay lại menu Khai báo">‹ Menu</button>}
-          <strong className="menu-cur">{SECTION_ICONS[current] ?? ''} {items.find((x) => x.id === current)?.label}</strong>
+          <strong className="menu-cur"><IconGlyph icon={SECTION_ICONS[current] ?? ''} /> {items.find((x) => x.id === current)?.label}</strong>
         </div>
       )}
       {current === 'materials' || current === 'places' ? (

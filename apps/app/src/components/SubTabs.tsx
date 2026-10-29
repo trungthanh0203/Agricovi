@@ -1,10 +1,18 @@
 import type { Section } from '../lib/tabs';
 
+/** Biểu tượng riêng của Hồ sơ web (ảnh do chủ sản phẩm chọn, đặt ở public/icons) */
+export const HO_SO_WEB_ICON = `${import.meta.env.BASE_URL}icons/ho-so-web.png`;
+
+/** Biểu tượng là chữ emoji hoặc đường dẫn ảnh (bắt đầu bằng /) */
+export function IconGlyph({ icon }: { icon: string }) {
+  return icon.startsWith('/') ? <img className="icon-img" src={icon} alt="" aria-hidden /> : <>{icon}</>;
+}
+
 /** Biểu tượng cho từng mục */
 export const SECTION_ICONS: Record<string, string> = {
   cycles: '🌱', logs: '📒', harvest: '🧺', stock: '📦', attendance: '⏱',
   areas: '🏡', partners: '🚚', customers: '🛒', website: '📬', payables: '💳', crops: '🌾', worktypes: '🧰', templates: '📋', materials: '🧪', places: '🏬',
-  commerce: '👤', kiosks: '📲', members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
+  commerce: HO_SO_WEB_ICON, kiosks: '📲', members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
   intro: '📖', household: '🌾', company: '🏢',
   expense: '💸', sales: '💰', summary: '📊', weekly: '🗓️', paybook: '💼', custom: '🔎', licenses: '📜', logbook: '📔', checklist: '✅',
 };
@@ -27,7 +35,7 @@ export function SubTabs<Id extends string>({ items, value, onChange, onBack, lab
       <nav className="tiles" aria-label={label}>
         {items.map((x) => (
           <button key={x.id} className="tile" onClick={() => onChange(x.id)}>
-            <span className="tile-ico" aria-hidden>{SECTION_ICONS[x.id] ?? '•'}</span>
+            <span className="tile-ico" aria-hidden><IconGlyph icon={SECTION_ICONS[x.id] ?? '•'} /></span>
             <span className="tile-label">{x.label}</span>
           </button>
         ))}
@@ -38,7 +46,7 @@ export function SubTabs<Id extends string>({ items, value, onChange, onBack, lab
   return (
     <div className="menubar">
       <button className="menu-back" onClick={onBack} aria-label={`Quay lại menu ${label}`}>‹ Menu</button>
-      <strong className="menu-cur">{SECTION_ICONS[value] ?? ''} {cur?.label}</strong>
+      <strong className="menu-cur"><IconGlyph icon={SECTION_ICONS[value] ?? ''} /> {cur?.label}</strong>
     </div>
   );
 }

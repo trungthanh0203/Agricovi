@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { SECTION_ICONS } from './SubTabs';
+import { HO_SO_WEB_ICON, IconGlyph, SECTION_ICONS } from './SubTabs';
 import { canSeeConfig, declareSections, productionSections, reportSections, type TabId } from '../lib/tabs';
 import { hasRole } from '../lib/roles';
 import type { MyOrg } from '../lib/orgs';
@@ -28,7 +28,7 @@ export function HomeLinks({ org, onGo }: { org: MyOrg; onGo: (tab: TabId, sectio
     if (declareSections(org).length > 0) out.push({ key: 'declare', label: 'Khai báo', icon: '🧰', tab: 'declare' });
     out.push({ key: 'production', label: 'Sản xuất', icon: '🌱', tab: 'production' });
     if (reportSections(org).length > 0) out.push({ key: 'reports', label: 'Báo cáo', icon: '📊', tab: 'reports' });
-    if (reportSections(org).some((s) => s.id === 'commerce')) out.push({ key: 'web', label: 'Hồ sơ web', icon: '👤', tab: 'reports', section: 'commerce' });
+    if (reportSections(org).some((s) => s.id === 'commerce')) out.push({ key: 'web', label: 'Hồ sơ web', icon: HO_SO_WEB_ICON, tab: 'reports', section: 'commerce' });
     out.push({ key: 'site', label: 'Website', icon: '🌐', href: SITE_URL });
     return out.slice(0, POS.length);
   }, [org]);
@@ -48,7 +48,7 @@ export function HomeLinks({ org, onGo }: { org: MyOrg; onGo: (tab: TabId, sectio
         <div className="tiles">
           {shortcuts.map((x) => (
             <button key={x.id} className="tile" onClick={() => onGo(x.tab, x.id)}>
-              <span className="tile-ico" aria-hidden>{SECTION_ICONS[x.id] ?? '•'}</span>
+              <span className="tile-ico" aria-hidden><IconGlyph icon={SECTION_ICONS[x.id] ?? '•'} /></span>
               <span className="tile-label">{x.label}</span>
             </button>
           ))}
@@ -62,7 +62,7 @@ export function HomeLinks({ org, onGo }: { org: MyOrg; onGo: (tab: TabId, sectio
       <p className="flow-title">Quản lý và kết nối cơ sở theo luồng công việc:</p>
       <nav className="flow" aria-label="Luồng công việc">
         {steps.map((s, i) => {
-          const inner = (<><span className="flow-circle" aria-hidden>{s.icon}</span><span className="flow-label">{s.label}</span></>);
+          const inner = (<><span className="flow-circle" aria-hidden><IconGlyph icon={s.icon} /></span><span className="flow-label">{s.label}</span></>);
           const style = { gridRow: POS[i]!.r, gridColumn: POS[i]!.c };
           return s.href
             ? <a key={s.key} className="flow-step" style={style} href={s.href} target="_blank" rel="noopener noreferrer">{inner}</a>
