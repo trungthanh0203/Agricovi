@@ -17,8 +17,8 @@ export interface HelpEntry {
   guide?: { id: GuideId; step: number };
 }
 
-/** Trang chủ của tab (menu các chức năng): 'tab-production', 'tab-declare', 'tab-reports' */
-export type TabHelpKey = 'tab-production' | 'tab-declare' | 'tab-reports';
+/** Giới thiệu chung của một tab hoặc màn lẻ không có thanh menu: trang menu Sản xuất, Khai báo, Báo cáo, và Cấu hình, Tài khoản, Tạo vụ */
+export type TabHelpKey = 'tab-production' | 'tab-declare' | 'tab-reports' | 'tab-config' | 'tab-profile' | 'create-cycle';
 export type HelpKey = ProductionSection | DeclareSection | ReportSection | TabHelpKey;
 
 export const HELP: Record<HelpKey, HelpEntry> = {
@@ -57,6 +57,43 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     ],
     note: 'Báo cáo đúng đến đâu là do bạn ghi việc, vật tư, thu hoạch đủ đến đó.',
     guide: { id: 'crop', step: 13 },
+  },
+
+  'tab-config': {
+    title: 'Cấu hình',
+    what: 'Các danh sách mặc định của cơ sở. Đây là nơi chọn loại sản phẩm bạn thật sự làm; những chỗ cần chọn trong app sẽ lấy danh sách từ đây.',
+    how: [
+      'Nhóm loại sản phẩm: tích cột "Sử dụng" cho loại bạn làm (Cây trồng, Vật nuôi, Thủy sản). Việc, mẫu, vật tư của loại khác sẽ tự ẩn.',
+      'Tạo quy trình: chọn dùng công đoạn hay chỉ một danh sách việc.',
+      'Nhóm vật tư, nhóm chi phí, loại khách hàng, kiểu nhà/chuồng: đã có sẵn, chỉ sửa khi muốn gọi tên khác.',
+    ],
+    note: 'Chưa chắc thì để mặc định. Đổi lúc nào cũng được, dữ liệu đã ghi không mất.',
+    guide: { id: 'declare', step: 1 },
+  },
+  'tab-profile': {
+    title: 'Tài khoản',
+    what: 'Thông tin của bạn và của cơ sở đang chọn: tên, mật khẩu, quyền của bạn và gói dịch vụ.',
+    how: [
+      'Đổi tên hiển thị và đổi mật khẩu.',
+      '"Tôi được làm gì": xem vai trò và quyền của bạn ở cơ sở này.',
+      '"Công việc của tôi": tổ và phân khu bạn được giao.',
+      '"Gói dịch vụ": gói đang dùng và số vụ tối đa chạy cùng lúc.',
+      '"Mã QR tài khoản": thông tin tài khoản và cơ sở để chia sẻ.',
+    ],
+    note: 'Lời mời vào cơ sở khác (nếu có) hiện ở đầu trang này.',
+    guide: { id: 'intro', step: 13 },
+  },
+  'create-cycle': {
+    title: 'Tạo vụ mới',
+    what: 'Mở một vụ nuôi trồng mới: chọn sản phẩm, quy trình, phân khu và ngày bắt đầu. App tự lập lịch các công đoạn cho vụ.',
+    how: [
+      'Chọn Sản phẩm, quy trình và Phân khu (app cảnh báo nếu phân khu khác loại).',
+      'Chọn ngày bắt đầu, hoặc "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước.',
+      'Nên nhập thêm giống, diện tích, số cây hoặc số con, sản lượng và ngân sách dự kiến để app so kế hoạch với thực tế.',
+      'Tạo xong, chọn cách quản lý vụ (5 kiểu); đổi lại được sau.',
+    ],
+    note: 'Số vụ chạy cùng lúc bị giới hạn theo gói dịch vụ.',
+    guide: { id: 'crop', step: 7 },
   },
 
   // ---- Sản xuất ----

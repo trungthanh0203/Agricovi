@@ -20,6 +20,7 @@ import { CycleWord } from '../components/CycleWord';
 
 import type { LogPreset } from './CycleDetailScreen';
 import { supabase } from '../lib/supabase';
+import { HelpButton } from '../components/HelpButton';
 
 /** Ngày (YYYY-MM-DD, giờ máy) cách hôm nay `back` ngày */
 const dayAgo = (back: number) => { const d = new Date(); d.setDate(d.getDate() - back); return toLocalInput(d).slice(0, 10); };
@@ -255,8 +256,9 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
         <div className="row">
           <h1 className="grow">Ghi việc: {workType.name}</h1>
           <button type="button" className="link inline" onClick={() => { setWorkTypeId(null); setStageSel(undefined); }}>Đổi việc</button>
+          <HelpButton topic="log" />
         </div>
-      ) : <h1>Ghi việc vừa làm</h1>}
+      ) : <div className="row"><h1 className="grow">Ghi việc vừa làm</h1><HelpButton topic="log" /></div>}
 
       {options.length === 0 && siteAreas.length === 0 ? (
         <>

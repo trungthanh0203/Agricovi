@@ -8,6 +8,7 @@ import {
 } from '../lib/config';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
+import { HelpButton } from '../components/HelpButton';
 
 /**
  * Tab Cấu hình. Hai kiểu cấu hình (xem lib/config.ts):
@@ -18,7 +19,7 @@ export function ConfigTab() {
   const cfg = useConfig();
   return (
     <section>
-      <h1>Cấu hình</h1>
+      <div className="row"><h1 className="grow">Cấu hình</h1><HelpButton topic="tab-config" /></div>
       <p className="muted">Các danh sách mặc định của hệ thống. Những chỗ cần chọn sẽ lấy danh sách từ đây.</p>
       {CONFIG_DEFS.map((d) => (d.mode === 'entries'
         ? <EntriesRow key={d.id} def={d} orgId={cfg.org} />

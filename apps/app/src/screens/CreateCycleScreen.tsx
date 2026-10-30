@@ -13,6 +13,7 @@ import { listTemplates, loadTemplate, stageRanges, totalDays, type StageRow, typ
 import { useTable } from '../lib/tables';
 import { useConfig } from '../lib/config';
 import type { AreaRow } from '../lib/db';
+import { HelpButton } from '../components/HelpButton';
 
 /**
  * Tạo vụ mới (P2): BẮT BUỘC chọn quy trình mẫu của cơ sở sở hữu vụ. Việc và ngày kế hoạch của vụ
@@ -163,7 +164,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   return (
     <section>
       <button type="button" className="link" onClick={onCancel}>← Quay lại</button>
-      <h1>Tạo vụ mới</h1>
+      <div className="row"><h1 className="grow">Tạo vụ mới</h1><HelpButton topic="create-cycle" /></div>
       <p className="muted">Cơ sở: {active.name}</p>
 
       {myAreas.length === 0 ? (

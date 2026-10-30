@@ -15,6 +15,7 @@ import { changeMyPassword, fetchDisplayName, fetchMyWork, renameOrg, saveDisplay
 import { buildAccountQr } from '../lib/qr';
 import { isOwner, roleSummary } from '../lib/roles';
 import { fetchStaffStatus, WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
+import { HelpButton } from '../components/HelpButton';
 
 /**
  * Tab Tài khoản (D40, D50): mọi phần đều THU GỌN được — tài khoản (tên hiển thị, đổi mật khẩu), "Tôi được làm gì", công việc,
@@ -50,7 +51,7 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
 
   return (
     <section>
-      <h1>Tài khoản</h1>
+      <div className="row"><h1 className="grow">Tài khoản</h1><HelpButton topic="tab-profile" /></div>
 
       <InvitationsPanel />
 
