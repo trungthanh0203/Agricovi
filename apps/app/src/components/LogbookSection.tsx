@@ -12,7 +12,7 @@ import { dataForBook, logbookSetFor, type LogbookData } from '../lib/logbook';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { useTable } from '../lib/tables';
-import { areaPath } from '../lib/areas';
+import { areaPath, areaName } from '../lib/areas';
 import { cycleTitle } from '../lib/cycles';
 
 /**
@@ -75,7 +75,7 @@ export function LogbookSection() {
       <div className="no-print">
         <label>Vụ
           <select value={cycle?.id ?? ''} onChange={(e) => { setCycleId(e.target.value); setBookId(''); setData(null); }}>
-            {mine.map((c) => <option key={c.id} value={c.id}>{cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')}{c.code ? ` (${c.code})` : ''} · {(areaPath(c.area_id, areas) || '')}</option>)}
+            {mine.map((c) => <option key={c.id} value={c.id}>{cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')}{c.code ? ` (${c.code})` : ''} · {areaName(c.area_id, areas)}</option>)}
           </select>
         </label>
         <div className="pair">

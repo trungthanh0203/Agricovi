@@ -2,9 +2,11 @@ import { cycleProgress } from '../lib/cycles';
 import { fmtDate } from '../lib/dates';
 import { todayLocal } from '../lib/hooks';
 import { useTable } from '../lib/tables';
+import { useCycleTitle } from '../lib/useCycleTitle';
 
 /** Tiến độ các vụ đang sản xuất (thanh phần trăm theo việc của quy trình mẫu), đặt ở đầu Trang chủ */
 export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<string>; onOpenCycle: (id: string) => void }) {
+  const titleOf = useCycleTitle();
   const cycles = useTable('cycles');
   const stages = useTable('stages');
   const today = todayLocal();
@@ -18,7 +20,7 @@ export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<str
       {progress.map(({ c, p }) => (
         <div className="card slim" key={c.id}>
           <div className="row">
-            <strong className="grow">{c.name || c.template_name || 'Vụ'}</strong>
+            <strong className="grow">{titleOf(c)}</strong>
             <button className="secondary mini" onClick={() => onOpenCycle(c.id)}>Quản lý vụ</button>
           </div>
           {p.total > 0 ? (

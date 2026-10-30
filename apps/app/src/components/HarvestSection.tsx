@@ -22,7 +22,7 @@ import { canPerm } from '../lib/permissions';
 import { canManageProduction } from '../lib/roles';
 import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
-import { areaPath } from '../lib/areas';
+import { areaPath, areaName } from '../lib/areas';
 import { cycleTitle } from '../lib/cycles';
 
 const OWN_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // khớp chính sách harvest_update_own ở máy chủ
@@ -61,7 +61,7 @@ export function HarvestSection() {
   const cycleLabel = (id: string | null) => {
     const c = cycles.find((x) => x.id === id);
     if (!c) return '';
-    return `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')} · ${(areaPath(c.area_id, areas) || '')}`;
+    return `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')} · ${areaName(c.area_id, areas)}`;
   };
 
   const list = useMemo(

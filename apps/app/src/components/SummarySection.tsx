@@ -15,7 +15,7 @@ import { buildSummaryCsv, canCompare, summaryNotes, vnNumber, type CycleSummary 
 import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
 import { AreaRollup } from './AreaRollup';
-import { areaPath } from '../lib/areas';
+import { areaPath, areaName } from '../lib/areas';
 import { cycleTitle } from '../lib/cycles';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
@@ -39,7 +39,7 @@ export function SummarySection() {
   const label = useCallback((id: string) => {
     const c = cycles.find((x) => x.id === id);
     if (!c) return '';
-    return `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')} · ${(areaPath(c.area_id, areas) || '')}`;
+    return `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')} · ${areaName(c.area_id, areas)}`;
   }, [cycles, areas, cropTypes]);
 
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();

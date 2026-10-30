@@ -42,7 +42,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const areas = useTable('areas');
   const allLogs = useTable('logs'); // để cảnh báo ghi trùng
 
-  const areaName = (id: string) => areaPath(id, areas) || '—';
+  const areaName = (id: string) => areas.find((a) => a.id === id)?.name ?? '—'; // nhãn vụ: Tên vụ · tên ô
   const cropName = (id: string) => cropTypes.find((c) => c.id === id)?.name ?? '—';
 
   const options = useMemo(

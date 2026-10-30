@@ -14,7 +14,7 @@ import { summarizeFields } from '../lib/fieldsLogic';
 import { fieldAlerts } from '../lib/fieldAlerts';
 import { useTable } from '../lib/tables';
 import { CycleWord } from '../components/CycleWord';
-import { areaPath } from '../lib/areas';
+import { areaPath, areaName } from '../lib/areas';
 import { cycleTitle } from '../lib/cycles';
 
 const PAGE = 30;
@@ -62,7 +62,7 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
   const cycleLabel = (id: string | null, areaId?: string | null) => {
     const c = cycles.find((x) => x.id === id);
     if (!c) return areaPath(areaId, areas) ? `Khu vực · ${areaPath(areaId, areas)}` : '';
-    return `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')} · ${areaPath(c.area_id, areas)}`;
+    return `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')} · ${areaName(c.area_id, areas)}`;
   };
 
   const filtered = useMemo(() => {

@@ -37,6 +37,9 @@ export function areaPath(areaId: string | null | undefined, areas: AreaRow[]): s
   return p ? `${p.name} › ${a.name}` : a.name;
 }
 
+/** Tên riêng của khu/ô (không kèm phân khu cha): dùng trong nhãn vụ "Tên vụ · tên ô" */
+export const areaName = (areaId: string | null | undefined, areas: AreaRow[]): string => areas.find((x) => x.id === areaId)?.name ?? '';
+
 /** Diện tích hiển thị của phân khu: có ô sản xuất thì cộng diện tích các ô (đổi ha sang m² để cộng), nếu không thì diện tích của chính nó */
 export function areaSizeM2(a: AreaRow, areas: AreaRow[]): number | null {
   const toM2 = (x: AreaRow) => (x.area_size == null ? 0 : x.area_unit === 'ha' ? x.area_size * 10000 : x.area_size);
