@@ -66,6 +66,7 @@ export const HELP: Record<HelpKey, HelpEntry> = {
       'Nhóm loại sản phẩm: tích cột "Sử dụng" cho loại bạn làm (Cây trồng, Vật nuôi, Thủy sản). Việc, mẫu, vật tư của loại khác sẽ tự ẩn.',
       'Tạo quy trình: chọn dùng công đoạn hay chỉ một danh sách việc.',
       'Nhóm vật tư, nhóm chi phí, loại khách hàng, kiểu nhà/chuồng: đã có sẵn, chỉ sửa khi muốn gọi tên khác.',
+      'Chỗ ươm: chọn khu ươm riêng trong khu trồng hoặc vườn ươm riêng để vụ sau được ươm trước khi vụ trước xong (ươm gối vụ).',
     ],
     note: 'Chưa chắc thì để mặc định. Đổi lúc nào cũng được, dữ liệu đã ghi không mất.',
     guide: { id: 'declare', step: 1 },
@@ -91,8 +92,9 @@ export const HELP: Record<HelpKey, HelpEntry> = {
       'Chọn ngày bắt đầu, hoặc "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước.',
       'Nên nhập thêm giống, diện tích, số cây hoặc số con, sản lượng và ngân sách dự kiến để app so kế hoạch với thực tế.',
       'Tạo xong, chọn cách quản lý vụ (5 kiểu); đổi lại được sau.',
+      'Phân khu đang có vụ khác: chọn "Nối tiếp sau vụ…"; nếu cơ sở bật Chỗ ươm (Cấu hình) thì tích "Ươm trước khi vụ kia xong" để ghi việc ươm khi vụ còn Chuẩn bị.',
     ],
-    note: 'Số vụ chạy cùng lúc bị giới hạn theo gói dịch vụ.',
+    note: 'Số vụ chạy cùng lúc bị giới hạn theo gói dịch vụ. Vụ Chuẩn bị không tính; khi vụ trước kết thúc, app nhắc bạn bấm "Bắt đầu sản xuất".',
     guide: { id: 'crop', step: 7 },
   },
 
