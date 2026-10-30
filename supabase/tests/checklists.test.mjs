@@ -107,12 +107,26 @@ test('chốt kết quả bất biến; chưa đạt vẫn chốt được; hủy
   assert.match(await expectError(asUser(db, owner, `update checklist_answers set result='fail' where audit_id=$1`, [AUD])), /permission denied/i);
 });
 
-test('bộ bảng kiểm dưa lưới dùng chung: 18 tiêu chí (11 A, 7 B), chưa đối chiếu; cơ sở lấy về được độc lập với bộ heo', async () => {
+test('bộ bảng kiểm dưa lưới dùng chung: đủ 25 tiêu chí loại A chia 4 nhóm, chưa đối chiếu; bộ 18 tiêu chí cũ ngừng; cơ sở lấy về chép cả nhóm', async () => {
   const { db, owner, org } = await setup();
-  const sh = (await db.query(`select count(*)::int n, count(*) filter (where level='A')::int a, count(*) filter (where level='B')::int b from checklist_items i join checklist_templates t on t.id=i.template_id where t.code='vietgap_melon'`)).rows[0];
-  assert.deepEqual(sh, { n: 18, a: 11, b: 7 });
-  assert.equal((await db.query(`select verified_at from checklist_templates where code='vietgap_melon'`)).rows[0].verified_at, null);
-  const mel = (await asUser(db, owner, `select ensure_checklist_template($1,'vietgap_melon') id`, [org])).rows[0].id;
-  assert.equal((await asUser(db, owner, `select count(*)::int n from checklist_items where template_id=$1`, [mel])).rows[0].n, 18);
+  const sh = (await db.query(`select count(*)::int n, count(*) filter (where level='A')::int a, count(distinct section)::int g from checklist_items i join checklist_templates t on t.id=i.template_id where t.code='vietgap_melon_25'`)).rows[0];
+  assert.deepEqual(sh, { n: 25, a: 25, g: 4 });
+  const t25 = (await db.query(`select verified_at, pass_a_pct, is_active from checklist_templates where code='vietgap_melon_25'`)).rows[0];
+  assert.deepEqual([t25.verified_at, t25.pass_a_pct, t25.is_active], [null, 100, true]);
+  // bộ 18 tiêu chí cũ không còn cho lấy mới
+  assert.equal((await db.query(`select is_active from checklist_templates where code='vietgap_melon'`)).rows[0].is_active, false);
+  assert.match(await expectError(asUser(db, owner, `select ensure_checklist_template($1,'vietgap_melon')`, [org])), /NOT_FOUND/);
+  // lấy bộ mới về: chép đủ 25 tiêu chí kèm nhóm; bắt đầu đánh giá chép nhóm sang câu trả lời
+  const mel = (await asUser(db, owner, `select ensure_checklist_template($1,'vietgap_melon_25') id`, [org])).rows[0].id;
+  assert.equal((await asUser(db, owner, `select count(*)::int n from checklist_items where template_id=$1 and section is not null`, [mel])).rows[0].n, 25);
   assert.equal((await db.query(`select count(*)::int n from checklist_templates where organization_id=$1`, [org])).rows[0].n, 2); // heo (ở setup) + dưa
+  const aud = '70000000-0000-4000-8000-0000000000c1';
+  await asUser(db, owner, `select start_checklist_audit($1,$2,$3,'2026-10-01','Chủ vườn')`, [aud, org, mel]);
+  assert.equal((await db.query(`select count(*)::int n from checklist_answers where audit_id=$1 and section like 'IV.%'`, [aud])).rows[0].n, 8);
+  // 100% đạt mới đạt: một tiêu chí không đạt thì kết luận không đạt
+  const ans = (await db.query(`select id from checklist_answers where audit_id=$1 order by seq`, [aud])).rows;
+  for (let i = 0; i < ans.length; i++) await asUser(db, owner, `select save_checklist_answer($1,$2,null)`, [ans[i].id, i === 0 ? 'fail' : 'pass']);
+  assert.equal((await asUser(db, owner, `select get_checklist_summary($1) s`, [aud])).rows[0].s.verdict, 'fail');
+  await asUser(db, owner, `select save_checklist_answer($1,'pass','Đã sửa mái màng')`, [ans[0].id]);
+  assert.equal((await asUser(db, owner, `select get_checklist_summary($1) s`, [aud])).rows[0].s.verdict, 'pass');
 });
