@@ -7,13 +7,15 @@ import { defaultCountUnit } from '../lib/countUnit';
 import { restWarning } from '../lib/milestoneLogic';
 import { Collapsible } from '../components/Collapsible';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
-import { createCycle, fetchQuotaContexts, type QuotaContext } from '../lib/production';
+import { createCycle, fetchQuotaContexts, setCycleNursery, type QuotaContext } from '../lib/production';
 import { addDays, fmtDate } from '../lib/dates';
 import { listTemplates, loadTemplate, stageRanges, totalDays, type StageRow, type TemplateRow } from '../lib/templates';
 import { useTable } from '../lib/tables';
 import { useConfig } from '../lib/config';
 import type { AreaRow } from '../lib/db';
 import { HelpButton } from '../components/HelpButton';
+import { NURSERY_LOG_DAYS } from '../lib/nursery';
+import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 
 /**
  * Tạo vụ mới (P2): BẮT BUỘC chọn quy trình mẫu của cơ sở sở hữu vụ. Việc và ngày kế hoạch của vụ
@@ -42,6 +44,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const [error, setError] = useState<string | null>(null);
   const online = useOnline();
   const [busy, setBusy] = useState(false);
+  const [followsId, setFollowsId] = useState(''); // nối tiếp sau vụ nào (D124)
+  const [overlap, setOverlap] = useState(false); // ươm gối: tạo vụ Chuẩn bị và ghi việc ươm khi vụ trước còn chạy
 
   // Phân khu hợp loại với sản phẩm: cùng loại, hoặc phân khu/sản phẩm loại "Khác". Phân khu khác loại vẫn chọn được nhưng có cảnh báo.
   const baseKind = (k?: string | null) => (k === 'growing' || !k ? 'crop' : k);
@@ -114,9 +118,18 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const allCycles = useTable('cycles');
   const allStages = useTable('stages');
   // trống chuồng tối thiểu 7 ngày trước khi nhập lứa mới (cảnh báo, không chặn)
-  const rest = areaId && startDate
+  const nurseryMode = cfg.nurseryMode();
+  const sameArea = allCycles.filter((c) => c.area_id === areaId && (c.status === 'active' || c.status === 'paused' || c.status === 'preparing'));
+  const running = sameArea.filter((c) => c.status === 'active' || c.status === 'paused');
+  const canOverlap = nurseryMode !== 'same' && running.length > 0;
+  const cycleLabel = (c: { name?: string | null; crop_type_id: string }) => c.name || cropName(c.crop_type_id);
+  const restBase = areaId && startDate
     ? restWarning(areaId, startDate, 7, allCycles, (cid) => allStages.filter((s) => s.cycle_id === cid && s.actual_end).map((s) => s.actual_end as string).sort().pop() ?? null)
     : null;
+  // Cơ sở đã bật ươm gối: phân khu đang có vụ chạy không phải lỗi, mà gợi ý ươm trước (D124)
+  const rest = canOverlap && running.length > 0
+    ? `Phân khu này đang có vụ "${cycleLabel(running[0]!)}" đang chạy. Bạn có thể tạo vụ này ở trạng thái Chuẩn bị, ươm trước, rồi chuyển sang sản xuất khi vụ đó xong.`
+    : restBase;
   const ownerLabel = (c: QuotaContext) => (c.kind === 'own' ? `Hộ riêng (${c.org_name})` : `HTX ${c.org_name}`);
   const picked = templates?.find((t) => t.id === templateId) ?? null;
   const defaultUnit = defaultCountUnit(prodKind);
@@ -129,7 +142,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     if (!productId) return setError('Hãy chọn sản phẩm (cây trồng, vật nuôi…) của vụ.');
     if (!templateId) return setError('Hãy chọn quy trình mùa vụ. Vụ phải được tạo theo một quy trình.');
     // Báo sớm khi biết chắc đã hết hạn mức; máy chủ vẫn là nơi kiểm tra cuối cùng
-    if (startNow && chosen && (!chosen.is_current || (chosen.max_cycles !== null && chosen.used_cycles >= chosen.max_cycles))) {
+    if (startNow && !overlap && chosen && (!chosen.is_current || (chosen.max_cycles !== null && chosen.used_cycles >= chosen.max_cycles))) {
       return setError(
         chosen.is_current
           ? `Đã dùng ${chosen.used_cycles}/${chosen.max_cycles} vụ của gói (vụ đang sản xuất và vụ đang tạm dừng đều được tính). Hãy kết thúc hoặc hủy một vụ, nâng gói, hoặc chọn "Chưa bắt đầu" để lưu ở trạng thái Chuẩn bị.`
@@ -146,13 +159,16 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
         ownerOrgId: ownerId || active!.id,
         areaId,
         templateId,
-        status: startNow ? 'active' : 'preparing',
+        status: startNow && !overlap ? 'active' : 'preparing',
         startDate: startDate || null,
         name,
         info: cropInfoResult.info,
         targetYield: targetYield.trim() ? Number(targetYield.replace(/[.,\s]/g, '')) : null,
         budget: budget.trim() ? Number(budget.replace(/[.,\s]/g, '')) : null,
       });
+      if (followsId || overlap) {
+        try { await setCycleNursery(newId, followsId || null, overlap); } catch (err) { window.alert(`Đã tạo vụ nhưng chưa lưu được thông tin ươm gối / nối tiếp: ${friendlyError(err)}`); }
+      }
       onDone(newId); // mở chi tiết vụ kèm mã QR vừa tạo
     } catch (err) {
       setError(friendlyError(err)); // gồm cả lỗi vượt hạn mức từ máy chủ
@@ -259,6 +275,23 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
             Ngày bắt đầu
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </label>
+
+          {sameArea.length > 0 && (
+            <label>
+              Nối tiếp sau vụ (không bắt buộc)
+              <select value={followsId} onChange={(e) => setFollowsId(e.target.value)}>
+                <option value="">Không nối tiếp vụ nào</option>
+                {sameArea.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
+              </select>
+              <small>Khi vụ đó kết thúc, app nhắc bạn chuyển vụ này sang sản xuất.</small>
+            </label>
+          )}
+          {canOverlap && (
+            <label className="check">
+              <input type="checkbox" checked={overlap} onChange={(e) => { setOverlap(e.target.checked); if (e.target.checked) setStartNow(false); }} />
+              <span>Ươm trước khi vụ kia xong: lưu ở trạng thái Chuẩn bị nhưng vẫn ghi việc ươm được (tối đa {NURSERY_LOG_DAYS} ngày)</span>
+            </label>
+          )}
 
           {rest && <p className="msg warn" role="status">{rest}</p>}
 

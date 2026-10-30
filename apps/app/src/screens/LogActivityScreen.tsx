@@ -21,6 +21,7 @@ import { CycleWord } from '../components/CycleWord';
 import type { LogPreset } from './CycleDetailScreen';
 import { supabase } from '../lib/supabase';
 import { HelpButton } from '../components/HelpButton';
+import { canLogCycle } from '../lib/nursery';
 
 /** Ngày (YYYY-MM-DD, giờ máy) cách hôm nay `back` ngày */
 const dayAgo = (back: number) => { const d = new Date(); d.setDate(d.getDate() - back); return toLocalInput(d).slice(0, 10); };
@@ -47,14 +48,14 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
       cycles.filter(
         (c) =>
           (c.owner_org_id === active?.id || areas.find((a) => a.id === c.area_id)?.organization_id === active?.id) &&
-          c.status === 'active', // chỉ vụ ĐANG SẢN XUẤT; chuẩn bị/tạm dừng thì chưa ghi việc được
+          canLogCycle(c), // vụ ĐANG SẢN XUẤT, hoặc vụ Chuẩn bị đang ươm gối (D124); chuẩn bị thường/tạm dừng thì chưa ghi việc được
       ),
     [cycles, areas, active],
   );
   const notStarted = cycles.filter(
     (c) =>
       (c.owner_org_id === active?.id || areas.find((a) => a.id === c.area_id)?.organization_id === active?.id) &&
-      (c.status === 'preparing' || c.status === 'paused'),
+      (c.status === 'preparing' || c.status === 'paused') && !canLogCycle(c),
   );
 
   const remembered = (() => {

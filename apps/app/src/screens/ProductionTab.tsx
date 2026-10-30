@@ -29,6 +29,7 @@ import { CycleWord } from '../components/CycleWord';
 import { infoLabels } from '../lib/terms';
 import { productionSections, type ProductionSection, type TabId } from '../lib/tabs';
 import { useTable } from '../lib/tables';
+import { nurseryLoggable, predecessorOf } from '../lib/nursery';
 
 interface Props {
   section?: string;
@@ -221,8 +222,16 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
           <div className="card slim" key={c.id}>
             <div className="row">
               <strong>{c.name || cropName(c.crop_type_id)} - <span className="mono-code">{cycleCode(c.id)}</span></strong>
-              <span className="pill">{CYCLE_STATUS_LABEL_VI[c.status]}</span>
+              <span className="pill">{CYCLE_STATUS_LABEL_VI[c.status]}{nurseryLoggable(c) ? ' · ươm gối' : ''}</span>
             </div>
+            {(() => {
+              const pre = c.status === 'preparing' ? predecessorOf(c, cycles) : null;
+              if (!pre) return null;
+              const label = pre.pred.name || cropName(pre.pred.crop_type_id);
+              return pre.ended
+                ? <p className="msg ok" role="status">Vụ trước ({label}) đã kết thúc. Bấm "Bắt đầu sản xuất" để chuyển vụ này sang sản xuất.</p>
+                : <p className="muted">Nối tiếp sau vụ {label} (đang {CYCLE_STATUS_LABEL_VI[pre.pred.status].toLowerCase()}).</p>;
+            })()}
             <p className="muted">
               Phân khu: {areaById.get(c.area_id)?.name ?? '—'}
               {c.start_date && ` · Bắt đầu ${new Date(c.start_date).toLocaleDateString('vi-VN')}`}

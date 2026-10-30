@@ -220,6 +220,8 @@ export function useConfig() {
     kindsOn, kindOn, animalsOn,
     /** Cơ sở có dùng Công đoạn trong Quy trình mẫu không (mặc định có) */
     usePhases: (): boolean => read(org ?? '').items['use_phases']?.[0] !== 'no',
+    /** Chỗ ươm của cơ sở (D124): inside / separate / same (mặc định same = không ươm gối) */
+    nurseryMode: (): 'inside' | 'separate' | 'same' => { const v = read(org ?? '').items['nursery_mode']?.[0]; return v === 'inside' || v === 'separate' ? v : 'same'; },
     items: (id: string) => itemsOf(org, defById(id)),
     entries, choices, resolve, choiceOf, labelOf,
     /** Nhóm loại sản phẩm chọn được (id là mã mục) */

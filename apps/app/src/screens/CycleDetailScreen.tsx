@@ -25,9 +25,10 @@ import { toLocalInput } from '../lib/hooks';
 import type { TabId } from '../lib/tabs';
 import { effectiveModel, featuresOf, modelName } from '../lib/models';
 import {
-  addCycleStage, addNote, advanceStage, deleteCycleStage, deleteCyclePhase, deleteNote, refreshCycle, setNoteDone, updateCyclePhase, updateCycleStage,
+  addCycleStage, addNote, advanceStage, deleteCycleStage, deleteCyclePhase, deleteNote, refreshCycle, setCycleStatus, setNoteDone, updateCyclePhase, updateCycleStage,
 } from '../lib/production';
 import { canManageProduction, isOwner } from '../lib/roles';
+import { nurseryLoggable, predecessorOf } from '../lib/nursery';
 
 export interface LogPreset { cycleId: string; workTypeId?: string | null; stageId?: string | null; areaId?: string; copyFromLogId?: string }
 
@@ -46,6 +47,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
   const notes = useLiveQuery(() => db.notes.where('cycle_id').equals(cycleId).toArray(), [cycleId], []);
   const harvestsAll = useTable('harvests'); // phiếu thu hoạch của vụ (việc Thu hoạch tính cả phiếu này khi kiểm đã ghi đủ)
   const area = useLiveQuery(async () => (cycle ? db.areas.get(cycle.area_id) : undefined), [cycle?.area_id]);
+  const allCycles = useTable('cycles');
   const { cropTypes, workTypes } = useCatalog();
   const withdrawals = useTable('withdrawals');
   const [view, setView] = useState<'list' | 'calendar'>(openCalendar ? 'calendar' : 'list');
@@ -73,6 +75,9 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
   // vụ có ghi việc hay không theo mô hình của CHÍNH vụ này (mô hình 1 chưa bật tùy chọn Ghi việc thì ẩn)
   const canLogHere = featuresOf(effectiveModel(cycle.mgmt_model, active?.mgmtModel), cycle.mgmt_options ?? []).logs !== 'off';
   const isActive = cycle.status === 'active';
+  const nurseryLog = nurseryLoggable(cycle); // vụ Chuẩn bị đang ươm gối: ghi việc được (D124)
+  const logOk = isActive || nurseryLog;
+  const pre = predecessorOf(cycle, allCycles);
   const closed = cycle.status === 'ended' || cycle.status === 'cancelled';
   const canEditStages = canManage && !closed;
   const crop = cropTypes.find((c) => c.id === cycle.crop_type_id)?.name ?? '—';
@@ -124,6 +129,16 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
         {cycle.expected_end_date && ` · Dự kiến xong ${fmtDate(cycle.expected_end_date)}`}
       </p>
       <p className="muted">Mã vụ: <strong>{cycleCode(cycleId)}</strong></p>
+      {pre && cycle.status === 'preparing' && (
+        pre.ended
+          ? (
+            <div className="msg ok" role="status">
+              <p style={{ margin: 0 }}>Vụ trước ({pre.pred.name || crop}) đã kết thúc. Có thể chuyển vụ này sang sản xuất.</p>
+              {canManage && <button className="primary" disabled={busy || !online} onClick={() => void run(() => setCycleStatus(cycleId, 'active'))}>Bắt đầu sản xuất</button>}
+            </div>
+          )
+          : <p className="msg warn" role="status">Nối tiếp sau vụ {pre.pred.name || crop} (đang {CYCLE_STATUS_LABEL_VI[pre.pred.status].toLowerCase()}). Khi vụ đó kết thúc, bạn sẽ chuyển vụ này sang sản xuất.</p>
+      )}
       <p className="muted">Quy trình: {cycle.template_name ?? 'không có (vụ cũ)'}{cycle.template_version ? ` · bản ${cycle.template_version}` : ''}</p>
       {cycle.note && <p>{cycle.note}</p>}
       {canManage && cycle.owner_org_id === active?.id && (
@@ -149,7 +164,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
 
       {active && <IncidentsSection cycleId={cycleId} orgId={active.id} stages={stages} canManage={canManage} userId={session?.user.id} online={online} today={today} />}
 
-      {isActive && (() => {
+      {logOk && (() => {
         const todayLogs = logs.filter((l) => !l.voided_at && toLocalInput(new Date(l.performed_at)).slice(0, 10) === today);
         const due = dueToday(stages, todayLogs, today, logs.filter((l) => !l.voided_at));
         if (due.length === 0) return null;
@@ -186,7 +201,8 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
         <p className="msg warn">Vụ này chưa có việc nào.{canEditStages ? ' Bấm "+ Thêm việc" bên dưới để thêm.' : ''}</p>
       )}
 
-      {!isActive && prog.total > 0 && !closed && <p className="muted">Chỉ vụ đang sản xuất mới bắt đầu/hoàn thành việc và ghi việc được.</p>}
+      {nurseryLog && <p className="msg ok" role="status">Vụ đang ươm gối: ghi việc ươm được. Bấm Bắt đầu / Xong từng việc sau khi chuyển sang sản xuất.</p>}
+      {!logOk && prog.total > 0 && !closed && <p className="muted">Chỉ vụ đang sản xuất mới bắt đầu/hoàn thành việc và ghi việc được.</p>}
       {!online && canManage && <p className="msg warn" role="status">Đang offline: đổi việc và ghi chú cần có mạng. Ghi việc vẫn dùng được.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
@@ -245,7 +261,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                     <td>{fmtDate(s.planned_start)}<span className="sub">→ {fmtDate(s.planned_end)}</span></td>
                     <td>{s.actual_start ? fmtDate(s.actual_start) : '—'}<span className="sub">{s.actual_end ? `→ ${fmtDate(s.actual_end)}` : ''}</span></td>
                     <td className="act"><div className="stack">
-                      {isActive && canLogHere && s.status === 'in_progress' && (
+                      {canLogHere && ((isActive && s.status === 'in_progress') || (nurseryLog && s.status !== 'done')) && (
                         <button className="secondary" style={{ minHeight: 40, width: '100%', margin: 0, padding: '0 8px' }}
                           onClick={() => onLog({ cycleId, workTypeId: s.work_type_id, stageId: s.id })}>Ghi việc</button>
                       )}
@@ -320,7 +336,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
         </>
       )}
 
-      {isActive && canLogHere && (
+      {logOk && canLogHere && (
         <button className="secondary" onClick={() => onLog({ cycleId, stageId: prog.current?.status === 'in_progress' ? prog.current.id : null })}>Ghi việc cho vụ này</button>
       )}
     </div>

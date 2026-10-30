@@ -20,7 +20,8 @@ const CYCLE_COLUMNS_PLAN = `${CYCLE_COLUMNS_BASE}, target_yield_kg, budget_amoun
 const CYCLE_COLUMNS_D98 = `${CYCLE_COLUMNS_PLAN}, code, count_unit, supervisor_name, supervisor_phone`;
 // mô hình quản lý theo vụ (migration 0102)
 const CYCLE_COLUMNS_MODEL = `${CYCLE_COLUMNS_D98}, mgmt_model`;
-const CYCLE_COLUMNS = `${CYCLE_COLUMNS_MODEL}, mgmt_options`; // mục tùy chọn của mô hình (migration 0104)
+const CYCLE_COLUMNS_OPTIONS = `${CYCLE_COLUMNS_MODEL}, mgmt_options`; // mục tùy chọn của mô hình (migration 0104)
+const CYCLE_COLUMNS = `${CYCLE_COLUMNS_OPTIONS}, nursery_overlap, follows_cycle_id`; // ươm gối và vụ nối tiếp (migration 0135)
 const AREA_COLUMNS_BASE = 'id, organization_id, name, description, location, area_size, area_unit, image, is_active';
 const AREA_COLUMNS_D98 = `${AREA_COLUMNS_BASE}, code, kind, housing`;
 const AREA_COLUMNS = `${AREA_COLUMNS_D98}, kind_item`;
@@ -32,6 +33,7 @@ async function selectCycles(id?: string) {
     return id ? b.eq('id', id) : b;
   };
   let r = await q(CYCLE_COLUMNS);
+  if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_OPTIONS);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_MODEL);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_D98);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_PLAN);
@@ -222,6 +224,15 @@ export interface CropInfo {
   areaM2: number | null; plants: number | null; variety: string; seedSource: string; seedLot: string; sowingDate: string | null; plantingDate: string | null;
   /** Mã vụ/lô, đơn vị đếm (trống = theo loại sản phẩm), cán bộ kỹ thuật/thú y phụ trách (D98) */
   code: string; countUnit: string; supervisorName: string; supervisorPhone: string;
+}
+
+/** Đặt "ươm gối" và "nối tiếp sau vụ" cho một vụ (cần mạng, người quản lý vụ). Ươm gối chỉ được khi cơ sở bật Chỗ ươm và vụ còn Chuẩn bị (D124). */
+export async function setCycleNursery(cycleId: string, followsId: string | null, overlap: boolean): Promise<void> {
+  requireOnline('lưu thông tin ươm gối');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { error } = await supabase.rpc('set_cycle_nursery', { p_cycle: cycleId, p_follows: followsId, p_overlap: overlap });
+  if (error) throw new Error(error.message);
+  await refreshCycle(cycleId).catch(() => undefined);
 }
 
 /** Đặt thông tin giống và diện tích của vụ (cần mạng, người quản lý vụ); trống = bỏ */

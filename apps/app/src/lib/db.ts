@@ -27,6 +27,9 @@ export interface AreaRow {
 
 export interface CycleRow {
   id: string;
+  /** Ươm gối vụ (D124): đang ươm khi vụ còn Chuẩn bị (ghi việc được); và vụ này nối tiếp sau vụ nào */
+  nursery_overlap?: boolean | null;
+  follows_cycle_id?: string | null;
   /** Mô hình quản lý của vụ (null = theo mô hình mặc định của cơ sở) */
   mgmt_model?: string | null;
   /** Mục tùy chọn của mô hình đã bật cho vụ này (mã chức năng) */
