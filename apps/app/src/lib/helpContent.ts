@@ -17,9 +17,48 @@ export interface HelpEntry {
   guide?: { id: GuideId; step: number };
 }
 
-export type HelpKey = ProductionSection | DeclareSection | ReportSection;
+/** Trang chủ của tab (menu các chức năng): 'tab-production', 'tab-declare', 'tab-reports' */
+export type TabHelpKey = 'tab-production' | 'tab-declare' | 'tab-reports';
+export type HelpKey = ProductionSection | DeclareSection | ReportSection | TabHelpKey;
 
 export const HELP: Record<HelpKey, HelpEntry> = {
+  // ---- Giới thiệu chung của từng tab ----
+  'tab-production': {
+    title: 'Sản xuất',
+    what: 'Nơi làm việc hằng ngày: tạo vụ, ghi việc, thu hoạch, kho, chi phí và chấm công.',
+    how: [
+      'Vụ nuôi trồng: tạo vụ mới và theo dõi lịch, "Việc đến hạn hôm nay".',
+      'Ghi việc và Nhật ký việc: ghi những gì vừa làm và xem lại (nút ＋ ở giữa thanh dưới cũng mở Ghi việc).',
+      'Thu hoạch, Quản lý kho, Chi phí, Chấm công: ghi và theo dõi số liệu hằng ngày.',
+      'Bấm vào từng ô để vào chức năng; mỗi chức năng có nút ⓘ riêng.',
+    ],
+    note: 'Mục nào bạn chưa có quyền hoặc cơ sở không dùng thì tự ẩn cho màn hình gọn.',
+    guide: { id: 'intro', step: 6 },
+  },
+  'tab-declare': {
+    title: 'Khai báo',
+    what: 'Những thứ làm một lần rồi ít đổi. Khai báo xong, mọi bước sau (tạo vụ, ghi việc, nhập kho, bán hàng) chỉ việc chọn trong danh sách, không phải gõ lại.',
+    how: [
+      'Cơ sở và vật tư: Phân khu, Sản phẩm, Kho, Vật tư, Nhà cung ứng, Máy chấm công.',
+      'Nhân sự: Nhân sự, Chức vụ và quyền, Tổ chức.',
+      'Quy trình: Việc (loại việc) và Tạo quy trình.',
+      'Giấy phép và đối tác: Giấy phép, Khách hàng, Hợp tác xã hoặc Hộ thành viên.',
+    ],
+    note: 'Nên khai báo theo thứ tự trên cùng: Phân khu, Sản phẩm, Kho, Vật tư rồi mới tới Quy trình.',
+    guide: { id: 'declare', step: 0 },
+  },
+  'tab-reports': {
+    title: 'Báo cáo',
+    what: 'Xem kết quả đi ra từ những gì bạn đã ghi hằng ngày: lãi lỗ, giá thành, công nợ, lương và hồ sơ.',
+    how: [
+      'Báo cáo tuần, Tổng kết vụ, Doanh thu, Công nợ, Bảng lương: xem tiền và kết quả.',
+      'Sổ nhật ký và Bảng kiểm: in hoặc xuất khi cần nộp để kiểm tra.',
+      'Hồ sơ web và Đơn khách từ website: làm việc với website thương mại.',
+    ],
+    note: 'Báo cáo đúng đến đâu là do bạn ghi việc, vật tư, thu hoạch đủ đến đó.',
+    guide: { id: 'crop', step: 13 },
+  },
+
   // ---- Sản xuất ----
   cycles: {
     title: 'Vụ nuôi trồng',

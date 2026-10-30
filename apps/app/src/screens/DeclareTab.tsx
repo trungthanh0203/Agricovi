@@ -14,6 +14,7 @@ import { CropsSection } from '../components/CropsSection';
 import { TemplatesSection } from '../components/TemplatesSection';
 import { WorkTypesSection } from '../components/WorkTypesSection';
 import { IconGlyph, pickSection, SECTION_ICONS } from '../components/SubTabs';
+import { HelpButton } from '../components/HelpButton';
 import { useOrgs } from '../lib/orgs';
 import { declareGroups, declareSections, type DeclareSection } from '../lib/tabs';
 
@@ -31,7 +32,7 @@ export function DeclareTab({ section, onSection }: { section?: string; onSection
 
   return (
     <section>
-      <h1>Khai báo</h1>
+      <div className="row"><h1 className="grow">Khai báo</h1>{current === null && <HelpButton topic="tab-declare" />}</div>
       {current === null && groups.length > 1 && (
         <nav aria-label="Khai báo">
           {groups.map((g) => (
@@ -52,6 +53,7 @@ export function DeclareTab({ section, onSection }: { section?: string; onSection
         <div className="menubar">
           {groups.length > 1 && <button className="menu-back" onClick={() => onSection('' as DeclareSection)} aria-label="Quay lại menu Khai báo">‹ Menu</button>}
           <strong className="menu-cur"><IconGlyph icon={SECTION_ICONS[current] ?? ''} /> {items.find((x) => x.id === current)?.label}</strong>
+          <HelpButton topic={current} />
         </div>
       )}
       {current === 'materials' || current === 'places' ? (

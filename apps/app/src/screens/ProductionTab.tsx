@@ -7,6 +7,7 @@ import { AttendanceSection } from '../components/AttendanceSection';
 import { ExpenseSection } from '../components/ExpenseSection';
 import { HarvestSection } from '../components/HarvestSection';
 import { pickSection, SubTabs } from '../components/SubTabs';
+import { HelpButton } from '../components/HelpButton';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { cycleProgress } from '../lib/cycles';
@@ -50,7 +51,7 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
 
   return (
     <section>
-      <h1>Sản xuất</h1>
+      <div className="row"><h1 className="grow">Sản xuất</h1>{current === null && <HelpButton topic="tab-production" />}</div>
       <SubTabs items={items} value={current} onChange={(id) => (id === 'log' ? onLog() : onSection(id))} onBack={() => onSection('' as ProductionSection)} label="Sản xuất" />
       {current === 'harvest' ? (
         <HarvestSection />
