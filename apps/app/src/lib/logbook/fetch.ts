@@ -74,7 +74,7 @@ export async function loadLogbookData(a: LoadArgs): Promise<LogbookData> {
   const area = areas.find((x) => x.id === a.cycle?.area_id);
   const inR = (iso: string) => iso.slice(0, 10) >= a.from && iso.slice(0, 10) <= a.to;
   return {
-    orgName: a.orgName, cycle: a.cycle, areaName: area?.name ?? '', areaLocation: area?.location ?? null,
+    orgName: a.orgName, cycle: a.cycle, areaName: area?.parent_id ? `${areas.find((x) => x.id === area.parent_id)?.name ?? ''} › ${area.name}` : area?.name ?? '', areaLocation: area?.location ?? null,
     productName: a.productName, productKind: a.productKind, unit: a.unit, from: a.from, to: a.to,
     entries, receipts, areas, stages, milestones, countEvents: countEvents.filter((c) => inR(c.event_date)),
     harvests: harvests.filter((h) => inR(h.harvested_at)), incidents: incidents.filter((i) => inR(i.incident_date)), actions,

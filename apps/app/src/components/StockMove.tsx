@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { fetchCycleMaterialNet, formatQty, ISSUE_KIND_LABEL, issueSharedToCycles, parseNumber, recordIssue, returnToStock, splitShares, transferStock } from '../lib/inventory';
 import { useTable } from '../lib/tables';
 import { useCatalog } from '../lib/catalog';
+import { areaPath } from '../lib/areas';
 
 /** Dữ liệu chung của hai biểu mẫu: vật tư, kho đang dùng và tồn hiện có để nhắc người nhập */
 function useStockChoices(orgId: string) {
@@ -43,7 +44,7 @@ export function StockIssue({ orgId, onClose }: { orgId: string; onClose: () => v
   const { cropTypes } = useCatalog();
   // vụ của cơ sở chưa kết thúc: chọn để xuất vật tư cho vụ (không cần nhật ký)
   const openCycles = cycles.filter((c) => c.owner_org_id === orgId && c.status !== 'ended' && c.status !== 'cancelled');
-  const cycleLabel = (c: (typeof cycles)[number]) => `${c.name || cropTypes.find((t) => t.id === c.crop_type_id)?.name || 'Vụ'} · ${areas.find((a) => a.id === c.area_id)?.name ?? '—'}`;
+  const cycleLabel = (c: (typeof cycles)[number]) => `${c.name || cropTypes.find((t) => t.id === c.crop_type_id)?.name || 'Vụ'} · ${(areaPath(c.area_id, areas) || '—')}`;
   const [kind, setKind] = useState('cycle');
   const [cycleId, setCycleId] = useState('');
   const cyc = cycleId || openCycles[0]?.id || '';
@@ -243,7 +244,7 @@ export function StockReturn({ orgId, onClose }: { orgId: string; onClose: () => 
   const areas = useTable('areas');
   const { cropTypes } = useCatalog();
   const open = cycles.filter((c) => c.owner_org_id === orgId && c.status !== 'ended' && c.status !== 'cancelled');
-  const label = (c: (typeof cycles)[number]) => `${c.name || cropTypes.find((t) => t.id === c.crop_type_id)?.name || 'Vụ'} · ${areas.find((a) => a.id === c.area_id)?.name ?? '—'}`;
+  const label = (c: (typeof cycles)[number]) => `${c.name || cropTypes.find((t) => t.id === c.crop_type_id)?.name || 'Vụ'} · ${(areaPath(c.area_id, areas) || '—')}`;
   const [cycleId, setCycleId] = useState('');
   const cyc = cycleId || open[0]?.id || '';
   const [net, setNet] = useState<Map<string, number>>(new Map());

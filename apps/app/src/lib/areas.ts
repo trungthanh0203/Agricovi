@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { AreaRow } from './db';
+import type { CycleStat } from './cycleStatsLogic';
 import { useTable } from './tables';
 
 /**
@@ -50,4 +51,37 @@ export function orderedAreas(areas: AreaRow[]): AreaRow[] {
 export function useAreaPath(): (id: string | null | undefined) => string {
   const areas = useTable('areas');
   return useMemo(() => (id) => areaPath(id, areas), [areas]);
+}
+
+/** Tổng hợp số liệu theo phân khu cha (D125): cộng các vụ của chính phân khu và của mọi nhà màng con. null = người xem không có quyền mục đó. */
+export interface AreaRollupRow {
+  area: AreaRow; cycles: number; running: number;
+  cost: number | null; harvest: number | null; revenue: number | null; profit: number | null;
+  cells: AreaRollupRow[];
+}
+
+const addN = (a: number | null, b: number | null): number | null => (a === null && b === null ? null : (a ?? 0) + (b ?? 0));
+
+function leafRollup(area: AreaRow, cycles: { id: string; area_id: string; status: string }[], stats: Map<string, CycleStat>): AreaRollupRow {
+  const mine = cycles.filter((c) => c.area_id === area.id);
+  const row: AreaRollupRow = { area, cycles: mine.length, running: mine.filter((c) => c.status === 'active').length, cost: null, harvest: null, revenue: null, profit: null, cells: [] };
+  for (const c of mine) {
+    const s = stats.get(c.id);
+    if (!s) continue;
+    row.cost = addN(row.cost, s.cost_total); row.harvest = addN(row.harvest, s.harvest_net); row.revenue = addN(row.revenue, s.revenue); row.profit = addN(row.profit, s.profit);
+  }
+  return row;
+}
+
+export function rollupByArea(areas: AreaRow[], cycles: { id: string; area_id: string; status: string }[], stats: CycleStat[]): AreaRollupRow[] {
+  const byId = new Map(stats.map((s) => [s.cycle_id, s]));
+  return topAreas(areas).filter((t) => t.kind !== 'facility').map((t) => {
+    const own = leafRollup(t, cycles, byId);
+    const cells = cellsOf(areas, t.id).map((c) => leafRollup(c, cycles, byId));
+    const total = [own, ...cells].reduce<AreaRollupRow>((s, r) => ({
+      ...s, cycles: s.cycles + r.cycles, running: s.running + r.running,
+      cost: addN(s.cost, r.cost), harvest: addN(s.harvest, r.harvest), revenue: addN(s.revenue, r.revenue), profit: addN(s.profit, r.profit),
+    }), { area: t, cycles: 0, running: 0, cost: null, harvest: null, revenue: null, profit: null, cells: [] });
+    return { ...total, cells };
+  }).filter((r) => r.cycles > 0);
 }

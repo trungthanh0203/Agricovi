@@ -18,6 +18,7 @@ import { putLocal } from '../lib/serverWrite';
 import { canPerm } from '../lib/permissions';
 import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
+import { areaPath } from '../lib/areas';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 
@@ -43,7 +44,7 @@ export function SalesSection() {
   const cycleLabel = (id: string | null) => {
     const c = cycles.find((x) => x.id === id);
     if (!c) return '';
-    return `${cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? ''} · ${areas.find((a) => a.id === c.area_id)?.name ?? ''}`;
+    return `${cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? ''} · ${(areaPath(c.area_id, areas) || '')}`;
   };
 
   const list = useMemo(

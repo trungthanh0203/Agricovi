@@ -300,7 +300,11 @@ export const HELP: Record<HelpKey, HelpEntry> = {
   summary: {
     title: 'Tổng kết vụ',
     what: 'Chi phí, doanh thu, lãi lỗ và giá thành mỗi kg của từng vụ.',
-    how: ['Chọn vụ để xem số liệu; xuất bảng CSV được.', 'Thiếu số liệu thì app hiện "chưa đủ số liệu" thay vì đưa con số sai.'],
+    how: [
+      'Cơ sở có chia nhà màng: khối "Tổng hợp theo phân khu" ở đầu trang cộng chi phí, thu hoạch, doanh thu, lãi lỗ của các vụ trong từng phân khu và nhà màng.',
+      'Chọn vụ để xem số liệu chi tiết; xuất bảng CSV được.',
+      'Thiếu số liệu thì app hiện "chưa đủ số liệu" thay vì đưa con số sai.',
+    ],
     note: 'Số liệu đúng đến đâu là do bạn ghi việc, vật tư, thu hoạch đủ đến đó.',
     guide: { id: 'crop', step: 13 },
   },

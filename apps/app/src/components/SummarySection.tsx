@@ -14,6 +14,8 @@ import { perHeadSummary } from '../lib/summaryByKind';
 import { buildSummaryCsv, canCompare, summaryNotes, vnNumber, type CycleSummary } from '../lib/summaryReport';
 import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
+import { AreaRollup } from './AreaRollup';
+import { areaPath } from '../lib/areas';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 
@@ -36,7 +38,7 @@ export function SummarySection() {
   const label = useCallback((id: string) => {
     const c = cycles.find((x) => x.id === id);
     if (!c) return '';
-    return `${cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? ''} · ${areas.find((a) => a.id === c.area_id)?.name ?? ''}`;
+    return `${cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? ''} · ${(areaPath(c.area_id, areas) || '')}`;
   }, [cycles, areas, cropTypes]);
 
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
@@ -126,6 +128,7 @@ export function SummarySection() {
 
   return (
     <>
+      <AreaRollup />
       <label>
         <CycleWord cap />
         <select value={cycleId} onChange={(e) => setPicked(e.target.value)}>

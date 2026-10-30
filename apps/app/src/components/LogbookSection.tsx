@@ -12,6 +12,7 @@ import { dataForBook, logbookSetFor, type LogbookData } from '../lib/logbook';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { useTable } from '../lib/tables';
+import { areaPath } from '../lib/areas';
 
 /**
  * Sổ nhật ký (P5 gọn): dựng các sổ VietGAP từ dữ liệu đã ghi, xem trên màn hình, in A4 ngang, tải file Excel (CSV),
@@ -73,7 +74,7 @@ export function LogbookSection() {
       <div className="no-print">
         <label>Vụ
           <select value={cycle?.id ?? ''} onChange={(e) => { setCycleId(e.target.value); setBookId(''); setData(null); }}>
-            {mine.map((c) => <option key={c.id} value={c.id}>{c.code ?? c.name ?? cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? 'Vụ'} · {areas.find((a) => a.id === c.area_id)?.name ?? ''}</option>)}
+            {mine.map((c) => <option key={c.id} value={c.id}>{c.code ?? c.name ?? cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? 'Vụ'} · {(areaPath(c.area_id, areas) || '')}</option>)}
           </select>
         </label>
         <div className="pair">
