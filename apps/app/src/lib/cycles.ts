@@ -46,3 +46,11 @@ export function cycleProgress(stages: StageRow[], today: string): CycleProgress 
 /** Màu công đoạn (cùng bảng màu với trình soạn quy trình) */
 export const STAGE_COLORS = ['#2e7d32', '#1976d2', '#f9a825', '#8e24aa', '#00838f', '#c62828', '#6d4c41'];
 export const stageColor = (index: number) => STAGE_COLORS[index % STAGE_COLORS.length]!;
+
+/** Tên hiển thị của vụ: tên vụ do người dùng đặt; chưa đặt thì "Sản phẩm dd/mm" (theo ngày bắt đầu) để phân biệt các vụ cùng sản phẩm */
+export function cycleTitle(c: { name?: string | null; start_date?: string | null }, productName: string): string {
+  const n = c.name?.trim();
+  if (n) return n;
+  const d = c.start_date ? c.start_date.slice(0, 10).split('-') : null;
+  return d && d.length === 3 ? `${productName || 'Vụ'} ${d[2]}/${d[1]}` : productName || 'Vụ';
+}

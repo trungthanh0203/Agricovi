@@ -23,6 +23,7 @@ import { supabase } from '../lib/supabase';
 import { HelpButton } from '../components/HelpButton';
 import { canLogCycle } from '../lib/prep';
 import { areaPath } from '../lib/areas';
+import { cycleTitle } from '../lib/cycles';
 
 /** Ngày (YYYY-MM-DD, giờ máy) cách hôm nay `back` ngày */
 const dayAgo = (back: number) => { const d = new Date(); d.setDate(d.getDate() - back); return toLocalInput(d).slice(0, 10); };
@@ -318,7 +319,7 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
             <select value={effectiveCycleId} onChange={(e) => { setCycleId(e.target.value); setStageSel(undefined); }}>
               {options.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {cropName(c.crop_type_id)} · {areaName(c.area_id)} ({CYCLE_STATUS_LABEL_VI[c.status]})
+                  {cycleTitle(c, cropName(c.crop_type_id))} · {areaName(c.area_id)} ({CYCLE_STATUS_LABEL_VI[c.status]})
                 </option>
               ))}
             </select>

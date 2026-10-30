@@ -200,15 +200,15 @@ function MaterialForm({ m, units, busy, onSave, onClose }: {
           )}
           {m ? <small>Đơn vị tính không đổi được sau khi tạo (để tồn kho không bị sai).</small> : <small>Chọn đúng ngay từ đầu, không đổi được sau này. Muốn thêm đơn vị riêng: tab Cấu hình.</small>}
         </label>
+        <label>Báo "sắp hết" khi tồn ≤ (để trống nếu không báo)<input value={thr} inputMode="decimal" onChange={(e) => setThr(e.target.value)} /></label>
         <label>Mô tả<input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Nhãn hiệu, công dụng…" /></label>
-        <ImagePicker value={ext.image} onChange={(v) => setExt((x) => ({ ...x, image: v }))} store="materials" />
         <label>Xuất xứ / thương hiệu<input value={ext.brand} onChange={setE('brand')} /></label>
         <label>Nhà sản xuất<input value={ext.manufacturer} maxLength={200} onChange={setE('manufacturer')} /></label>
         <label>Số đăng ký lưu hành<input value={ext.registration_no} maxLength={80} onChange={setE('registration_no')} /></label>
+        <ImagePicker value={ext.image} onChange={(v) => setExt((x) => ({ ...x, image: v }))} store="materials" />
         <details className="fold">
           <summary>Thông tin tùy chọn (không bắt buộc)</summary>
           <label>Hoạt chất / thành phần<input value={ext.active_ingredient} maxLength={300} onChange={setE('active_ingredient')} /></label>
-          <label>Báo "sắp hết" khi tồn ≤ (để trống nếu không báo)<input value={thr} inputMode="decimal" onChange={(e) => setThr(e.target.value)} /></label>
           <label>Thời gian cách ly (số ngày)<input value={ext.withdrawal_days} inputMode="numeric" onChange={setE('withdrawal_days')} /></label>
           <label>Ghi chú loại (tùy ý)<input value={cat} onChange={(e) => setCat(e.target.value)} /></label>
           <label>Hướng dẫn sử dụng<textarea rows={3} value={ext.usage_guide} onChange={setE('usage_guide')} /></label>
