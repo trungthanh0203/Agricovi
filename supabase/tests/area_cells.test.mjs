@@ -19,16 +19,18 @@ async function setup() {
   return out;
 }
 
-test('nhà màng: cùng cơ sở, chỉ 2 cấp, không dưới cơ sở vật chất; kế thừa loại của phân khu cha', async () => {
+test('ô sản xuất: cùng cơ sở, chỉ 2 cấp; ô giữ loại riêng, kể cả cơ sở vật chất; đổi loại phân khu cha không kéo theo ô', async () => {
   const c = await setup();
-  await c.db.query(`insert into production_areas (id,organization_id,name,kind,parent_id) values ($1,$2,'Nhà màng 1','livestock',$3)`, [C1, c.org, P]);
-  assert.equal((await c.db.query(`select kind from production_areas where id=$1`, [C1])).rows[0].kind, 'crop'); // theo cha, không theo giá trị nhập
+  await c.db.query(`insert into production_areas (id,organization_id,name,kind,parent_id) values ($1,$2,'Chuồng 1','livestock',$3)`, [C1, c.org, P]);
+  assert.equal((await c.db.query(`select kind from production_areas where id=$1`, [C1])).rows[0].kind, 'livestock'); // ô giữ loại riêng, khác loại phân khu cha
   assert.match(await expectError(c.db.query(`insert into production_areas (id,organization_id,name,parent_id) values (gen_random_uuid(),$1,'Con của con',$2)`, [c.org, C1])), /INVALID_PARENT/);
   const otherArea = (await c.db.query(`insert into production_areas (id,organization_id,name) values (gen_random_uuid(),$1,'Khu lạ') returning id`, [c.org2])).rows[0].id;
   assert.match(await expectError(c.db.query(`insert into production_areas (id,organization_id,name,parent_id) values (gen_random_uuid(),$1,'X',$2)`, [c.org, otherArea])), /INVALID_PARENT/);
-  assert.match(await expectError(c.db.query(`insert into production_areas (id,organization_id,name,parent_id) values (gen_random_uuid(),$1,'X',$2)`, [c.org, FAC])), /INVALID_PARENT/);
-  // đổi loại cha thì con đổi theo
-  await c.db.query(`update production_areas set kind='livestock' where id=$1`, [P]);
+  // ô cơ sở vật chất được nằm trong phân khu, nhưng không gắn vụ vào được
+  await c.db.query(`insert into production_areas (id,organization_id,name,kind,parent_id) values ($1,$2,'Cổng','facility',$3)`, [C2, c.org, P]);
+  assert.match(await expectError(c.cycle(CYC, C2)), /FACILITY_AREA/);
+  // đổi loại phân khu cha không đổi loại các ô
+  await c.db.query(`update production_areas set kind='aquatic' where id=$1`, [P]);
   assert.equal((await c.db.query(`select kind from production_areas where id=$1`, [C1])).rows[0].kind, 'livestock');
 });
 

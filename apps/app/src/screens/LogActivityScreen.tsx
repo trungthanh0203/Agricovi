@@ -67,7 +67,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const cycle = options.find((c) => c.id === effectiveCycleId) ?? null;
 
   // Ghi cho khu vực không gắn vụ (cổng, kho, biogas, hố sát trùng...): mọi khu đang dùng của cơ sở
-  const siteAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const siteAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false && !areas.some((c) => c.parent_id === a.id)).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   const [forArea, setForArea] = useState<boolean | null>(preset?.areaId ? true : null); // null = tự chọn: không có vụ nào thì ghi cho khu
   const areaMode = forArea ?? (options.length === 0 && siteAreas.length > 0);
   const [areaPick, setAreaPick] = useState(preset?.areaId ?? '');
@@ -309,7 +309,7 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
             <label>
               Khu vực
               <select value={siteArea?.id ?? ''} onChange={(e) => setAreaPick(e.target.value)}>
-                {siteAreas.map((a) => <option key={a.id} value={a.id}>{a.name}{a.code ? ` · ${a.code}` : ''}{a.kind === 'facility' ? ' (cơ sở vật chất)' : ''}</option>)}
+                {siteAreas.map((a) => <option key={a.id} value={a.id}>{areaPath(a.id, areas)}{a.code ? ` · ${a.code}` : ''}{a.kind === 'facility' ? ' (cơ sở vật chất)' : ''}</option>)}
               </select>
             </label>
           ) : (

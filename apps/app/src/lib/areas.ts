@@ -16,6 +16,7 @@ export function cellDefaultName(kind?: string | null): string {
   if (kind === 'livestock') return 'Chuồng';
   if (kind === 'aquatic') return 'Ao';
   if (kind === 'other') return 'Ô';
+  if (kind === 'facility') return 'Hạng mục';
   return 'Nhà màng';
 }
 

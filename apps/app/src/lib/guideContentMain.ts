@@ -41,7 +41,7 @@ export const MAIN_GUIDES: Guide[] = [
         title: "Các khái niệm cần nhớ (đọc một lần)",
         details: [
           "Cơ sở: nơi của bạn (Hộ, Hợp tác xã hoặc Công ty). Mỗi cơ sở có dữ liệu riêng.",
-          "Phân khu: cụm nuôi trồng (ví dụ \"Vườn Đông\"); bên trong là các ô sản xuất (nhà màng, chuồng, ao…) nơi chạy từng vụ. Loại \"Cơ sở vật chất\" (cổng, kho, biogas) để ghi những việc không thuộc vụ nào.",
+          "Phân khu: cụm nuôi trồng (ví dụ \"Vườn Đông\"); bên trong là các ô sản xuất (nhà màng, chuồng, ao…) nơi chạy từng vụ. Ô loại \"Cơ sở vật chất\" (cổng, kho, biogas) để ghi những việc không thuộc vụ nào.",
           "Sản phẩm: loại cây trồng hoặc vật nuôi (dưa lưới, heo thịt, tôm…).",
           "Quy trình → Công đoạn → Việc: quy trình là \"công thức\" làm một loại sản phẩm, chia thành công đoạn, mỗi công đoạn gồm các việc. Làm một lần, dùng cho nhiều vụ.",
           "Vụ: một lần nuôi trồng thật (sản phẩm + phân khu + ngày bắt đầu). App sao quy trình thành lịch riêng của vụ; sửa lịch vụ không đổi quy trình gốc.",
@@ -225,8 +225,8 @@ export const MAIN_GUIDES: Guide[] = [
         title: "Khai báo phân khu",
         details: [
           "Khai báo → Cơ sở & vật tư → Phân khu → thêm mới.",
-          "Thêm phân khu (cụm, ví dụ “Vườn Đông”): tên, loại, mã khu, vị trí, mô tả, ảnh. Rồi thêm ô sản xuất bên trong (ví dụ “Nhà màng 1”) với diện tích, mã ô, mô tả, ảnh.",
-          "Có nhiều nhà màng thì bấm “+ Nhiều ô cùng lúc” (nhập số lượng, app tự đánh số). Chỗ không trồng (cổng, kho) chọn loại “Cơ sở vật chất”.",
+          "Thêm phân khu (cụm, ví dụ “Vườn Đông”): tên, mã khu, vị trí, mô tả, ảnh. Rồi thêm ô sản xuất bên trong (ví dụ “Nhà màng 1”): tên và mã ô, loại ô, kiểu ô, diện tích, mô tả, ảnh.",
+          "Có nhiều nhà màng thì bấm “+ Nhiều ô cùng lúc” (nhập số lượng, app tự đánh số). Chỗ không trồng (cổng, kho) là ô loại “Cơ sở vật chất”.",
           "Vì sao: Mỗi vụ chạy trong MỘT phân khu. Diện tích dùng để tính năng suất và chia vật tư dùng chung cho nhiều vụ.",
         ],
         go: { tab: "declare", section: "areas", label: "Mở Phân khu" },
@@ -452,7 +452,7 @@ export const MAIN_GUIDES: Guide[] = [
         details: [
           "Menu ☰ → Cấu hình.",
           "Ở “Nhóm loại sản phẩm”, tích cột “Sử dụng” cho Vật nuôi và/hoặc Thủy sản (tùy bạn nuôi gì). Có thể tắt Cây trồng nếu không trồng.",
-          "Ở “Kiểu nhà/chuồng”, xem sẵn các kiểu chuồng; chỉ sửa khi muốn gọi tên khác.",
+          "Ở “Kiểu ô”, xem sẵn các kiểu (kín, hở…); chỉ sửa khi muốn gọi tên khác.",
           "Ở “Tạo quy trình”, chọn dùng công đoạn hay chỉ danh sách việc.",
           "Vì sao: Việc “Cho ăn” của heo khác “Cho ăn” của tôm (ô cần nhập và vật tư khác nhau), nên app tách theo đối tượng và chỉ hiện đúng loại bạn chọn.",
         ],

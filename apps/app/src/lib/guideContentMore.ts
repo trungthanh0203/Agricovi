@@ -40,10 +40,10 @@ export const MORE_GUIDES: Guide[] = [
       {
         title: 'Phân khu: nơi nuôi trồng',
         details: [
-          'Khai báo → Phân khu → "+ Thêm phân khu": tên, loại, mã khu, vị trí, mô tả, ảnh. Phân khu là cụm (ví dụ "Vườn Đông"), không nhập diện tích hay kiểu nhà/chuồng ở đây.',
-          'Loại "Cơ sở vật chất" dành cho chỗ không nuôi trồng (cổng, kho, biogas) để ghi những việc không thuộc vụ nào.',
-          'Phân khu có hai cấp: PHÂN KHU (cụm) và bên trong là Ô SẢN XUẤT (nhà màng, chuồng, ao… do bạn đặt tên). Ô sản xuất mới có đủ thông tin: mã ô, kiểu nhà/chuồng, diện tích, mô tả, ảnh.',
-          'Khi thêm phân khu, app tạo sẵn các ô (mặc định 1, tối đa 50). Thêm sau: "+ Ô sản xuất" (một ô) hoặc "+ Nhiều ô cùng lúc" (nhập số lượng, app tự đánh số). Phân khu cũ đang có vụ thì bấm "Chia thành ô sản xuất": app tạo ô đầu tiên và chuyển các vụ hiện có sang đó.',
+          'Khai báo → Phân khu → "+ Thêm phân khu": tên, mã khu, vị trí, mô tả, ảnh. Phân khu là cụm (ví dụ "Vườn Đông"), không có loại, diện tích hay kiểu ô; những thông tin đó nằm ở từng ô sản xuất.',
+          'Ô loại "Cơ sở vật chất" dành cho chỗ không nuôi trồng (cổng, kho, biogas) để ghi những việc không thuộc vụ nào.',
+          'Phân khu có hai cấp: PHÂN KHU (cụm) và bên trong là Ô SẢN XUẤT (nhà màng, chuồng, ao… do bạn đặt tên). Mỗi ô có đủ thông tin: tên và mã ô, loại ô (cây trồng, vật nuôi, thủy sản, cơ sở vật chất) và kiểu ô, diện tích, mô tả, ảnh. Một phân khu có thể có các ô khác loại.',
+          'Khi thêm phân khu, app tạo sẵn các ô (mặc định 1, tối đa 50) theo loại ô và kiểu ô bạn chọn. Thêm sau: "+ Ô sản xuất" (một ô) hoặc "+ Nhiều ô cùng lúc" (nhập số lượng, app tự đánh số). Phân khu cũ đang có vụ thì bấm "Chia thành ô sản xuất": app tạo ô đầu tiên và chuyển các vụ hiện có sang đó.',
           'Mỗi vụ chạy trong MỘT ô sản xuất (hoặc một phân khu cũ chưa chia nhỏ). Diện tích dùng để tính năng suất, mật độ và chia vật tư dùng chung theo diện tích; diện tích phân khu tự cộng từ các ô.',
           'Cơ sở đông người có thể giao mỗi người một hay nhiều phân khu hoặc ô sản xuất: giao phân khu thì họ thấy mọi ô bên trong, giao riêng một ô thì chỉ thấy ô đó (Khai báo → Nhân sự).',
         ],

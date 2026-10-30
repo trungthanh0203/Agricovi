@@ -18,9 +18,41 @@ const parseSize = (s: string): number | null | 'bad' => {
   return Number.isNaN(n) || n < 0 ? 'bad' : n;
 };
 
+/** Loại ô đã chọn: nhóm gốc (kind), mã mục tự thêm (kind_item) và kiểu ô */
+interface CellKind { kind: Exclude<AreaKind, 'growing'>; kind_item: string | null; housing: string | null }
+
+/** Chọn Loại ô (Nhóm loại sản phẩm đang dùng + Cơ sở vật chất) và Kiểu ô trên cùng một dòng; trả về mã chọn và hàm đổi */
+function KindRow({ choice, onChoice, housing, onHousing, currentHousing }: {
+  choice: string; onChoice: (v: string) => void; housing: string; onHousing: (v: string) => void; currentHousing?: string | null;
+}) {
+  const cfg = useConfig();
+  const isFacility = choice === 'facility';
+  const choices = cfg.housing().includes(housing) || !housing ? cfg.housing() : [...cfg.housing(), housing];
+  return (
+    <div className="pair">
+      <label>Loại ô
+        <select value={choice} onChange={(e) => onChoice(e.target.value)}>
+          {cfg.productGroups(choice).map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+          <option value="facility">Cơ sở vật chất</option>
+        </select>
+      </label>
+      {!isFacility
+        ? (
+          <label>Kiểu ô
+            <select value={housing || (currentHousing ? housingText(currentHousing) : '')} onChange={(e) => onHousing(e.target.value)}>
+              <option value="">— Không áp dụng —</option>
+              {choices.map((h) => <option key={h} value={h}>{h}</option>)}
+            </select>
+          </label>
+        )
+        : <p className="muted">Cơ sở vật chất (cổng, kho, biogas, hố sát trùng…) chỉ để ghi việc, không tạo vụ.</p>}
+    </div>
+  );
+}
+
 /**
- * Phân khu của cơ sở (D125, D127: hai cấp). Cấp 1 là PHÂN KHU (cụm, chỉ tên, mã, loại, vị trí, mô tả, ảnh); cấp 2 là Ô SẢN XUẤT (nhà màng, chuồng, ao…)
- * nơi chạy vụ, có đủ thông tin: mã, kiểu nhà/chuồng, diện tích, mô tả, ảnh. Diện tích phân khu tự cộng từ các ô.
+ * Phân khu của cơ sở (D125, D127, D128: hai cấp). Cấp 1 là PHÂN KHU (cụm: tên, mã khu, vị trí, mô tả, ảnh); cấp 2 là Ô SẢN XUẤT (nhà màng, chuồng, ao…)
+ * nơi chạy vụ, có đủ thông tin: tên, mã ô, loại ô, kiểu ô, diện tích, mô tả, ảnh. Một phân khu có thể có các ô khác loại. Diện tích phân khu tự cộng từ các ô.
  * Mỗi phân khu có nút thêm ô (một cái, nhiều cái một lần) và, nếu đang có vụ, nút "Chia thành ô sản xuất". Cần mạng để thêm/sửa (D24).
  */
 export function AreasSection() {
@@ -52,21 +84,24 @@ export function AreasSection() {
     try { await fn(); } catch (err) { setError(friendlyError(err)); throw err; } finally { setBusy(false); }
   }
   const closeAll = () => { setAdding(false); setEditing(null); setCellFor(null); };
+  const newCell = (parentId: string, name: string, k: CellKind, size?: number | null, unit?: 'm2' | 'ha'): FarmInput =>
+    ({ name, kind: k.kind, kind_item: k.kind_item ?? undefined, housing: k.housing, area_size: size ?? null, area_unit: unit ?? 'm2', parent_id: parentId });
 
   const renderRow = (a: AreaRow, isCell: boolean) => {
     const kids = isCell ? [] : cellsOf(mine, a.id);
     const m2 = areaSizeM2(a, mine);
     const hasCycles = !isCell && cycles.some((c) => c.area_id === a.id);
+    const showKind = isCell || kids.length === 0; // phân khu đã chia ô thì không có loại riêng
     return (
       <tr key={a.id} className={a.is_active === false ? 'off' : ''}>
         <td style={isCell ? { paddingLeft: 24 } : undefined}>
           <Thumb src={a.image} />{isCell ? '↳ ' : ''}{a.name}{a.code ? ` · ${a.code}` : ''}
           {!isCell && kids.length > 0 && <span className="sub">{kids.length} ô sản xuất</span>}
-          {(a.kind || a.housing) && <span className="sub">{[!isCell && a.kind ? kindLabel(a.kind, a.kind_item) : '', a.housing ? `Nhà/chuồng ${housingText(a.housing).toLowerCase()}` : ''].filter(Boolean).join(' · ')}</span>}
+          {(showKind && a.kind) || a.housing ? <span className="sub">{[showKind && a.kind ? kindLabel(a.kind, a.kind_item) : '', a.housing ? `Kiểu ô: ${housingText(a.housing).toLowerCase()}` : ''].filter(Boolean).join(' · ')}</span> : null}
           {a.location && <span className="sub">📍 {a.location}</span>}
           {a.description && <span className="sub">{a.description}</span>}
           {a.is_active === false && <span className="sub">Đã dừng</span>}
-          {canManage && !isCell && a.kind !== 'facility' && a.is_active !== false && (
+          {canManage && !isCell && a.is_active !== false && (
             <span className="sub">
               <button type="button" className="link" disabled={busy || !online} onClick={() => { closeAll(); setCellFor({ parent: a, mode: 'one' }); }}>+ Ô sản xuất</button>
               {' · '}
@@ -99,9 +134,9 @@ export function AreasSection() {
       )}
       {canManage && adding && (
         <ZoneForm title="Thêm phân khu" busy={busy || !online} onClose={() => setAdding(false)}
-          onSave={(f, cellNames) => run(async () => {
+          onSave={(f, cells) => run(async () => {
             const id = await createArea(active.id, f);
-            for (const name of cellNames) await createArea(active.id, { name, kind: f.kind, kind_item: f.kind_item ?? undefined, parent_id: id });
+            for (const name of cells.names) await createArea(active.id, newCell(id, name, cells.kind));
             setAdding(false);
           })} />
       )}
@@ -111,10 +146,10 @@ export function AreasSection() {
       )}
       {canManage && cellFor && cellFor.mode !== 'one' && (
         <CellBulkForm parent={cellFor.parent} mode={cellFor.mode} busy={busy || !online} onClose={() => setCellFor(null)}
-          onSave={(names, size, unit) => run(async () => {
+          onSave={(names, k, size, unit) => run(async () => {
             const p = cellFor.parent;
             if (cellFor.mode === 'split') await splitAreaIntoCells(p.id, names[0]!);
-            else for (const name of names) await createArea(active.id, { name, kind: p.kind as Exclude<AreaKind, 'growing'>, kind_item: p.kind_item ?? undefined, housing: p.housing ?? null, area_size: size, area_unit: unit, parent_id: p.id });
+            else for (const name of names) await createArea(active.id, newCell(p.id, name, k, size, unit));
             setCellFor(null);
           })} />
       )}
@@ -127,7 +162,7 @@ export function AreasSection() {
         </tbody>
       </table>
       <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả khu đã dừng</label>
-      <p className="muted">Khu đã dừng vẫn giữ lịch sử nhưng không chọn được để tạo vụ mới. Phân khu là cụm (ví dụ vườn); bên trong là các ô sản xuất (nhà màng, chuồng, ao…), vụ gắn vào từng ô.</p>
+      <p className="muted">Khu đã dừng vẫn giữ lịch sử nhưng không chọn được để tạo vụ mới. Phân khu là cụm (ví dụ vườn); bên trong là các ô sản xuất (nhà màng, chuồng, ao…), mỗi ô có loại riêng và vụ gắn vào từng ô.</p>
       <p className="msg" role="note">💡 Sau khi tạo phân khu và ô sản xuất, hãy vào <strong>Khai báo → Sản phẩm</strong> để tạo/chọn loại đối tượng nuôi / trồng, rồi tạo vụ nuôi trồng cho từng ô.</p>
 
       {canManage && editRow && !editParent && (
@@ -143,76 +178,77 @@ export function AreasSection() {
   );
 }
 
-/** Phân khu (cấp 1): chỉ tên, loại, mã khu, vị trí, mô tả, ảnh. Thêm mới có thể tạo sẵn các ô sản xuất. Phân khu cũ chưa chia ô mà đang dùng trực tiếp vẫn thấy diện tích, kiểu nhà/chuồng. */
+/** Mã chọn Loại ô → loại gốc + mã mục tự thêm */
+function useKindResolver() {
+  const cfg = useConfig();
+  const first = cfg.productGroups()[0]?.id ?? 'crop';
+  const resolve = (choice: string, initialItem?: string | null): { kind: Exclude<AreaKind, 'growing'>; kind_item: string | null } => {
+    if (choice === 'facility') return { kind: 'facility', kind_item: initialItem ? null : null };
+    const r = cfg.resolve('product_groups', choice);
+    return { kind: r.base as Exclude<AreaKind, 'growing'>, kind_item: r.item };
+  };
+  return { first, resolve, choiceOf: (a?: AreaRow) => (a ? (a.kind === 'facility' ? 'facility' : cfg.choiceOf('product_groups', a.kind ?? 'crop', a.kind_item)) : first) };
+}
+
+/**
+ * Phân khu (cấp 1): chỉ tên, mã khu, vị trí, mô tả, ảnh; không có loại, diện tích, kiểu ô (D128). Thêm mới có thể tạo sẵn các ô sản xuất (chọn loại ô, kiểu ô cho chúng).
+ * Phân khu cũ chưa chia ô mà đang là nơi chạy vụ trực tiếp vẫn thấy loại ô, kiểu ô, diện tích để không mất dữ liệu.
+ */
 function ZoneForm({ title, initial, hasCells, hasCycles, busy, onSave, onClose }: {
   title: string; initial?: AreaRow; hasCells?: boolean; hasCycles?: boolean; busy: boolean;
-  onSave: (f: FarmInput, cellNames: string[]) => Promise<unknown>; onClose: () => void;
+  onSave: (f: FarmInput, cells: { names: string[]; kind: CellKind }) => Promise<unknown>; onClose: () => void;
 }) {
-  const cfg = useConfig();
+  const { first, resolve, choiceOf } = useKindResolver();
   const [name, setName] = useState(initial?.name ?? '');
-  const [location, setLocation] = useState(initial?.location ?? '');
   const [code, setCode] = useState(initial?.code ?? '');
-  // lựa chọn = mã mục trong Nhóm loại sản phẩm, hoặc 'facility' (cơ sở vật chất: loại riêng của khu, không tạo vụ)
-  const [choice, setChoice] = useState(initial?.kind === 'facility' ? 'facility' : cfg.choiceOf('product_groups', initial?.kind ?? 'crop', initial?.kind_item));
-  const isFacility = choice === 'facility';
+  const [location, setLocation] = useState(initial?.location ?? '');
   const [desc, setDesc] = useState(initial?.description ?? '');
   const [image, setImage] = useState(initial?.image ?? '');
-  // phân khu cũ chưa chia ô nhưng đang có thông tin riêng hoặc đang chạy vụ trực tiếp: còn là nơi chạy vụ nên giữ diện tích, kiểu nhà/chuồng
-  const legacyLeaf = !!initial && !hasCells && !isFacility && (initial.area_size != null || !!initial.housing || !!hasCycles);
+  // phân khu cũ chưa chia ô nhưng còn là nơi chạy vụ trực tiếp (có diện tích, kiểu ô hoặc vụ)
+  const legacyLeaf = !!initial && !hasCells && (initial.area_size != null || !!initial.housing || !!hasCycles);
+  const [legacyChoice, setLegacyChoice] = useState(choiceOf(initial));
+  const [legacyHousing, setLegacyHousing] = useState<string>(housingText(initial?.housing));
   const [size, setSize] = useState(initial?.area_size != null ? String(initial.area_size) : '');
   const [unit, setUnit] = useState<'m2' | 'ha'>(initial?.area_unit ?? 'm2');
-  const [housing, setHousing] = useState<string>(housingText(initial?.housing));
-  const housingChoices = cfg.housing().includes(housing) || !housing ? cfg.housing() : [...cfg.housing(), housing];
   // chỉ khi thêm mới: tạo sẵn ô sản xuất
-  const baseOfChoice = isFacility ? 'facility' : cfg.resolve('product_groups', choice).base;
   const [cellCount, setCellCount] = useState('1');
   const [cellPrefix, setCellPrefix] = useState('');
-  const prefix = cellPrefix || cellDefaultName(baseOfChoice);
+  const [cellChoice, setCellChoice] = useState(first);
+  const [cellHousing, setCellHousing] = useState('');
+  const cellKind = resolve(cellChoice);
+  const prefix = cellPrefix || cellDefaultName(cellKind.kind);
   const [err, setErr] = useState<string | null>(null);
   return (
     <div className="card">
       <h2>{title}</h2>
       <div className="inline-form">
-        <label>Tên phân khu<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Vườn Đông" /></label>
         <div className="pair">
-          <label>Loại khu
-            <select value={choice} onChange={(e) => setChoice(e.target.value)}>
-              {cfg.productGroups(choice).map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
-              <option value="facility">Cơ sở vật chất</option>
-            </select>
-          </label>
+          <label>Tên phân khu<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Vườn Đông" /></label>
           <label>Mã khu<input value={code} maxLength={40} onChange={(e) => setCode(e.target.value)} placeholder="Ví dụ: VD" /></label>
         </div>
-        {isFacility && <p className="muted">Cơ sở vật chất (cổng, kho, biogas, hố sát trùng…) chỉ để ghi việc, không tạo vụ.</p>}
         <label>Vị trí<input value={location} maxLength={200} onChange={(e) => setLocation(e.target.value)} placeholder="Xã, huyện, tỉnh hoặc mô tả đường đi" /></label>
         {legacyLeaf && (
           <>
             <p className="muted">Phân khu này chưa chia ô sản xuất nên vẫn là nơi chạy vụ trực tiếp. Bạn có thể giữ thông tin dưới đây, hoặc bấm "Chia thành ô sản xuất" ở danh sách.</p>
+            <KindRow choice={legacyChoice} onChoice={setLegacyChoice} housing={legacyHousing} onHousing={setLegacyHousing} />
             <div className="pair">
               <label>Diện tích<input value={size} inputMode="decimal" onChange={(e) => setSize(e.target.value)} /></label>
               <label>Đơn vị
                 <select value={unit} onChange={(e) => setUnit(e.target.value as 'm2' | 'ha')}><option value="m2">m²</option><option value="ha">ha</option></select>
               </label>
             </div>
-            {(cfg.animalsOn || !!initial?.housing) && (
-              <label>Kiểu nhà/chuồng
-                <select value={housing} onChange={(e) => setHousing(e.target.value)}>
-                  <option value="">— Không áp dụng —</option>
-                  {housingChoices.map((h) => <option key={h} value={h}>{h}</option>)}
-                </select>
-              </label>
-            )}
           </>
         )}
         <label>Mô tả<textarea rows={3} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Đặc điểm chung của phân khu: nguồn nước, loại đất…" /></label>
         <ImagePicker value={image} onChange={setImage} store="areas" />
-        {!initial && !isFacility && (
+        {!initial && (
           <>
-            <p className="muted">Nơi chạy vụ là các ô sản xuất (nhà màng, chuồng, ao…) bên trong phân khu. Tạo sẵn để dùng ngay; thêm hoặc sửa ô sau cũng được.</p>
+            <p className="muted">Nơi chạy vụ là các ô sản xuất (nhà màng, chuồng, ao…) bên trong phân khu. Tạo sẵn để dùng ngay; thêm hoặc sửa ô sau cũng được, mỗi ô có loại riêng.</p>
             <div className="pair">
               <label>Số ô sản xuất tạo sẵn (0 đến 50)<input value={cellCount} inputMode="numeric" onChange={(e) => setCellCount(e.target.value)} /></label>
-              <label>Tên chung của ô<input value={cellPrefix} maxLength={100} onChange={(e) => setCellPrefix(e.target.value)} placeholder={cellDefaultName(baseOfChoice)} /></label>
+              <label>Tên chung của ô<input value={cellPrefix} maxLength={100} onChange={(e) => setCellPrefix(e.target.value)} placeholder={cellDefaultName(cellKind.kind)} /></label>
             </div>
+            <KindRow choice={cellChoice} onChoice={setCellChoice} housing={cellHousing} onHousing={setCellHousing} />
           </>
         )}
         {err && <p className="msg error" role="alert">{err}</p>}
@@ -221,16 +257,16 @@ function ZoneForm({ title, initial, hasCells, hasCycles, busy, onSave, onClose }
             if (!name.trim()) return setErr('Hãy nhập tên phân khu.');
             const n = legacyLeaf ? parseSize(size) : undefined;
             if (n === 'bad') return setErr('Diện tích phải là số không âm.');
-            const count = !initial && !isFacility ? Number(cellCount.trim() === '' ? '0' : cellCount) : 0;
+            const count = !initial ? Number(cellCount.trim() === '' ? '0' : cellCount) : 0;
             if (!Number.isInteger(count) || count < 0 || count > 50) return setErr('Số ô sản xuất tạo sẵn từ 0 đến 50.');
             setErr(null);
-            const r = isFacility ? { base: 'facility', item: null } : cfg.resolve('product_groups', choice);
+            const lk = resolve(legacyChoice);
             const f: FarmInput = {
-              name, location, description: desc, image, code, kind: r.base as Exclude<AreaKind, 'growing'>, kind_item: r.item ?? (initial?.kind_item ? null : undefined),
-              ...(legacyLeaf ? { area_size: n as number | null, area_unit: unit, housing: housing || null } : {}),
+              name, location, description: desc, image, code,
+              ...(legacyLeaf ? { kind: lk.kind, kind_item: lk.kind_item ?? (initial?.kind_item ? null : undefined), area_size: n as number | null, area_unit: unit, housing: lk.kind === 'facility' ? null : legacyHousing || null } : {}),
             };
             const names = Array.from({ length: count }, (_, i) => `${prefix.trim()} ${i + 1}`);
-            void onSave(f, names).catch(() => undefined);
+            void onSave(f, { names, kind: { ...cellKind, housing: cellKind.kind === 'facility' ? null : cellHousing || null } }).catch(() => undefined);
           }}>Lưu</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>
@@ -239,35 +275,31 @@ function ZoneForm({ title, initial, hasCells, hasCycles, busy, onSave, onClose }
   );
 }
 
-/** Ô sản xuất (cấp 2: nhà màng, chuồng, ao…): đủ thông tin; loại khu lấy theo phân khu cha */
+/** Ô sản xuất (cấp 2: nhà màng, chuồng, ao…): đủ thông tin. Dòng 1: tên và mã ô; dòng 2: loại ô và kiểu ô; dòng 3: diện tích và đơn vị */
 function CellFullForm({ title, parent, initial, busy, onSave, onClose }: {
   title: string; parent: AreaRow; initial?: AreaRow; busy: boolean; onSave: (f: FarmInput) => Promise<unknown>; onClose: () => void;
 }) {
-  const cfg = useConfig();
+  const { resolve, choiceOf } = useKindResolver();
   const [name, setName] = useState(initial?.name ?? '');
   const [code, setCode] = useState(initial?.code ?? '');
+  const [choice, setChoice] = useState(choiceOf(initial));
+  const [housing, setHousing] = useState<string>(housingText(initial?.housing));
   const [size, setSize] = useState(initial?.area_size != null ? String(initial.area_size) : '');
   const [unit, setUnit] = useState<'m2' | 'ha'>(initial?.area_unit ?? 'm2');
-  const [housing, setHousing] = useState<string>(housingText(initial?.housing ?? parent.housing));
-  const housingChoices = cfg.housing().includes(housing) || !housing ? cfg.housing() : [...cfg.housing(), housing];
   const [desc, setDesc] = useState(initial?.description ?? '');
   const [image, setImage] = useState(initial?.image ?? '');
   const [err, setErr] = useState<string | null>(null);
+  const k = resolve(choice);
   return (
     <div className="card">
       <h2>{title}</h2>
       <p className="muted">Thuộc phân khu: <strong>{parent.name}</strong></p>
       <div className="inline-form">
-        <label>Tên ô sản xuất<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder={`Ví dụ: ${cellDefaultName(parent.kind)} 1`} /></label>
-        <label>Mã ô<input value={code} maxLength={40} onChange={(e) => setCode(e.target.value)} placeholder="Ví dụ: NM-01" /></label>
-        {(cfg.animalsOn || !!initial?.housing) && (
-          <label>Kiểu nhà/chuồng
-            <select value={housing} onChange={(e) => setHousing(e.target.value)}>
-              <option value="">— Không áp dụng —</option>
-              {housingChoices.map((h) => <option key={h} value={h}>{h}</option>)}
-            </select>
-          </label>
-        )}
+        <div className="pair">
+          <label>Tên ô<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder={`Ví dụ: ${cellDefaultName(k.kind)} 1`} /></label>
+          <label>Mã ô<input value={code} maxLength={40} onChange={(e) => setCode(e.target.value)} placeholder="Ví dụ: NM-01" /></label>
+        </div>
+        <KindRow choice={choice} onChoice={setChoice} housing={housing} onHousing={setHousing} />
         <div className="pair">
           <label>Diện tích<input value={size} inputMode="decimal" onChange={(e) => setSize(e.target.value)} /></label>
           <label>Đơn vị
@@ -284,8 +316,9 @@ function CellFullForm({ title, parent, initial, busy, onSave, onClose }: {
             if (n === 'bad') return setErr('Diện tích phải là số không âm.');
             setErr(null);
             void onSave({
-              name, code, description: desc, image, area_size: n, area_unit: unit, housing: housing || null,
-              ...(initial ? {} : { kind: parent.kind as Exclude<AreaKind, 'growing'>, kind_item: parent.kind_item ?? undefined, parent_id: parent.id }),
+              name, code, description: desc, image, area_size: n, area_unit: unit, housing: k.kind === 'facility' ? null : housing || null,
+              kind: k.kind, kind_item: k.kind_item ?? (initial?.kind_item ? null : undefined),
+              ...(initial ? {} : { parent_id: parent.id }),
             }).catch(() => undefined);
           }}>Lưu</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
@@ -295,40 +328,45 @@ function CellFullForm({ title, parent, initial, busy, onSave, onClose }: {
   );
 }
 
-/** Thêm nhiều ô sản xuất cùng lúc (tên chung + số thứ tự), hoặc chia phân khu đang có vụ thành ô sản xuất (tạo ô đầu tiên và chuyển vụ sang đó) */
+/** Thêm nhiều ô sản xuất cùng lúc (tên chung + số thứ tự + loại ô, kiểu ô), hoặc chia phân khu đang có vụ thành ô sản xuất (tạo ô đầu tiên và chuyển vụ sang đó) */
 function CellBulkForm({ parent, mode, busy, onSave, onClose }: {
-  parent: AreaRow; mode: 'many' | 'split'; busy: boolean; onSave: (names: string[], size: number | null, unit: 'm2' | 'ha') => Promise<unknown>; onClose: () => void;
+  parent: AreaRow; mode: 'many' | 'split'; busy: boolean; onSave: (names: string[], kind: CellKind, size: number | null, unit: 'm2' | 'ha') => Promise<unknown>; onClose: () => void;
 }) {
-  const def = cellDefaultName(parent.kind);
-  const [name, setName] = useState(`${def} 1`);
-  const [prefix, setPrefix] = useState(def);
+  const { first, resolve } = useKindResolver();
+  const [choice, setChoice] = useState(first);
+  const [housing, setHousing] = useState('');
+  const k = resolve(choice);
+  const [name, setName] = useState('');
+  const [prefix, setPrefix] = useState('');
   const [count, setCount] = useState('10');
   const [start, setStart] = useState('1');
   const [size, setSize] = useState('');
   const [unit, setUnit] = useState<'m2' | 'ha'>('m2');
   const [err, setErr] = useState<string | null>(null);
+  const def = cellDefaultName(mode === 'split' ? parent.kind : k.kind);
   return (
     <div className="card">
       <h2>{mode === 'split' ? `Chia "${parent.name}" thành ô sản xuất` : `Thêm nhiều ô sản xuất vào "${parent.name}"`}</h2>
       <div className="inline-form">
         {mode === 'split' ? (
           <>
-            <p className="muted">Phân khu này đang có vụ. App tạo ô sản xuất đầu tiên (kế thừa diện tích và kiểu nhà/chuồng của phân khu) và chuyển các vụ hiện có sang đó; sau đó bạn thêm các ô còn lại.</p>
-            <label>Tên ô sản xuất đầu tiên<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
+            <p className="muted">Phân khu này đang có vụ. App tạo ô sản xuất đầu tiên (kế thừa loại, diện tích và kiểu ô của phân khu) và chuyển các vụ hiện có sang đó; sau đó bạn thêm các ô còn lại.</p>
+            <label>Tên ô sản xuất đầu tiên<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder={`${def} 1`} /></label>
           </>
         ) : (
           <>
-            <label>Tên chung<input value={prefix} maxLength={100} onChange={(e) => setPrefix(e.target.value)} /></label>
             <div className="pair">
+              <label>Tên chung<input value={prefix} maxLength={100} onChange={(e) => setPrefix(e.target.value)} placeholder={def} /></label>
               <label>Số lượng<input value={count} inputMode="numeric" onChange={(e) => setCount(e.target.value)} /></label>
-              <label>Bắt đầu từ số<input value={start} inputMode="numeric" onChange={(e) => setStart(e.target.value)} /></label>
             </div>
+            <KindRow choice={choice} onChoice={setChoice} housing={housing} onHousing={setHousing} />
             <div className="pair">
+              <label>Bắt đầu từ số<input value={start} inputMode="numeric" onChange={(e) => setStart(e.target.value)} /></label>
               <label>Diện tích mỗi ô (không bắt buộc)<input value={size} inputMode="decimal" onChange={(e) => setSize(e.target.value)} /></label>
-              <label>Đơn vị
-                <select value={unit} onChange={(e) => setUnit(e.target.value as 'm2' | 'ha')}><option value="m2">m²</option><option value="ha">ha</option></select>
-              </label>
             </div>
+            <label>Đơn vị diện tích
+              <select value={unit} onChange={(e) => setUnit(e.target.value as 'm2' | 'ha')}><option value="m2">m²</option><option value="ha">ha</option></select>
+            </label>
           </>
         )}
         {err && <p className="msg error" role="alert">{err}</p>}
@@ -341,16 +379,15 @@ function CellBulkForm({ parent, mode, busy, onSave, onClose }: {
               if (p === 'bad') return setErr('Diện tích phải là số không âm.');
               n = p;
               const c = Number(count), s = Number(start);
-              if (!prefix.trim()) return setErr('Hãy nhập tên chung.');
+              const base = (prefix || def).trim();
               if (!Number.isInteger(c) || c < 1 || c > 50) return setErr('Số lượng từ 1 đến 50.');
               if (!Number.isInteger(s) || s < 0) return setErr('Số bắt đầu phải là số nguyên không âm.');
-              names = Array.from({ length: c }, (_, i) => `${prefix.trim()} ${s + i}`);
+              names = Array.from({ length: c }, (_, i) => `${base} ${s + i}`);
             } else {
-              if (!name.trim()) return setErr('Hãy nhập tên ô sản xuất.');
-              names = [name.trim()];
+              names = [(name || `${def} 1`).trim()];
             }
             setErr(null);
-            void onSave(names, n, unit).catch(() => undefined);
+            void onSave(names, { ...k, housing: k.kind === 'facility' ? null : housing || null }, n, unit).catch(() => undefined);
           }}>{mode === 'split' ? 'Chia và chuyển vụ' : 'Lưu'}</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>

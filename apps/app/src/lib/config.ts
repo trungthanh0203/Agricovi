@@ -4,7 +4,7 @@ import { requireOnline } from './serverWrite';
 import { supabase } from './supabase';
 
 /**
- * Cấu hình của cơ sở (tab Cấu hình). Chỗ nào cần danh sách (chọn nhóm loại sản phẩm, loại khu, nhóm vật tư, kiểu nhà/chuồng…) lấy từ đây.
+ * Cấu hình của cơ sở (tab Cấu hình). Chỗ nào cần danh sách (chọn nhóm loại sản phẩm, loại ô, nhóm vật tư, kiểu ô…) lấy từ đây.
  * Thêm cấu hình mới = thêm một mục vào CONFIG_DEFS (và tên khóa vào hàm ở CSDL). Chưa có giá trị đã lưu thì dùng mặc định.
  *
  * Hai kiểu:
@@ -58,8 +58,8 @@ export const CONFIG_DEFS: ConfigDef[] = [
     hint: 'Dùng để chọn Loại khách khi thêm/sửa Khách hàng. Chỉ để phân loại, thêm, bớt hoặc đổi tên tùy ý (khách cũ giữ nguyên loại đã chọn).',
   },
   {
-    id: 'housing', title: 'Kiểu nhà / chuồng', mode: 'free', defaults: ['Kín', 'Hở', 'Nửa kín hở'],
-    hint: 'Dùng để chọn Kiểu nhà/chuồng của Phân khu. Thêm, bớt hoặc đổi tên tùy ý.',
+    id: 'housing', title: 'Kiểu ô', mode: 'free', defaults: ['Kín', 'Hở', 'Nửa kín hở'],
+    hint: 'Dùng để chọn Kiểu ô của ô sản xuất (ví dụ nhà màng kín hay hở, chuồng kín hay hở). Thêm, bớt hoặc đổi tên tùy ý.',
   },
 ];
 
