@@ -24,7 +24,8 @@ const CYCLE_COLUMNS_OPTIONS = `${CYCLE_COLUMNS_MODEL}, mgmt_options`; // mục t
 const CYCLE_COLUMNS = `${CYCLE_COLUMNS_OPTIONS}, nursery_overlap, follows_cycle_id`; // ươm gối và vụ nối tiếp (migration 0135)
 const AREA_COLUMNS_BASE = 'id, organization_id, name, description, location, area_size, area_unit, image, is_active';
 const AREA_COLUMNS_D98 = `${AREA_COLUMNS_BASE}, code, kind, housing`;
-const AREA_COLUMNS = `${AREA_COLUMNS_D98}, kind_item`;
+const AREA_COLUMNS_ITEM = `${AREA_COLUMNS_D98}, kind_item`;
+const AREA_COLUMNS = `${AREA_COLUMNS_ITEM}, parent_id`; // nhà màng dưới phân khu (migration 0136)
 
 /** Tải vụ theo từng bậc cột: đầy đủ -> bản trước D98 -> bản gốc, để CSDL chưa cập nhật không làm hỏng đồng bộ */
 async function selectCycles(id?: string) {
@@ -63,6 +64,7 @@ const LOG_COLUMNS =
 
 async function selectAreas() {
   let r = await supabase!.from('production_areas').select(AREA_COLUMNS);
+  if (r.error && missingPlanColumns(r.error)) r = await supabase!.from('production_areas').select(AREA_COLUMNS_ITEM) as typeof r; // chưa db push 0136
   if (r.error && missingPlanColumns(r.error)) r = await supabase!.from('production_areas').select(AREA_COLUMNS_D98) as typeof r; // chưa db push 0098
   return r.error && missingPlanColumns(r.error) ? supabase!.from('production_areas').select(AREA_COLUMNS_BASE) : r;
 }
@@ -169,6 +171,8 @@ export interface FarmInput {
   /** Mã mục tự thêm trong cấu hình Nhóm loại sản phẩm (kind là nhóm gốc); null/bỏ trống = mục có sẵn */
   kind_item?: string | null;
   housing?: string | null;
+  /** Nhà màng / chuồng / ao thuộc phân khu cha này (D125) */
+  parent_id?: string | null;
 }
 
 export async function createArea(organizationId: string, f: FarmInput): Promise<string> {
@@ -178,9 +182,19 @@ export async function createArea(organizationId: string, f: FarmInput): Promise<
     location: f.location?.trim() || null, area_size: f.area_size ?? null, area_unit: f.area_unit ?? 'm2', image: f.image || null,
     code: f.code?.trim() || null, kind: f.kind ?? 'crop', housing: f.housing ?? null,
     ...(f.kind_item ? { kind_item: f.kind_item } : {}),
+    ...(f.parent_id ? { parent_id: f.parent_id } : {}),
   };
   await insertAndCache('production_areas', { ...row }, { ...row }, 'thêm phân khu');
   return id;
+}
+
+/** Chia phân khu đang có vụ thành nhà màng: tạo nhà màng đầu tiên và chuyển các vụ hiện có sang đó (cần mạng, quyền khai báo) */
+export async function splitAreaIntoCells(parentId: string, name: string): Promise<void> {
+  requireOnline('chia phân khu thành nhà màng');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { error } = await supabase.rpc('split_area_into_cells', { p_parent: parentId, p_name: name });
+  if (error) throw new Error(error.message);
+  await syncDown().catch(() => undefined);
 }
 
 /** Đổi tên hoặc dừng/dùng lại phân khu (cần mạng). Phân khu đã dừng giữ lịch sử, không dùng để tạo vụ mới. */

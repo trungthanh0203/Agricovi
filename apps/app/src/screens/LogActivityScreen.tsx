@@ -22,6 +22,7 @@ import type { LogPreset } from './CycleDetailScreen';
 import { supabase } from '../lib/supabase';
 import { HelpButton } from '../components/HelpButton';
 import { canLogCycle } from '../lib/nursery';
+import { areaPath } from '../lib/areas';
 
 /** Ngày (YYYY-MM-DD, giờ máy) cách hôm nay `back` ngày */
 const dayAgo = (back: number) => { const d = new Date(); d.setDate(d.getDate() - back); return toLocalInput(d).slice(0, 10); };
@@ -40,7 +41,7 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const areas = useTable('areas');
   const allLogs = useTable('logs'); // để cảnh báo ghi trùng
 
-  const areaName = (id: string) => areas.find((a) => a.id === id)?.name ?? '—';
+  const areaName = (id: string) => areaPath(id, areas) || '—';
   const cropName = (id: string) => cropTypes.find((c) => c.id === id)?.name ?? '—';
 
   const options = useMemo(

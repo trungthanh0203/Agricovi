@@ -88,7 +88,7 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     title: 'Tạo vụ mới',
     what: 'Mở một vụ nuôi trồng mới: chọn sản phẩm, quy trình, phân khu và ngày bắt đầu. App tự lập lịch các công đoạn cho vụ.',
     how: [
-      'Chọn Sản phẩm, quy trình và Phân khu (app cảnh báo nếu phân khu khác loại).',
+      'Chọn Sản phẩm, quy trình và Phân khu / nhà màng (danh sách gom nhà màng theo phân khu; app cảnh báo nếu khác loại).',
       'Chọn ngày bắt đầu, hoặc "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước.',
       'Nên nhập thêm giống, diện tích, số cây hoặc số con, sản lượng và ngân sách dự kiến để app so kế hoạch với thực tế.',
       'Tạo xong, chọn cách quản lý vụ (5 kiểu); đổi lại được sau.',
@@ -170,9 +170,14 @@ export const HELP: Record<HelpKey, HelpEntry> = {
   // ---- Khai báo ----
   areas: {
     title: 'Phân khu',
-    what: 'Nơi nuôi trồng của cơ sở: vườn, ao, chuồng, nhà màng…',
-    how: ['Thêm tên, diện tích, vị trí, kiểu nhà/chuồng, ảnh.', 'Chỗ không nuôi trồng (cổng, kho, biogas) chọn loại "Cơ sở vật chất".'],
-    note: 'Mỗi vụ chạy trong một phân khu. Diện tích dùng để tính năng suất, mật độ và chia vật tư dùng chung.',
+    what: 'Nơi nuôi trồng của cơ sở, chia 2 cấp: phân khu (cụm, ví dụ "Vườn Đông") và bên trong là nhà màng, chuồng hoặc ao nơi chạy vụ.',
+    how: [
+      'Bấm "+ Thêm phân khu": tên, diện tích, vị trí, ảnh.',
+      'Phân khu lớn có nhiều nhà màng: bấm "+ Nhà màng" hoặc "+ Nhiều nhà màng cùng lúc" (nhập số lượng, app tự đánh số).',
+      'Phân khu đang có vụ mà muốn chia nhỏ: bấm "Chia thành nhà màng", app chuyển các vụ hiện có sang nhà màng đầu tiên.',
+      'Chỗ không nuôi trồng (cổng, kho, biogas) chọn loại "Cơ sở vật chất".',
+    ],
+    note: 'Vụ gắn vào nhà màng; phân khu chưa chia nhỏ thì vụ gắn thẳng phân khu. Diện tích phân khu tự cộng từ các nhà màng. Giao quyền cho người làm theo phân khu thì họ thấy mọi nhà màng bên trong.',
     guide: { id: 'declare', step: 2 },
   },
   crops: {
@@ -226,7 +231,7 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     title: 'Máy chấm công',
     what: 'Biến một điện thoại đặt cố định thành máy chấm công cho người làm.',
     how: [
-      'Bấm "Liên kết điện thoại này làm máy chấm công": đặt tên máy, chọn phân khu, tích xác nhận đã báo người làm.',
+      'Bấm "Liên kết điện thoại này làm máy chấm công": đặt tên máy, chọn phân khu (cấp 1, nơi đặt máy), tích xác nhận đã báo người làm.',
       'Sau đó máy chỉ còn màn Chấm công. Chủ vào lại app bằng số điện thoại + PIN.',
       'Mỗi cơ sở có tối đa 20 máy.',
     ],

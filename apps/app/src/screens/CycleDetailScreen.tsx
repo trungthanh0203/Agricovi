@@ -29,6 +29,7 @@ import {
 } from '../lib/production';
 import { canManageProduction, isOwner } from '../lib/roles';
 import { nurseryLoggable, predecessorOf } from '../lib/nursery';
+import { areaPath } from '../lib/areas';
 
 export interface LogPreset { cycleId: string; workTypeId?: string | null; stageId?: string | null; areaId?: string; copyFromLogId?: string }
 
@@ -48,6 +49,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
   const harvestsAll = useTable('harvests'); // phiếu thu hoạch của vụ (việc Thu hoạch tính cả phiếu này khi kiểm đã ghi đủ)
   const area = useLiveQuery(async () => (cycle ? db.areas.get(cycle.area_id) : undefined), [cycle?.area_id]);
   const allCycles = useTable('cycles');
+  const allAreas = useTable('areas');
   const { cropTypes, workTypes } = useCatalog();
   const withdrawals = useTable('withdrawals');
   const [view, setView] = useState<'list' | 'calendar'>(openCalendar ? 'calendar' : 'list');
@@ -124,7 +126,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
         <span className="pill">{CYCLE_STATUS_LABEL_VI[cycle.status]}</span>
       </div>
       <p className="muted">
-        {cycle.name ? `${crop} · ` : ''}Phân khu: {area?.name ?? '—'}
+        {cycle.name ? `${crop} · ` : ''}Khu: {areaPath(cycle.area_id, allAreas) || area?.name || '—'}
         {cycle.start_date && ` · Bắt đầu ${fmtDate(cycle.start_date)}`}
         {cycle.expected_end_date && ` · Dự kiến xong ${fmtDate(cycle.expected_end_date)}`}
       </p>

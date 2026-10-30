@@ -41,7 +41,7 @@ export const MAIN_GUIDES: Guide[] = [
         title: "Các khái niệm cần nhớ (đọc một lần)",
         details: [
           "Cơ sở: nơi của bạn (Hộ, Hợp tác xã hoặc Công ty). Mỗi cơ sở có dữ liệu riêng.",
-          "Phân khu: chỗ nuôi trồng cụ thể như vườn, ao, chuồng, nhà màng. Loại \"Cơ sở vật chất\" (cổng, kho, biogas) để ghi những việc không thuộc vụ nào.",
+          "Phân khu: cụm nuôi trồng (ví dụ \"Vườn Đông\"); bên trong chia thành nhà màng (chuồng, ao) nơi chạy từng vụ. Loại \"Cơ sở vật chất\" (cổng, kho, biogas) để ghi những việc không thuộc vụ nào.",
           "Sản phẩm: loại cây trồng hoặc vật nuôi (dưa lưới, heo thịt, tôm…).",
           "Quy trình → Công đoạn → Việc: quy trình là \"công thức\" làm một loại sản phẩm, chia thành công đoạn, mỗi công đoạn gồm các việc. Làm một lần, dùng cho nhiều vụ.",
           "Vụ: một lần nuôi trồng thật (sản phẩm + phân khu + ngày bắt đầu). App sao quy trình thành lịch riêng của vụ; sửa lịch vụ không đổi quy trình gốc.",

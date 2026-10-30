@@ -14,6 +14,7 @@ import { summarizeFields } from '../lib/fieldsLogic';
 import { fieldAlerts } from '../lib/fieldAlerts';
 import { useTable } from '../lib/tables';
 import { CycleWord } from '../components/CycleWord';
+import { areaPath } from '../lib/areas';
 
 const PAGE = 30;
 const OWN_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // khớp chính sách logs_update_own ở máy chủ
@@ -59,8 +60,8 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
 
   const cycleLabel = (id: string | null, areaId?: string | null) => {
     const c = cycles.find((x) => x.id === id);
-    if (!c) return areas.find((a) => a.id === areaId)?.name ? `Khu vực · ${areas.find((a) => a.id === areaId)!.name}` : '';
-    return `${cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? ''} · ${areas.find((a) => a.id === c.area_id)?.name ?? ''}`;
+    if (!c) return areaPath(areaId, areas) ? `Khu vực · ${areaPath(areaId, areas)}` : '';
+    return `${cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? ''} · ${areaPath(c.area_id, areas)}`;
   };
 
   const filtered = useMemo(() => {

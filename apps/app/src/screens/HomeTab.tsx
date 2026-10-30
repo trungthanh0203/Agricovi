@@ -20,6 +20,7 @@ import { retryFailed } from '../lib/outbox';
 import { useTable } from '../lib/tables';
 import { setIncidentActionDone } from '../lib/incidents';
 import { dueActions } from '../lib/incidentsLogic';
+import { areaPath } from '../lib/areas';
 
 export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: string) => void; onOpenCycle: (id: string) => void }) {
   const { active } = useOrgs();
@@ -132,7 +133,7 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
               <span className="muted">{new Date(l.performed_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
             <p className="muted">
-              {c ? `${cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? ''} · ${areas.find((a) => a.id === c.area_id)?.name ?? ''}` : ''}
+              {c ? `${cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? ''} · ${areaPath(c.area_id, areas)}` : ''}
               {l.note ? ` — ${l.note}` : ''}
             </p>
             <SyncBadge sync={sync.get(l.id)} />

@@ -154,7 +154,7 @@ export function KioskAdmin({ workers: workersProp, onChanged }: { workers?: Work
                 Phân khu
                 <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
                   <option value="">Cả cơ sở</option>
-                  {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  {areas.filter((a) => !a.parent_id).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </select>
               </label>
               <label className="check">

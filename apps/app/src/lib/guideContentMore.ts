@@ -42,8 +42,10 @@ export const MORE_GUIDES: Guide[] = [
         details: [
           'Khai báo → Phân khu → thêm mới: tên, diện tích, vị trí, kiểu nhà/chuồng, ảnh. Ví dụ: vườn, nhà màng, ao, chuồng.',
           'Loại "Cơ sở vật chất" dành cho chỗ không nuôi trồng (cổng, kho, biogas) để ghi những việc không thuộc vụ nào.',
-          'Mỗi vụ chạy trong MỘT phân khu. Diện tích dùng để tính năng suất, mật độ và để chia vật tư dùng chung cho nhiều vụ theo diện tích.',
-          'Cơ sở đông người có thể giao mỗi người một hay nhiều phân khu: họ chỉ thấy và ghi việc ở phân khu được giao (Khai báo → Nhân sự).',
+          'Phân khu có hai cấp: PHÂN KHU (cụm, ví dụ "Vườn Đông") và bên trong là NHÀ MÀNG (chuồng, ao với vật nuôi, thủy sản). Phân khu chỉ có một nhà màng thì không cần chia nhỏ.',
+          'Chia nhỏ: ở dòng phân khu bấm "+ Nhà màng" (một cái) hoặc "+ Nhiều nhà màng cùng lúc" (nhập số lượng, app tự đánh số, tối đa 50). Phân khu đang có vụ thì bấm "Chia thành nhà màng": app tạo nhà màng đầu tiên và chuyển các vụ hiện có sang đó.',
+          'Mỗi vụ chạy trong MỘT nhà màng (hoặc một phân khu chưa chia nhỏ). Diện tích dùng để tính năng suất, mật độ và chia vật tư dùng chung theo diện tích; diện tích phân khu tự cộng từ các nhà màng.',
+          'Cơ sở đông người có thể giao mỗi người một hay nhiều phân khu hoặc nhà màng: giao phân khu thì họ thấy mọi nhà màng bên trong, giao riêng nhà màng thì chỉ thấy nhà màng đó (Khai báo → Nhân sự).',
         ],
         go: { tab: 'declare', section: 'areas', label: 'Mở Phân khu' },
       },
@@ -96,7 +98,7 @@ export const MORE_GUIDES: Guide[] = [
         details: [
           'Khai báo → Nhân sự: tạo tài khoản cho người làm (số điện thoại + mật khẩu tạm), chọn chức vụ và phân khu.',
           'Khai báo → Chức vụ, Tổ chức: đặt quyền theo mục và chia phòng/tổ.',
-          'Khai báo → Máy chấm công: liên kết một điện thoại cố định làm máy chấm công.',
+          'Khai báo → Máy chấm công: liên kết một điện thoại cố định làm máy chấm công, gắn với phân khu cấp 1 (nơi đặt máy). Tiền công không tính theo nhà màng; chủ nhập chi phí nhân công theo vụ ở Chi phí.',
           'Hộ nhỏ chỉ có người nhà thì có thể bỏ qua cả khung này.',
           'Chi tiết xem hướng dẫn "Nhân sự, chấm công và lương".',
         ],

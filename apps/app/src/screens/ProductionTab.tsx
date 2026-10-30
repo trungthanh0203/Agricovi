@@ -30,6 +30,7 @@ import { infoLabels } from '../lib/terms';
 import { productionSections, type ProductionSection, type TabId } from '../lib/tabs';
 import { useTable } from '../lib/tables';
 import { nurseryLoggable, predecessorOf } from '../lib/nursery';
+import { areaPath } from '../lib/areas';
 
 interface Props {
   section?: string;
@@ -233,7 +234,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
                 : <p className="muted">Nối tiếp sau vụ {label} (đang {CYCLE_STATUS_LABEL_VI[pre.pred.status].toLowerCase()}).</p>;
             })()}
             <p className="muted">
-              Phân khu: {areaById.get(c.area_id)?.name ?? '—'}
+              Khu: {areaPath(c.area_id, areas) || '—'}
               {c.start_date && ` · Bắt đầu ${new Date(c.start_date).toLocaleDateString('vi-VN')}`}
             </p>
             {c.name && <p className="muted">Sản phẩm: {cropName(c.crop_type_id)}</p>}

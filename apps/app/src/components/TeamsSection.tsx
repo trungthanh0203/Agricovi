@@ -134,7 +134,7 @@ export function TeamsSection({ org }: { org: MyOrg }) {
             Phân khu (không bắt buộc)
             <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
               <option value="">— Không chọn —</option>
-              {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              {areas.filter((a) => !a.parent_id).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </label>
           <div className="btnrow">

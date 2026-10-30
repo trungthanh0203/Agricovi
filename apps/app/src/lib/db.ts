@@ -23,6 +23,8 @@ export interface AreaRow {
   kind_item?: string | null;
   /** Kiểu chuồng: chỉ lưu và hiển thị ở P1 */
   housing?: string | null;
+  /** Nhà màng / chuồng / ao (cấp 2, D125) trỏ về phân khu cha; null = phân khu cấp 1 */
+  parent_id?: string | null;
 }
 
 export interface CycleRow {

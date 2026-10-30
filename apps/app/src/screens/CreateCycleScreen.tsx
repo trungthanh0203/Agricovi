@@ -16,6 +16,7 @@ import type { AreaRow } from '../lib/db';
 import { HelpButton } from '../components/HelpButton';
 import { NURSERY_LOG_DAYS } from '../lib/nursery';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
+import { areaPath, cycleAreas } from '../lib/areas';
 
 /**
  * Tạo vụ mới (P2): BẮT BUỘC chọn quy trình mẫu của cơ sở sở hữu vụ. Việc và ngày kế hoạch của vụ
@@ -27,7 +28,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const { cropTypes } = useCatalog();
   const cfg = useConfig();
 
-  const myAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false && a.kind !== 'facility'); // khu đã dừng hoặc là cơ sở vật chất thì không tạo vụ
+  const myAreas = cycleAreas(areas.filter((a) => a.organization_id === active?.id && a.is_active !== false)); // chỉ khu tạo vụ được: nhà màng, hoặc phân khu chưa chia nhỏ (D125) // khu đã dừng hoặc là cơ sở vật chất thì không tạo vụ
   const [areaId, setAreaId] = useState('');
   const [productId, setProductId] = useState('');
   const [templateId, setTemplateId] = useState('');
@@ -55,6 +56,26 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const otherAreas = myAreas.filter((a) => !fits(a));
   const pickedArea = myAreas.find((a) => a.id === areaId) ?? null;
   const areaMismatch = pickedArea && !fits(pickedArea);
+  // danh sách chọn: nhà màng gom theo phân khu cha; phân khu chưa chia nhỏ đứng riêng
+  const areaOptions = (list: AreaRow[]) => {
+    const groups = new Map<string, AreaRow[]>();
+    const solo: AreaRow[] = [];
+    for (const a of list) {
+      if (a.parent_id) groups.set(a.parent_id, [...(groups.get(a.parent_id) ?? []), a]);
+      else solo.push(a);
+    }
+    const nameOf = (id: string) => areas.find((x) => x.id === id)?.name ?? '';
+    return (
+      <>
+        {solo.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+        {[...groups.entries()].sort((x, y) => nameOf(x[0]).localeCompare(nameOf(y[0]), 'vi')).map(([pid, cells]) => (
+          <optgroup key={pid} label={nameOf(pid)}>
+            {cells.sort((x, y) => x.name.localeCompare(y.name, 'vi', { numeric: true })).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </optgroup>
+        ))}
+      </>
+    );
+  };
   const isAnimal = prodKind === 'livestock' || prodKind === 'aquatic';
 
   useEffect(() => {
@@ -235,12 +256,12 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           {picked?.note && <p className="muted">{picked.note}</p>}
 
           <label>
-            Phân khu
+            Phân khu / nhà màng
             <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
-              {fitAreas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              {areaOptions(fitAreas)}
               {otherAreas.length > 0 && (
                 <optgroup label="Phân khu khác loại (nên tránh)">
-                  {otherAreas.map((a) => <option key={a.id} value={a.id}>{a.name} · {cfg.groupLabel(a.kind, a.kind_item)}</option>)}
+                  {otherAreas.map((a) => <option key={a.id} value={a.id}>{areaPath(a.id, areas)} · {cfg.groupLabel(a.kind, a.kind_item)}</option>)}
                 </optgroup>
               )}
             </select>

@@ -16,6 +16,7 @@ import { MemberProfile } from './MemberProfile';
 import { WorkerProfile } from './WorkerProfile';
 import { PositionPicker } from './PositionPicker';
 import { CredentialsCard, StaffCreateForm } from './StaffAccountsSection';
+import { areaPath } from '../lib/areas';
 
 /**
  * Nhân sự (D85): danh sách người của cơ sở, mỗi người một dòng (tên, chức vụ, tổ, trạng thái). Chủ bấm vào một người để mở HỒ SƠ
@@ -107,7 +108,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
   const areaText = (uid: string) => {
     if (!(uid in areaMap)) return '';
     const ids = areaMap[uid];
-    return !ids ? 'Tất cả' : ids.map((id) => areas.find((a) => a.id === id)?.name).filter(Boolean).join(', ');
+    return !ids ? 'Tất cả' : ids.map((id) => areaPath(id, areas)).filter(Boolean).join(', ');
   };
 
   if (isOwner && adding) {
