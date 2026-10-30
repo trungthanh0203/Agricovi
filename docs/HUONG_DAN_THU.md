@@ -245,7 +245,7 @@ Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng m�
 ## Thử P1B: bảng kiểm VietGAP (cần `db push` 0084)
 1. Báo cáo → **Bảng kiểm** → "Lấy bộ bảng kiểm về" (45 tiêu chí, 31 loại A, 14 loại B). Dòng cảnh báo vàng nhắc bộ này **chưa đối chiếu** với bản chính thức.
 2. Mở "Bộ tiêu chí": đổi mức A/B của một tiêu chí, sửa chữ, thêm tiêu chí riêng, đổi ngưỡng (A 100%, B 50%). Đối chiếu xong bấm "Đã đối chiếu với bản chính thức".
-3. "+ Bắt đầu lần đánh giá mới": bấm Đạt / Chưa đạt / Không áp dụng cho từng tiêu chí, ghi bằng chứng; bảng kết luận ở đầu trang tự cập nhật. Phải trả lời hết mới chốt được.
+3. "+ Bắt đầu lần đánh giá mới": bấm Đạt / Không đạt / Không áp dụng cho từng tiêu chí, ghi bằng chứng (hoặc biện pháp khắc phục nếu không đạt); bảng kết luận ở đầu trang tự cập nhật. Phải trả lời hết mới chốt được.
 4. Chốt xong không sửa được; muốn bỏ thì "Hủy lần đánh giá" kèm lý do. Danh sách xếp theo năm.
 
 ## Thử P2: số lượng và hao hụt (cần `db push` 0085)
@@ -265,7 +265,7 @@ Cần `npx supabase db push` (0080–0082) trước. Chỉ phần bạn dùng m�
 1. Báo cáo → **Sổ nhật ký**: chọn vụ, khoảng ngày và sổ (dưa: gieo trồng, bón phân, phun thuốc kèm PHI, tưới, thu hoạch, sự cố; heo: đàn–giống, thức ăn–nước, thú y–vaccine, vệ sinh–môi trường, sự cố).
 2. Mở **Còn thiếu gì trước khi nộp**: app liệt kê thiếu mã vụ, người phụ trách, thuốc chưa ghi hoạt chất/cách ly, thu hoạch trong thời gian cách ly, chưa Brix, sự cố còn mở, mốc quá hạn…
 3. Bấm **In sổ** (chọn khổ A4 ngang) hoặc **Tải file Excel** (mở bằng Excel; ngăn cách bằng dấu chấm phẩy, tiếng Việt có dấu).
-4. Bảng kiểm: Báo cáo → Bảng kiểm → lấy thêm bộ **dưa lưới** (18 tiêu chí) nếu hộ trồng dưa.
+4. Bảng kiểm: Báo cáo → Bảng kiểm → lấy thêm bộ **dưa lưới** (25 tiêu chí, 4 nhóm, đạt khi 100% đạt) nếu hộ trồng dưa.
 
 ## Thử P3: tăng trọng và FCR (cần `db push` 0088, vụ vật nuôi, có mạng)
 1. Vật tư cám: Khai báo → Vật tư → sửa → *Nhóm vật tư* = **Thức ăn**, đơn vị **kg**.

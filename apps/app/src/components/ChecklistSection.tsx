@@ -17,7 +17,7 @@ const vnDate = (iso: string) => iso.split('-').reverse().join('/');
 
 /**
  * Bảng kiểm nội bộ VietGAP (P1B): bộ tiêu chí của cơ sở (mức A/B và ngưỡng đạt SỬA ĐƯỢC), các lần đánh giá theo năm,
- * mỗi tiêu chí Đạt / Chưa đạt / Không áp dụng kèm bằng chứng, tự kết luận. Cần mạng.
+ * mỗi tiêu chí Đạt / Không đạt / Không áp dụng kèm bằng chứng hoặc biện pháp khắc phục, tự kết luận; tiêu chí xếp theo nhóm. Cần mạng.
  */
 export function ChecklistSection() {
   const { active } = useOrgs();
@@ -106,7 +106,7 @@ export function ChecklistSection() {
                       <strong className="grow">{vnDate(a.audit_date)}{a.auditor ? ` · ${a.auditor}` : ''}</strong>{tpls && tpls.length > 1 && <span className="muted">{a.template_name.slice(0, 28)}</span>}
                       {a.voided_at ? <span className="pill err">Đã hủy</span> : a.status === 'draft' ? <span className="pill warn">Bản nháp</span> : verdict && <span className={verdictClass(verdict)}>{VERDICT_LABEL[verdict]}</span>}
                     </div>
-                    {a.conclusion && !a.voided_at && <p className="muted">Loại A: {a.conclusion.a_pass}/{a.conclusion.a_total} ({a.conclusion.a_pct}%) · Loại B: {a.conclusion.b_pass}/{a.conclusion.b_total} ({a.conclusion.b_pct}%)</p>}
+                    {a.conclusion && !a.voided_at && <p className="muted">{a.conclusion.b_total === 0 ? 'Đạt' : 'Loại A'}: {a.conclusion.a_pass}/{a.conclusion.a_total} ({a.conclusion.a_pct}%){a.conclusion.b_total > 0 ? ` · Loại B: ${a.conclusion.b_pass}/${a.conclusion.b_total} (${a.conclusion.b_pct}%)` : ''}</p>}
                     {a.voided_at && a.void_reason && <p className="muted">Lý do hủy: {a.void_reason}</p>}
                     <button className="secondary" onClick={() => setOpenId(a.id)}>{a.status === 'draft' && !a.voided_at && canEdit ? 'Tiếp tục điền' : 'Xem'}</button>
                   </div>
@@ -162,11 +162,14 @@ function TemplateEditor({ tpl, canEdit, online, busy, run }: {
         </>
       )}
       <Collapsible inline title="＋ Danh sách tiêu chí" summary={items ? `${items.length} tiêu chí: ${nA} loại A, ${items.length - nA} loại B` : 'Đang tải…'}>
-        {(items ?? []).map((it) => (
-          <ItemRow key={it.id} item={it} canEdit={canEdit && online && !busy}
+        {(items ?? []).map((it, i, all) => (
+          <div key={it.id}>
+          {it.section && it.section !== all[i - 1]?.section && <h3 className="sect">{it.section}</h3>}
+          <ItemRow item={it} showLevel={all.some((x) => x.level === 'B')} canEdit={canEdit && online && !busy}
             onLevel={() => void edit(() => updateItem(it.id, { level: it.level === 'A' ? 'B' : 'A' }))}
             onText={(t) => void edit(() => updateItem(it.id, { item_text: t }))}
             onDelete={() => void edit(() => deleteItem(it.id))} />
+          </div>
         ))}
         {canEdit && items && (
           <div className="inline-form">
@@ -183,14 +186,14 @@ function TemplateEditor({ tpl, canEdit, online, busy, run }: {
   );
 }
 
-function ItemRow({ item, canEdit, onLevel, onText, onDelete }: { item: ChecklistItem; canEdit: boolean; onLevel: () => void; onText: (t: string) => void; onDelete: () => void }) {
+function ItemRow({ item, canEdit, showLevel, onLevel, onText, onDelete }: { item: ChecklistItem; canEdit: boolean; showLevel: boolean; onLevel: () => void; onText: (t: string) => void; onDelete: () => void }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(item.item_text);
   return (
     <div className="card slim">
       <div className="row">
         <strong>{item.seq}.</strong>
-        <span className={item.level === 'A' ? 'pill err' : 'pill'}>Loại {item.level}</span>
+        {showLevel && <span className={item.level === 'A' ? 'pill err' : 'pill'}>Loại {item.level}</span>}
         {canEdit && <button className="link inline" onClick={onLevel}>Đổi sang {item.level === 'A' ? 'B' : 'A'}</button>}
         {canEdit && <button className="link inline" onClick={() => setEditing(!editing)}>Sửa chữ</button>}
         {canEdit && <button className="link inline" onClick={() => { if (window.confirm('Xóa tiêu chí này khỏi bộ? Các lần đánh giá cũ không bị ảnh hưởng.')) onDelete(); }}>Xóa</button>}
@@ -235,18 +238,19 @@ function AuditView({ audit, canEdit, online, onBack }: { audit: ChecklistAudit; 
   }
 
   const shown = (answers ?? []).filter((a) => !onlyOpen || a.result === null);
+  const hasB = (answers ?? []).some((a) => a.level === 'B'); // bộ chỉ có loại A (ví dụ 25 tiêu chí cốt lõi) thì không hiện loại B
   return (
     <section>
       <button className="link" onClick={onBack}>← Về danh sách</button>
       <h1>Đánh giá ngày {vnDate(cur.audit_date)}</h1>
-      <p className="muted">{cur.template_name}{cur.auditor ? ` · ${cur.auditor}` : ''} · ngưỡng đạt: loại A {cur.pass_a_pct}%, loại B {cur.pass_b_pct}%</p>
+      <p className="muted">{cur.template_name}{cur.auditor ? ` · ${cur.auditor}` : ''} · {hasB ? `ngưỡng đạt: loại A ${cur.pass_a_pct}%, loại B ${cur.pass_b_pct}%` : `đạt khi ${cur.pass_a_pct}% tiêu chí đạt`}</p>
       {cur.voided_at && <p className="msg warn">Đã hủy: {cur.void_reason}</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
       <div className="card slim">
         <div className="row"><span>Kết luận</span><strong><span className={verdictClass(summary.verdict)}>{VERDICT_LABEL[summary.verdict]}</span></strong></div>
-        <div className="row"><span>Loại A (bắt buộc)</span><strong>{summary.a_pass}/{summary.a_total} · {summary.a_pct}%</strong></div>
-        <div className="row"><span>Loại B</span><strong>{summary.b_pass}/{summary.b_total} · {summary.b_pct}%</strong></div>
+        <div className="row"><span>{hasB ? 'Loại A (bắt buộc)' : `Tiêu chí đạt (cần ${cur.pass_a_pct}%)`}</span><strong>{summary.a_pass}/{summary.a_total} · {summary.a_pct}%</strong></div>
+        {hasB && <div className="row"><span>Loại B</span><strong>{summary.b_pass}/{summary.b_total} · {summary.b_pct}%</strong></div>}
         <p className="muted">{summary.unanswered > 0 ? `Còn ${summary.unanswered} tiêu chí chưa trả lời. ` : ''}{summary.na > 0 ? `${summary.na} tiêu chí không áp dụng (không tính vào tỉ lệ).` : ''}</p>
       </div>
 
@@ -270,9 +274,11 @@ function AuditView({ audit, canEdit, online, onBack }: { audit: ChecklistAudit; 
 
       <label className="check"><input type="checkbox" checked={onlyOpen} onChange={(e) => setOnlyOpen(e.target.checked)} /> Chỉ hiện tiêu chí chưa trả lời</label>
       {answers === null && <p className="muted">Đang tải…</p>}
-      {shown.map((a) => (
-        <div className="card slim" key={a.id}>
-          <div className="row"><strong>{a.seq}.</strong><span className={a.level === 'A' ? 'pill err' : 'pill'}>Loại {a.level}</span></div>
+      {shown.map((a, i) => (
+        <div key={a.id}>
+        {a.section && a.section !== shown[i - 1]?.section && <h2 className="sect">{a.section}</h2>}
+        <div className="card slim">
+          <div className="row"><strong>{a.seq}.</strong>{hasB && <span className={a.level === 'A' ? 'pill err' : 'pill'}>Loại {a.level}</span>}</div>
           <p>{a.item_text}</p>
           {a.method && <p className="muted">Cách đánh giá: {a.method}</p>}
           <div className="btnrow">
@@ -282,10 +288,11 @@ function AuditView({ audit, canEdit, online, onBack }: { audit: ChecklistAudit; 
             ))}
           </div>
           {(draft || a.evidence) && (
-            <label>Bằng chứng / yêu cầu điều chỉnh
+            <label>{a.result === 'fail' ? 'Biện pháp khắc phục' : 'Bằng chứng / ghi chú'}
               <input defaultValue={a.evidence ?? ''} maxLength={500} disabled={!draft || !online} onBlur={(e) => { if (e.target.value !== (a.evidence ?? '')) void setResult(a, a.result, e.target.value); }} />
             </label>
           )}
+        </div>
         </div>
       ))}
     </section>

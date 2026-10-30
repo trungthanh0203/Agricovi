@@ -9,7 +9,7 @@
 | A2 | Deploy lại Edge Function `staff-accounts` | D45 |
 | A3 | Xem CI trên GitHub xanh (bộ test đầy đủ) | Tôi chỉ chạy test từng file |
 | A4 | Dùng thử thật theo `HUONG_DAN_THU.md`, gửi phản hồi theo mức P0–P3 | Nhiều thay đổi gần đây chưa ai mở xem trên màn hình |
-| A5 | Cung cấp dữ liệu: bảng kiểm dưa lưới (18/25 tiêu chí), đối chiếu bảng kiểm heo, lịch vaccine heo | Cần cho bảng kiểm, mốc nhắc |
+| A5 | Cung cấp dữ liệu: ~~bảng kiểm dưa lưới (18/25 tiêu chí)~~ (đủ 25, 31/10/2026, D129), đối chiếu bảng kiểm heo, lịch vaccine heo | Cần cho bảng kiểm, mốc nhắc |
 
 ## B. Dở dang của các đợt vừa làm
 | # | Việc | Cỡ | Quyết |

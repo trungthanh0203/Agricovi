@@ -26,5 +26,5 @@ export function checklistSummary(answers: ChecklistAnswerLite[], passA: number, 
   };
 }
 
-export const VERDICT_LABEL: Record<ChecklistSummary['verdict'], string> = { pass: 'Đạt', fail: 'Chưa đạt', incomplete: 'Chưa xong' };
-export const RESULT_LABEL: Record<ChecklistResult, string> = { pass: 'Đạt', fail: 'Chưa đạt', na: 'Không áp dụng' };
+export const VERDICT_LABEL: Record<ChecklistSummary['verdict'], string> = { pass: 'Đạt', fail: 'Không đạt', incomplete: 'Chưa xong' };
+export const RESULT_LABEL: Record<ChecklistResult, string> = { pass: 'Đạt', fail: 'Không đạt', na: 'Không áp dụng' };

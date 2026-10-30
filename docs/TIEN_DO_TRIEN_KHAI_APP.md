@@ -50,7 +50,7 @@ Làm theo thứ tự; lớp trước ổn mới sang lớp sau. Ghi kết quả 
 
 **Việc bạn làm trong lúc thử (cung cấp dữ liệu, Claude không tự đoán):**
 - [ ] Bảng kiểm VietGAP heo: đối chiếu với bản chính thức rồi bấm "Đã đối chiếu".
-- [ ] Bảng kiểm dưa lưới nhà màng: file ghi 25 tiêu chí nhưng nạp được 18 — cho biết 7 tiêu chí còn thiếu hoặc xác nhận 18 là đủ.
+- [x] Bảng kiểm dưa lưới nhà màng: đã nạp đủ 25 tiêu chí từ file mới của chủ sản phẩm (31/10/2026, D129). Còn lại: đối chiếu với bản của đơn vị chứng nhận.
 - [ ] Lịch vaccine heo: thú y của trại chốt, bạn thêm mốc nhắc theo lịch đó.
 - [ ] Vật tư cám: đặt nhóm "Thức ăn", đơn vị kg (để tính FCR).
 

@@ -353,8 +353,14 @@ export const HELP: Record<HelpKey, HelpEntry> = {
   },
   checklist: {
     title: 'Bảng kiểm',
-    what: 'Bảng kiểm dùng khi cần đối chiếu quy trình của cơ sở với tiêu chuẩn (ví dụ VietGAP).',
-    how: ['Mở bảng kiểm tương ứng và đối chiếu với nhật ký đã ghi.', 'In hoặc xuất ra khi cần nộp.'],
+    what: 'Bảng kiểm tự đánh giá VietGAP để kiểm tra cơ sở trước khi xin chứng nhận: heo 45 tiêu chí; dưa lưới nhà màng 25 tiêu chí chia 4 nhóm (cơ sở vật chất, đầu vào, thu hoạch, hồ sơ và an toàn lao động).',
+    how: [
+      'Lần đầu: bấm "Lấy bộ này về" ở bộ bảng kiểm phù hợp (cần quyền Khai báo).',
+      'Bấm "+ Bắt đầu lần đánh giá mới", rồi chọn Đạt, Không đạt hoặc Không áp dụng cho từng tiêu chí.',
+      'Tiêu chí không đạt thì ghi Biện pháp khắc phục; tiêu chí đạt có thể ghi bằng chứng.',
+      'Trả lời hết rồi bấm "Chốt kết quả". Lần đã chốt không sửa được, chỉ hủy kèm lý do.',
+    ],
+    note: 'Bộ dưa lưới 25 tiêu chí: đạt khi 100% tiêu chí đạt. Bộ này chưa đối chiếu với bản của đơn vị chứng nhận nên cần đối chiếu rồi đánh dấu.',
     guide: { id: 'crop', step: 13 },
   },
   logbook: {

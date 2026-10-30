@@ -9,12 +9,12 @@ export interface ChecklistTemplate {
 }
 /** Bộ dùng chung do hệ thống nạp sẵn (chưa lấy về thì chưa sửa được) */
 export interface SharedTemplate { code: string; name: string; source_note: string | null }
-export interface ChecklistItem { id: string; seq: number; item_text: string; level: 'A' | 'B'; method: string | null }
+export interface ChecklistItem { id: string; seq: number; item_text: string; level: 'A' | 'B'; method: string | null; section?: string | null }
 export interface ChecklistAudit {
   id: string; template_name: string; audit_date: string; auditor: string | null; pass_a_pct: number; pass_b_pct: number;
   status: 'draft' | 'final'; conclusion: ChecklistSummary | null; finalized_at: string | null; voided_at: string | null; void_reason: string | null;
 }
-export interface ChecklistAnswer { id: string; seq: number; item_text: string; level: 'A' | 'B'; method: string | null; result: ChecklistResult | null; evidence: string | null }
+export interface ChecklistAnswer { id: string; seq: number; item_text: string; level: 'A' | 'B'; method: string | null; result: ChecklistResult | null; evidence: string | null; section?: string | null }
 
 function client() {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
@@ -44,7 +44,10 @@ export async function adoptTemplate(orgId: string, code: string): Promise<string
   return rpc<string>('ensure_checklist_template', { p_org: orgId, p_source_code: code }, 'lấy bộ bảng kiểm');
 }
 export async function listItems(templateId: string): Promise<ChecklistItem[]> {
-  return rows<ChecklistItem>(await client().from('checklist_items').select('id, seq, item_text, level, method').eq('template_id', templateId).order('seq'));
+  // cột nhóm (migration 0139): chưa db push thì tải bản không có nhóm
+  let r = await client().from('checklist_items').select('id, seq, item_text, level, method, section').eq('template_id', templateId).order('seq');
+  if (r.error) r = await client().from('checklist_items').select('id, seq, item_text, level, method').eq('template_id', templateId).order('seq') as typeof r;
+  return rows<ChecklistItem>(r);
 }
 export async function updateTemplate(id: string, c: { pass_a_pct?: number; pass_b_pct?: number; verified?: boolean }): Promise<void> {
   requireOnline('sửa bộ bảng kiểm');
@@ -76,7 +79,9 @@ export async function listAudits(orgId: string): Promise<ChecklistAudit[]> {
   return rows<ChecklistAudit>(await client().from('checklist_audits').select(AUDIT_COLUMNS).eq('organization_id', orgId).order('audit_date', { ascending: false }).limit(200));
 }
 export async function listAnswers(auditId: string): Promise<ChecklistAnswer[]> {
-  return rows<ChecklistAnswer>(await client().from('checklist_answers').select('id, seq, item_text, level, method, result, evidence').eq('audit_id', auditId).order('seq'));
+  let r = await client().from('checklist_answers').select('id, seq, item_text, level, method, result, evidence, section').eq('audit_id', auditId).order('seq');
+  if (r.error) r = await client().from('checklist_answers').select('id, seq, item_text, level, method, result, evidence').eq('audit_id', auditId).order('seq') as typeof r;
+  return rows<ChecklistAnswer>(r);
 }
 export async function startAudit(id: string, orgId: string, templateId: string, date: string, auditor: string): Promise<ChecklistAudit> {
   return rpc<ChecklistAudit>('start_checklist_audit', { p_id: id, p_org: orgId, p_template: templateId, p_date: date, p_auditor: auditor }, 'bắt đầu đánh giá');
