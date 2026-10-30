@@ -28,6 +28,7 @@ import { fetchKioskInfo, readCachedKiosk, type KioskInfo } from './lib/kiosk';
 import { fetchOwnerSignup, type OwnerSignup } from './lib/phoneSignup';
 import { OwnerPendingScreen } from './screens/OwnerPendingScreen';
 import { KioskScreen } from './screens/KioskScreen';
+import { GUIDE_JUMP_EVENT, type GuideJump } from './lib/helpEvents';
 
 // Các màn ngoài Trang chủ tải khi mở lần đầu (giảm dung lượng phải tải lúc vào app); bản dựng vẫn được lưu sẵn để dùng offline
 const CreateCycleScreen = lazyRetry(() => import('./screens/CreateCycleScreen').then((m) => ({ default: m.CreateCycleScreen })));
@@ -144,6 +145,19 @@ function Shell() {
     if (section) setSubs((cur) => ({ ...cur, [t]: section }));
   }, []);
 
+  // Nút ⓘ → "Xem hướng dẫn đầy đủ": mở tab Hướng dẫn đúng mục và bước (D123)
+  const [guideJump, setGuideJump] = useState<{ step: number; n: number } | null>(null);
+  useEffect(() => {
+    const onJump = (e: Event) => {
+      const d = (e as CustomEvent<GuideJump>).detail;
+      setOverlay(null); setLogPreset(null); setQrFirst(false); setDetailOpts({});
+      goTo('guide', d.id);
+      setGuideJump({ step: d.step, n: Date.now() });
+    };
+    window.addEventListener(GUIDE_JUMP_EVENT, onJump);
+    return () => window.removeEventListener(GUIDE_JUMP_EVENT, onJump);
+  }, [goTo]);
+
   useEffect(() => {
     const sync = () => void syncDown().catch(() => undefined).finally(() => void refresh());
     const on = () => {
@@ -234,7 +248,7 @@ function Shell() {
         ) : tab === 'config' ? (
           <ConfigTab />
         ) : tab === 'guide' ? (
-          <GuideTab section={subs.guide} onSection={setSub('guide')} onGo={(t, s) => { closeOverlay(); goTo(t, s); }} />
+          <GuideTab section={subs.guide} jump={guideJump} onSection={setSub('guide')} onGo={(t, s) => { closeOverlay(); goTo(t, s); }} />
         ) : tab === 'reports' ? (
           <ReportsTab section={subs.reports} onSection={setSub('reports')} onGo={goTo} />
         ) : (

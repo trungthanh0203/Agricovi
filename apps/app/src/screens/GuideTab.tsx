@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GuideFlow } from '../components/GuideFlow';
 import { pickSection, SubTabs } from '../components/SubTabs';
 import { GUIDES, type GuideId } from '../lib/guideContent';
@@ -9,7 +9,7 @@ import type { TabId } from '../lib/tabs';
  * Tab Hướng dẫn sử dụng: menu 9 mục (Giới thiệu, Trồng cây, Vật nuôi, HTX, Nhân sự, Khai báo, Quy trình, Kho, Website; Công ty tạm ẩn). Mỗi hướng dẫn mở đầu bằng SƠ ĐỒ các chặng (bấm ô để nhảy tới bước),
  * rồi danh sách bước đánh số; bấm một bước thì mở chi tiết bên dưới kèm nút nhảy tới đúng màn. Nội dung ở lib/guideContent.ts.
  */
-export function GuideTab({ section, onSection, onGo }: { section?: string; onSection: (s: GuideId) => void; onGo: (t: TabId, section?: string) => void }) {
+export function GuideTab({ section, onSection, onGo, jump }: { section?: string; onSection: (s: GuideId) => void; onGo: (t: TabId, section?: string) => void; jump?: { step: number; n: number } | null }) {
   const items = GUIDES.map((g) => ({ id: g.id, label: g.label }));
   const current = pickSection(items, section);
   const guide = GUIDES.find((g) => g.id === current);
@@ -21,10 +21,16 @@ export function GuideTab({ section, onSection, onGo }: { section?: string; onSec
     window.setTimeout(() => document.getElementById(`guide-step-${i}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
+  // đến từ nút ⓘ: mở sẵn đúng bước (đợi bước được vẽ ra rồi mới cuộn tới)
+  useEffect(() => {
+    if (jump && guide) pick(jump.step);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jump?.n, guide?.id]);
+
   return (
     <section>
       <h1>Hướng dẫn sử dụng</h1>
-      <SubTabs items={items} value={current} onChange={(s) => { setOpen(null); onSection(s); }} onBack={() => onSection('' as GuideId)} label="Hướng dẫn" />
+      <SubTabs items={items} value={current} onChange={(s) => { setOpen(null); onSection(s); }} onBack={() => onSection('' as GuideId)} label="Hướng dẫn" help={false} />
       {current === null && (
         <div className="card">
           <p className="muted">Chọn một mục để xem. Mỗi hướng dẫn có sơ đồ tổng quát ở đầu, rồi các bước đánh số; bấm vào bước để xem chi tiết.</p>

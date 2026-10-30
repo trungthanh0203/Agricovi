@@ -1,4 +1,5 @@
 import type { Section } from '../lib/tabs';
+import { HelpButton } from './HelpButton';
 
 /** Biểu tượng riêng của Hồ sơ web (ảnh do chủ sản phẩm chọn, đặt ở public/icons) */
 export const HO_SO_WEB_ICON = `${import.meta.env.BASE_URL}icons/ho-so-web.png`;
@@ -22,12 +23,14 @@ export const SECTION_ICONS: Record<string, string> = {
  * `value` null = đang ở menu. Chỉ có một mục thì không cần menu (người gọi tự mở mục đó, xem `pickSection`). Chỉ phần đang mở mới được dựng,
  * nên không làm chậm việc tải.
  */
-export function SubTabs<Id extends string>({ items, value, onChange, onBack, label }: {
+export function SubTabs<Id extends string>({ items, value, onChange, onBack, label, help = true }: {
   items: Section<Id>[];
   value: Id | null;
   onChange: (id: Id) => void;
   onBack: () => void;
   label: string;
+  /** Hiện nút ⓘ giới thiệu chức năng (D123); tắt cho menu Hướng dẫn vì đó chính là hướng dẫn */
+  help?: boolean;
 }) {
   if (items.length < 2) return null;
   if (value === null) {
@@ -47,6 +50,7 @@ export function SubTabs<Id extends string>({ items, value, onChange, onBack, lab
     <div className="menubar">
       <button className="menu-back" onClick={onBack} aria-label={`Quay lại menu ${label}`}>‹ Menu</button>
       <strong className="menu-cur"><IconGlyph icon={SECTION_ICONS[value] ?? ''} /> {cur?.label}</strong>
+      {help && <HelpButton topic={value} />}
     </div>
   );
 }
