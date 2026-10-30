@@ -13,6 +13,7 @@ import {
 } from '../lib/reports';
 import { downloadCsv } from '../lib/summary';
 import { useTable } from '../lib/tables';
+import { useCycleTitle } from '../lib/useCycleTitle';
 
 const monthStart = (d: string) => `${d.slice(0, 7)}-01`;
 const prevMonth = (d: string) => { const x = new Date(`${monthStart(d)}T00:00:00`); x.setMonth(x.getMonth() - 1); return x.toLocaleDateString('en-CA'); };
@@ -22,6 +23,7 @@ const prevMonth = (d: string) => { const x = new Date(`${monthStart(d)}T00:00:00
  * Cần mạng; máy chủ tính số và kiểm quyền theo mục.
  */
 export function ReportBuilder() {
+  const titleOf = useCycleTitle();
   const { active } = useOrgs();
   const { session } = useAuth();
   const online = useOnline();
@@ -120,7 +122,7 @@ export function ReportBuilder() {
             <label>Vụ (không bắt buộc)
               <select value={cycleId} onChange={(e) => setCycleId(e.target.value)}>
                 <option value="">— Tất cả các vụ —</option>
-                {cycles.map((c) => <option key={c.id} value={c.id}>{c.name || c.template_name || 'Vụ'}</option>)}
+                {cycles.map((c) => <option key={c.id} value={c.id}>{titleOf(c)}</option>)}
               </select>
             </label>
           )}

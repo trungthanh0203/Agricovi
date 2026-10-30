@@ -15,6 +15,7 @@ import {
   type WorkerLite,
 } from '../lib/work';
 import { useTable } from '../lib/tables';
+import { useCycleTitle } from '../lib/useCycleTitle';
 
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
@@ -150,15 +151,18 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
   );
 }
 
-type CycleOpt = { id: string; name?: string | null; template_name?: string | null };
-const CycleSelect = ({ cycles, value, onChange }: { cycles: CycleOpt[]; value: string; onChange: (v: string) => void }) => cycles.length === 0 ? null : (
+type CycleOpt = { id: string; name?: string | null; crop_type_id?: string | null; start_date?: string | null };
+const CycleSelect = ({ cycles, value, onChange }: { cycles: CycleOpt[]; value: string; onChange: (v: string) => void }) => {
+  const titleOf = useCycleTitle();
+  return cycles.length === 0 ? null : (
   <label>Vụ (không bắt buộc)
     <select value={value} onChange={(e) => onChange(e.target.value)}>
       <option value="">— Không gắn vụ —</option>
-      {cycles.map((c) => <option key={c.id} value={c.id}>{c.name || c.template_name || 'Vụ'}</option>)}
+      {cycles.map((c) => <option key={c.id} value={c.id}>{titleOf(c)}</option>)}
     </select>
   </label>
-);
+  );
+};
 
 function ShiftForm({ workers, cycles, busy, onSave }: { workers: WorkerLite[]; cycles: CycleOpt[]; busy: boolean; onSave: (w: string, s: Date, e: Date, b: number, note: string, c: string | null) => Promise<unknown> }) {
   const [cyc, setCyc] = useState('');

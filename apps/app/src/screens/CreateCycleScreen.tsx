@@ -18,6 +18,7 @@ import { PrepPicker } from '../components/PrepPicker';
 import { type PrepMode } from '../lib/prep';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { areaPath, cycleAreas } from '../lib/areas';
+import { cycleTitle } from '../lib/cycles';
 
 /**
  * Tạo vụ mới (P2): BẮT BUỘC chọn quy trình mẫu của cơ sở sở hữu vụ. Việc và ngày kế hoạch của vụ
@@ -144,7 +145,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const sameArea = allCycles.filter((c) => c.area_id === areaId && (c.status === 'active' || c.status === 'paused' || c.status === 'preparing'));
   const running = sameArea.filter((c) => c.status === 'active' || c.status === 'paused');
   const prepEarly = prepMode !== 'whole'; // chuẩn bị 1 phần hoặc ở nhà riêng: vụ ở trạng thái Chuẩn bị nhưng ghi việc được
-  const cycleLabel = (c: { name?: string | null; crop_type_id: string }) => c.name || cropName(c.crop_type_id);
+  const cycleLabel = (c: { name?: string | null; crop_type_id: string; start_date?: string | null }) => cycleTitle(c, cropName(c.crop_type_id));
   const restBase = areaId && startDate
     ? restWarning(areaId, startDate, 7, allCycles, (cid) => allStages.filter((s) => s.cycle_id === cid && s.actual_end).map((s) => s.actual_end as string).sort().pop() ?? null)
     : null;

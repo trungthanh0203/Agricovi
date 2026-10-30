@@ -90,7 +90,7 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
                     onChange={() => { setNoteError(null); setIncidentActionDone(a.id, true).catch((e) => setNoteError(friendlyError(e))); }} />
                   <span>
                     Khắc phục sự cố: {a.content}
-                    <small className="muted"> — {c?.name || cropTypes.find((t) => t.id === c?.crop_type_id)?.name || 'Vụ'} · {a.assignee_name ?? 'chưa giao ai'} · {fmtDate(a.due_date!)}</small>
+                    <small className="muted"> — {c ? cycleTitle(c, cropTypes.find((t) => t.id === c?.crop_type_id)?.name ?? '') : 'Vụ'} · {a.assignee_name ?? 'chưa giao ai'} · {fmtDate(a.due_date!)}</small>
                   </span>
                 </label>
                 <span className={d < 0 ? 'pill err' : d === 0 ? 'pill warn' : 'pill'}>{when}</span>
@@ -108,7 +108,7 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
                     onChange={() => { setNoteError(null); setNoteDone(n.id, true).catch((e) => setNoteError(friendlyError(e))); }} />
                   <span>
                     {n.content}
-                    <small className="muted"> — {c?.name || cropTypes.find((t) => t.id === c?.crop_type_id)?.name || 'Vụ'} · {fmtDate(n.note_date)}</small>
+                    <small className="muted"> — {c ? cycleTitle(c, cropTypes.find((t) => t.id === c?.crop_type_id)?.name ?? '') : 'Vụ'} · {fmtDate(n.note_date)}</small>
                   </span>
                 </label>
                 <span className={d < 0 ? 'pill err' : d === 0 ? 'pill warn' : 'pill'}>{when}</span>

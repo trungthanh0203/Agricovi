@@ -6,6 +6,7 @@ import { createCustomer, listCustomers, type Customer } from '../lib/partners';
 import { putLocal } from '../lib/serverWrite';
 import { useTable } from '../lib/tables';
 import { fetchOrderContext, normPhone, recordOrderSale, type OrderContext } from '../lib/webSite';
+import { useCycleTitle } from '../lib/useCycleTitle';
 
 interface Line { itemId: string; name: string; unit: string | null; cycleId: string; qty: string; amount: string }
 
@@ -15,6 +16,7 @@ interface Line { itemId: string; name: string; unit: string | null; cycleId: str
  * Chỉ người có quyền sửa Doanh thu dùng (máy chủ kiểm lại).
  */
 export function OrderSaleForm({ orderId, onClose, onDone }: { orderId: string; onClose: () => void; onDone: () => void }) {
+  const titleOf = useCycleTitle();
   const online = useOnline();
   const cyclesAll = useTable('cycles');
   const [ctx, setCtx] = useState<OrderContext | null>(null);
@@ -59,7 +61,7 @@ export function OrderSaleForm({ orderId, onClose, onDone }: { orderId: string; o
   }, [orderId]);
 
   const cycles = useMemo(() => cyclesAll.filter((c) => c.owner_org_id === ctx?.organization_id), [cyclesAll, ctx]);
-  const cycleName = (id: string) => { const c = cycles.find((x) => x.id === id); return c ? (c.name || c.template_name || 'Vụ') : '—'; };
+  const cycleName = (id: string) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : '—'; };
 
   if (!ctx) {
     return (
@@ -152,7 +154,7 @@ export function OrderSaleForm({ orderId, onClose, onDone }: { orderId: string; o
             <label>Vụ
               <select value={l.cycleId} onChange={(e) => setLines((s) => s.map((x) => (x.itemId === l.itemId ? { ...x, cycleId: e.target.value } : x)))}>
                 <option value="">— Chọn vụ —</option>
-                {cycles.map((c) => <option key={c.id} value={c.id}>{c.name || c.template_name || 'Vụ'}</option>)}
+                {cycles.map((c) => <option key={c.id} value={c.id}>{titleOf(c)}</option>)}
               </select>
             </label>
             <div className="pair">

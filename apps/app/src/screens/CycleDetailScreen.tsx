@@ -11,7 +11,7 @@ import { useTable } from '../lib/tables';
 import { withdrawalMessage } from '../lib/withdrawalLogic';
 import { cycleCode } from '../lib/qr';
 import { useCatalog } from '../lib/catalog';
-import { cycleProgress, stageColor, stageDelayDays, STAGE_STATUS_LABEL_VI } from '../lib/cycles';
+import { cycleProgress, stageColor, stageDelayDays, STAGE_STATUS_LABEL_VI, cycleTitle } from '../lib/cycles';
 import { db, type NoteRow, type StageRow } from '../lib/db';
 import { addDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
@@ -126,7 +126,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
         </div>
       )}
       <div className="row">
-        <h1 className="grow">{cycle.name || crop}</h1>
+        <h1 className="grow">{cycleTitle(cycle, crop)}</h1>
         <span className="pill">{CYCLE_STATUS_LABEL_VI[cycle.status]}</span>
       </div>
       <p className="muted">

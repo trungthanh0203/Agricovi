@@ -10,7 +10,7 @@ import { pickSection, SubTabs } from '../components/SubTabs';
 import { HelpButton } from '../components/HelpButton';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
-import { cycleProgress } from '../lib/cycles';
+import { cycleProgress, cycleTitle } from '../lib/cycles';
 import { cycleCode } from '../lib/qr';
 import { CycleQr } from '../components/CycleQr';
 import { CycleStatsStrip } from '../components/CycleStatsStrip';
@@ -187,7 +187,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   }
 
   async function remove(c: CycleRow) {
-    if (!window.confirm(`Xóa vụ "${c.name || cropName(c.crop_type_id)}" cùng các việc và ghi chú? Không khôi phục được. Vụ đã có nhật ký, thu hoạch, chi phí… thì không xóa được, hãy chọn Kết thúc vụ.`)) return;
+    if (!window.confirm(`Xóa vụ "${cycleTitle(c, cropName(c.crop_type_id))}" cùng các việc và ghi chú? Không khôi phục được. Vụ đã có nhật ký, thu hoạch, chi phí… thì không xóa được, hãy chọn Kết thúc vụ.`)) return;
     setActionError(null);
     try { await deleteCycle(c.id); } catch (err) { setActionError(friendlyError(err)); }
   }
@@ -222,13 +222,13 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
         return (
           <div className="card slim" key={c.id}>
             <div className="row">
-              <strong>{c.name || cropName(c.crop_type_id)} - <span className="mono-code">{cycleCode(c.id)}</span></strong>
+              <strong>{cycleTitle(c, cropName(c.crop_type_id))} - <span className="mono-code">{cycleCode(c.id)}</span></strong>
               <span className="pill">{CYCLE_STATUS_LABEL_VI[c.status]}{prepLoggable(c) ? ' · chuẩn bị trước' : ''}</span>
             </div>
             {(() => {
               const pre = c.status === 'preparing' ? predecessorOf(c, cycles) : null;
               if (!pre) return null;
-              const label = pre.pred.name || cropName(pre.pred.crop_type_id);
+              const label = cycleTitle(pre.pred, cropName(pre.pred.crop_type_id));
               return pre.ended
                 ? <p className="msg ok" role="status">Vụ trước ({label}) đã kết thúc. Bấm "Bắt đầu sản xuất" để chuyển vụ này sang sản xuất.</p>
                 : <p className="muted">Nối tiếp sau vụ {label} (đang {CYCLE_STATUS_LABEL_VI[pre.pred.status].toLowerCase()}).</p>;
@@ -261,7 +261,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
               )}
             </div>
             {pubId === c.id && <PublishCycle cycleId={c.id} />}
-            {qrId === c.id && <CycleQr cycleId={c.id} label={c.name || cropName(c.crop_type_id)} />}
+            {qrId === c.id && <CycleQr cycleId={c.id} label={cycleTitle(c, cropName(c.crop_type_id))} />}
             {editId === c.id && (
               <CycleEditForm cycle={c} busy={!online} defaultUnit={cycleCountUnit({ crop_type_id: c.crop_type_id, count_unit: null }, cropTypes)} kind={cropTypes.find((t) => t.id === c.crop_type_id)?.kind} onClose={() => setEditId(null)}
                 onSave={async (v) => {

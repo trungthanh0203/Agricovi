@@ -11,6 +11,7 @@ import {
 import { MILESTONE_STATUS_LABEL, milestoneDue, milestoneStatus, milestoneWhen, type MilestoneStatus } from '../lib/milestoneLogic';
 import { useOrgs } from '../lib/orgs';
 import { useTable } from '../lib/tables';
+import { cycleTitle } from '../lib/cycles';
 
 const vn = (iso: string | null) => (iso ? iso.split('-').reverse().join('/') : '—');
 const pillClass = (s: MilestoneStatus) => (s === 'overdue' ? 'pill err' : s === 'today' || s === 'soon' ? 'pill warn' : s === 'done' ? 'pill ok' : 'pill');
@@ -36,7 +37,7 @@ export function HomeReminders() {
   }, [milestones, cycles, active, today]);
   if (rows.length === 0) return null;
   const late = rows.filter((r) => r.status === 'overdue').length;
-  const label = (c: CycleRow) => `${c.code ?? c.name ?? cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? 'Vụ'}`;
+  const label = (c: CycleRow) => `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')}${c.code ? ` (${c.code})` : ''}`;
   return (
     <Collapsible title="Mốc an toàn đến hạn" summary={`${rows.length} mốc${late > 0 ? ` · ${late} quá hạn` : ''}`} warn={late > 0} defaultOpen={late > 0}>
       {error && <p className="msg error" role="alert">{error}</p>}

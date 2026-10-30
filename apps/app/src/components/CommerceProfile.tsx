@@ -14,6 +14,7 @@ import { listLicenses, type LicenseRow } from '../lib/licenses';
 import type { MyOrg } from '../lib/orgs';
 import { isOwner } from '../lib/roles';
 import { useTable } from '../lib/tables';
+import { useCycleTitle } from '../lib/useCycleTitle';
 
 /**
  * Hồ sơ website (D55): giới thiệu cơ sở, liên hệ, hình ảnh, sản phẩm cung ứng, chứng chỉ; chủ đồng ý công khai rồi gửi duyệt.
@@ -303,6 +304,7 @@ function ProductsBlock({ org, profileId, owner, onChanged }: { org: MyOrg; profi
 
 function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: string; initial: Listing | null; busy: boolean; onSave: (f: ListingForm) => Promise<boolean>; onClose: () => void }) {
   const { cropTypes } = useCatalog();
+  const titleOf = useCycleTitle();
   const cycles = useTable('cycles').filter((c) => c.owner_org_id === orgId);
   const [f, setF] = useState({
     name: initial?.name ?? '', description: initial?.description ?? '', specification: initial?.specification ?? '', unit: initial?.unit ?? '', season: initial?.season ?? '',
@@ -340,7 +342,7 @@ function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: str
           <label>Đặt tối thiểu<input value={f.min_order} maxLength={120} onChange={set('min_order')} placeholder="50 kg" /></label>
         </div>
         <label>Vụ để người mua xem truy xuất (không bắt buộc)
-          <select value={f.cycle_id} onChange={set('cycle_id')}><option value="">— Không liên kết —</option>{cycles.map((c) => <option key={c.id} value={c.id}>{c.name || c.template_name || 'Vụ'}</option>)}</select>
+          <select value={f.cycle_id} onChange={set('cycle_id')}><option value="">— Không liên kết —</option>{cycles.map((c) => <option key={c.id} value={c.id}>{titleOf(c)}</option>)}</select>
           <small>Chỉ hiện truy xuất nếu vụ đó đã được bạn bấm "Mở công khai website".</small>
         </label>
         <label className="check"><input type="checkbox" checked={f.include} onChange={(e) => setF({ ...f, include: e.target.checked })} /> Đưa sản phẩm này lên website</label>
