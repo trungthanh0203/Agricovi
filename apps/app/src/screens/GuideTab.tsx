@@ -6,7 +6,7 @@ import { shareSystem } from '../lib/shareApp';
 import type { TabId } from '../lib/tabs';
 
 /**
- * Tab Hướng dẫn sử dụng: menu 4 mục (Giới thiệu, Hộ, HTX, Công ty). Mỗi hướng dẫn mở đầu bằng SƠ ĐỒ các chặng (bấm ô để nhảy tới bước),
+ * Tab Hướng dẫn sử dụng: menu 9 mục (Giới thiệu, Trồng cây, Vật nuôi, HTX, Nhân sự, Khai báo, Quy trình, Kho, Website; Công ty tạm ẩn). Mỗi hướng dẫn mở đầu bằng SƠ ĐỒ các chặng (bấm ô để nhảy tới bước),
  * rồi danh sách bước đánh số; bấm một bước thì mở chi tiết bên dưới kèm nút nhảy tới đúng màn. Nội dung ở lib/guideContent.ts.
  */
 export function GuideTab({ section, onSection, onGo }: { section?: string; onSection: (s: GuideId) => void; onGo: (t: TabId, section?: string) => void }) {

@@ -13,7 +13,7 @@ export const SECTION_ICONS: Record<string, string> = {
   cycles: '🌱', log: '📝', logs: '📒', harvest: '🧺', stock: '📦', attendance: '⏱',
   areas: '🏡', partners: '🚚', customers: '🛒', website: '📬', payables: '💳', crops: '🌾', worktypes: '🧰', templates: '📋', materials: '🧪', places: '🏬',
   commerce: HO_SO_WEB_ICON, kiosks: '📲', process: '📋', staff: '👥', members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
-  intro: '📖', household: '🌾', company: '🏢',
+  intro: '📖', crop: '🌾', livestock: '🐖', declare: '🏡', webtalk: '🌐', company: '🏢',
   expense: '💸', sales: '💰', summary: '📊', weekly: '🗓️', paybook: '💼', custom: '🔎', licenses: '📜', logbook: '📔', checklist: '✅',
 };
 

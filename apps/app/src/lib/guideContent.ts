@@ -1,4 +1,5 @@
 import type { TabId } from './tabs';
+import { MORE_GUIDES } from './guideContentMore';
 
 /**
  * Nội dung Hướng dẫn sử dụng. Mỗi hướng dẫn là danh sách BƯỚC đánh số (xem nhanh theo thứ tự việc phải làm);
@@ -29,9 +30,12 @@ export interface Guide {
   steps: GuideStep[];
 }
 
-export type GuideId = 'intro' | 'household' | 'process' | 'stock' | 'staff' | 'coop' | 'company';
+export type GuideId = 'intro' | 'crop' | 'livestock' | 'coop' | 'staff' | 'declare' | 'process' | 'stock' | 'webtalk' | 'company';
 
-export const GUIDES: Guide[] = [
+/** Thứ tự hiện trong menu Hướng dẫn sử dụng. 'company' tạm ẩn (D122): nội dung vẫn giữ bên dưới, thêm lại id vào đây để hiện. */
+const GUIDE_ORDER: GuideId[] = ['intro', 'crop', 'livestock', 'coop', 'staff', 'declare', 'process', 'stock', 'webtalk'];
+
+const BASE_GUIDES: Guide[] = [
   // ---------------------------------------------------------------------------------------------------------------------------------
   {
     id: 'intro',
@@ -42,7 +46,7 @@ export const GUIDES: Guide[] = [
       { title: 'Dùng hằng ngày', tone: 'ok', nodes: [{ icon: '🧭', label: 'Menu và các màn', step: 3 }, { icon: '💰', label: 'Tiền được tính thế nào', step: 4 }, { icon: '📶', label: 'Mất mạng thì sao', step: 5 }] },
       { title: 'Yên tâm', tone: 'neutral', nodes: [{ icon: '🛡️', label: 'Ai làm được gì', step: 6 }, { icon: '🔒', label: 'Dữ liệu riêng tư', step: 7 }, { icon: '📲', label: 'Cài lên điện thoại', step: 8 }] },
     ],
-    intro: 'Agricovi là app giúp bạn ghi chép và quản lý nuôi trồng ngay trên điện thoại, thay cho sổ tay. Đọc lần lượt 9 ý dưới đây một lần để hiểu cách hệ thống nghĩ; sau đó mở các hướng dẫn còn lại khi cần làm việc cụ thể.',
+    intro: 'Agricovi là app giúp bạn ghi chép và quản lý nuôi trồng ngay trên điện thoại, thay cho sổ tay. Đọc lần lượt 9 ý dưới đây một lần để hiểu cách hệ thống nghĩ; sau đó mở Hướng dẫn cho trồng cây hoặc cho vật nuôi để làm từng bước từ đầu đến cuối, rồi các hướng dẫn chuyên đề khi cần làm việc cụ thể.',
     steps: [
       {
         title: 'Agricovi dùng để làm gì',
@@ -145,8 +149,8 @@ export const GUIDES: Guide[] = [
 
   // ---------------------------------------------------------------------------------------------------------------------------------
   {
-    id: 'household',
-    label: 'Hướng dẫn Hộ nuôi trồng',
+    id: 'crop',
+    label: 'Hướng dẫn cho trồng cây',
     icon: '🌾',
     flow: [
       { title: 'Làm một lần đầu', tone: 'info', nodes: [{ icon: '📝', label: 'Đăng ký', step: 0 }, { icon: '⚙️', label: 'Cấu hình', step: 1 }, { icon: '🏡', label: 'Phân khu', step: 2 }, { icon: '🌾', label: 'Sản phẩm', step: 3 }, { icon: '📦', label: 'Kho và vật tư', step: 4 }, { icon: '📋', label: 'Quy trình', step: 5 }] },
@@ -155,7 +159,7 @@ export const GUIDES: Guide[] = [
       { title: 'Khi có thu và chi', tone: 'warn', nodes: [{ icon: '🧺', label: 'Thu hoạch và bán', step: 10 }, { icon: '💳', label: 'Chi phí và công nợ', step: 11 }] },
       { title: 'Người làm và kết quả', tone: 'info', nodes: [{ icon: '👥', label: 'Nhân sự và lương', step: 12 }, { icon: '📊', label: 'Báo cáo và website', step: 13 }] },
     ],
-    intro: 'Làm lần lượt từ bước 1 đến bước 14. Bước 1–6 chỉ làm một lần đầu; từ bước 7 là việc lặp lại mỗi vụ, mỗi ngày. Mỗi bước có chỗ giải thích "vì sao" và nút mở thẳng màn cần làm. Muốn hiểu sâu từng phần, xem thêm: Quy trình, vụ và Ghi việc · Kho, vật tư và chi phí · Nhân sự, chấm công và lương.',
+    intro: 'Dành cho hộ và hợp tác xã trồng cây (ví dụ dưa lưới nhà màng). Làm lần lượt từ bước 1 đến bước 14. Bước 1–6 chỉ làm một lần đầu; từ bước 7 là việc lặp lại mỗi vụ, mỗi ngày. Mỗi bước có chỗ giải thích "vì sao" và nút mở thẳng màn cần làm. Nuôi heo, gia cầm, tôm, cá: xem Hướng dẫn cho vật nuôi. Muốn hiểu sâu từng phần, xem thêm: Khai báo cơ sở · Quy trình, vụ và Ghi việc · Kho, vật tư và chi phí · Nhân sự, chấm công và lương · Tương tác website.',
     steps: [
       {
         title: 'Đăng ký tài khoản và tạo cơ sở',
@@ -229,7 +233,7 @@ export const GUIDES: Guide[] = [
           'App sao quy trình thành lịch của riêng vụ (từng công đoạn, từng việc có ngày). Sửa lịch của vụ sau này không làm đổi quy trình gốc.',
           'Chọn "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước, bắt đầu chạy sau. Chỉ vụ đang sản xuất mới ghi việc được.',
           'Tạo xong, app hỏi bạn muốn quản lý vụ thế nào (5 cách: Tự làm trong gia đình · Chủ và người làm công tháng · Có người quản lý điều hành · Có nhiều nhân viên · Chuẩn VietGAP). Chọn cách đơn giản thì app chỉ hiện các mục cần dùng; đổi lúc nào cũng được ở Chi tiết vụ, không mất dữ liệu.',
-          'Nên nhập thêm (không bắt buộc): giống, diện tích trồng, số cây, ngày gieo/trồng, sản lượng dự kiến, ngân sách dự kiến. Có chúng app mới tính được mật độ, năng suất và so kế hoạch với thực tế. Vụ vật nuôi/thủy sản nên nhập số con nhập chuồng/thả để tính hao hụt, mật độ, FCR.',
+          'Nên nhập thêm (không bắt buộc): giống, diện tích trồng, số cây, ngày gieo/trồng, sản lượng dự kiến, ngân sách dự kiến. Có chúng app mới tính được mật độ, năng suất và so kế hoạch với thực tế.',
           'Mỗi vụ có một mã (dùng cho mã QR truy xuất). Quota số vụ đang chạy tùy gói dịch vụ của tài khoản.',
         ],
         tip: 'Hộ nhỏ thấy app còn nhiều mục? Chọn cách quản lý "Tự làm trong gia đình": app ẩn kho, nhân sự, chấm công, bảng lương; Ghi việc vẫn dùng bình thường.',
@@ -266,7 +270,6 @@ export const GUIDES: Guide[] = [
           'Sản xuất → Thu hoạch: ghi ngày, sản lượng và hao hụt. Số thu hoạch tính là sau hao hụt; đây là mẫu số để tính giá thành mỗi kg.',
           'Báo cáo → Doanh thu: ghi lần bán (khách, số lượng, tiền). Khách chưa trả hết thì ghi hạn thu tiền, app nhắc khi quá hạn.',
           'Khách hàng khai báo ở Khai báo → Khách hàng.',
-          'Vụ vật nuôi: số con còn lại tự trừ theo phiếu thu hoạch (xuất chuồng) để tính hao hụt đúng.',
         ],
         go: { tab: 'production', section: 'harvest', label: 'Mở Thu hoạch' },
       },
@@ -620,7 +623,7 @@ export const GUIDES: Guide[] = [
       { title: 'Vận hành', tone: 'ok', nodes: [{ icon: '🌱', label: 'Theo dõi vụ và sản lượng', step: 3 }, { icon: '👥', label: 'Nhân sự, chấm công', step: 4 }] },
       { title: 'Công khai', tone: 'neutral', nodes: [{ icon: '🌐', label: 'Giấy phép, QR, website', step: 5 }] },
     ],
-    intro: 'Hợp tác xã dùng các bước như hộ (xem Hướng dẫn Hộ nuôi trồng và các hướng dẫn chuyên đề) và thêm phần quản lý hộ thành viên dưới đây.',
+    intro: 'Hợp tác xã dùng các bước như hộ (xem Hướng dẫn cho trồng cây hoặc cho vật nuôi, và các hướng dẫn chuyên đề) và thêm phần quản lý hộ thành viên dưới đây.',
     steps: [
       {
         title: 'Tạo cơ sở loại Hợp tác xã',
@@ -683,7 +686,7 @@ export const GUIDES: Guide[] = [
       { title: 'Sản xuất và tiền', tone: 'ok', nodes: [{ icon: '🏡', label: 'Nhiều phân khu, nhiều vụ', step: 3 }, { icon: '💳', label: 'Nhà cung ứng, khách, nợ', step: 4 }, { icon: '⏱', label: 'Chấm công, tiền công', step: 5 }] },
       { title: 'Công khai và bán', tone: 'neutral', nodes: [{ icon: '🌐', label: 'Giấy phép, QR, đơn website', step: 6 }] },
     ],
-    intro: 'Công ty có nhiều người và nhiều bộ phận nên cần chia quyền cẩn thận. Các thao tác khác giống Hướng dẫn Hộ nuôi trồng và các hướng dẫn chuyên đề.',
+    intro: 'Công ty có nhiều người và nhiều bộ phận nên cần chia quyền cẩn thận. Các thao tác khác giống Hướng dẫn cho trồng cây hoặc cho vật nuôi và các hướng dẫn chuyên đề.',
     steps: [
       {
         title: 'Tạo cơ sở và đặt người phụ trách',
@@ -750,6 +753,9 @@ export const GUIDES: Guide[] = [
     ],
   },
 ];
+
+const ALL_GUIDES: Guide[] = [...BASE_GUIDES, ...MORE_GUIDES];
+export const GUIDES: Guide[] = GUIDE_ORDER.map((id) => ALL_GUIDES.find((g) => g.id === id)).filter((g): g is Guide => !!g);
 
 /** Lời giới thiệu gửi cho người khác (nút "Chia sẻ hệ thống") */
 export function buildShareText(url: string): string {
