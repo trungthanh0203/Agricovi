@@ -1,5 +1,6 @@
 import type { StageRow } from './db';
 import { diffDays } from './dates';
+import { canLogCycle } from './prep';
 
 /** Nhãn trạng thái công đoạn của vụ */
 export const STAGE_STATUS_LABEL_VI: Record<StageRow['status'], string> = {
@@ -53,4 +54,13 @@ export function cycleTitle(c: { name?: string | null; start_date?: string | null
   if (n) return n;
   const d = c.start_date ? c.start_date.slice(0, 10).split('-') : null;
   return d && d.length === 3 ? `${productName || 'Vụ'} ${d[2]}/${d[1]}` : productName || 'Vụ';
+}
+
+/**
+ * Vụ chọn được trong biểu mẫu GHI MỚI (thu hoạch, chi phí, doanh thu…): chỉ vụ đang sản xuất (và vụ chuẩn bị trước ghi việc được), cho gọn.
+ * `showAll` (ô tích "Hiện cả vụ không còn sản xuất") hiện đủ; `keepId` là vụ đang chọn/đang sửa, luôn có mặt.
+ */
+export function formCycles<T extends { id: string; status: string; prep_mode?: 'whole' | 'part' | 'separate' | null; created_at?: string | null }>(cycles: T[], showAll: boolean, keepId?: string | null): T[] {
+  if (showAll) return cycles;
+  return cycles.filter((c) => c.id === keepId || canLogCycle(c as unknown as Parameters<typeof canLogCycle>[0]));
 }

@@ -23,7 +23,7 @@ import { canManageProduction } from '../lib/roles';
 import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
 import { areaPath, areaName } from '../lib/areas';
-import { cycleTitle } from '../lib/cycles';
+import { cycleTitle, formCycles } from '../lib/cycles';
 
 const OWN_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // khớp chính sách harvest_update_own ở máy chủ
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
@@ -205,7 +205,8 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const schemaOf = (cycleId: string) => harvestSchemaFor(workTypeRows, activeOrg?.id, cropTypes.find((c) => c.id === allCycles.find((x) => x.id === cycleId)?.crop_type_id)?.kind);
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
   // vụ đang chạy lên đầu danh sách
-  const ordered = [...cycles].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active'));
+  const [showAllCycles, setShowAllCycles] = useState(false);
+  const ordered = [...formCycles(cycles, showAllCycles, editing?.cycle_id)].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active'));
 
   const [cycleId, setCycleId] = useState(editing?.cycle_id ?? '');
   const [when, setWhen] = useState(toLocalInput(editing ? new Date(editing.harvested_at) : new Date()));
@@ -288,12 +289,17 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
         {editing ? (
           <p className="muted">{cycleLabel(editing.cycle_id)} — không đổi được vụ; muốn đổi hãy hủy phiếu và ghi lại. Mọi thay đổi được lưu lịch sử.</p>
         ) : (
+          <>
           <label>
             <CycleWord cap />
             <select value={effCycleId} onChange={(e) => setCycleId(e.target.value)}>
               {ordered.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
             </select>
           </label>
+          {(cycles.length > ordered.length || showAllCycles) && (
+            <label className="check"><input type="checkbox" checked={showAllCycles} onChange={(e) => setShowAllCycles(e.target.checked)} /> Hiện cả vụ không còn sản xuất</label>
+          )}
+          </>
         )}
         <label>
           Thời điểm thu

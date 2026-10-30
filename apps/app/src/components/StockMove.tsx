@@ -9,6 +9,7 @@ import { useTable } from '../lib/tables';
 import { useCatalog } from '../lib/catalog';
 import { areaPath, areaName } from '../lib/areas';
 import { cycleTitle } from '../lib/cycles';
+import { canLogCycle } from '../lib/prep';
 
 /** Dữ liệu chung của hai biểu mẫu: vật tư, kho đang dùng và tồn hiện có để nhắc người nhập */
 function useStockChoices(orgId: string) {
@@ -44,7 +45,7 @@ export function StockIssue({ orgId, onClose }: { orgId: string; onClose: () => v
   const areas = useTable('areas');
   const { cropTypes } = useCatalog();
   // vụ của cơ sở chưa kết thúc: chọn để xuất vật tư cho vụ (không cần nhật ký)
-  const openCycles = cycles.filter((c) => c.owner_org_id === orgId && c.status !== 'ended' && c.status !== 'cancelled');
+  const openCycles = cycles.filter((c) => c.owner_org_id === orgId && canLogCycle(c)); // chỉ vụ đang sản xuất (và vụ chuẩn bị trước ghi việc được)
   const cycleLabel = (c: (typeof cycles)[number]) => `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')} · ${areaName(c.area_id, areas) || '—'}`;
   const [kind, setKind] = useState('cycle');
   const [cycleId, setCycleId] = useState('');

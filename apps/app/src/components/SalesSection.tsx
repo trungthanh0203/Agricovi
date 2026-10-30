@@ -19,7 +19,7 @@ import { canPerm } from '../lib/permissions';
 import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
 import { areaPath, areaName } from '../lib/areas';
-import { cycleTitle } from '../lib/cycles';
+import { cycleTitle, formCycles } from '../lib/cycles';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 
@@ -172,7 +172,8 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const online = useOnline();
   const allCycles = useTable('cycles');
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
-  const ordered = [...cycles].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active'));
+  const [showAllCycles, setShowAllCycles] = useState(false);
+  const ordered = [...formCycles(cycles, showAllCycles, editing?.cycle_id)].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active'));
 
   const [cycleId, setCycleId] = useState('');
   const [date, setDate] = useState(editing?.sold_date ?? todayLocal());
@@ -283,12 +284,17 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
         {editing ? (
           <p className="muted">{cycleLabel(editing.cycle_id)} — không đổi được vụ; muốn đổi hãy hủy khoản bán và ghi lại. Mọi thay đổi được lưu lịch sử.</p>
         ) : (
+          <>
           <label>
             <CycleWord cap />
             <select value={effCycle} onChange={(e) => setCycleId(e.target.value)}>
               {ordered.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
             </select>
           </label>
+          {(cycles.length > ordered.length || showAllCycles) && (
+            <label className="check"><input type="checkbox" checked={showAllCycles} onChange={(e) => setShowAllCycles(e.target.checked)} /> Hiện cả vụ không còn sản xuất</label>
+          )}
+          </>
         )}
         <label>
           Ngày bán

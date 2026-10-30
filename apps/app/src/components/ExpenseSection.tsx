@@ -17,7 +17,7 @@ import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
 import { useConfig } from '../lib/config';
 import { areaPath, areaName } from '../lib/areas';
-import { cycleTitle } from '../lib/cycles';
+import { cycleTitle, formCycles } from '../lib/cycles';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 
@@ -189,7 +189,9 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
   const [draftId, setDraftId] = useState(() => crypto.randomUUID());
   const [busy, setBusy] = useState(false);
 
-  const effCycle = cycleId || (cycles.find((c) => c.id === remembered)?.id ?? 'none');
+  const [showAllCycles, setShowAllCycles] = useState(false);
+  const ordered = formCycles(cycles, showAllCycles, editing?.cycle_id ?? cycleId);
+  const effCycle = cycleId || (ordered.find((c) => c.id === remembered)?.id ?? 'none');
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -242,14 +244,19 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
         {editing ? (
           <p className="muted">{cycleLabel(editing.cycle_id)} — không đổi được vụ; muốn đổi hãy hủy khoản chi và ghi lại. Mọi thay đổi được lưu lịch sử.</p>
         ) : (
+          <>
           <label>
             Thuộc vụ
             <select value={effCycle} onChange={(e) => setCycleId(e.target.value)}>
               <option value="none">Chi phí chung (không gắn vụ)</option>
-              {cycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
+              {ordered.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
             </select>
             <small>Chi phí gắn vụ mới vào được tổng kết vụ.</small>
           </label>
+          {(cycles.length > ordered.length || showAllCycles) && (
+            <label className="check"><input type="checkbox" checked={showAllCycles} onChange={(e) => setShowAllCycles(e.target.checked)} /> Hiện cả vụ không còn sản xuất</label>
+          )}
+          </>
         )}
         <label>
           Nhóm chi phí
