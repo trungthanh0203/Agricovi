@@ -7,14 +7,16 @@ import { defaultCountUnit } from '../lib/countUnit';
 import { restWarning } from '../lib/milestoneLogic';
 import { Collapsible } from '../components/Collapsible';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
-import { createCycle, fetchQuotaContexts, setCycleNursery, type QuotaContext } from '../lib/production';
+import { createCycle, fetchQuotaContexts, setCyclePrep, type QuotaContext } from '../lib/production';
 import { addDays, fmtDate } from '../lib/dates';
 import { listTemplates, loadTemplate, stageRanges, totalDays, type StageRow, type TemplateRow } from '../lib/templates';
 import { useTable } from '../lib/tables';
 import { useConfig } from '../lib/config';
 import type { AreaRow } from '../lib/db';
 import { HelpButton } from '../components/HelpButton';
-import { NURSERY_LOG_DAYS } from '../lib/nursery';
+import { PrepPicker } from '../components/PrepPicker';
+import { type PrepMode } from '../lib/prep';
+import { cellWord } from '../lib/areas';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { areaPath, cycleAreas } from '../lib/areas';
 
@@ -46,7 +48,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const online = useOnline();
   const [busy, setBusy] = useState(false);
   const [followsId, setFollowsId] = useState(''); // nối tiếp sau vụ nào (D124)
-  const [overlap, setOverlap] = useState(false); // ươm gối: tạo vụ Chuẩn bị và ghi việc ươm khi vụ trước còn chạy
+  const [prepMode, setPrepMode] = useState<PrepMode>('whole'); // cách chuẩn bị theo nhà màng của vụ (D126)
+  const [prepArea, setPrepArea] = useState('');
 
   // Phân khu hợp loại với sản phẩm: cùng loại, hoặc phân khu/sản phẩm loại "Khác". Phân khu khác loại vẫn chọn được nhưng có cảnh báo.
   const baseKind = (k?: string | null) => (k === 'growing' || !k ? 'crop' : k);
@@ -139,17 +142,19 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const allCycles = useTable('cycles');
   const allStages = useTable('stages');
   // trống chuồng tối thiểu 7 ngày trước khi nhập lứa mới (cảnh báo, không chặn)
-  const nurseryMode = cfg.nurseryMode();
   const sameArea = allCycles.filter((c) => c.area_id === areaId && (c.status === 'active' || c.status === 'paused' || c.status === 'preparing'));
   const running = sameArea.filter((c) => c.status === 'active' || c.status === 'paused');
-  const canOverlap = nurseryMode !== 'same' && running.length > 0;
+  const prepEarly = prepMode !== 'whole'; // chuẩn bị 1 phần hoặc ở nhà riêng: vụ ở trạng thái Chuẩn bị nhưng ghi việc được
   const cycleLabel = (c: { name?: string | null; crop_type_id: string }) => c.name || cropName(c.crop_type_id);
   const restBase = areaId && startDate
     ? restWarning(areaId, startDate, 7, allCycles, (cid) => allStages.filter((s) => s.cycle_id === cid && s.actual_end).map((s) => s.actual_end as string).sort().pop() ?? null)
     : null;
-  // Cơ sở đã bật ươm gối: phân khu đang có vụ chạy không phải lỗi, mà gợi ý ươm trước (D124)
-  const rest = canOverlap && running.length > 0
-    ? `Phân khu này đang có vụ "${cycleLabel(running[0]!)}" đang chạy. Bạn có thể tạo vụ này ở trạng thái Chuẩn bị, ươm trước, rồi chuyển sang sản xuất khi vụ đó xong.`
+  // Đang có vụ chạy ở khu này: chuẩn bị trước thì không phải lỗi, chỉ nhắc cách làm (D126)
+  const word = cellWord(prodKind).toLowerCase();
+  const rest = running.length > 0
+    ? (prepEarly
+      ? `${word[0]!.toUpperCase()}${word.slice(1)} này đang có vụ "${cycleLabel(running[0]!)}" đang chạy. Vụ mới ở trạng thái Chuẩn bị, ghi việc chuẩn bị được; chuyển sang sản xuất khi vụ đó xong.`
+      : `${restBase ?? `${word[0]!.toUpperCase()}${word.slice(1)} này đang có vụ "${cycleLabel(running[0]!)}" đang chạy.`} Nếu chỉ chuẩn bị trước, hãy chọn "Chuẩn bị trong 1 phần ${word}" hoặc "${word[0]!.toUpperCase()}${word.slice(1)} chuẩn bị riêng" ở mục Công đoạn chuẩn bị.`)
     : restBase;
   const ownerLabel = (c: QuotaContext) => (c.kind === 'own' ? `Hộ riêng (${c.org_name})` : `HTX ${c.org_name}`);
   const picked = templates?.find((t) => t.id === templateId) ?? null;
@@ -163,13 +168,14 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     if (!productId) return setError('Hãy chọn sản phẩm (cây trồng, vật nuôi…) của vụ.');
     if (!templateId) return setError('Hãy chọn quy trình mùa vụ. Vụ phải được tạo theo một quy trình.');
     // Báo sớm khi biết chắc đã hết hạn mức; máy chủ vẫn là nơi kiểm tra cuối cùng
-    if (startNow && !overlap && chosen && (!chosen.is_current || (chosen.max_cycles !== null && chosen.used_cycles >= chosen.max_cycles))) {
+    if (startNow && !prepEarly && chosen && (!chosen.is_current || (chosen.max_cycles !== null && chosen.used_cycles >= chosen.max_cycles))) {
       return setError(
         chosen.is_current
           ? `Đã dùng ${chosen.used_cycles}/${chosen.max_cycles} vụ của gói (vụ đang sản xuất và vụ đang tạm dừng đều được tính). Hãy kết thúc hoặc hủy một vụ, nâng gói, hoặc chọn "Chưa bắt đầu" để lưu ở trạng thái Chuẩn bị.`
           : 'Gói đã hết hạn nên chưa tạo được vụ đang sản xuất. Hãy gia hạn, hoặc chọn "Chưa bắt đầu".',
       );
     }
+    if (prepMode === 'separate' && !prepArea) return setError('Hãy chọn nơi chuẩn bị riêng, hoặc chọn cách chuẩn bị khác.');
     const cropInfoResult = formToCropInfo(cropInfo);
     if ('error' in cropInfoResult) return setError(cropInfoResult.error);
     // chỉ nhắc, không bắt buộc: số con là gốc để tính hao hụt, mật độ và FCR
@@ -180,15 +186,15 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
         ownerOrgId: ownerId || active!.id,
         areaId,
         templateId,
-        status: startNow && !overlap ? 'active' : 'preparing',
+        status: startNow && !prepEarly ? 'active' : 'preparing',
         startDate: startDate || null,
         name,
         info: cropInfoResult.info,
         targetYield: targetYield.trim() ? Number(targetYield.replace(/[.,\s]/g, '')) : null,
         budget: budget.trim() ? Number(budget.replace(/[.,\s]/g, '')) : null,
       });
-      if (followsId || overlap) {
-        try { await setCycleNursery(newId, followsId || null, overlap); } catch (err) { window.alert(`Đã tạo vụ nhưng chưa lưu được thông tin ươm gối / nối tiếp: ${friendlyError(err)}`); }
+      if (followsId || prepMode !== 'whole') {
+        try { await setCyclePrep(newId, prepMode, prepMode === 'separate' ? prepArea : null, followsId || null); } catch (err) { window.alert(`Đã tạo vụ nhưng chưa lưu được cách chuẩn bị / nối tiếp: ${friendlyError(err)}. Bạn đặt lại ở chi tiết vụ (mục Công đoạn chuẩn bị).`); }
       }
       onDone(newId); // mở chi tiết vụ kèm mã QR vừa tạo
     } catch (err) {
@@ -280,7 +286,13 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
             <input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Dưa lưới vụ 1 nhà màng 2" />
           </label>
 
-          <fieldset>
+          <PrepPicker kind={prodKind} mode={prepMode} areaId={prepArea} areas={areas.filter((a) => a.organization_id === active.id)} cycleAreaId={areaId}
+            onArea={setPrepArea} onMode={(m) => {
+              setPrepMode(m);
+              if (m !== 'whole' && !followsId && running.length > 0) setFollowsId(running[0]!.id); // gợi ý sẵn: nối tiếp sau vụ đang chạy ở khu này
+            }} />
+
+          {!prepEarly && <fieldset>
             <legend>Trạng thái</legend>
             <label className={startNow ? 'choice selected' : 'choice'}>
               <input type="radio" name="start" checked={startNow} onChange={() => setStartNow(true)} />
@@ -290,7 +302,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
               <input type="radio" name="start" checked={!startNow} onChange={() => setStartNow(false)} />
               <span><strong>Chưa bắt đầu (Chuẩn bị)</strong><small>Không tính vào số vụ của gói.</small></span>
             </label>
-          </fieldset>
+          </fieldset>}
 
           <label>
             Ngày bắt đầu
@@ -305,12 +317,6 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
                 {sameArea.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
               </select>
               <small>Khi vụ đó kết thúc, app nhắc bạn chuyển vụ này sang sản xuất.</small>
-            </label>
-          )}
-          {canOverlap && (
-            <label className="check">
-              <input type="checkbox" checked={overlap} onChange={(e) => { setOverlap(e.target.checked); if (e.target.checked) setStartNow(false); }} />
-              <span>Ươm trước khi vụ kia xong: lưu ở trạng thái Chuẩn bị nhưng vẫn ghi việc ươm được (tối đa {NURSERY_LOG_DAYS} ngày)</span>
             </label>
           )}
 

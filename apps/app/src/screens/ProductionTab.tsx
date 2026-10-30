@@ -29,7 +29,7 @@ import { CycleWord } from '../components/CycleWord';
 import { infoLabels } from '../lib/terms';
 import { productionSections, type ProductionSection, type TabId } from '../lib/tabs';
 import { useTable } from '../lib/tables';
-import { nurseryLoggable, predecessorOf } from '../lib/nursery';
+import { prepLoggable, predecessorOf } from '../lib/prep';
 import { areaPath } from '../lib/areas';
 
 interface Props {
@@ -223,7 +223,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
           <div className="card slim" key={c.id}>
             <div className="row">
               <strong>{c.name || cropName(c.crop_type_id)} - <span className="mono-code">{cycleCode(c.id)}</span></strong>
-              <span className="pill">{CYCLE_STATUS_LABEL_VI[c.status]}{nurseryLoggable(c) ? ' · ươm gối' : ''}</span>
+              <span className="pill">{CYCLE_STATUS_LABEL_VI[c.status]}{prepLoggable(c) ? ' · chuẩn bị trước' : ''}</span>
             </div>
             {(() => {
               const pre = c.status === 'preparing' ? predecessorOf(c, cycles) : null;

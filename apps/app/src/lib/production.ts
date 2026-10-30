@@ -21,7 +21,7 @@ const CYCLE_COLUMNS_D98 = `${CYCLE_COLUMNS_PLAN}, code, count_unit, supervisor_n
 // mô hình quản lý theo vụ (migration 0102)
 const CYCLE_COLUMNS_MODEL = `${CYCLE_COLUMNS_D98}, mgmt_model`;
 const CYCLE_COLUMNS_OPTIONS = `${CYCLE_COLUMNS_MODEL}, mgmt_options`; // mục tùy chọn của mô hình (migration 0104)
-const CYCLE_COLUMNS = `${CYCLE_COLUMNS_OPTIONS}, nursery_overlap, follows_cycle_id`; // ươm gối và vụ nối tiếp (migration 0135)
+const CYCLE_COLUMNS = `${CYCLE_COLUMNS_OPTIONS}, prep_mode, prep_area_id, follows_cycle_id`; // công đoạn chuẩn bị và vụ nối tiếp (migration 0137)
 const AREA_COLUMNS_BASE = 'id, organization_id, name, description, location, area_size, area_unit, image, is_active';
 const AREA_COLUMNS_D98 = `${AREA_COLUMNS_BASE}, code, kind, housing`;
 const AREA_COLUMNS_ITEM = `${AREA_COLUMNS_D98}, kind_item`;
@@ -240,11 +240,11 @@ export interface CropInfo {
   code: string; countUnit: string; supervisorName: string; supervisorPhone: string;
 }
 
-/** Đặt "ươm gối" và "nối tiếp sau vụ" cho một vụ (cần mạng, người quản lý vụ). Ươm gối chỉ được khi cơ sở bật Chỗ ươm và vụ còn Chuẩn bị (D124). */
-export async function setCycleNursery(cycleId: string, followsId: string | null, overlap: boolean): Promise<void> {
-  requireOnline('lưu thông tin ươm gối');
+/** Đặt cách chuẩn bị ("whole" | "part" | "separate" + nơi chuẩn bị riêng) và "nối tiếp sau vụ" cho một vụ (cần mạng, người quản lý vụ). Chọn "part"/"separate" chỉ khi vụ còn Chuẩn bị (D126). */
+export async function setCyclePrep(cycleId: string, mode: 'whole' | 'part' | 'separate', areaId: string | null, followsId: string | null): Promise<void> {
+  requireOnline('lưu cách chuẩn bị');
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  const { error } = await supabase.rpc('set_cycle_nursery', { p_cycle: cycleId, p_follows: followsId, p_overlap: overlap });
+  const { error } = await supabase.rpc('set_cycle_prep', { p_cycle: cycleId, p_mode: mode, p_area: areaId, p_follows: followsId });
   if (error) throw new Error(error.message);
   await refreshCycle(cycleId).catch(() => undefined);
 }

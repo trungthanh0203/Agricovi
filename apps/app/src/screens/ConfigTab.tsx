@@ -9,7 +9,6 @@ import {
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { HelpButton } from '../components/HelpButton';
-import { NURSERY_CHOICES, NURSERY_LOG_DAYS, nurseryModeLabel, type NurseryMode } from '../lib/nursery';
 
 /**
  * Tab Cấu hình. Hai kiểu cấu hình (xem lib/config.ts):
@@ -26,7 +25,6 @@ export function ConfigTab() {
         ? <EntriesRow key={d.id} def={d} orgId={cfg.org} />
         : <FreeRow key={d.id} def={d} orgId={cfg.org} items={cfg.items(d.id)} />))}
       <PhasesOption orgId={cfg.org} on={cfg.usePhases()} />
-      <NurseryOption orgId={cfg.org} mode={cfg.nurseryMode()} />
       <UnitsConfig />
     </section>
   );
@@ -47,35 +45,6 @@ function PhasesOption({ orgId, on }: { orgId: string | undefined; on: boolean })
         {!online && <p className="msg warn" role="status">Cần có mạng để lưu.</p>}
         <div className="btnrow">
           <button className="primary" disabled={busy || !online || val === on} onClick={() => { if (orgId) void run(() => saveConfig(orgId, 'use_phases', [val ? 'yes' : 'no'])); }}>Lưu</button>
-        </div>
-      </div>
-    </Collapsible>
-  );
-}
-
-/** Chỗ ươm cây giống / con giống (D124): bật "ươm gối vụ" để vụ sau ươm trước khi vụ trước xong */
-function NurseryOption({ orgId, mode }: { orgId: string | undefined; mode: NurseryMode }) {
-  const online = useOnline();
-  const [val, setVal] = useState<NurseryMode>(mode);
-  const { busy, msg, run } = useSaver();
-  useEffect(() => { setVal(mode); }, [mode]);
-  return (
-    <Collapsible title="Chỗ ươm" summary={nurseryModeLabel(mode)}>
-      <div className="inline-form">
-        <fieldset>
-          <legend>Cơ sở của bạn ươm giống ở đâu?</legend>
-          {NURSERY_CHOICES.map((c) => (
-            <label key={c.code} className={val === c.code ? 'choice selected' : 'choice'}>
-              <input type="radio" name="nursery" checked={val === c.code} onChange={() => setVal(c.code)} />
-              <span><strong>{c.label}</strong><small>{c.hint}</small></span>
-            </label>
-          ))}
-        </fieldset>
-        <p className="muted">Chọn một trong hai kiểu đầu thì khi tạo vụ ở phân khu đang có vụ khác, bạn được tạo vụ ở trạng thái Chuẩn bị và vẫn ghi việc ươm (tối đa {NURSERY_LOG_DAYS} ngày). Vụ Chuẩn bị vẫn không tính vào số vụ của gói; chuyển sang sản xuất khi vụ trước xong.</p>
-        {msg && <p className={msg.ok ? 'msg ok' : 'msg error'} role={msg.ok ? 'status' : 'alert'}>{msg.text}</p>}
-        {!online && <p className="msg warn" role="status">Cần có mạng để lưu.</p>}
-        <div className="btnrow">
-          <button className="primary" disabled={busy || !online || val === mode} onClick={() => { if (orgId) void run(() => saveConfig(orgId, 'nursery_mode', [val])); }}>Lưu</button>
         </div>
       </div>
     </Collapsible>

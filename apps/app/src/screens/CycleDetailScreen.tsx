@@ -28,7 +28,10 @@ import {
   addCycleStage, addNote, advanceStage, deleteCycleStage, deleteCyclePhase, deleteNote, refreshCycle, setCycleStatus, setNoteDone, updateCyclePhase, updateCycleStage,
 } from '../lib/production';
 import { canManageProduction, isOwner } from '../lib/roles';
-import { nurseryLoggable, predecessorOf } from '../lib/nursery';
+import { prepLabel, prepLoggable, predecessorOf } from '../lib/prep';
+import { PrepPicker } from '../components/PrepPicker';
+import { setCyclePrep } from '../lib/production';
+import type { AreaRow } from '../lib/db';
 import { areaPath } from '../lib/areas';
 
 export interface LogPreset { cycleId: string; workTypeId?: string | null; stageId?: string | null; areaId?: string; copyFromLogId?: string }
@@ -77,8 +80,9 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
   // vụ có ghi việc hay không theo mô hình của CHÍNH vụ này (mô hình 1 chưa bật tùy chọn Ghi việc thì ẩn)
   const canLogHere = featuresOf(effectiveModel(cycle.mgmt_model, active?.mgmtModel), cycle.mgmt_options ?? []).logs !== 'off';
   const isActive = cycle.status === 'active';
-  const nurseryLog = nurseryLoggable(cycle); // vụ Chuẩn bị đang ươm gối: ghi việc được (D124)
+  const nurseryLog = prepLoggable(cycle); // vụ Chuẩn bị đang chuẩn bị trước (1 phần nhà màng / nhà riêng): ghi việc được (D126)
   const logOk = isActive || nurseryLog;
+  const cropKind = cropTypes.find((c) => c.id === cycle.crop_type_id)?.kind;
   const pre = predecessorOf(cycle, allCycles);
   const closed = cycle.status === 'ended' || cycle.status === 'cancelled';
   const canEditStages = canManage && !closed;
@@ -143,6 +147,12 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
       )}
       <p className="muted">Quy trình: {cycle.template_name ?? 'không có (vụ cũ)'}{cycle.template_version ? ` · bản ${cycle.template_version}` : ''}</p>
       {cycle.note && <p>{cycle.note}</p>}
+      {canManage && cycle.status === 'preparing' && cycle.owner_org_id === active?.id && (
+        <Collapsible title="Công đoạn chuẩn bị" summary={prepLabel(cycle.prep_mode, cropKind)}>
+          <PrepEditor cycle={cycle} kind={cropKind} areas={allAreas.filter((a) => a.organization_id === active?.id)} busy={busy || !online} onSave={(m, a) => run(() => setCyclePrep(cycleId, m, a, cycle.follows_cycle_id ?? null))} />
+        </Collapsible>
+      )}
+
       {canManage && cycle.owner_org_id === active?.id && (
         <Collapsible title="Cách quản lý vụ này" summary={modelName(cycle.mgmt_model, active?.mgmtModel)}>
           <ModelPicker cycleId={cycleId} onDone={() => undefined} />
@@ -203,7 +213,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
         <p className="msg warn">Vụ này chưa có việc nào.{canEditStages ? ' Bấm "+ Thêm việc" bên dưới để thêm.' : ''}</p>
       )}
 
-      {nurseryLog && <p className="msg ok" role="status">Vụ đang ươm gối: ghi việc ươm được. Bấm Bắt đầu / Xong từng việc sau khi chuyển sang sản xuất.</p>}
+      {nurseryLog && <p className="msg ok" role="status">{prepLabel(cycle.prep_mode, cropKind)}{cycle.prep_mode === 'separate' && cycle.prep_area_id ? `: ${areaPath(cycle.prep_area_id, allAreas)}` : ''}. Ghi việc chuẩn bị được; bấm Bắt đầu / Xong từng việc sau khi chuyển sang sản xuất.</p>}
       {!logOk && prog.total > 0 && !closed && <p className="muted">Chỉ vụ đang sản xuất mới bắt đầu/hoàn thành việc và ghi việc được.</p>}
       {!online && canManage && <p className="msg warn" role="status">Đang offline: đổi việc và ghi chú cần có mạng. Ghi việc vẫn dùng được.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
@@ -424,6 +434,29 @@ function PhaseEditForm({ name, code, busy, onSave, onClose }: { name: string; co
           <button className="primary" disabled={busy} onClick={() => { if (n.trim().length < 1) return setErr('Hãy nhập tên công đoạn.'); setErr(null); void onSave(c, n).catch(() => undefined); }}>Lưu thay đổi</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Đổi cách chuẩn bị khi vụ còn ở trạng thái Chuẩn bị (D126) */
+function PrepEditor({ cycle, kind, areas, busy, onSave }: {
+  cycle: { prep_mode?: 'whole' | 'part' | 'separate' | null; prep_area_id?: string | null; area_id: string };
+  kind?: string | null; areas: AreaRow[]; busy: boolean; onSave: (m: 'whole' | 'part' | 'separate', area: string | null) => Promise<unknown>;
+}) {
+  const [mode, setMode] = useState<'whole' | 'part' | 'separate'>(cycle.prep_mode ?? 'whole');
+  const [area, setArea] = useState(cycle.prep_area_id ?? '');
+  const [err, setErr] = useState<string | null>(null);
+  return (
+    <div className="inline-form">
+      <PrepPicker kind={kind} mode={mode} onMode={setMode} areaId={area} onArea={setArea} areas={areas} cycleAreaId={cycle.area_id} name="prep-edit" />
+      {err && <p className="msg error" role="alert">{err}</p>}
+      <div className="btnrow">
+        <button type="button" className="primary" disabled={busy} onClick={() => {
+          if (mode === 'separate' && !area) return setErr('Hãy chọn nơi chuẩn bị riêng.');
+          setErr(null);
+          void onSave(mode, mode === 'separate' ? area : null).catch((e) => setErr(friendlyError(e)));
+        }}>Lưu</button>
       </div>
     </div>
   );
