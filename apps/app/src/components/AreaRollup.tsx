@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { cachedCycleStats, fetchCycleStats, type CycleStats } from '../lib/cycleStats';
-import { cellWord, rollupByArea } from '../lib/areas';
+import { rollupByArea } from '../lib/areas';
 import { formatMoney } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { useTable } from '../lib/tables';
 
 /**
- * Tổng hợp theo phân khu (D125): chi phí, thu hoạch, doanh thu, lãi lỗ tạm tính cộng từ các vụ của phân khu và mọi nhà màng bên trong.
- * Số lấy từ thống kê tóm tắt của máy chủ (cùng nguồn với thẻ vụ); phần tiền chỉ hiện với người có quyền xem tiền. Chỉ hiện khi cơ sở có chia nhà màng.
+ * Tổng hợp theo phân khu (D125): chi phí, thu hoạch, doanh thu, lãi lỗ tạm tính cộng từ các vụ của phân khu và mọi ô sản xuất bên trong.
+ * Số lấy từ thống kê tóm tắt của máy chủ (cùng nguồn với thẻ vụ); phần tiền chỉ hiện với người có quyền xem tiền. Chỉ hiện khi cơ sở có chia ô sản xuất.
  */
 export function AreaRollup() {
   const { active } = useOrgs();
@@ -47,7 +47,7 @@ export function AreaRollup() {
           <tbody>
             {rows.flatMap((r) => [
               <tr key={r.area.id}><td><strong>{r.area.name}</strong></td>{cells(r)}</tr>,
-              ...r.cells.filter((c) => c.cycles > 0).map((c) => <tr key={c.area.id}><td style={{ paddingLeft: 24 }}>↳ {c.area.name} <span className="muted">({cellWord(c.area.kind).toLowerCase()})</span></td>{cells(c)}</tr>),
+              ...r.cells.filter((c) => c.cycles > 0).map((c) => <tr key={c.area.id}><td style={{ paddingLeft: 24 }}>↳ {c.area.name}</td>{cells(c)}</tr>),
             ])}
           </tbody>
         </table>

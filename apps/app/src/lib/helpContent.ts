@@ -87,12 +87,12 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     title: 'Tạo vụ mới',
     what: 'Mở một vụ nuôi trồng mới: chọn sản phẩm, quy trình, phân khu và ngày bắt đầu. App tự lập lịch các công đoạn cho vụ.',
     how: [
-      'Chọn Sản phẩm, quy trình và Phân khu / nhà màng (danh sách gom nhà màng theo phân khu; app cảnh báo nếu khác loại).',
+      'Chọn Sản phẩm, quy trình và Phân khu / ô sản xuất (danh sách gom ô theo phân khu; app cảnh báo nếu khác loại).',
       'Chọn ngày bắt đầu, hoặc "Chưa bắt đầu (Chuẩn bị)" nếu muốn lập lịch trước.',
       'Nên nhập thêm giống, diện tích, số cây hoặc số con, sản lượng và ngân sách dự kiến để app so kế hoạch với thực tế.',
       'Tạo xong, chọn cách quản lý vụ (5 kiểu); đổi lại được sau.',
-      'Công đoạn chuẩn bị: chọn chuẩn bị trong toàn bộ nhà màng, trong 1 phần nhà màng, hoặc ở nhà chuẩn bị riêng. Hai cách sau lưu vụ ở trạng thái Chuẩn bị nhưng vẫn ghi việc chuẩn bị được (tối đa 45 ngày).',
-      'Nhà màng đang có vụ khác: chọn "Nối tiếp sau vụ…"; khi vụ đó kết thúc, app nhắc bạn bấm "Bắt đầu sản xuất".',
+      'Công đoạn chuẩn bị: chọn chuẩn bị trong toàn bộ ô sản xuất, trong 1 phần ô, hoặc ở nơi chuẩn bị riêng. Hai cách sau lưu vụ ở trạng thái Chuẩn bị nhưng vẫn ghi việc chuẩn bị được (tối đa 45 ngày).',
+      'Ô sản xuất đang có vụ khác: chọn "Nối tiếp sau vụ…"; khi vụ đó kết thúc, app nhắc bạn bấm "Bắt đầu sản xuất".',
     ],
     note: 'Số vụ chạy cùng lúc bị giới hạn theo gói dịch vụ. Vụ Chuẩn bị không tính; khi vụ trước kết thúc, app nhắc bạn bấm "Bắt đầu sản xuất".',
     guide: { id: 'crop', step: 7 },
@@ -170,14 +170,14 @@ export const HELP: Record<HelpKey, HelpEntry> = {
   // ---- Khai báo ----
   areas: {
     title: 'Phân khu',
-    what: 'Nơi nuôi trồng của cơ sở, chia 2 cấp: phân khu (cụm, ví dụ "Vườn Đông") và bên trong là nhà màng, chuồng hoặc ao nơi chạy vụ.',
+    what: 'Nơi nuôi trồng của cơ sở, chia 2 cấp: phân khu (cụm, ví dụ "Vườn Đông") và bên trong là các ô sản xuất (nhà màng, chuồng, ao…) nơi chạy vụ.',
     how: [
-      'Bấm "+ Thêm phân khu": tên, diện tích, vị trí, ảnh.',
-      'Phân khu lớn có nhiều nhà màng: bấm "+ Nhà màng" hoặc "+ Nhiều nhà màng cùng lúc" (nhập số lượng, app tự đánh số).',
-      'Phân khu đang có vụ mà muốn chia nhỏ: bấm "Chia thành nhà màng", app chuyển các vụ hiện có sang nhà màng đầu tiên.',
+      'Bấm "+ Thêm phân khu": tên, loại, mã khu, vị trí, mô tả, ảnh. Có thể tạo sẵn các ô sản xuất ngay (mặc định 1 ô).',
+      'Thêm ô sau: bấm "+ Ô sản xuất" (đủ thông tin: mã, kiểu nhà/chuồng, diện tích, mô tả, ảnh) hoặc "+ Nhiều ô cùng lúc" (nhập số lượng, app tự đánh số).',
+      'Phân khu đang có vụ mà muốn chia nhỏ: bấm "Chia thành ô sản xuất", app chuyển các vụ hiện có sang ô đầu tiên.',
       'Chỗ không nuôi trồng (cổng, kho, biogas) chọn loại "Cơ sở vật chất".',
     ],
-    note: 'Vụ gắn vào nhà màng; phân khu chưa chia nhỏ thì vụ gắn thẳng phân khu. Diện tích phân khu tự cộng từ các nhà màng. Giao quyền cho người làm theo phân khu thì họ thấy mọi nhà màng bên trong.',
+    note: 'Vụ gắn vào ô sản xuất; phân khu chưa chia nhỏ thì vụ gắn thẳng phân khu. Diện tích phân khu tự cộng từ các ô. Giao quyền cho người làm theo phân khu thì họ thấy mọi ô bên trong.',
     guide: { id: 'declare', step: 2 },
   },
   crops: {
@@ -301,7 +301,7 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     title: 'Tổng kết vụ',
     what: 'Chi phí, doanh thu, lãi lỗ và giá thành mỗi kg của từng vụ.',
     how: [
-      'Cơ sở có chia nhà màng: khối "Tổng hợp theo phân khu" ở đầu trang cộng chi phí, thu hoạch, doanh thu, lãi lỗ của các vụ trong từng phân khu và nhà màng.',
+      'Cơ sở có chia ô sản xuất: khối "Tổng hợp theo phân khu" ở đầu trang cộng chi phí, thu hoạch, doanh thu, lãi lỗ của các vụ trong từng phân khu và ô sản xuất.',
       'Chọn vụ để xem số liệu chi tiết; xuất bảng CSV được.',
       'Thiếu số liệu thì app hiện "chưa đủ số liệu" thay vì đưa con số sai.',
     ],

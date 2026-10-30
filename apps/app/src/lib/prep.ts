@@ -1,26 +1,21 @@
 import type { CycleRow } from './db';
-import { cellWord } from './areas';
 
 /**
- * Công đoạn chuẩn bị của vụ (D126, migration 0137): khi tạo vụ chọn một trong ba cách chuẩn bị THEO NHÀ MÀNG CỦA VỤ:
- * - 'whole': chuẩn bị trong toàn bộ nhà màng (như trước: vụ Chuẩn bị chưa ghi việc được);
- * - 'part': chuẩn bị trong một phần nhà màng (phần còn lại vẫn chạy vụ khác): vụ Chuẩn bị nhưng GHI VIỆC được;
- * - 'separate': nhà chuẩn bị riêng (chuẩn bị ở nơi khác, ví dụ vườn ươm): vụ Chuẩn bị nhưng GHI VIỆC được.
+ * Công đoạn chuẩn bị của vụ (D126, migration 0137): khi tạo vụ chọn một trong ba cách chuẩn bị THEO Ô SẢN XUẤT CỦA VỤ:
+ * - 'whole': chuẩn bị trong toàn bộ ô sản xuất (như trước: vụ Chuẩn bị chưa ghi việc được);
+ * - 'part': chuẩn bị trong một phần ô sản xuất (phần còn lại vẫn chạy vụ khác): vụ Chuẩn bị nhưng GHI VIỆC được;
+ * - 'separate': nơi chuẩn bị riêng (chuẩn bị ở nơi khác, ví dụ vườn ươm): vụ Chuẩn bị nhưng GHI VIỆC được.
  * Hai kiểu sau ghi việc được tối đa PREP_LOG_DAYS ngày kể từ lúc tạo vụ, không bắt đầu/hoàn thành việc cho tới khi vụ sang Đang sản xuất.
  * Hạn mức gói không đổi: vụ Chuẩn bị không tính.
  */
 export type PrepMode = 'whole' | 'part' | 'separate';
 export const PREP_LOG_DAYS = 45;
 
-/** Chữ "Nhà chuẩn bị riêng" theo loại: nhà (cây trồng), chuồng, ao, nơi */
-const separateWord = (kind?: string | null) => (kind === 'livestock' ? 'Chuồng' : kind === 'aquatic' ? 'Ao' : kind === 'other' ? 'Nơi' : 'Nhà');
-
-export function prepChoices(kind?: string | null): { code: PrepMode; label: string; hint: string }[] {
-  const w = cellWord(kind).toLowerCase();
+export function prepChoices(_kind?: string | null): { code: PrepMode; label: string; hint: string }[] {
   return [
-    { code: 'whole', label: `Chuẩn bị trong toàn bộ ${w}`, hint: 'Như hiện nay: bắt đầu sản xuất ngay, hoặc chờ ở trạng thái Chuẩn bị (lúc này chưa ghi việc được).' },
-    { code: 'part', label: `Chuẩn bị trong 1 phần ${w}`, hint: `Phần còn lại của ${w} vẫn chạy vụ khác. Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được.` },
-    { code: 'separate', label: `${separateWord(kind)} chuẩn bị riêng`, hint: 'Chuẩn bị ở một nơi khác (vườn ươm, nhà sơ chế…). Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được.' },
+    { code: 'whole', label: 'Chuẩn bị trong toàn bộ ô sản xuất', hint: 'Như hiện nay: bắt đầu sản xuất ngay, hoặc chờ ở trạng thái Chuẩn bị (lúc này chưa ghi việc được).' },
+    { code: 'part', label: 'Chuẩn bị trong 1 phần ô sản xuất', hint: 'Phần còn lại của ô vẫn chạy vụ khác. Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được.' },
+    { code: 'separate', label: 'Nơi chuẩn bị riêng', hint: 'Chuẩn bị ở một nơi khác (vườn ươm, nhà sơ chế, ô khác…). Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được.' },
   ];
 }
 

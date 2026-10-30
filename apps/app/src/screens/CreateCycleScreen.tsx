@@ -16,7 +16,6 @@ import type { AreaRow } from '../lib/db';
 import { HelpButton } from '../components/HelpButton';
 import { PrepPicker } from '../components/PrepPicker';
 import { type PrepMode } from '../lib/prep';
-import { cellWord } from '../lib/areas';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { areaPath, cycleAreas } from '../lib/areas';
 
@@ -30,7 +29,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const { cropTypes } = useCatalog();
   const cfg = useConfig();
 
-  const myAreas = cycleAreas(areas.filter((a) => a.organization_id === active?.id && a.is_active !== false)); // chỉ khu tạo vụ được: nhà màng, hoặc phân khu chưa chia nhỏ (D125) // khu đã dừng hoặc là cơ sở vật chất thì không tạo vụ
+  const myAreas = cycleAreas(areas.filter((a) => a.organization_id === active?.id && a.is_active !== false)); // chỉ khu tạo vụ được: ô sản xuất, hoặc phân khu chưa chia nhỏ (D125); khu đã dừng hoặc là cơ sở vật chất thì không tạo vụ
   const [areaId, setAreaId] = useState('');
   const [productId, setProductId] = useState('');
   const [templateId, setTemplateId] = useState('');
@@ -48,7 +47,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const online = useOnline();
   const [busy, setBusy] = useState(false);
   const [followsId, setFollowsId] = useState(''); // nối tiếp sau vụ nào (D124)
-  const [prepMode, setPrepMode] = useState<PrepMode>('whole'); // cách chuẩn bị theo nhà màng của vụ (D126)
+  const [prepMode, setPrepMode] = useState<PrepMode>('whole'); // cách chuẩn bị theo ô sản xuất của vụ (D126)
   const [prepArea, setPrepArea] = useState('');
 
   // Phân khu hợp loại với sản phẩm: cùng loại, hoặc phân khu/sản phẩm loại "Khác". Phân khu khác loại vẫn chọn được nhưng có cảnh báo.
@@ -59,7 +58,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const otherAreas = myAreas.filter((a) => !fits(a));
   const pickedArea = myAreas.find((a) => a.id === areaId) ?? null;
   const areaMismatch = pickedArea && !fits(pickedArea);
-  // danh sách chọn: nhà màng gom theo phân khu cha; phân khu chưa chia nhỏ đứng riêng
+  // danh sách chọn: ô sản xuất gom theo phân khu cha; phân khu chưa chia nhỏ đứng riêng
   const areaOptions = (list: AreaRow[]) => {
     const groups = new Map<string, AreaRow[]>();
     const solo: AreaRow[] = [];
@@ -150,11 +149,10 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     ? restWarning(areaId, startDate, 7, allCycles, (cid) => allStages.filter((s) => s.cycle_id === cid && s.actual_end).map((s) => s.actual_end as string).sort().pop() ?? null)
     : null;
   // Đang có vụ chạy ở khu này: chuẩn bị trước thì không phải lỗi, chỉ nhắc cách làm (D126)
-  const word = cellWord(prodKind).toLowerCase();
   const rest = running.length > 0
     ? (prepEarly
-      ? `${word[0]!.toUpperCase()}${word.slice(1)} này đang có vụ "${cycleLabel(running[0]!)}" đang chạy. Vụ mới ở trạng thái Chuẩn bị, ghi việc chuẩn bị được; chuyển sang sản xuất khi vụ đó xong.`
-      : `${restBase ?? `${word[0]!.toUpperCase()}${word.slice(1)} này đang có vụ "${cycleLabel(running[0]!)}" đang chạy.`} Nếu chỉ chuẩn bị trước, hãy chọn "Chuẩn bị trong 1 phần ${word}" hoặc "${word[0]!.toUpperCase()}${word.slice(1)} chuẩn bị riêng" ở mục Công đoạn chuẩn bị.`)
+      ? `Ô sản xuất này đang có vụ "${cycleLabel(running[0]!)}" đang chạy. Vụ mới ở trạng thái Chuẩn bị, ghi việc chuẩn bị được; chuyển sang sản xuất khi vụ đó xong.`
+      : `${restBase ?? `Ô sản xuất này đang có vụ "${cycleLabel(running[0]!)}" đang chạy.`} Nếu chỉ chuẩn bị trước, hãy chọn "Chuẩn bị trong 1 phần ô sản xuất" hoặc "Nơi chuẩn bị riêng" ở mục Công đoạn chuẩn bị.`)
     : restBase;
   const ownerLabel = (c: QuotaContext) => (c.kind === 'own' ? `Hộ riêng (${c.org_name})` : `HTX ${c.org_name}`);
   const picked = templates?.find((t) => t.id === templateId) ?? null;
@@ -262,7 +260,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           {picked?.note && <p className="muted">{picked.note}</p>}
 
           <label>
-            Phân khu / nhà màng
+            Phân khu / ô sản xuất
             <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
               {areaOptions(fitAreas)}
               {otherAreas.length > 0 && (

@@ -4,12 +4,15 @@ import type { CycleStat } from './cycleStatsLogic';
 import { useTable } from './tables';
 
 /**
- * Hai cấp khu (D125, migration 0136): PHÂN KHU (cấp 1, cụm) → NHÀ MÀNG / CHUỒNG / AO (cấp 2, nơi chạy vụ). Vụ gắn vào cấp thấp nhất:
- * phân khu đã chia nhỏ thì vụ gắn nhà màng; phân khu chưa chia thì vụ gắn thẳng phân khu như trước.
+ * Hai cấp khu (D125, migration 0136): PHÂN KHU (cấp 1, cụm) → Ô SẢN XUẤT (cấp 2: nhà màng, chuồng, ao…, nơi chạy vụ; tên chung D127). Vụ gắn vào cấp thấp nhất:
+ * phân khu đã chia ô thì vụ gắn ô sản xuất; phân khu chưa chia thì vụ gắn thẳng phân khu như trước.
  */
 
-/** Tên cấp 2 theo loại khu */
-export function cellWord(kind?: string | null): string {
+/** Tên cấp 2 dùng trên giao diện (D127): chung cho trồng cây, chăn nuôi, thủy sản */
+export const CELL_NAME = 'Ô sản xuất';
+
+/** Tên gợi ý khi đặt tên các ô (người dùng sửa được): theo loại khu, ví dụ "Nhà màng 1", "Chuồng 2" */
+export function cellDefaultName(kind?: string | null): string {
   if (kind === 'livestock') return 'Chuồng';
   if (kind === 'aquatic') return 'Ao';
   if (kind === 'other') return 'Ô';
@@ -22,10 +25,10 @@ export const topAreas = (areas: AreaRow[]) => areas.filter((a) => !a.parent_id).
 export const cellsOf = (areas: AreaRow[], parentId: string) => areas.filter((a) => a.parent_id === parentId).sort(byName);
 export const hasCells = (areas: AreaRow[], id: string) => areas.some((a) => a.parent_id === id);
 
-/** Khu tạo vụ được: khu nuôi trồng (không phải cơ sở vật chất) và chưa chia nhà màng */
+/** Khu tạo vụ được: khu nuôi trồng (không phải cơ sở vật chất) và chưa chia ô sản xuất */
 export const cycleAreas = (areas: AreaRow[]) => areas.filter((a) => a.kind !== 'facility' && !hasCells(areas, a.id));
 
-/** "Phân khu A › Nhà màng 3"; khu không có cha thì chỉ tên khu */
+/** "Phân khu A › Nhà màng 3" (tên ô do người dùng đặt); khu không có cha thì chỉ tên khu */
 export function areaPath(areaId: string | null | undefined, areas: AreaRow[]): string {
   const a = areas.find((x) => x.id === areaId);
   if (!a) return '';
@@ -33,7 +36,7 @@ export function areaPath(areaId: string | null | undefined, areas: AreaRow[]): s
   return p ? `${p.name} › ${a.name}` : a.name;
 }
 
-/** Diện tích hiển thị của phân khu: có nhà màng thì cộng diện tích các nhà màng (đổi ha sang m² để cộng), nếu không thì diện tích của chính nó */
+/** Diện tích hiển thị của phân khu: có ô sản xuất thì cộng diện tích các ô (đổi ha sang m² để cộng), nếu không thì diện tích của chính nó */
 export function areaSizeM2(a: AreaRow, areas: AreaRow[]): number | null {
   const toM2 = (x: AreaRow) => (x.area_size == null ? 0 : x.area_unit === 'ha' ? x.area_size * 10000 : x.area_size);
   const kids = areas.filter((c) => c.parent_id === a.id);
@@ -42,18 +45,18 @@ export function areaSizeM2(a: AreaRow, areas: AreaRow[]): number | null {
   return sum > 0 ? sum : null;
 }
 
-/** Danh sách phẳng theo thứ tự cây: phân khu rồi các nhà màng của nó */
+/** Danh sách phẳng theo thứ tự cây: phân khu rồi các ô sản xuất của nó */
 export function orderedAreas(areas: AreaRow[]): AreaRow[] {
   return topAreas(areas).flatMap((t) => [t, ...cellsOf(areas, t.id)]);
 }
 
-/** Hook: hàm trả tên đầy đủ "Phân khu › Nhà màng" của một khu theo mã */
+/** Hook: hàm trả tên đầy đủ "Phân khu › ô" của một khu theo mã */
 export function useAreaPath(): (id: string | null | undefined) => string {
   const areas = useTable('areas');
   return useMemo(() => (id) => areaPath(id, areas), [areas]);
 }
 
-/** Tổng hợp số liệu theo phân khu cha (D125): cộng các vụ của chính phân khu và của mọi nhà màng con. null = người xem không có quyền mục đó. */
+/** Tổng hợp số liệu theo phân khu cha (D125): cộng các vụ của chính phân khu và của mọi ô sản xuất con. null = người xem không có quyền mục đó. */
 export interface AreaRollupRow {
   area: AreaRow; cycles: number; running: number;
   cost: number | null; harvest: number | null; revenue: number | null; profit: number | null;

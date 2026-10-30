@@ -40,12 +40,12 @@ export const MORE_GUIDES: Guide[] = [
       {
         title: 'Phân khu: nơi nuôi trồng',
         details: [
-          'Khai báo → Phân khu → thêm mới: tên, diện tích, vị trí, kiểu nhà/chuồng, ảnh. Ví dụ: vườn, nhà màng, ao, chuồng.',
+          'Khai báo → Phân khu → "+ Thêm phân khu": tên, loại, mã khu, vị trí, mô tả, ảnh. Phân khu là cụm (ví dụ "Vườn Đông"), không nhập diện tích hay kiểu nhà/chuồng ở đây.',
           'Loại "Cơ sở vật chất" dành cho chỗ không nuôi trồng (cổng, kho, biogas) để ghi những việc không thuộc vụ nào.',
-          'Phân khu có hai cấp: PHÂN KHU (cụm, ví dụ "Vườn Đông") và bên trong là NHÀ MÀNG (chuồng, ao với vật nuôi, thủy sản). Phân khu chỉ có một nhà màng thì không cần chia nhỏ.',
-          'Chia nhỏ: ở dòng phân khu bấm "+ Nhà màng" (một cái) hoặc "+ Nhiều nhà màng cùng lúc" (nhập số lượng, app tự đánh số, tối đa 50). Phân khu đang có vụ thì bấm "Chia thành nhà màng": app tạo nhà màng đầu tiên và chuyển các vụ hiện có sang đó.',
-          'Mỗi vụ chạy trong MỘT nhà màng (hoặc một phân khu chưa chia nhỏ). Diện tích dùng để tính năng suất, mật độ và chia vật tư dùng chung theo diện tích; diện tích phân khu tự cộng từ các nhà màng.',
-          'Cơ sở đông người có thể giao mỗi người một hay nhiều phân khu hoặc nhà màng: giao phân khu thì họ thấy mọi nhà màng bên trong, giao riêng nhà màng thì chỉ thấy nhà màng đó (Khai báo → Nhân sự).',
+          'Phân khu có hai cấp: PHÂN KHU (cụm) và bên trong là Ô SẢN XUẤT (nhà màng, chuồng, ao… do bạn đặt tên). Ô sản xuất mới có đủ thông tin: mã ô, kiểu nhà/chuồng, diện tích, mô tả, ảnh.',
+          'Khi thêm phân khu, app tạo sẵn các ô (mặc định 1, tối đa 50). Thêm sau: "+ Ô sản xuất" (một ô) hoặc "+ Nhiều ô cùng lúc" (nhập số lượng, app tự đánh số). Phân khu cũ đang có vụ thì bấm "Chia thành ô sản xuất": app tạo ô đầu tiên và chuyển các vụ hiện có sang đó.',
+          'Mỗi vụ chạy trong MỘT ô sản xuất (hoặc một phân khu cũ chưa chia nhỏ). Diện tích dùng để tính năng suất, mật độ và chia vật tư dùng chung theo diện tích; diện tích phân khu tự cộng từ các ô.',
+          'Cơ sở đông người có thể giao mỗi người một hay nhiều phân khu hoặc ô sản xuất: giao phân khu thì họ thấy mọi ô bên trong, giao riêng một ô thì chỉ thấy ô đó (Khai báo → Nhân sự).',
         ],
         go: { tab: 'declare', section: 'areas', label: 'Mở Phân khu' },
       },
@@ -98,7 +98,7 @@ export const MORE_GUIDES: Guide[] = [
         details: [
           'Khai báo → Nhân sự: tạo tài khoản cho người làm (số điện thoại + mật khẩu tạm), chọn chức vụ và phân khu.',
           'Khai báo → Chức vụ, Tổ chức: đặt quyền theo mục và chia phòng/tổ.',
-          'Khai báo → Máy chấm công: liên kết một điện thoại cố định làm máy chấm công, gắn với phân khu cấp 1 (nơi đặt máy). Tiền công không tính theo nhà màng; chủ nhập chi phí nhân công theo vụ ở Chi phí.',
+          'Khai báo → Máy chấm công: liên kết một điện thoại cố định làm máy chấm công, gắn với phân khu cấp 1 (nơi đặt máy). Tiền công không tính theo ô sản xuất; chủ nhập chi phí nhân công theo vụ ở Chi phí.',
           'Hộ nhỏ chỉ có người nhà thì có thể bỏ qua cả khung này.',
           'Chi tiết xem hướng dẫn "Nhân sự, chấm công và lương".',
         ],

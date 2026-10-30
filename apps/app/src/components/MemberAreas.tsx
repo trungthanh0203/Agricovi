@@ -53,7 +53,7 @@ export function MemberAreas({ orgId, userId, initial, onSaved }: { orgId: string
         <label className="check" key={a.id} style={a.parent_id ? { paddingLeft: 20 } : undefined}><input type="checkbox" checked={picked.includes(a.id)} onChange={() => toggle(a.id)} /> {a.parent_id ? '↳ ' : ''}{a.name}</label>
       ))}</div>}
       {!all && areas.length === 0 && <p className="muted">Chưa có phân khu nào. Khai báo phân khu trước.</p>}
-      {!all && areas.some((a) => a.parent_id) && <p className="muted">Chọn một phân khu thì người này thấy tất cả nhà màng bên trong; chọn riêng nhà màng thì chỉ thấy nhà màng đó.</p>}
+      {!all && areas.some((a) => a.parent_id) && <p className="muted">Chọn một phân khu thì người này thấy tất cả ô sản xuất bên trong; chọn riêng một ô thì chỉ thấy ô đó.</p>}
       {msg && <p className={msg.ok ? 'msg ok' : 'msg error'} role="status">{msg.text}</p>}
       <div className="btnrow">
         <button type="button" className="primary" disabled={busy} onClick={() => void save()}>Lưu</button>
