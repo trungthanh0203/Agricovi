@@ -62,3 +62,29 @@ test('nạp mẫu HTX: đủ quy mô, nhất quán, chạy lại không nhân đ
     (select count(*)::int from inventory_transactions where organization_id='${org}') t, (select count(*)::int from expense_records where organization_id='${org}') e`);
   assert.deepEqual([after.a, after.p, after.cy, after.w, after.t, after.e], [before.a, before.p, 0, 0, 0, 0]);
 });
+
+test('mẫu HTX: đơn giá giờ 30.000 / tổ trưởng 35.000, mỗi người đúng một tổ; script bổ sung sửa được dữ liệu cũ', async () => {
+  const db = await createDb();
+  const u = await addUser(db, 1);
+  const org = (await asUser(db, u, `select create_organization('cooperative','HTX Thử') id`)).rows[0].id;
+  await db.exec(prep());
+  const check = async () => {
+    const r = await one(db, `select
+      (select count(*)::int from work_rates r join worker_teams t on t.leader_worker_id = r.worker_id where r.organization_id='${org}' and r.rate_type='hour' and r.amount=35000) leaders,
+      (select count(*)::int from work_rates r join worker_profiles w on w.id=r.worker_id where r.organization_id='${org}' and r.rate_type='hour' and r.amount=30000 and not exists (select 1 from worker_teams t where t.leader_worker_id=w.id)) staff,
+      (select count(*)::int from (select m.worker_id from worker_team_memberships m join worker_teams t on t.id=m.team_id where t.organization_id='${org}' group by 1 having count(*) <> 1) x) multi,
+      (select count(*)::int from attendance_records ar join worker_team_memberships m on m.worker_id=ar.worker_id join worker_teams t on t.id=m.team_id where ar.organization_id='${org}' and ar.area_id is distinct from t.area_id) wrongarea`);
+    assert.deepEqual([r.leaders, r.staff, r.multi, r.wrongarea], [5, 45, 0, 0]);
+  };
+  await check();
+  // làm lệch như bản nạp cũ (không có đơn giá, sai phân khu, một người mất tổ) rồi chạy script bổ sung
+  await db.exec(`delete from work_rates where organization_id='${org}'; update attendance_records set area_id = null where organization_id='${org}';
+    delete from worker_team_memberships where worker_id in (select id from worker_profiles where organization_id='${org}' and phone = '0911900015');`);
+  const fix = readFileSync(new URL('../maintenance/seed_sample_htx_bosung_luong.sql', import.meta.url), 'utf8').replace("'trungthanhfx23@gmail.com'", "'u1@test.local'");
+  await db.exec(fix);
+  await check();
+  await db.exec(fix); // chạy lại an toàn
+  await check();
+  await db.exec(prep('XOA'));
+  assert.equal((await one(db, `select count(*)::int n from work_rates where organization_id='${org}'`)).n, 0);
+});

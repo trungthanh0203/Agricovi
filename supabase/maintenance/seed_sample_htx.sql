@@ -3,7 +3,7 @@
 --
 -- NỘI DUNG:
 --   · 5 phân khu, mỗi phân khu 4 nhà màng (khu cấp dưới) và 2 kho (kho vật tư chung, kho phân – thuốc)
---   · 5 tổ theo 5 phân khu, mỗi tổ 1 tổ trưởng + 9 nhân viên (50 người) và công chấm 45 ngày gần nhất (kèm vài ca chờ xác nhận, ca đang mở hôm nay)
+--   · 5 tổ theo 5 phân khu (mỗi người thuộc đúng 1 tổ = 1 phân khu), mỗi tổ 1 tổ trưởng (35.000đ/giờ) + 9 nhân viên (30.000đ/giờ), 50 người, có công chấm 45 ngày gần nhất (kèm vài ca chờ xác nhận, ca đang mở hôm nay)
 --   · Mỗi phân khu 2 quy trình dưa lưới: 1 sao từ mẫu hệ thống (17 việc, 7 công đoạn), 1 quy trình riêng (10 việc, ít hơn nhưng tổng 79 ngày như mẫu)
 --   · Mỗi phân khu 12 vụ (mỗi nhà màng 3 vụ nối tiếp): 4 đã kết thúc (quá khứ), 4 đang sản xuất, 4 đang chuẩn bị (tương lai)
 --   · Nhật ký việc cho mọi việc ĐÃ THỰC HIỆN XONG (việc lặp ghi theo từng lần), kèm xuất vật tư khi bón phân/phun thuốc/chuẩn bị đất/gieo/làm giàn
@@ -71,6 +71,7 @@ begin
     delete from activity_logs where cycle_id in (select id from smp_del_cyc);
     delete from production_stages where cycle_id in (select id from smp_del_cyc);
     delete from production_cycles where id in (select id from smp_del_cyc);
+    delete from work_rates where worker_id in (select id from smp_del_wk);
     delete from worker_team_memberships where team_id in (select id from worker_teams where organization_id = v_org and description like 'Dữ liệu mẫu%');
     delete from worker_teams where organization_id = v_org and description like 'Dữ liệu mẫu%';
     delete from worker_profiles where id in (select id from smp_del_wk);
@@ -167,6 +168,10 @@ begin
       from smp_team t join smp_area a on a.k = t.k join smp_worker w on w.k = t.k and w.idx = 1;
   insert into worker_team_memberships (team_id, worker_id, valid_from)
     select t.id, w.id, v_today - 300 from smp_worker w join smp_team t on t.k = w.k;
+
+  -- đơn giá công theo giờ: nhân viên 30.000đ/giờ, tổ trưởng 35.000đ/giờ
+  insert into work_rates (organization_id, rate_type, worker_id, amount, valid_from)
+    select v_org, 'hour', w.id, case when w.idx = 1 then 35000 else 30000 end, v_today - 365 from smp_worker w;
 
   -- =============================================================== QUY TRÌNH (mỗi phân khu 2)
   create temp table smp_tpl (k int, kind text, id uuid default gen_random_uuid(), name text) on commit drop;
