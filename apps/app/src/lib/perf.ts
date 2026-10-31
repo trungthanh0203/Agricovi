@@ -5,7 +5,7 @@ import { perfState } from './perfState';
  * Đo hiệu năng đồng bộ (Đợt 0, docs/PLAN_HIEU_NANG.md): mỗi lần đồng bộ ghi lại thời gian, dung lượng dữ liệu tải (đã giải nén), số yêu cầu và số dòng
  * của các bảng trên máy; giữ 8 lần gần nhất để chủ/quản trị xem ở màn Hỗ trợ & Chia sẻ và chép gửi đi.
  */
-export interface SyncPerf { at: string; ms: number; kb: number; requests: number; ok: boolean; first: boolean; rows: Record<string, number> }
+export interface SyncPerf { at: string; ms: number; kb: number; requests: number; ok: boolean; first: boolean; rows: Record<string, number>; err?: string }
 
 const KEY = 'agri.perf.sync';
 const TABLES = ['areas', 'cycles', 'logs', 'stages', 'notes', 'harvests', 'expenses', 'sales', 'materials', 'balances', 'incidents', 'countEvents', 'milestones'] as const;
@@ -19,21 +19,21 @@ export function clearSyncPerf(): void {
 }
 
 /** Bắt đầu đo một lần đồng bộ; gọi hàm trả về khi xong (kèm kết quả thành công hay lỗi) */
-export function beginSyncMeasure(): (ok: boolean) => Promise<void> {
+export function beginSyncMeasure(): (ok: boolean, err?: string) => Promise<void> {
   const t0 = performance.now();
   const first = !firstDone;
   firstDone = true;
   perfState.measuring = true;
   perfState.bytes = 0;
   perfState.requests = 0;
-  return async (ok) => {
+  return async (ok, err) => {
     await new Promise((r) => setTimeout(r, 150));   // chờ các bản sao phản hồi được đếm xong
     perfState.measuring = false;
     const rows: Record<string, number> = {};
     for (const t of TABLES) {
       try { rows[t] = await (db[t] as unknown as { count(): Promise<number> }).count(); } catch { rows[t] = -1; }
     }
-    const item: SyncPerf = { at: new Date().toISOString(), ms: Math.round(performance.now() - t0), kb: Math.round(perfState.bytes / 1024), requests: perfState.requests, ok, first, rows };
+    const item: SyncPerf = { at: new Date().toISOString(), ms: Math.round(performance.now() - t0), kb: Math.round(perfState.bytes / 1024), requests: perfState.requests, ok, first, rows, ...(err ? { err: err.slice(0, 300) } : {}) };
     try { localStorage.setItem(KEY, JSON.stringify([item, ...readSyncPerf()].slice(0, 8))); } catch { /* bỏ qua */ }
   };
 }
@@ -53,7 +53,7 @@ export function perfReport(): string {
     `Mạng: ${nav.connection?.effectiveType ?? '?'} ${nav.connection?.downlink ?? '?'} Mbps · RAM ${nav.deviceMemory ?? '?'} GB · ${nav.hardwareConcurrency ?? '?'} nhân`,
     `Tải trang: ${pageLoadMs() ?? '?'} ms`,
     'Đồng bộ (mới nhất trước): giờ · thời gian · dung lượng tải · số yêu cầu · lần đầu mở app?',
-    ...list.map((s) => `${new Date(s.at).toLocaleTimeString('vi-VN')} · ${s.ms} ms · ${s.kb} KB · ${s.requests} yêu cầu · ${s.first ? 'lần đầu' : 'lần sau'}${s.ok ? '' : ' · LỖI'}`),
+    ...list.map((s) => `${new Date(s.at).toLocaleTimeString('vi-VN')} · ${s.ms} ms · ${s.kb} KB · ${s.requests} yêu cầu · ${s.first ? 'lần đầu' : 'lần sau'}${s.ok ? '' : ` · LỖI: ${s.err ?? 'không rõ'}`}`),
   ];
   if (list[0]) lines.push('Số dòng trên máy: ' + Object.entries(list[0].rows).map(([k, v]) => `${k} ${v}`).join(', '));
   return lines.join('\n');

@@ -46,8 +46,22 @@ const missingPlanColumns = (e: { message?: string; code?: string } | null) => !!
 const STAGE_COLUMNS =
   'id, cycle_id, name, seq, work_type_id, duration_days, planned_start, planned_end, actual_start, actual_end, status, note';
 /** Việc của vụ kèm công đoạn và mức độ quan trọng (migration 0109); CSDL chưa cập nhật thì dùng bộ cột cũ */
+type PagedResult = { data: unknown[] | null; error: { message?: string; code?: string } | null };
+/** Máy chủ chỉ trả tối đa 1000 dòng mỗi yêu cầu: tải từng trang cho tới khi hết để không bỏ sót giai đoạn khi có nhiều vụ */
+async function pageStages(cols: string, cycleId?: string): Promise<PagedResult> {
+  const out: unknown[] = [];
+  for (let from = 0; ; from += 1000) {
+    let b = supabase!.from('production_stages').select(cols).order('id').range(from, from + 999);
+    if (cycleId) b = b.eq('cycle_id', cycleId);
+    const r = await b;
+    if (r.error) return { data: null, error: r.error };   // ví dụ thiếu cột: để bậc dự phòng bên dưới thử tiếp
+    const rows = (r.data ?? []) as unknown[];
+    out.push(...rows);
+    if (rows.length < 1000) return { data: out, error: null };
+  }
+}
 async function selectStages(cycleId?: string) {
-  const q = (cols: string) => { const b = supabase!.from('production_stages').select(cols); return cycleId ? b.eq('cycle_id', cycleId) : b; };
+  const q = (cols: string) => pageStages(cols, cycleId);
   const rw = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials, log_waived_reason');
   if (!rw.error) return rw;
   const r0 = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials'); // chưa db push 0126
@@ -79,7 +93,7 @@ export async function syncDown(): Promise<void> {
     await syncDownRaw();
     await done(true);
   } catch (e) {
-    await done(false);
+    await done(false, e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e));
     throw e;
   }
 }

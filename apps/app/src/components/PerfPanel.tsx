@@ -41,13 +41,14 @@ export function PerfPanel() {
                   <td className="num">{s.ms} ms</td>
                   <td className="num">{s.kb} KB</td>
                   <td className="num">{s.requests}</td>
-                  <td>{s.ok ? '' : <span className="pill err">Lỗi</span>}</td>
+                  <td>{s.ok ? '' : <span className="pill err" title={s.err}>Lỗi</span>}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+      {list.filter((s) => !s.ok && s.err).slice(0, 2).map((s) => <p key={s.at} className="msg error" role="alert">Lỗi lúc {new Date(s.at).toLocaleTimeString('vi-VN')}: {s.err}</p>)}
       {last && <p className="muted">Số dòng đang giữ trên máy: {Object.entries(last.rows).filter(([, v]) => v >= 0).map(([k, v]) => `${k} ${v}`).join(' · ')}</p>}
       <div className="btnrow">
         <button type="button" className="primary" disabled={busy} onClick={() => void measure()}>{busy ? 'Đang đo…' : 'Đồng bộ lại và đo'}</button>
