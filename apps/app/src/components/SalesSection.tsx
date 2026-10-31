@@ -1,4 +1,4 @@
-import { useShowMore } from './ShowMore';
+import { LoadOlder, useShowMore } from './ShowMore';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
@@ -117,7 +117,7 @@ export function SalesSection() {
         <div className="row"><span>Đã bán</span><strong>{formatQty(qty)} kg</strong></div>
         <div className="row"><span>Doanh thu đã ghi</span><strong>{formatMoney(revenue)}</strong></div>
         {qty > 0 && <div className="row"><span>Giá bán trung bình</span><strong>{formatMoney(Math.round(revenue / qty))}/kg</strong></div>}
-        <p className="muted">{valid.length} lần bán chưa hủy. Đây là doanh thu đã ghi nhận, chưa phải lợi nhuận.</p>
+        <p className="muted">{valid.length} lần bán chưa hủy đang tải về máy (bấm "Tải thêm" để xem cũ hơn). Đây là doanh thu đã ghi nhận, chưa phải lợi nhuận.</p>
       </div>
 
       {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Ghi, sửa và hủy cần có mạng.</p>}
@@ -161,6 +161,7 @@ export function SalesSection() {
         </div>
       ))}
       {listMore}
+      <LoadOlder kind="sales" online={online} loaded={sales.length} />
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { useShowMore } from './ShowMore';
+import { LoadOlder, useShowMore } from './ShowMore';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
@@ -119,7 +119,7 @@ export function ExpenseSection() {
         <div className="row"><span>Tiền thực chi</span><strong>{formatMoney(sumKind(['cash_paid']))}</strong></div>
         <div className="row"><span>Vật tư đã dùng (ghi tay)</span><strong>{formatMoney(sumKind(['material_used']))}</strong></div>
         <div className="row"><span>Phân bổ / ước tính</span><strong>{formatMoney(sumKind(['allocated', 'estimated']))}</strong></div>
-        <p className="muted">{valid.length} khoản chưa hủy. Ba dòng trên tách riêng, không cộng gộp vì bản chất khác nhau.</p>
+        <p className="muted">{valid.length} khoản chưa hủy đang tải về máy (bấm "Tải thêm" để xem khoản cũ hơn). Ba dòng trên tách riêng, không cộng gộp vì bản chất khác nhau.</p>
       </div>
 
       {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Ghi, sửa và hủy cần có mạng.</p>}
@@ -163,6 +163,7 @@ export function ExpenseSection() {
         </div>
       ))}
       {listMore}
+      <LoadOlder kind="expenses" online={online} loaded={expenses.length} />
     </>
   );
 }

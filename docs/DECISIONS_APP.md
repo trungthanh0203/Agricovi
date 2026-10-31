@@ -282,3 +282,7 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 ## D140 — Đợt 2 (phần 1): danh sách dài vẽ từng 50 dòng
 - `components/ShowMore.tsx` (`useShowMore`): Chi phí, Doanh thu, Khách hàng, Nhà cung ứng chỉ vẽ 50 dòng đầu, nút "Xem thêm"; đổi bộ lọc thì về 50 dòng đầu. Nhật ký việc đã có phân trang sẵn.
 - Chưa làm (phần 2): ô tìm/lọc và phân trang do máy chủ làm cho Nhân sự, Vụ cũ, tải bản ghi cũ hơn của Chi phí/Doanh thu, bảng lương (`get_pay_overview`). Cần RPC mới + test; làm khi số đo cho thấy cần.
+
+## D141 — Đợt 2 (phần 2): tải thêm khoản cũ cho Chi phí/Doanh thu
+- `loadOlderFinance` + nút "Tải thêm khoản cũ hơn" (hiện khi đã có ≥200 khoản): tải 200 khoản kế tiếp lùi theo ngày vào máy; dòng tổng ghi rõ là tính trên phần đã tải.
+- Theo chủ sản phẩm: danh sách Nhân sự và Vụ không nhiều nên không làm phân trang máy chủ. Bảng lương (114 KB/552 ms với 300 người) giữ nguyên, xem lại nếu số đo xấu đi.

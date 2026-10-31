@@ -201,3 +201,30 @@ export function validateSale(quantity: number | null, amount: number | null): st
   }
   return null;
 }
+
+/**
+ * Tải thêm 200 khoản cũ hơn khoản cũ nhất đang có trên máy (Đợt 2, D141). Trả về true nếu có thể còn nữa.
+ * Đồng bộ nền chỉ giữ 200 khoản gần nhất; muốn xem cũ hơn thì bấm "Tải thêm".
+ */
+export async function loadOlderFinance(kind: 'expenses' | 'sales'): Promise<boolean> {
+  if (!supabase || !navigator.onLine) throw new Error('Cần có mạng để tải thêm.');
+  const isEx = kind === 'expenses';
+  const col = isEx ? 'expense_date' : 'sold_date';
+  const local = isEx ? await db.expenses.toArray() : await db.sales.toArray();
+  const oldest = local.map((r) => (r as unknown as Record<string, string>)[col]).sort()[0];
+  const have = new Set(local.map((r) => r.id));
+  const q = isEx
+    ? supabase.from('expense_records').select(EXPENSE_COLUMNS_BASE + ', category_item')
+    : supabase.from('sales_records').select(SALE_COLUMNS);
+  let r: { data: unknown; error: { message?: string } | null } = await (oldest ? q.lte(col, oldest) : q).order(col, { ascending: false }).limit(200);
+  if (r.error && isEx && /column|schema cache/i.test(r.error.message ?? '')) {
+    const q2 = supabase.from('expense_records').select(EXPENSE_COLUMNS_BASE);
+    r = await (oldest ? q2.lte(col, oldest) : q2).order(col, { ascending: false }).limit(200);
+  }
+  if (r.error) throw r.error;
+  const rows = (r.data ?? []) as unknown as Array<{ id: string }>;
+  const fresh = rows.filter((x) => !have.has(x.id));
+  if (isEx) await db.expenses.bulkPut(fresh.map((x) => ({ ...(x as unknown as ExpenseRow), amount: Number((x as unknown as ExpenseRow).amount) })));
+  else await db.sales.bulkPut(fresh.map((x) => ({ ...(x as unknown as SaleRow), quantity: Number((x as unknown as SaleRow).quantity), amount: Number((x as unknown as SaleRow).amount) })));
+  return rows.length >= 200 && fresh.length > 0;
+}
