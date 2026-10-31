@@ -575,7 +575,7 @@ export function PlanOrdersPage() {
                 <td>{o.org_name}<br /><small className="muted">{o.plan_name} · {o.quarters} quý</small></td>
                 <td>{vnd(o.amount)}</td>
                 <td><span className={`badge ${ORDER_CLS[o.status]}`}>{ORDER_LABEL[o.status]}</span>{o.admin_note && <><br /><small className="muted">{o.admin_note}</small></>}
-                  {o.email_status && o.email_status !== 'sent' && <><br /><small className="muted">Email: {o.email_status === 'skipped' ? 'chưa cấu hình gửi' : 'gửi lỗi'}</small></>}</td>
+                  {o.email_status && o.email_status !== 'sent' && <><br /><small className="muted">{o.email_status === 'skipped' ? 'Email: chưa cấu hình gửi (cần RESEND_API_KEY)' : `Email gửi lỗi: ${o.email_status.replace(/^failed:\s*/, '')}`}</small></>}</td>
                 <td>{o.status === 'pending' && (<>
                   <button className="primary" disabled={busy} onClick={() => startApprove(o)}>Duyệt</button>{' '}
                   <button disabled={busy} onClick={() => void reject(o)}>Từ chối</button>

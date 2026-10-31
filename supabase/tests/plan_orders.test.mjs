@@ -104,3 +104,18 @@ test('Edge Function tạo đơn thay người dùng bằng p_actor (khóa dịch
   // người dùng đã đăng nhập: luôn là chính họ, p_actor bị bỏ qua
   assert.match(await expectError(asUser(db, mgr, `select create_plan_order($1,$2,1,'Nguyễn Văn A','0912345678','12 Đường X',null,$3)`, [org, p, owner])), /FORBIDDEN/);
 });
+
+test('Đã mua: dùng thử thì chưa mua; mua rồi gia hạn nối tiếp cùng gói thì cộng số quý và số tiền; chỉ chủ xem', async () => {
+  const { db, admin, owner, mgr, org, plan, order } = await setup();
+  assert.deepEqual((await asUser(db, owner, `select my_plan_purchase($1) r`, [org])).rows[0].r, { purchased: false });
+  const p = await plan('Cơ bản');
+  const a = (await order(owner, p, 2)).rows[0].id;
+  await asUser(db, admin, `select admin_decide_plan_order($1,true)`, [a]);
+  let r = (await asUser(db, owner, `select my_plan_purchase($1) r`, [org])).rows[0].r;
+  assert.deepEqual([r.purchased, r.quarters, r.amount], [true, 2, 600000]);
+  const b = (await order(owner, p, 1)).rows[0].id;                                  // gia hạn nối tiếp cùng gói
+  await asUser(db, admin, `select admin_decide_plan_order($1,true)`, [b]);
+  r = (await asUser(db, owner, `select my_plan_purchase($1) r`, [org])).rows[0].r;
+  assert.deepEqual([r.purchased, r.quarters, r.amount], [true, 3, 900000]);
+  assert.match(await expectError(asUser(db, mgr, `select my_plan_purchase($1)`, [org])), /FORBIDDEN/);
+});

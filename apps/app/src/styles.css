@@ -715,3 +715,8 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 .contact-row dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .contact-row a { color: var(--green); font-weight: 600; }
 @media (max-width: 420px) { .contact-row { flex-direction: column; gap: 0; } .contact-row dt { flex: none; } }
+
+/* Gói dịch vụ: các khung */
+.plan-frame { margin: 10px 0; }
+.plan-frame h3.sub { margin-top: 0; }
+.plan-frame tr.sel td { background: color-mix(in srgb, var(--green) 8%, transparent); }

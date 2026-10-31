@@ -9,7 +9,7 @@
 // Chưa cấu hình gửi email thì đơn vẫn được lưu và hiện ở trang quản trị (đánh dấu "chưa gửi email").
 //
 // Hợp đồng:
-//   POST { action: 'create', organization_id, plan_id, quarters, full_name, phone, address, note? } -> { ok: true, order_id, email: 'sent'|'skipped'|'failed' }
+//   POST { action: 'create', organization_id, plan_id, quarters, full_name, phone, address, note? } -> { ok: true, order_id, email: 'sent'|'skipped'|'failed: <lý do>' }
 // Lỗi: HTTP 400 { error: "MÃ_LỖI: nội dung tiếng Việt" }.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -31,7 +31,8 @@ interface MailData {
   org_name: string; org_type: string; user_email: string | null; to_email: string | null;
 }
 
-async function sendMail(d: MailData): Promise<'sent' | 'skipped' | 'failed'> {
+/** Kết quả gửi: 'sent', 'skipped' (chưa cấu hình) hoặc 'failed: <lý do do Resend báo>' để quản trị thấy vì sao không gửi được */
+async function sendMail(d: MailData): Promise<string> {
   const key = Deno.env.get('RESEND_API_KEY');
   const to = Deno.env.get('ORDER_NOTIFY_EMAIL') || d.to_email;
   if (!key || !to) return 'skipped';
@@ -51,11 +52,13 @@ async function sendMail(d: MailData): Promise<'sent' | 'skipped' | 'failed'> {
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from, to: [to], subject: `Đơn mua gói ${d.plan_name} - ${d.org_name}`, html, text, ...(d.user_email ? { reply_to: d.user_email } : {}) }),
     });
-    if (!res.ok) console.error('resend error', res.status, await res.text());
-    return res.ok ? 'sent' : 'failed';
+    if (res.ok) return 'sent';
+    const detail = (await res.text()).replace(/\s+/g, ' ').slice(0, 300);
+    console.error('resend error', res.status, detail);
+    return `failed: ${res.status} ${detail}`;
   } catch (e) {
     console.error('resend exception', e);
-    return 'failed';
+    return `failed: ${String((e as Error)?.message ?? e).slice(0, 200)}`;
   }
 }
 
@@ -90,7 +93,7 @@ Deno.serve(async (req) => {
     const orderId = created.data as string;
 
     // 2) gửi email thông báo; lỗi gửi thư không làm mất đơn
-    let email: 'sent' | 'skipped' | 'failed' = 'skipped';
+    let email = 'skipped';
     const md = await admin.rpc('plan_order_mail_data', { p_id: orderId });
     if (!md.error && md.data) email = await sendMail(md.data as MailData);
     await admin.rpc('plan_order_email_result', { p_id: orderId, p_status: email });
