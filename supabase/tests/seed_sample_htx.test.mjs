@@ -88,3 +88,28 @@ test('mẫu HTX: đơn giá giờ 30.000 / tổ trưởng 35.000, mỗi người
   await db.exec(prep('XOA'));
   assert.equal((await one(db, `select count(*)::int n from work_rates where organization_id='${org}'`)).n, 0);
 });
+
+test('script bổ sung ghi việc: thêm đúng phần thiếu, không nhân đôi, chạy lại an toàn', async () => {
+  const db = await createDb();
+  const u = await addUser(db, 1);
+  const org = (await asUser(db, u, `select create_organization('cooperative','HTX Thử') id`)).rows[0].id;
+  await db.exec(prep());
+  const count = async () => (await one(db, `select count(*)::int n from activity_logs where organization_id='${org}'`)).n;
+  const full = await count();
+  // mô phỏng dữ liệu thiếu: xóa nhật ký của các vụ, làm lệch trạng thái việc
+  await db.exec(`alter table inventory_transactions disable trigger inventory_txn_guard_mod;
+    delete from inventory_transactions where organization_id='${org}' and activity_log_id is not null;
+    alter table inventory_transactions enable trigger inventory_txn_guard_mod;
+    delete from activity_logs where organization_id='${org}';
+    update production_stages set status='pending', actual_start=null, actual_end=null where organization_id='${org}';`);
+  assert.equal(await count(), 0);
+  const fix = readFileSync(new URL('../maintenance/seed_sample_htx_bosung_ghi_viec.sql', import.meta.url), 'utf8').replace("'trungthanhfx23@gmail.com'", "'u1@test.local'");
+  await db.exec(fix);
+  assert.equal(await count(), full);   // đúng số nhật ký như bản nạp gốc
+  const bad = await one(db, `select count(*)::int n from production_stages s join production_cycles c on c.id=s.cycle_id where c.owner_org_id='${org}' and c.status='ended' and s.status <> 'done'`);
+  assert.equal(bad.n, 0);
+  const nolog = await one(db, `select count(*)::int n from production_stages s join production_cycles c on c.id=s.cycle_id where c.owner_org_id='${org}' and c.status in ('ended','active') and s.status='done' and not exists (select 1 from activity_logs l where l.stage_id=s.id)`);
+  assert.equal(nolog.n, 0);
+  await db.exec(fix);
+  assert.equal(await count(), full);   // chạy lại không nhân đôi
+});

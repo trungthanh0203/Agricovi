@@ -298,3 +298,7 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 
 ## D144 — Sửa "đã hết hạn" sai ở Trang chủ (migration 0150)
 - `org_plan_usage` lấy dòng gói có hạn xa nhất; gói gia hạn bắt đầu ở tương lai nên bị coi là chưa hiệu lực → báo "đã hết hạn" dù còn đến 2031. Nay: "đang hiệu lực" = có kỳ đang chạy; tên gói/số vụ theo kỳ đang chạy; hạn hiển thị = cuối chuỗi các kỳ đã mua. Test trong `plan_orders.test.mjs`.
+
+## D145 — Nhật ký của vụ tải khi mở vụ
+- Đồng bộ nền chỉ giữ 200 nhật ký mới nhất của cả cơ sở, nên vụ đã kết thúc hoặc đang chạy lâu hiện "chưa có ghi việc" dù CSDL có. `refreshCycle` (chạy khi mở chi tiết vụ) nay tải thêm tối đa 1.000 nhật ký của vụ đó.
+- Script mẫu `seed_sample_htx_bosung_ghi_viec.sql` bù nhật ký còn thiếu cho vụ mẫu (không nhân đôi).

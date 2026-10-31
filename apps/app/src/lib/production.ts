@@ -346,9 +346,11 @@ export async function setCyclePlan(cycleId: string, targetYield: number | null, 
 /** Tải lại một vụ cùng giai đoạn của nó từ máy chủ vào bộ nhớ trên máy */
 export async function refreshCycle(id: string): Promise<void> {
   if (!supabase) return;
-  const [cyRes, st] = await Promise.all([
+  const [cyRes, st, lg] = await Promise.all([
     selectCycles(id),
     selectStages(id),
+    // nhật ký của vụ: đồng bộ nền chỉ giữ 200 bản mới nhất của cả cơ sở nên vụ cũ/vụ đang chạy lâu thiếu nhật ký; mở vụ thì tải đủ (D145)
+    supabase.from('activity_logs').select(LOG_COLUMNS).eq('cycle_id', id).order('performed_at', { ascending: false }).limit(1000),
   ]);
   if (cyRes.error) throw new Error(cyRes.error.message);
   const cyRow = (cyRes.data as unknown as CycleRow[] | null)?.[0];
@@ -356,6 +358,10 @@ export async function refreshCycle(id: string): Promise<void> {
   if (!st.error) {
     await db.stages.where('cycle_id').equals(id).delete();
     await db.stages.bulkPut(((st.data ?? []) as unknown as StageRow[]));
+  }
+  if (!lg.error && lg.data) {
+    const pending = new Set((await db.outbox.where('state').notEqual('synced').toArray()).map((i) => i.payload.id as string));
+    await db.logs.bulkPut((lg.data as unknown as LogRow[]).filter((r) => !pending.has(r.id)));
   }
 }
 
