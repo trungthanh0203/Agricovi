@@ -76,8 +76,8 @@ function Admin({ session, roles }: { session: Session; roles: string[] }) {
   const isChief = isAdmin || roles.includes('chief_editor');
   const isMod = roles.includes('moderator');
   const visible = PAGES.filter((p) => (!p.adminOnly || isAdmin) && (!p.chiefOnly || isChief || (p.modOk && isMod)));
-  const [page, setPage] = useState('overview');
-  const go = (p: string) => setPage(visible.some((v) => v.id === p) ? p : 'overview');
+  const [page, setPage] = useState(() => { try { const p = sessionStorage.getItem('webadmin.page'); return p && visible.some((v) => v.id === p) ? p : 'overview'; } catch { return 'overview'; } });
+  const go = (p: string) => { const n = visible.some((v) => v.id === p) ? p : 'overview'; setPage(n); try { sessionStorage.setItem('webadmin.page', n); } catch { /* bỏ qua */ } };
   const title = PAGES.find((p) => p.id === page)?.label ?? '';
   const groups = [...new Set(visible.map((p) => p.group))];
   return (
@@ -132,17 +132,20 @@ function Admin({ session, roles }: { session: Session; roles: string[] }) {
 function Root() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [roles, setRoles] = useState<string[] | null>(null);
+  const userId = session?.user.id;
 
   useEffect(() => {
     if (!supabase) return;
-    void supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    // Supabase phát lại SIGNED_IN/TOKEN_REFRESHED mỗi khi quay lại tab: giữ phiên cũ nếu vẫn cùng người dùng, kẻo cả trang bị dựng lại và về Tổng quan.
+    const keep = (s: Session | null) => setSession((prev) => (prev && s && prev.user.id === s.user.id ? prev : s));
+    void supabase.auth.getSession().then(({ data }) => keep(data.session));
+    const { data } = supabase.auth.onAuthStateChange((_e, s) => keep(s));
     return () => data.subscription.unsubscribe();
   }, []);
   useEffect(() => {
     setRoles(null);
-    if (session) void rpc<string[]>('get_my_site_roles').then(setRoles).catch(() => setRoles([]));
-  }, [session]);
+    if (userId) void rpc<string[]>('get_my_site_roles').then(setRoles).catch(() => setRoles([]));
+  }, [userId]);
 
   if (!supabase) return <main className="login"><h1>Chưa cấu hình</h1><p className="muted">Thiếu biến môi trường VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY khi build (xem docs/DEPLOY_CLOUDFLARE.md).</p></main>;
   if (session === undefined) return <p className="muted" style={{ padding: 24 }}>Đang tải…</p>;
