@@ -290,3 +290,8 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 ## D142 — Đợt 2 (hoàn tất): tổng ở máy chủ, chi tiết theo trang, xuất CSV đủ (migration 0148)
 - `expense_totals` / `sales_totals`: tổng Chi phí/Doanh thu tính trên TOÀN BỘ khoản chưa hủy (có kiểm quyền xem, lọc theo vụ). Màn hình dùng số này; chưa có (offline, chưa db push) thì tạm số trên máy. Danh sách chi tiết vẫn theo trang (50 dòng + "Tải thêm khoản cũ hơn"). Thay D141 phần "tổng chỉ trên phần đã tải". Nút "Xuất CSV tất cả" tải đủ từ máy chủ (trang 1000 dòng).
 - Nhân sự (ô tìm + 50 dòng/lần, gộp người có tài khoản và không tài khoản), Vụ (50 vụ/lần mỗi nhóm), Bảng lương (ô tìm tên + 50 người/lần ở chế độ danh sách): làm ở phía máy khách vì dữ liệu ít (theo chủ sản phẩm).
+
+## D143 — Đợt 4: số đo báo cáo và sửa attendance_summary (migration 0149)
+- Số đo (300 người, 85.000 lượt công): `attendance_summary` **24 giây** (kiểm quyền từng dòng); các báo cáo khác đều dưới 2 giây (nặng nhất: số liệu các vụ 1,9 s nguội/0,56 s ấm, biểu đồ lương 1,7/1,3 s, báo cáo tuần 1,5/0,15 s, bảng lương 0,45/0,15 s).
+- Sửa: quản trị nhân sự đi đường nhanh (`attendance_summary_fast` kiểm quyền một lần rồi chạy `attendance_summary_core`), người khác giữ đường cũ chỉ thấy phần của mình; lọc ảnh theo khoảng thời gian; thêm chỉ mục ca đang mở. Kết quả không đổi (test `attendance_scale` đạt).
+- Các báo cáo còn lại đạt tiêu chí "dưới 2 giây", chưa tối ưu thêm; xem lại nếu dữ liệu tăng gấp nhiều lần.
