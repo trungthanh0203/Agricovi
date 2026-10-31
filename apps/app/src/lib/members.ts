@@ -124,6 +124,9 @@ export const inviteHousehold = (coop: string, email: string) => rpc<string>('inv
 export const revokeCoopInvitation = (id: string) => rpc<void>('revoke_coop_invitation', { p_id: id });
 export const createMemberHousehold = (coop: string, name: string) =>
   rpc<string>('create_member_household', { p_coop: coop, p_name: name });
+/** Xóa hộ do HTX tạo khỏi danh sách (chỉ khi hộ chưa có dữ liệu sản xuất) */
+export const deleteManagedHousehold = (coop: string, household: string) =>
+  rpc<void>('delete_managed_household', { p_coop: coop, p_household: household });
 export const removeHousehold = (coop: string, household: string) =>
   rpc<void>('remove_household', { p_coop: coop, p_household: household });
 export const leaveCooperative = (household: string) => rpc<void>('leave_cooperative', { p_household: household });

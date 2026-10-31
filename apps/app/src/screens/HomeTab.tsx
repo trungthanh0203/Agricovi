@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { addDays, diffDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { setNoteDone } from '../lib/production';
@@ -24,7 +24,7 @@ import { areaPath, areaName } from '../lib/areas';
 import { cycleTitle } from '../lib/cycles';
 
 export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: string) => void; onOpenCycle: (id: string) => void }) {
-  const { active } = useOrgs();
+  const { active, fetchUsage } = useOrgs();
   const sync = useRecordSync();
   const { session } = useAuth();
   const uid = session?.user.id;
@@ -38,6 +38,15 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
   const online = useOnline();
   const [noteError, setNoteError] = useState<string | null>(null);
   const { workTypes, cropTypes } = useCatalog();
+  // Hạn dùng gói (chỉ chủ cơ sở xem được), hiện cạnh ngày ở đầu Trang chủ
+  const [planEnd, setPlanEnd] = useState<{ text: string; expired: boolean } | null>(null);
+  const planOrg = active && hasRole(active.roles, 'owner') ? active.id : null;
+  useEffect(() => {
+    if (!planOrg || !navigator.onLine) { setPlanEnd(null); return; }
+    let live = true;
+    fetchUsage(planOrg).then((u) => { if (live && u) setPlanEnd({ text: new Date(u.period_end).toLocaleDateString('vi-VN'), expired: !u.is_current }); }).catch(() => undefined);
+    return () => { live = false; };
+  }, [planOrg, fetchUsage]);
   if (!active) return null;
   const canManage = canManageProduction(active.roles);
 
@@ -67,7 +76,10 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
       <div className="hero">
         <h1>Xin chào{myName ? `, ${myName}` : ''}</h1>
         <div className="hero-top">
-          <small>{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}</small>
+          <small>
+            {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}
+            {planEnd && <span className={planEnd.expired ? 'hero-exp warn' : 'hero-exp'}> → Hạn: {planEnd.text}{planEnd.expired ? ' (đã hết hạn)' : ''}</span>}
+          </small>
         </div>
       </div>
 

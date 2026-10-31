@@ -720,3 +720,6 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 .plan-frame { margin: 10px 0; }
 .plan-frame h3.sub { margin-top: 0; }
 .plan-frame tr.sel td { background: color-mix(in srgb, var(--green) 8%, transparent); }
+
+.hero-exp { font-weight: 700; white-space: nowrap; }
+.hero-exp.warn { color: var(--warn); }

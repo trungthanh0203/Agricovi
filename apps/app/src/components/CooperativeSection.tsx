@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { RowMenu } from './RowMenu';
 import { friendlyError } from '../lib/errors';
 import { Collapsible } from './Collapsible';
 import {
-  createMemberHousehold, inviteHousehold, leaveCooperative, listCoopHouseholds, myCooperative,
+  createMemberHousehold, deleteManagedHousehold, inviteHousehold, leaveCooperative, listCoopHouseholds, myCooperative,
   pendingCoopInvites, removeHousehold, revokeCoopInvitation, updateCoopHousehold,
   type CoopHousehold, type HouseholdInfo, type MyCooperative, type PendingInvite,
 } from '../lib/members';
@@ -34,7 +34,12 @@ function useRunner(reload: () => Promise<void>) {
       setBusy(false);
     }
   }
-  return { error, info, busy, run, setError };
+  // Có lỗi hoặc có thông báo thành công thì cuộn tới chỗ báo để người dùng thấy ngay (biểu mẫu dài, nút Lưu nằm cuối trang)
+  const msgRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (error || info) msgRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [error, info]);
+  return { error, info, busy, run, setError, msgRef };
 }
 
 const EMPTY_INFO: HouseholdInfo = { member_code: '', head_name: '', phone: '', address: '', main_products: '', area_ha: null, note: '', activity_status: 'active', certificates: '' };
@@ -89,12 +94,13 @@ function ForCooperative({ org }: { org: MyOrg }) {
     void r.run(async () => {
       if (isNew) {
         const hid = await createMemberHousehold(org.id, name);
+        setForm(hid);   // hộ đã được tạo: nếu lưu chi tiết bị lỗi thì bấm Lưu lại chỉ cập nhật hộ này, không tạo thêm hộ trùng
         if (Object.values(info).some((v) => v !== '' && v !== null)) await updateCoopHousehold(org.id, hid, info);
       } else if (id) {
         await updateCoopHousehold(org.id, id, info);
       }
       setForm(null);
-    }, isNew ? 'Đã thêm hộ thành viên. Bấm ➜ ở dòng của hộ để ghi dữ liệu cho hộ.' : 'Đã lưu.');
+    }, isNew ? `Đã thêm hộ thành viên "${name.trim()}" thành công. Bấm ➜ ở dòng của hộ để ghi dữ liệu cho hộ.` : 'Đã lưu thành công.');
   }
   function onInvite(e: FormEvent) {
     e.preventDefault();
@@ -111,7 +117,6 @@ function ForCooperative({ org }: { org: MyOrg }) {
           <button className="menu-back" onClick={() => setForm(null)} aria-label="Quay lại danh sách hộ thành viên">‹ Danh sách</button>
           <strong className="menu-cur">{isNew ? 'Thêm hộ thành viên' : name}</strong>
         </div>
-        {r.error && <p className="msg error" role="alert">{r.error}</p>}
         <form onSubmit={onSave} className="inline-form" noValidate>
           {isNew && <p className="muted">Dành cho hộ chưa có tài khoản hoặc điện thoại. HTX sẽ là bên quản lý dữ liệu của hộ này, và hộ chưa thể rời HTX cho tới khi chuyển quyền chủ hộ. Hộ đã có tài khoản thì mời bằng email ở dưới danh sách.</p>}
           <label>Tên hộ
@@ -133,8 +138,9 @@ function ForCooperative({ org }: { org: MyOrg }) {
             </select>
           </label>
           <label>Ghi chú<textarea rows={2} maxLength={500} value={f.note} onChange={set('note')} /></label>
+          {r.error && <p ref={r.msgRef} className="msg error" role="alert">{r.error}</p>}
           <div className="btnrow">
-            <button type="submit" className="primary" disabled={r.busy}>Lưu</button>
+            <button type="submit" className="primary" disabled={r.busy}>{r.busy ? 'Đang lưu…' : 'Lưu'}</button>
             <button type="button" className="secondary" onClick={() => setForm(null)}>Hủy</button>
           </div>
         </form>
@@ -146,8 +152,8 @@ function ForCooperative({ org }: { org: MyOrg }) {
     <>
       <h2 className="sect">Hộ thành viên{households.length > 0 ? ` (${households.length} hộ${invites.length > 0 ? ` · ${invites.length} lời mời chờ` : ''})` : ''}</h2>
       <p className="muted">Số hộ không bị giới hạn; hạn mức chỉ tính theo số vụ đang chạy của HTX.</p>
-      {r.error && <p className="msg error" role="alert">{r.error}</p>}
-      {r.info && <p className="msg ok" role="status">{r.info}</p>}
+      {r.error && <p ref={r.msgRef} className="msg error" role="alert">{r.error}</p>}
+      {r.info && <p ref={r.msgRef} className="msg ok" role="status">{r.info}</p>}
       {canManage && <button className="secondary" disabled={!navigator.onLine} onClick={() => openForm(null)}>+ Thêm hộ thành viên</button>}
 
       <div className="tablewrap">
@@ -175,7 +181,12 @@ function ForCooperative({ org }: { org: MyOrg }) {
                   <RowMenu label={`Hộ ${h.name}`} items={[
                     ...(h.managed ? [{ label: 'Làm việc ở hộ này', icon: '➜', onClick: () => setActive(h.household_org_id) }] : []),
                     ...(canManage ? [{ label: 'Chỉnh sửa', icon: '✎', onClick: () => openForm(h) }] : []),
-                    ...(isOwner(org.roles) && !h.managed ? [{ label: 'Gỡ khỏi HTX', icon: '🗑', danger: true, disabled: r.busy, onClick: () => { if (window.confirm(`Gỡ hộ "${h.name}" khỏi HTX?`)) void r.run(() => removeHousehold(org.id, h.household_org_id)); } }] : []),
+                    ...(isOwner(org.roles) ? [{ label: 'Xóa hộ khỏi danh sách', icon: '🗑', danger: true, disabled: r.busy, onClick: () => {
+                      const msg = h.managed
+                        ? `Xóa hộ "${h.name}" khỏi danh sách? Hộ do HTX tạo sẽ bị xóa hẳn (chỉ làm được khi hộ chưa có phân khu, vụ hay dữ liệu).`
+                        : `Xóa hộ "${h.name}" khỏi danh sách HTX? Hộ vẫn giữ dữ liệu của mình, chỉ không còn là thành viên HTX.`;
+                      if (window.confirm(msg)) void r.run(() => (h.managed ? deleteManagedHousehold(org.id, h.household_org_id) : removeHousehold(org.id, h.household_org_id)), `Đã xóa hộ "${h.name}" khỏi danh sách.`);
+                    } }] : []),
                   ]} />
                 </td>
               </tr>
@@ -183,7 +194,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
           </tbody>
         </table>
       </div>
-      <p className="muted">✎ sửa thông tin · ➜ làm việc ở hộ do HTX quản lý · 🗑 gỡ hộ khỏi HTX (chỉ hộ tự tham gia).</p>
+      <p className="muted">✎ sửa thông tin · ➜ làm việc ở hộ do HTX quản lý · 🗑 xóa hộ khỏi danh sách.</p>
 
       {invites.length > 0 && <h3 className="sub">Lời mời đang chờ hộ chấp nhận</h3>}
       {invites.map((i) => (
