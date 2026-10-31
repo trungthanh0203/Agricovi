@@ -14,7 +14,7 @@ import { validReason } from '../lib/withdrawalLogic';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { formatMoney, formatQty, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
-import { createCustomer, listCustomers, recordSaleWithCustomer, validateSaleCredit, type Customer } from '../lib/partners';
+import { createCustomer, fetchReceivables, listCustomers, recordSaleWithCustomer, RECEIVABLE_STATUS_LABEL, validateSaleCredit, type Customer, type ReceivableSale } from '../lib/partners';
 import { fmtDate } from '../lib/dates';
 import { putLocal } from '../lib/serverWrite';
 import { canPerm } from '../lib/permissions';
@@ -38,11 +38,25 @@ export function SalesSection() {
   const [mode, setMode] = useState<{ kind: 'list' } | { kind: 'new' } | { kind: 'edit'; id: string }>({ kind: 'list' });
   const [cycleFilter, setCycleFilter] = useState('');
   const [showVoided, setShowVoided] = useState(false);
+  const [custFilter, setCustFilter] = useState('');
+  // khách mua, đã thu và còn nợ của từng lần bán (từ công nợ phải thu; cần mạng)
+  const [debts, setDebts] = useState<Map<string, ReceivableSale>>(new Map());
   const [voiding, setVoiding] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
 
   const canWrite = canPerm(active?.perms, 'sales', 'edit');
+  useEffect(() => {
+    if (!active?.id || !online) return;
+    let live = true;
+    fetchReceivables(active.id, false).then((rows) => { if (live) setDebts(new Map(rows.map((r) => [r.sale_id, r]))); }).catch(() => undefined);
+    return () => { live = false; };
+  }, [active?.id, online, sales.length]);
+  const customersInSales = useMemo(() => {
+    const m = new Map<string, string>();
+    debts.forEach((d) => m.set(d.partner_id, d.partner_name));
+    return [...m.entries()].sort((a, b) => a[1].localeCompare(b[1], 'vi'));
+  }, [debts]);
   const ownCycles = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id), [cycles, active]);
   const cycleLabel = (id: string | null) => {
     const c = cycles.find((x) => x.id === id);
@@ -54,11 +68,12 @@ export function SalesSection() {
     () => sales
       .filter((s) => s.organization_id === active?.id)
       .filter((s) => !cycleFilter || s.cycle_id === cycleFilter)
+      .filter((s) => !custFilter || debts.get(s.id)?.partner_id === custFilter)
       .filter((s) => (showVoided ? true : !s.voided_at))
       .sort((a, b) => b.sold_date.localeCompare(a.sold_date) || (b.received_at ?? '').localeCompare(a.received_at ?? '')),
-    [sales, active, cycleFilter, showVoided],
+    [sales, active, cycleFilter, showVoided, custFilter, debts],
   );
-  const { visible: listShown, more: listMore } = useShowMore(list, `${cycleFilter}|${showVoided}`);
+  const { visible: listShown, more: listMore } = useShowMore(list, `${cycleFilter}|${showVoided}|${custFilter}`);
   const valid = list.filter((s) => !s.voided_at);
   // tổng tính ở máy chủ trên TOÀN BỘ lần bán (D142); chưa có thì tạm dùng số trên máy
   const srv = useFinanceTotals<SaleTotals>('sales', active?.id, cycleFilter, `${sales.length}|${sales.filter((s) => s.voided_at).length}`);
@@ -102,7 +117,7 @@ export function SalesSection() {
       )}
       {canWrite && ownCycles.length === 0 && <p className="msg warn">Chưa có vụ nào. Hãy tạo vụ ở màn hình Sản xuất trước.</p>}
 
-      <Collapsible inline title="Bộ lọc" summary={`${cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả vụ'}${showVoided ? ' · cả khoản đã hủy' : ''}`}>
+      <Collapsible inline title="Bộ lọc" summary={`${cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả vụ'}${custFilter ? ` · khách ${customersInSales.find((c) => c[0] === custFilter)?.[1] ?? ''}` : ''}${showVoided ? ' · cả khoản đã hủy' : ''}`}>
       <div className="filters">
           <label>
             <CycleWord cap />
@@ -111,6 +126,15 @@ export function SalesSection() {
               {ownCycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
             </select>
           </label>
+          {customersInSales.length > 0 && (
+            <label>
+              Khách mua
+              <select value={custFilter} onChange={(e) => setCustFilter(e.target.value)}>
+                <option value="">Tất cả khách</option>
+                {customersInSales.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+              </select>
+            </label>
+          )}
           <label className="check">
             <input type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
             Hiện cả khoản đã hủy
@@ -137,7 +161,20 @@ export function SalesSection() {
           </div>
           <p>{formatQty(s.quantity)} kg{s.quantity > 0 ? ` · ${formatMoney(Math.round(s.amount / s.quantity))}/kg` : ''}</p>
           <p className="muted">{cycleLabel(s.cycle_id)}</p>
-          {s.buyer_note && <p>{s.buyer_note}</p>}
+          {(() => {
+            const d = debts.get(s.id);
+            if (!d) return s.buyer_note ? <p>{s.buyer_note}</p> : null;
+            return (
+              <>
+                <p>Khách: <strong>{d.partner_name}</strong>{d.invoice_no ? ` · phiếu ${d.invoice_no}` : ''}</p>
+                <p className="muted">
+                  Đã thu {formatMoney(d.collected)} · {d.remaining > 0 ? `còn nợ ${formatMoney(d.remaining)}${d.due_date ? ` (hạn ${fmtDate(d.due_date)})` : ''}` : 'đã thu đủ'}{' '}
+                  <span className={d.status === 'overdue' ? 'pill err' : d.status === 'paid' ? 'pill ok' : 'pill warn'}>{RECEIVABLE_STATUS_LABEL[d.status]}</span>
+                </p>
+                {s.buyer_note && s.buyer_note !== d.partner_name && <p className="muted">{s.buyer_note}</p>}
+              </>
+            );
+          })()}
           <div className="badges">
             {s.version > 1 && !s.voided_at && <span className="pill">Đã chỉnh sửa</span>}
             {s.voided_at && <span className="pill err">Đã hủy</span>}

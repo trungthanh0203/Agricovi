@@ -302,3 +302,9 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 ## D145 — Nhật ký của vụ tải khi mở vụ
 - Đồng bộ nền chỉ giữ 200 nhật ký mới nhất của cả cơ sở, nên vụ đã kết thúc hoặc đang chạy lâu hiện "chưa có ghi việc" dù CSDL có. `refreshCycle` (chạy khi mở chi tiết vụ) nay tải thêm tối đa 1.000 nhật ký của vụ đó.
 - Script mẫu `seed_sample_htx_bosung_ghi_viec.sql` bù nhật ký còn thiếu cho vụ mẫu (không nhân đôi).
+
+## D146 — Xem khách đã mua gì và nợ ra sao
+- **Câu hỏi của chủ sản phẩm (ghi lại để làm tiếp):** "Khách đã mua những đơn nào và đang nợ thế nào, tìm ở đâu? Trong Doanh thu bán hàng, mục khách mua không có thông tin."
+- **Hệ thống có sẵn:** Công nợ → Phải thu (nhóm theo khách, từng đơn, thu tiền, các lần thu) — nhưng mặc định chỉ khách còn nợ, và danh sách Doanh thu không hiện khách (dữ liệu mẫu cũng để trống "người mua").
+- **Đã bổ sung:** (1) Doanh thu: mỗi lần bán hiện khách, phiếu, đã thu/còn nợ, hạn, tình trạng; thêm bộ lọc "Khách mua". (2) Khai báo → Khách hàng: nút 🧾 mở lịch sử một khách (tổng đã mua/đã thu/còn nợ, từng đơn, bấm xem các lần thu tiền; `components/CustomerOrders.tsx`). (3) Dữ liệu mẫu ghi tên khách vào "người mua".
+- **Chưa làm (nếu cần):** xuất CSV/in bảng đối chiếu công nợ theo khách; lọc theo khoảng ngày trong lịch sử khách; nhắc khách nợ quá hạn; xem lịch sử khách ngay từ màn Công nợ.

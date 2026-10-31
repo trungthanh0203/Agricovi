@@ -1,3 +1,4 @@
+import { CustomerOrders } from './CustomerOrders';
 import { useShowMore } from './ShowMore';
 import { customerKindText, useConfig } from '../lib/config';
 import { RowMenu } from './RowMenu';
@@ -23,6 +24,7 @@ export function CustomersSection() {
   const [rows, setRows] = useState<Customer[] | null>(null);
   const [all, setAll] = useState<Existing[]>([]);
   const [showOff, setShowOff] = useState(false);
+  const [history, setHistory] = useState<{ id: string; name: string } | null>(null);   // xem đơn hàng và công nợ của một khách (D146)
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [dupe, setDupe] = useState<{ existing: Existing; input: CustomerInput } | null>(null);
@@ -92,6 +94,7 @@ export function CustomersSection() {
       <h2 className="sect">Khách hàng ({shown.length})</h2>
       {rows === null && !error && <p className="muted">{online ? 'Đang tải…' : 'Chưa tải được vì đang offline.'}</p>}
       {rows !== null && shown.length === 0 && <p className="muted">Chưa có khách hàng nào. Thêm nơi bạn hay bán nông sản để ghi lần bán và theo dõi công nợ.</p>}
+      {history && <CustomerOrders orgId={orgId} partnerId={history.id} name={history.name} onClose={() => setHistory(null)} />}
       {shown.length > 0 && (
         <table className="grid">
           <thead><tr><th>Tên</th><th>Điện thoại</th><th></th></tr></thead>
@@ -107,6 +110,7 @@ export function CustomersSection() {
                 </td>
                 <td>{p.phone ? <a href={`tel:${p.phone}`}>{p.phone}</a> : '—'}</td>
                 <td className="act">
+                  <button type="button" className="icon" aria-label={`Đơn hàng và công nợ của ${p.name}`} title="Đơn hàng và công nợ" onClick={() => setHistory({ id: p.id, name: p.name })}>🧾</button>
                   {canEdit && (
                     <RowMenu label={p.name} items={[
                       { label: 'Chỉnh sửa', icon: '✎', disabled: busy || !online, onClick: () => { setAdding(false); setEditing(p.id); } },

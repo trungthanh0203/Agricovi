@@ -319,7 +319,7 @@ begin
     select id, v_org, cycle_id, (d + time '06:30') at time zone v_tz, case when n % 3 = 0 then 'B' else 'A' end, qty, 'kg', round((5 + random() * 10)::numeric, 1), 'Dữ liệu mẫu'
       from smp_h;
   insert into sales_records (id, organization_id, cycle_id, sold_date, quantity, unit, amount, buyer_note, partner_id, invoice_no, due_date)
-    select h.id, v_org, h.cycle_id, h.d, h.qty, 'kg', h.amount, case when h.cust is null then 'Bán lẻ tại vườn' else null end, p.id,
+    select h.id, v_org, h.cycle_id, h.d, h.qty, 'kg', h.amount, case when h.cust is null then 'Bán lẻ tại vườn' else p.name end, p.id,
            case when h.cust is not null then 'BH-' || chr(64 + h.k) || h.c || '-' || h.n end,
            case when h.cust is not null then h.d + case when h.cust % 2 = 0 then 15 else 30 end end
       from smp_h h left join smp_partner p on p.kind = 'cus' and p.idx = h.cust;
