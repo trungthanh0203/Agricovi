@@ -35,3 +35,9 @@ Dán nội dung đã chép (mục D), bảng giây ở mục C, và ghi tên đi
 
 ## 4. Dọn dữ liệu thử
 Chạy lại script với `v_part` = `99` (vẫn cần `v_confirm` = `'TAO-DU-LIEU-THU'`): xóa toàn bộ cơ sở ZZ_THU_TAI và dữ liệu của nó. Trên điện thoại đã đo: xóa dữ liệu trang để bỏ bản lưu cũ.
+
+## 5. Đo các báo cáo ở máy chủ (Đợt 4)
+Chỉ đọc, không ghi/xóa gì. Làm sau khi đã nạp dữ liệu thử (mục 1):
+1. Supabase (dự án THỬ) → SQL Editor → dán toàn bộ `supabase/maintenance/measure_reports.sql`.
+2. Sửa email ở dòng `v_owner_email` thành email tài khoản chủ cơ sở ZZ_THU_TAI, bấm Run.
+3. Chụp/chép bảng kết quả (đã xếp từ chậm đến nhanh; mỗi báo cáo đo 2 lần) gửi lại. Tôi chỉ tối ưu những báo cáo trên 2 giây.
