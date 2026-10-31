@@ -1,3 +1,4 @@
+import { useShowMore } from './ShowMore';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
@@ -57,6 +58,7 @@ export function ExpenseSection() {
       .sort((a, b) => b.expense_date.localeCompare(a.expense_date) || (b.received_at ?? '').localeCompare(a.received_at ?? '')),
     [expenses, active, cycleFilter, showVoided],
   );
+  const { visible: listShown, more: listMore } = useShowMore(list, `${cycleFilter}|${showVoided}`);
   const valid = list.filter((e) => !e.voided_at);
   // Không cộng gộp các loại khác nhau: báo cáo phải phân biệt tiền thực chi, vật tư ghi tay và ước tính/phân bổ (v1.1 mục 4.5)
   const sumKind = (kinds: string[]) => valid.filter((e) => kinds.includes(e.kind)).reduce((s, e) => s + e.amount, 0);
@@ -124,7 +126,7 @@ export function ExpenseSection() {
       {msg && <p className="msg warn" role="status">{msg}</p>}
       {list.length === 0 && <p className="muted">Chưa có khoản chi nào.</p>}
 
-      {list.map((e) => (
+      {listShown.map((e) => (
         <div className={e.voided_at ? 'card slim voided' : 'card slim'} key={e.id}>
           <div className="row">
             <strong>{formatMoney(e.amount)}</strong>
@@ -160,6 +162,7 @@ export function ExpenseSection() {
           )}
         </div>
       ))}
+      {listMore}
     </>
   );
 }

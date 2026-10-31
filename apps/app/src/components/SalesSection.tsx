@@ -1,3 +1,4 @@
+import { useShowMore } from './ShowMore';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
@@ -56,6 +57,7 @@ export function SalesSection() {
       .sort((a, b) => b.sold_date.localeCompare(a.sold_date) || (b.received_at ?? '').localeCompare(a.received_at ?? '')),
     [sales, active, cycleFilter, showVoided],
   );
+  const { visible: listShown, more: listMore } = useShowMore(list, `${cycleFilter}|${showVoided}`);
   const valid = list.filter((s) => !s.voided_at);
   const qty = valid.reduce((s, r) => s + r.quantity, 0);
   const revenue = valid.reduce((s, r) => s + r.amount, 0);
@@ -122,7 +124,7 @@ export function SalesSection() {
       {msg && <p className="msg warn" role="status">{msg}</p>}
       {list.length === 0 && <p className="muted">Chưa ghi lần bán nào.</p>}
 
-      {list.map((s) => (
+      {listShown.map((s) => (
         <div className={s.voided_at ? 'card slim voided' : 'card slim'} key={s.id}>
           <div className="row">
             <strong>{formatMoney(s.amount)}</strong>
@@ -158,6 +160,7 @@ export function SalesSection() {
           )}
         </div>
       ))}
+      {listMore}
     </>
   );
 }

@@ -278,3 +278,7 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - Đồng bộ nền tải giai đoạn của vụ chưa `ended`/`cancelled` (theo nhóm 40 vụ); vụ đã xong giữ bản đã tải, mở chi tiết/sổ nhật ký thì tải (`refreshCycle`). Lỗi tải vụ thì không xóa giai đoạn trên máy.
 - Số đo sau 1A: người dùng báo nhanh hơn hẳn. `get_pay_overview` (114 KB, bảng lương) không thuộc đồng bộ; xử lý ở Đợt 2/4 (phân trang/tổng hợp).
 - 1B (dấu thay đổi) vẫn hoãn: chỉ làm nếu số đo cho thấy còn cần.
+
+## D140 — Đợt 2 (phần 1): danh sách dài vẽ từng 50 dòng
+- `components/ShowMore.tsx` (`useShowMore`): Chi phí, Doanh thu, Khách hàng, Nhà cung ứng chỉ vẽ 50 dòng đầu, nút "Xem thêm"; đổi bộ lọc thì về 50 dòng đầu. Nhật ký việc đã có phân trang sẵn.
+- Chưa làm (phần 2): ô tìm/lọc và phân trang do máy chủ làm cho Nhân sự, Vụ cũ, tải bản ghi cũ hơn của Chi phí/Doanh thu, bảng lương (`get_pay_overview`). Cần RPC mới + test; làm khi số đo cho thấy cần.

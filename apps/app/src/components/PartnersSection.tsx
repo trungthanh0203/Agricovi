@@ -1,3 +1,4 @@
+import { useShowMore } from './ShowMore';
 import { useCallback, useEffect, useState } from 'react';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
@@ -26,6 +27,7 @@ export function PartnersSection() {
   }, [orgId]);
   useEffect(() => { void load(); }, [load]);
 
+  const { visible: shownPage, more: shownMore } = useShowMore((rows ?? []).filter((p) => showOff || p.is_active), String(showOff));
   if (!active || !orgId) return null;
   const canEdit = canPerm(active.perms, 'expenses', 'edit');
 
@@ -58,7 +60,7 @@ export function PartnersSection() {
         <table className="grid">
           <thead><tr><th>Tên</th><th>Điện thoại</th><th></th></tr></thead>
           <tbody>
-            {shown.map((p) => (
+            {shownPage.map((p) => (
               <tr key={p.id} className={p.is_active ? '' : 'off'}>
                 <td>
                   {p.name}
@@ -81,6 +83,7 @@ export function PartnersSection() {
           </tbody>
         </table>
       )}
+      {shownMore}
       <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả nhà cung ứng đã dừng</label>
       <p className="muted">Nhà cung ứng đã dừng vẫn giữ lịch sử mua nhưng không chọn được cho hóa đơn mới. Thông tin này riêng tư, không công khai trên website.</p>
 

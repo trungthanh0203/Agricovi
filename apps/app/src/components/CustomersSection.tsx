@@ -1,3 +1,4 @@
+import { useShowMore } from './ShowMore';
 import { customerKindText, useConfig } from '../lib/config';
 import { RowMenu } from './RowMenu';
 import { useCallback, useEffect, useState } from 'react';
@@ -40,6 +41,7 @@ export function CustomersSection() {
   }, [orgId]);
   useEffect(() => { void load(); }, [load]);
 
+  const { visible: shownPage, more: shownMore } = useShowMore((rows ?? []).filter((p) => showOff || p.is_active), String(showOff));
   if (!active || !orgId) return null;
   const canEdit = canPerm(active.perms, 'sales', 'edit');
 
@@ -94,7 +96,7 @@ export function CustomersSection() {
         <table className="grid">
           <thead><tr><th>Tên</th><th>Điện thoại</th><th></th></tr></thead>
           <tbody>
-            {shown.map((p) => (
+            {shownPage.map((p) => (
               <tr key={p.id} className={p.is_active ? '' : 'off'}>
                 <td>
                   {p.name}
@@ -124,6 +126,7 @@ Tên, điện thoại, địa chỉ, ghi chú sẽ bị xóa và KHÔNG khôi ph
           </tbody>
         </table>
       )}
+      {shownMore}
       <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả khách hàng đã dừng</label>
       <p className="muted">Khách đã dừng vẫn giữ lịch sử mua nhưng không chọn được cho lần bán mới. Thông tin khách là dữ liệu cá nhân: riêng tư, không công khai trên website.</p>
 
