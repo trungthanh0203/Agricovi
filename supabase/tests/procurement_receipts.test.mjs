@@ -82,3 +82,40 @@ test('hộ do HTX tạo (tài khoản Hộ nhập liệu) cũng chỉ xem sổ b
   assert.equal(mine.length, 1); assert.equal(Number(mine[0].total_amount), 1000000);
   assert.match(await expectError(asUser(c.db, worker, `select get_procurement_ledger($1,'household',true)`, [c.hh])), /FORBIDDEN/);
 });
+
+test('lập phiếu từ phiếu thu hoạch: cần hộ cho xem, mỗi lần thu hoạch chỉ một phiếu, báo cáo thu mua đúng số', async () => {
+  const c = await setup();
+  await c.db.query(`insert into harvest_records (id,organization_id,cycle_id,harvested_at,quantity,grade) values ($1,$2,$3,now() - interval '2 days',200,'A'),($4,$2,$3,now() - interval '1 day',100,'B')`, [id('d', 1), c.hh, id('3', 1), id('d', 2)]);
+  const hv = async () => (await asUser(c.db, c.boss, `select coop_household_harvests($1,$2) r`, [c.coop, c.hh])).rows[0].r;
+  // hộ vào HTX mặc định chia sẻ (đồng ý lúc chấp nhận) nên thấy 2 phiếu thu hoạch
+  assert.equal((await hv()).harvests.length, 2);
+  await asUser(c.db, c.farmer, `select set_coop_sharing($1,false)`, [c.hh]);
+  assert.equal((await hv()).shared, false);
+  assert.match(await expectError(asUser(c.db, c.boss, `select create_procurement_from_harvest($1,$2,$3,25000,null,null,null)`, [id('7', 1), c.coop, id('d', 1)])), /NOT_SHARED/);
+  await asUser(c.db, c.farmer, `select set_coop_sharing($1,true)`, [c.hh]);
+
+  assert.match(await expectError(asUser(c.db, c.farmer, `select create_procurement_from_harvest($1,$2,$3,25000,null,null,null)`, [id('7', 1), c.coop, id('d', 1)])), /FORBIDDEN/);
+  await asUser(c.db, c.boss, `select create_procurement_from_harvest($1,$2,$3,25000,null,null,null)`, [id('7', 1), c.coop, id('d', 1)]);
+  await asUser(c.db, c.boss, `select create_procurement_from_harvest($1,$2,$3,25000,null,null,null)`, [id('7', 1), c.coop, id('d', 1)]);   // lặp cùng mã: không nhân đôi
+  const rc = (await c.db.query(`select quantity, amount, harvest_id, cycle_id from procurement_receipts`)).rows;
+  assert.equal(rc.length, 1);
+  assert.deepEqual([Number(rc[0].quantity), Number(rc[0].amount), rc[0].harvest_id, rc[0].cycle_id], [200, 5000000, id('d', 1), id('3', 1)]);
+  assert.match(await expectError(asUser(c.db, c.boss, `select create_procurement_from_harvest($1,$2,$3,26000,null,null,null)`, [id('7', 2), c.coop, id('d', 1)])), /ALREADY_PURCHASED/);
+  assert.equal((await hv()).harvests.length, 1);   // còn lại phiếu thu hoạch chưa thu mua
+  await asUser(c.db, c.boss, `select create_procurement_from_harvest($1,$2,$3,20000,null,'PM-02',null)`, [id('7', 3), c.coop, id('d', 2)]);
+  await asUser(c.db, c.boss, `select pay_procurement($1,$2,2000000,current_date,'cash',null)`, [id('8', 1), id('7', 3)]);
+
+  // báo cáo: HTX theo hộ; hộ theo HTX; theo tháng; người ngoài bị chặn
+  const rep = async (who, org, grp = 'partner') => (await asUser(c.db, who, `select get_procurement_report($1, current_date - 30, current_date, $2) r`, [org, grp])).rows[0].r;
+  const k = await rep(c.boss, c.coop);
+  assert.equal(k.rows.length, 1);
+  assert.deepEqual([k.rows[0].label, Number(k.rows[0].receipts), Number(k.rows[0].qty), Number(k.rows[0].amount), Number(k.rows[0].paid), Number(k.rows[0].remaining)], ['Hộ A', 2, 300, 7000000, 2000000, 5000000]);
+  const h = await rep(c.farmer, c.hh);
+  assert.deepEqual([h.title, h.rows[0].label, Number(h.rows[0].remaining)], ['Bán cho hợp tác xã', 'HTX A', 5000000]);
+  assert.ok((await rep(c.boss, c.coop, 'month')).rows.length >= 1);
+  assert.match(await expectError(asUser(c.db, c.outsider, `select get_procurement_report($1, current_date - 30, current_date, 'partner')`, [c.coop])), /FORBIDDEN/);
+  // phiếu hủy thì không tính vào báo cáo và phiếu thu hoạch được thu mua lại
+  await asUser(c.db, c.boss, `select void_procurement_receipt($1,'nhập nhầm đơn giá')`, [id('7', 1)]);
+  assert.equal((await hv()).harvests.length, 1);   // phiếu thu hoạch d1 hiện lại (d2 đã thu mua)
+  assert.equal(Number((await rep(c.boss, c.coop)).rows[0].receipts), 1);
+});

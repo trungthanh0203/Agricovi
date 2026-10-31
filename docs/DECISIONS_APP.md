@@ -328,3 +328,9 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - Chỉ HTX (quyền `coop` sửa) lập phiếu, ghi trả tiền, hủy; **hộ (kể cả tài khoản "Hộ nhập liệu") chỉ xem** sổ của mình để đối chiếu. Không trả vượt tổng, ngày hợp lệ, lập/ghi lặp cùng mã không nhân đôi, hủy phải kèm lý do, phiếu đã có tiền thì hủy tiền trước; không xóa.
 - Giao diện: Công nợ → tab **"Thu mua từ hộ"** (HTX) / **"Bán cho HTX"** (hộ thuộc HTX). Gợi ý đơn giá từ danh mục bao tiêu (D148); chọn vụ của hộ nếu hộ đã cho HTX xem sản xuất (truy xuất).
 - Chưa làm: tự sinh phiếu từ phiếu thu hoạch; báo cáo/xuất CSV thu mua theo hộ và theo mùa; in phiếu; đưa vào báo cáo tài chính hộ/HTX (hiện nằm riêng trong Công nợ).
+
+## D150 — Hoàn thiện phiếu thu mua (migration 0154)
+- **Lập phiếu từ phiếu thu hoạch của hộ** (`coop_household_harvests`, `create_procurement_from_harvest`): HTX chọn một hay nhiều phiếu thu hoạch (hộ phải cho xem sản xuất hoặc do HTX làm chủ), nhập đơn giá; khối lượng, ngày, vụ, sản phẩm, mã lô lấy từ phiếu thu hoạch. Mỗi phiếu thu hoạch chỉ thu mua một lần (hủy phiếu thì lập lại được). Vẫn có "Nhập tay".
+- **Báo cáo thu mua / bán cho HTX** (`get_procurement_report`, loại mới trong Báo cáo theo nhu cầu, lưu được): HTX theo hộ/sản phẩm/tháng; hộ theo HTX; có số phiếu, khối lượng, thành tiền, đã trả/nhận, còn lại; xuất CSV có sẵn của Báo cáo.
+- **Xuất CSV sổ phiếu** và **In phiếu** (trang in có chỗ ký) ở màn Công nợ → Thu mua từ hộ / Bán cho HTX.
+- Chưa làm: gộp thu mua vào Tổng kết vụ/KPI Trang chủ (hiện thấy ở Công nợ và Báo cáo). **(d) chuyển vụ theo HTX → vụ riêng: chủ sản phẩm quyết định bỏ, không làm.**

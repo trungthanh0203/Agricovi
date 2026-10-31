@@ -8,7 +8,7 @@ import type { MemberRole } from '@agriconnect/shared';
  * Báo cáo đã lưu chỉ lưu loại + bộ lọc, mở lại luôn chạy mới.
  */
 
-export type ReportType = 'expenses' | 'sales' | 'harvest' | 'stock' | 'labor' | 'cycles' | 'purchases' | 'customers';
+export type ReportType = 'expenses' | 'sales' | 'harvest' | 'stock' | 'labor' | 'cycles' | 'purchases' | 'customers' | 'procurement';
 
 export interface ReportTypeInfo {
   id: ReportType;
@@ -40,6 +40,9 @@ export const REPORT_TYPES: ReportTypeInfo[] = [
   { id: 'labor', label: 'Giờ công và tiền công', hint: 'Giờ công đã xác nhận và tiền công đã tính',
     groups: [{ id: 'worker', label: 'Theo người' }, { id: 'team', label: 'Theo phòng / tổ' }, { id: 'month', label: 'Theo tháng' }, { id: 'cycle', label: 'Theo vụ' }],
     allowed: (_p, r) => hasRole(r, 'manager') },
+  { id: 'procurement', label: 'Thu mua / bán cho HTX', hint: 'HTX: thu mua từ hộ (số phiếu, khối lượng, thành tiền, đã trả, còn phải trả). Hộ thuộc HTX: bán cho HTX (đã nhận, còn phải thu)',
+    groups: [{ id: 'partner', label: 'Theo hộ / HTX' }, { id: 'crop', label: 'Theo sản phẩm' }, { id: 'month', label: 'Theo tháng' }],
+    allowed: (p) => canPerm(p, 'coop') || canPerm(p, 'sales') },
   { id: 'cycles', label: 'Tổng hợp theo vụ', hint: 'Mỗi vụ một dòng: chi phí, thu hoạch, doanh thu, giá thành',
     groups: [], allowed: (p) => canPerm(p, 'summary') },
 ];
@@ -62,7 +65,11 @@ function needOnline(what: string) {
 
 export async function runReport(orgId: string, type: ReportType, params: ReportParams): Promise<ReportResult> {
   needOnline('xem báo cáo');
-  const { data, error } = await client().rpc('run_report', { p_org: orgId, p_type: type, p_params: params });
+  const { data, error } = type === 'procurement'
+    ? await client().rpc('get_procurement_report', {
+      p_org: orgId, p_from: params.from ?? new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10), p_to: params.to ?? new Date().toISOString().slice(0, 10), p_group: params.group || 'partner',
+    })
+    : await client().rpc('run_report', { p_org: orgId, p_type: type, p_params: params });
   if (error) throw new Error(error.message);
   return data as ReportResult;
 }

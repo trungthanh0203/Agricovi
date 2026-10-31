@@ -48,6 +48,14 @@ export const createProcurementReceipt = (r: NewReceipt) => rpc<unknown>('create_
   p_price: r.unitPrice, p_due: r.dueDate, p_invoice: r.invoiceNo || null, p_note: r.note || null,
 });
 
+export interface UnpurchasedHarvest { id: string; cycle_id: string; cycle_name: string; harvested_at: string; grade: string | null; quantity: number; lot_code: string | null; crop_type_id: string; crop_name: string }
+export async function fetchUnpurchasedHarvests(coopId: string, householdId: string): Promise<{ shared: boolean; harvests: UnpurchasedHarvest[] }> {
+  const d = await rpc<{ shared: boolean; harvests: UnpurchasedHarvest[] }>('coop_household_harvests', { p_coop: coopId, p_household: householdId });
+  return { shared: d.shared, harvests: d.harvests.map((h) => ({ ...h, quantity: Number(h.quantity) })) };
+}
+export const createReceiptFromHarvest = (id: string, coopId: string, harvestId: string, unitPrice: number, dueDate: string | null, invoiceNo: string, note: string) =>
+  rpc<unknown>('create_procurement_from_harvest', { p_id: id, p_coop: coopId, p_harvest: harvestId, p_price: unitPrice, p_due: dueDate, p_invoice: invoiceNo || null, p_note: note || null });
+
 export const payProcurement = (receiptId: string, i: PayInput, id: string = i.opId ?? crypto.randomUUID()) =>
   rpc<unknown>('pay_procurement', { p_id: id, p_receipt: receiptId, p_amount: i.amount, p_paid_on: i.paidOn, p_method: i.method, p_note: i.note || null });
 export const voidProcurementPayment = (paymentId: string, reason: string) => rpc<unknown>('void_procurement_payment', { p_payment: paymentId, p_reason: reason });
