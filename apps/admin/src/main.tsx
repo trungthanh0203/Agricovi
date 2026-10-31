@@ -51,7 +51,8 @@ function Login() {
 }
 
 function Admin({ session }: { session: Session }) {
-  const [page, setPage] = useState('overview');
+  const [page, setPageState] = useState(() => { try { const p = sessionStorage.getItem('admin.page'); return PAGES.some((x) => x.id === p) ? p! : 'overview'; } catch { return 'overview'; } });
+  const setPage = (p: string) => { setPageState(p); try { sessionStorage.setItem('admin.page', p); } catch { /* bỏ qua */ } };
   const [orgId, setOrgId] = useState<string | null>(null);
   // "reviews" (hồ sơ chờ duyệt) giờ ở quản trị website
   const go = (p: string) => { if (p === 'reviews' && WEBADMIN_URL) { window.open(WEBADMIN_URL, '_blank', 'noopener'); return; } setPage(p); setOrgId(null); };
@@ -90,17 +91,20 @@ function Admin({ session }: { session: Session }) {
 function Root() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const userId = session?.user.id;
 
   useEffect(() => {
     if (!supabase) return;
-    void supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    // Supabase phát lại SIGNED_IN/TOKEN_REFRESHED mỗi khi quay lại tab: giữ nguyên phiên cũ nếu vẫn cùng người dùng, kẻo cả trang bị dựng lại và về Tổng quan.
+    const keep = (s: Session | null) => setSession((prev) => (prev && s && prev.user.id === s.user.id ? prev : s));
+    void supabase.auth.getSession().then(({ data }) => keep(data.session));
+    const { data } = supabase.auth.onAuthStateChange((_e, s) => keep(s));
     return () => data.subscription.unsubscribe();
   }, []);
   useEffect(() => {
     setIsAdmin(null);
-    if (session) void rpc<boolean>('is_platform_admin').then(setIsAdmin).catch(() => setIsAdmin(false));
-  }, [session]);
+    if (userId) void rpc<boolean>('is_platform_admin').then(setIsAdmin).catch(() => setIsAdmin(false));
+  }, [userId]);
 
   if (!supabase) return <main className="login"><h1>Chưa cấu hình</h1><p className="muted">Thiếu biến môi trường VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY khi build (xem docs/DEPLOY_CLOUDFLARE.md).</p></main>;
   if (session === undefined) return <p className="muted" style={{ padding: 24 }}>Đang tải…</p>;
