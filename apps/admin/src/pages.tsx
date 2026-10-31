@@ -137,7 +137,9 @@ export function OrgDetailPage({ id, onBack }: { id: string; onBack: () => void }
   }
   if (error) return <><button onClick={onBack}>‹ Quay lại</button><Err e={error} /></>;
   if (!d) return <p className="muted">Đang tải…</p>;
-  const typePlans = (plans ?? []).filter((p) => p.org_type === d.org.type && p.is_active);
+  // mọi gói của loại cơ sở này trong "Gói và giá" (gói đã ngừng xếp cuối, ghi rõ) để không sót gói nào
+  const typePlans = (plans ?? []).filter((p) => p.org_type === d.org.type).sort((a, b) => Number(b.is_active) - Number(a.is_active) || a.price_per_quarter - b.price_per_quarter);
+  const planLabel = (p: PlanRow) => `${p.name} · ${p.max_cycles} vụ · ${vnd(p.price_per_quarter)}/quý${p.is_active ? '' : ' (đã ngừng)'}`;
 
   // Thành tiền = số quý × giá/quý của gói được chọn (để trống = gói hiện tại); tổng thu = thành tiền − chiết khấu. CSDL chỉ lưu tổng thu, chiết khấu ghi vào ghi chú.
   const curSub = [...d.subscriptions].sort((a, b) => b.period_end.localeCompare(a.period_end))[0];
@@ -168,7 +170,7 @@ export function OrgDetailPage({ id, onBack }: { id: string; onBack: () => void }
         <section className="card">
           <h2>Ghi nhận thanh toán / gia hạn</h2>
           <form className="form" onSubmit={pay}>
-            <label>Gói (để trống = giữ gói hiện tại)<select value={planId} onChange={(e) => setPlanId(e.target.value)}><option value="">— Giữ gói hiện tại —</option>{typePlans.map((p) => <option key={p.id} value={p.id}>{p.name} ({vnd(p.price_per_quarter)}/quý)</option>)}</select></label>
+            <label>Gói (để trống = giữ gói hiện tại)<select value={planId} onChange={(e) => setPlanId(e.target.value)}><option value="">— Giữ gói hiện tại —</option>{typePlans.map((p) => <option key={p.id} value={p.id}>{planLabel(p)}</option>)}</select></label>
             <label>Gia hạn (quý)<select value={quarters} onChange={(e) => setQuarters(e.target.value)}>{[1, 2, 3, 4, 6, 8].map((q) => <option key={q} value={q}>{q} quý</option>)}</select></label>
             <label>Thành tiền (đồng)<input value={vnd(gross)} readOnly /></label>
             <label>Chiết khấu (đồng)<input value={discount} onChange={(e) => setDiscount(e.target.value)} inputMode="numeric" placeholder="0" /></label>
@@ -182,7 +184,7 @@ export function OrgDetailPage({ id, onBack }: { id: string; onBack: () => void }
         <section className="card">
           <h2>Đổi gói / đặt hạn dùng</h2>
           <form className="form" onSubmit={(e) => { e.preventDefault(); if (!setPlan || !until) return setErr('Hãy chọn gói và hạn.'); void run(() => rpc('admin_set_org_plan', { p_org: id, p_plan: setPlan, p_period_end: new Date(`${until}T23:59:59`).toISOString(), p_reason: reason }), 'Đã cập nhật gói.'); }}>
-            <label>Gói<select value={setPlan} onChange={(e) => setSetPlan(e.target.value)}><option value="">— Chọn gói —</option>{typePlans.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+            <label>Gói<select value={setPlan} onChange={(e) => setSetPlan(e.target.value)}><option value="">— Chọn gói —</option>{typePlans.map((p) => <option key={p.id} value={p.id}>{planLabel(p)}</option>)}</select></label>
             <label>Hạn dùng đến ngày<input type="date" value={until} onChange={(e) => setUntil(e.target.value)} /></label>
             <label>Lý do (bắt buộc)<input value={reason} onChange={(e) => setReason(e.target.value)} /></label>
             <button disabled={busy}>Cập nhật gói</button>
