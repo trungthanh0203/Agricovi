@@ -40,6 +40,17 @@ export interface PhaseRow { id: string; template_id: string; seq: number; code: 
  * Tải lại sản phẩm và loại việc (kể cả đã dừng, để lịch sử vẫn hiện đúng tên) cùng bản chỉnh của các cơ sở về máy.
  * Bản chỉnh lỗi/chưa có (CSDL chưa cập nhật) thì coi như không có, không làm hỏng phần còn lại.
  */
+const CATALOG_AT_KEY = 'agri.catalogAt';
+/** Đồng bộ nền chỉ tải lại danh mục (sản phẩm, loại việc, bản chỉnh) mỗi 12 giờ; gọi trực tiếp (sau khi sửa danh mục) luôn tải mới */
+export async function refreshCatalogIfStale(maxAgeMs = 12 * 3600_000): Promise<void> {
+  try {
+    const at = Number(localStorage.getItem(CATALOG_AT_KEY) ?? 0);
+    if (at && Date.now() - at < maxAgeMs && (await db.cropTypes.count()) > 0) return;
+  } catch { /* không đọc được thì cứ tải */ }
+  await refreshCatalogCache();
+  try { localStorage.setItem(CATALOG_AT_KEY, String(Date.now())); } catch { /* bỏ qua */ }
+}
+
 export async function refreshCatalogCache(): Promise<void> {
   const cropsQ = async () => {
     const r = await client().from('crop_types').select('id, code, name, description, kind, kind_item, image, organization_id, is_active');

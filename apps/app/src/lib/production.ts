@@ -2,7 +2,7 @@ import type { CycleStatus } from '@agriconnect/shared';
 import { db, type AreaKind, type AreaRow, type CycleRow, type LogRow, type NoteRow, type StageRow } from './db';
 import { syncFinanceDown } from './finance';
 import { beginSyncMeasure } from './perf';
-import { refreshCatalogCache } from './templates';
+import { refreshCatalogIfStale } from './templates';
 import { syncHarvestsDown } from './harvest';
 import { syncCountEventsDown } from './counts';
 import { syncMilestonesDown } from './milestones';
@@ -120,7 +120,7 @@ async function syncDownRaw(): Promise<void> {
   // Các phần còn lại độc lập nhau nên tải song song (trước đây tải tuần tự, chậm hơn nhiều khi mạng yếu).
   // Vật tư/kho, thu hoạch, chi phí/doanh thu: lỗi ở đây không làm hỏng đồng bộ sản xuất.
   const extras = Promise.all([
-    refreshCatalogCache(), // sản phẩm, loại việc và bản chỉnh của cơ sở
+    refreshCatalogIfStale(), // sản phẩm, loại việc và bản chỉnh của cơ sở (tải lại tối đa 12 giờ một lần)
     syncInventoryDown().catch((e) => console.warn('Không tải được vật tư/kho', e)),
     syncHarvestsDown().catch((e) => console.warn('Không tải được thu hoạch', e)),
     syncFinanceDown().catch((e) => console.warn('Không tải được chi phí/doanh thu', e)),

@@ -268,3 +268,8 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - A43: Vì cùng tên miền nên app và admin dùng chung phiên đăng nhập; quyền thật vẫn do CSDL kiểm ở mọi thao tác quản trị. Nên bật Cloudflare Access cho đường dẫn `/quan-tri/*` làm lớp bảo vệ thứ hai. Đã bỏ phương án dùng email của tài khoản HTX đang có làm quản trị: dùng một email riêng cho tài khoản vừa là HTX vừa là quản trị.
 
 - D130 (31/10/2026): **Thông tin liên hệ do quản trị nền tảng sửa** (tên công ty, địa chỉ, điện thoại, Zalo, website, email, Facebook, YouTube) lưu ở `platform_settings.contact_info`, đã có giá trị mẫu để thay. Đọc công khai qua hàm `public_contact_info()` (migration 0140) nên hiện được cả ở trang đăng nhập/đăng ký và màn chờ duyệt, kể cả khi app đã cài (hướng dẫn cài bị ẩn). Trong app, mục menu "Chia sẻ hệ thống" đổi thành **Hỗ trợ & Chia sẻ**: liên hệ ở trên, nút chia sẻ ở dưới (lời giới thiệu kèm dòng liên hệ).
+
+## D138 — Đợt 1 hiệu năng: kiểm quyền một lần, danh mục tải thưa (migration 0147)
+- **1A**: `readable_cycle_ids()` / `readable_cycle_ids_perm()` tính tập vụ được xem MỘT LẦN mỗi câu truy vấn; chính sách đọc của giai đoạn, nhật ký, thu hoạch, ghi chú, sự cố, mốc, cách ly, cân, thức ăn, đếm, việc dùng `cycle_id in (select …)`. Quyền không đổi (test đối chiếu `rls_readable_cycles`, `farm_scope`).
+- **1C (một phần)**: đồng bộ nền chỉ tải lại danh mục (sản phẩm, loại việc, bản chỉnh) mỗi 12 giờ (`refreshCatalogIfStale`).
+- **Hoãn**: 1B (dấu thay đổi để bỏ qua đồng bộ) và giai đoạn chỉ cho vụ chưa kết thúc — cần đo lại sau 1A rồi quyết, vì sửa sai có thể làm máy thiếu dữ liệu.
