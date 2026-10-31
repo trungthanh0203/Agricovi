@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '../lib/auth';
-import { SUPPORT_CONTACT } from '../lib/brand';
+import { ContactCard } from '../components/ContactCard';
 import type { OwnerSignup } from '../lib/phoneSignup';
 
 /**
@@ -19,7 +19,7 @@ export function OwnerPendingScreen({ signup, onCheck }: { signup: OwnerSignup; o
       <main className="auth">
         <h1>Đăng ký chưa được duyệt</h1>
         <p className="msg error" role="alert">{signup.note ?? 'Agricovi chưa thể xác nhận đăng ký này.'}</p>
-        <p className="muted">{SUPPORT_CONTACT}</p>
+        <ContactCard />
         <button className="link" onClick={() => void signOut()}>Đăng xuất</button>
       </main>
     );
@@ -29,7 +29,7 @@ export function OwnerPendingScreen({ signup, onCheck }: { signup: OwnerSignup; o
       <h1>Đã nhận đăng ký</h1>
       <p className="msg ok" role="status">Cơ sở <strong>{signup.org_name}</strong> đang chờ duyệt.</p>
       <p>Chúng tôi sẽ nhắn hoặc gọi <strong>Zalo số {signup.phone}</strong> để xác nhận. Duyệt xong, màn hình này tự chuyển vào app; bạn không cần làm gì thêm.</p>
-      <p className="muted">{SUPPORT_CONTACT}</p>
+      <ContactCard />
       <button className="secondary" onClick={onCheck}>Kiểm tra lại</button>
       <button className="link" onClick={() => void signOut()}>Đăng xuất</button>
     </main>

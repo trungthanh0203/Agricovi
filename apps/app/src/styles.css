@@ -703,3 +703,15 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 /* Dòng "Vật tư đã dùng" trong biểu mẫu Ghi việc: ô chọn vật tư chiếm phần còn lại, ô số lượng rộng cố định, nút Xóa không bị đẩy ra ngoài */
 .inline-form .row.member > select { flex: 1 1 0; width: auto; min-width: 0; }
 .inline-form .row.member > input:not([type='radio']):not([type='checkbox']) { flex: 0 0 6.5rem; width: 6.5rem; }
+
+/* Khối thông tin liên hệ (components/ContactCard.tsx) */
+.auth-contact { max-width: 460px; margin: 14px auto 0; padding: 0 16px; }
+.contact-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 14px 16px; margin: 12px 0; }
+.contact-card h2 { font-size: 1.05rem; margin: 0 0 6px; color: var(--green); }
+.contact-company { font-weight: 700; margin: 0 0 6px; }
+.contact-card dl { margin: 0; display: grid; gap: 6px; }
+.contact-row { display: flex; gap: 10px; align-items: baseline; }
+.contact-row dt { flex: 0 0 8.2em; color: var(--muted); font-size: .92rem; }
+.contact-row dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.contact-row a { color: var(--green); font-weight: 600; }
+@media (max-width: 420px) { .contact-row { flex-direction: column; gap: 0; } .contact-row dt { flex: none; } }

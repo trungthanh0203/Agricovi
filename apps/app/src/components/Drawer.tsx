@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
-import { shareSystem } from '../lib/shareApp';
 import { ADMIN_URL } from '../lib/platformAdmin';
 import { TAB_LABEL, type TabId } from '../lib/tabs';
 import type { MyOrg } from '../lib/orgs';
 
 const ORG_TYPE_LABEL: Record<'household' | 'cooperative', string> = { household: 'Hộ nuôi trồng', cooperative: 'Hợp tác xã' };
-const TAB_ICON: Partial<Record<TabId, string>> = { declare: '🧰', config: '⚙️', guide: '📖', profile: '👤', reports: '📊' };
+const TAB_ICON: Partial<Record<TabId, string>> = { declare: '🧰', config: '⚙️', guide: '📖', support: '🤝', profile: '👤', reports: '📊' };
 const TAB_HINT: Partial<Record<TabId, string>> = {
   declare: 'Phân khu, sản phẩm, vật tư, nhân sự, tổ',
   config: 'Nhóm loại sản phẩm và các cấu hình mặc định',
-  guide: 'Giới thiệu, hướng dẫn hộ, HTX, công ty',
+  guide: 'Giới thiệu, hướng dẫn trồng cây, vật nuôi, HTX',
+  support: 'Liên hệ hỗ trợ và gửi giới thiệu app cho người khác',
   profile: 'Thông tin cá nhân, mã QR, giấy phép',
 };
 
@@ -33,9 +33,8 @@ interface Props {
 
 /** Menu bên trái (mở bằng nút ☰ ở thanh trên): thông tin người dùng, chuyển cơ sở, các chức năng ít dùng hằng ngày, đăng xuất. */
 export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, tabs, current, onGo, isPlatformAdmin, waiting, onSignOut }: Props) {
-  const [shareNote, setShareNote] = useState('');
   useEffect(() => {
-    if (!open) { setShareNote(''); return; }
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -78,12 +77,6 @@ export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, 
                 <span className="menu-go" aria-hidden>›</span>
               </button>
             ))}
-            <button className="drawer-item" onClick={() => void shareSystem().then((m) => { if (m) setShareNote(m); else onClose(); })}>
-              <span className="drawer-ico" aria-hidden>📤</span>
-              <span className="grow"><strong>Chia sẻ hệ thống</strong><small className="muted">Gửi lời giới thiệu app cho người khác</small></span>
-              <span className="menu-go" aria-hidden>›</span>
-            </button>
-            {shareNote && <p className="muted" role="status" style={{ padding: '0 16px' }}>{shareNote}</p>}
             {isPlatformAdmin && (
               <a className="drawer-item" href={ADMIN_URL}>
                 <span className="drawer-ico" aria-hidden>🔒</span>

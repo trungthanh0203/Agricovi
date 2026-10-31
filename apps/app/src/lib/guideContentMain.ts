@@ -56,7 +56,7 @@ export const MAIN_GUIDES: Guide[] = [
           "Khai báo (làm một lần): Cơ sở và vật tư · Nhân sự · Quy trình · Giấy phép và đối tác.",
           "Sản xuất (hằng ngày): Vụ nuôi trồng, Nhật ký việc, Quản lý kho, Chi phí, Thu hoạch, Chấm công.",
           "Báo cáo (xem kết quả): Báo cáo tuần, Công nợ, Doanh thu, Bảng lương, Tổng kết vụ, Sổ nhật ký, Hồ sơ web.",
-          "Menu ☰ góc trên bên trái: đổi cơ sở, Cấu hình, Hướng dẫn sử dụng, Tài khoản, Chia sẻ hệ thống. Mục nào chưa có quyền hoặc cơ sở không dùng thì tự ẩn.",
+          "Menu ☰ góc trên bên trái: đổi cơ sở, Cấu hình, Hướng dẫn sử dụng, Tài khoản, Hỗ trợ & Chia sẻ. Mục nào chưa có quyền hoặc cơ sở không dùng thì tự ẩn.",
         ],
       },
       {

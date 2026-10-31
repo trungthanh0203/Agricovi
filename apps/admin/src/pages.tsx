@@ -288,6 +288,49 @@ const SETTINGS: { key: string; label: string; hint: string; kind: 'number' | 'te
   { key: 'login_email_domain', label: 'Tên miền email ẩn của nhân viên', hint: 'PHẢI là tên miền bạn sở hữu (đổi sau khi đã có nhân viên sẽ không đăng nhập được bằng số điện thoại cũ)', kind: 'text' },
   { key: 'ranking', label: 'Cấu hình xếp hạng hiển thị website (JSON)', hint: 'Ví dụ {"freshness_days":30,"profile_completeness_weight":1,"freshness_weight":1}', kind: 'json' },
 ];
+// ============================================================ Thông tin liên hệ (hiện cho người dùng ở trang đăng nhập và màn "Hỗ trợ & Chia sẻ" của app)
+const CONTACT_FIELDS: { key: string; label: string; hint: string; area?: boolean }[] = [
+  { key: 'company', label: 'Tên công ty / đơn vị', hint: 'Ví dụ: CÔNG TY TNHH AGRICOVI' },
+  { key: 'address', label: 'Địa chỉ', hint: 'Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành', area: true },
+  { key: 'phone', label: 'Điện thoại', hint: 'Số gọi hỗ trợ, ví dụ 0989.099.454' },
+  { key: 'zalo', label: 'Zalo', hint: 'Số Zalo (để trống nếu trùng với điện thoại)' },
+  { key: 'website', label: 'Website', hint: 'Bắt đầu bằng https://, ví dụ https://agricovi.com' },
+  { key: 'email', label: 'Email', hint: 'Ví dụ lienhe@agricovi.com' },
+  { key: 'facebook', label: 'Facebook', hint: 'Đường dẫn trang, bắt đầu bằng https://' },
+  { key: 'youtube', label: 'YouTube', hint: 'Đường dẫn kênh, bắt đầu bằng https://' },
+];
+function ContactSettings({ value, onSaved }: { value: Record<string, string> | undefined; onSaved: () => void }) {
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => { setDraft(Object.fromEntries(CONTACT_FIELDS.map((f) => [f.key, value?.[f.key] ?? '']))); }, [value]);
+  async function save() {
+    setErr(null); setMsg(null);
+    try {
+      const out = Object.fromEntries(CONTACT_FIELDS.map((f) => [f.key, (draft[f.key] ?? '').trim()]));
+      await rpc('admin_set_setting', { p_key: 'contact_info', p_value: out });
+      setMsg('Đã lưu thông tin liên hệ. Người dùng thấy nội dung mới khi mở lại app.');
+      onSaved();
+    } catch (e) { setErr(clean(e instanceof Error ? e.message : String(e))); }
+  }
+  return (
+    <section className="card">
+      <h2>Thông tin liên hệ</h2>
+      <p className="muted">Hiện ở trang đăng nhập/đăng ký (kể cả khi app đã cài) và màn "Hỗ trợ &amp; Chia sẻ" trong app. Mục để trống thì không hiện. Đang là dữ liệu MẪU, hãy thay bằng thông tin thật.</p>
+      {err && <p className="msg error" role="alert">{err}</p>}{msg && <p className="msg ok" role="status">{msg}</p>}
+      {CONTACT_FIELDS.map((f) => (
+        <label key={f.key}>{f.label}
+          {f.area
+            ? <textarea rows={2} maxLength={300} value={draft[f.key] ?? ''} onChange={(e) => setDraft({ ...draft, [f.key]: e.target.value })} />
+            : <input maxLength={300} value={draft[f.key] ?? ''} onChange={(e) => setDraft({ ...draft, [f.key]: e.target.value })} />}
+          <small className="muted">{f.hint}</small>
+        </label>
+      ))}
+      <div><button className="primary" onClick={() => void save()}>Lưu thông tin liên hệ</button></div>
+    </section>
+  );
+}
+
 export function SettingsPage() {
   const { data, error, reload } = useLoad(async () => {
     const { data: rows, error: e } = await supabase!.from('platform_settings').select('key, value');
@@ -316,6 +359,7 @@ export function SettingsPage() {
   return (
     <>
       <Err e={error ?? err} />{msg && <p className="msg ok" role="status">{msg}</p>}
+      <ContactSettings value={data?.contact_info as Record<string, string> | undefined} onSaved={reload} />
       {SETTINGS.map((s) => (
         <section className="card" key={s.key}>
           <h2>{s.label}</h2>

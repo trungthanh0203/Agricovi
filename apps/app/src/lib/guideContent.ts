@@ -488,9 +488,9 @@ const ALL_GUIDES: Guide[] = [...MAIN_GUIDES, ...BASE_GUIDES, ...MORE_GUIDES];
 export const GUIDES: Guide[] = GUIDE_ORDER.map((id) => ALL_GUIDES.find((g) => g.id === id)).filter((g): g is Guide => !!g);
 
 /** Lời giới thiệu gửi cho người khác (nút "Chia sẻ hệ thống") */
-export function buildShareText(url: string): string {
+export function buildShareText(url: string, contact?: string): string {
   return [
-    'AGRICONNECT — App quản lý nuôi trồng trên điện thoại',
+    'AGRICOVI — App quản lý nuôi trồng trên điện thoại',
     '',
     'Dành cho hộ nuôi trồng, hợp tác xã và công ty nông nghiệp:',
     '• Ghi nhật ký việc hằng ngày, kể cả khi mất mạng',
@@ -500,5 +500,6 @@ export function buildShareText(url: string): string {
     '• Mã QR truy xuất nguồn gốc, đưa sản phẩm lên website',
     '',
     `Mở và dùng thử tại: ${url}`,
+    ...(contact ? ['', `Liên hệ: ${contact}`] : []),
   ].join('\n');
 }

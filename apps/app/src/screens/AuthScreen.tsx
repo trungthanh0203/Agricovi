@@ -3,6 +3,7 @@ import { useAuth } from '../lib/auth';
 import { InstallGuide } from '../components/InstallGuide';
 import { PhoneSignupForm } from '../components/PhoneSignupForm';
 import { friendlyError } from '../lib/errors';
+import { ContactCard } from '../components/ContactCard';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'newpass';
 
@@ -148,6 +149,7 @@ export function AuthScreen() {
         )}
       </main>
       {tabbed && <InstallGuide />}
+      <div className="auth-contact"><ContactCard /></div>
       <p className="auth-foot">Dữ liệu của bạn riêng tư và được bảo vệ</p>
     </div>
   );

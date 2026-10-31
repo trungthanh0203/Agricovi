@@ -9,7 +9,7 @@ import { featureShown, SECTION_FEATURE } from './models';
  * mỗi tab có các mục con. Hiện/ẩn theo quyền chỉ là giao diện; máy chủ luôn kiểm tra lại.
  * Khai báo và Tổ chức tạm theo vai trò; sẽ chuyển sang quyền theo mục khi làm chức vụ (kế hoạch P3).
  */
-export type TabId = 'home' | 'production' | 'declare' | 'config' | 'reports' | 'guide' | 'profile';
+export type TabId = 'home' | 'production' | 'declare' | 'config' | 'reports' | 'guide' | 'support' | 'profile';
 
 export const TAB_LABEL: Record<TabId, string> = {
   home: 'Trang chủ',
@@ -18,6 +18,7 @@ export const TAB_LABEL: Record<TabId, string> = {
   config: 'Cấu hình',
   reports: 'Báo cáo',
   guide: 'Hướng dẫn sử dụng',
+  support: 'Hỗ trợ & Chia sẻ',
   profile: 'Tài khoản',
 };
 
@@ -129,12 +130,13 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
 
 /** Các tab được hiện với người đang đăng nhập ở cơ sở đang chọn */
 export function visibleTabs(org: MyOrg | null): TabId[] {
-  // Thứ tự: Trang chủ · Khai báo · Sản xuất · Báo cáo; Cấu hình, Hướng dẫn, Tài khoản nằm ở menu ☰
+  // Thứ tự: Trang chủ · Khai báo · Sản xuất · Báo cáo; Cấu hình, Hướng dẫn, Hỗ trợ & Chia sẻ, Tài khoản nằm ở menu ☰
   const tabs: TabId[] = ['home'];
   if (declareSections(org).length > 0) tabs.push('declare');
   tabs.push('production');
   if (canSeeConfig(org)) tabs.push('config');
   tabs.push('guide');
+  tabs.push('support');
   if (reportSections(org).length > 0) tabs.push('reports');
   tabs.push('profile');
   return tabs;

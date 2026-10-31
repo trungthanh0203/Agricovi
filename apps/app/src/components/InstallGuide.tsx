@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import { SUPPORT_CONTACT as SUPPORT } from '../lib/brand';
-
 type Platform = 'desktop' | 'android' | 'ios';
 
 const PLATFORMS: { id: Platform; icon: string; title: string; steps: string[]; result: string }[] = [
@@ -71,7 +69,6 @@ export function InstallGuide() {
   return (
     <section className="install" aria-labelledby="install-title">
       <h2 id="install-title">📲 Cài app về máy để dùng tiện hơn</h2>
-      <p className="install-contact">{SUPPORT}</p>
       {evt && (
         <button className="primary" onClick={() => { void evt.prompt().then(() => evt.userChoice).then((c) => { if (c.outcome === 'accepted') setEvt(null); }); }}>
           Cài app ngay

@@ -39,10 +39,11 @@ const ConfigTab = lazyRetry(() => import('./screens/ConfigTab').then((m) => ({ d
 const ProductionTab = lazyRetry(() => import('./screens/ProductionTab').then((m) => ({ default: m.ProductionTab })));
 const ProfileTab = lazyRetry(() => import('./screens/ProfileTab').then((m) => ({ default: m.ProfileTab })));
 const GuideTab = lazyRetry(() => import('./screens/GuideTab').then((m) => ({ default: m.GuideTab })));
+const SupportTab = lazyRetry(() => import('./screens/SupportTab').then((m) => ({ default: m.SupportTab })));
 const ReportsTab = lazyRetry(() => import('./screens/ReportsTab').then((m) => ({ default: m.ReportsTab })));
 const Loading = () => <p className="center muted">Đang tải…</p>;
 
-const TAB_ICON: Record<TabId, string> = { home: '🏠', production: '🌱', reports: '📊', declare: '🧰', config: '⚙️', guide: '📖', profile: '👤' };
+const TAB_ICON: Record<TabId, string> = { home: '🏠', production: '🌱', reports: '📊', declare: '🧰', config: '⚙️', guide: '📖', support: '🤝', profile: '👤' };
 
 export function App() {
   useAutoScrollToForm(); // bấm Sửa/Thêm mới thì cuộn tới form
@@ -200,7 +201,7 @@ function Shell() {
   const attention = counts?.needs_attention ?? 0;
   // Thanh dưới: Trang chủ · Khai báo · (Ghi việc) · Sản xuất · Báo cáo; Cấu hình, Tài khoản, Hướng dẫn nằm ở menu ☰ (D74)
   const mainTabs = (['home', 'declare', 'production', 'reports'] as TabId[]).filter((t) => tabs.includes(t));
-  const menuTabs = (['profile', 'config', 'guide'] as TabId[]).filter((t) => tabs.includes(t)); // Tài khoản lên đầu menu ☰
+  const menuTabs = (['profile', 'config', 'guide', 'support'] as TabId[]).filter((t) => tabs.includes(t)); // Tài khoản lên đầu menu ☰
   const fabAt = mainTabs.length >= 3 ? 2 : 1; // nút Ghi việc nằm giữa
   // nút Ghi việc ẩn khi mô hình của các vụ đang chạy không dùng ghi việc (mô hình 1 chưa bật tùy chọn Ghi việc)
   const canLog = cyclesAll.some((c) => c.status === 'active' && c.owner_org_id === active?.id) && (active?.features?.logs ?? 'on') !== 'off';
@@ -249,6 +250,8 @@ function Shell() {
           <ConfigTab />
         ) : tab === 'guide' ? (
           <GuideTab section={subs.guide} jump={guideJump} onSection={setSub('guide')} onGo={(t, s) => { closeOverlay(); goTo(t, s); }} />
+        ) : tab === 'support' ? (
+          <SupportTab />
         ) : tab === 'reports' ? (
           <ReportsTab section={subs.reports} onSection={setSub('reports')} onGo={goTo} />
         ) : (

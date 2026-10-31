@@ -260,3 +260,4 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 
 - A43: Vì cùng tên miền nên app và admin dùng chung phiên đăng nhập; quyền thật vẫn do CSDL kiểm ở mọi thao tác quản trị. Nên bật Cloudflare Access cho đường dẫn `/quan-tri/*` làm lớp bảo vệ thứ hai. Đã bỏ phương án dùng email của tài khoản HTX đang có làm quản trị: dùng một email riêng cho tài khoản vừa là HTX vừa là quản trị.
 
+- D130 (31/10/2026): **Thông tin liên hệ do quản trị nền tảng sửa** (tên công ty, địa chỉ, điện thoại, Zalo, website, email, Facebook, YouTube) lưu ở `platform_settings.contact_info`, đã có giá trị mẫu để thay. Đọc công khai qua hàm `public_contact_info()` (migration 0140) nên hiện được cả ở trang đăng nhập/đăng ký và màn chờ duyệt, kể cả khi app đã cài (hướng dẫn cài bị ẩn). Trong app, mục menu "Chia sẻ hệ thống" đổi thành **Hỗ trợ & Chia sẻ**: liên hệ ở trên, nút chia sẻ ở dưới (lời giới thiệu kèm dòng liên hệ).
