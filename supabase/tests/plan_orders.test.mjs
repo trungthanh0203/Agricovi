@@ -119,3 +119,16 @@ test('Đã mua: dùng thử thì chưa mua; mua rồi gia hạn nối tiếp cù
   assert.deepEqual([r.purchased, r.quarters, r.amount], [true, 3, 900000]);
   assert.match(await expectError(asUser(db, mgr, `select my_plan_purchase($1)`, [org])), /FORBIDDEN/);
 });
+
+test('org_plan_usage: gói gia hạn bắt đầu ở tương lai vẫn là "đang hiệu lực" và hiện hạn cuối chuỗi (D144)', async () => {
+  const db = await createDb();
+  const owner = await addUser(db, 1);
+  const org = (await asUser(db, owner, `select create_organization('household','Hộ A') id`)).rows[0].id;
+  const cur = (await db.query(`select * from subscriptions where organization_id=$1 order by period_end desc limit 1`, [org])).rows[0];
+  await db.query(`update subscriptions set period_start = now() - interval '10 days', period_end = now() + interval '20 days', status = 'active' where id = $1`, [cur.id]);
+  await db.query(`insert into subscriptions (organization_id, plan_tier_id, status, max_cycles, price_per_quarter, period_start, period_end)
+    values ($1,$2,'active',$3,0, now() + interval '20 days', now() + interval '5 years')`, [org, cur.plan_tier_id, cur.max_cycles]);
+  const u = (await asUser(db, owner, `select is_current, period_end > now() + interval '4 years' far from org_plan_usage($1)`, [org])).rows[0];
+  assert.equal(u.is_current, true);
+  assert.equal(u.far, true);
+});

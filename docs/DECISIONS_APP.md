@@ -295,3 +295,6 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - Số đo (300 người, 85.000 lượt công): `attendance_summary` **24 giây** (kiểm quyền từng dòng); các báo cáo khác đều dưới 2 giây (nặng nhất: số liệu các vụ 1,9 s nguội/0,56 s ấm, biểu đồ lương 1,7/1,3 s, báo cáo tuần 1,5/0,15 s, bảng lương 0,45/0,15 s).
 - Sửa: quản trị nhân sự đi đường nhanh (`attendance_summary_fast` kiểm quyền một lần rồi chạy `attendance_summary_core`), người khác giữ đường cũ chỉ thấy phần của mình; lọc ảnh theo khoảng thời gian; thêm chỉ mục ca đang mở. Kết quả không đổi (test `attendance_scale` đạt).
 - Các báo cáo còn lại đạt tiêu chí "dưới 2 giây", chưa tối ưu thêm; xem lại nếu dữ liệu tăng gấp nhiều lần.
+
+## D144 — Sửa "đã hết hạn" sai ở Trang chủ (migration 0150)
+- `org_plan_usage` lấy dòng gói có hạn xa nhất; gói gia hạn bắt đầu ở tương lai nên bị coi là chưa hiệu lực → báo "đã hết hạn" dù còn đến 2031. Nay: "đang hiệu lực" = có kỳ đang chạy; tên gói/số vụ theo kỳ đang chạy; hạn hiển thị = cuối chuỗi các kỳ đã mua. Test trong `plan_orders.test.mjs`.
