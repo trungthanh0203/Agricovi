@@ -50,6 +50,11 @@ export async function savePosition(
 }
 
 /** Thêm lại các chức vụ có sẵn đã xóa (không đụng chức vụ đã có) */
+/** Chủ HTX cấp tài khoản cho hộ do HTX tạo: bảo đảm hộ có chức vụ mẫu "Hộ nhập liệu" (xem và nhập dữ liệu của chính hộ), trả về mã chức vụ (D147) */
+export async function ensureHouseholdPosition(householdOrg: string): Promise<string> {
+  return String(await ok(client().rpc('ensure_household_position', { p_org: householdOrg })));
+}
+
 export async function addBuiltinRoles(orgId: string): Promise<number> {
   needOnline('thêm chức vụ có sẵn');
   return Number(await ok(client().rpc('add_builtin_roles', { p_org: orgId })));

@@ -394,3 +394,10 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 1. Tài khoản của chủ cơ sở → **Gói dịch vụ**: trên là gói đang dùng; dưới là các gói bán. Mở một gói, điền họ tên, điện thoại, địa chỉ, chọn số quý → **Gửi yêu cầu mua**. Yêu cầu hiện ở “Yêu cầu mua của bạn” (Chờ xử lý).
 2. Trang quản trị nền tảng → **Đơn mua gói** (có email thông báo nếu đã cấu hình): bấm **Duyệt**, kiểm số quý và số tiền → **Ghi nhận và kích hoạt gói**. Quay lại app: gói đang dùng đã đổi.
 3. Thử **Từ chối** kèm lý do: chủ thấy lý do ở dòng yêu cầu.
+
+## Thử: cấp tài khoản đăng nhập cho hộ thành viên (D147)
+1. Đăng nhập bằng tài khoản chủ HTX → Khai báo → Hộ thành viên. Tạo một hộ ("+ Thêm hộ thành viên") nếu chưa có.
+2. Ở dòng hộ bấm ⋮ → "Cấp tài khoản đăng nhập cho hộ". Nhập họ tên và số điện thoại → "Cấp tài khoản". Ghi lại mật khẩu tạm.
+3. Đăng xuất, đăng nhập bằng số điện thoại và mật khẩu tạm của hộ; đổi mật khẩu khi được yêu cầu.
+4. Kiểm tra: chỉ thấy cơ sở của hộ; ghi được việc, thu hoạch, chi phí, doanh thu, kho; KHÔNG thấy bảng lương hay dữ liệu hộ khác/HTX.
+5. Đăng nhập lại chủ HTX → "Làm việc ở hộ này": thấy đủ dữ liệu hộ vừa nhập.

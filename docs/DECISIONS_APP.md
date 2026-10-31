@@ -308,3 +308,10 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - **Hệ thống có sẵn:** Công nợ → Phải thu (nhóm theo khách, từng đơn, thu tiền, các lần thu) — nhưng mặc định chỉ khách còn nợ, và danh sách Doanh thu không hiện khách (dữ liệu mẫu cũng để trống "người mua").
 - **Đã bổ sung:** (1) Doanh thu: mỗi lần bán hiện khách, phiếu, đã thu/còn nợ, hạn, tình trạng; thêm bộ lọc "Khách mua". (2) Khai báo → Khách hàng: nút 🧾 mở lịch sử một khách (tổng đã mua/đã thu/còn nợ, từng đơn, bấm xem các lần thu tiền; `components/CustomerOrders.tsx`). (3) Dữ liệu mẫu ghi tên khách vào "người mua".
 - **Chưa làm (nếu cần):** xuất CSV/in bảng đối chiếu công nợ theo khách; lọc theo khoảng ngày trong lịch sử khách; nhắc khách nợ quá hạn; xem lịch sử khách ngay từ màn Công nợ.
+
+## D147 — Tài khoản đăng nhập cho hộ thành viên do HTX tạo (migration 0151)
+- **Vấn đề:** hộ do HTX tạo chưa có tài khoản nên chỉ chủ HTX/quản lý nhập hộ. **Giải pháp (chủ sản phẩm đồng ý):** hộ đăng nhập bằng số điện thoại + mật khẩu, chỉ thấy và nhập dữ liệu của chính hộ.
+- Dùng tài khoản nhân viên sẵn có (Edge Function `staff-accounts`, email ẩn theo số điện thoại, mật khẩu tạm đổi ở lần đầu) trong cơ sở của hộ. Hàm `ensure_household_position` tạo chức vụ mẫu **"Hộ nhập liệu"** (vai trò Quản lý; kho, thu hoạch, chi phí, doanh thu: sửa; tổng kết, khai báo: xem; bảng lương, website, HTX: không). Chủ HTX vẫn là chủ cơ sở hộ nên xem/sửa/xóa-hủy mọi thứ; người của hộ không mời/gỡ người, không tạo chức vụ, không đổi chức vụ ai.
+- Giao diện: Khai báo → Hộ thành viên → ⋮ → "Cấp tài khoản đăng nhập cho hộ" (chỉ hộ do HTX tạo, chỉ chủ HTX). Hiện số điện thoại + mật khẩu tạm một lần.
+- Điểm cần biết: vai trò Quản lý cho phép hộ sửa/hủy cả bản ghi do HTX nhập trong cơ sở hộ (cùng một hộ). Muốn chặt hơn (chỉ sửa phần mình nhập) thì đổi chức vụ sang vai trò Nhân viên, đổi lại là không tạo vụ được.
+- Chưa làm: chuyển quyền chủ cơ sở hộ sang chính hộ (HTX chuyển thành chỉ xem); cần cơ chế đọc riêng cho HTX.

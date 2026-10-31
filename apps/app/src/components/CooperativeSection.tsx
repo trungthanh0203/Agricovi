@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { RowMenu } from './RowMenu';
 import { friendlyError } from '../lib/errors';
 import { Collapsible } from './Collapsible';
+import { CredentialsCard } from './StaffAccountsSection';
+import { createStaffAccount, type StaffCredentials } from '../lib/staff';
+import { ensureHouseholdPosition, setMemberPosition } from '../lib/positions';
 import {
   createMemberHousehold, deleteManagedHousehold, inviteHousehold, leaveCooperative, listCoopHouseholds, myCooperative,
   pendingCoopInvites, removeHousehold, revokeCoopInvitation, updateCoopHousehold,
@@ -63,6 +66,11 @@ function ForCooperative({ org }: { org: MyOrg }) {
   const [name, setName] = useState('');
   const [f, setF] = useState<HouseholdInfo>(EMPTY_INFO);
   const [areaText, setAreaText] = useState('');
+  // cấp tài khoản đăng nhập cho hộ do HTX tạo (D147)
+  const [acct, setAcct] = useState<{ orgId: string; hhName: string } | null>(null);
+  const [acctName, setAcctName] = useState('');
+  const [acctPhone, setAcctPhone] = useState('');
+  const [creds, setCreds] = useState<{ hh: string; c: StaffCredentials } | null>(null);
 
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
@@ -155,6 +163,35 @@ function ForCooperative({ org }: { org: MyOrg }) {
       {r.error && <p ref={r.msgRef} className="msg error" role="alert">{r.error}</p>}
       {r.info && <p ref={r.msgRef} className="msg ok" role="status">{r.info}</p>}
       {canManage && <button className="secondary" disabled={!navigator.onLine} onClick={() => openForm(null)}>+ Thêm hộ thành viên</button>}
+      {creds && (
+        <>
+          <p className="msg ok" role="status">Đã cấp tài khoản cho {creds.hh}. Gửi số điện thoại và mật khẩu tạm này cho hộ; hộ đăng nhập bằng số điện thoại và đổi mật khẩu ở lần đầu.</p>
+          <CredentialsCard creds={creds.c} onClose={() => setCreds(null)} />
+        </>
+      )}
+      {acct && (
+        <form className="inline-form" noValidate onSubmit={(e) => {
+          e.preventDefault();
+          if (acctName.trim().length < 2) return r.setError('Hãy nhập họ tên người của hộ.');
+          if (!acctPhone.trim()) return r.setError('Hãy nhập số điện thoại của hộ (dùng để đăng nhập).');
+          void r.run(async () => {
+            const pos = await ensureHouseholdPosition(acct.orgId);
+            const res = await createStaffAccount({ organization_id: acct.orgId, full_name: acctName, phone: acctPhone, roles: ['manager'], work_mode: 'self_hourly' });
+            if (res.user_id) await setMemberPosition(acct.orgId, res.user_id, pos);
+            setCreds({ hh: acct.hhName, c: res });
+            setAcct(null); setAcctName(''); setAcctPhone('');
+          });
+        }}>
+          <strong>Cấp tài khoản đăng nhập cho {acct.hhName}</strong>
+          <p className="muted">Người của hộ đăng nhập bằng số điện thoại và mật khẩu, chỉ xem và nhập dữ liệu của chính hộ (vụ, ghi việc, thu hoạch, kho, chi phí, doanh thu). HTX vẫn xem và sửa được mọi thứ của hộ.</p>
+          <label>Họ tên người của hộ<input value={acctName} maxLength={120} onChange={(e) => setAcctName(e.target.value)} /></label>
+          <label>Số điện thoại (tên đăng nhập)<input type="tel" inputMode="tel" autoComplete="off" value={acctPhone} onChange={(e) => setAcctPhone(e.target.value)} placeholder="0912345678" /></label>
+          <div className="actions">
+            <button className="primary" disabled={r.busy || !navigator.onLine}>{r.busy ? 'Đang tạo…' : 'Cấp tài khoản'}</button>
+            <button type="button" className="secondary" onClick={() => setAcct(null)}>Hủy</button>
+          </div>
+        </form>
+      )}
 
       <div className="tablewrap">
         <table className="grid">
@@ -180,6 +217,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
                 <td className="act">
                   <RowMenu label={`Hộ ${h.name}`} items={[
                     ...(h.managed ? [{ label: 'Làm việc ở hộ này', icon: '➜', onClick: () => setActive(h.household_org_id) }] : []),
+                    ...(h.managed && isOwner(org.roles) ? [{ label: 'Cấp tài khoản đăng nhập cho hộ', icon: '🔑', disabled: !navigator.onLine, onClick: () => { setCreds(null); setAcct({ orgId: h.household_org_id, hhName: h.name }); setAcctName(h.head_name ?? ''); setAcctPhone(h.phone ?? ''); } }] : []),
                     ...(canManage ? [{ label: 'Chỉnh sửa', icon: '✎', onClick: () => openForm(h) }] : []),
                     ...(isOwner(org.roles) ? [{ label: 'Xóa hộ khỏi danh sách', icon: '🗑', danger: true, disabled: r.busy, onClick: () => {
                       const msg = h.managed
