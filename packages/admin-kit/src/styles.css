@@ -1,6 +1,6 @@
-:root { --bg: #f5f7f5; --card: #fff; --fg: #1b2420; --muted: #5d6b64; --line: #dde4df; --green: #2e7d32; --warn: #b26a00; --err: #b3261e; --info: #1565c0; }
+:root { --bg: #f5f7f5; --card: #fff; --fg: #1b2420; --muted: #5d6b64; --line: #dde4df; --green: #2e7d32; --warn: #b26a00; --err: #b3261e; --info: #1565c0; --label: #1b5e8c; --input-fg: #111; }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #121512; --card: #1b201b; --fg: #ececec; --muted: #a8aeb3; --line: #333a33; --green: #66bb6a; --warn: #ffb74d; --err: #f2b8b5; --info: #64b5f6; }
+  :root { --bg: #121512; --card: #1b201b; --fg: #ececec; --muted: #a8aeb3; --line: #333a33; --green: #66bb6a; --warn: #ffb74d; --err: #f2b8b5; --info: #64b5f6; --label: #8fc7ee; --input-fg: #111; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; font: 15px/1.45 system-ui, 'Segoe UI', sans-serif; background: var(--bg); color: var(--fg); }
@@ -24,8 +24,12 @@ button.primary { background: var(--green); color: #fff; border-color: var(--gree
 button.danger { color: var(--err); border-color: var(--err); }
 button:disabled { opacity: .5; cursor: default; }
 input, select, textarea { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); width: 100%; }
+/* Nhãn khác màu, ô nhập chữ đen trên nền trắng cho dễ nhìn (cả hai trang quản trị) */
+.form input, .form select, .form textarea, label > input, label > select, label > textarea { color: var(--input-fg); background: #fff; border-color: #b8c2bb; }
+.form input[readonly] { background: #eef2ef; }
+label { color: var(--label); }
 .form { display: flex; flex-direction: column; gap: 10px; }
-.form label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 13px; }
+.form label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 13px; color: var(--label); }
 .form label.check, label.check { flex-direction: row; align-items: center; gap: 8px; font-weight: 400; }
 label.check input { width: auto; }
 .toolbar { display: flex; gap: 10px; align-items: center; margin: 8px 0 12px; flex-wrap: wrap; }
