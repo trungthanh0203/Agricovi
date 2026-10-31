@@ -1,3 +1,4 @@
+import { useShowMore } from './ShowMore';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { friendlyError } from '../lib/errors';
 import { listPinStatus, type PinStatus } from '../lib/kiosk';
@@ -89,6 +90,14 @@ export function MembersSection({ org }: { org: MyOrg }) {
   };
 
   const offlineWorkers = workers.filter((w) => !w.user_id);
+  // ô tìm + hiện từng 50 dòng (D142): gộp người có tài khoản và người làm không tài khoản thành một danh sách
+  const [find, setFind] = useState('');
+  const needle = find.trim().toLowerCase();
+  const hit = (...xs: (string | null | undefined)[]) => !needle || xs.some((x) => (x ?? '').toLowerCase().includes(needle));
+  const memberHits = members.filter((m) => hit(m.full_name, m.display_name, m.phone, m.email));
+  const workerHits = offlineWorkers.filter((w) => hit(w.full_name, w.phone));
+  const staffRows = [...memberHits.map((m) => ({ m, w: null as null | typeof workerHits[number] })), ...workerHits.map((w) => ({ m: null as null | typeof memberHits[number], w }))];
+  const { visible: staffShown, more: staffMore } = useShowMore(staffRows, needle);
   const selWorker = offlineWorkers.find((w) => w.id === openWorker) ?? null;
   if (isOwner && selWorker) {
     const link = teamLinks.find((l) => l.worker_id === selWorker.id);
@@ -166,12 +175,14 @@ export function MembersSection({ org }: { org: MyOrg }) {
       {creds && <CredentialsCard creds={creds} onClose={() => setCreds(null)} />}
       {isOwner && <button className="secondary" disabled={!navigator.onLine} onClick={() => { setAdding(true); setError(null); setInfo(null); }}>+ Thêm nhân sự</button>}
 
+      {members.length + offlineWorkers.length > 8 && <div className="filters"><label>Tìm nhân sự<input type="search" value={find} placeholder="Tên hoặc số điện thoại" onChange={(e) => setFind(e.target.value)} /></label></div>}
       <div className="tablewrap">
         <table className="grid">
           <thead><tr><th>Nhân sự</th><th>Trạng thái</th>{isOwner && <th></th>}</tr></thead>
           <tbody>
-            {members.length === 0 && offlineWorkers.length === 0 && <tr><td colSpan={isOwner ? 3 : 2} className="muted">Chưa có nhân sự.</td></tr>}
-            {members.map((m) => {
+            {staffRows.length === 0 && <tr><td colSpan={isOwner ? 3 : 2} className="muted">{needle ? "Không tìm thấy ai." : "Chưa có nhân sự."}</td></tr>}
+            {staffShown.map(({ m }) => {
+              if (!m) return null;
               const label = m.is_staff ? m.full_name ?? m.phone ?? '' : m.display_name || m.email.split('@')[0]; // chủ cơ sở: tên hiển thị (chưa đặt thì dùng phần đầu email, không hiện cả email)
               const owner = m.roles.includes('owner');
               const pos = positionOf(m.user_id);
@@ -200,7 +211,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
                 </tr>
               );
             })}
-            {offlineWorkers.map((w) => (
+            {staffShown.map(({ w }) => w && (
               <tr key={w.id}>
                 <td>
                   <strong>{w.full_name}</strong>
@@ -214,6 +225,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
           </tbody>
         </table>
       </div>
+      {staffMore}
 
       {invites.length > 0 && <h3 className="sub">Đang chờ chấp nhận</h3>}
       {invites.map((i) => (

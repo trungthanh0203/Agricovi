@@ -286,3 +286,7 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 ## D141 — Đợt 2 (phần 2): tải thêm khoản cũ cho Chi phí/Doanh thu
 - `loadOlderFinance` + nút "Tải thêm khoản cũ hơn" (hiện khi đã có ≥200 khoản): tải 200 khoản kế tiếp lùi theo ngày vào máy; dòng tổng ghi rõ là tính trên phần đã tải.
 - Theo chủ sản phẩm: danh sách Nhân sự và Vụ không nhiều nên không làm phân trang máy chủ. Bảng lương (114 KB/552 ms với 300 người) giữ nguyên, xem lại nếu số đo xấu đi.
+
+## D142 — Đợt 2 (hoàn tất): tổng ở máy chủ, chi tiết theo trang, xuất CSV đủ (migration 0148)
+- `expense_totals` / `sales_totals`: tổng Chi phí/Doanh thu tính trên TOÀN BỘ khoản chưa hủy (có kiểm quyền xem, lọc theo vụ). Màn hình dùng số này; chưa có (offline, chưa db push) thì tạm số trên máy. Danh sách chi tiết vẫn theo trang (50 dòng + "Tải thêm khoản cũ hơn"). Thay D141 phần "tổng chỉ trên phần đã tải". Nút "Xuất CSV tất cả" tải đủ từ máy chủ (trang 1000 dòng).
+- Nhân sự (ô tìm + 50 dòng/lần, gộp người có tài khoản và không tài khoản), Vụ (50 vụ/lần mỗi nhóm), Bảng lương (ô tìm tên + 50 người/lần ở chế độ danh sách): làm ở phía máy khách vì dữ liệu ít (theo chủ sản phẩm).

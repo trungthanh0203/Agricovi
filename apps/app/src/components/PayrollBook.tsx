@@ -44,6 +44,8 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [fromCache, setFromCache] = useState(false);
+  const [pq, setPq] = useState(''); // ô tìm tên và hiện từng 50 người (D142)
+  const [pn, setPn] = useState(50);
   const [onlyTodo, setOnlyTodo] = useState(false); // lọc "Cần xử lý"
   const [tick, setTick] = useState(0); // tăng lên để tải lại sau khi chốt lương / nhập thưởng phạt
   const [settle, setSettle] = useState<SettleState | null>(null);
@@ -149,6 +151,9 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
   const todoCount = rows.filter((r) => personState(r).needs).length;
   const shownRows = onlyTodo ? rows.filter((r) => personState(r).needs) : rows;
   const total = sumRows(rows);
+  const pneedle = pq.trim().toLowerCase();
+  const foundRows = pneedle ? shownRows.filter((r) => r.name.toLowerCase().includes(pneedle)) : shownRows;
+  const pageRows = foundRows.slice(0, pn);
   return (
     <>
       {header}
@@ -174,7 +179,14 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
         <Collapsible key={g.team} title={g.team} summary={`${g.rows.length} người · ${hoursText(g.total.hours)} · ${fmtVnd(g.total.net)}`}>
           {g.rows.map(line)}
         </Collapsible>
-      )) : shownRows.map(line)}
+      )) : (
+        <>
+          {rows.length > 8 && <div className="filters"><label>Tìm người<input type="search" value={pq} placeholder="Tên" onChange={(e) => { setPq(e.target.value); setPn(50); }} /></label></div>}
+          {pneedle && foundRows.length === 0 && <p className="muted">Không tìm thấy ai.</p>}
+          {pageRows.map(line)}
+          {foundRows.length > pn && <div className="btnrow"><button type="button" className="secondary" onClick={() => setPn((x) => x + 50)}>Xem thêm ({foundRows.length - pn} người nữa)</button></div>}
+        </>
+      )}
       {rows.length > 0 && <button className="secondary" onClick={csv}>Xuất CSV</button>}
       {ov && <p className="muted">Tính lúc {stamp(ov.generated_at)}. Số "ước tính" theo đơn giá hiện hành; chốt khi chủ khóa kỳ lương. Chủ chốt lương ngay ở đầu trang khi xem một tháng.</p>}
     </>

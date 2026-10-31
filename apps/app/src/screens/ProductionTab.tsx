@@ -132,6 +132,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const { cropTypes } = useCatalog();
   const [contexts, setContexts] = useState<QuotaContext[]>([]);
   const [group, setGroup] = useState<CycleGroup | null>(null);
+  const [vn, setVn] = useState(50);
   const [editId, setEditId] = useState<string | null>(null);
   const [qrId, setQrId] = useState<string | null>(null);
   const [pubId, setPubId] = useState<string | null>(null);
@@ -170,7 +171,8 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const inGroup = (g: CycleGroup) => myCycles.filter((c) => GROUPS.find((x) => x.id === g)!.statuses.includes(c.status));
   // mặc định mở nhóm đầu tiên có vụ (Đang sản xuất trước)
   const curGroup: CycleGroup = group ?? GROUPS.find((g) => inGroup(g.id).length > 0)?.id ?? 'active';
-  const shown = inGroup(curGroup);
+  const shownAll = inGroup(curGroup);
+  const shown = shownAll.slice(0, vn); // vẽ từng 50 vụ (D142)
   const ownerLabel = (ownerId: string) => {
     if (ownerId === active.id) return null;
     return contexts.find((c) => c.org_id === ownerId)?.org_name ?? 'Vụ ghi theo HTX';
@@ -209,7 +211,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
       {(myCycles.length > 0 || (canManage && hasAreas)) && (
         <div className="chips" role="tablist" aria-label="Nhóm vụ theo trạng thái">
           {GROUPS.map((g) => (
-            <button key={g.id} role="tab" aria-selected={curGroup === g.id} className={curGroup === g.id ? 'chip active' : 'chip'} onClick={() => { setGroup(g.id); setEditId(null); }}>
+            <button key={g.id} role="tab" aria-selected={curGroup === g.id} className={curGroup === g.id ? 'chip active' : 'chip'} onClick={() => { setGroup(g.id); setVn(50); setEditId(null); }}>
               {g.label} ({inGroup(g.id).length})
             </button>
           ))}
@@ -288,6 +290,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
           </div>
         );
       })}
+      {shownAll.length > vn && <div className="btnrow"><button type="button" className="secondary" onClick={() => setVn((x) => x + 50)}>Xem thêm ({shownAll.length - vn} vụ nữa)</button></div>}
       {canManage && !hasAreas && (
         <div className="card">
           <p>Chưa có phân khu nên chưa tạo được vụ.</p>

@@ -1,3 +1,4 @@
+import { exportFinanceCsv, useFinanceTotals, type ExpenseTotals, type SaleTotals } from '../lib/financeTotals';
 import { LoadOlder, useShowMore } from './ShowMore';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
@@ -61,7 +62,12 @@ export function ExpenseSection() {
   const { visible: listShown, more: listMore } = useShowMore(list, `${cycleFilter}|${showVoided}`);
   const valid = list.filter((e) => !e.voided_at);
   // Không cộng gộp các loại khác nhau: báo cáo phải phân biệt tiền thực chi, vật tư ghi tay và ước tính/phân bổ (v1.1 mục 4.5)
-  const sumKind = (kinds: string[]) => valid.filter((e) => kinds.includes(e.kind)).reduce((s, e) => s + e.amount, 0);
+  const localSum = (kinds: string[]) => valid.filter((e) => kinds.includes(e.kind)).reduce((s, e) => s + e.amount, 0);
+  // tổng tính ở máy chủ trên TOÀN BỘ khoản (D142); chưa có thì tạm dùng số trên máy
+  const srv = useFinanceTotals<ExpenseTotals>('expenses', active?.id, cycleFilter, `${expenses.length}|${expenses.filter((e) => e.voided_at).length}`);
+  const sumKind = (kinds: string[]) => (srv ? (kinds[0] === 'cash_paid' ? srv.cash_paid : kinds[0] === 'material_used' ? srv.material_used : srv.allocated_estimated) : localSum(kinds));
+  const totalN = srv ? srv.n : valid.length;
+  const [csvBusy, setCsvBusy] = useState(false);
 
   async function confirmVoid(id: string) {
     if (reason.trim().length < 3) return setMsg('Hãy ghi lý do hủy (ít nhất 3 ký tự).');
@@ -119,7 +125,7 @@ export function ExpenseSection() {
         <div className="row"><span>Tiền thực chi</span><strong>{formatMoney(sumKind(['cash_paid']))}</strong></div>
         <div className="row"><span>Vật tư đã dùng (ghi tay)</span><strong>{formatMoney(sumKind(['material_used']))}</strong></div>
         <div className="row"><span>Phân bổ / ước tính</span><strong>{formatMoney(sumKind(['allocated', 'estimated']))}</strong></div>
-        <p className="muted">{valid.length} khoản chưa hủy đang tải về máy (bấm "Tải thêm" để xem khoản cũ hơn). Ba dòng trên tách riêng, không cộng gộp vì bản chất khác nhau.</p>
+        <p className="muted">{totalN} khoản chưa hủy (tính trên toàn bộ). Ba dòng trên tách riêng, không cộng gộp vì bản chất khác nhau.</p>
       </div>
 
       {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Ghi, sửa và hủy cần có mạng.</p>}
@@ -164,6 +170,7 @@ export function ExpenseSection() {
       ))}
       {listMore}
       <LoadOlder kind="expenses" online={online} loaded={expenses.length} />
+      <button type="button" className="secondary" disabled={!online || csvBusy} onClick={async () => { setCsvBusy(true); try { await exportFinanceCsv('expenses', active.id, cycleFilter, (id) => cycleLabel(id)); } catch (e) { setMsg(e instanceof Error ? e.message : 'Không xuất được.'); } finally { setCsvBusy(false); } }}>{csvBusy ? 'Đang xuất…' : 'Xuất CSV tất cả'}</button>
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { exportFinanceCsv, useFinanceTotals, type ExpenseTotals, type SaleTotals } from '../lib/financeTotals';
 import { LoadOlder, useShowMore } from './ShowMore';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
@@ -59,8 +60,12 @@ export function SalesSection() {
   );
   const { visible: listShown, more: listMore } = useShowMore(list, `${cycleFilter}|${showVoided}`);
   const valid = list.filter((s) => !s.voided_at);
-  const qty = valid.reduce((s, r) => s + r.quantity, 0);
-  const revenue = valid.reduce((s, r) => s + r.amount, 0);
+  // tổng tính ở máy chủ trên TOÀN BỘ lần bán (D142); chưa có thì tạm dùng số trên máy
+  const srv = useFinanceTotals<SaleTotals>('sales', active?.id, cycleFilter, `${sales.length}|${sales.filter((s) => s.voided_at).length}`);
+  const qty = srv ? Number(srv.quantity) : valid.reduce((s, r) => s + r.quantity, 0);
+  const revenue = srv ? Number(srv.amount) : valid.reduce((s, r) => s + r.amount, 0);
+  const totalN = srv ? srv.n : valid.length;
+  const [csvBusy, setCsvBusy] = useState(false);
 
   async function confirmVoid(id: string) {
     if (reason.trim().length < 3) return setMsg('Hãy ghi lý do hủy (ít nhất 3 ký tự).');
@@ -117,7 +122,7 @@ export function SalesSection() {
         <div className="row"><span>Đã bán</span><strong>{formatQty(qty)} kg</strong></div>
         <div className="row"><span>Doanh thu đã ghi</span><strong>{formatMoney(revenue)}</strong></div>
         {qty > 0 && <div className="row"><span>Giá bán trung bình</span><strong>{formatMoney(Math.round(revenue / qty))}/kg</strong></div>}
-        <p className="muted">{valid.length} lần bán chưa hủy đang tải về máy (bấm "Tải thêm" để xem cũ hơn). Đây là doanh thu đã ghi nhận, chưa phải lợi nhuận.</p>
+        <p className="muted">{totalN} lần bán chưa hủy (tính trên toàn bộ). Đây là doanh thu đã ghi nhận, chưa phải lợi nhuận.</p>
       </div>
 
       {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Ghi, sửa và hủy cần có mạng.</p>}
@@ -162,6 +167,7 @@ export function SalesSection() {
       ))}
       {listMore}
       <LoadOlder kind="sales" online={online} loaded={sales.length} />
+      <button type="button" className="secondary" disabled={!online || csvBusy} onClick={async () => { setCsvBusy(true); try { await exportFinanceCsv('sales', active.id, cycleFilter, (id) => cycleLabel(id)); } catch (e) { setMsg(e instanceof Error ? e.message : 'Không xuất được.'); } finally { setCsvBusy(false); } }}>{csvBusy ? 'Đang xuất…' : 'Xuất CSV tất cả'}</button>
     </>
   );
 }
