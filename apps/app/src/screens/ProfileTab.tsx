@@ -66,6 +66,18 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
       </Collapsible>
 
       {active && (
+        <Collapsible title="Mã QR cơ sở" summary="thông tin tài khoản và cơ sở">
+          <AccountQr name={shownName} login={login} orgName={active.name} orgType={active.type} orgId={active.id} roles={roleSummary(active.roles)} licenses={licenses} />
+        </Collapsible>
+      )}
+
+      {active && isOwner(active.roles) && (
+        <Collapsible title="Gói dịch vụ">
+          <PlanCard />
+        </Collapsible>
+      )}
+
+      {active && (
         <Collapsible title={`Tôi được làm gì ở ${active.name}`} summary={roleSummary(active.roles)}>
           <p className="muted">Vai trò: {roleSummary(active.roles)}</p>
           {(active.positions ?? []).length > 0 && <p className="muted">Chức vụ của tôi: {(active.positions ?? []).map((p) => p.name).join(', ')}</p>}
@@ -98,20 +110,8 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
       )}
 
       {active && isOwner(active.roles) && (
-        <Collapsible title="Gói dịch vụ">
-          <PlanCard />
-        </Collapsible>
-      )}
-
-      {active && isOwner(active.roles) && (
         <Collapsible title="Kho ảnh" summary="chuyển ảnh cũ sang kho ảnh mới">
           <MigrateImages orgId={active.id} />
-        </Collapsible>
-      )}
-
-      {active && (
-        <Collapsible title="Mã QR tài khoản" summary="thông tin tài khoản và cơ sở">
-          <AccountQr name={shownName} login={login} orgName={active.name} orgType={active.type} orgId={active.id} roles={roleSummary(active.roles)} licenses={licenses} />
         </Collapsible>
       )}
 

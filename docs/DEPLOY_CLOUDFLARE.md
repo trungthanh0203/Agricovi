@@ -77,6 +77,15 @@ Nếu quên bước này, thư xác nhận email và thư đặt lại mật kh�
 3. Duyệt đăng ký: trang quản trị nền tảng (`/quan-tri/`) → mục **Đăng ký chờ duyệt**. Nhắn hoặc gọi Zalo đúng số điện thoại để xác nhận rồi bấm Duyệt; hộ quên mật khẩu thì bấm Đặt lại mật khẩu rồi gửi mật khẩu mới qua Zalo.
 4. Đổi dòng liên hệ hiện trong app (mặc định “Liên hệ Mr.Thành - 0989.099.454 (Zalo)”) bằng biến build `VITE_SUPPORT_CONTACT`.
 
+## 2c. Mua gói dịch vụ và email thông báo (D131)
+1. Đưa Edge Function lên: `npx supabase functions deploy plan-order` (và `npx supabase db push` cho migration 0141).
+2. Đơn mua gói luôn hiện ở trang quản trị nền tảng → **Đơn mua gói**, kể cả khi chưa cấu hình email.
+3. Muốn có email thông báo (Resend có gói miễn phí, xem trang giá hiện hành): tạo tài khoản ở resend.com, lấy API key, rồi
+   - `npx supabase secrets set RESEND_API_KEY=<khóa>`
+   - Chưa có tên miền đã xác minh ở Resend: bỏ qua `RESEND_FROM` (dùng onboarding@resend.dev), khi đó **chỉ gửi được tới email của chính chủ tài khoản Resend**. Có tên miền: xác minh ở Resend rồi `npx supabase secrets set RESEND_FROM="Agricovi <no-reply@tên-miền-của-bạn>"`.
+   - Email nhận: mặc định là email ở trang quản trị → Cấu hình → Thông tin liên hệ; muốn khác thì `npx supabase secrets set ORDER_NOTIFY_EMAIL=<email>`.
+4. Duyệt đơn: liên hệ theo số điện thoại trong đơn, thu tiền, bấm Duyệt (kiểm số quý, số tiền) để kích hoạt gói.
+
 ## 3. (Sau này) Admin và website
 
 Làm tương tự, **mỗi cái một dự án Pages riêng**:

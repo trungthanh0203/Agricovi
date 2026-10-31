@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { clean, downloadCsv, Err, fmtDate, fmtDateTime, rpc, supabase, useLoad, vnd } from '@agriconnect/admin-kit';
 
 const STATUS_LABEL: Record<string, string> = { trial: 'Dùng thử', active: 'Đang hoạt động', expired: 'Hết hạn', suspended: 'Tạm khóa', none: 'Chưa có gói' };
@@ -509,6 +509,93 @@ export function SignupsPage() {
                 {r.status === 'approved' && <button disabled={busy} onClick={() => void resetPw(r)}>Đặt lại mật khẩu</button>}
               </td>
             </tr>
+          ))}
+        </tbody></table>
+    </>
+  );
+}
+
+// ============================================================ Đơn mua gói dịch vụ
+interface OrderRow {
+  id: string; org_id: string; org_name: string; plan_name: string; quarters: number; amount: number; full_name: string; phone: string; address: string;
+  note: string | null; status: 'pending' | 'approved' | 'rejected'; admin_note: string | null; email_status: string | null; created_at: string; decided_at: string | null;
+}
+const ORDER_LABEL: Record<string, string> = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Đã từ chối' };
+const ORDER_CLS: Record<string, string> = { pending: 'warn', approved: 'ok', rejected: 'bad' };
+export function PlanOrdersPage() {
+  const [status, setStatus] = useState('pending');
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState<string | null>(null);        // đơn đang mở form duyệt
+  const [amount, setAmount] = useState('');
+  const [quarters, setQuarters] = useState('1');
+  const [method, setMethod] = useState('Chuyển khoản');
+  const [note, setNote] = useState('');
+  const { data: rows, error, reload } = useLoad(() => rpc<OrderRow[]>('admin_list_plan_orders', { p_status: status }), [status]);
+
+  function startApprove(o: OrderRow) {
+    setOpen(o.id); setAmount(String(o.amount)); setQuarters(String(o.quarters)); setNote('');
+  }
+  async function approve(o: OrderRow) {
+    const amt = Number(amount.replace(/\D/g, ''));
+    if (!window.confirm(`Xác nhận đã thu ${vnd(amt)} của ${o.full_name} và kích hoạt gói "${o.plan_name}" ${quarters} quý cho cơ sở "${o.org_name}"?`)) return;
+    setBusy(true); setMsg(null);
+    try {
+      await rpc('admin_decide_plan_order', { p_id: o.id, p_approve: true, p_amount: amt, p_quarters: Number(quarters), p_method: method, p_note: note || null });
+      setMsg('Đã ghi nhận thanh toán và kích hoạt gói.'); setOpen(null); reload();
+    } catch (e) { setMsg(clean((e as Error).message)); } finally { setBusy(false); }
+  }
+  async function reject(o: OrderRow) {
+    const reason = window.prompt(`Lý do từ chối đơn của ${o.full_name}? (hiện cho chủ cơ sở)`);
+    if (!reason) return;
+    setBusy(true); setMsg(null);
+    try { await rpc('admin_decide_plan_order', { p_id: o.id, p_approve: false, p_note: reason }); setMsg('Đã từ chối.'); reload(); }
+    catch (e) { setMsg(clean((e as Error).message)); } finally { setBusy(false); }
+  }
+
+  return (
+    <>
+      <div className="toolbar">
+        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+          {Object.entries(ORDER_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <span className="muted">{rows ? `${rows.length} đơn` : ''}</span>
+      </div>
+      <Err e={error} />
+      {msg && <p className="msg ok" role="status">{msg}</p>}
+      <p className="muted">Chủ cơ sở chọn mua gói trong app (Tài khoản → Gói dịch vụ). Hãy liên hệ theo số điện thoại, thu tiền rồi bấm Duyệt: hệ thống ghi nhận thanh toán và kích hoạt hoặc gia hạn gói cho cơ sở.</p>
+      <table className="list"><thead><tr><th>Ngày</th><th>Người mua</th><th>Cơ sở và gói</th><th>Thành tiền</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+          {(rows ?? []).length === 0 && <tr><td colSpan={6} className="muted">Không có đơn nào.</td></tr>}
+          {(rows ?? []).map((o) => (
+            <Fragment key={o.id}>
+              <tr>
+                <td>{fmtDateTime(o.created_at)}</td>
+                <td><strong>{o.full_name}</strong><br />{o.phone}<br /><small className="muted">{o.address}</small>{o.note && <><br /><small className="muted">Ghi chú: {o.note}</small></>}</td>
+                <td>{o.org_name}<br /><small className="muted">{o.plan_name} · {o.quarters} quý</small></td>
+                <td>{vnd(o.amount)}</td>
+                <td><span className={`badge ${ORDER_CLS[o.status]}`}>{ORDER_LABEL[o.status]}</span>{o.admin_note && <><br /><small className="muted">{o.admin_note}</small></>}
+                  {o.email_status && o.email_status !== 'sent' && <><br /><small className="muted">Email: {o.email_status === 'skipped' ? 'chưa cấu hình gửi' : 'gửi lỗi'}</small></>}</td>
+                <td>{o.status === 'pending' && (<>
+                  <button className="primary" disabled={busy} onClick={() => startApprove(o)}>Duyệt</button>{' '}
+                  <button disabled={busy} onClick={() => void reject(o)}>Từ chối</button>
+                </>)}</td>
+              </tr>
+              {open === o.id && (
+                <tr><td colSpan={6}>
+                  <div className="form" style={{ maxWidth: 520 }}>
+                    <label>Số quý<input inputMode="numeric" value={quarters} onChange={(e) => setQuarters(e.target.value.replace(/\D/g, ''))} /></label>
+                    <label>Số tiền đã thu (đồng)<input inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
+                    <label>Hình thức<input value={method} onChange={(e) => setMethod(e.target.value)} /></label>
+                    <label>Ghi chú (không bắt buộc)<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
+                    <div className="actions">
+                      <button className="primary" disabled={busy} onClick={() => void approve(o)}>Ghi nhận và kích hoạt gói</button>{' '}
+                      <button disabled={busy} onClick={() => setOpen(null)}>Hủy</button>
+                    </div>
+                  </div>
+                </td></tr>
+              )}
+            </Fragment>
           ))}
         </tbody></table>
     </>

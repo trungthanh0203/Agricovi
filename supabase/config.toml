@@ -18,3 +18,6 @@ verify_jwt = true
 
 [functions.owner-signup]
 verify_jwt = true
+
+[functions.plan-order]
+verify_jwt = true

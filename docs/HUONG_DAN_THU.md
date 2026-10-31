@@ -389,3 +389,8 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 2. Trang quản trị nền tảng → **Đăng ký chờ duyệt** → bấm **Duyệt**. Trên điện thoại của người đăng ký, trong tối đa 20 giây (hoặc bấm Kiểm tra lại) app tự vào cơ sở vừa tạo.
 3. Thử **Từ chối** kèm lý do: người đăng ký thấy lý do ở màn “Đăng ký chưa được duyệt”.
 4. Thử đăng ký 4 lần liên tiếp từ cùng một mạng: lần thứ 4 báo giới hạn.
+
+## Thử mua gói dịch vụ (31/10/2026; cần `db push` 0141 và `npx supabase functions deploy plan-order`, xem DEPLOY_CLOUDFLARE mục 2c)
+1. Tài khoản của chủ cơ sở → **Gói dịch vụ**: trên là gói đang dùng; dưới là các gói bán. Mở một gói, điền họ tên, điện thoại, địa chỉ, chọn số quý → **Gửi yêu cầu mua**. Yêu cầu hiện ở “Yêu cầu mua của bạn” (Chờ xử lý).
+2. Trang quản trị nền tảng → **Đơn mua gói** (có email thông báo nếu đã cấu hình): bấm **Duyệt**, kiểm số quý và số tiền → **Ghi nhận và kích hoạt gói**. Quay lại app: gói đang dùng đã đổi.
+3. Thử **Từ chối** kèm lý do: chủ thấy lý do ở dòng yêu cầu.
