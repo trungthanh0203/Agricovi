@@ -93,3 +93,14 @@ test('hàm cho Edge Function không cấp cho người dùng; dữ liệu soạn
   assert.equal((await db.query(`select email_status from plan_orders where id=$1`, [id])).rows[0].email_status, 'sent');
   assert.ok(org);
 });
+
+test('Edge Function tạo đơn thay người dùng bằng p_actor (khóa dịch vụ); người dùng gọi trực tiếp không giả mạo được p_actor; thiếu người gọi thì báo cần đăng nhập', async () => {
+  const { db, owner, mgr, org, plan } = await setup();
+  const p = await plan('Cơ bản');
+  const id = (await db.query(`select create_plan_order($1,$2,1,'Nguyễn Văn A','0912345678','12 Đường X',null,$3) id`, [org, p, owner])).rows[0].id;
+  assert.equal((await db.query(`select requested_by from plan_orders where id=$1`, [id])).rows[0].requested_by, owner);
+  assert.match(await expectError(db.query(`select create_plan_order($1,$2,1,'Nguyễn Văn A','0912345678','12 Đường X',null,$3)`, [org, p, mgr])), /FORBIDDEN/);   // người không phải chủ
+  assert.match(await expectError(db.query(`select create_plan_order($1,$2,1,'Nguyễn Văn A','0912345678','12 Đường X')`, [org, p])), /UNAUTHENTICATED/);
+  // người dùng đã đăng nhập: luôn là chính họ, p_actor bị bỏ qua
+  assert.match(await expectError(asUser(db, mgr, `select create_plan_order($1,$2,1,'Nguyễn Văn A','0912345678','12 Đường X',null,$3)`, [org, p, owner])), /FORBIDDEN/);
+});

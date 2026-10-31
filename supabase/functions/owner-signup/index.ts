@@ -55,7 +55,6 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return fail('METHOD: Chỉ hỗ trợ POST', 405);
 
   const url = Deno.env.get('SUPABASE_URL')!;
-  const anon = Deno.env.get('SUPABASE_ANON_KEY')!;
   const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const admin = createClient(url, service, { auth: { autoRefreshToken: false, persistSession: false } });
 
@@ -106,9 +105,8 @@ Deno.serve(async (req) => {
     }
 
     if (body.action === 'admin_reset_password') {
-      const authHeader = req.headers.get('Authorization') ?? '';
-      const asCaller = createClient(url, anon, { global: { headers: { Authorization: authHeader } } });
-      const { data: who, error: whoErr } = await asCaller.auth.getUser();
+      const jwt = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+      const { data: who, error: whoErr } = jwt ? await admin.auth.getUser(jwt) : { data: { user: null }, error: new Error('no token') };
       if (whoErr || !who.user) return fail('UNAUTHENTICATED: Cần đăng nhập bằng tài khoản quản trị nền tảng', 401);
       const chk = await admin.rpc('owner_signup_admin_check', { p_actor: who.user.id, p_signup: String(body.signup_id ?? '') });
       if (chk.error) return fail(chk.error.message);

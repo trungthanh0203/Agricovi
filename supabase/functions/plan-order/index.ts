@@ -64,13 +64,13 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return fail('METHOD: Chỉ hỗ trợ POST', 405);
 
   const url = Deno.env.get('SUPABASE_URL')!;
-  const anon = Deno.env.get('SUPABASE_ANON_KEY')!;
-  const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const asCaller = createClient(url, anon, { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } });
+    const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const admin = createClient(url, service, { auth: { autoRefreshToken: false, persistSession: false } });
 
-  const { data: who, error: whoErr } = await asCaller.auth.getUser();
-  if (whoErr || !who.user) return fail('UNAUTHENTICATED: Cần đăng nhập', 401);
+  // Xác định người gọi từ mã thông báo (JWT) của chính họ, truyền rõ vào getUser (không phụ thuộc phiên lưu trong máy khách)
+  const jwt = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+  const { data: who, error: whoErr } = jwt ? await admin.auth.getUser(jwt) : { data: { user: null }, error: new Error('no token') };
+  if (whoErr || !who.user) return fail('UNAUTHENTICATED: Phiên đăng nhập hết hạn hoặc không hợp lệ. Hãy đăng nhập lại rồi thử gửi lại.', 401);
 
   let body: Record<string, unknown>;
   try {
@@ -81,9 +81,9 @@ Deno.serve(async (req) => {
 
   try {
     if (body.action !== 'create') return fail('BAD_REQUEST: Hành động không hợp lệ');
-    // 1) tạo yêu cầu bằng quyền của chính người gọi (máy chủ kiểm: chỉ chủ cơ sở, gói hợp lệ, tối đa 3 yêu cầu chờ)
-    const created = await asCaller.rpc('create_plan_order', {
-      p_org: String(body.organization_id ?? ''), p_plan: String(body.plan_id ?? ''), p_quarters: Number(body.quarters ?? 1),
+    // 1) tạo yêu cầu thay mặt người gọi (máy chủ kiểm: chỉ chủ cơ sở, gói hợp lệ, tối đa 3 yêu cầu chờ)
+    const created = await admin.rpc('create_plan_order', {
+      p_actor: who.user.id, p_org: String(body.organization_id ?? ''), p_plan: String(body.plan_id ?? ''), p_quarters: Number(body.quarters ?? 1),
       p_name: String(body.full_name ?? ''), p_phone: String(body.phone ?? ''), p_address: String(body.address ?? ''), p_note: body.note ? String(body.note) : null,
     });
     if (created.error) return fail(created.error.message);
