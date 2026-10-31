@@ -75,7 +75,7 @@ Chủ sản phẩm xác định: hộ trong HTX gần như là **cơ sở độc
 6. **Rời HTX:** vụ theo HTX đang chạy phải **kết thúc hoặc chuyển thành vụ riêng có HTX đồng ý** trước khi rời (nối tiếp quy tắc A2). Sau khi rời hộ **xuất toàn bộ dữ liệu**; HTX giữ bản chụp truy xuất theo mục 5.
 7. **Chống lách hạn mức:** một số điện thoại/hộ chỉ một lần dùng thử; vụ theo HTX không đếm vào gói hộ nên hộ không dùng gói dùng thử để "gánh" vụ của HTX.
 
-### Cần chốt thêm
+### Cần chốt thêm (ĐÃ CHỐT 31/10/2026: a, b, c đồng ý; d chỉ cho chuyển một chiều theo HTX → riêng, chiều ngược lại làm sau)
 a. Đồng ý **mặc định theo gói** (mục 2): dùng thử → chỉ vụ theo HTX; có gói riêng → chọn từng vụ, mặc định theo danh mục bao tiêu?
 b. **Danh mục bao tiêu** do HTX khai (sản phẩm, có thể kèm giá thu mua tham chiếu) — đồng ý?
 c. Có làm **Phiếu thu mua** (mục 4) để tách tiền hộ và HTX không? (đề xuất: có, là đợt C/D của mục 6)

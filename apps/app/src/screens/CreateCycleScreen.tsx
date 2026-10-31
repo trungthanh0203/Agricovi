@@ -8,6 +8,7 @@ import { restWarning } from '../lib/milestoneLogic';
 import { Collapsible } from '../components/Collapsible';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
 import { createCycle, fetchQuotaContexts, setCyclePrep, type QuotaContext } from '../lib/production';
+import { myCoopProcurement, type CoopProcurement } from '../lib/members';
 import { addDays, fmtDate } from '../lib/dates';
 import { listTemplates, loadTemplate, stageRanges, totalDays, type StageRow, type TemplateRow } from '../lib/templates';
 import { useTable } from '../lib/tables';
@@ -44,6 +45,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const [budget, setBudget] = useState('');
   const [contexts, setContexts] = useState<QuotaContext[] | null>(null);
   const [ownerId, setOwnerId] = useState('');
+  const [procure, setProcure] = useState<CoopProcurement[]>([]);   // sản phẩm HTX bao tiêu (D148)
   const [error, setError] = useState<string | null>(null);
   const online = useOnline();
   const [busy, setBusy] = useState(false);
@@ -93,7 +95,12 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     setOwnerId(active.id);
     if (!navigator.onLine) return setContexts(null);
     if (active.type === 'household') {
-      fetchQuotaContexts(active.id).then(setContexts).catch(() => setContexts(null));
+      fetchQuotaContexts(active.id).then((cs) => {
+        setContexts(cs);
+        const d = cs.find((c) => c.is_default && c.allowed) ?? cs.find((c) => c.allowed);
+        if (d) setOwnerId(d.org_id);   // hộ chưa có gói trả phí: mặc định theo HTX
+      }).catch(() => setContexts(null));
+      myCoopProcurement(active.id).then(setProcure).catch(() => setProcure([]));
     }
   }, [active]);
 
@@ -222,16 +229,24 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
               <legend>Vụ này ghi theo</legend>
               {choices.map((c) => (
                 <label key={c.org_id} className={ownerId === c.org_id ? 'choice selected' : 'choice'}>
-                  <input type="radio" name="owner" checked={ownerId === c.org_id} onChange={() => setOwnerId(c.org_id)} />
+                  <input type="radio" name="owner" checked={ownerId === c.org_id} disabled={!c.allowed} onChange={() => setOwnerId(c.org_id)} />
                   <span>
                     <strong>{ownerLabel(c)}</strong>
                     <small>
                       Đã dùng {c.used_cycles}/{c.max_cycles ?? '—'} vụ (tính cả vụ tạm dừng){c.plan_name ? ` · ${c.plan_name}` : ''}
                       {!c.is_current && ' · Gói đã hết hạn'}
+                      {!c.allowed && ' · Hộ chưa có gói trả phí riêng nên chỉ tạo vụ theo HTX'}
                     </small>
                   </span>
                 </label>
               ))}
+              {(() => {
+                const pc = procure.find((p) => p.crop_type_id === productId);
+                const own = contexts?.find((c) => c.kind === 'own');
+                return pc && own && ownerId === own.org_id
+                  ? <p className="msg warn" role="status">{pc.coop_name} bao tiêu {pc.crop_name}{pc.ref_price_per_kg != null ? " (giá tham chiếu " + pc.ref_price_per_kg.toLocaleString("vi-VN") + "đ/kg)" : ""}. Nên chọn ghi theo HTX để HTX theo dõi và thu mua.</p>
+                  : null;
+              })()}
               <small className="muted">
                 Vụ ghi theo HTX thì dùng quy trình của HTX và HTX xem được theo quyền. Vụ ghi theo hộ riêng dùng quy trình của hộ và chỉ mình bạn xem.
               </small>

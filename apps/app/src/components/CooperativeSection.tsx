@@ -3,6 +3,7 @@ import { RowMenu } from './RowMenu';
 import { friendlyError } from '../lib/errors';
 import { Collapsible } from './Collapsible';
 import { CredentialsCard } from './StaffAccountsSection';
+import { HouseholdOverviewPanel, HouseholdSharing, ProcurementPanel } from './HtxHouseholdPanels';
 import { createStaffAccount, type StaffCredentials } from '../lib/staff';
 import { ensureHouseholdPosition, setMemberPosition } from '../lib/positions';
 import {
@@ -71,6 +72,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
   const [acctName, setAcctName] = useState('');
   const [acctPhone, setAcctPhone] = useState('');
   const [creds, setCreds] = useState<{ hh: string; c: StaffCredentials } | null>(null);
+  const [overview, setOverview] = useState<{ id: string; name: string } | null>(null);   // xem sản xuất của một hộ (D148)
 
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
@@ -163,6 +165,8 @@ function ForCooperative({ org }: { org: MyOrg }) {
       {r.error && <p ref={r.msgRef} className="msg error" role="alert">{r.error}</p>}
       {r.info && <p ref={r.msgRef} className="msg ok" role="status">{r.info}</p>}
       {canManage && <button className="secondary" disabled={!navigator.onLine} onClick={() => openForm(null)}>+ Thêm hộ thành viên</button>}
+      <ProcurementPanel coopId={org.id} canEdit={canManage} />
+      {overview && <HouseholdOverviewPanel coopId={org.id} householdId={overview.id} name={overview.name} onClose={() => setOverview(null)} />}
       {creds && (
         <>
           <p className="msg ok" role="status">Đã cấp tài khoản cho {creds.hh}. Gửi số điện thoại và mật khẩu tạm này cho hộ; hộ đăng nhập bằng số điện thoại và đổi mật khẩu ở lần đầu.</p>
@@ -216,6 +220,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
                 <td>{h.activity_status === 'paused' ? <span className="pill warn">Tạm ngưng</span> : <span className="pill ok">Đang hoạt động</span>}</td>
                 <td className="act">
                   <RowMenu label={`Hộ ${h.name}`} items={[
+                    { label: 'Xem sản xuất của hộ', icon: '👁', disabled: !navigator.onLine, onClick: () => setOverview({ id: h.household_org_id, name: h.name }) },
                     ...(h.managed ? [{ label: 'Làm việc ở hộ này', icon: '➜', onClick: () => setActive(h.household_org_id) }] : []),
                     ...(h.managed && isOwner(org.roles) ? [{ label: 'Cấp tài khoản đăng nhập cho hộ', icon: '🔑', disabled: !navigator.onLine, onClick: () => { setCreds(null); setAcct({ orgId: h.household_org_id, hhName: h.name }); setAcctName(h.head_name ?? ''); setAcctPhone(h.phone ?? ''); } }] : []),
                     ...(canManage ? [{ label: 'Chỉnh sửa', icon: '✎', onClick: () => openForm(h) }] : []),
@@ -276,6 +281,7 @@ function ForHousehold({ org }: { org: MyOrg }) {
         <>
           <p>Đang tham gia: <strong>{coop.name}</strong>{coop.managed && ' (HTX quản lý hộ này)'}</p>
           <p className="muted">Mỗi hộ chỉ thuộc một HTX.</p>
+          {!coop.managed && <HouseholdSharing householdId={org.id} isOwner={isOwner(org.roles)} />}
           {isOwner(org.roles) && !coop.managed && (
             <button className="secondary" disabled={r.busy}
               onClick={() => window.confirm(`Rời HTX ${coop.name}?`) && void r.run(() => leaveCooperative(org.id))}>

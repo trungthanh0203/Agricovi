@@ -401,3 +401,10 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 3. Đăng xuất, đăng nhập bằng số điện thoại và mật khẩu tạm của hộ; đổi mật khẩu khi được yêu cầu.
 4. Kiểm tra: chỉ thấy cơ sở của hộ; ghi được việc, thu hoạch, chi phí, doanh thu, kho; KHÔNG thấy bảng lương hay dữ liệu hộ khác/HTX.
 5. Đăng nhập lại chủ HTX → "Làm việc ở hộ này": thấy đủ dữ liệu hộ vừa nhập.
+
+## Thử: HTX quản lý hộ đã dùng thử (D148)
+1. Hộ tự đăng ký (tài khoản mới, dùng thử). HTX: Khai báo → Hộ thành viên → mời bằng email của hộ.
+2. Hộ đăng nhập: lời mời hiện ở đầu trang. Đọc dòng "Cho HTX xem dữ liệu sản xuất", bấm "Tham gia HTX".
+3. Hộ: Tạo vụ mới → chỉ chọn được "ghi theo HTX" (chưa có gói trả phí riêng). Mục Hợp tác xã có ô chia sẻ dữ liệu sản xuất.
+4. HTX: ⋮ ở dòng hộ → "Xem sản xuất của hộ": thấy vụ, tiến độ, ghi việc gần nhất, thu hoạch, sự cố (chỉ xem). Hộ tắt chia sẻ (nếu HTX chưa khai bao tiêu) thì HTX không còn xem được.
+5. HTX khai "Sản phẩm HTX bao tiêu": hộ không tắt chia sẻ được nữa, và khi tạo vụ sản phẩm đó có gợi ý ghi theo HTX.

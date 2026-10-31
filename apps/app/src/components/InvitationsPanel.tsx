@@ -18,6 +18,7 @@ export function InvitationsPanel({ onChanged }: { onChanged?: () => void }) {
   const [coopInv, setCoopInv] = useState<CoopInvitation[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [shareProd, setShareProd] = useState(true);   // cho HTX xem dữ liệu sản xuất khi tham gia (D148)
 
   const canAcceptCoop = active?.type === 'household' && isOwner(active.roles);
 
@@ -74,9 +75,13 @@ export function InvitationsPanel({ onChanged }: { onChanged?: () => void }) {
           <p>
             <strong>HTX {i.coop_name}</strong> mời hộ <strong>{active!.name}</strong> tham gia.
           </p>
-          <p className="muted">Vụ bạn chọn ghi theo HTX thì HTX xem được theo quyền. Vụ riêng của hộ vẫn chỉ mình bạn xem.</p>
+          <p className="muted">Vụ bạn chọn ghi theo HTX thì HTX là bên theo dõi và bao tiêu. Chi phí, doanh thu riêng của hộ vẫn chỉ mình bạn xem.</p>
+          <label className="check">
+            <input type="checkbox" checked={shareProd} onChange={(e) => setShareProd(e.target.checked)} />
+            Cho HTX xem (không sửa) dữ liệu sản xuất của hộ: vụ, nhật ký việc, thu hoạch, sự cố. Có thể đổi sau ở Hợp tác xã. Nếu HTX bao tiêu sản phẩm thì phần này bắt buộc.
+          </label>
           <div className="actions">
-            <button className="primary" disabled={busy} onClick={() => run(() => acceptCoopInvitation(i.id, active!.id))}>Tham gia HTX</button>
+            <button className="primary" disabled={busy} onClick={() => run(() => acceptCoopInvitation(i.id, active!.id, shareProd))}>Tham gia HTX</button>
             <button className="secondary" disabled={busy} onClick={() => run(() => declineCoopInvitation(i.id))}>Từ chối</button>
           </div>
         </div>

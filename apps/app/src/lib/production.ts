@@ -194,6 +194,10 @@ export interface QuotaContext {
   max_cycles: number | null;
   used_cycles: number;
   is_current: boolean;
+  /** Được chọn để tạo vụ (hộ thuộc HTX chưa có gói trả phí riêng chỉ chọn được HTX) */
+  allowed: boolean;
+  /** Mặc định theo gói của hộ (D148) */
+  is_default: boolean;
 }
 
 export async function fetchQuotaContexts(householdId: string): Promise<QuotaContext[]> {

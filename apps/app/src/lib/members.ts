@@ -83,8 +83,34 @@ export const myInvitations = () => rpc<OrgInvitation[]>('my_invitations');
 export const myCoopInvitations = () => rpc<CoopInvitation[]>('my_coop_invitations');
 export const acceptInvitation = (id: string) => rpc<string>('accept_invitation', { p_id: id });
 export const declineInvitation = (id: string) => rpc<void>('decline_invitation', { p_id: id });
-export const acceptCoopInvitation = (id: string, householdId: string) =>
-  rpc<void>('accept_coop_invitation', { p_id: id, p_household: householdId });
+export const acceptCoopInvitation = (id: string, householdId: string, shareProduction = true) =>
+  rpc<void>('accept_coop_invitation', { p_id: id, p_household: householdId, p_share_production: shareProduction });
+
+/** Hộ thuộc HTX: đồng ý cho HTX xem dữ liệu sản xuất (D148). required = HTX có bao tiêu nên bắt buộc chia sẻ. */
+export interface MySharing { coop_name: string; share_production: boolean; required: boolean; consented_at: string | null }
+export const mySharing = (household: string) => rpc<MySharing[]>('my_coop_sharing', { p_household: household });
+export const setCoopSharing = (household: string, share: boolean) => rpc<void>('set_coop_sharing', { p_household: household, p_share_production: share });
+
+/** Sản phẩm HTX bao tiêu (hộ xem để biết; tạo vụ chọn mặc định "theo HTX") */
+export interface CoopProcurement { crop_type_id: string; crop_name: string; ref_price_per_kg: number | null; coop_name: string }
+export const myCoopProcurement = (household: string) => rpc<CoopProcurement[]>('my_coop_procurement', { p_household: household });
+export const saveProcurementItem = (coop: string, crop: string, price: number | null, active: boolean) =>
+  rpc<string>('save_procurement_item', { p_coop: coop, p_crop: crop, p_price: price, p_active: active });
+export interface ProcurementRow { id: string; crop_type_id: string; ref_price_per_kg: number | null; is_active: boolean; crop_types: { name: string } | null }
+export async function listProcurementItems(coop: string): Promise<ProcurementRow[]> {
+  const { data, error } = await client().from('coop_procurement_items').select('id, crop_type_id, ref_price_per_kg, is_active, crop_types(name)').eq('cooperative_org_id', coop);
+  if (error) throw error;
+  return (data ?? []) as unknown as ProcurementRow[];
+}
+
+/** HTX xem tổng quan sản xuất của một hộ (theo hộ đồng ý) */
+export interface HouseholdCycleOverview {
+  id: string; kind: 'own' | 'coop'; name: string; code: string | null; crop: string; area: string; status: string;
+  start_date: string | null; expected_end_date: string | null; stages_total: number; stages_done: number;
+  last_log_at: string | null; logs_30d: number; open_incidents: number; harvest_kg: number;
+}
+export const coopHouseholdOverview = (coop: string, household: string) =>
+  rpc<{ shared: boolean; cycles: HouseholdCycleOverview[] }>('coop_household_overview', { p_coop: coop, p_household: household });
 export const declineCoopInvitation = (id: string) => rpc<void>('decline_coop_invitation', { p_id: id });
 
 export const listMembers = (org: string) => rpc<Member[]>('list_org_members', { p_org: org });

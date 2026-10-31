@@ -315,3 +315,10 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - Giao diện: Khai báo → Hộ thành viên → ⋮ → "Cấp tài khoản đăng nhập cho hộ" (chỉ hộ do HTX tạo, chỉ chủ HTX). Hiện số điện thoại + mật khẩu tạm một lần.
 - Điểm cần biết: vai trò Quản lý cho phép hộ sửa/hủy cả bản ghi do HTX nhập trong cơ sở hộ (cùng một hộ). Muốn chặt hơn (chỉ sửa phần mình nhập) thì đổi chức vụ sang vai trò Nhân viên, đổi lại là không tạo vụ được.
 - Chưa làm: chuyển quyền chủ cơ sở hộ sang chính hộ (HTX chuyển thành chỉ xem); cần cơ chế đọc riêng cho HTX.
+
+## D148 — HTX quản lý hộ thành viên (chủ sản phẩm đồng ý 31/10/2026; chi tiết docs/PLAN_HTX_HO.md; migration 0152)
+- **Mô hình:** hộ trong HTX gần như cơ sở độc lập, sản xuất dưới sự giám sát của HTX, HTX bao tiêu đầu ra. Khu/nhà màng là tài sản của hộ, không tính hạn mức; hạn mức chỉ tính số vụ đang chạy theo chủ vụ (không đếm trùng).
+- **Chia sẻ (mức 2):** hộ đồng ý cho HTX xem (không sửa) dữ liệu sản xuất khi chấp nhận lời mời, đổi được sau (`coop_data_sharing`; hộ đã ở HTX từ trước mặc định CHƯA chia sẻ, chờ xác nhận). HTX có sản phẩm bao tiêu thì bắt buộc chia sẻ. HTX **không đọc thẳng bảng của hộ**: chỉ qua hàm `coop_household_overview` (đồng ý + quyền `coop`). Tài chính riêng của hộ (mức 3) mặc định không chia sẻ, chưa có đường đọc; ủy quyền nhập hộ: chưa làm.
+- **Danh mục bao tiêu** (`coop_procurement_items`, ⋮ → Hộ thành viên → "Sản phẩm HTX bao tiêu"): hộ thấy gợi ý "ghi theo HTX" khi tạo vụ sản phẩm đó.
+- **Hạn mức theo gói của hộ:** hộ thuộc HTX **chưa có gói trả phí riêng** chỉ tạo "vụ theo HTX" (ép ở CSDL: trigger `production_cycles_coop_member`; giao diện tự chọn HTX). Có gói trả phí riêng: chọn từng vụ, hai hạn mức độc lập. `quota_contexts` thêm `allowed`, `is_default`.
+- **Làm sau (đã đồng ý hướng):** (c) **Phiếu thu mua** HTX–hộ (công nợ phải trả HTX/phải thu hộ, tách tiền hai bên); (d) **chuyển một chiều vụ theo HTX → vụ riêng** (HTX duyệt, có lịch sử; chiều ngược lại để sau) — cần chuyển chủ vụ và các bản ghi con, rà các trigger bất biến; tài chính mức 3; ủy quyền nhập hộ; rời HTX có xuất dữ liệu và bản chụp truy xuất.
