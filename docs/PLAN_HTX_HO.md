@@ -54,3 +54,29 @@ Tùy chọn thêm: **Ủy quyền nhập hộ** (HTX/quản lý HTX được ghi
 2. **Mức 3 (tài chính) mặc định không**, chỉ giao dịch với HTX hiển thị chung. Đồng ý?
 3. **Ủy quyền nhập hộ** có làm không, và ai trong HTX được dùng (chủ, quản lý HTX)?
 4. Quy tắc **rời HTX**: HTX giữ bản chụp truy xuất bao lâu? (đề xuất 24 tháng, cần cố vấn pháp lý).
+
+## 8. Bổ sung (31/10/2026): hộ trong HTX tạo vụ/khu thì tính cho ai; hộ tự đăng ký riêng thì sao
+Chủ sản phẩm xác định: hộ trong HTX gần như là **cơ sở độc lập, sản xuất dưới sự giám sát của HTX, HTX bao tiêu đầu ra**; hộ chỉ có tài khoản dùng thử thì vụ/khu **tính cho HTX**. Hỏi: nếu hộ **tự đăng ký gói riêng** mà vẫn ở trong HTX thì xử lý thế nào?
+
+### Cơ chế đã có (đọc mã)
+- Mỗi vụ có **chủ vụ** (`owner_org_id`): hoặc **hộ** ("vụ riêng") hoặc **HTX** ("vụ theo HTX", làm trên khu của hộ). Khi tạo vụ, hộ thuộc HTX chọn tính vào hạn mức nào (`quota_contexts`: "hộ riêng" hoặc "HTX"). Hạn mức chỉ tính **số vụ đang chạy theo chủ vụ**, không đếm trùng.
+- **Khu/nhà màng** thuộc cơ sở của hộ; hiện **không** có hạn mức khu.
+- Vụ theo HTX dùng **quy trình mẫu của HTX** (mẫu không dùng chung giữa cơ sở) → HTX giám sát đúng quy trình do mình đặt.
+- Mọi bản ghi của vụ (nhật ký, thu hoạch, chi phí, doanh thu) hiện **ghi vào cơ sở của chủ vụ**.
+
+### Đề xuất "hợp lý nhất"
+1. **Hai loại vụ, quyết định một lần khi tạo, không đổi tuỳ tiện:** *Vụ theo HTX* (đầu ra bao tiêu, HTX giám sát đầy đủ) và *Vụ riêng của hộ* (hộ tự bán, HTX chỉ xem theo mức đã đồng ý ở mục 3). Muốn chuyển loại: **yêu cầu + HTX duyệt**, có lịch sử (làm sau).
+2. **Mặc định theo gói của hộ:**
+   - **Hộ chỉ dùng thử/miễn phí và đã vào HTX:** chỉ tạo **Vụ theo HTX** (ẩn lựa chọn "vụ riêng"), tính vào hạn mức HTX. Vụ riêng đã tạo lúc dùng thử giữ nguyên đến hết, không tạo thêm. Hộ hết hạn dùng thử vẫn làm việc bình thường nhờ gói của HTX.
+   - **Hộ có gói trả phí riêng và ở trong HTX:** tự chọn từng vụ. **Mặc định "Vụ theo HTX"** với sản phẩm HTX bao tiêu (HTX khai danh mục bao tiêu); sản phẩm ngoài danh mục mặc định "Vụ riêng". Hai hạn mức **độc lập**: vụ theo HTX tính HTX, vụ riêng tính hộ, **không ai trả hai lần cho một vụ**.
+3. **Khu/nhà màng:** là **tài sản của hộ**, không tính hạn mức, không tính phí. HTX thấy khu của hộ khi có vụ theo HTX trên khu đó, hoặc hộ chia sẻ mức 1/2. (Nếu sau này muốn tính phí theo khu thì thêm hạn mức khu riêng, không gộp vào vụ.)
+4. **Bao tiêu và tiền:** với vụ theo HTX, **sản lượng giao HTX** là dữ liệu của HTX (đã đúng với cách ghi theo chủ vụ). Nhưng **chi phí sản xuất và thu nhập của hộ** là của hộ; việc ghi chúng vào sổ HTX là không đúng thực tế. Đề xuất thêm **Phiếu thu mua** (HTX mua của hộ): từ phiếu thu hoạch tạo giao dịch HTX–hộ (khối lượng, giá, thành tiền), sinh **công nợ phải trả của HTX / phải thu của hộ**; chi phí riêng của hộ vẫn ghi ở hộ (mức 3, hộ quyết chia sẻ). Đây là phần mới cần làm.
+5. **Giám sát chất lượng:** vụ theo HTX bắt buộc theo quy trình mẫu HTX; HTX thấy tiến độ, việc trễ, vật tư, cách ly, sự cố; có thể **đình chỉ thu hoạch/giao hàng** khi chưa hết cách ly (đã có cảnh báo cách ly).
+6. **Rời HTX:** vụ theo HTX đang chạy phải **kết thúc hoặc chuyển thành vụ riêng có HTX đồng ý** trước khi rời (nối tiếp quy tắc A2). Sau khi rời hộ **xuất toàn bộ dữ liệu**; HTX giữ bản chụp truy xuất theo mục 5.
+7. **Chống lách hạn mức:** một số điện thoại/hộ chỉ một lần dùng thử; vụ theo HTX không đếm vào gói hộ nên hộ không dùng gói dùng thử để "gánh" vụ của HTX.
+
+### Cần chốt thêm
+a. Đồng ý **mặc định theo gói** (mục 2): dùng thử → chỉ vụ theo HTX; có gói riêng → chọn từng vụ, mặc định theo danh mục bao tiêu?
+b. **Danh mục bao tiêu** do HTX khai (sản phẩm, có thể kèm giá thu mua tham chiếu) — đồng ý?
+c. Có làm **Phiếu thu mua** (mục 4) để tách tiền hộ và HTX không? (đề xuất: có, là đợt C/D của mục 6)
+d. Chuyển loại vụ giữa "theo HTX" và "riêng" có cần không, hay cấm hẳn sau khi tạo?
