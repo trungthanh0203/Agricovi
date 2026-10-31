@@ -334,3 +334,7 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - **Báo cáo thu mua / bán cho HTX** (`get_procurement_report`, loại mới trong Báo cáo theo nhu cầu, lưu được): HTX theo hộ/sản phẩm/tháng; hộ theo HTX; có số phiếu, khối lượng, thành tiền, đã trả/nhận, còn lại; xuất CSV có sẵn của Báo cáo.
 - **Xuất CSV sổ phiếu** và **In phiếu** (trang in có chỗ ký) ở màn Công nợ → Thu mua từ hộ / Bán cho HTX.
 - Chưa làm: gộp thu mua vào Tổng kết vụ/KPI Trang chủ (hiện thấy ở Công nợ và Báo cáo). **(d) chuyển vụ theo HTX → vụ riêng: chủ sản phẩm quyết định bỏ, không làm.**
+
+## D151 — Dữ liệu mẫu HTX + 5 hộ thành viên (`supabase/maintenance/seed_sample_htx_ho.sql`)
+- Dùng lại hộ có sẵn của HTX (hộ do HTX tạo, hộ có tài khoản đã chấp nhận), tạo thêm "Hộ mẫu ..." cho đủ 5. Mỗi hộ: phân khu, 2 nhà màng, kho, 8 vật tư, 2 nhà cung ứng, 6 vụ (đã kết thúc/đang chạy/chuẩn bị), nhật ký việc đã xong + xuất vật tư, thu hoạch, chi phí, doanh thu.
+- Phần mới của mô hình HTX–hộ: danh mục bao tiêu, đồng ý chia sẻ (hộ có tài khoản riêng giữ ý của hộ), vụ theo HTX/vụ riêng, phiếu thu mua + trả tiền (hộ số 5 nợ quá hạn), HTX bán lô thu mua cho 3 khách (công nợ phải thu). Chạy được nhiều lần (bỏ qua nếu đã có), `v_mode = 'XOA'` xóa chỉ dữ liệu mẫu và hộ "Hộ mẫu" do file tạo. Có test `seed_sample_htx_ho.test.mjs`.
