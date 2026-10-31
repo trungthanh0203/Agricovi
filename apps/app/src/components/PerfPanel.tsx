@@ -48,6 +48,17 @@ export function PerfPanel() {
           </table>
         </div>
       )}
+      {last?.top && last.top.length > 0 && (
+        <>
+          <p className="muted">Các yêu cầu nặng nhất của lần đo gần nhất:</p>
+          <div className="tablewrap">
+            <table className="grid">
+              <thead><tr><th>Bảng / hàm</th><th className="num">Lần</th><th className="num">KB</th><th className="num">ms</th></tr></thead>
+              <tbody>{last.top.slice(0, 8).map((t) => <tr key={t.name}><td>{t.name}</td><td className="num">{t.n}</td><td className="num">{t.kb}</td><td className="num">{t.ms}</td></tr>)}</tbody>
+            </table>
+          </div>
+        </>
+      )}
       {list.filter((s) => !s.ok && s.err).slice(0, 2).map((s) => <p key={s.at} className="msg error" role="alert">Lỗi lúc {new Date(s.at).toLocaleTimeString('vi-VN')}: {s.err}</p>)}
       {last && <p className="muted">Số dòng đang giữ trên máy: {Object.entries(last.rows).filter(([, v]) => v >= 0).map(([k, v]) => `${k} ${v}`).join(' · ')}</p>}
       <div className="btnrow">

@@ -12,10 +12,16 @@ export const missingEnv = [!url && 'VITE_SUPABASE_URL', !anonKey && 'VITE_SUPABA
 /** null khi chưa cấu hình .env - app hiện màn hướng dẫn cài đặt. */
 // Khi đang đo một lần đồng bộ (lib/perf.ts) thì cộng dung lượng dữ liệu từng phản hồi; bình thường chỉ chuyển tiếp, không tốn thêm gì
 const measuredFetch: typeof fetch = async (input, init) => {
+  const t0 = performance.now();
   const res = await fetch(input, init);
   if (perfState.measuring) {
     perfState.requests += 1;
-    void res.clone().arrayBuffer().then((b) => { perfState.bytes += b.byteLength; }).catch(() => undefined);
+    const href = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const name = href.replace(/^https?:\/\/[^/]+/, '').replace(/\?.*$/, '').replace('/rest/v1/', '').replace('/auth/v1/', 'auth/').replace('/functions/v1/', 'fn/');
+    void res.clone().arrayBuffer().then((b) => {
+      perfState.bytes += b.byteLength;
+      perfState.items.push({ name, kb: b.byteLength / 1024, ms: performance.now() - t0 });
+    }).catch(() => undefined);
   }
   return res;
 };
