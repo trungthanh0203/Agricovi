@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { ContactCard } from '../components/ContactCard';
 import { contactLine, useContactInfo } from '../lib/contactInfo';
+import { PerfPanel } from '../components/PerfPanel';
+import { useOrgs } from '../lib/orgs';
+import { hasRole } from '../lib/roles';
 import { shareSystem } from '../lib/shareApp';
 
 /**
@@ -9,6 +12,7 @@ import { shareSystem } from '../lib/shareApp';
  */
 export function SupportTab() {
   const info = useContactInfo();
+  const { active } = useOrgs();
   const [note, setNote] = useState('');
   return (
     <section>
@@ -22,6 +26,7 @@ export function SupportTab() {
         <button type="button" className="primary" onClick={() => void shareSystem(contactLine(info)).then(setNote)}>Chia sẻ hệ thống cho người khác</button>
         {note && <p className="muted" role="status">{note}</p>}
       </div>
+      {active && hasRole(active.roles, 'manager') && <PerfPanel />}
     </section>
   );
 }

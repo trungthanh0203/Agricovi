@@ -1,6 +1,7 @@
 import type { CycleStatus } from '@agriconnect/shared';
 import { db, type AreaKind, type AreaRow, type CycleRow, type LogRow, type NoteRow, type StageRow } from './db';
 import { syncFinanceDown } from './finance';
+import { beginSyncMeasure } from './perf';
 import { refreshCatalogCache } from './templates';
 import { syncHarvestsDown } from './harvest';
 import { syncCountEventsDown } from './counts';
@@ -70,7 +71,20 @@ async function selectAreas() {
 }
 
 /** Tải dữ liệu về thiết bị để dùng offline. Không ghi đè bản ghi đang chờ gửi hoặc đang xung đột. */
+/** Đồng bộ xuống từ máy chủ, có đo thời gian và dung lượng (xem lib/perf.ts) */
 export async function syncDown(): Promise<void> {
+  if (!supabase || !navigator.onLine) return;
+  const done = beginSyncMeasure();
+  try {
+    await syncDownRaw();
+    await done(true);
+  } catch (e) {
+    await done(false);
+    throw e;
+  }
+}
+
+async function syncDownRaw(): Promise<void> {
   if (!supabase || !navigator.onLine) return;
   await flushOutbox().catch((e) => console.warn('Chưa gửi hết phần chờ', e)); // gửi phần còn chờ trước để dữ liệu nhìn thấy khớp máy chủ
 
