@@ -120,7 +120,7 @@ export function OrgDetailPage({ id, onBack }: { id: string; onBack: () => void }
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // thanh toán
-  const [amount, setAmount] = useState('');
+  const [discount, setDiscount] = useState('');
   const [paidAt, setPaidAt] = useState(new Date().toLocaleDateString('en-CA'));
   const [method, setMethod] = useState('Chuyển khoản');
   const [note, setNote] = useState('');
@@ -139,11 +139,17 @@ export function OrgDetailPage({ id, onBack }: { id: string; onBack: () => void }
   if (!d) return <p className="muted">Đang tải…</p>;
   const typePlans = (plans ?? []).filter((p) => p.org_type === d.org.type && p.is_active);
 
+  // Thành tiền = số quý × giá/quý của gói được chọn (để trống = gói hiện tại); tổng thu = thành tiền − chiết khấu. CSDL chỉ lưu tổng thu, chiết khấu ghi vào ghi chú.
+  const curSub = [...d.subscriptions].sort((a, b) => b.period_end.localeCompare(a.period_end))[0];
+  const unitPrice = planId ? typePlans.find((p) => p.id === planId)?.price_per_quarter ?? 0 : curSub?.price_per_quarter ?? 0;
+  const gross = unitPrice * Number(quarters);
+  const disc = Number(discount.replace(/[.,\s]/g, '')) || 0;
+  const total = gross - disc;
   function pay(e: FormEvent) {
     e.preventDefault();
-    const a = Number(amount.replace(/[.,\s]/g, ''));
-    if (Number.isNaN(a) || a < 0 || !amount.trim()) return setErr('Số tiền không hợp lệ.');
-    void run(() => rpc('admin_record_payment', { p_org: id, p_amount: a, p_paid_at: paidAt, p_method: method, p_note: note, p_quarters: Number(quarters), p_plan: planId || null }), 'Đã ghi nhận thanh toán và gia hạn.');
+    if (disc < 0 || total < 0) return setErr('Chiết khấu không được lớn hơn thành tiền.');
+    const n = disc > 0 ? `${note.trim() ? `${note.trim()} · ` : ''}Thành tiền ${vnd(gross)}, chiết khấu ${vnd(disc)}` : note;
+    void run(() => rpc('admin_record_payment', { p_org: id, p_amount: total, p_paid_at: paidAt, p_method: method, p_note: n, p_quarters: Number(quarters), p_plan: planId || null }), 'Đã ghi nhận thanh toán và gia hạn.');
   }
   return (
     <>
@@ -162,11 +168,13 @@ export function OrgDetailPage({ id, onBack }: { id: string; onBack: () => void }
         <section className="card">
           <h2>Ghi nhận thanh toán / gia hạn</h2>
           <form className="form" onSubmit={pay}>
-            <label>Số tiền (đồng)<input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="numeric" /></label>
-            <label>Ngày thu<input type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} /></label>
-            <label>Hình thức<input value={method} onChange={(e) => setMethod(e.target.value)} /></label>
-            <label>Gia hạn (quý)<select value={quarters} onChange={(e) => setQuarters(e.target.value)}>{[1, 2, 3, 4, 6, 8].map((q) => <option key={q} value={q}>{q} quý</option>)}</select></label>
             <label>Gói (để trống = giữ gói hiện tại)<select value={planId} onChange={(e) => setPlanId(e.target.value)}><option value="">— Giữ gói hiện tại —</option>{typePlans.map((p) => <option key={p.id} value={p.id}>{p.name} ({vnd(p.price_per_quarter)}/quý)</option>)}</select></label>
+            <label>Gia hạn (quý)<select value={quarters} onChange={(e) => setQuarters(e.target.value)}>{[1, 2, 3, 4, 6, 8].map((q) => <option key={q} value={q}>{q} quý</option>)}</select></label>
+            <label>Thành tiền (đồng)<input value={vnd(gross)} readOnly /></label>
+            <label>Chiết khấu (đồng)<input value={discount} onChange={(e) => setDiscount(e.target.value)} inputMode="numeric" placeholder="0" /></label>
+            <label>Tổng thu (đồng)<input value={vnd(total)} readOnly /></label>
+            <label>Hình thức thanh toán<input value={method} onChange={(e) => setMethod(e.target.value)} /></label>
+            <label>Ngày thu<input type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} /></label>
             <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
             <button className="primary" disabled={busy}>Ghi nhận và gia hạn</button>
           </form>
