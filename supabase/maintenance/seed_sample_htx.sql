@@ -51,7 +51,7 @@ begin
     create temp table smp_del_partner (id uuid) on commit drop;
     insert into smp_del_cyc select id from production_cycles where owner_org_id = v_org and code like 'MAU-%';
     insert into smp_del_wk select id from worker_profiles where organization_id = v_org and phone like '09119000%';
-    insert into smp_del_partner select id from partners where organization_id = v_org and note like 'Dữ liệu mẫu%';
+    insert into smp_del_partner select id from partners where organization_id = v_org and note ~ '^Dữ liệu mẫu(\.|$)';
     delete from attendance_records where worker_id in (select id from smp_del_wk);
     alter table sale_receipts disable trigger sale_receipts_guard;   -- thu tiền thường không xóa được; riêng dữ liệu mẫu thì dọn
     delete from sale_receipts where sale_id in (select id from sales_records where cycle_id in (select id from smp_del_cyc));
@@ -64,23 +64,23 @@ begin
     alter table bill_payments enable trigger bill_payments_guard;
     alter table inventory_transactions disable trigger inventory_txn_guard_mod;   -- giao dịch kho thường không xóa được; riêng dữ liệu mẫu thì dọn
     delete from inventory_transactions where organization_id = v_org and (cycle_id in (select id from smp_del_cyc)
-      or location_id in (select id from inventory_locations where organization_id = v_org and description like 'Dữ liệu mẫu%')
-      or material_id in (select id from materials where organization_id = v_org and description like 'Dữ liệu mẫu%'));
+      or location_id in (select id from inventory_locations where organization_id = v_org and description ~ '^Dữ liệu mẫu(\.|$)')
+      or material_id in (select id from materials where organization_id = v_org and description ~ '^Dữ liệu mẫu(\.|$)'));
     alter table inventory_transactions enable trigger inventory_txn_guard_mod;
     delete from purchase_bills where partner_id in (select id from smp_del_partner);
     delete from activity_logs where cycle_id in (select id from smp_del_cyc);
     delete from production_stages where cycle_id in (select id from smp_del_cyc);
     delete from production_cycles where id in (select id from smp_del_cyc);
     delete from work_rates where worker_id in (select id from smp_del_wk);
-    delete from worker_team_memberships where team_id in (select id from worker_teams where organization_id = v_org and description like 'Dữ liệu mẫu%');
-    delete from worker_teams where organization_id = v_org and description like 'Dữ liệu mẫu%';
+    delete from worker_team_memberships where team_id in (select id from worker_teams where organization_id = v_org and description ~ '^Dữ liệu mẫu(\.|$)');
+    delete from worker_teams where organization_id = v_org and description ~ '^Dữ liệu mẫu(\.|$)';
     delete from worker_profiles where id in (select id from smp_del_wk);
     delete from material_lots where organization_id = v_org and lot_no ~ '^L[12]-[1-8]-[A-E]$';
-    delete from inventory_locations where organization_id = v_org and description like 'Dữ liệu mẫu%';
-    delete from materials where organization_id = v_org and description like 'Dữ liệu mẫu%';
-    delete from template_stages where template_id in (select id from cycle_templates where organization_id = v_org and note like 'Dữ liệu mẫu%');
-    delete from template_phases where template_id in (select id from cycle_templates where organization_id = v_org and note like 'Dữ liệu mẫu%');
-    delete from cycle_templates where organization_id = v_org and note like 'Dữ liệu mẫu%';
+    delete from inventory_locations where organization_id = v_org and description ~ '^Dữ liệu mẫu(\.|$)';
+    delete from materials where organization_id = v_org and description ~ '^Dữ liệu mẫu(\.|$)';
+    delete from template_stages where template_id in (select id from cycle_templates where organization_id = v_org and note ~ '^Dữ liệu mẫu(\.|$)');
+    delete from template_phases where template_id in (select id from cycle_templates where organization_id = v_org and note ~ '^Dữ liệu mẫu(\.|$)');
+    delete from cycle_templates where organization_id = v_org and note ~ '^Dữ liệu mẫu(\.|$)';
     delete from partners where id in (select id from smp_del_partner);
     delete from production_areas where organization_id = v_org and code like 'MAU-%' and parent_id is not null;
     delete from production_areas where organization_id = v_org and code like 'MAU-%';

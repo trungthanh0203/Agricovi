@@ -338,3 +338,6 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 ## D151 — Dữ liệu mẫu HTX + 5 hộ thành viên (`supabase/maintenance/seed_sample_htx_ho.sql`)
 - Dùng lại hộ có sẵn của HTX (hộ do HTX tạo, hộ có tài khoản đã chấp nhận), tạo thêm "Hộ mẫu ..." cho đủ 5. Mỗi hộ: phân khu, 2 nhà màng, kho, 8 vật tư, 2 nhà cung ứng, 6 vụ (đã kết thúc/đang chạy/chuẩn bị), nhật ký việc đã xong + xuất vật tư, thu hoạch, chi phí, doanh thu.
 - Phần mới của mô hình HTX–hộ: danh mục bao tiêu, đồng ý chia sẻ (hộ có tài khoản riêng giữ ý của hộ), vụ theo HTX/vụ riêng, phiếu thu mua + trả tiền (hộ số 5 nợ quá hạn), HTX bán lô thu mua cho 3 khách (công nợ phải thu). Chạy được nhiều lần (bỏ qua nếu đã có), `v_mode = 'XOA'` xóa chỉ dữ liệu mẫu và hộ "Hộ mẫu" do file tạo. Có test `seed_sample_htx_ho.test.mjs`.
+
+## D152 — Dữ liệu mẫu quy mô lớn cho chính cơ sở HTX (`seed_sample_htx_coso_lon.sql`)
+- Chủ HTX cũng là một cơ sở sản xuất, thường diện tích lớn: bộ này 8 trại × 5 nhà màng (120 vụ), 16 kho, 120 nhân sự (8 tổ × 15), 8 nhà cung ứng, 10 khách hàng; cùng cấu trúc với `seed_sample_htx.sql` (bản nhỏ). Nhãn riêng (`MAUL-`, "Mẫu quy mô lớn", SĐT 09118…) nên chạy chung được với bản nhỏ và `seed_sample_htx_ho.sql` mà không lẫn. Bản nhỏ nay chỉ khớp nhãn gốc "Dữ liệu mẫu" khi XÓA (không đụng "Dữ liệu mẫu hộ"). Test: `seed_sample_htx_coso_lon.test.mjs`.
