@@ -322,3 +322,9 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - **Danh mục bao tiêu** (`coop_procurement_items`, ⋮ → Hộ thành viên → "Sản phẩm HTX bao tiêu"): hộ thấy gợi ý "ghi theo HTX" khi tạo vụ sản phẩm đó.
 - **Hạn mức theo gói của hộ:** hộ thuộc HTX **chưa có gói trả phí riêng** chỉ tạo "vụ theo HTX" (ép ở CSDL: trigger `production_cycles_coop_member`; giao diện tự chọn HTX). Có gói trả phí riêng: chọn từng vụ, hai hạn mức độc lập. `quota_contexts` thêm `allowed`, `is_default`.
 - **Làm sau (đã đồng ý hướng):** (c) **Phiếu thu mua** HTX–hộ (công nợ phải trả HTX/phải thu hộ, tách tiền hai bên); (d) **chuyển một chiều vụ theo HTX → vụ riêng** (HTX duyệt, có lịch sử; chiều ngược lại để sau) — cần chuyển chủ vụ và các bản ghi con, rà các trigger bất biến; tài chính mức 3; ủy quyền nhập hộ; rời HTX có xuất dữ liệu và bản chụp truy xuất.
+
+## D149 — Phiếu thu mua HTX–hộ (migration 0153)
+- HTX mua sản phẩm của hộ thành viên (bao tiêu): **phiếu thu mua** (hộ, sản phẩm, vụ nguồn gốc tùy chọn, khối lượng × đơn giá = thành tiền, hạn trả, số phiếu) và **các lần HTX trả tiền**. Đây là **giao dịch giữa HTX và hộ**, không tính vào chi phí/doanh thu của vụ → tách tiền hai bên; sinh công nợ **HTX còn phải trả / hộ còn phải thu**.
+- Chỉ HTX (quyền `coop` sửa) lập phiếu, ghi trả tiền, hủy; **hộ (kể cả tài khoản "Hộ nhập liệu") chỉ xem** sổ của mình để đối chiếu. Không trả vượt tổng, ngày hợp lệ, lập/ghi lặp cùng mã không nhân đôi, hủy phải kèm lý do, phiếu đã có tiền thì hủy tiền trước; không xóa.
+- Giao diện: Công nợ → tab **"Thu mua từ hộ"** (HTX) / **"Bán cho HTX"** (hộ thuộc HTX). Gợi ý đơn giá từ danh mục bao tiêu (D148); chọn vụ của hộ nếu hộ đã cho HTX xem sản xuất (truy xuất).
+- Chưa làm: tự sinh phiếu từ phiếu thu hoạch; báo cáo/xuất CSV thu mua theo hộ và theo mùa; in phiếu; đưa vào báo cáo tài chính hộ/HTX (hiện nằm riêng trong Công nợ).

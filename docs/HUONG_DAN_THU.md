@@ -408,3 +408,8 @@ Tạo sản phẩm thuộc nhóm Thủy sản, tạo vụ: sổ nhật ký ở B
 3. Hộ: Tạo vụ mới → chỉ chọn được "ghi theo HTX" (chưa có gói trả phí riêng). Mục Hợp tác xã có ô chia sẻ dữ liệu sản xuất.
 4. HTX: ⋮ ở dòng hộ → "Xem sản xuất của hộ": thấy vụ, tiến độ, ghi việc gần nhất, thu hoạch, sự cố (chỉ xem). Hộ tắt chia sẻ (nếu HTX chưa khai bao tiêu) thì HTX không còn xem được.
 5. HTX khai "Sản phẩm HTX bao tiêu": hộ không tắt chia sẻ được nữa, và khi tạo vụ sản phẩm đó có gợi ý ghi theo HTX.
+
+## Thử: phiếu thu mua HTX–hộ (D149)
+1. HTX: Công nợ → tab "Thu mua từ hộ" → "+ Lập phiếu thu mua": chọn hộ, sản phẩm, khối lượng, đơn giá, hạn trả → Lưu phiếu.
+2. Mở hộ ở danh sách → "Ghi trả tiền" (thử trả vượt tổng sẽ bị chặn), "Các lần trả", "Hủy phiếu" (chỉ khi chưa trả).
+3. Hộ đăng nhập: Công nợ → tab "Bán cho HTX": thấy cùng phiếu, số còn phải thu khớp; hộ không có nút ghi/hủy.
