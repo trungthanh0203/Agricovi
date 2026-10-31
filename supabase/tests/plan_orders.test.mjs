@@ -22,10 +22,10 @@ async function setup() {
   return { db, admin, owner, mgr, org, plan, order };
 }
 
-test('danh sách gói mua được: đúng loại cơ sở, đang mở bán, không phải gói dùng thử; chỉ chủ xem', async () => {
+test('danh sách gói: đủ các gói đang mở của đúng loại cơ sở (không lẫn gói loại khác, không có gói đã ngừng); chỉ chủ xem', async () => {
   const { db, owner, mgr, org } = await setup();
   const list = (await asUser(db, owner, `select list_purchasable_plans($1) r`, [org])).rows[0].r;
-  assert.deepEqual(list.map((p) => p.name), ['Cơ bản', 'Nâng cao']);
+  assert.deepEqual(list.map((p) => [p.name, p.is_trial]), [['Dùng thử', true], ['Cơ bản', false], ['Nâng cao', false]]);   // đủ các gói đang mở của loại cơ sở; gói dùng thử chỉ để xem, không mua được
   assert.match(await expectError(asUser(db, mgr, `select list_purchasable_plans($1)`, [org])), /FORBIDDEN/);
 });
 

@@ -12,7 +12,7 @@ const STATUS_LABEL: Record<PlanUsage['status'], string> = {
 const vnd = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + 'đ';
 const date = (iso: string) => new Date(iso).toLocaleDateString('vi-VN');
 
-interface SalePlan { id: string; name: string; max_cycles: number; price_per_quarter: number }
+interface SalePlan { id: string; name: string; max_cycles: number; price_per_quarter: number; is_trial?: boolean }
 interface MyOrder { id: string; plan_name: string; quarters: number; amount: number; status: 'pending' | 'approved' | 'rejected'; admin_note: string | null; created_at: string }
 interface Purchase { purchased: boolean; quarters?: number; amount?: number; since?: string; until?: string }
 const ORDER_LABEL = { pending: 'Chờ xử lý', approved: 'Đã kích hoạt', rejected: 'Chưa duyệt' } as const;
@@ -33,16 +33,18 @@ export function PlanCard() {
   const [buying, setBuying] = useState<string | null>(null);   // gói đang mở biểu mẫu mua
   const orgId = active?.id;
 
+  // Chỉ tải lại khi ĐỔI cơ sở (không phụ thuộc đối tượng `active`, vốn đổi chỗ nhớ mỗi khi danh sách cơ sở được làm mới) và không xóa số cũ khi tải lại
+  const activeId = active?.id;
   useEffect(() => {
-    if (!active) return;
+    if (!activeId) return;
     let alive = true;
     setUsage(null);
     setError(null);
-    fetchUsage(active.id)
+    fetchUsage(activeId)
       .then((u) => alive && setUsage(u))
       .catch((e) => alive && setError(friendlyError(e)));
     return () => { alive = false; };
-  }, [active, fetchUsage]);
+  }, [activeId, fetchUsage]);
 
   const loadSale = useCallback(async () => {
     if (!orgId || !supabase || !navigator.onLine) return;
@@ -61,7 +63,7 @@ export function PlanCard() {
   const isCurrent = usage?.is_current === true;
   // Gia hạn thêm: mở biểu mẫu của chính gói đang dùng nếu gói đó đang bán; không thì chỉ cuộn tới danh sách để chọn gói
   const renew = () => {
-    const same = plans.find((p) => p.name === usage?.plan_name);
+    const same = plans.find((p) => p.name === usage?.plan_name && !p.is_trial);
     setBuying(same?.id ?? null);
     window.setTimeout(() => document.getElementById('plan-sale')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
@@ -80,7 +82,7 @@ export function PlanCard() {
             <p>Số vụ được dùng: <strong>{usage.used_cycles}/{usage.max_cycles}</strong></p>
             <p>Đã mua: {purchase?.purchased ? <strong>{purchase.quarters} quý · {vnd(purchase.amount ?? 0)}</strong> : <span className="muted">chưa mua (đang dùng thử)</span>}</p>
             {!isCurrent && <p className="msg warn">Gói đã hết hạn: bạn vẫn xem và ghi dữ liệu cũ được, nhưng chưa tạo được vụ mới. Hãy gia hạn hoặc chọn gói bên dưới.</p>}
-            {plans.length > 0 && <div className="btnrow"><button type="button" className="primary" onClick={renew}>Gia hạn thêm</button></div>}
+            {plans.some((p) => !p.is_trial) && <div className="btnrow"><button type="button" className="primary" onClick={renew}>Gia hạn thêm</button></div>}
           </>
         )}
       </div>
@@ -95,8 +97,12 @@ export function PlanCard() {
                 {plans.map((p) => (
                   <tr key={p.id} className={buying === p.id ? 'sel' : ''}>
                     <td><strong>{p.name}</strong><span className="sub">Tối đa {p.max_cycles} vụ</span></td>
-                    <td>{vnd(p.price_per_quarter)}</td>
-                    <td className="act"><button type="button" className="secondary" onClick={() => setBuying(buying === p.id ? null : p.id)}>{buying === p.id ? 'Đóng' : 'Đăng ký'}</button></td>
+                    <td>{p.is_trial ? 'Miễn phí' : vnd(p.price_per_quarter)}</td>
+                    <td className="act">
+                      {p.is_trial
+                        ? <span className="pill">Dùng thử</span>
+                        : <button type="button" className="secondary" onClick={() => setBuying(buying === p.id ? null : p.id)}>{buying === p.id ? 'Đóng' : 'Đăng ký'}</button>}
+                    </td>
                   </tr>
                 ))}
               </tbody>

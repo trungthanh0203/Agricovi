@@ -21,6 +21,7 @@ const stores = new Map<string, Store<unknown>>();
 
 function createStore<T>(read: () => Promise<T[]>): Store<T> {
   let value: T[] = EMPTY;
+  let lastKey = '';   // dấu vân của bản đã đọc: ghi đè bảng bằng dữ liệu y hệt (đồng bộ lại) thì không làm các màn tải lại
   const listeners = new Set<() => void>();
   let sub: Subscription | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -31,7 +32,13 @@ function createStore<T>(read: () => Promise<T[]>): Store<T> {
       if (timer) { clearTimeout(timer); timer = null; }
       if (!sub) {
         sub = liveQuery(read).subscribe({
-          next: (v) => { value = v; listeners.forEach((f) => f()); },
+          next: (v) => {
+            const key = JSON.stringify(v);
+            if (key === lastKey && value !== EMPTY) return;
+            lastKey = key;
+            value = v;
+            listeners.forEach((f) => f());
+          },
           error: () => undefined,
         });
       }
@@ -40,7 +47,7 @@ function createStore<T>(read: () => Promise<T[]>): Store<T> {
         if (listeners.size === 0 && !timer) {
           timer = setTimeout(() => {
             timer = null;
-            if (listeners.size === 0) { sub?.unsubscribe(); sub = null; value = EMPTY; }
+            if (listeners.size === 0) { sub?.unsubscribe(); sub = null; value = EMPTY; lastKey = ''; }
           }, 2000);
         }
       };

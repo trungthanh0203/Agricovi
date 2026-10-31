@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { MemberRole, OrgType } from '@agriconnect/shared';
 import { useAuth } from './auth';
 import { effectivePerms, type EffectivePerms, type PermOverrides } from './permissions';
@@ -91,6 +91,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [stale, setStale] = useState(false);
+  const lastLoadAt = useRef(0);
 
   const load = useCallback(async () => {
     if (!uid) {
@@ -156,7 +157,9 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         }];
       });
       list.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-      setOrgs(list);
+      lastLoadAt.current = Date.now();
+      // Dữ liệu giống hệt lần trước thì giữ nguyên (không làm các màn đang mở tải lại)
+      setOrgs((prev) => (JSON.stringify(prev) === JSON.stringify(list) ? prev : list));
       // Danh sách lưu trên máy từ bản cũ có thể bị trùng; ghi đè bằng danh sách đúng ngay bên dưới
       setStale(false);
       writeStore(cacheKey(uid), JSON.stringify(list));
@@ -176,11 +179,11 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     void load();
   }, [load]);
 
-  // Tự tải lại khi có mạng trở lại
+  // Tải lại danh sách cơ sở/quyền khi có mạng trở lại (nếu đã quá 1 phút) và khi mở lại app sau ít nhất 15 phút
+  // (để quyền chủ vừa đổi có hiệu lực); mở lại app nhanh thì không tải lại gì cả.
   useEffect(() => {
-    const on = () => void load();
-    // và khi mở lại app, để quyền chủ vừa đổi có hiệu lực sớm
-    const visible = () => { if (document.visibilityState === 'visible') on(); };
+    const on = () => { if (Date.now() - lastLoadAt.current > 60_000) void load(); };
+    const visible = () => { if (document.visibilityState === 'visible' && Date.now() - lastLoadAt.current > 15 * 60_000) void load(); };
     window.addEventListener('online', on);
     document.addEventListener('visibilitychange', visible);
     return () => {
@@ -221,7 +224,11 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const cycles = useTable('cycles');
   const activeBase = orgs.find((o) => o.id === activeId) ?? null;
   // chức năng hiện ra = hợp các mô hình của các vụ còn chạy (vụ chưa chọn mô hình = đầy đủ)
-  const active = useMemo(() => (activeBase ? { ...activeBase, features: orgFeatures(cycles, activeBase.id, activeBase.mgmtModel) } : null), [activeBase, cycles]);
+  // Đối tượng `active` chỉ đổi khi cơ sở hoặc chức năng hiện ra thật sự đổi (không đổi chỗ nhớ mỗi lần bảng vụ được làm mới)
+  const features = activeBase ? orgFeatures(cycles, activeBase.id, activeBase.mgmtModel) : null;
+  const featuresKey = JSON.stringify(features);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const active = useMemo(() => (activeBase && features ? { ...activeBase, features } : null), [activeBase, featuresKey]);
   const value = useMemo(
     () => ({ orgs, active, loading, stale, setActive, refresh: load, createOrg, fetchUsage }),
     [orgs, active, loading, stale, setActive, load, createOrg, fetchUsage],

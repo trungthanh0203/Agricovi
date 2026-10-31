@@ -160,7 +160,12 @@ function Shell() {
   }, [goTo]);
 
   useEffect(() => {
-    const sync = () => void syncDown().catch(() => undefined).finally(() => void refresh());
+    let lastSync = 0;
+    const sync = (force = false) => {
+      if (!force && Date.now() - lastSync < 45_000) { void refresh(); return; }   // mạng chập chờn: không tải lại dồn dập
+      lastSync = Date.now();
+      void syncDown().catch(() => undefined).finally(() => void refresh());
+    };
     const on = () => {
       setOnline(true);
       sync();
@@ -168,8 +173,8 @@ function Shell() {
     const off = () => setOnline(false);
     window.addEventListener('online', on);
     window.addEventListener('offline', off);
-    sync(); // gửi phần còn chờ rồi tải dữ liệu mới mỗi khi mở app (iOS không có đồng bộ nền)
-    const timer = window.setInterval(() => void refresh(), 3000); // cập nhật số bản ghi chờ gửi
+    sync(true); // gửi phần còn chờ rồi tải dữ liệu mới mỗi khi mở app (iOS không có đồng bộ nền)
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void refresh(); }, 5000); // cập nhật số bản ghi chờ gửi (dừng khi app ẩn)
     return () => {
       window.clearInterval(timer);
       window.removeEventListener('online', on);

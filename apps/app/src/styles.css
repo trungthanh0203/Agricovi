@@ -723,3 +723,6 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 
 .hero-exp { font-weight: 700; white-space: nowrap; }
 .hero-exp.warn { color: var(--warn); }
+
+/* Tên các khung trong Gói dịch vụ màu xanh lá cho nổi */
+.plan-frame h3.sub { color: var(--green); font-size: 1.05rem; }

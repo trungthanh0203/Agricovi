@@ -38,7 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
-      setSession(next);
+      // Cùng một người dùng (tab hiện lại, làm mới mã đăng nhập): giữ nguyên đối tượng phiên, không kích hoạt tải lại ở các màn đang mở
+      setSession((prev) => (prev && next && prev.user.id === next.user.id ? prev : next));
       if (event === 'PASSWORD_RECOVERY') setRecovering(true);
       if (event === 'SIGNED_OUT') setRecovering(false);
       setLoading(false);
