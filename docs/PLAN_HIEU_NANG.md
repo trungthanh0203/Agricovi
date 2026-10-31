@@ -52,3 +52,7 @@ Mục tiêu: một cơ sở có hàng trăm người làm, hàng chục vụ, h�
 ## Rủi ro cần canh
 - Đồng bộ gia tăng sai có thể làm máy hiển thị thiếu dữ liệu: bắt buộc có test đầu–cuối và nút "Tải lại toàn bộ" ở màn Hỗ trợ.
 - Mọi migration mới đi kèm test CSDL (một file gọn); không đổi dữ liệu đã có.
+
+## Tiến độ (cập nhật 31/10/2026)
+- **Xong:** Đợt 0 (đo), 1 (kiểm quyền một lần, danh mục 12 giờ, giai đoạn chỉ vụ chưa xong), 2 (phân trang, tổng ở máy chủ, xuất CSV), 4 (báo cáo; `attendance_summary` 24 s → 0,03 s). Số đo trên dữ liệu thử 300 người: mọi báo cáo dưới 2 s; mỗi yêu cầu đồng bộ nặng nhất dưới 1 s (giai đoạn còn 515 KB vì dữ liệu thử có 30 vụ đều đang chạy).
+- **Hoãn:** Đợt 3 (đồng bộ gia tăng, rủi ro cao) — làm khi số đo thực tế cho thấy cần. Đợt 5 (giao diện), 6 (giám sát) — làm khi có khách dùng thật.
