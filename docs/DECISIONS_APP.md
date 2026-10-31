@@ -273,3 +273,8 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - **1A**: `readable_cycle_ids()` / `readable_cycle_ids_perm()` tính tập vụ được xem MỘT LẦN mỗi câu truy vấn; chính sách đọc của giai đoạn, nhật ký, thu hoạch, ghi chú, sự cố, mốc, cách ly, cân, thức ăn, đếm, việc dùng `cycle_id in (select …)`. Quyền không đổi (test đối chiếu `rls_readable_cycles`, `farm_scope`).
 - **1C (một phần)**: đồng bộ nền chỉ tải lại danh mục (sản phẩm, loại việc, bản chỉnh) mỗi 12 giờ (`refreshCatalogIfStale`).
 - **Hoãn**: 1B (dấu thay đổi để bỏ qua đồng bộ) và giai đoạn chỉ cho vụ chưa kết thúc — cần đo lại sau 1A rồi quyết, vì sửa sai có thể làm máy thiếu dữ liệu.
+
+## D139 — Đợt 1C: giai đoạn chỉ tải cho vụ chưa kết thúc
+- Đồng bộ nền tải giai đoạn của vụ chưa `ended`/`cancelled` (theo nhóm 40 vụ); vụ đã xong giữ bản đã tải, mở chi tiết/sổ nhật ký thì tải (`refreshCycle`). Lỗi tải vụ thì không xóa giai đoạn trên máy.
+- Số đo sau 1A: người dùng báo nhanh hơn hẳn. `get_pay_overview` (114 KB, bảng lương) không thuộc đồng bộ; xử lý ở Đợt 2/4 (phân trang/tổng hợp).
+- 1B (dấu thay đổi) vẫn hoãn: chỉ làm nếu số đo cho thấy còn cần.

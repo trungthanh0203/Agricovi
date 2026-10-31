@@ -48,11 +48,21 @@ const STAGE_COLUMNS =
 /** Việc của vụ kèm công đoạn và mức độ quan trọng (migration 0109); CSDL chưa cập nhật thì dùng bộ cột cũ */
 type PagedResult = { data: unknown[] | null; error: { message?: string; code?: string } | null };
 /** Máy chủ chỉ trả tối đa 1000 dòng mỗi yêu cầu: tải từng trang cho tới khi hết để không bỏ sót giai đoạn khi có nhiều vụ */
-async function pageStages(cols: string, cycleId?: string): Promise<PagedResult> {
+async function pageStages(cols: string, cycleId?: string | string[]): Promise<PagedResult> {
+  if (Array.isArray(cycleId)) {
+    // nhiều vụ: tải theo nhóm 40 vụ để địa chỉ yêu cầu không quá dài
+    const all: unknown[] = [];
+    for (let i = 0; i < cycleId.length; i += 40) {
+      const r = await pageStages(cols, cycleId.slice(i, i + 40).join(','));
+      if (r.error) return r;
+      all.push(...(r.data ?? []));
+    }
+    return { data: all, error: null };
+  }
   const out: unknown[] = [];
   for (let from = 0; ; from += 1000) {
     let b = supabase!.from('production_stages').select(cols).order('id').range(from, from + 999);
-    if (cycleId) b = b.eq('cycle_id', cycleId);
+    if (cycleId) b = cycleId.includes(',') ? b.in('cycle_id', cycleId.split(',')) : b.eq('cycle_id', cycleId);
     const r = await b;
     if (r.error) return { data: null, error: r.error };   // ví dụ thiếu cột: để bậc dự phòng bên dưới thử tiếp
     const rows = (r.data ?? []) as unknown[];
@@ -60,7 +70,7 @@ async function pageStages(cols: string, cycleId?: string): Promise<PagedResult> 
     if (rows.length < 1000) return { data: out, error: null };
   }
 }
-async function selectStages(cycleId?: string) {
+async function selectStages(cycleId?: string | string[]) {
   const q = (cols: string) => pageStages(cols, cycleId);
   const rw = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials, log_waived_reason');
   if (!rw.error) return rw;
@@ -107,11 +117,17 @@ async function syncDownRaw(): Promise<void> {
   );
   const fresh = <T extends { id: string }>(rows: T[] | null) => (rows ?? []).filter((r) => !pendingIds.has(r.id));
 
+  const cyclesP = selectCycles();
+  // giai đoạn: chỉ của vụ chưa kết thúc/hủy; vụ đã xong tải khi mở chi tiết (D139)
+  const stagesP = cyclesP.then((r) => {
+    const ids = r.error ? [] : ((r.data ?? []) as unknown as CycleRow[]).filter((c) => c.status !== 'ended' && c.status !== 'cancelled').map((c) => c.id);
+    return ids.length ? selectStages(ids) : Promise.resolve({ data: [] as unknown[], error: null } as PagedResult);
+  });
   const [areas, cycles, logs, stages, notes] = await Promise.all([
     selectAreas(),
-    selectCycles(),
+    cyclesP,
     supabase.from('activity_logs').select(LOG_COLUMNS).order('performed_at', { ascending: false }).limit(200),
-    selectStages(),
+    stagesP,
     supabase.from('cycle_notes').select(NOTE_COLUMNS).order('note_date', { ascending: false }).limit(1000),
   ]);
   const cyclesRes: { data: unknown; error: { message?: string; code?: string } | null } = cycles;
@@ -134,8 +150,10 @@ async function syncDownRaw(): Promise<void> {
 
   await db.transaction('rw', [db.areas, db.cycles, db.logs, db.stages, db.notes], async () => {
     // giai đoạn chưa có (CSDL chưa cập nhật) thì bỏ qua, không làm hỏng phần còn lại
-    if (!stages.error) {
-      await db.stages.clear(); // giai đoạn đã xóa ở nơi khác thì bỏ khỏi máy
+    if (!stages.error && !cyclesRes.error) {
+      // giai đoạn đã xóa ở nơi khác thì bỏ khỏi máy; vụ đã kết thúc giữ nguyên bản đã tải (nếu có)
+      const endedIds = new Set(((cyclesRes.data ?? []) as unknown as CycleRow[]).filter((c) => c.status === 'ended' || c.status === 'cancelled').map((c) => c.id));
+      await db.stages.filter((s) => !endedIds.has(s.cycle_id)).delete();
       await db.stages.bulkPut(((stages.data ?? []) as unknown as StageRow[]));
     }
     if (!notes.error) {

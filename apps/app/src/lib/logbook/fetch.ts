@@ -1,5 +1,6 @@
 import { db, type CycleRow, type LogRow, type MaterialRow, type WorkTypeRow } from '../db';
 import { supabase } from '../supabase';
+import { refreshCycle } from '../production';
 import type { LogEntry, LogbookData, ReceiptEntry, Use } from './types';
 
 /**
@@ -61,6 +62,7 @@ export async function loadLogbookData(a: LoadArgs): Promise<LogbookData> {
   const entries: LogEntry[] = logs.map((l) => ({ log: l, wt: wtById.get(l.work_type_id), uses: usesByLog.get(l.id) ?? [] }));
 
   const cid = a.cycle?.id;
+  if (cid && navigator.onLine && (await db.stages.where('cycle_id').equals(cid).count()) === 0) await refreshCycle(cid).catch(() => undefined); // vụ đã kết thúc: giai đoạn chỉ tải khi cần (D139)
   const [harvests, incidents, actions, countEvents, stages, milestones, areas, auditsRes] = await Promise.all([
     cid ? db.harvests.where('cycle_id').equals(cid).toArray() : Promise.resolve([]),
     cid ? db.incidents.where('cycle_id').equals(cid).toArray() : Promise.resolve([]),
