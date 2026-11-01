@@ -68,9 +68,6 @@ export const DEFAULT_HEADER_NAV: SiteNavItem[] = [
 export const DEFAULT_ABOUT_MENU: SiteLink[] = [
   { label: 'Về chúng tôi', href: '/gioi-thieu' },
   { label: 'Hướng dẫn sử dụng', href: '/huong-dan-mua-hang' },
-  { label: 'Giới thiệu hệ thống Agricovi', href: '/huong-dan/he-thong/' },
-  { label: 'Hướng dẫn trồng trọt', href: '/huong-dan/trong-cay/' },
-  { label: 'Hướng dẫn vật nuôi', href: '/huong-dan/vat-nuoi/' },
   { label: 'Trung tâm trợ giúp', href: '/tro-giup' },
   { label: 'Liên hệ', href: '/lien-he' },
 ];
@@ -154,6 +151,10 @@ export const DEFAULT_PAGES: Record<string, DefaultPage> = {
     title: 'Trung tâm trợ giúp',
     description: 'Giải đáp thắc mắc khi dùng Agricovi.',
     body: [
+      '## Tài liệu hướng dẫn',
+      '[[Giới thiệu hệ thống Agricovi|/huong-dan/he-thong/]]',
+      '[[Hướng dẫn trồng trọt|/huong-dan/trong-cay/]]',
+      '[[Hướng dẫn vật nuôi|/huong-dan/vat-nuoi/]]',
       '## Câu hỏi thường gặp',
       '- Thông tin cơ sở trên website có đáng tin không? Hồ sơ do từng cơ sở tự khai và được kiểm duyệt trước khi hiển thị. Nhãn "Tự khai báo" nghĩa là chưa được xác minh độc lập.',
       '- Làm sao xem nguồn gốc một sản phẩm? Nhập mã vụ in trên bao bì (dạng VU-XXXXXXXX) hoặc quét mã QR.',

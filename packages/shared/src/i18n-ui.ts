@@ -32,6 +32,7 @@ export const EN_UI: Record<string, string> = {
   'Hướng dẫn sử dụng': 'User guide',
   'Trung tâm trợ giúp': 'Help center',
   'Giới thiệu hệ thống Agricovi': 'About the Agricovi system',
+  'Tài liệu hướng dẫn': 'Guides',
   'Hướng dẫn trồng trọt': 'Crop growing guide',
   'Hướng dẫn vật nuôi': 'Livestock guide',
   'Liên hệ': 'Contact',

@@ -344,5 +344,5 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 
 ## D153 — Ba tài liệu hướng dẫn đặt trên website (cả APP và WEB, theo yêu cầu chủ sản phẩm)
 - `docs/huongdan_hethong.html`, `huongdan_trongcay.html`, `huongdan_vatnuoi.html` là bản gốc; chạy `npm run docs:guides` chép vào `apps/web/public/huong-dan/{he-thong,trong-cay,vat-nuoi}/index.html` (trang tĩnh do Worker website phục vụ như `/admin/`): `agricovi.com/huong-dan/he-thong/`, `/trong-cay/`, `/vat-nuoi/`.
-- Website: menu "Tìm hiểu về Agricovi" (`DEFAULT_ABOUT_MENU`) thêm 3 mục; `_headers` đặt bộ nhớ đệm 1 giờ; `localizePath` không thêm `/en` cho `/huong-dan/…`. Nếu menu này đã được sửa trong quản trị website (lưu CSDL) thì thêm 3 mục bằng tay ở đó (mục `about_menu` ghi đè mặc định).
+- Website: ban đầu thêm 3 mục vào menu "Tìm hiểu về Agricovi"; SAU ĐÓ chuyển thành 3 tiêu đề đầu trang Trung tâm trợ giúp (`/tro-giup`, mục "Tài liệu hướng dẫn"), bỏ khỏi menu; `_headers` đặt bộ nhớ đệm 1 giờ; `localizePath` không thêm `/en` cho `/huong-dan/…`. Nếu menu này đã được sửa trong quản trị website (lưu CSDL) thì thêm 3 mục bằng tay ở đó (mục `about_menu` ghi đè mặc định).
 - App: Hỗ trợ & Chia sẻ → "Tài liệu hướng dẫn" (3 tiêu đề mở trang web ở tab mới, cần mạng); địa chỉ gốc theo `VITE_PUBLIC_SITE_URL` (mặc định agricovi.com).
