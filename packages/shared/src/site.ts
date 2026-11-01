@@ -232,9 +232,7 @@ export const DEFAULT_PAGES: Record<string, DefaultPage> = {
       '- Cần hỗ trợ trực tiếp hoặc báo vi phạm: trang Liên hệ.',
       '[[Trung tâm trợ giúp|/tro-giup]]',
       '[[Liên hệ hỗ trợ|/lien-he]]',
-    ].join('
-
-'),
+    ].join('\n\n'),
   },
   'huong-dan-mua-hang': {
     title: 'Hướng dẫn mua hàng',
