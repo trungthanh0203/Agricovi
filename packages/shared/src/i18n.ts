@@ -130,7 +130,7 @@ export function localizePath(path: string, lang: Lang): string {
   if (lang !== 'en') return path;
   if (!path.startsWith('/') || path.startsWith('//')) return path;
   if (path === EN_PREFIX || path.startsWith(EN_PREFIX + '/') || path.startsWith(EN_PREFIX + '?') || path.startsWith(EN_PREFIX + '#')) return path;
-  if (/^\/(anh|admin|_astro|api|sitemap|robots|favicon)/.test(path)) return path;
+  if (/^\/(anh|admin|huong-dan\/|_astro|api|sitemap|robots|favicon)/.test(path)) return path;
   if (/^\/[^?#]*\.[A-Za-z0-9]{2,5}([?#]|$)/.test(path)) return path;   // có đuôi tệp (.js, .png, .xml…)
   return path === '/' ? EN_PREFIX + '/' : EN_PREFIX + path;
 }

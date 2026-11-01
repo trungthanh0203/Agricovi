@@ -68,6 +68,9 @@ export const DEFAULT_HEADER_NAV: SiteNavItem[] = [
 export const DEFAULT_ABOUT_MENU: SiteLink[] = [
   { label: 'Về chúng tôi', href: '/gioi-thieu' },
   { label: 'Hướng dẫn sử dụng', href: '/huong-dan-mua-hang' },
+  { label: 'Giới thiệu hệ thống Agricovi', href: '/huong-dan/he-thong/' },
+  { label: 'Hướng dẫn trồng trọt', href: '/huong-dan/trong-cay/' },
+  { label: 'Hướng dẫn vật nuôi', href: '/huong-dan/vat-nuoi/' },
   { label: 'Trung tâm trợ giúp', href: '/tro-giup' },
   { label: 'Liên hệ', href: '/lien-he' },
 ];

@@ -7,6 +7,9 @@
   Cache-Control: public, max-age=604800
 /apple-touch-icon.png
   Cache-Control: public, max-age=604800
+/huong-dan/*
+  Cache-Control: public, max-age=3600
+  X-Content-Type-Options: nosniff
 /admin/*
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN

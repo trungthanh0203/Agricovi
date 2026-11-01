@@ -341,3 +341,8 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 
 ## D152 — Dữ liệu mẫu quy mô lớn cho chính cơ sở HTX (`seed_sample_htx_coso_lon.sql`)
 - Chủ HTX cũng là một cơ sở sản xuất, thường diện tích lớn: bộ này 8 trại × 5 nhà màng (120 vụ), 16 kho, 120 nhân sự (8 tổ × 15), 8 nhà cung ứng, 10 khách hàng; cùng cấu trúc với `seed_sample_htx.sql` (bản nhỏ). Nhãn riêng (`MAUL-`, "Mẫu quy mô lớn", SĐT 09118…) nên chạy chung được với bản nhỏ và `seed_sample_htx_ho.sql` mà không lẫn. Bản nhỏ nay chỉ khớp nhãn gốc "Dữ liệu mẫu" khi XÓA (không đụng "Dữ liệu mẫu hộ"). Test: `seed_sample_htx_coso_lon.test.mjs`.
+
+## D153 — Ba tài liệu hướng dẫn đặt trên website (cả APP và WEB, theo yêu cầu chủ sản phẩm)
+- `docs/huongdan_hethong.html`, `huongdan_trongcay.html`, `huongdan_vatnuoi.html` là bản gốc; chạy `npm run docs:guides` chép vào `apps/web/public/huong-dan/{he-thong,trong-cay,vat-nuoi}/index.html` (trang tĩnh do Worker website phục vụ như `/admin/`): `agricovi.com/huong-dan/he-thong/`, `/trong-cay/`, `/vat-nuoi/`.
+- Website: menu "Tìm hiểu về Agricovi" (`DEFAULT_ABOUT_MENU`) thêm 3 mục; `_headers` đặt bộ nhớ đệm 1 giờ; `localizePath` không thêm `/en` cho `/huong-dan/…`. Nếu menu này đã được sửa trong quản trị website (lưu CSDL) thì thêm 3 mục bằng tay ở đó (mục `about_menu` ghi đè mặc định).
+- App: Hỗ trợ & Chia sẻ → "Tài liệu hướng dẫn" (3 tiêu đề mở trang web ở tab mới, cần mạng); địa chỉ gốc theo `VITE_PUBLIC_SITE_URL` (mặc định agricovi.com).
