@@ -1,0 +1,114 @@
+---
+import Base from '../layouts/Base.astro';
+import { link, sb } from '../lib/db';
+import { loadChrome } from '../lib/site';
+
+// Trang Liên hệ hai cột: bên trái thông tin đơn vị (đọc public_contact_info, do quản trị nền tảng sửa; thiếu thì lấy Thông tin chung của website),
+// bên phải biểu mẫu gửi liên hệ. Tin gửi đi nằm trong "Yêu cầu báo giá" của quản trị website, có tiền tố [Liên hệ].
+const chrome = await loadChrome();
+let info: Record<string, string> = {};
+try {
+  if (sb) {
+    const { data } = await sb.rpc('public_contact_info');
+    if (data && typeof data === 'object') info = data as Record<string, string>;
+  }
+} catch { /* dùng thông tin dự phòng */ }
+const c = chrome.settings.contact;
+const company = info.company || c.operator || '';
+const address = info.address || c.address || '';
+const phone = info.phone || c.hotline || '';
+const zalo = info.zalo || '';
+const email = info.email || c.email || '';
+const website = link(info.website);
+const facebook = link(info.facebook || chrome.settings.social.facebook);
+const youtube = link(info.youtube || chrome.settings.social.youtube);
+const shown = (u: string) => u.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
+const digits = (s: string) => s.replace(/[^0-9+]/g, '');
+const mapHref = address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address) : '';
+type Row = { ico: string; label: string; text: string; href?: string };
+const rows = ([
+  address && { ico: '📍', label: 'Địa chỉ', text: address },
+  phone && { ico: '📞', label: 'Điện thoại', text: phone, href: 'tel:' + digits(phone) },
+  zalo && { ico: '💬', label: 'Zalo', text: zalo, href: 'https://zalo.me/' + digits(zalo) },
+  email && { ico: '✉️', label: 'Email', text: email, href: 'mailto:' + email },
+  website && { ico: '🌐', label: 'Website', text: shown(website), href: website },
+  facebook && { ico: '📘', label: 'Facebook', text: shown(facebook), href: facebook },
+  youtube && { ico: '▶️', label: 'YouTube', text: shown(youtube), href: youtube },
+].filter(Boolean)) as Row[];
+
+const v = { name: '', phone: '', email: '', address: '', subject: '', msg: '' };
+let error = '';
+let done = false;
+if (Astro.request.method === 'POST') {
+  const f = await Astro.request.formData();
+  const g = (k: string) => String(f.get(k) ?? '').trim().slice(0, 1200);
+  Object.assign(v, { name: g('name'), phone: g('phone'), email: g('email'), address: g('address'), subject: g('subject'), msg: g('msg') });
+  if (g('website')) done = true; // ô bẫy: người thật không thấy ô này
+  else if (!sb) error = 'Website chưa được cấu hình kết nối dữ liệu.';
+  else if (!v.phone || !v.email) error = 'Hãy nhập số điện thoại và email để chúng tôi liên hệ lại.';
+  else {
+    const message = ['[Liên hệ]' + (v.subject ? ' ' + v.subject : ''), v.address && 'Địa chỉ: ' + v.address, v.msg].filter(Boolean).join('\n');
+    const { error: e } = await sb.rpc('submit_quote_request', {
+      p_kind: 'general', p_target: null, p_name: v.name, p_phone: v.phone, p_email: v.email, p_qty: null, p_message: message,
+    });
+    if (e) error = e.message.replace(/^[A-Z_]{4,}: /, '');
+    else done = true;
+  }
+}
+---
+<Base title="Liên hệ — Agricovi" description="Thông tin liên hệ và biểu mẫu gửi tin tới Agricovi." cache={false}>
+  <h1 class="ct-title">Liên hệ</h1>
+  <div class="contact2">
+    <section class="ct-card ct-info">
+      <h2>Liên hệ hỗ trợ</h2>
+      {company && <h3>{company}</h3>}
+      {rows.length === 0 && <p class="muted">Đang cập nhật.</p>}
+      <ul class="ct-list">
+        {rows.map((r) => (
+          <li><span class="ct-ico" aria-hidden="true">{r.ico}</span><span class="ct-lab">{r.label}</span>
+            {r.href ? <a href={r.href} rel="noopener" target={r.href.startsWith('http') ? '_blank' : undefined}>{r.text}</a> : <span class="ct-val">{r.text}</span>}
+          </li>
+        ))}
+      </ul>
+      {mapHref && <p><a class="btn" href={mapHref} target="_blank" rel="noopener">🗺️ Xem bản đồ</a></p>}
+    </section>
+
+    <section class="ct-card ct-form">
+      <h2>Form liên hệ</h2>
+      {done ? (
+        <div class="ok"><p><b>Đã gửi.</b> Cảm ơn bạn, chúng tôi sẽ liên hệ lại qua số điện thoại hoặc email bạn đã nhập.</p><p><a class="btn solid" href="/">Về trang chủ</a></p></div>
+      ) : (
+        <form method="post" class="ct-fields">
+          {error && <p class="err" role="alert">{error}</p>}
+          <div class="hp" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off" /></label></div>
+          <label><span aria-hidden="true">👤</span><input name="name" required minlength="2" maxlength="80" value={v.name} placeholder="Họ & tên (*)" autocomplete="name" /></label>
+          <label><span aria-hidden="true">📞</span><input name="phone" required inputmode="tel" maxlength="20" value={v.phone} placeholder="Số điện thoại (*)" autocomplete="tel" /></label>
+          <label><span aria-hidden="true">✉️</span><input name="email" type="email" required maxlength="120" value={v.email} placeholder="Email (*)" autocomplete="email" /></label>
+          <label><span aria-hidden="true">📍</span><input name="address" maxlength="200" value={v.address} placeholder="Địa chỉ" autocomplete="street-address" /></label>
+          <label><span aria-hidden="true">➤</span><input name="subject" maxlength="120" value={v.subject} placeholder="Tiêu đề" /></label>
+          <label class="ta"><span aria-hidden="true">✏️</span><textarea name="msg" required rows="6" maxlength="1000" placeholder="Nội dung liên hệ (*)">{v.msg}</textarea></label>
+          <p class="muted">Vui lòng không dán đường dẫn trong nội dung. Thông tin của bạn chỉ dùng để liên hệ lại.</p>
+          <button class="btn solid" type="submit">Gửi liên hệ</button>
+        </form>
+      )}
+    </section>
+  </div>
+</Base>
+
+<style is:global>
+  .ct-title { margin: 6px 0 12px; }
+  .contact2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .ct-card { background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 20px 22px; }
+  .ct-card h2 { margin: 0 0 10px; font-size: 1.25rem; color: var(--g-d); }
+  .ct-info h3 { margin: 0 0 12px; font-size: 1.1rem; }
+  .ct-list { list-style: none; margin: 0 0 14px; padding: 0; }
+  .ct-list li { display: grid; grid-template-columns: 26px 92px minmax(0, 1fr); gap: 4px 8px; align-items: baseline; padding: 7px 0; }
+  .ct-lab { color: var(--muted); } .ct-list a { font-weight: 700; overflow-wrap: anywhere; } .ct-val { overflow-wrap: anywhere; }
+  .ct-fields { display: grid; gap: 10px; }
+  .ct-fields label { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 0 12px; background: #fff; }
+  .ct-fields label:focus-within { border-color: var(--g); box-shadow: 0 0 0 3px rgba(22,128,67,.18); }
+  .ct-fields label span { flex: none; opacity: .6; }
+  .ct-fields input, .ct-fields textarea { flex: 1; min-width: 0; border: 0; outline: 0; padding: 12px 0; font: inherit; background: transparent; resize: vertical; }
+  .ct-fields label.ta { align-items: flex-start; } .ct-fields label.ta span { padding-top: 12px; }
+  @media (max-width: 800px) { .contact2 { grid-template-columns: 1fr; } .ct-list li { grid-template-columns: 26px 82px minmax(0, 1fr); } }
+</style>
