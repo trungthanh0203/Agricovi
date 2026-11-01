@@ -27,5 +27,8 @@ test('admin_org_summary / admin_org_items: chỉ quản trị viên, đếm đú
   assert.equal(JSON.stringify(ex).includes('123456'), false);
   const md = (await asUser(db, admin, `select admin_org_items($1,'models') r`, [org])).rows[0].r;
   assert.equal(md[0][3], 'family');
+  for (const k of ['plan', 'models', 'cycles', 'areas', 'cells', 'warehouses', 'staff', 'templates', 'expenses', 'harvests', 'sales', 'public_cycles', 'web_orders']) {
+    assert.ok(Array.isArray((await asUser(db, admin, `select admin_org_items($1,$2) r`, [org, k])).rows[0].r), k);
+  }
   assert.match(await expectError(asUser(db, admin, `select admin_org_items($1,'xyz')`, [org])), /INVALID_KIND/);
 });
