@@ -2,7 +2,7 @@ import { StrictMode, useEffect, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Session } from '@supabase/supabase-js';
 import { clean, rpc, supabase } from '@agriconnect/admin-kit';
-import { AuditPage, OrgDetailPage, OrgsPage, OverviewPage, PaymentsPage, PlansPage, RolesPage, SettingsPage, SignupsPage, PlanOrdersPage } from './pages';
+import { AuditPage, OrgDetailPage, OrgSummaryPage, OrgsPage, OverviewPage, PaymentsPage, PlansPage, RolesPage, SettingsPage, SignupsPage, PlanOrdersPage } from './pages';
 import '@agriconnect/admin-kit/src/styles.css';
 
 /**
@@ -16,6 +16,7 @@ const WEBADMIN_URL = ((import.meta as unknown as { env?: Record<string, string |
 const PAGES: { id: string; label: string; icon: string }[] = [
   { id: 'overview', label: 'Tổng quan', icon: '📊' },
   { id: 'orgs', label: 'Cơ sở', icon: '🏡' },
+  { id: 'summary', label: 'Tổng hợp cơ sở', icon: '🧮' },
   { id: 'signups', label: 'Đăng ký chờ duyệt', icon: '📝' },
   { id: 'orders', label: 'Đơn mua gói', icon: '🛒' },
   { id: 'plans', label: 'Gói và giá', icon: '🏷️' },
@@ -78,6 +79,7 @@ function Admin({ session }: { session: Session }) {
         <h1>{orgId ? 'Chi tiết cơ sở' : title}</h1>
         {page === 'overview' && <OverviewPage onOpenOrg={(id) => { setPage('orgs'); setOrgId(id); }} go={go} />}
         {page === 'orgs' && (orgId ? <OrgDetailPage id={orgId} onBack={() => setOrgId(null)} /> : <OrgsPage onOpen={setOrgId} />)}
+        {page === 'summary' && <OrgSummaryPage initialOrg={null} />}
         {page === 'signups' && <SignupsPage />}
         {page === 'orders' && <PlanOrdersPage />}
         {page === 'plans' && <PlansPage />}

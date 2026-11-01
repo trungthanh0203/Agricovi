@@ -212,6 +212,114 @@ export function OrgDetailPage({ id, onBack }: { id: string; onBack: () => void }
   );
 }
 
+// ============================================================ Tổng hợp cơ sở (số liệu + bảng chi tiết từng mục)
+interface OrgSummary {
+  org: { id: string; name: string; type: string; created_at: string; mgmt_model: string | null };
+  plan: { name: string | null; status: string; period_start: string | null; period_end: string | null; max_cycles: number | null };
+  models: number; cycles: number; areas: number; cells: number; warehouses: number; staff: number; templates: number;
+  expenses: number; harvests: number; sales: number; public_cycles: number; web_orders: number;
+}
+const MODEL_LABEL: Record<string, string> = { family: 'Tự làm trong gia đình', monthly: 'Người làm công tháng', managed: 'Có người quản lý', staffed: 'Nhiều nhân viên', vietgap: 'Chuẩn VietGAP' };
+const CYCLE_STATUS: Record<string, string> = { preparing: 'Chuẩn bị', active: 'Đang chạy', paused: 'Tạm dừng', completed: 'Đã xong', cancelled: 'Đã hủy', closed: 'Đã đóng' };
+const AREA_KIND: Record<string, string> = { crop: 'Cây trồng', livestock: 'Vật nuôi', aquatic: 'Thủy sản', facility: 'Cơ sở vật chất', other: 'Khác' };
+const ORDER_STATUS: Record<string, string> = { placed: 'Mới đặt', quoted: 'Đã báo giá', accepted: 'Đã nhận', preparing: 'Đang chuẩn bị', shipped: 'Đang giao', delivered: 'Đã giao', completed: 'Hoàn tất', cancelled: 'Đã hủy', rejected: 'Từ chối' };
+const PAY_STATUS: Record<string, string> = { unpaid: 'Chưa thanh toán', partial: 'Thanh toán một phần', paid: 'Đã thanh toán' };
+const SOURCE_LABEL: Record<string, string> = { online: 'Nhập trực tiếp', offline: 'Nhập khi mất mạng' };
+const EXPENSE_KIND: Record<string, string> = { cash_paid: 'Đã chi tiền', allocated: 'Phân bổ', estimated: 'Ước tính', payable: 'Còn nợ' };
+
+type Cell = 't' | 'd' | 'b' | 'n' | Record<string, string>;
+interface ItemKind { id: keyof OrgSummary | 'plan'; label: string; cols: [string, Cell][]; note?: string }
+const YES = (v: unknown) => (v ? 'Có' : 'Không');
+const ITEM_KINDS: ItemKind[] = [
+  { id: 'plan', label: 'Lịch sử gói', cols: [['Gói', 't'], ['Trạng thái', STATUS_LABEL], ['Từ', 'd'], ['Đến', 'd'], ['Số vụ tối đa', 'n']] },
+  { id: 'models', label: 'Cách quản lý vụ', cols: [['Vụ', 't'], ['Sản phẩm', 't'], ['Trạng thái', CYCLE_STATUS], ['Cách quản lý', MODEL_LABEL], ['Bắt đầu', 'd']] },
+  { id: 'areas', label: 'Phân khu', cols: [['Tên', 't'], ['Thuộc', 't'], ['Loại', AREA_KIND], ['Diện tích', 'n'], ['Đơn vị', 't'], ['Đang dùng', 'b']] },
+  { id: 'cells', label: 'Nhà màng (cấp con)', cols: [['Tên', 't'], ['Thuộc phân khu', 't'], ['Loại', AREA_KIND], ['Diện tích', 'n'], ['Đơn vị', 't'], ['Đang dùng', 'b']] },
+  { id: 'warehouses', label: 'Kho', cols: [['Tên kho', 't'], ['Đang dùng', 'b'], ['Tạo ngày', 'd']] },
+  { id: 'staff', label: 'Nhân sự', cols: [['Họ tên', 't'], ['Trạng thái', { active: 'Đang làm', inactive: 'Đã nghỉ' }], ['Có tài khoản app', 'b'], ['Thêm ngày', 'd']] },
+  { id: 'templates', label: 'Quy trình', cols: [['Tên quy trình', 't'], ['Sản phẩm', 't'], ['Phiên bản', 'n'], ['Đang dùng', 'b'], ['Tạo ngày', 'd']] },
+  { id: 'expenses', label: 'Chi phí', cols: [['Ngày', 'd'], ['Vụ', 't'], ['Nhóm chi', 't'], ['Loại', EXPENSE_KIND], ['Đã hủy', 'b']], note: 'Chỉ hiện ngày và nhóm; không hiện số tiền của nhà vườn.' },
+  { id: 'harvests', label: 'Thu hoạch', cols: [['Ngày', 'd'], ['Vụ', 't'], ['Phân loại', 't'], ['Cách nhập', SOURCE_LABEL], ['Đã hủy', 'b']], note: 'Chỉ hiện ngày và vụ; không hiện sản lượng.' },
+  { id: 'sales', label: 'Doanh thu', cols: [['Ngày', 'd'], ['Vụ', 't'], ['Cách nhập', SOURCE_LABEL], ['Đã hủy', 'b']], note: 'Chỉ hiện ngày và vụ; không hiện số tiền.' },
+  { id: 'public_cycles', label: 'Vụ công khai trên web', cols: [['Mã', 't'], ['Vụ', 't'], ['Đang hiện', 'b'], ['Công khai ngày', 'd']] },
+  { id: 'web_orders', label: 'Đơn từ web', cols: [['Mã đơn', 't'], ['Trạng thái', ORDER_STATUS], ['Thanh toán', PAY_STATUS], ['Đặt ngày', 'd']] },
+];
+const showCell = (v: unknown, c: Cell): string => {
+  if (v === null || v === undefined || v === '') return '—';
+  if (c === 'd') return fmtDate(String(v));
+  if (c === 'b') return YES(v);
+  if (typeof c === 'object') return c[String(v)] ?? String(v);
+  return String(v);
+};
+
+export function OrgSummaryPage({ initialOrg }: { initialOrg: string | null }) {
+  const [q, setQ] = useState('');
+  const [orgId, setOrgId] = useState<string | null>(initialOrg);
+  const [kind, setKind] = useState<string>('plan');
+  const { data: list } = useLoad(() => rpc<{ total: number; rows: OrgRow[] }>('admin_list_orgs', { p_search: q || null, p_status: null, p_limit: 50, p_offset: 0 }), [q]);
+  const { data: s, error } = useLoad(() => (orgId ? rpc<OrgSummary>('admin_org_summary', { p_org: orgId }) : Promise.resolve(null)), [orgId]);
+  const { data: items, error: e2, loading } = useLoad(() => (orgId ? rpc<unknown[][]>('admin_org_items', { p_org: orgId, p_kind: kind }) : Promise.resolve(null)), [orgId, kind]);
+  const def = ITEM_KINDS.find((k) => k.id === kind)!;
+  const count = (id: string): ReactNode => {
+    if (!s) return '…';
+    if (id === 'plan') return s.plan.name ?? 'Chưa có';
+    return Number((s as unknown as Record<string, number>)[id] ?? 0);
+  };
+  const tile = (id: string, label: string, note?: string) => (
+    <button key={id} className={`kpi linkish ${kind === id ? 'info' : ''}`} onClick={() => setKind(id)} aria-pressed={kind === id}>
+      <span>{label}</span><strong>{count(id)}</strong>{note && <small>{note}</small>}
+    </button>
+  );
+  return (
+    <>
+      <div className="toolbar">
+        <input placeholder="Tìm cơ sở theo tên hoặc email chủ…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <select value={orgId ?? ''} onChange={(e) => { setOrgId(e.target.value || null); setKind('plan'); }}>
+          <option value="">— Chọn cơ sở —</option>
+          {(list?.rows ?? []).map((o) => <option key={o.id} value={o.id}>{o.name}{o.owner_email ? ` · ${o.owner_email}` : ''}</option>)}
+        </select>
+      </div>
+      <Err e={error} />
+      {!orgId && <p className="muted">Hãy chọn một cơ sở để xem tổng hợp.</p>}
+      {s && (
+        <>
+          <h2>{s.org.name} <Badge s={s.plan.status} /></h2>
+          <p className="muted">{s.org.type === 'cooperative' ? 'Hợp tác xã' : 'Hộ / trang trại'} · tạo {fmtDate(s.org.created_at)} · ấn vào một ô để xem chi tiết ở bảng bên dưới</p>
+          <div className="kpis">
+            {tile('plan', 'Gói đang dùng', s.plan.period_end ? `Hạn ${fmtDate(s.plan.period_end)}${s.plan.max_cycles ? ` · tối đa ${s.plan.max_cycles} vụ` : ''}` : undefined)}
+            {tile('models', 'Cách quản lý vụ', `${s.models} cách · ${s.cycles} vụ`)}
+            {tile('areas', 'Phân khu')}
+            {tile('cells', 'Nhà màng (cấp con)')}
+            {tile('warehouses', 'Kho')}
+            {tile('staff', 'Nhân sự')}
+            {tile('templates', 'Quy trình')}
+            {tile('expenses', 'Lần chi phí')}
+            {tile('harvests', 'Lần thu hoạch')}
+            {tile('sales', 'Lần doanh thu')}
+            {tile('public_cycles', 'Vụ công khai trên web')}
+            {tile('web_orders', 'Đơn từ web')}
+          </div>
+        </>
+      )}
+      {orgId && s && (
+        <section className="card">
+          <h2>{def.label}{items ? ` (${items.length})` : ''}</h2>
+          {def.note && <p className="muted">{def.note}</p>}
+          <Err e={e2} />
+          {loading && <p className="muted">Đang tải…</p>}
+          <table className="list">
+            <thead><tr>{def.cols.map(([h]) => <th key={h}>{h}</th>)}</tr></thead>
+            <tbody>
+              {items && items.length === 0 && <tr><td colSpan={def.cols.length} className="muted">Chưa có.</td></tr>}
+              {(items ?? []).map((r, i) => <tr key={i}>{def.cols.map(([h, c], j) => <td key={h}>{showCell(r[j], c)}</td>)}</tr>)}
+            </tbody>
+          </table>
+        </section>
+      )}
+    </>
+  );
+}
+
 // ============================================================ Thanh toán (tất cả)
 interface PayRow { id: string; amount: number; paid_at: string; method: string | null; note: string | null; subscriptions: { organizations: { name: string } | null; plan_tiers: { name: string } | null } | null }
 export function PaymentsPage() {
