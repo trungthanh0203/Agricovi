@@ -40,10 +40,14 @@ export function areaPath(areaId: string | null | undefined, areas: AreaRow[]): s
 /** Tên riêng của khu/ô (không kèm phân khu cha): dùng trong nhãn vụ "Tên vụ · tên ô" */
 export const areaName = (areaId: string | null | undefined, areas: AreaRow[]): string => areas.find((x) => x.id === areaId)?.name ?? '';
 
-/** Diện tích hiển thị của phân khu: có ô sản xuất thì cộng diện tích các ô (đổi ha sang m² để cộng), nếu không thì diện tích của chính nó */
+/**
+ * Diện tích hiển thị của phân khu: phân khu đã nhập diện tích riêng thì dùng số đó (thêm ô sản xuất KHÔNG tự cộng vào nữa);
+ * chưa nhập thì cộng diện tích các ô (đổi ha sang m² để cộng); không có ô thì diện tích của chính nó
+ */
 export function areaSizeM2(a: AreaRow, areas: AreaRow[]): number | null {
   const toM2 = (x: AreaRow) => (x.area_size == null ? 0 : x.area_unit === 'ha' ? x.area_size * 10000 : x.area_size);
   const kids = areas.filter((c) => c.parent_id === a.id);
+  if (a.area_size != null && toM2(a) > 0) return toM2(a);
   if (kids.length === 0) return a.area_size == null ? null : toM2(a);
   const sum = kids.reduce((s, c) => s + toM2(c), 0);
   return sum > 0 ? sum : null;

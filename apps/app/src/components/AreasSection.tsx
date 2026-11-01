@@ -112,7 +112,7 @@ export function AreasSection() {
             </span>
           )}
         </td>
-        <td className="num">{!isCell && kids.length > 0 ? (m2 ? `${fmtM2(m2)} (tổng)` : '—') : fmtSize(a) || '—'}</td>
+        <td className="num">{!isCell && kids.length > 0 ? (m2 ? fmtM2(m2) : '—') : fmtSize(a) || '—'}</td>
         {canManage && (
           <td className="act">
             <button className="icon" disabled={busy || !online} aria-label={a.is_active === false ? `Dùng lại ${a.name}` : `Dừng ${a.name}`}
@@ -208,8 +208,8 @@ function ZoneForm({ title, initial, hasCells, hasCycles, busy, onSave, onClose }
   const legacyLeaf = !!initial && !hasCells && (initial.area_size != null || !!initial.housing || !!hasCycles);
   const [legacyChoice, setLegacyChoice] = useState(choiceOf(initial));
   const [legacyHousing, setLegacyHousing] = useState<string>(housingText(initial?.housing));
-  const [size, setSize] = useState(initial?.area_size != null ? String(initial.area_size) : '');
-  const [unit, setUnit] = useState<'m2' | 'ha'>(initial?.area_unit ?? 'm2');
+  // diện tích riêng của phân khu, nhập theo m² (phân khu cũ lưu ha thì đổi sang m² để sửa)
+  const [size, setSize] = useState(initial?.area_size != null ? String(initial.area_unit === 'ha' ? Math.round(initial.area_size * 10000) : initial.area_size) : '');
   // chỉ khi thêm mới: tạo sẵn ô sản xuất
   const [cellCount, setCellCount] = useState('1');
   const [cellPrefix, setCellPrefix] = useState('');
@@ -231,14 +231,10 @@ function ZoneForm({ title, initial, hasCells, hasCycles, busy, onSave, onClose }
           <>
             <p className="muted">Phân khu này chưa chia ô sản xuất nên vẫn là nơi chạy vụ trực tiếp. Bạn có thể giữ thông tin dưới đây, hoặc bấm "Chia thành ô sản xuất" ở danh sách.</p>
             <KindRow choice={legacyChoice} onChoice={setLegacyChoice} housing={legacyHousing} onHousing={setLegacyHousing} />
-            <div className="pair">
-              <label>Diện tích<input value={size} inputMode="decimal" onChange={(e) => setSize(e.target.value)} /></label>
-              <label>Đơn vị
-                <select value={unit} onChange={(e) => setUnit(e.target.value as 'm2' | 'ha')}><option value="m2">m²</option><option value="ha">ha</option></select>
-              </label>
-            </div>
           </>
         )}
+        <label>Diện tích phân khu (m²)<input value={size} inputMode="numeric" onChange={(e) => setSize(e.target.value)} placeholder="Ví dụ: 5000" /></label>
+        <p className="muted">Nhập diện tích của cả phân khu thì thêm hay sửa ô sản xuất sau này diện tích phân khu KHÔNG tự cộng thêm. Để trống thì lấy tổng diện tích các ô.</p>
         <label>Mô tả<textarea rows={3} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Đặc điểm chung của phân khu: nguồn nước, loại đất…" /></label>
         <ImagePicker value={image} onChange={setImage} store="areas" />
         {!initial && (
@@ -255,15 +251,15 @@ function ZoneForm({ title, initial, hasCells, hasCycles, busy, onSave, onClose }
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {
             if (!name.trim()) return setErr('Hãy nhập tên phân khu.');
-            const n = legacyLeaf ? parseSize(size) : undefined;
-            if (n === 'bad') return setErr('Diện tích phải là số không âm.');
+            const n = parseSize(size);
+            if (n === 'bad') return setErr('Diện tích phải là số không âm (m²).');
             const count = !initial ? Number(cellCount.trim() === '' ? '0' : cellCount) : 0;
             if (!Number.isInteger(count) || count < 0 || count > 50) return setErr('Số ô sản xuất tạo sẵn từ 0 đến 50.');
             setErr(null);
             const lk = resolve(legacyChoice);
             const f: FarmInput = {
-              name, location, description: desc, image, code,
-              ...(legacyLeaf ? { kind: lk.kind, kind_item: lk.kind_item ?? (initial?.kind_item ? null : undefined), area_size: n as number | null, area_unit: unit, housing: lk.kind === 'facility' ? null : legacyHousing || null } : {}),
+              name, location, description: desc, image, code, area_size: n as number | null, area_unit: 'm2',
+              ...(legacyLeaf ? { kind: lk.kind, kind_item: lk.kind_item ?? (initial?.kind_item ? null : undefined), housing: lk.kind === 'facility' ? null : legacyHousing || null } : {}),
             };
             const names = Array.from({ length: count }, (_, i) => `${prefix.trim()} ${i + 1}`);
             void onSave(f, { names, kind: { ...cellKind, housing: cellKind.kind === 'facility' ? null : cellHousing || null } }).catch(() => undefined);
