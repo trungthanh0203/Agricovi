@@ -17,12 +17,13 @@ export function auditGaps(d: LogbookData, today: string): Gap[] {
   const c = d.cycle;
 
   if (c) {
-    if (!c.code) warn('Vụ chưa có mã vụ / mã lô (Sửa vụ → Thông tin quản lý).');
-    if (!c.supervisor_name) warn('Vụ chưa ghi cán bộ kỹ thuật / thú y phụ trách.');
-    if (d.productKind === 'livestock') { if (!c.plant_count) warn(`Vụ chưa ghi số ${d.unit} ban đầu.`); }
+    // Thông tin nhận diện vụ: không bắt buộc để dựng sổ, chỉ nhắc (một số đơn vị chứng nhận có hỏi)
+    if (!c.code) info('Vụ chưa có mã vụ / mã lô (Sửa vụ → Thông tin quản lý). Không bắt buộc.');
+    if (!c.supervisor_name) info('Vụ chưa ghi cán bộ kỹ thuật / thú y phụ trách. Không bắt buộc, chỉ cần nếu đơn vị chứng nhận yêu cầu.');
+    if (d.productKind === 'livestock') { if (!c.plant_count) info(`Vụ chưa ghi số ${d.unit} ban đầu.`); }
     else {
-      if (!c.variety_name) warn('Vụ chưa ghi giống.');
-      if (!c.planted_area_m2) warn('Vụ chưa ghi diện tích trồng.');
+      if (!c.variety_name) info('Vụ chưa ghi giống.');
+      if (!c.planted_area_m2) info('Vụ chưa ghi diện tích trồng.');
       if (!c.seed_lot && !d.entries.some((e) => e.uses.some((u) => u.material?.material_group === 'seed' && u.lotNo))) info('Chưa có số lô giống (ghi ở Sửa vụ hoặc nhập kho giống kèm số lô).');
     }
   }

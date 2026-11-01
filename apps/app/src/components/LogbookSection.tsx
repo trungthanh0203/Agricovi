@@ -92,6 +92,7 @@ export function LogbookSection() {
           <Collapsible title="Còn thiếu gì trước khi nộp" summary={gaps.length === 0 ? 'đủ' : `${gaps.filter((g) => g.level === 'warn').length} cần bổ sung · ${gaps.filter((g) => g.level === 'info').length} nhắc thêm`} warn={gaps.some((g) => g.level === 'warn')}>
             {gaps.length === 0 && <p className="msg ok">Chưa phát hiện thiếu sót nào trong dữ liệu đã ghi.</p>}
             {gaps.map((g, i) => <p key={i} className={g.level === 'warn' ? 'msg warn' : 'muted'}>{g.level === 'warn' ? '⚠ ' : '• '}{g.text}</p>)}
+            <p className="muted">Các mục này chỉ là nhắc, không chặn việc in hay tải sổ.</p>
             <p className="muted">Đây là kiểm tra tự động trên dữ liệu đã ghi, không thay thế việc đối chiếu với bảng kiểm của đơn vị chứng nhận.</p>
           </Collapsible>
         )}
