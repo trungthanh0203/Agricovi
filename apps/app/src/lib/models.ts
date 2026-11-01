@@ -70,9 +70,9 @@ export const modelDef = (id: ModelId): ModelDef => MODELS.find((m) => m.id === i
 export const allFeaturesOn = (): Features => F(Object.fromEntries(ALL_FEATURES.map((k) => [k, 'on'])) as Partial<Features>);
 
 /** Mô hình của một vụ: của vụ, nếu chưa có thì mặc định của cơ sở, nếu chưa có thì null (= hiện đầy đủ) */
-export function effectiveModel(cycleModel: unknown, orgModel: unknown): ModelId | null {
-  if (isModelId(cycleModel)) return cycleModel;
-  if (isModelId(orgModel)) return orgModel;
+export function effectiveModel(_cycleModel: unknown, _orgModel: unknown): ModelId | null {
+  // TẠM THỜI (theo yêu cầu 1/11/2026): chưa hạn chế chức năng theo cách quản lý vụ, ai có quyền đúng đều thấy đủ mục.
+  // Muốn bật lại: trả về cycleModel/orgModel nếu isModelId(...) như trước, và hiện lại khối "Cách quản lý vụ này" + màn chọn sau khi tạo vụ.
   return null;
 }
 

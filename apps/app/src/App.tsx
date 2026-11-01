@@ -194,7 +194,7 @@ function Shell() {
         <ModelPicker cycleId={detailId} onDone={() => setOverlay('detail')} onSkip={() => setOverlay('detail')} />
       </div>
     ) : overlay === 'cycle' ? (
-      <CreateCycleScreen onDone={(id) => { setDetailId(id); setQrFirst(true); setOverlay('model'); setTab('production'); }} onCancel={() => setOverlay(null)} />
+      <CreateCycleScreen onDone={(id) => { setDetailId(id); setQrFirst(true); setOverlay('detail'); setTab('production'); }} onCancel={() => setOverlay(null)} />
     ) : null;
   const closeOverlay = () => { setOverlay(null); setLogPreset(null); setQrFirst(false); setDetailOpts({}); };
 

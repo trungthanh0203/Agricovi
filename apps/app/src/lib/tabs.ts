@@ -56,12 +56,12 @@ export function productionSections(org: MyOrg | null): Section<ProductionSection
   if (!org) return [];
   return simpleFilter(org, 'production', [
     { id: 'cycles' as const, label: 'Vụ nuôi trồng' },
-    (org.features?.logs ?? 'on') !== 'off' ? { id: 'log' as const, label: 'Ghi việc' } : null, // mở thẳng màn Ghi việc (cùng nút ＋ ở giữa thanh dưới)
-    { id: 'logs' as const, label: 'Nhật ký việc' },
     canPerm(org.perms, 'inventory') ? { id: 'stock' as const, label: 'Quản lý kho' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'expense' as const, label: 'Chi phí' } : null,
     canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
     hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,
+    (org.features?.logs ?? 'on') !== 'off' ? { id: 'log' as const, label: 'Ghi việc' } : null, // mở thẳng màn Ghi việc (cùng nút ＋ ở giữa thanh dưới)
+    { id: 'logs' as const, label: 'Nhật ký việc' },
   ].filter((x): x is Section<ProductionSection> => x !== null));
 }
 

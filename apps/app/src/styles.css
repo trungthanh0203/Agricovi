@@ -726,3 +726,8 @@ td.act .stack .rowmenu-btn { align-self: flex-end; }
 
 /* Tên các khung trong Gói dịch vụ màu xanh lá cho nổi */
 .plan-frame h3.sub { color: var(--green); font-size: 1.05rem; }
+
+/* Nút đóng/mở khung: nền xanh nhạt, mũi tên nhỏ bên phải (xoay xuống khi khung đang mở) */
+button.secondary.soft-toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--tint); border-color: var(--tint); text-align: left; padding: 0 14px; }
+button.secondary.soft-toggle > i { flex: 0 0 auto; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s; }
+button.secondary.soft-toggle[aria-expanded="true"] > i { transform: rotate(45deg); }

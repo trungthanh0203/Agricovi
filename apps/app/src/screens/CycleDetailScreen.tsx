@@ -18,12 +18,11 @@ import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { useAuth } from '../lib/auth';
 import { useOrgs } from '../lib/orgs';
-import { ModelPicker } from '../components/ModelPicker';
 import { dueToday, stageLogProgress } from '../lib/dueTasks';
 import { RowMenu } from '../components/RowMenu';
 import { toLocalInput } from '../lib/hooks';
 import type { TabId } from '../lib/tabs';
-import { effectiveModel, featuresOf, modelName } from '../lib/models';
+import { effectiveModel, featuresOf } from '../lib/models';
 import {
   addCycleStage, addNote, advanceStage, deleteCycleStage, deleteCyclePhase, deleteNote, refreshCycle, setCycleStatus, setNoteDone, updateCyclePhase, updateCycleStage,
 } from '../lib/production';
@@ -153,11 +152,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
         </Collapsible>
       )}
 
-      {canManage && cycle.owner_org_id === active?.id && (
-        <Collapsible title="Cách quản lý vụ này" summary={modelName(cycle.mgmt_model, active?.mgmtModel)}>
-          <ModelPicker cycleId={cycleId} onDone={() => undefined} />
-        </Collapsible>
-      )}
+      {/* Khối "Cách quản lý vụ này" (ModelPicker) tạm ẩn: xem effectiveModel ở lib/models.ts */}
 
       {(() => {
         const w = withdrawals.find((x) => x.cycle_id === cycleId);
