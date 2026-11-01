@@ -88,7 +88,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
     setName(h?.name ?? '');
     const info = h ? infoOf(h) : EMPTY_INFO;
     setF(info);
-    setAreaText(info.area_ha != null ? String(info.area_ha) : '');
+    setAreaText(info.area_ha != null ? String(Math.round(Number(info.area_ha) * 10000)) : '');   // hiện m² (CSDL lưu ha)
     r.setError(null);
   }
   const set = (k: keyof HouseholdInfo) => (e: { target: { value: string } }) => setF((cur) => ({ ...cur, [k]: e.target.value }));
@@ -98,8 +98,8 @@ function ForCooperative({ org }: { org: MyOrg }) {
     const isNew = form === 'new';
     if (isNew && name.trim().length < 2) return r.setError('Tên hộ cần ít nhất 2 ký tự.');
     const n = areaText.trim() === '' ? null : Number(areaText.replace(',', '.'));
-    if (n !== null && (Number.isNaN(n) || n < 0)) return r.setError('Diện tích phải là số không âm (đơn vị ha).');
-    const info = { ...f, area_ha: n };
+    if (n !== null && (Number.isNaN(n) || n < 0)) return r.setError('Diện tích phải là số không âm (đơn vị m²).');
+    const info = { ...f, area_ha: n === null ? null : n / 10000 };   // nhập m², lưu ha
     const id = form;
     void r.run(async () => {
       if (isNew) {
@@ -140,7 +140,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
           <label>Địa chỉ (thôn/ấp, xã, huyện)<input value={f.address} maxLength={200} onChange={set('address')} /></label>
           <label>Sản phẩm chính<input value={f.main_products} maxLength={200} onChange={set('main_products')} placeholder="Ví dụ: Dưa lưới, heo thịt" /></label>
           <label>Giấy chứng nhận (VietGAP, OCOP…)<input value={f.certificates} maxLength={300} onChange={set('certificates')} placeholder="Ví dụ: VietGAP dưa lưới (hết hạn 06/2027), OCOP 3 sao" /></label>
-          <label>Diện tích sản xuất (ha)<input inputMode="decimal" value={areaText} onChange={(e) => setAreaText(e.target.value)} /></label>
+          <label>Diện tích sản xuất (m²)<input inputMode="numeric" value={areaText} onChange={(e) => setAreaText(e.target.value)} placeholder="Ví dụ: 5000" /></label>
           <label>Trạng thái hộ
             <select value={f.activity_status} onChange={(e) => setF((cur) => ({ ...cur, activity_status: e.target.value as 'active' | 'paused' }))}>
               <option value="active">Đang hoạt động</option>
@@ -199,25 +199,20 @@ function ForCooperative({ org }: { org: MyOrg }) {
 
       <div className="tablewrap">
         <table className="grid">
-          <thead><tr><th>Mã hộ</th><th>Hộ</th><th>Điện thoại</th><th>Địa chỉ</th><th>Sản phẩm chính</th><th>Giấy chứng nhận</th><th className="num">Diện tích (ha)</th><th>Ngày vào HTX</th><th className="num">Vụ đang chạy</th><th>Trạng thái</th><th></th></tr></thead>
+          <thead><tr><th>Hộ</th><th className="num">Diện tích (m²)</th><th className="num">Vụ đang chạy</th><th></th></tr></thead>
           <tbody>
-            {households.length === 0 && <tr><td colSpan={11} className="muted">Chưa có hộ thành viên.</td></tr>}
+            {households.length === 0 && <tr><td colSpan={4} className="muted">Chưa có hộ thành viên.</td></tr>}
             {households.map((h) => (
               <tr key={h.household_org_id} className={h.activity_status === 'paused' ? 'off' : ''}>
-                <td>{h.member_code ?? ''}</td>
                 <td>
                   <strong>{h.name}</strong>
                   {h.head_name && <span className="sub">Chủ hộ: {h.head_name}</span>}
+                  {h.member_code && <span className="sub">Mã hộ: {h.member_code}</span>}
                   {h.managed && <span className="pill">Do HTX quản lý</span>}
+                  {h.activity_status === 'paused' && <span className="pill warn">Tạm ngưng</span>}
                 </td>
-                <td>{h.phone ?? ''}</td>
-                <td>{h.address ?? ''}</td>
-                <td>{h.main_products ?? ''}</td>
-                <td>{h.certificates ?? ''}</td>
-                <td className="num">{h.area_ha != null ? Number(h.area_ha).toLocaleString('vi-VN') : ''}</td>
-                <td>{h.joined_at ? new Date(h.joined_at).toLocaleDateString('vi-VN') : ''}</td>
+                <td className="num">{h.area_ha != null ? Math.round(Number(h.area_ha) * 10000).toLocaleString('vi-VN') : ''}</td>
                 <td className="num">{h.active_coop_cycles}</td>
-                <td>{h.activity_status === 'paused' ? <span className="pill warn">Tạm ngưng</span> : <span className="pill ok">Đang hoạt động</span>}</td>
                 <td className="act">
                   <RowMenu label={`Hộ ${h.name}`} items={[
                     { label: 'Xem sản xuất của hộ', icon: '👁', disabled: !navigator.onLine, onClick: () => setOverview({ id: h.household_org_id, name: h.name }) },
