@@ -33,7 +33,7 @@ const jsonLd = a ? JSON.stringify(a.channel === 'hoi_cho' && a.start
         b.t === 'h' ? <h2>{b.text}</h2>
         : b.t === 'p' ? <p>{b.text}</p>
         : b.t === 'ul' ? <ul>{b.items.map((i) => <li>{i}</li>)}</ul>
-        : b.t === 'img' ? <img class="pageimg" src={b.src} alt={b.alt} loading="lazy" decoding="async" />
+        : b.t === 'img' ? <img class="bodyimg" src={b.src} alt={b.alt} loading="lazy" decoding="async" />
         : <p><a class="btn solid" href={b.href}>{b.label}</a></p>
       ))}
       {a.sourceUrl && <p class="muted">Nguồn: <a href={a.sourceUrl} rel="noopener nofollow" target="_blank">{a.sourceName || a.sourceUrl}</a></p>}
