@@ -279,6 +279,7 @@ export type Block =
   | { t: 'h'; text: string }
   | { t: 'p'; text: string }
   | { t: 'ul'; items: string[] }
+  | { t: 'img'; src: string; alt: string }
   | { t: 'btn'; label: string; href: string };
 
 /** Liên kết an toàn: đường dẫn nội bộ hoặc https; ngoài ra trả '' */
@@ -298,8 +299,10 @@ export function parseBody(text: string): Block[] {
     const flush = () => { if (list.length) { out.push({ t: 'ul', items: list }); list = []; } };
     for (const line of lines) {
       const btn = /^\[\[(.+?)\|(.+?)\]\]$/.exec(line);
+      const im = /^!\[(.*?)\]\((.+?)\)$/.exec(line);
       if (line.startsWith('## ')) { flush(); out.push({ t: 'h', text: line.slice(3).trim() }); }
       else if (line.startsWith('- ')) list.push(line.slice(2).trim());
+      else if (im) { flush(); const src = safeHref(im[2]); if (src) out.push({ t: 'img', src, alt: im[1]!.trim() }); }
       else if (btn) { flush(); const href = safeHref(btn[2]); if (href) out.push({ t: 'btn', label: btn[1]!.trim(), href }); }
       else { flush(); out.push({ t: 'p', text: line }); }
     }

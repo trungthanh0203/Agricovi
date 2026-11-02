@@ -350,7 +350,7 @@ export function SiteArticlesPage({ roles }: { roles: string[] }) {
           </form>
           <h2>Xem trước nội dung</h2>
           <div className="card" style={{ background: 'transparent' }}>
-            {blocks.map((b, i) => (b.t === 'h' ? <h4 key={i}>{b.text}</h4> : b.t === 'p' ? <p key={i}>{b.text}</p> : b.t === 'ul' ? <ul key={i}>{b.items.map((x, j) => <li key={j}>{x}</li>)}</ul> : <p key={i}><button type="button">{b.label}</button> <small>→ {b.href}</small></p>))}
+            {blocks.map((b, i) => (b.t === 'h' ? <h4 key={i}>{b.text}</h4> : b.t === 'p' ? <p key={i}>{b.text}</p> : b.t === 'ul' ? <ul key={i}>{b.items.map((x, j) => <li key={j}>{x}</li>)}</ul> : b.t === 'img' ? <img key={i} src={b.src} alt={b.alt} style={{ maxWidth: '100%', borderRadius: 8 }} /> : <p key={i}><button type="button">{b.label}</button> <small>→ {b.href}</small></p>))}
           </div>
         </section>
       )}

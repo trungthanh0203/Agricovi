@@ -91,7 +91,7 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
             </label>
             <label>Nội dung
               <textarea rows={14} value={f.body} onChange={(e) => setF({ ...f, body: e.target.value })} />
-              <small>Cách viết: cách nhau một dòng trống là sang đoạn mới. <code>## Tiêu đề nhỏ</code> · các dòng bắt đầu bằng <code>- </code> là danh sách · một dòng <code>[[Chữ trên nút|/duong-dan]]</code> tạo nút bấm.</small>
+              <small>Cách viết: cách nhau một dòng trống là sang đoạn mới. <code>## Tiêu đề nhỏ</code> · các dòng bắt đầu bằng <code>- </code> là danh sách · một dòng <code>[[Chữ trên nút|/duong-dan]]</code> tạo nút bấm · một dòng <code>![Mô tả ảnh](/brand/photo-about.webp)</code> chèn ảnh (đường dẫn trong website hoặc https://…).</small>
             </label>
             <Err e={err} />
             <div className="toolbar">
@@ -106,6 +106,7 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
             {blocks.map((b, i) => (b.t === 'h' ? <h4 key={i}>{b.text}</h4>
               : b.t === 'p' ? <p key={i}>{b.text}</p>
               : b.t === 'ul' ? <ul key={i}>{b.items.map((x, j) => <li key={j}>{x}</li>)}</ul>
+              : b.t === 'img' ? <img key={i} src={b.src} alt={b.alt} style={{ maxWidth: '100%', borderRadius: 8 }} />
               : <p key={i}><button type="button">{b.label}</button> <small>→ {b.href}</small></p>))}
           </div>
           {versions.length > 0 && (
