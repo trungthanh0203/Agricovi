@@ -63,6 +63,18 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
     try { await rpc('site_delete_page', { p_id: f.id }); setF(null); reload(); } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
   }
 
+  const [imgBusy, setImgBusy] = useState(false);
+  async function addImage(file: File | undefined) {
+    if (!file || !f) return;
+    setImgBusy(true); setErr(null);
+    try {
+      const url = await compressImage(file, 1100, 300_000);
+      const id = await rpc<string>('site_upload_page_image', { p_image: url });
+      const alt = file.name.replace(/\.[^.]+$/, '').replace(/[\[\]()]/g, ' ').trim();
+      setF({ ...f, body: (f.body.trim() ? f.body.replace(/\s+$/, '') + '\n\n' : '') + `![${alt}](/anh/pg/${id})` });
+    } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
+    setImgBusy(false);
+  }
   const existing = new Set((data ?? []).map((p) => p.slug));
   const suggestions = Object.entries(DEFAULT_PAGES).filter(([slug]) => !existing.has(slug));
   const isLocked = f ? locked(roles, (data ?? []).find((p) => p.id === f.id)?.status) : false;
@@ -92,6 +104,10 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
             <label>Nội dung
               <textarea rows={14} value={f.body} onChange={(e) => setF({ ...f, body: e.target.value })} />
               <small>Cách viết: cách nhau một dòng trống là sang đoạn mới. <code>## Tiêu đề nhỏ</code> · các dòng bắt đầu bằng <code>- </code> là danh sách · một dòng <code>[[Chữ trên nút|/duong-dan]]</code> tạo nút bấm · một dòng <code>![Mô tả ảnh](/brand/photo-about.webp)</code> chèn ảnh (đường dẫn trong website hoặc https://…).</small>
+            </label>
+            <label>Chèn ảnh từ máy
+              <input type="file" accept="image/*" disabled={isLocked || imgBusy} onChange={(e) => { void addImage(e.target.files?.[0]); e.target.value = ''; }} />
+              <small>{imgBusy ? 'Đang tải ảnh lên…' : 'Chọn ảnh, hệ thống tự thu nhỏ rồi thêm một dòng ảnh vào cuối nội dung; bạn có thể cắt dòng đó sang vị trí khác và sửa phần mô tả trong ngoặc [ ].'}</small>
             </label>
             <Err e={err} />
             <div className="toolbar">

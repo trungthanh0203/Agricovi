@@ -4,7 +4,7 @@ import { sb } from '../../lib/db';
 /**
  * Phục vụ ảnh công khai (W8, D71). Ảnh đang lưu dạng data URL trong CSDL; trang không nhúng ảnh vào HTML mà trỏ về đây để:
  * trình duyệt/biên Cloudflare lưu đệm riêng từng ảnh, HTML nhẹ, danh sách không phải tải nội dung ảnh.
- * Đường dẫn: /anh/sp/<mã sản phẩm>/<số thứ tự> · /anh/cs/<mã hồ sơ>/<số thứ tự> · /anh/vt/<mã vật tư> · /anh/bv/<mã bài viết> · /anh/bn/<mã banner>.
+ * Đường dẫn: /anh/sp/<mã sản phẩm>/<số thứ tự> · /anh/cs/<mã hồ sơ>/<số thứ tự> · /anh/vt/<mã vật tư> · /anh/bv/<mã bài viết> · /anh/bn/<mã banner> · /anh/pg/<mã ảnh trang tĩnh>.
  * Chỉ trả ảnh jpeg/png/webp đúng định dạng; dữ liệu đọc bằng khóa anon nên vẫn chịu chính sách RLS (chỉ nội dung đã đăng).
  */
 export const prerender = false;
@@ -22,6 +22,10 @@ async function load(kind: string, id: string, idx: number): Promise<string | nul
     const col = kind === 'sp' ? 'listing_id' : 'profile_id';
     const { data } = await sb.from(table).select(`src:snapshot->images->${idx}->>src`).eq(col, id).eq('is_visible', true).maybeSingle();
     return ((data as { src?: string | null } | null)?.src) ?? null;
+  }
+  if (kind === 'pg') {
+    const { data } = await sb.rpc('public_page_image', { p_id: id });
+    return typeof data === 'string' ? data : null;
   }
   const table = kind === 'vt' ? 'site_materials' : kind === 'bv' ? 'site_articles' : kind === 'bn' ? 'site_banners' : null;
   if (!table) return null;
