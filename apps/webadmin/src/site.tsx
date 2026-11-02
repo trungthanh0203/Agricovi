@@ -64,6 +64,12 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
   }
 
   const [imgBusy, setImgBusy] = useState(false);
+  const [uploaded, setUploaded] = useState<{ id: string; alt: string; thumb: string }[]>([]);
+  const [copied, setCopied] = useState('');
+  const imgLine = (u: { id: string; alt: string }) => `![${u.alt}](/anh/pg/${u.id})`;
+  async function copyText(t: string, key: string) {
+    try { await navigator.clipboard.writeText(t); setCopied(key); setTimeout(() => setCopied(''), 2000); } catch { window.prompt('Sao chép đoạn này:', t); }
+  }
   async function addImage(file: File | undefined) {
     if (!file || !f) return;
     setImgBusy(true); setErr(null);
@@ -71,6 +77,8 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
       const url = await compressImage(file, 1100, 300_000);
       const id = await rpc<string>('site_upload_page_image', { p_image: url });
       const alt = file.name.replace(/\.[^.]+$/, '').replace(/[\[\]()]/g, ' ').trim();
+      setUploaded((l) => [{ id, alt, thumb: url }, ...l]);
+      setMsg('Đã tải ảnh lên thành công và thêm vào cuối nội dung. Nhớ bấm Lưu để giữ lại.');
       setF({ ...f, body: (f.body.trim() ? f.body.replace(/\s+$/, '') + '\n\n' : '') + `![${alt}](/anh/pg/${id})` });
     } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
     setImgBusy(false);
@@ -107,8 +115,25 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
             </label>
             <label>Chèn ảnh từ máy
               <input type="file" accept="image/*" disabled={isLocked || imgBusy} onChange={(e) => { void addImage(e.target.files?.[0]); e.target.value = ''; }} />
-              <small>{imgBusy ? 'Đang tải ảnh lên…' : 'Chọn ảnh, hệ thống tự thu nhỏ rồi thêm một dòng ảnh vào cuối nội dung; bạn có thể cắt dòng đó sang vị trí khác và sửa phần mô tả trong ngoặc [ ].'}</small>
+              {imgBusy && <small role="status">⏳ Đang tải ảnh lên, vui lòng chờ…</small>}
+              <small>{imgBusy ? '' : 'Chọn ảnh, hệ thống tự thu nhỏ rồi thêm một dòng ảnh vào cuối nội dung; bạn có thể cắt dòng đó sang vị trí khác và sửa phần mô tả trong ngoặc [ ].'}</small>
             </label>
+            {uploaded.length > 0 && (
+              <div className="card" style={{ background: 'transparent' }}>
+                <b>✔ Ảnh đã tải lên trong lần làm việc này</b>
+                {uploaded.map((u) => (
+                  <div key={u.id} style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8, flexWrap: 'wrap' }}>
+                    <img src={u.thumb} alt="" style={{ width: 96, height: 64, objectFit: 'cover', borderRadius: 8 }} />
+                    <div style={{ flex: 1, minWidth: 220 }}>
+                      <div><small>Địa chỉ ảnh:</small> <code>{`/anh/pg/${u.id}`}</code></div>
+                      <small>Đầy đủ: {SITE_URL ?? ''}/anh/pg/{u.id}</small>
+                    </div>
+                    <button type="button" onClick={() => void copyText(imgLine(u), u.id)}>{copied === u.id ? 'Đã sao chép ✔' : 'Sao chép dòng chèn ảnh'}</button>
+                    <button type="button" onClick={() => f && setF({ ...f, body: (f.body.trim() ? f.body.replace(/\s+$/, '') + '\n\n' : '') + imgLine(u) })}>Thêm vào cuối nội dung</button>
+                  </div>
+                ))}
+              </div>
+            )}
             <Err e={err} />
             <div className="toolbar">
               <button className="primary" disabled={isLocked}>Lưu</button>
