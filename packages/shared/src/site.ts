@@ -262,7 +262,7 @@ export const DEFAULT_PAGES: Record<string, DefaultPage> = {
     title: 'Liên hệ',
     description: 'Liên hệ với Agricovi.',
     body: [
-      'Thông tin liên hệ nằm ở cuối trang. Nếu cần báo cáo hồ sơ có thông tin sai hoặc vi phạm, vui lòng liên hệ qua các kênh đó, kèm đường dẫn trang liên quan.',
+      'Nếu cần báo cáo hồ sơ có thông tin sai hoặc vi phạm, vui lòng liên hệ qua thông tin hoặc biểu mẫu dưới đây, kèm đường dẫn trang liên quan.',
     ].join('\n\n'),
   },
   'dieu-khoan-su-dung': { title: 'Điều khoản sử dụng', description: 'Điều khoản sử dụng website.', body: SOON },

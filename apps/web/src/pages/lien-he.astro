@@ -1,11 +1,15 @@
 ---
 import Base from '../layouts/Base.astro';
 import { link, sb } from '../lib/db';
-import { loadChrome } from '../lib/site';
+import { loadChrome, loadPage } from '../lib/site';
+import { parseBody } from '@agriconnect/shared';
 
 // Trang Liên hệ hai cột: bên trái thông tin đơn vị (đọc public_contact_info, do quản trị nền tảng sửa; thiếu thì lấy Thông tin chung của website),
 // bên phải biểu mẫu gửi liên hệ. Tin gửi đi nằm trong "Yêu cầu báo giá" của quản trị website, có tiền tố [Liên hệ].
 const chrome = await loadChrome();
+// Nội dung soạn ở Quản trị website > Trang tĩnh (địa chỉ "lien-he"): hiện dưới tiêu đề, phía trên hai cột; chưa soạn thì không hiện
+const cms = await loadPage('lien-he');
+const intro = cms ? parseBody(cms.body) : [];
 let info: Record<string, string> = {};
 try {
   if (sb) {
@@ -57,7 +61,17 @@ if (Astro.request.method === 'POST') {
 }
 ---
 <Base title="Liên hệ — Agricovi" description="Thông tin liên hệ và biểu mẫu gửi tin tới Agricovi." cache={false}>
-  <h1 class="ct-title">Liên hệ</h1>
+  <h1 class="ct-title">{cms?.title || 'Liên hệ'}</h1>
+  {intro.length > 0 && (
+    <div class="prose ct-intro">
+      {intro.map((b) => (
+        b.t === 'h' ? <h2>{b.text}</h2>
+        : b.t === 'p' ? <p>{b.text}</p>
+        : b.t === 'ul' ? <ul>{b.items.map((i) => <li>{i}</li>)}</ul>
+        : <p><a class="btn solid" href={b.href}>{b.label}</a></p>
+      ))}
+    </div>
+  )}
   <div class="contact2">
     <section class="ct-card ct-info">
       <h2>Liên hệ hỗ trợ</h2>
