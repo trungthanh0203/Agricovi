@@ -64,7 +64,21 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
   }
 
   const [imgBusy, setImgBusy] = useState(false);
-  const [uploaded, setUploaded] = useState<{ id: string; alt: string; thumb: string }[]>([]);
+  const [uploaded, setUploaded] = useState<{ id: string; alt: string; thumb: string; usedIn?: string[] }[]>([]);
+  async function loadLibrary() {
+    setImgBusy(true); setErr(null);
+    try {
+      const rows = await rpc<{ id: string; image: string; used_in: string[] }[]>('site_list_page_images', { p_limit: 40 });
+      setUploaded(rows.map((r) => ({ id: r.id, alt: 'ảnh', thumb: r.image, usedIn: r.used_in })));
+      setMsg(rows.length ? `Có ${rows.length} ảnh đã tải lên (hiện tối đa 40 ảnh mới nhất).` : 'Chưa có ảnh nào được tải lên.');
+    } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
+    setImgBusy(false);
+  }
+  async function deleteImage(id: string) {
+    if (!window.confirm('Xóa hẳn ảnh này? Không hoàn tác được. Ảnh đang dùng trong trang nào thì phải gỡ khỏi trang đó trước.')) return;
+    setErr(null);
+    try { await rpc('site_delete_page_image', { p_id: id }); setUploaded((l) => l.filter((u) => u.id !== id)); setMsg('Đã xóa ảnh.'); } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
+  }
   const [copied, setCopied] = useState('');
   const imgLine = (u: { id: string; alt: string }) => `![${u.alt}](/anh/pg/${u.id})`;
   async function copyText(t: string, key: string) {
@@ -118,18 +132,21 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
               {imgBusy && <small role="status">⏳ Đang tải ảnh lên, vui lòng chờ…</small>}
               <small>{imgBusy ? '' : 'Chọn ảnh, hệ thống tự thu nhỏ rồi thêm một dòng ảnh vào cuối nội dung; bạn có thể cắt dòng đó sang vị trí khác và sửa phần mô tả trong ngoặc [ ].'}</small>
             </label>
+            <div className="toolbar"><button type="button" disabled={imgBusy} onClick={() => void loadLibrary()}>🖼️ Xem tất cả ảnh đã tải lên</button></div>
             {uploaded.length > 0 && (
               <div className="card" style={{ background: 'transparent' }}>
-                <b>✔ Ảnh đã tải lên trong lần làm việc này</b>
+                <b>Ảnh đã tải lên</b>
                 {uploaded.map((u) => (
                   <div key={u.id} style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8, flexWrap: 'wrap' }}>
                     <img src={u.thumb} alt="" style={{ width: 96, height: 64, objectFit: 'cover', borderRadius: 8 }} />
                     <div style={{ flex: 1, minWidth: 220 }}>
                       <div><small>Địa chỉ ảnh:</small> <code>{`/anh/pg/${u.id}`}</code></div>
                       <small>Đầy đủ: {SITE_URL ?? ''}/anh/pg/{u.id}</small>
+                      {u.usedIn && <div><small>{u.usedIn.length ? `Đang dùng ở trang: ${u.usedIn.join(', ')}` : 'Chưa dùng ở trang nào'}</small></div>}
                     </div>
                     <button type="button" onClick={() => void copyText(imgLine(u), u.id)}>{copied === u.id ? 'Đã sao chép ✔' : 'Sao chép dòng chèn ảnh'}</button>
                     <button type="button" onClick={() => f && setF({ ...f, body: (f.body.trim() ? f.body.replace(/\s+$/, '') + '\n\n' : '') + imgLine(u) })}>Thêm vào cuối nội dung</button>
+                    <button type="button" onClick={() => void deleteImage(u.id)}>🗑️ Xóa ảnh</button>
                   </div>
                 ))}
               </div>
