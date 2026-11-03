@@ -24,8 +24,6 @@ export function SupportTab() {
       <p className="muted">Cần giúp đỡ? Liên hệ trực tiếp với chúng tôi qua các cách dưới đây.</p>
       <ContactCard title="Liên hệ hỗ trợ" />
 
-      {referral && <ReferralCard info={referral} />}
-
       <h2 className="sect">Chia sẻ hệ thống</h2>
       <div className="card">
         <p>Gửi lời giới thiệu app cho người quen làm nông nghiệp (qua Zalo, tin nhắn…). Lời giới thiệu có sẵn địa chỉ để họ mở và dùng thử{referral ? ', kèm mã giới thiệu của bạn' : ''}.</p>
@@ -42,6 +40,8 @@ export function SupportTab() {
           </p>
         ))}
       </div>
+
+      {referral && <ReferralCard info={referral} />}
 
       {active && hasRole(active.roles, 'manager') && <PerfPanel />}
     </section>

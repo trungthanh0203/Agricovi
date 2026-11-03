@@ -208,7 +208,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       if (code) {   // mã sai không chặn việc tạo cơ sở: báo cho người dùng biết
         const ok = await supabase.rpc('referral_code_valid', { p_code: code });
-        if (ok.data === false) window.alert(`Đã tạo cơ sở thành công, nhưng mã giới thiệu "${code}" không chính xác nên chưa được ghi nhận. Nếu cần, hãy báo lại cho Agricovi để gắn đúng người giới thiệu.`);
+        if (ok.data === false) window.alert('Tài khoản đã tạo thành công, mã giới thiệu chưa đúng trong hệ thống.');
       }
       const id = data as string;
       await load();
