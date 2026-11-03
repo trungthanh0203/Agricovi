@@ -44,6 +44,29 @@ export function cycleProgress(stages: StageRow[], today: string): CycleProgress 
   return { total, done, percent: total ? Math.round((done / total) * 100) : 0, current, delay: current ? stageDelayDays(current, today) : 0 };
 }
 
+/**
+ * Ngày đến của vụ để sắp xếp (D154): vụ đang chạy/tạm dừng = hạn của việc hiện tại (đang làm: ngày kết thúc dự kiến; chưa làm: ngày bắt đầu dự kiến);
+ * vụ chuẩn bị = ngày bắt đầu; không xác định được = null (xếp cuối).
+ */
+export function cycleDueDate(c: { status: string; start_date?: string | null }, stages: StageRow[]): string | null {
+  if (c.status === 'preparing') return c.start_date?.slice(0, 10) ?? null;
+  const cur = currentStage(stages);
+  if (cur) return (cur.status === 'in_progress' ? cur.planned_end : cur.planned_start) ?? null;
+  return null;
+}
+
+/**
+ * Sắp xếp vụ theo ngày đến từ gần tới xa: vụ trễ ngày (ngày đến đã qua) hoặc sắp đến hạn lên trước, vụ chưa tới ngày hoặc xa ngày ở sau, không có ngày ở cuối.
+ * Vụ đã kết thúc/hủy xếp sau cùng, vụ gần đây nhất trước.
+ */
+export function sortByDue<T extends { id: string; status: string; start_date?: string | null; expected_end_date?: string | null }>(cycles: T[], stagesOf: (id: string) => StageRow[]): T[] {
+  const closed = (c: T) => c.status === 'ended' || c.status === 'cancelled';
+  const open = cycles.filter((c) => !closed(c)).map((c) => ({ c, d: cycleDueDate(c, stagesOf(c.id)) ?? '9999-99-99' }))
+    .sort((a, b) => a.d.localeCompare(b.d) || (a.c.start_date ?? '').localeCompare(b.c.start_date ?? '')).map((x) => x.c);
+  const done = cycles.filter(closed).sort((a, b) => ((b.expected_end_date ?? b.start_date ?? '')).localeCompare(a.expected_end_date ?? a.start_date ?? ''));
+  return [...open, ...done];
+}
+
 /** Màu công đoạn (cùng bảng màu với trình soạn quy trình) */
 export const STAGE_COLORS = ['#2e7d32', '#1976d2', '#f9a825', '#8e24aa', '#00838f', '#c62828', '#6d4c41'];
 export const stageColor = (index: number) => STAGE_COLORS[index % STAGE_COLORS.length]!;

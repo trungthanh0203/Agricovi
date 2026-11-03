@@ -10,7 +10,8 @@ import { pickSection, SubTabs } from '../components/SubTabs';
 import { HelpButton } from '../components/HelpButton';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
-import { cycleProgress, cycleTitle } from '../lib/cycles';
+import { cycleProgress, cycleTitle, sortByDue } from '../lib/cycles';
+import { AreaFilter, topAreaIdOf } from '../components/AreaFilter';
 import { cycleCode } from '../lib/qr';
 import { CycleQr } from '../components/CycleQr';
 import { CycleStatsStrip } from '../components/CycleStatsStrip';
@@ -133,6 +134,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const [contexts, setContexts] = useState<QuotaContext[]>([]);
   const [group, setGroup] = useState<CycleGroup | null>(null);
   const [vn, setVn] = useState(50);
+  const [areaFilter, setAreaFilter] = useState('');   // lọc theo phân khu (D154)
   const [editId, setEditId] = useState<string | null>(null);
   const [qrId, setQrId] = useState<string | null>(null);
   const [pubId, setPubId] = useState<string | null>(null);
@@ -164,14 +166,16 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   if (!active) return null;
 
   // Vụ của cơ sở đang chọn: do cơ sở sở hữu, hoặc diễn ra trên phân khu của cơ sở
-  const myCycles = cycles
+  const myCyclesAll = cycles
     .filter((c) => c.owner_org_id === active.id || areaById.get(c.area_id)?.organization_id === active.id)
     .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
+  const myCycles = areaFilter ? myCyclesAll.filter((c) => topAreaIdOf(c.area_id, areaById) === areaFilter) : myCyclesAll;
   const hasAreas = areas.some((a) => a.organization_id === active.id);
   const inGroup = (g: CycleGroup) => myCycles.filter((c) => GROUPS.find((x) => x.id === g)!.statuses.includes(c.status));
   // mặc định mở nhóm đầu tiên có vụ (Đang sản xuất trước)
   const curGroup: CycleGroup = group ?? GROUPS.find((g) => inGroup(g.id).length > 0)?.id ?? 'active';
-  const shownAll = inGroup(curGroup);
+  // trong mỗi nhóm: ngày đến từ gần tới xa (vụ trễ ngày hoặc sắp đến hạn lên trước)
+  const shownAll = sortByDue(inGroup(curGroup), (id) => allStages.filter((s) => s.cycle_id === id));
   const shown = shownAll.slice(0, vn); // vẽ từng 50 vụ (D142)
   const ownerLabel = (ownerId: string) => {
     if (ownerId === active.id) return null;
@@ -217,6 +221,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
           ))}
         </div>
       )}
+      <AreaFilter areas={areas.filter((a) => a.organization_id === active.id)} usedAreaIds={myCyclesAll.map((c) => c.area_id)} value={areaFilter} onChange={(v) => { setAreaFilter(v); setVn(50); }} />
       {myCycles.length > 0 && shown.length === 0 && <p className="muted">Không có vụ nào ở nhóm này.</p>}
       {shown.map((c) => {
         const owner = ownerLabel(c.owner_org_id);

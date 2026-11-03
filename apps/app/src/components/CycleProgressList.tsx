@@ -1,4 +1,6 @@
-import { cycleProgress } from '../lib/cycles';
+import { useState } from 'react';
+import { AreaFilter, topAreaIdOf } from './AreaFilter';
+import { cycleProgress, sortByDue } from '../lib/cycles';
 import { fmtDate } from '../lib/dates';
 import { todayLocal } from '../lib/hooks';
 import { useTable } from '../lib/tables';
@@ -9,14 +11,20 @@ export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<str
   const titleOf = useCycleTitle();
   const cycles = useTable('cycles');
   const stages = useTable('stages');
+  const areas = useTable('areas');
+  const [areaFilter, setAreaFilter] = useState('');
   const today = todayLocal();
-  const progress = cycles
-    .filter((c) => c.status === 'active' && cycleIds.has(c.id))
+  const areaById = new Map(areas.map((a) => [a.id, a]));
+  const running = cycles.filter((c) => c.status === 'active' && cycleIds.has(c.id));
+  // vụ trễ ngày hoặc sắp đến hạn lên trước (D154)
+  const progress = sortByDue(running.filter((c) => !areaFilter || topAreaIdOf(c.area_id, areaById) === areaFilter), (id) => stages.filter((s) => s.cycle_id === id))
     .map((c) => ({ c, p: cycleProgress(stages.filter((s) => s.cycle_id === c.id), today) }));
-  if (progress.length === 0) return null;
+  if (running.length === 0) return null;
   return (
     <>
       <h2 className="sect">Tiến độ các vụ đang chạy</h2>
+      <AreaFilter areas={areas} usedAreaIds={running.map((c) => c.area_id)} value={areaFilter} onChange={setAreaFilter} />
+      {progress.length === 0 && <p className="muted">Không có vụ đang chạy ở phân khu này.</p>}
       {progress.map(({ c, p }) => (
         <div className="card slim" key={c.id}>
           <div className="row">
