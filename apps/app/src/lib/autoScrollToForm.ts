@@ -10,8 +10,9 @@ export function useAutoScrollToForm(): void {
     let lastClick = 0;
     const onClick = () => { lastClick = Date.now(); };
     const recent = () => Date.now() - lastClick < 1000;
-    const go = (el: Element) => {
-      const target = el.closest('.card') ?? el.closest('details.fold') ?? el;
+    // self = true: mục thu gọn nằm TRONG một form lớn (ví dụ "＋ Giống, diện tích" khi tạo vụ): chỉ cuộn tới chính mục đó, không nhảy về đầu cả form
+    const go = (el: Element, self = false) => {
+      const target = self ? el : (el.closest('.card') ?? el.closest('details.fold') ?? el);
       const r = target.getBoundingClientRect();
       const inView = r.top >= 56 && r.top < window.innerHeight * 0.6; // đã nằm gọn ở nửa trên màn hình thì không cuộn
       if (!inView) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -28,7 +29,7 @@ export function useAutoScrollToForm(): void {
     });
     const onToggle = (e: Event) => {
       const t = e.target;
-      if (t instanceof HTMLDetailsElement && t.open && t.classList.contains('inline') && recent()) requestAnimationFrame(() => go(t));
+      if (t instanceof HTMLDetailsElement && t.open && t.classList.contains('inline') && recent()) requestAnimationFrame(() => go(t, true));
     };
     document.addEventListener('click', onClick, true);
     document.addEventListener('toggle', onToggle, true);
