@@ -4,6 +4,7 @@ import { friendlyError } from '../lib/errors';
 import { Collapsible } from './Collapsible';
 import { CredentialsCard } from './StaffAccountsSection';
 import { HouseholdOverviewPanel, HouseholdSharing, ProcurementPanel } from './HtxHouseholdPanels';
+import { TransferRequestsPanel } from './TransferRequestsPanel';
 import { createStaffAccount, type StaffCredentials } from '../lib/staff';
 import { ensureHouseholdPosition, setMemberPosition } from '../lib/positions';
 import {
@@ -166,6 +167,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
       {r.info && <p ref={r.msgRef} className="msg ok" role="status">{r.info}</p>}
       {canManage && <button className="secondary" disabled={!navigator.onLine} onClick={() => openForm(null)}>+ Thêm hộ thành viên</button>}
       <ProcurementPanel coopId={org.id} canEdit={canManage} />
+      <TransferRequestsPanel coopId={org.id} households={households} canEdit={canManage} />
       {overview && <HouseholdOverviewPanel coopId={org.id} householdId={overview.id} name={overview.name} onClose={() => setOverview(null)} />}
       {creds && (
         <>

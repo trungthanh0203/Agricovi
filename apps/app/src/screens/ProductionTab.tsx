@@ -12,6 +12,7 @@ import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { cycleProgress, cycleTitle, sortByDue } from '../lib/cycles';
 import { AreaFilter, topAreaIdOf } from '../components/AreaFilter';
+import { cancelTransferRequest, listTransferRequests, requestCycleToOwn, TRANSFER_STATUS_LABEL, type TransferRequest } from '../lib/cycleTransfer';
 import { cycleCode } from '../lib/qr';
 import { CycleQr } from '../components/CycleQr';
 import { CycleStatsStrip } from '../components/CycleStatsStrip';
@@ -135,6 +136,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const [group, setGroup] = useState<CycleGroup | null>(null);
   const [vn, setVn] = useState(50);
   const [areaFilter, setAreaFilter] = useState('');   // lọc theo phân khu (D154)
+  const [transfers, setTransfers] = useState<TransferRequest[]>([]);   // yêu cầu chuyển vụ theo HTX sang vụ riêng của hộ (D156)
   const [moveId, setMoveId] = useState<string | null>(null);   // vụ chưa bắt đầu đang đổi ô sản xuất (D155)
   const [moveTo, setMoveTo] = useState('');
   const [showCancelled, setShowCancelled] = useState(false);   // hiện cả vụ đã hủy (xóa vụ làm sai)
@@ -161,6 +163,13 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
     fetchCycleStats(active.id).then((s) => { if (alive) setStats(s); }).catch(() => undefined);
     return () => { alive = false; };
   }, [active?.id, cyclesKey, online]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!active || active.type !== 'household' || !navigator.onLine) { setTransfers([]); return; }
+    let live = true;
+    listTransferRequests('household', active.id).then((r) => { if (live) setTransfers(r); }).catch(() => undefined);
+    return () => { live = false; };
+  }, [active?.id, active?.type, online]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const statById = useMemo(() => new Map((stats?.cycles ?? []).map((s) => [s.cycle_id, s])), [stats]);
   const areaById = useMemo(() => new Map(areas.map((a) => [a.id, a])), [areas]);
@@ -195,6 +204,18 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
     } catch (err) {
       setActionError(friendlyError(err));
     }
+  }
+
+  async function askOwn(c: CycleRow) {
+    const note = window.prompt('Xin quản lý riêng vụ này (HTX sẽ xem và duyệt; chuyển rồi không đổi ngược lại). Ghi chú cho HTX (không bắt buộc):');
+    if (note === null) return;
+    setActionError(null);
+    try { await requestCycleToOwn(c.id, note.trim()); setTransfers(await listTransferRequests('household', active!.id)); }
+    catch (err) { setActionError(friendlyError(err)); }
+  }
+  async function cancelOwn(reqId: string) {
+    setActionError(null);
+    try { await cancelTransferRequest(reqId); setTransfers(await listTransferRequests('household', active!.id)); } catch (err) { setActionError(friendlyError(err)); }
   }
 
   // Vụ chưa bắt đầu làm sai: ghi lý do rồi xóa (hủy nhật ký chuẩn bị, hoàn kho); còn dấu vết phải giữ thì chuyển Đã hủy
@@ -298,6 +319,18 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
                   setEditId(null);
                 }} />
             )}
+            {active.type === 'household' && c.owner_org_id !== active.id && isOwner(active.roles) && (() => {
+              const mine = transfers.filter((t) => t.cycle_id === c.id);
+              const pend = mine.find((t) => t.status === 'pending');
+              const last = mine[0];
+              return (
+                <>
+                  {pend && <p className="msg warn" role="status">{TRANSFER_STATUS_LABEL.pending}. <button type="button" className="link" disabled={!online} onClick={() => void cancelOwn(pend.id)}>Hủy yêu cầu</button></p>}
+                  {!pend && last?.status === 'rejected' && <p className="muted">HTX đã từ chối xin quản lý riêng{last.decision_reason ? `: ${last.decision_reason}` : '.'}</p>}
+                  {!pend && <div className="actions"><button className="secondary" disabled={!online} onClick={() => void askOwn(c)}>Xin chuyển thành vụ riêng</button></div>}
+                </>
+              );
+            })()}
             {moveId === c.id && (() => {
               const curOrg = areaById.get(c.area_id)?.organization_id;
               const options = cycleAreas(areas.filter((a) => a.organization_id === curOrg && a.is_active !== false)).filter((a) => a.id !== c.area_id);
