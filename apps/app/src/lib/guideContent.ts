@@ -43,7 +43,7 @@ const BASE_GUIDES: Guide[] = [
     label: 'Quy trình, vụ và Ghi việc',
     icon: '📋',
     flow: [
-      { title: 'Chuẩn bị', tone: 'info', nodes: [{ icon: '🧩', label: 'Quy trình – Công đoạn – Việc', step: 0 }, { icon: '🧰', label: 'Danh mục Việc', step: 1 }, { icon: '📋', label: 'Tạo quy trình', step: 2 }] },
+      { title: 'Chuẩn bị', tone: 'info', nodes: [{ icon: '🧩', label: 'Quy trình – Công đoạn – Việc', step: 0 }, { icon: '🧰', label: 'Danh mục Việc', step: 1 }, { icon: '📋', label: 'Quy trình mẫu', step: 2 }] },
       { title: 'Chạy vụ', tone: 'ok', nodes: [{ icon: '🌱', label: 'Vụ lấy lịch từ quy trình', step: 3 }, { icon: '📈', label: 'Quản lý vụ', step: 4 }] },
       { title: 'Ghi và đóng việc', tone: 'warn', nodes: [{ icon: '📒', label: 'Ghi việc', step: 5 }, { icon: '✅', label: 'Bấm Xong', step: 6 }, { icon: '✏️', label: 'Sửa, hủy, nhân bản', step: 7 }] },
     ],
@@ -69,17 +69,17 @@ const BASE_GUIDES: Guide[] = [
         go: { tab: 'declare', section: 'worktypes', label: 'Mở Việc' },
       },
       {
-        title: 'Tạo quy trình: đặt ngày, việc song song, việc lặp lại',
+        title: 'Quy trình mẫu: đặt ngày, việc song song, việc lặp lại',
         details: [
-          'Khai báo → Tạo quy trình. Tab "Mẫu hệ thống" có mẫu soạn sẵn (dưa lưới nhà màng, heo thịt, tôm ao lót bạt): xem trước rồi "Áp dụng cho cơ sở của tôi". Tab "Của cơ sở" là các quy trình của bạn để sửa, nhân bản.',
+          'Khai báo → Quy trình mẫu. Tab "Quy trình mẫu của hệ thống" có mẫu soạn sẵn (dưa lưới nhà màng, heo thịt, tôm ao lót bạt): xem trước rồi "Áp dụng cho cơ sở của tôi". Tab "Của cơ sở" là các quy trình của bạn để sửa, nhân bản.',
           'Mỗi việc trong công đoạn có: loại việc · số ngày thực hiện · "Bắt đầu ngày thứ" · "Lặp lại mỗi … ngày" · mức quan trọng · ghi chú · hướng dẫn · vật tư dự kiến.',
           'Để trống "Bắt đầu ngày thứ" = việc này NỐI TIẾP sau việc trước (làm xong việc trước mới tới). Nhập một số = việc bắt đầu đúng ngày đó của vụ và CHẠY SONG SONG với việc khác (ví dụ tưới chạy suốt trong khi bón phân vào ngày 15).',
           'Việc lặp lại (tưới mỗi 1 ngày, bón mỗi 7 ngày…): nhập "Lặp lại mỗi N ngày". App tính số lần phải làm trong khoảng thời gian của việc; số lần này dùng khi bấm Xong (xem bước 6).',
           'Tổng số ngày của vụ = ngày kết thúc muộn nhất trong tất cả các việc, nên việc chạy song song không làm vụ dài thêm.',
-          'Mẫu hệ thống là bản tham khảo; hãy hỏi người có kinh nghiệm và chỉnh số ngày, vật tư, hướng dẫn cho đúng thực tế của bạn.',
+          'Quy trình mẫu của hệ thống là bản tham khảo; hãy hỏi người có kinh nghiệm và chỉnh số ngày, vật tư, hướng dẫn cho đúng thực tế của bạn.',
         ],
         tip: 'Chưa rõ thời gian thì nhập số ngày ước lượng; khi làm thật, lịch của vụ tự dời theo thực tế nên không cần đúng ngay.',
-        go: { tab: 'declare', section: 'templates', label: 'Mở Tạo quy trình' },
+        go: { tab: 'declare', section: 'templates', label: 'Mở Quy trình mẫu' },
       },
       {
         title: 'Tạo vụ: lịch lấy từ quy trình',
@@ -374,10 +374,10 @@ const BASE_GUIDES: Guide[] = [
       {
         title: 'Khai báo chung: sản phẩm, vật tư, quy trình',
         details: [
-          'Hợp tác xã khai báo danh mục sản phẩm, vật tư và quy trình chuẩn để các hộ làm theo một cách (có thể bắt đầu từ Mẫu hệ thống).',
+          'Hợp tác xã khai báo danh mục sản phẩm, vật tư và quy trình chuẩn để các hộ làm theo một cách (có thể bắt đầu từ Quy trình mẫu của hệ thống).',
           'Mỗi hộ có thể điều chỉnh riêng cho phù hợp với vườn của mình; sửa của hộ không ảnh hưởng hộ khác.',
         ],
-        go: { tab: 'declare', section: 'templates', label: 'Mở Tạo quy trình' },
+        go: { tab: 'declare', section: 'templates', label: 'Mở Quy trình mẫu' },
       },
       {
         title: 'Theo dõi mùa vụ và sản lượng',

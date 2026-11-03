@@ -64,7 +64,7 @@ export const MAIN_GUIDES: Guide[] = [
         details: [
           "Cơ sở và vật tư: Phân khu, Sản phẩm, Kho, Vật tư, Nhà cung ứng, Máy chấm công.",
           "Nhân sự: Nhân sự, Chức vụ và quyền, Tổ chức.",
-          "Quy trình: Việc (loại việc), Tạo quy trình, Mẫu hệ thống có sẵn.",
+          "Quy trình: Việc (loại việc), Quy trình mẫu, Quy trình mẫu của hệ thống có sẵn.",
           "Giấy phép và đối tác: Giấy phép, Khách hàng, Hợp tác xã hoặc Hộ thành viên.",
           "Vì sao: khai báo xong, mỗi lần tạo vụ hay ghi việc chỉ chọn trong danh sách, không gõ lại, số liệu không lệch tên.",
         ],
@@ -77,9 +77,9 @@ export const MAIN_GUIDES: Guide[] = [
           "Ví dụ dưa lưới nhà màng: các công đoạn Chuẩn bị giá thể → Gieo và ươm → Chăm sóc → Thu hoạch. Công đoạn Chăm sóc gồm các việc: tưới (lặp mỗi 1 ngày), bón phân (ngày thứ 15), phun thuốc (lặp mỗi 7 ngày), tỉa nhánh.",
           "Tạo vụ: chọn sản phẩm, quy trình, phân khu, ngày bắt đầu. Vụ có lịch riêng sao từ quy trình.",
           "Việc chạy song song khi có ngày bắt đầu riêng; để trống thì nối tiếp sau việc trước.",
-          "Mẫu hệ thống có sẵn cho dưa lưới nhà màng, heo thịt, tôm ao lót bạt; cơ sở sửa lại cho đúng cách làm của mình.",
+          "Quy trình mẫu của hệ thống có sẵn cho dưa lưới nhà màng, heo thịt, tôm ao lót bạt; cơ sở sửa lại cho đúng cách làm của mình.",
         ],
-        go: { tab: "declare", section: "templates", label: "Mở Tạo quy trình" },
+        go: { tab: "declare", section: "templates", label: "Mở Quy trình mẫu" },
       },
       {
         title: "Việc hằng ngày: Ghi việc và Chấm công",
@@ -215,7 +215,7 @@ export const MAIN_GUIDES: Guide[] = [
         details: [
           "Menu ☰ góc trên bên trái → Cấu hình.",
           "Ở “Nhóm loại sản phẩm”, tích cột “Sử dụng” cho Cây trồng.",
-          "Ở “Tạo quy trình”, chọn dùng công đoạn hay chỉ danh sách việc (đơn giản hơn cho hộ nhỏ).",
+          "Ở “Quy trình mẫu”, chọn dùng công đoạn hay chỉ danh sách việc (đơn giản hơn cho hộ nhỏ).",
           "Vì sao: Những việc, mẫu, vật tư của loại khác (ví dụ vật nuôi) sẽ tự ẩn nên màn hình gọn hơn.",
         ],
         tip: "Chưa chắc thì để mặc định. Đổi lúc nào cũng được, dữ liệu đã ghi không mất.",
@@ -253,16 +253,16 @@ export const MAIN_GUIDES: Guide[] = [
       {
         title: "Lập quy trình (dùng mẫu có sẵn rồi sửa)",
         details: [
-          "Khai báo → Quy trình → Tạo quy trình. Có hai tab: “Của cơ sở” và “Mẫu hệ thống”.",
-          "Ở “Mẫu hệ thống” chọn mẫu dưa lưới nhà màng, xem trước, rồi bấm “Áp dụng cho cơ sở của tôi”.",
+          "Khai báo → Quy trình → Quy trình mẫu. Có hai tab: “Quy trình mẫu của cơ sở” và “Quy trình mẫu của hệ thống”.",
+          "Ở “Quy trình mẫu của hệ thống” chọn mẫu dưa lưới nhà màng, xem trước, rồi bấm “Áp dụng cho cơ sở của tôi”.",
           "Sửa số ngày, vật tư dự kiến và hướng dẫn cho đúng cách làm của bạn.",
           "Mỗi việc có: loại việc, số ngày thực hiện, “Bắt đầu ngày thứ”, “Lặp lại mỗi … ngày”, ghi chú, hướng dẫn, vật tư dự kiến.",
           "Để trống “Bắt đầu ngày thứ” là việc nối tiếp sau việc trước. Nhập một số là việc bắt đầu đúng ngày đó và chạy song song (ví dụ tưới chạy suốt trong khi bón phân vào ngày 15).",
           "Muốn thêm loại việc riêng: Khai báo → Quy trình → Việc.",
           "Vì sao: Quy trình là công thức làm một loại cây: chia thành công đoạn (Chuẩn bị, Gieo, Chăm sóc, Thu hoạch), mỗi công đoạn gồm các việc. Làm một lần, dùng cho nhiều vụ.",
         ],
-        tip: "Mẫu hệ thống chỉ để tham khảo. Hỏi người có kinh nghiệm rồi chỉnh. Chưa rõ số ngày thì nhập ước lượng, lịch của vụ tự dời theo thực tế.",
-        go: { tab: "declare", section: "templates", label: "Mở Tạo quy trình" },
+        tip: "Quy trình mẫu của hệ thống chỉ để tham khảo. Hỏi người có kinh nghiệm rồi chỉnh. Chưa rõ số ngày thì nhập ước lượng, lịch của vụ tự dời theo thực tế.",
+        go: { tab: "declare", section: "templates", label: "Mở Quy trình mẫu" },
       },
       {
         title: "Nhập kho vật tư",
@@ -453,7 +453,7 @@ export const MAIN_GUIDES: Guide[] = [
           "Menu ☰ → Cấu hình.",
           "Ở “Nhóm loại sản phẩm”, tích cột “Sử dụng” cho Vật nuôi và/hoặc Thủy sản (tùy bạn nuôi gì). Có thể tắt Cây trồng nếu không trồng.",
           "Ở “Kiểu ô”, xem sẵn các kiểu (kín, hở…); chỉ sửa khi muốn gọi tên khác.",
-          "Ở “Tạo quy trình”, chọn dùng công đoạn hay chỉ danh sách việc.",
+          "Ở “Quy trình mẫu”, chọn dùng công đoạn hay chỉ danh sách việc.",
           "Vì sao: Việc “Cho ăn” của heo khác “Cho ăn” của tôm (ô cần nhập và vật tư khác nhau), nên app tách theo đối tượng và chỉ hiện đúng loại bạn chọn.",
         ],
         tip: "Chưa chắc thì để mặc định. Đổi lúc nào cũng được.",
@@ -492,7 +492,7 @@ export const MAIN_GUIDES: Guide[] = [
       {
         title: "Lập quy trình nuôi",
         details: [
-          "Khai báo → Quy trình → Tạo quy trình → tab “Mẫu hệ thống”.",
+          "Khai báo → Quy trình → Quy trình mẫu → tab “Quy trình mẫu của hệ thống”.",
           "Có mẫu heo thịt và tôm ao lót bạt. Xem trước rồi bấm “Áp dụng cho cơ sở của tôi”, sau đó sửa cho đúng trại của bạn.",
           "Nuôi gà, vịt, cút hoặc loài khác: tạo quy trình mới, thêm công đoạn (ví dụ Úp chuồng, Úm, Nuôi thịt, Xuất chuồng) rồi thêm các việc vào công đoạn.",
           "Mỗi việc có số ngày, “Bắt đầu ngày thứ”, “Lặp lại mỗi … ngày” (ví dụ cho ăn mỗi 1 ngày), hướng dẫn và vật tư dự kiến.",
@@ -500,7 +500,7 @@ export const MAIN_GUIDES: Guide[] = [
           "Vì sao: Quy trình là công thức nuôi: công đoạn → việc. Làm một lần, đợt nào cũng dùng lại.",
         ],
         tip: "Lịch tiêm, thời gian cách ly, mật độ trong mẫu chỉ để tham khảo. Số liệu kỹ thuật do trại nhập hoặc xác nhận với thú y.",
-        go: { tab: "declare", section: "templates", label: "Mở Tạo quy trình" },
+        go: { tab: "declare", section: "templates", label: "Mở Quy trình mẫu" },
       },
       {
         title: "Nhập kho thức ăn và thuốc",

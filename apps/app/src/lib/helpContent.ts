@@ -41,7 +41,7 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     how: [
       'Cơ sở và vật tư: Phân khu, Sản phẩm, Kho, Vật tư, Nhà cung ứng, Máy chấm công.',
       'Nhân sự: Nhân sự, Chức vụ và quyền, Tổ chức.',
-      'Quy trình: Việc (loại việc) và Tạo quy trình.',
+      'Quy trình: Việc (loại việc) và Quy trình mẫu.',
       'Giấy phép và đối tác: Giấy phép, Khách hàng, Hợp tác xã hoặc Hộ thành viên.',
     ],
     note: 'Nên khai báo theo thứ tự trên cùng: Phân khu, Sản phẩm, Kho, Vật tư rồi mới tới Quy trình.',
@@ -64,7 +64,7 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     what: 'Các danh sách mặc định của cơ sở. Đây là nơi chọn loại sản phẩm bạn thật sự làm; những chỗ cần chọn trong app sẽ lấy danh sách từ đây.',
     how: [
       'Nhóm loại sản phẩm: tích cột "Sử dụng" cho loại bạn làm (Cây trồng, Vật nuôi, Thủy sản). Việc, mẫu, vật tư của loại khác sẽ tự ẩn.',
-      'Tạo quy trình: chọn dùng công đoạn hay chỉ một danh sách việc.',
+      'Quy trình mẫu: chọn dùng công đoạn hay chỉ một danh sách việc.',
       'Nhóm vật tư, nhóm chi phí, loại khách hàng, kiểu nhà/chuồng: đã có sẵn, chỉ sửa khi muốn gọi tên khác.',
     ],
     note: 'Chưa chắc thì để mặc định. Đổi lúc nào cũng được, dữ liệu đã ghi không mất.',
@@ -198,14 +198,14 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     guide: { id: 'process', step: 1 },
   },
   templates: {
-    title: 'Tạo quy trình',
+    title: 'Quy trình mẫu',
     what: 'Soạn "công thức" làm một loại sản phẩm: các công đoạn và việc trong từng công đoạn. Làm một lần, dùng cho nhiều vụ.',
     how: [
-      'Tab "Mẫu hệ thống": xem trước rồi bấm "Áp dụng cho cơ sở của tôi".',
+      'Tab "Quy trình mẫu của hệ thống": xem trước rồi bấm "Áp dụng cho cơ sở của tôi".',
       'Tab "Của cơ sở": sửa hoặc nhân bản quy trình của bạn.',
       'Đặt số ngày, "Bắt đầu ngày thứ" (để trống là nối tiếp, nhập số là chạy song song), "Lặp lại mỗi … ngày".',
     ],
-    note: 'Mẫu hệ thống chỉ để tham khảo. Hãy chỉnh số ngày, vật tư, hướng dẫn cho đúng cách làm của bạn.',
+    note: 'Quy trình mẫu của hệ thống chỉ để tham khảo. Hãy chỉnh số ngày, vật tư, hướng dẫn cho đúng cách làm của bạn.',
     guide: { id: 'process', step: 2 },
   },
   materials: {

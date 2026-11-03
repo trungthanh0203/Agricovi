@@ -80,9 +80,10 @@ export function TemplatesSection() {
       {error && <p className="msg error" role="alert">{error}</p>}
 
       <div className="chips" role="tablist">
-        <button role="tab" aria-selected={tab === 'org'} className={tab === 'org' ? 'chip active' : 'chip'} onClick={() => setTab('org')}>Quy trình của cơ sở</button>{' '}
-        <button role="tab" aria-selected={tab === 'system'} className={tab === 'system' ? 'chip active' : 'chip'} onClick={() => setTab('system')}>Mẫu hệ thống</button>
+        <button role="tab" aria-selected={tab === 'org'} className={tab === 'org' ? 'chip active' : 'chip'} onClick={() => setTab('org')}>Quy trình mẫu của cơ sở</button>{' '}
+        <button role="tab" aria-selected={tab === 'system'} className={tab === 'system' ? 'chip active' : 'chip'} onClick={() => setTab('system')}>Quy trình mẫu của hệ thống</button>
       </div>
+      {tab === 'org' && <p className="muted">Hãy xem quy trình mẫu của hệ thống cho sản phẩm của cơ sở và áp dụng tạo mẫu cho cơ sở nếu muốn hoặc tự tạo mẫu ở dưới đây.</p>}
 
       {tab === 'system' ? (
         <SystemTemplates systems={systems.filter((s) => cfg.kindOn(s.kind))} crops={activeCrops} canManage={canManage} online={online} busy={busy}
@@ -132,14 +133,14 @@ export function TemplatesSection() {
           ))}
         </tbody>
       </table>
-      <p className="muted">Mỗi hộ/HTX có bộ mẫu riêng. Sửa mẫu không đổi các vụ đã tạo. Chưa có quy trình? Xem tab "Mẫu hệ thống" rồi bấm "Áp dụng cho cơ sở của tôi".</p>
+      <p className="muted">Mỗi hộ/HTX có bộ mẫu riêng. Sửa mẫu không đổi các vụ đã tạo. Chưa có quy trình? Xem tab "Quy trình mẫu của hệ thống" rồi bấm "Áp dụng cho cơ sở của tôi".</p>
       </>
       )}
     </>
   );
 }
 
-/** Tab "Mẫu hệ thống": xem trước dạng công đoạn → việc và áp dụng (sao) thành quy trình riêng của cơ sở, sau đó sửa tùy ý */
+/** Tab "Quy trình mẫu của hệ thống": xem trước dạng công đoạn → việc và áp dụng (sao) thành quy trình riêng của cơ sở, sau đó sửa tùy ý */
 function SystemTemplates({ systems, crops, canManage, online, busy, onApply }: {
   systems: SystemTemplate[]; crops: { id: string; name: string; kind?: string | null }[]; canManage: boolean; online: boolean; busy: boolean;
   onApply: (sys: SystemTemplate, cropId: string, name: string) => void;

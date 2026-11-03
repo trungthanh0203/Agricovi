@@ -20,7 +20,7 @@ export const MORE_GUIDES: Guide[] = [
       {
         title: 'Khai báo là gì và đi theo thứ tự nào',
         details: [
-          'Tab Khai báo chia thành 4 khung: Cơ sở & vật tư (Phân khu, Sản phẩm, Kho, Vật tư, Nhà cung ứng, Máy chấm công) · Nhân sự (Chức vụ, Tổ chức, Nhân sự) · Quy trình (Việc, Tạo quy trình) · Giấy phép & đối tác (Giấy phép, Hợp tác xã hoặc Hộ thành viên, Khách hàng).',
+          'Tab Khai báo chia thành 4 khung: Cơ sở & vật tư (Phân khu, Sản phẩm, Kho, Vật tư, Nhà cung ứng, Máy chấm công) · Nhân sự (Chức vụ, Tổ chức, Nhân sự) · Quy trình (Việc, Quy trình mẫu) · Giấy phép & đối tác (Giấy phép, Hợp tác xã hoặc Hộ thành viên, Khách hàng).',
           'Thứ tự gợi ý: Cấu hình → Phân khu → Sản phẩm → Kho → Vật tư → Nhà cung ứng → Quy trình → Nhân sự. Khách hàng và Giấy phép thêm lúc nào cũng được.',
           'Mục nào bạn không có quyền hoặc cơ sở không dùng thì tự ẩn để màn hình ngắn gọn.',
           'Khai báo là dữ liệu dùng chung nên cần có mạng khi lưu. Sai thì sửa hoặc dừng dùng; dữ liệu đã ghi trước đó không bị mất.',
