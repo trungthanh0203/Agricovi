@@ -68,8 +68,8 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
   async function loadLibrary() {
     setImgBusy(true); setErr(null);
     try {
-      const rows = await rpc<{ id: string; image: string; used_in: string[] }[]>('site_list_page_images', { p_limit: 40 });
-      setUploaded(rows.map((r) => ({ id: r.id, alt: 'ảnh', thumb: r.image, usedIn: r.used_in })));
+      const rows = await rpc<{ id: string; used_in: string[] }[]>('site_list_page_images', { p_limit: 40 });
+      setUploaded(rows.map((r) => ({ id: r.id, alt: 'ảnh', thumb: `/anh/pg/${r.id}`, usedIn: r.used_in })));
       setMsg(rows.length ? `Có ${rows.length} ảnh đã tải lên (hiện tối đa 40 ảnh mới nhất).` : 'Chưa có ảnh nào được tải lên.');
     } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
     setImgBusy(false);

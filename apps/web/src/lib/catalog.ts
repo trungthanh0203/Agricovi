@@ -9,17 +9,33 @@ export interface Cat { id: string; parent_id: string | null; slug: string; name:
 
 const TTL = 60_000;
 const memo = new Map<string, { at: number; v: unknown }>();
+const inflight = new Map<string, Promise<unknown>>();
+/**
+ * Lưu đệm trong bộ nhớ Worker ~60 giây. Khi hết hạn: các yêu cầu đồng thời DÙNG CHUNG một lần tải (không dồn hàng trăm lệnh vào CSDL),
+ * và nếu đang có bản cũ thì trả bản cũ ngay (không bắt người dùng chờ) trong lúc làm mới.
+ */
 async function cached<T>(key: string, fn: () => Promise<T>, fallback: T): Promise<T> {
   const hit = memo.get(key);
   if (hit && Date.now() - hit.at < TTL) return hit.v as T;
-  try {
-    const v = await Promise.race([fn(), new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), 3500))]);
-    memo.set(key, { at: Date.now(), v });
-    return v;
-  } catch {
-    memo.set(key, { at: Date.now() - TTL + 8_000, v: fallback });
-    return fallback;
+  let p = inflight.get(key) as Promise<T> | undefined;
+  if (!p) {
+    p = (async () => {
+      try {
+        const v = await Promise.race([fn(), new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), 3500))]);
+        memo.set(key, { at: Date.now(), v });
+        return v;
+      } catch {
+        // lỗi/chậm: giữ bản cũ (nếu có) thêm một lúc ngắn, nếu không thì dùng giá trị dự phòng
+        const v = hit ? (hit.v as T) : fallback;
+        memo.set(key, { at: Date.now() - TTL + 8_000, v });
+        return v;
+      } finally { inflight.delete(key); }
+    })();
+    inflight.set(key, p);
   }
+  if (hit) return hit.v as T;
+  // người chờ nhờ lần tải của yêu cầu khác: có hạn chờ riêng để không bao giờ treo nếu yêu cầu kia bị hủy
+  return Promise.race([p, new Promise<T>((res) => setTimeout(() => res(fallback), 4000))]);
 }
 
 const FALLBACK_CATS: Cat[] = DEFAULT_CATEGORIES.map((c, i) => ({
