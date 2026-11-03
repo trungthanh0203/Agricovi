@@ -81,8 +81,8 @@ export function TemplatesSection() {
 
       <p className="muted">Hãy xem quy trình mẫu của hệ thống cho sản phẩm của cơ sở và áp dụng tạo mẫu cho cơ sở nếu muốn hoặc tự tạo mẫu ở dưới đây.</p>
       <div className="chips" role="tablist">
-        <button role="tab" aria-selected={tab === 'org'} className={tab === 'org' ? 'chip active' : 'chip'} onClick={() => setTab('org')}>Quy trình mẫu của cơ sở</button>{' '}
-        <button role="tab" aria-selected={tab === 'system'} className={tab === 'system' ? 'chip active' : 'chip'} onClick={() => setTab('system')}>Quy trình mẫu của hệ thống</button>
+        <button role="tab" aria-selected={tab === 'system'} className={tab === 'system' ? 'chip active' : 'chip'} onClick={() => setTab('system')}>Quy trình mẫu của hệ thống</button>{' '}
+        <button role="tab" aria-selected={tab === 'org'} className={tab === 'org' ? 'chip active' : 'chip'} onClick={() => setTab('org')}>Quy trình mẫu của cơ sở</button>
       </div>
 
       {tab === 'system' ? (
@@ -98,12 +98,12 @@ export function TemplatesSection() {
         <p className="msg warn">Chưa có sản phẩm nào. Hãy thêm ở mục "Sản phẩm" trước.</p>
       ) : (
         <form className="quickadd" onSubmit={onCreate} noValidate>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tên quy trình mới" aria-label="Tên quy trình mới" />
+          <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Mô tả (áp dụng khi nào…)" aria-label="Mô tả quy trình mới" />
           <select value={effCrop} onChange={(e) => setCropId(e.target.value)} aria-label="Sản phẩm">
             {activeCrops.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tên quy trình mới" aria-label="Tên quy trình mới" />
-          <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Mô tả (áp dụng khi nào…)" aria-label="Mô tả quy trình mới" />
-          <button type="submit" className="primary" disabled={busy || !online}>Tạo</button>
+          <button type="submit" className="primary" disabled={busy || !online}>Tạo mẫu</button>
         </form>
       ))}
 

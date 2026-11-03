@@ -27,6 +27,7 @@ import {
   addCycleStage, addNote, advanceStage, deleteCycleStage, deleteCyclePhase, deleteNote, refreshCycle, setCycleStatus, setNoteDone, updateCyclePhase, updateCycleStage,
 } from '../lib/production';
 import { canManageProduction, isOwner } from '../lib/roles';
+import { PublishedCycleBar } from '../components/PublishedCycleBar';
 import { prepLabel, prepLoggable, predecessorOf } from '../lib/prep';
 import { PrepPicker } from '../components/PrepPicker';
 import { setCyclePrep } from '../lib/production';
@@ -212,6 +213,10 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
       {!logOk && prog.total > 0 && !closed && <p className="muted">Chỉ vụ đang sản xuất mới bắt đầu/hoàn thành việc và ghi việc được.</p>}
       {!online && canManage && <p className="msg warn" role="status">Đang offline: đổi việc và ghi chú cần có mạng. Ghi việc vẫn dùng được.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
+
+      {cycle.owner_org_id === active?.id && (canManage || isOwner(active?.roles)) && (
+        <PublishedCycleBar cycleId={cycleId} label={cycle.name || cycle.code || 'vu'} canQr={canManage} canPublish={isOwner(active?.roles)} />
+      )}
 
       <div className="chips" role="tablist" aria-label="Cách xem">
         <button role="tab" aria-selected={view === 'list'} className={view === 'list' ? 'chip active' : 'chip'} onClick={() => setView('list')}>Danh sách</button>

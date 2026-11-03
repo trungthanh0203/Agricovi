@@ -363,3 +363,7 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - **Quy trình**: hộ (chủ hộ) bấm "Xin chuyển thành vụ riêng" trên thẻ vụ theo HTX (có thể hủy yêu cầu đang chờ) → HTX (quyền Hộ thành viên) duyệt hoặc từ chối kèm lý do ở Khai báo → Hộ thành viên → "Yêu cầu chuyển vụ sang vụ riêng". Có lịch sử (`cycle_transfer_requests`).
 - **Chuyển theo vụ**: nhật ký, giai đoạn, ghi chú, sự cố, mốc, cách ly, cân, thức ăn, việc và THU HOẠCH sang sổ của hộ. **Giữ ở sổ HTX**: chi phí và doanh thu HTX đã ghi, phiếu thu mua HTX–hộ, chấm công của nhân sự HTX (giao dịch/ghi nhận của HTX). Từ nay hộ ghi tiếp vào sổ của hộ.
 - Chiều ngược lại (vụ riêng → theo HTX) chưa làm. Lưu ý: luật "hộ thuộc HTX chưa có gói TRẢ PHÍ chỉ tạo vụ theo HTX" (D148) áp dụng khi TẠO vụ mới; chuyển vụ đòi gói còn hiệu lực (kể cả dùng thử còn hạn) theo yêu cầu chủ sản phẩm.
+
+## D157 — Quy trình mẫu: thứ tự và nút; vụ đã công khai có nút cập nhật nhanh
+- Quy trình mẫu: tab "Quy trình mẫu của hệ thống" đứng trước "của cơ sở"; form tạo mẫu: tên, mô tả, **ô chọn sản phẩm ở cuối trước nút "Tạo mẫu"**.
+- Quản lý vụ (`CycleDetailScreen`): với vụ ĐÃ CÔNG KHAI lên website (và không bị quản trị ẩn), trên hai nút Danh sách / Lịch có thêm "Cập nhật mã QR vụ" (lấy số liệu mới nhất, vẽ lại mã QR; người quản lý vụ) và "Cập nhật lên website" (`publish_cycle`, chỉ chủ cơ sở) — `components/PublishedCycleBar.tsx`. Chỉ hiện cho cơ sở chủ vụ.
