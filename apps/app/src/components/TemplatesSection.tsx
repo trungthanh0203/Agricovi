@@ -79,11 +79,11 @@ export function TemplatesSection() {
       {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Soạn mẫu cần có mạng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
+      <p className="muted">Hãy xem quy trình mẫu của hệ thống cho sản phẩm của cơ sở và áp dụng tạo mẫu cho cơ sở nếu muốn hoặc tự tạo mẫu ở dưới đây.</p>
       <div className="chips" role="tablist">
         <button role="tab" aria-selected={tab === 'org'} className={tab === 'org' ? 'chip active' : 'chip'} onClick={() => setTab('org')}>Quy trình mẫu của cơ sở</button>{' '}
         <button role="tab" aria-selected={tab === 'system'} className={tab === 'system' ? 'chip active' : 'chip'} onClick={() => setTab('system')}>Quy trình mẫu của hệ thống</button>
       </div>
-      {tab === 'org' && <p className="muted">Hãy xem quy trình mẫu của hệ thống cho sản phẩm của cơ sở và áp dụng tạo mẫu cho cơ sở nếu muốn hoặc tự tạo mẫu ở dưới đây.</p>}
 
       {tab === 'system' ? (
         <SystemTemplates systems={systems.filter((s) => cfg.kindOn(s.kind))} crops={activeCrops} canManage={canManage} online={online} busy={busy}
@@ -175,7 +175,7 @@ function SystemTemplateCard({ sys, crops, canManage, online, busy, wtName, onApp
           {p.description && <span className="sub">{p.description}</span>}
           {stages.filter((s) => s.phase_id === p.id).map((s, j) => (
             <p key={s.id} className="muted">
-              {p.code?.trim() || i + 1}.{j + 1} {wtName(s.work_type_id)} · {s.duration_days} ngày{s.start_day ? ` từ ngày ${s.start_day}` : ''}{s.repeat_every_days ? ` · lặp mỗi ${s.repeat_every_days} ngày` : ''} · Quan trọng: {IMPORTANCE_LABEL[s.importance]}{s.note ? ` · ${s.note}` : ''}
+              {p.code?.trim() || i + 1}.{j + 1} {wtName(s.work_type_id)} · {s.duration_days} ngày{s.start_day ? ` từ ngày ${s.start_day}` : ''}{s.repeat_every_days ? ` · lặp mỗi ${s.repeat_every_days} ngày` : ''}{s.note ? ` · ${s.note}` : ''} · Quan trọng: {IMPORTANCE_LABEL[s.importance]}
               {s.guide ? <span className="sub">Hướng dẫn: {s.guide}</span> : null}
               {(s.materials ?? []).length > 0 ? <span className="sub">Vật tư: {(s.materials ?? []).map((m) => `${m.name}${m.amount ? ` (${m.amount})` : ''}`).join('; ')}</span> : null}
             </p>
