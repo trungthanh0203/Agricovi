@@ -23,7 +23,7 @@ import { PublishCycle } from '../components/PublishCycle';
 import { fmtDate } from '../lib/dates';
 import { useOrgs } from '../lib/orgs';
 import { canManageProduction, isOwner } from '../lib/roles';
-import { deleteCycle, editCycle, fetchQuotaContexts, setCycleInfo, setCyclePlan, setCycleStatus, type CropInfo, type QuotaContext } from '../lib/production';
+import { changeCycleArea, deleteCycle, discardUnstartedCycle, editCycle, fetchQuotaContexts, setCycleInfo, setCyclePlan, setCycleStatus, type CropInfo, type QuotaContext } from '../lib/production';
 import type { CycleRow } from '../lib/db';
 import { cycleCountUnit } from '../lib/countUnit';
 import { CycleWord } from '../components/CycleWord';
@@ -31,7 +31,7 @@ import { infoLabels } from '../lib/terms';
 import { productionSections, type ProductionSection, type TabId } from '../lib/tabs';
 import { useTable } from '../lib/tables';
 import { prepLoggable, predecessorOf } from '../lib/prep';
-import { areaPath } from '../lib/areas';
+import { areaPath, cycleAreas } from '../lib/areas';
 
 interface Props {
   section?: string;
@@ -135,6 +135,9 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const [group, setGroup] = useState<CycleGroup | null>(null);
   const [vn, setVn] = useState(50);
   const [areaFilter, setAreaFilter] = useState('');   // lọc theo phân khu (D154)
+  const [moveId, setMoveId] = useState<string | null>(null);   // vụ chưa bắt đầu đang đổi nhà màng (D155)
+  const [moveTo, setMoveTo] = useState('');
+  const [showCancelled, setShowCancelled] = useState(false);   // hiện cả vụ đã hủy (xóa vụ làm sai)
   const [editId, setEditId] = useState<string | null>(null);
   const [qrId, setQrId] = useState<string | null>(null);
   const [pubId, setPubId] = useState<string | null>(null);
@@ -169,7 +172,9 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const myCyclesAll = cycles
     .filter((c) => c.owner_org_id === active.id || areaById.get(c.area_id)?.organization_id === active.id)
     .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
-  const myCycles = areaFilter ? myCyclesAll.filter((c) => topAreaIdOf(c.area_id, areaById) === areaFilter) : myCyclesAll;
+  const byArea = areaFilter ? myCyclesAll.filter((c) => topAreaIdOf(c.area_id, areaById) === areaFilter) : myCyclesAll;
+  const cancelledCount = byArea.filter((c) => c.status === 'cancelled').length;
+  const myCycles = showCancelled ? byArea : byArea.filter((c) => c.status !== 'cancelled');   // vụ đã hủy ẩn mặc định
   const hasAreas = areas.some((a) => a.organization_id === active.id);
   const inGroup = (g: CycleGroup) => myCycles.filter((c) => GROUPS.find((x) => x.id === g)!.statuses.includes(c.status));
   // mặc định mở nhóm đầu tiên có vụ (Đang sản xuất trước)
@@ -190,6 +195,18 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
     } catch (err) {
       setActionError(friendlyError(err));
     }
+  }
+
+  // Vụ chưa bắt đầu làm sai: ghi lý do rồi xóa (hủy nhật ký chuẩn bị, hoàn kho); còn dấu vết phải giữ thì chuyển Đã hủy
+  async function discard(c: CycleRow) {
+    const title = cycleTitle(c, cropName(c.crop_type_id));
+    const reason = window.prompt(`Xóa vụ làm sai "${title}"? Nhật ký chuẩn bị đã ghi sẽ bị hủy (kèm lý do) và vật tư đã xuất được hoàn lại kho.\n\nLý do xóa (ví dụ: chọn nhầm nhà màng):`);
+    if (!reason || reason.trim().length < 3) return;
+    setActionError(null);
+    try {
+      const r = await discardUnstartedCycle(c.id, reason);
+      if (r === 'cancelled') setActionError('Vụ đã được chuyển sang "Đã hủy" vì còn dấu vết nhật ký đã hủy cần giữ. Bật "Hiện cả vụ đã hủy" ở nhóm Kết thúc nếu muốn xem lại.');
+    } catch (err) { setActionError(friendlyError(err)); }
   }
 
   async function remove(c: CycleRow) {
@@ -223,6 +240,9 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
       )}
       <AreaFilter areas={areas.filter((a) => a.organization_id === active.id)} usedAreaIds={myCyclesAll.map((c) => c.area_id)} value={areaFilter} onChange={(v) => { setAreaFilter(v); setVn(50); }} />
       {myCycles.length > 0 && shown.length === 0 && <p className="muted">Không có vụ nào ở nhóm này.</p>}
+      {curGroup === 'ended' && cancelledCount > 0 && (
+        <label className="check"><input type="checkbox" checked={showCancelled} onChange={(e) => { setShowCancelled(e.target.checked); setVn(50); }} /> Hiện cả vụ đã hủy ({cancelledCount})</label>
+      )}
       {shown.map((c) => {
         const owner = ownerLabel(c.owner_org_id);
         const prog = cycleProgress(allStages.filter((s) => s.cycle_id === c.id), today);
@@ -278,13 +298,37 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
                   setEditId(null);
                 }} />
             )}
+            {moveId === c.id && (() => {
+              const curOrg = areaById.get(c.area_id)?.organization_id;
+              const options = cycleAreas(areas.filter((a) => a.organization_id === curOrg && a.is_active !== false)).filter((a) => a.id !== c.area_id);
+              return (
+                <div className="inline-form">
+                  <strong>Đổi nhà màng của vụ chưa bắt đầu</strong>
+                  <p className="muted">Hiện ở: {areaPath(c.area_id, areas) || '—'}. Nhật ký chuẩn bị đã ghi được giữ nguyên và chuyển theo vụ.</p>
+                  <label>Nhà màng mới
+                    <select value={moveTo} onChange={(e) => setMoveTo(e.target.value)}>
+                      <option value="">— Chọn —</option>
+                      {options.map((a) => <option key={a.id} value={a.id}>{areaPath(a.id, areas)}</option>)}
+                    </select>
+                  </label>
+                  <div className="actions">
+                    <button className="primary" disabled={!online || !moveTo} onClick={async () => {
+                      setActionError(null);
+                      try { await changeCycleArea(c.id, moveTo); setMoveId(null); } catch (err) { setActionError(friendlyError(err)); }
+                    }}>Lưu</button>
+                    <button type="button" className="secondary" onClick={() => setMoveId(null)}>Hủy</button>
+                  </div>
+                </div>
+              );
+            })()}
             {canManage && (
               <div className="actions">
                 {c.status === 'preparing' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'active')}>Bắt đầu sản xuất</button>}
                 {c.status === 'active' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'paused')}>Tạm dừng</button>}
                 {c.status === 'paused' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'active')}>Tiếp tục</button>}
                 <button className="secondary" disabled={!online} onClick={() => setEditId(editId === c.id ? null : c.id)}>Sửa vụ</button>
-                <button className="secondary" disabled={!online} onClick={() => void remove(c)}>Xóa vụ</button>
+                {c.status === 'preparing' && <button className="secondary" disabled={!online} onClick={() => { setMoveId(moveId === c.id ? null : c.id); setMoveTo(''); }}>Đổi nhà màng</button>}
+                <button className="secondary" disabled={!online} onClick={() => void (c.status === 'preparing' ? discard(c) : remove(c))}>Xóa vụ</button>
                 {(c.status === 'active' || c.status === 'paused') && (
                   <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'ended', 'Kết thúc vụ này? Nhật ký và số liệu vẫn được giữ lại.')}>
                     Kết thúc vụ

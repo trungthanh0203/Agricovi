@@ -352,3 +352,8 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 ## D154 — Sắp xếp vụ theo ngày đến và lọc theo phân khu
 - Danh sách vụ ở Trang chủ ("Tiến độ các vụ đang chạy") và Sản xuất → Vụ nuôi trồng xếp theo **ngày đến từ gần tới xa** (`sortByDue`): vụ đang chạy/tạm dừng = hạn của việc hiện tại (đang làm: ngày kết thúc dự kiến; chưa làm: ngày bắt đầu dự kiến), vụ chuẩn bị = ngày bắt đầu; vụ trễ ngày hoặc sắp đến hạn lên trước, xa ngày ở sau, không có ngày ở cuối; vụ đã kết thúc/hủy sau cùng, mới nhất trước.
 - Bộ lọc **Phân khu** (`AreaFilter`, chỉ hiện khi có từ 2 phân khu có vụ): Trang chủ dưới chữ "Tiến độ các vụ đang chạy"; Vụ nuôi trồng dưới các nút trạng thái (số vụ ở mỗi nút đếm theo phân khu đã chọn). Ô sản xuất tính theo phân khu cha.
+
+## D155 — Vụ chưa bắt đầu làm sai nhà màng (migration 0155)
+- **Đổi nhà màng** (`change_cycle_area`): chỉ vụ ở trạng thái Chuẩn bị, chưa có thu hoạch/doanh thu, nhà màng mới cùng cơ sở/hộ với nhà màng hiện tại và đúng quyền; nhật ký chuẩn bị đã ghi được giữ. Nút "Đổi nhà màng" trên thẻ vụ chuẩn bị.
+- **Xóa vụ làm sai** (`discard_unstarted_cycle`): chỉ vụ Chuẩn bị, chưa có thu hoạch/doanh thu/chi phí; bắt buộc ghi lý do; hủy nhật ký chuẩn bị (kho tự hoàn lại), rồi xóa hẳn vụ; nếu còn dấu vết phải giữ (nhật ký đã hủy, giao dịch hoàn kho) thì chuyển "Đã hủy". Vụ đã hủy ẩn khỏi danh sách, hiện lại bằng ô "Hiện cả vụ đã hủy" ở nhóm Kết thúc; không tính hạn mức. Vụ đã bắt đầu vẫn chỉ "Kết thúc vụ".
+- Sửa lỗi: mở khung "＋ Giống, diện tích", "＋ Kế hoạch", "＋ Thông tin quản lý" khi tạo vụ không còn nhảy về đầu trang (`autoScrollToForm` chỉ cuộn tới chính khung đó).

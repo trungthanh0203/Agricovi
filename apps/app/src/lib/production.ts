@@ -390,6 +390,37 @@ export async function deleteCycle(cycleId: string): Promise<void> {
   });
 }
 
+/** Vụ chưa bắt đầu làm sai nhà màng: đổi sang nhà màng khác cùng cơ sở, giữ nhật ký chuẩn bị đã ghi (D155; cần mạng) */
+export async function changeCycleArea(cycleId: string, areaId: string): Promise<void> {
+  requireOnline('đổi nhà màng của vụ');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { error } = await supabase.rpc('change_cycle_area', { p_cycle: cycleId, p_area: areaId });
+  if (error) throw new Error(error.message);
+  await refreshCycle(cycleId);
+}
+
+/**
+ * Xóa vụ chưa bắt đầu làm sai (D155; cần mạng): hủy nhật ký chuẩn bị (kho tự hoàn lại), rồi xóa hẳn vụ hoặc chuyển "Đã hủy" nếu còn dấu vết phải giữ.
+ * Trả 'deleted' hoặc 'cancelled'.
+ */
+export async function discardUnstartedCycle(cycleId: string, reason: string): Promise<'deleted' | 'cancelled'> {
+  requireOnline('xóa vụ');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { data, error } = await supabase.rpc('discard_unstarted_cycle', { p_cycle: cycleId, p_reason: reason.trim() });
+  if (error) throw new Error(error.message);
+  if (data === 'deleted') {
+    await db.transaction('rw', [db.cycles, db.stages, db.notes, db.logs], async () => {
+      await db.stages.where('cycle_id').equals(cycleId).delete();
+      await db.notes.where('cycle_id').equals(cycleId).delete();
+      await db.logs.where('cycle_id').equals(cycleId).delete();
+      await db.cycles.delete(cycleId);
+    });
+  } else {
+    await refreshCycle(cycleId);
+  }
+  return data as 'deleted' | 'cancelled';
+}
+
 export interface StageEdit {
   name?: string;
   work_type_id?: string | null;
