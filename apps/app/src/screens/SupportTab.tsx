@@ -4,6 +4,8 @@ import { contactLine, useContactInfo } from '../lib/contactInfo';
 import { PerfPanel } from '../components/PerfPanel';
 import { GUIDE_LINKS } from '../lib/guideLinks';
 import { useOrgs } from '../lib/orgs';
+import { ReferralCard } from '../components/ReferralCard';
+import { useMyReferral } from '../lib/referral';
 import { hasRole } from '../lib/roles';
 import { shareSystem } from '../lib/shareApp';
 
@@ -15,6 +17,7 @@ export function SupportTab() {
   const info = useContactInfo();
   const { active } = useOrgs();
   const [note, setNote] = useState('');
+  const referral = useMyReferral(active?.id, !!active?.roles.includes('owner'));
   return (
     <section>
       <h1>Hỗ trợ &amp; Chia sẻ</h1>
@@ -32,10 +35,12 @@ export function SupportTab() {
         ))}
       </div>
 
+      {referral && <ReferralCard info={referral} />}
+
       <h2 className="sect">Chia sẻ hệ thống</h2>
       <div className="card">
-        <p>Gửi lời giới thiệu app cho người quen làm nông nghiệp (qua Zalo, tin nhắn…). Lời giới thiệu có sẵn địa chỉ để họ mở và dùng thử.</p>
-        <button type="button" className="primary" onClick={() => void shareSystem(contactLine(info)).then(setNote)}>Chia sẻ hệ thống cho người khác</button>
+        <p>Gửi lời giới thiệu app cho người quen làm nông nghiệp (qua Zalo, tin nhắn…). Lời giới thiệu có sẵn địa chỉ để họ mở và dùng thử{referral ? ', kèm mã giới thiệu của bạn' : ''}.</p>
+        <button type="button" className="primary" onClick={() => void shareSystem(contactLine(info), referral?.code).then(setNote)}>Chia sẻ hệ thống cho người khác</button>
         {note && <p className="muted" role="status">{note}</p>}
       </div>
       {active && hasRole(active.roles, 'manager') && <PerfPanel />}

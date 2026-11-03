@@ -7,7 +7,7 @@
 //   npx supabase secrets set TURNSTILE_SECRET_KEY=...   (chưa đặt thì bỏ qua bước này; vẫn có giới hạn theo mạng và phải chờ duyệt)
 //
 // Hợp đồng:
-//   POST { action: 'register', phone, password, full_name, org_name, org_type: 'household'|'cooperative', turnstile_token? } -> { ok: true, phone }
+//   POST { action: 'register', phone, password, full_name, org_name, org_type: 'household'|'cooperative', turnstile_token?, ref_code? } -> { ok: true, phone }
 //   POST { action: 'admin_reset_password', signup_id }   (cần đăng nhập bằng tài khoản quản trị nền tảng) -> { phone, temp_password }
 // Lỗi: HTTP 400 { error: "MÃ_LỖI: nội dung tiếng Việt" }.
 
@@ -96,6 +96,7 @@ Deno.serve(async (req) => {
       // 3) ghi đăng ký chờ duyệt; lỗi thì xóa tài khoản vừa tạo (không để lại tài khoản mồ côi)
       const fin = await admin.rpc('owner_signup_finalize', {
         p_user: created.data.user.id, p_phone: phone, p_auth_email: auth_email, p_name: fullName, p_org_name: orgName, p_type: orgType, p_ip_hash: ipHash,
+        p_ref: String(body.ref_code ?? '').trim() || null,
       });
       if (fin.error) {
         await admin.auth.admin.deleteUser(created.data.user.id);

@@ -51,7 +51,7 @@ interface OrgState {
   stale: boolean;
   setActive: (id: string) => void;
   refresh: () => Promise<void>;
-  createOrg: (type: OrgType, name: string) => Promise<string>;
+  createOrg: (type: OrgType, name: string, ref?: string) => Promise<string>;
   fetchUsage: (orgId: string) => Promise<PlanUsage | null>;
 }
 
@@ -201,9 +201,9 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   );
 
   const createOrg = useCallback(
-    async (type: OrgType, name: string) => {
+    async (type: OrgType, name: string, ref?: string) => {
       if (!supabase) throw new Error('Supabase chưa được cấu hình');
-      const { data, error } = await supabase.rpc('create_organization', { p_type: type, p_name: name });
+      const { data, error } = await supabase.rpc('create_organization', { p_type: type, p_name: name, p_ref: ref?.trim() || null });
       if (error) throw error;
       const id = data as string;
       await load();

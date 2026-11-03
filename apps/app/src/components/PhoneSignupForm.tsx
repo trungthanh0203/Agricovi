@@ -3,6 +3,7 @@ import { Turnstile, turnstileEnabled } from './Turnstile';
 import { useAuth } from '../lib/auth';
 import { friendlyError } from '../lib/errors';
 import { registerByPhone } from '../lib/phoneSignup';
+import { clearStoredRef, storedRef } from '../lib/referral';
 
 /**
  * Đăng ký chủ cơ sở bằng số điện thoại (cho hộ không có email). Sau khi gửi, tài khoản đăng nhập được ngay nhưng ở trạng thái
@@ -16,6 +17,7 @@ export function PhoneSignupForm() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const [ref, setRef] = useState(storedRef);
   const [token, setToken] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,8 @@ export function PhoneSignupForm() {
     if (!navigator.onLine) return setError('Đăng ký cần có mạng.');
     setBusy(true);
     try {
-      const res = await registerByPhone({ phone, password, full_name: fullName, org_name: orgName, org_type: orgType, turnstile_token: token || undefined });
+      const res = await registerByPhone({ phone, password, full_name: fullName, org_name: orgName, org_type: orgType, turnstile_token: token || undefined, ref_code: ref.trim() || undefined });
+      clearStoredRef();
       await signIn(res.phone, password); // đăng nhập ngay; app hiện màn "đang chờ duyệt"
     } catch (err) {
       setError(friendlyError(err));
@@ -70,6 +73,11 @@ export function PhoneSignupForm() {
           <button type="button" className="pwtoggle" onClick={() => setShowPw((v) => !v)} aria-label={showPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>{showPw ? '🙈' : '👁'}</button>
         </span>
         <small>Ít nhất 8 ký tự. Hãy nhớ mật khẩu này.</small>
+      </label>
+      <label>
+        Mã giới thiệu (nếu có)
+        <input value={ref} maxLength={20} autoCapitalize="characters" placeholder="Ví dụ: DL-HUNG" onChange={(e) => setRef(e.target.value.toUpperCase())} />
+        <small>Nếu người quen hoặc đại lý vật tư đưa mã cho bạn thì nhập vào đây, không có thì để trống.</small>
       </label>
       <Turnstile onToken={onToken} />
       {error && <p className="msg error" role="alert">{error}</p>}

@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { OrgReferral } from './partners';
 import { clean, downloadCsv, Err, fmtDate, fmtDateTime, rpc, supabase, useLoad, vnd } from '@agriconnect/admin-kit';
 
 const STATUS_LABEL: Record<string, string> = { trial: 'Dùng thử', active: 'Đang hoạt động', expired: 'Hết hạn', suspended: 'Tạm khóa', none: 'Chưa có gói' };
@@ -198,6 +199,7 @@ export function OrgDetailPage({ id, onBack }: { id: string; onBack: () => void }
           </button>
         </section>
       </div>
+      <OrgReferral orgId={id} />
       <section className="card">
         <h2>Lịch sử gói</h2>
         <table className="list"><thead><tr><th>Gói</th><th>Trạng thái</th><th>Từ</th><th>Đến</th><th>Số vụ tối đa</th><th>Giá/quý</th></tr></thead>
@@ -495,6 +497,7 @@ export function SettingsPage() {
 // ============================================================ Nhật ký kiểm toán
 interface AuditRow { id: number; at: string; actor: string | null; org: string | null; action: string; entity: string; entity_id: string | null; before: unknown; after: unknown; reason: string | null }
 const ACTION_LABEL: Record<string, string> = {
+  create_partner: 'Thêm đối tác', update_partner: 'Sửa đối tác', pay_commission: 'Chi hoa hồng', void_commission: 'Hủy hoa hồng', set_referral: 'Đổi đối tác giới thiệu',
   record_payment: 'Ghi nhận thanh toán', set_plan: 'Đổi gói / đặt hạn', suspend_org: 'Tạm khóa cơ sở', unsuspend_org: 'Mở khóa cơ sở', create_plan: 'Tạo gói', update_plan: 'Sửa gói',
   set_setting: 'Sửa cấu hình', set_role_label: 'Đổi tên vai trò', hide_public_cycle: 'Tạm ẩn vụ công khai', unhide_public_cycle: 'Cho phép vụ công khai lại', unlock: 'Mở khóa kỳ lương',
 };
@@ -560,7 +563,7 @@ export function RolesPage() {
 }
 
 // ============================================================ Đăng ký bằng số điện thoại (chờ duyệt)
-interface SignupRow { id: string; phone: string; full_name: string; org_name: string; org_type: string; status: 'pending' | 'approved' | 'rejected'; note: string | null; created_at: string; decided_at: string | null }
+interface SignupRow { id: string; phone: string; full_name: string; org_name: string; org_type: string; status: 'pending' | 'approved' | 'rejected'; note: string | null; created_at: string; decided_at: string | null; ref_code?: string | null }
 const SIGNUP_LABEL: Record<string, string> = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Đã từ chối' };
 const SIGNUP_CLS: Record<string, string> = { pending: 'warn', approved: 'ok', rejected: 'bad' };
 export function SignupsPage() {
@@ -601,15 +604,16 @@ export function SignupsPage() {
       <Err e={err2} />
       {msg && <p className="msg ok" role="status">{msg}</p>}
       <p className="muted">Hộ không có email đăng ký bằng số điện thoại (Zalo). Hãy nhắn hoặc gọi Zalo đúng số đó để xác nhận người thật, rồi bấm Duyệt.</p>
-      <table className="list"><thead><tr><th>Ngày đăng ký</th><th>Người đăng ký</th><th>Số điện thoại (Zalo)</th><th>Cơ sở</th><th>Trạng thái</th><th></th></tr></thead>
+      <table className="list"><thead><tr><th>Ngày đăng ký</th><th>Người đăng ký</th><th>Số điện thoại (Zalo)</th><th>Cơ sở</th><th>Mã giới thiệu</th><th>Trạng thái</th><th></th></tr></thead>
         <tbody>
-          {(rows ?? []).length === 0 && <tr><td colSpan={6} className="muted">Không có đăng ký nào.</td></tr>}
+          {(rows ?? []).length === 0 && <tr><td colSpan={7} className="muted">Không có đăng ký nào.</td></tr>}
           {(rows ?? []).map((r) => (
             <tr key={r.id}>
               <td>{fmtDateTime(r.created_at)}</td>
               <td>{r.full_name}</td>
               <td><strong>{r.phone}</strong></td>
               <td>{r.org_name}<br /><small className="muted">{r.org_type === 'cooperative' ? 'Hợp tác xã' : 'Hộ'}</small></td>
+              <td>{r.ref_code ?? <span className="muted">—</span>}</td>
               <td><span className={`badge ${SIGNUP_CLS[r.status]}`}>{SIGNUP_LABEL[r.status]}</span>{r.note && <><br /><small className="muted">{r.note}</small></>}</td>
               <td>
                 {r.status === 'pending' && (<>

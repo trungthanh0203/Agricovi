@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import type { OrgType } from '@agriconnect/shared';
 import { friendlyError } from '../lib/errors';
 import { useOrgs } from '../lib/orgs';
+import { clearStoredRef, storedRef } from '../lib/referral';
 
 const TYPES: { value: OrgType; label: string; hint: string }[] = [
   { value: 'household', label: 'Hộ nông dân / trang trại', hint: 'Bạn tự trồng và quản lý sản xuất của mình.' },
@@ -19,6 +20,7 @@ export function CreateOrgScreen({ first, onDone, onCancel }: Props) {
   const { createOrg } = useOrgs();
   const [type, setType] = useState<OrgType>('household');
   const [name, setName] = useState('');
+  const [ref, setRef] = useState(storedRef);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +31,8 @@ export function CreateOrgScreen({ first, onDone, onCancel }: Props) {
     setBusy(true);
     setError(null);
     try {
-      await createOrg(type, name);
+      await createOrg(type, name, first ? ref : undefined);
+      clearStoredRef();
       onDone?.();
     } catch (err) {
       setError(friendlyError(err));
@@ -61,6 +64,14 @@ export function CreateOrgScreen({ first, onDone, onCancel }: Props) {
           Tên cơ sở
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Vườn dưa lưới Hai Lúa" />
         </label>
+
+        {first && (
+          <label>
+            Mã giới thiệu (nếu có)
+            <input value={ref} maxLength={20} autoCapitalize="characters" placeholder="Ví dụ: DL-HUNG" onChange={(e) => setRef(e.target.value.toUpperCase())} />
+            <small>Người quen hoặc đại lý vật tư đưa mã cho bạn thì nhập vào đây, không có thì để trống.</small>
+          </label>
+        )}
 
         {error && <p className="msg error" role="alert">{error}</p>}
         <div className="btnrow">
