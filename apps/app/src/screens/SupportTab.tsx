@@ -24,6 +24,14 @@ export function SupportTab() {
       <p className="muted">Cần giúp đỡ? Liên hệ trực tiếp với chúng tôi qua các cách dưới đây.</p>
       <ContactCard title="Liên hệ hỗ trợ" />
 
+      {referral && <ReferralCard info={referral} />}
+
+      <h2 className="sect">Chia sẻ hệ thống</h2>
+      <div className="card">
+        <p>Gửi lời giới thiệu app cho người quen làm nông nghiệp (qua Zalo, tin nhắn…). Lời giới thiệu có sẵn địa chỉ để họ mở và dùng thử{referral ? ', kèm mã giới thiệu của bạn' : ''}.</p>
+        <button type="button" className="primary" onClick={() => void shareSystem(contactLine(info), referral?.code).then(setNote)}>Chia sẻ hệ thống cho người khác</button>
+        {note && <p className="muted" role="status">{note}</p>}
+      </div>
       <h2 className="sect">Tài liệu hướng dẫn</h2>
       <div className="card">
         <p className="muted">Mở trên website agricovi.com (cần có mạng), xem được cả trên máy tính.</p>
@@ -35,14 +43,6 @@ export function SupportTab() {
         ))}
       </div>
 
-      {referral && <ReferralCard info={referral} />}
-
-      <h2 className="sect">Chia sẻ hệ thống</h2>
-      <div className="card">
-        <p>Gửi lời giới thiệu app cho người quen làm nông nghiệp (qua Zalo, tin nhắn…). Lời giới thiệu có sẵn địa chỉ để họ mở và dùng thử{referral ? ', kèm mã giới thiệu của bạn' : ''}.</p>
-        <button type="button" className="primary" onClick={() => void shareSystem(contactLine(info), referral?.code).then(setNote)}>Chia sẻ hệ thống cho người khác</button>
-        {note && <p className="muted" role="status">{note}</p>}
-      </div>
       {active && hasRole(active.roles, 'manager') && <PerfPanel />}
     </section>
   );

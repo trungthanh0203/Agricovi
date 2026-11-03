@@ -7,7 +7,7 @@ import { callFunction } from './staff';
  */
 export interface PhoneSignupInput { phone: string; password: string; full_name: string; org_name: string; org_type: 'household' | 'cooperative'; turnstile_token?: string; ref_code?: string }
 
-export const registerByPhone = (p: PhoneSignupInput) => callFunction<{ ok: boolean; phone: string }>({ action: 'register', ...p }, 'owner-signup');
+export const registerByPhone = (p: PhoneSignupInput) => callFunction<{ ok: boolean; phone: string; ref_invalid?: boolean }>({ action: 'register', ...p }, 'owner-signup');
 
 export interface OwnerSignup { status: 'pending' | 'approved' | 'rejected'; org_name: string; phone: string; note: string | null; created_at: string }
 

@@ -15,11 +15,16 @@ async function setup() {
 const DL = { code: 'DL-HUNG', kind: 'agent', name: 'Đại lý Hùng', commission_pct: 20, renewal_pct: 5, months_eligible: 12, hold_days: 30 };
 const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
 
-test('nhập mã khi tạo cơ sở: gắn đối tác một lần; mã sai thì báo và không tạo cơ sở; không tự sửa được', async () => {
+test('nhập mã khi tạo cơ sở: gắn đối tác một lần; mã sai vẫn tạo được cơ sở nhưng không gắn đối tác; không tự sửa được', async () => {
   const { db, a, b, partner, makeOrg } = await setup();
   const pid = await partner(DL);
-  assert.match(await expectError(makeOrg(a, 'Vườn A', 'SAI-MA')), /INVALID_REF/);
-  assert.equal((await db.query(`select count(*)::int n from organizations`)).rows[0].n, 0);
+  // mã sai KHÔNG chặn: cơ sở vẫn được tạo, chỉ không gắn đối tác
+  assert.equal((await asUser(db, a, `select referral_code_valid('SAI-MA') v, referral_code_valid(' dl-hung ') w`)).rows[0].v, false);
+  assert.equal((await asUser(db, a, `select referral_code_valid(' dl-hung ') w`)).rows[0].w, true);
+  const bad = await makeOrg(a, 'Vườn lỗi mã', 'SAI-MA');
+  assert.equal((await db.query(`select referred_by from organizations where id = $1`, [bad])).rows[0].referred_by, null);
+  await db.query(`delete from organization_memberships where organization_id = $1`, [bad]);
+  await db.query(`delete from organizations where id = $1`, [bad]);
   const org = await makeOrg(a, 'Vườn A', ' dl-hung ');
   assert.equal((await db.query(`select referred_by from organizations where id = $1`, [org])).rows[0].referred_by, pid);
   // không có mã: vẫn tạo được
@@ -102,8 +107,11 @@ test('kiểm tra khi lưu đối tác; đăng ký bằng điện thoại mang m�
 
   const u = await addUser(db, 9);
   await db.query(`select owner_signup_finalize($1, '0912345678', 'x@sdt.test', 'Nguyễn Văn A', 'Vườn Z', 'household', null, 'dl-hung')`, [u]);
-  await assert.rejects(db.query(`select owner_signup_finalize($1, '0912345679', 'y@sdt.test', 'Nguyễn Văn B', 'Vườn Y', 'household', null, 'SAI')`, [await addUser(db, 10)]), /INVALID_REF/);
-  const sid = (await asUser(db, admin, `select admin_list_signups('pending') l`)).rows[0].l[0];
+  // mã sai: vẫn ghi đăng ký, không lưu mã
+  const u2 = await addUser(db, 10);
+  await db.query(`select owner_signup_finalize($1, '0912345679', 'y@sdt.test', 'Nguyễn Văn B', 'Vườn Y', 'household', null, 'SAI')`, [u2]);
+  assert.equal((await db.query(`select ref_code from owner_signups where user_id = $1`, [u2])).rows[0].ref_code, null);
+  const sid = (await asUser(db, admin, `select admin_list_signups('pending') l`)).rows[0].l.find((x) => x.phone === '0912345678');
   assert.equal(sid.ref_code, 'DL-HUNG');
   const org = (await asUser(db, admin, `select admin_decide_signup($1, true, null) o`, [sid.id])).rows[0].o;
   assert.equal((await db.query(`select referred_by from organizations where id = $1`, [org])).rows[0].referred_by, pid);

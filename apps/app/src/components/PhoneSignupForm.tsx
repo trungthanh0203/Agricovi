@@ -36,6 +36,7 @@ export function PhoneSignupForm() {
     try {
       const res = await registerByPhone({ phone, password, full_name: fullName, org_name: orgName, org_type: orgType, turnstile_token: token || undefined, ref_code: ref.trim() || undefined });
       clearStoredRef();
+      if (res.ref_invalid) window.alert(`Đã gửi đăng ký thành công, nhưng mã giới thiệu "${ref.trim()}" không chính xác nên chưa được ghi nhận. Bạn vẫn dùng bình thường; nếu cần, hãy báo lại cho Agricovi để gắn đúng người giới thiệu.`);
       await signIn(res.phone, password); // đăng nhập ngay; app hiện màn "đang chờ duyệt"
     } catch (err) {
       setError(friendlyError(err));

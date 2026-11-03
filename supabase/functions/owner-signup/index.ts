@@ -79,6 +79,9 @@ Deno.serve(async (req) => {
       if (!(await turnstileOk(body.turnstile_token as string | undefined, ip))) {
         return fail('CAPTCHA: Chưa xác nhận bạn là người thật. Hãy tải lại trang và thử lại.');
       }
+      // mã giới thiệu sai không chặn đăng ký: bỏ qua mã và báo lại cho người dùng
+      const refCode = String(body.ref_code ?? '').trim();
+      const refValid = refCode ? ((await admin.rpc('referral_code_valid', { p_code: refCode })).data === true) : false;
       const ipHash = ip ? await sha256(`agricovi|${ip}`) : null;
 
       // 1) kiểm tra số điện thoại, giới hạn theo mạng; nhận email ẩn theo cấu hình tên miền
@@ -96,13 +99,13 @@ Deno.serve(async (req) => {
       // 3) ghi đăng ký chờ duyệt; lỗi thì xóa tài khoản vừa tạo (không để lại tài khoản mồ côi)
       const fin = await admin.rpc('owner_signup_finalize', {
         p_user: created.data.user.id, p_phone: phone, p_auth_email: auth_email, p_name: fullName, p_org_name: orgName, p_type: orgType, p_ip_hash: ipHash,
-        p_ref: String(body.ref_code ?? '').trim() || null,
+        p_ref: refValid ? refCode : null,
       });
       if (fin.error) {
         await admin.auth.admin.deleteUser(created.data.user.id);
         return fail(fin.error.message);
       }
-      return json({ ok: true, phone });
+      return json({ ok: true, phone, ref_invalid: !!refCode && !refValid });
     }
 
     if (body.action === 'admin_reset_password') {

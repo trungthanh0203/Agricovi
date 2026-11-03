@@ -203,8 +203,13 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const createOrg = useCallback(
     async (type: OrgType, name: string, ref?: string) => {
       if (!supabase) throw new Error('Supabase chưa được cấu hình');
-      const { data, error } = await supabase.rpc('create_organization', { p_type: type, p_name: name, p_ref: ref?.trim() || null });
+      const code = ref?.trim() || null;
+      const { data, error } = await supabase.rpc('create_organization', { p_type: type, p_name: name, p_ref: code });
       if (error) throw error;
+      if (code) {   // mã sai không chặn việc tạo cơ sở: báo cho người dùng biết
+        const ok = await supabase.rpc('referral_code_valid', { p_code: code });
+        if (ok.data === false) window.alert(`Đã tạo cơ sở thành công, nhưng mã giới thiệu "${code}" không chính xác nên chưa được ghi nhận. Nếu cần, hãy báo lại cho Agricovi để gắn đúng người giới thiệu.`);
+      }
       const id = data as string;
       await load();
       setActive(id);
