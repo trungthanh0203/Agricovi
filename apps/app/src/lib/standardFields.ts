@@ -207,6 +207,17 @@ const CROP: Record<string, FieldDef[]> = {
     { key: 'ph', label: 'pH giá thể', type: 'number', min: 0, max: 14 },
     { key: 'ec', label: 'EC giá thể', type: 'number', unit: 'mS/cm', min: 0, max: 10 },
   ],
+  bed_prep: [
+    { key: 'steps', label: 'Các bước đã làm', type: 'multiselect', options: ['Cày / xới đất', 'Nhặt cỏ, tàn dư', 'Bón vôi', 'Xử lý đất', 'Lên luống', 'Khác'], required: true },
+    { key: 'area_m2', label: 'Diện tích đã làm', type: 'number', unit: 'm²', min: 0 },
+    { key: 'bed', label: 'Kích thước luống', type: 'text', hint: 'Ví dụ: rộng 1 m, cao 25 cm' },
+    { key: 'ph', label: 'pH đất', type: 'number', min: 0, max: 14 },
+  ],
+  mulching: [
+    { key: 'beds', label: 'Số luống đã phủ', type: 'number', min: 0 },
+    { key: 'film', label: 'Loại màng phủ', type: 'select', options: ['Đen', 'Bạc - đen', 'Trắng - đen', 'Khác'] },
+    { key: 'drip', label: 'Đã lắp ống tưới nhỏ giọt', type: 'bool' },
+  ],
   seed_soaking: [
     { key: 'method', label: 'Cách xử lý', type: 'text', hint: 'Ví dụ: ngâm nước ấm 3 giờ' },
     { key: 'hours', label: 'Thời gian ngâm ủ', type: 'number', unit: 'giờ', min: 0 },
