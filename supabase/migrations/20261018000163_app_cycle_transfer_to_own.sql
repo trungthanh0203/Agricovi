@@ -4,7 +4,7 @@
 -- Chuyển theo vụ: nhật ký, giai đoạn, ghi chú, sự cố, mốc, cách ly, cân, thức ăn, việc, THU HOẠCH. Giữ nguyên ở sổ HTX: chi phí và doanh thu HTX đã ghi,
 -- phiếu thu mua HTX–hộ, chấm công của nhân sự HTX (là giao dịch/ghi nhận của HTX, không thuộc sản xuất của hộ).
 
-create table cycle_transfer_requests (
+create table if not exists cycle_transfer_requests (
   id uuid primary key,
   cycle_id uuid not null references production_cycles(id) on delete cascade,
   cooperative_org_id uuid not null references organizations(id) on delete cascade,
@@ -17,10 +17,11 @@ create table cycle_transfer_requests (
   created_at timestamptz not null default now(),
   decided_at timestamptz
 );
-create unique index cycle_transfer_one_pending on cycle_transfer_requests (cycle_id) where status = 'pending';
-create index on cycle_transfer_requests (cooperative_org_id, created_at desc);
-create index on cycle_transfer_requests (household_org_id, created_at desc);
+create unique index if not exists cycle_transfer_one_pending on cycle_transfer_requests (cycle_id) where status = 'pending';
+create index if not exists cycle_transfer_coop_idx on cycle_transfer_requests (cooperative_org_id, created_at desc);
+create index if not exists cycle_transfer_hh_idx on cycle_transfer_requests (household_org_id, created_at desc);
 alter table cycle_transfer_requests enable row level security;
+drop policy if exists cycle_transfer_read on cycle_transfer_requests;
 create policy cycle_transfer_read on cycle_transfer_requests for select to authenticated
   using (has_perm(cooperative_org_id, 'coop', 'view') or is_org_member(household_org_id));
 -- ghi chỉ qua hàm

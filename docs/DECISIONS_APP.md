@@ -353,12 +353,12 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - Danh sách vụ ở Trang chủ ("Tiến độ các vụ đang chạy") và Sản xuất → Vụ nuôi trồng xếp theo **ngày đến từ gần tới xa** (`sortByDue`): vụ đang chạy/tạm dừng = hạn của việc hiện tại (đang làm: ngày kết thúc dự kiến; chưa làm: ngày bắt đầu dự kiến), vụ chuẩn bị = ngày bắt đầu; vụ trễ ngày hoặc sắp đến hạn lên trước, xa ngày ở sau, không có ngày ở cuối; vụ đã kết thúc/hủy sau cùng, mới nhất trước.
 - Bộ lọc **Phân khu** (`AreaFilter`, chỉ hiện khi có từ 2 phân khu có vụ): Trang chủ dưới chữ "Tiến độ các vụ đang chạy"; Vụ nuôi trồng dưới các nút trạng thái (số vụ ở mỗi nút đếm theo phân khu đã chọn). Ô sản xuất tính theo phân khu cha.
 
-## D155 — Vụ chưa bắt đầu làm sai nhà màng (migration 0155)
+## D155 — Vụ chưa bắt đầu làm sai nhà màng (migration 0161)
 - **Đổi nhà màng** (`change_cycle_area`): chỉ vụ ở trạng thái Chuẩn bị, chưa có thu hoạch/doanh thu, nhà màng mới cùng cơ sở/hộ với nhà màng hiện tại và đúng quyền; nhật ký chuẩn bị đã ghi được giữ. Nút "Đổi nhà màng" trên thẻ vụ chuẩn bị.
 - **Xóa vụ làm sai** (`discard_unstarted_cycle`): chỉ vụ Chuẩn bị, chưa có thu hoạch/doanh thu/chi phí; bắt buộc ghi lý do; hủy nhật ký chuẩn bị (kho tự hoàn lại), rồi xóa hẳn vụ; nếu còn dấu vết phải giữ (nhật ký đã hủy, giao dịch hoàn kho) thì chuyển "Đã hủy". Vụ đã hủy ẩn khỏi danh sách, hiện lại bằng ô "Hiện cả vụ đã hủy" ở nhóm Kết thúc; không tính hạn mức. Vụ đã bắt đầu vẫn chỉ "Kết thúc vụ".
 - Sửa lỗi: mở khung "＋ Giống, diện tích", "＋ Kế hoạch", "＋ Thông tin quản lý" khi tạo vụ không còn nhảy về đầu trang (`autoScrollToForm` chỉ cuộn tới chính khung đó).
 
-## D156 — Chuyển một chiều "vụ theo HTX" → "vụ riêng" của hộ (migration 0157; chủ sản phẩm đồng ý 03/11/2026)
+## D156 — Chuyển một chiều "vụ theo HTX" → "vụ riêng" của hộ (migration 0163; chủ sản phẩm đồng ý 03/11/2026)
 - **Điều kiện** (`cycle_transfer_blocker`, kiểm cả lúc gửi và lúc duyệt): hộ ĐÃ ĐĂNG KÝ TÀI KHOẢN RIÊNG (không phải hộ do HTX tạo và quản lý), vẫn thuộc HTX chủ vụ, còn gói dịch vụ hiệu lực (dùng thử còn hạn hoặc đã mua; hết hạn dùng thử mà chưa mua gói thì không chuyển được) và còn hạn mức số vụ khi vụ đang chạy/tạm dừng.
 - **Quy trình**: hộ (chủ hộ) bấm "Xin chuyển thành vụ riêng" trên thẻ vụ theo HTX (có thể hủy yêu cầu đang chờ) → HTX (quyền Hộ thành viên) duyệt hoặc từ chối kèm lý do ở Khai báo → Hộ thành viên → "Yêu cầu chuyển vụ sang vụ riêng". Có lịch sử (`cycle_transfer_requests`).
 - **Chuyển theo vụ**: nhật ký, giai đoạn, ghi chú, sự cố, mốc, cách ly, cân, thức ăn, việc và THU HOẠCH sang sổ của hộ. **Giữ ở sổ HTX**: chi phí và doanh thu HTX đã ghi, phiếu thu mua HTX–hộ, chấm công của nhân sự HTX (giao dịch/ghi nhận của HTX). Từ nay hộ ghi tiếp vào sổ của hộ.
