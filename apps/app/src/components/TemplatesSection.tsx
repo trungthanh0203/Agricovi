@@ -30,6 +30,7 @@ export function TemplatesSection() {
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<'org' | 'system'>('org');
   const [systems, setSystems] = useState<SystemTemplate[]>([]);
+  const [group, setGroup] = useState(''); // lọc theo loại sản phẩm ('' = tất cả)
 
   const load = useCallback(async () => {
     if (!active || !navigator.onLine) return;
@@ -46,7 +47,9 @@ export function TemplatesSection() {
   const cropName = (id: string) => crops.find((c) => c.id === id)?.name ?? '—';
   const activeCrops = crops.filter((c) => c.is_active && cfg.kindOn(c.kind));
   const effCrop = cropId || activeCrops[0]?.id || '';
-  const rows = [...templates].sort((a, b) => cropName(a.crop_type_id).localeCompare(cropName(b.crop_type_id), 'vi') || a.name.localeCompare(b.name, 'vi'));
+  const groups = cfg.productGroups(group || null);
+  const groupOf = (cropId: string) => { const c = crops.find((x) => x.id === cropId); return c ? cfg.choiceOf('product_groups', c.kind, c.kind_item) : ''; };
+  const rows = templates.filter((t) => !group || groupOf(t.crop_type_id) === group).sort((a, b) => cropName(a.crop_type_id).localeCompare(cropName(b.crop_type_id), 'vi') || a.name.localeCompare(b.name, 'vi'));
 
   function onCreate(e: FormEvent) {
     e.preventDefault();
@@ -84,9 +87,17 @@ export function TemplatesSection() {
         <button role="tab" aria-selected={tab === 'system'} className={tab === 'system' ? 'chip active' : 'chip'} onClick={() => setTab('system')}>Quy trình mẫu của hệ thống</button>{' '}
         <button role="tab" aria-selected={tab === 'org'} className={tab === 'org' ? 'chip active' : 'chip'} onClick={() => setTab('org')}>Quy trình mẫu của cơ sở</button>
       </div>
+      <div className="filters">
+        <label>Loại sản phẩm
+          <select value={group} onChange={(e) => setGroup(e.target.value)} aria-label="Lọc quy trình theo loại sản phẩm">
+            <option value="">Tất cả loại</option>
+            {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+          </select>
+        </label>
+      </div>
 
       {tab === 'system' ? (
-        <SystemTemplates systems={systems.filter((s) => cfg.kindOn(s.kind))} crops={activeCrops} canManage={canManage} online={online} busy={busy}
+        <SystemTemplates systems={systems.filter((s) => cfg.kindOn(s.kind) && (!group || cfg.resolve('product_groups', group).base === s.kind))} crops={activeCrops} canManage={canManage} online={online} busy={busy}
           onApply={(sys, cropId, nm) => {
             setBusy(true); setError(null);
             applySystemTemplate(active!.id, sys.id, cropId, nm).then((id) => { setTab('org'); setOpenId(id); }).catch((err) => setError(friendlyError(err))).finally(() => setBusy(false));

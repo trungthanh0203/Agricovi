@@ -7,7 +7,7 @@ import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import {
-  clearOverride, createCrop, refreshCatalogCache, saveOverride, updateCrop, type ProductKind,
+  clearOverride, createCrop, deleteCrop, refreshCatalogCache, saveOverride, updateCrop, type ProductKind,
 } from '../lib/templates';
 
 /**
@@ -37,6 +37,11 @@ export function CropsSection() {
     setBusy(true);
     setError(null);
     try { await fn(); } catch (e) { setError(friendlyError(e)); throw e; } finally { setBusy(false); }
+  }
+
+  function onDelete(c: EffCrop) {
+    if (!window.confirm(`Xóa sản phẩm "${c.name}"? Không khôi phục được. Nếu sản phẩm đã có quy trình hoặc vụ dùng thì không xóa được, khi đó hãy chọn "Dừng" (⏸).`)) return;
+    void run(async () => { await deleteCrop(c.id); if (editing === c.id) setEditing(null); }).catch(() => undefined);
   }
 
   const toggle = (c: EffCrop) => (c.shared ? saveOverride(org, 'crop_type', c.id, { is_active: !c.is_active }) : updateCrop(c.id, { is_active: !c.is_active }));
@@ -73,6 +78,7 @@ export function CropsSection() {
                 <td className="act">
                   <button className="icon" disabled={busy || !online} aria-label={c.is_active ? `Dừng ${c.name}` : `Dùng lại ${c.name}`} onClick={() => void run(() => toggle(c)).catch(() => undefined)}>{c.is_active ? '⏸' : '▶'}</button>{' '}
                   <button className="icon" aria-label={`Sửa ${c.name}`} onClick={() => { setAdding(false); setEditing(editing === c.id ? null : c.id); }}>✎</button>
+                  {!c.shared && <>{' '}<button className="icon" disabled={busy || !online} aria-label={`Xóa ${c.name}`} onClick={() => onDelete(c)}>🗑</button></>}
                 </td>
               )}
             </tr>
@@ -80,7 +86,7 @@ export function CropsSection() {
         </tbody>
       </table>
       <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả sản phẩm đã dừng</label>
-      <p className="muted">⏸ dừng (không chọn được cho quy trình/vụ mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa. Mục có sẵn chỉnh ở đây chỉ áp dụng cho cơ sở của bạn.</p>
+      <p className="muted">⏸ dừng (không chọn được cho quy trình/vụ mới, lịch sử vẫn giữ), ▶ dùng lại, ✎ sửa, 🗑 xóa (chỉ sản phẩm riêng của cơ sở và chưa được dùng). Mục có sẵn chỉnh ở đây chỉ áp dụng cho cơ sở của bạn.</p>
 
       {canManage && editRow && (
         <ProductForm key={editRow.id} title={`Sửa sản phẩm: ${editRow.name}`} initial={editRow} busy={busy || !online} onClose={() => setEditing(null)}

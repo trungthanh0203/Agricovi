@@ -161,6 +161,13 @@ export async function updateCrop(id: string, c: { name?: string; kind?: ProductK
   await refreshCatalogCache().catch(() => undefined);
 }
 
+/** Xóa sản phẩm do cơ sở tự thêm. Sản phẩm đã có quy trình hoặc vụ dùng thì máy chủ từ chối (lỗi khóa ngoại): chỉ dừng được. */
+export async function deleteCrop(id: string): Promise<void> {
+  needOnline('xóa sản phẩm');
+  await ok(client().from('crop_types').delete().eq('id', id));
+  await refreshCatalogCache().catch(() => undefined);
+}
+
 // ------------------------------------------------------------------ loại việc
 export async function createWorkType(orgId: string, name: string, fields: FieldDef[], description = '', appliesTo: string[] | null = null, materialIds: string[] = []): Promise<void> {
   needOnline('thêm loại việc');
