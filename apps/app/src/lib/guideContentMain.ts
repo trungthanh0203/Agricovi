@@ -226,7 +226,7 @@ export const MAIN_GUIDES: Guide[] = [
         details: [
           "Khai báo → Cơ sở & vật tư → Phân khu → thêm mới.",
           "Thêm phân khu (cụm, ví dụ “Vườn Đông”): tên, mã khu, vị trí, mô tả, ảnh. Rồi thêm ô sản xuất bên trong (ví dụ “Nhà màng 1”): tên và mã ô, loại ô, kiểu ô, diện tích, mô tả, ảnh.",
-          "Có nhiều nhà màng thì bấm “+ Nhiều ô cùng lúc” (nhập số lượng, app tự đánh số). Chỗ không trồng (cổng, kho) là ô loại “Cơ sở vật chất”.",
+          "Có nhiều nhà màng thì bấm “+ Thêm nhiều ô cùng lúc” (nhập số lượng, app tự đánh số). Chỗ không trồng (cổng, kho) là ô loại “Cơ sở vật chất”.",
           "Vì sao: Mỗi vụ chạy trong MỘT phân khu. Diện tích dùng để tính năng suất và chia vật tư dùng chung cho nhiều vụ.",
         ],
         go: { tab: "declare", section: "areas", label: "Mở Phân khu" },

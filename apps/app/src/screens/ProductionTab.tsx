@@ -135,7 +135,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const [group, setGroup] = useState<CycleGroup | null>(null);
   const [vn, setVn] = useState(50);
   const [areaFilter, setAreaFilter] = useState('');   // lọc theo phân khu (D154)
-  const [moveId, setMoveId] = useState<string | null>(null);   // vụ chưa bắt đầu đang đổi nhà màng (D155)
+  const [moveId, setMoveId] = useState<string | null>(null);   // vụ chưa bắt đầu đang đổi ô sản xuất (D155)
   const [moveTo, setMoveTo] = useState('');
   const [showCancelled, setShowCancelled] = useState(false);   // hiện cả vụ đã hủy (xóa vụ làm sai)
   const [editId, setEditId] = useState<string | null>(null);
@@ -200,7 +200,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   // Vụ chưa bắt đầu làm sai: ghi lý do rồi xóa (hủy nhật ký chuẩn bị, hoàn kho); còn dấu vết phải giữ thì chuyển Đã hủy
   async function discard(c: CycleRow) {
     const title = cycleTitle(c, cropName(c.crop_type_id));
-    const reason = window.prompt(`Xóa vụ làm sai "${title}"? Nhật ký chuẩn bị đã ghi sẽ bị hủy (kèm lý do) và vật tư đã xuất được hoàn lại kho.\n\nLý do xóa (ví dụ: chọn nhầm nhà màng):`);
+    const reason = window.prompt(`Xóa vụ làm sai "${title}"? Nhật ký chuẩn bị đã ghi sẽ bị hủy (kèm lý do) và vật tư đã xuất được hoàn lại kho.\n\nLý do xóa (ví dụ: chọn nhầm ô sản xuất):`);
     if (!reason || reason.trim().length < 3) return;
     setActionError(null);
     try {
@@ -303,9 +303,9 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
               const options = cycleAreas(areas.filter((a) => a.organization_id === curOrg && a.is_active !== false)).filter((a) => a.id !== c.area_id);
               return (
                 <div className="inline-form">
-                  <strong>Đổi nhà màng của vụ chưa bắt đầu</strong>
+                  <strong>Đổi ô sản xuất của vụ chưa bắt đầu</strong>
                   <p className="muted">Hiện ở: {areaPath(c.area_id, areas) || '—'}. Nhật ký chuẩn bị đã ghi được giữ nguyên và chuyển theo vụ.</p>
-                  <label>Nhà màng mới
+                  <label>Ô sản xuất mới
                     <select value={moveTo} onChange={(e) => setMoveTo(e.target.value)}>
                       <option value="">— Chọn —</option>
                       {options.map((a) => <option key={a.id} value={a.id}>{areaPath(a.id, areas)}</option>)}
@@ -327,7 +327,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
                 {c.status === 'active' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'paused')}>Tạm dừng</button>}
                 {c.status === 'paused' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'active')}>Tiếp tục</button>}
                 <button className="secondary" disabled={!online} onClick={() => setEditId(editId === c.id ? null : c.id)}>Sửa vụ</button>
-                {c.status === 'preparing' && <button className="secondary" disabled={!online} onClick={() => { setMoveId(moveId === c.id ? null : c.id); setMoveTo(''); }}>Đổi nhà màng</button>}
+                {c.status === 'preparing' && <button className="secondary" disabled={!online} onClick={() => { setMoveId(moveId === c.id ? null : c.id); setMoveTo(''); }}>Đổi ô sản xuất</button>}
                 <button className="secondary" disabled={!online} onClick={() => void (c.status === 'preparing' ? discard(c) : remove(c))}>Xóa vụ</button>
                 {(c.status === 'active' || c.status === 'paused') && (
                   <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'ended', 'Kết thúc vụ này? Nhật ký và số liệu vẫn được giữ lại.')}>

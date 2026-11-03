@@ -103,9 +103,9 @@ export function AreasSection() {
           {a.is_active === false && <span className="sub">Đã dừng</span>}
           {canManage && !isCell && a.is_active !== false && (
             <span className="sub">
-              <button type="button" className="link" disabled={busy || !online} onClick={() => { closeAll(); setCellFor({ parent: a, mode: 'one' }); }}>+ Ô sản xuất</button>
+              <button type="button" className="link" disabled={busy || !online} onClick={() => { closeAll(); setCellFor({ parent: a, mode: 'one' }); }}>+ Thêm ô sản xuất</button>
               {' · '}
-              <button type="button" className="link" disabled={busy || !online} onClick={() => { closeAll(); setCellFor({ parent: a, mode: 'many' }); }}>+ Nhiều ô cùng lúc</button>
+              <button type="button" className="link" disabled={busy || !online} onClick={() => { closeAll(); setCellFor({ parent: a, mode: 'many' }); }}>+ Thêm nhiều ô cùng lúc</button>
               {kids.length === 0 && hasCycles && (
                 <>{' · '}<button type="button" className="link" disabled={busy || !online} onClick={() => { closeAll(); setCellFor({ parent: a, mode: 'split' }); }}>Chia thành ô sản xuất</button></>
               )}

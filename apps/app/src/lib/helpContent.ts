@@ -173,7 +173,7 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     what: 'Nơi nuôi trồng của cơ sở, chia 2 cấp: phân khu (cụm, ví dụ "Vườn Đông") và bên trong là các ô sản xuất (nhà màng, chuồng, ao…) nơi chạy vụ.',
     how: [
       'Bấm "+ Thêm phân khu": tên, mã khu, vị trí, mô tả, ảnh. Có thể tạo sẵn các ô sản xuất ngay (mặc định 1 ô, chọn loại ô và kiểu ô).',
-      'Thêm ô sau: bấm "+ Ô sản xuất" (tên và mã ô, loại ô và kiểu ô, diện tích, mô tả, ảnh) hoặc "+ Nhiều ô cùng lúc" (nhập số lượng, app tự đánh số).',
+      'Thêm ô sau: bấm "+ Thêm ô sản xuất" (tên và mã ô, loại ô và kiểu ô, diện tích, mô tả, ảnh) hoặc "+ Thêm nhiều ô cùng lúc" (nhập số lượng, app tự đánh số).',
       'Phân khu đang có vụ mà muốn chia nhỏ: bấm "Chia thành ô sản xuất", app chuyển các vụ hiện có sang ô đầu tiên.',
       'Mỗi ô có loại riêng (cây trồng, vật nuôi, thủy sản…), nên một phân khu có thể có nhiều loại ô. Chỗ không nuôi trồng (cổng, kho, biogas) là ô loại "Cơ sở vật chất".',
     ],

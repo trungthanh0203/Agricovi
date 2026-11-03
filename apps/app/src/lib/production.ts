@@ -390,9 +390,9 @@ export async function deleteCycle(cycleId: string): Promise<void> {
   });
 }
 
-/** Vụ chưa bắt đầu làm sai nhà màng: đổi sang nhà màng khác cùng cơ sở, giữ nhật ký chuẩn bị đã ghi (D155; cần mạng) */
+/** Vụ chưa bắt đầu làm sai ô sản xuất: đổi sang ô sản xuất khác cùng cơ sở, giữ nhật ký chuẩn bị đã ghi (D155; cần mạng) */
 export async function changeCycleArea(cycleId: string, areaId: string): Promise<void> {
-  requireOnline('đổi nhà màng của vụ');
+  requireOnline('đổi ô sản xuất của vụ');
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   const { error } = await supabase.rpc('change_cycle_area', { p_cycle: cycleId, p_area: areaId });
   if (error) throw new Error(error.message);
