@@ -9,6 +9,7 @@ import { SiteReviewsPage } from './reviews2';
 import { SiteTranslationsPage } from './translations';
 import { PublicCyclesPage, ReviewsPage } from './reviews';
 import { SiteBannersPage, SiteMenusPage, SitePagesPage, SiteRolesPage, SiteSettingsPage } from './site';
+import { SiteNewsSourcesPage } from './news';
 import { SiteArticlesPage, SiteCategoriesPage, SiteMaterialsPage, SiteQuotesPage } from './site2';
 import '@agriconnect/admin-kit/src/styles.css';
 
@@ -25,6 +26,7 @@ interface PageDef { id: string; label: string; icon: string; group: string; admi
 const PAGES: PageDef[] = [
   { id: 'overview', label: 'Tổng quan', icon: '📊', group: '' },
   { id: 'site-articles', label: 'Bài viết và tin hội chợ', icon: '📰', group: 'Nội dung' },
+  { id: 'site-news', label: 'Nguồn tin tự động', icon: '📡', group: 'Nội dung' },
   { id: 'site-pages', label: 'Trang tĩnh', icon: '📄', group: 'Nội dung' },
   { id: 'site-banners', label: 'Banner trang chủ', icon: '🖼️', group: 'Nội dung' },
   { id: 'site-home', label: 'Các khối trang chủ', icon: '🏠', group: 'Nội dung' },
@@ -105,6 +107,7 @@ function Admin({ session, roles }: { session: Session; roles: string[] }) {
         <h1>{title}</h1>
         {page === 'overview' && <SiteOverviewPage go={go} />}
         {page === 'site-articles' && <SiteArticlesPage roles={roles} />}
+        {page === 'site-news' && <SiteNewsSourcesPage roles={roles} />}
         {page === 'site-pages' && <SitePagesPage roles={roles} />}
         {page === 'site-banners' && <SiteBannersPage roles={roles} />}
         {page === 'site-home' && <SiteHomePage roles={roles} />}

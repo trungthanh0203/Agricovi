@@ -69,6 +69,14 @@ Cách viết nội dung bài và trang: dòng trống = đoạn mới; `## Tiêu
 
 Quản trị website → **Người biên tập**, nhập email người đó và chọn vai trò. Người đó phải có tài khoản AgriConnect (đăng ký bằng email) trước, rồi đăng nhập trang Quản trị website bằng email của mình; họ không vào được Quản trị nền tảng.
 
+## 6b. Nguồn tin tự động
+
+Trang **Nội dung → Nguồn tin tự động**: khai báo các báo/trang tin có RSS; mỗi tuần hệ thống tự lấy tin mới về **bản nháp** trong "Bài viết và tin hội chợ". Chỉ lấy tiêu đề, tóm tắt ngắn và liên kết về bài gốc; bạn mở bản nháp, chỉnh rồi bấm đăng.
+
+- **Thêm nguồn:** tên báo, địa chỉ RSS (https://…), chuyên mục nhận (nông nghiệp, xuất khẩu, hội chợ), từ khóa lọc (nên đặt với báo tổng hợp), số tin tối đa mỗi lần.
+- **Lấy thử / Lấy tin ngay:** chạy ngay để kiểm tra nguồn; cột "Lần chạy gần nhất" cho biết kết quả hoặc lỗi.
+- **Cài đặt một lần (người triển khai):** `npx supabase functions deploy news-fetch`; `npx supabase secrets set NEWS_CRON_SECRET=<chuỗi ngẫu nhiên dài>`; ở GitHub (Settings → Secrets → Actions) đặt `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `NEWS_CRON_SECRET` (cùng giá trị trên). Lịch chạy: thứ Hai 07:00 giờ Việt Nam; xem hoặc chạy tay ở tab Actions của GitHub (workflow "Lấy tin tức hằng tuần").
+
 ## 7. Lưu ý
 
 - Ảnh chỉ 1 ảnh mỗi chỗ và tự thu nhỏ; ảnh quá phức tạp có thể bị từ chối, hãy chọn ảnh nhỏ hơn.

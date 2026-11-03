@@ -1,0 +1,27 @@
+name: Lấy tin tức hằng tuần
+
+# Mỗi tuần một lần (thứ Hai 07:00 giờ Việt Nam = 00:00 UTC) gọi Edge Function news-fetch để lấy tin từ các nguồn RSS về bản nháp.
+# Cần đặt 3 bí mật ở GitHub: Settings > Secrets and variables > Actions:
+#   SUPABASE_URL (ví dụ https://abcd.supabase.co), SUPABASE_ANON_KEY (khóa công khai anon), NEWS_CRON_SECRET (cùng giá trị đã đặt bằng `supabase secrets set`).
+# Có thể bấm "Run workflow" để chạy tay.
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Gọi news-fetch
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          NEWS_CRON_SECRET: ${{ secrets.NEWS_CRON_SECRET }}
+        run: |
+          curl --fail-with-body -sS -X POST "$SUPABASE_URL/functions/v1/news-fetch" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "x-cron-secret: $NEWS_CRON_SECRET" \
+            -H "Content-Type: application/json" -d '{}'
