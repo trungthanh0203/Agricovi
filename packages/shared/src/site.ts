@@ -64,6 +64,16 @@ export const DEFAULT_HEADER_NAV: SiteNavItem[] = [
   ] },
 ];
 
+/** Mục con của một chuyên mục tin (bài viết lưu mã mục con ở cột section). Tin hội chợ không có mục con lưu (Sắp diễn ra/Đã diễn ra/Lịch tính theo ngày). */
+export const NEWS_CHANNEL_HREF = { nong_nghiep: '/tin-nong-nghiep/', xuat_khau: '/tin-xuat-khau/', hoi_cho: '/tin-hoi-cho/' } as const;
+export function newsSections(channel: keyof typeof NEWS_CHANNEL_HREF): { slug: string; label: string }[] {
+  if (channel === 'hoi_cho') return [];
+  const base = NEWS_CHANNEL_HREF[channel];
+  return (DEFAULT_HEADER_NAV.find((i) => i.href === base)?.children ?? [])
+    .filter((c) => c.href.startsWith(base) && c.href !== base)   // bỏ các mục dẫn sang trang khác (Giá nông sản, Lịch mùa vụ)
+    .map((c) => ({ slug: c.href.slice(base.length).replace(/\/+$/, ''), label: c.label }));
+}
+
 /** Menu "Tìm hiểu về Agricovi" trên thanh xanh */
 export const DEFAULT_ABOUT_MENU: SiteLink[] = [
   { label: 'Về chúng tôi', href: '/gioi-thieu' },

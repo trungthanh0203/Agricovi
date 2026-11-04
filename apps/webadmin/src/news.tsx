@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { clean, Err, fmtDateTime, rpc, supabase, useLoad } from '@agriconnect/admin-kit';
+import { newsSections } from '@agriconnect/shared';
 import { canPublish } from './site';
 
 /**
@@ -26,7 +27,7 @@ export function SiteNewsSourcesPage({ roles }: { roles: string[] }) {
     if (!f) return;
     setBusy(true); setErr(null);
     try {
-      await rpc('site_save_news_source', { p_id: f.id, p_name: f.name, p_feed_url: f.feed_url, p_channel: f.channel, p_section: f.section, p_keywords: f.keywords, p_active: f.is_active, p_max: Number(f.max_items) || 10 });
+      await rpc('site_save_news_source', { p_id: f.id, p_name: f.name, p_feed_url: f.feed_url, p_channel: f.channel, p_section: f.channel === 'hoi_cho' ? '' : f.section, p_keywords: f.keywords, p_active: f.is_active, p_max: Number(f.max_items) || 10 });
       setF(null); setMsg('Đã lưu nguồn tin.'); reload();
     } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
     setBusy(false);
@@ -67,8 +68,11 @@ export function SiteNewsSourcesPage({ roles }: { roles: string[] }) {
             <label>Địa chỉ RSS (bắt đầu bằng https://)<input value={f.feed_url} onChange={(e) => setF({ ...f, feed_url: e.target.value })} required placeholder="https://tenbao.vn/rss/nong-nghiep.rss" />
               <small>Mở trang tin của báo, tìm biểu tượng RSS hoặc chữ "RSS" ở chân trang, sao chép địa chỉ.</small></label>
             <label>Đưa vào chuyên mục
-              <select value={f.channel} onChange={(e) => setF({ ...f, channel: e.target.value })}>{Object.entries(CHANNEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-            <label>Mục con (không bắt buộc, chữ thường không dấu, ví dụ trong-nuoc)<input value={f.section} onChange={(e) => setF({ ...f, section: e.target.value.trim().toLowerCase() })} /></label>
+              <select value={f.channel} onChange={(e) => setF({ ...f, channel: e.target.value, section: '' })}>{Object.entries(CHANNEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+            {newsSections(f.channel as 'nong_nghiep' | 'xuat_khau' | 'hoi_cho').length > 0 ? (
+              <label>Mục con trong chuyên mục
+                <select value={f.section} onChange={(e) => setF({ ...f, section: e.target.value })}><option value="">(Chung, không chọn mục con)</option>{newsSections(f.channel as 'nong_nghiep' | 'xuat_khau' | 'hoi_cho').map((s) => <option key={s.slug} value={s.slug}>{s.label}</option>)}</select></label>
+            ) : <p className="muted">Tin hội chợ tự chia thành Sắp diễn ra / Đã diễn ra / Lịch theo ngày nên không chọn mục con.</p>}
             <label>Từ khóa lọc (cách nhau bằng dấu phẩy; để trống là lấy hết)
               <input value={f.keywords} onChange={(e) => setF({ ...f, keywords: e.target.value })} placeholder="nông sản, xuất khẩu gạo, hội chợ" />
               <small>Báo tổng hợp nên đặt từ khóa để không lấy tin không liên quan. Không phân biệt dấu và chữ hoa.</small></label>

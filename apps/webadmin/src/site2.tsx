@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { DEFAULT_HEADER_NAV, parseBody } from '@agriconnect/shared';
+import { newsSections, parseBody, type NEWS_CHANNEL_HREF } from '@agriconnect/shared';
 import { canPublish, imageSrc, locked, SITE_URL, SiteBadge, STATUS_LABEL, statusOptions, uploadSiteImage } from './site';
 import { clean, downloadCsv, Err, fmtDateTime, rpc, supabase, useLoad } from '@agriconnect/admin-kit';
 
@@ -264,7 +264,7 @@ interface ArtRow { id: string; channel: string; section: string | null; slug: st
 interface ArtForm { id: string | null; version: number | null; channel: string; section: string; slug: string; title: string; summary: string; body: string; image: string; sourceName: string; sourceUrl: string; start: string; end: string; place: string; organizer: string; status: string; publishedAt: string }
 const CHANNEL_LABEL: Record<string, string> = { nong_nghiep: 'Tin nông nghiệp', xuat_khau: 'Tin xuất khẩu', hoi_cho: 'Tin hội chợ' };
 const CHANNEL_HREF: Record<string, string> = { nong_nghiep: '/tin-nong-nghiep/', xuat_khau: '/tin-xuat-khau/', hoi_cho: '/tin-hoi-cho/' };
-const sectionsOf = (channel: string) => (DEFAULT_HEADER_NAV.find((i) => i.href === CHANNEL_HREF[channel])?.children ?? []).map((c) => ({ slug: c.href.split('/').filter(Boolean).pop() ?? '', label: c.label }));
+const sectionsOf = (channel: string) => newsSections(channel as keyof typeof NEWS_CHANNEL_HREF);
 const emptyArt: ArtForm = { id: null, version: null, channel: 'nong_nghiep', section: '', slug: '', title: '', summary: '', body: '', image: '', sourceName: '', sourceUrl: '', start: '', end: '', place: '', organizer: '', status: 'draft', publishedAt: '' };
 const toLocal = (iso: string | null) => (iso ? new Date(new Date(iso).getTime() - new Date(iso).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '');
 
