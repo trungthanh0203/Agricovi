@@ -6,6 +6,7 @@ import { loadTranslations } from './lib/translations';
  * Lớp bao quanh mọi yêu cầu của website (W8, D71):
  *  1. Song ngữ: địa chỉ /en/… được xử lý như trang tiếng Việt tương ứng rồi DỊCH HTML sang tiếng Anh (từ điển ở packages/shared/src/i18n*.ts).
  *  2. Bộ nhớ đệm ở biên Cloudflare (Cache API): chỉ trang công khai có Cache-Control public + s-maxage; trang riêng tư không bao giờ được lưu.
+ *     Trang 200 lưu tới s-maxage (tối đa 1 giờ); trang 404 chỉ lưu tối đa 30 giây.
  *  3. Tiêu đề bảo mật cho mọi phản hồi (CSP, chống nhúng khung, nosniff, HSTS, Referrer-Policy, Permissions-Policy).
  */
 const SUPABASE = (import.meta.env.PUBLIC_SUPABASE_URL as string | undefined) ?? '';
@@ -80,7 +81,8 @@ export const onRequest = defineMiddleware(async (ctx, next) => {
   }
   res = secure(res, https);
 
-  const ttl = res.status === 200 ? edgeTtl(res) : 0;
+  // Trang 404 cũng được lưu đệm rất ngắn (tối đa 30 giây) để người quét địa chỉ lạ không dồn từng lượt vào CSDL
+  const ttl = res.status === 200 ? edgeTtl(res) : res.status === 404 ? Math.min(edgeTtl(res), 30) : 0;
   if (cache && key && ttl > 0) {
     const copy = new Response(res.clone().body, res);
     copy.headers.set('X-Orig-Cache-Control', res.headers.get('Cache-Control') ?? '');
