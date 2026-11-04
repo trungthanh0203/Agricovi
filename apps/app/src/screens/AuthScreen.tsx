@@ -158,7 +158,7 @@ export function AuthScreen() {
             {busy ? 'Đang xử lý…' : effective === 'forgot' ? 'Gửi thư đặt lại mật khẩu' : title}
           </button>
           {effective === 'signin' && (
-            <label className="check"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> <span>Nhớ mật khẩu</span></label>
+            <label className="check"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> <span>Nhớ tài khoản</span></label>
           )}
         </form>
 
