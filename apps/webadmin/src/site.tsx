@@ -74,6 +74,38 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
     } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
     setImgBusy(false);
   }
+  /** Dọn tệp ảnh trong kho không còn banner/bài viết/vật tư/ảnh trang nào dùng (chỉ tệp cũ hơn 1 ngày, tránh xóa ảnh vừa tải lên nhưng chưa lưu) */
+  async function cleanupImages() {
+    setImgBusy(true); setErr(null); setMsg(null);
+    try {
+      const used = new Set(await rpc<string[]>('site_list_used_images'));
+      const dayAgo = Date.now() - 86_400_000;
+      const stale: { path: string; size: number }[] = [];
+      for (const folder of ['banners', 'articles', 'materials', 'pages']) {
+        for (let offset = 0; ; offset += 100) {
+          const { data: objs, error: e } = await supabase!.storage.from('site-images').list(`site/${folder}`, { limit: 100, offset });
+          if (e) throw new Error(e.message);
+          for (const o of objs ?? []) {
+            if (!o.name.endsWith('.jpg')) continue;
+            const path = `site/${folder}/${o.name}`;
+            const t = o.created_at ? new Date(o.created_at).getTime() : Date.now();
+            if (!used.has('sb:' + path) && t < dayAgo) stale.push({ path, size: Number((o.metadata as { size?: number } | null)?.size ?? 0) });
+          }
+          if (!objs || objs.length < 100) break;
+        }
+      }
+      if (stale.length === 0) { setMsg('Kho ảnh sạch: không có ảnh nào không dùng.'); setImgBusy(false); return; }
+      const mb = (stale.reduce((a, x) => a + x.size, 0) / 1_048_576).toFixed(1);
+      if (window.confirm(`Có ${stale.length} ảnh không còn được dùng ở đâu (khoảng ${mb} MB). Xóa hẳn các ảnh này? Không hoàn tác được.`)) {
+        for (let i = 0; i < stale.length; i += 50) {
+          const { error: e } = await supabase!.storage.from('site-images').remove(stale.slice(i, i + 50).map((x) => x.path));
+          if (e) throw new Error(e.message);
+        }
+        setMsg(`Đã xóa ${stale.length} ảnh không dùng (khoảng ${mb} MB).`);
+      }
+    } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
+    setImgBusy(false);
+  }
   async function deleteImage(id: string) {
     if (!window.confirm('Xóa hẳn ảnh này? Không hoàn tác được. Ảnh đang dùng trong trang nào thì phải gỡ khỏi trang đó trước.')) return;
     setErr(null);
@@ -134,7 +166,7 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
               {imgBusy && <small role="status">⏳ Đang tải ảnh lên, vui lòng chờ…</small>}
               <small>{imgBusy ? '' : 'Chọn ảnh, hệ thống tự thu nhỏ rồi thêm một dòng ảnh vào cuối nội dung; bạn có thể cắt dòng đó sang vị trí khác và sửa phần mô tả trong ngoặc [ ].'}</small>
             </label>
-            <div className="toolbar"><button type="button" disabled={imgBusy} onClick={() => void loadLibrary()}>🖼️ Xem tất cả ảnh đã tải lên</button></div>
+            <div className="toolbar"><button type="button" disabled={imgBusy} onClick={() => void loadLibrary()}>🖼️ Xem tất cả ảnh đã tải lên</button>{canPublish(roles) && <button type="button" disabled={imgBusy} onClick={() => void cleanupImages()}>🧹 Dọn ảnh không dùng</button>}</div>
             {uploaded.length > 0 && (
               <div className="card" style={{ background: 'transparent' }}>
                 <b>Ảnh đã tải lên</b>

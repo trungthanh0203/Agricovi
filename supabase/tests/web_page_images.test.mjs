@@ -64,3 +64,17 @@ test('kho ảnh công khai site-images: chỉ biên tập ghi/xóa đúng đư�
   // ảnh nhẹ hồ sơ/sản phẩm: tham chiếu sb: được coi là ảnh hợp lệ
   assert.equal((await db.query(`select lite_images('[{"src":"sb:site/x.jpg"},{"src":"http://x"}]'::jsonb) l`)).rows[0].l[0].ok, true);
 });
+
+test('danh sách ảnh còn dùng (để dọn kho): chỉ tổng biên tập; gồm banner và sổ ảnh trang tĩnh', async () => {
+  const db = await createDb();
+  const admin = await addUser(db, 1), chief = await addUser(db, 2), editor = await addUser(db, 3);
+  await db.query(`insert into platform_admins (user_id) values ($1)`, [admin]);
+  await asUser(db, admin, `select admin_set_site_role('u2@test.local','chief_editor',true)`);
+  await asUser(db, admin, `select admin_set_site_role('u3@test.local','editor',true)`);
+  const A = '11111111-2222-4333-8444-555555555551', P = '11111111-2222-4333-8444-555555555552';
+  await asUser(db, chief, `select site_save_banner(null,'hero','T','',$1,'',0,null,null,'draft',null)`, [`sb:site/banners/${A}.jpg`]);
+  await asUser(db, chief, `select site_register_page_image($1)`, [P]);
+  assert.match(await expectError(asUser(db, editor, `select site_list_used_images()`)), /FORBIDDEN/);
+  const l = (await asUser(db, chief, `select site_list_used_images() l`)).rows[0].l;
+  assert.deepEqual([...l].sort(), [`sb:site/banners/${A}.jpg`, `sb:site/pages/${P}.jpg`]);
+});
