@@ -1,4 +1,5 @@
 import { PGlite } from '@electric-sql/pglite';
+import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,7 +9,7 @@ const migrationsDir = join(here, '..', 'migrations');
 
 /** Dựng CSDL mẫu: áp shim Supabase rồi toàn bộ migration theo thứ tự tên file. */
 async function buildTemplate() {
-  const db = new PGlite();
+  const db = new PGlite({ extensions: { pg_trgm } }); // pg_trgm: chỉ mục tìm kiếm (migration 0172)
   await db.exec(readFileSync(join(here, 'shim.sql'), 'utf8'));
   const files = readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
   for (const f of files) {

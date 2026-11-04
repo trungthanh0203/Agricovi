@@ -44,3 +44,18 @@ test('danh bạ và sản phẩm phân trang ở CSDL', async () => {
   await db.query(`update public_profiles set is_visible = false where slug = 'co-so-1'`);
   assert.equal((await prod([null, null, null, false, 0, 24, null])).total, 4); // hồ sơ ẩn thì sản phẩm ẩn theo
 });
+
+test('chỉ mục tìm kiếm: cột search_text tự tính, ô tìm trên đầu trang khớp không dấu, chỉ mục trigram tồn tại', async () => {
+  const db = await createDb();
+  await db.query(`set session_replication_role = replica`);
+  await db.query(`insert into public_profiles (profile_id, organization_id, slug, snapshot) values ('00000000-0000-0000-0000-0000000000a1', gen_random_uuid(), 'vuon-dau', $1::jsonb)`,
+    [JSON.stringify({ display_name: 'Vườn Dâu Đà Lạt', province: 'Lâm Đồng', description: 'Dâu tây sạch' })]);
+  await db.query(`insert into public_products (listing_id, profile_id, snapshot) values (gen_random_uuid(), '00000000-0000-0000-0000-0000000000a1', $1::jsonb)`, [JSON.stringify({ name: 'Dâu tây Hàn Quốc', crop: 'Dâu' })]);
+  const st = (await db.query(`select search_text from public_profiles`)).rows[0].search_text;
+  assert.match(st, /vuon dau da lat lam dong/);
+  const r = (await asAnon(db, `select site_search($1) r`, ['han quoc'])).rows[0].r;
+  assert.equal(r.products.length, 1); assert.equal(r.profiles.length, 0);
+  assert.equal((await asAnon(db, `select site_search($1) r`, ['da lat'])).rows[0].r.profiles.length, 1);
+  const idx = (await db.query(`select count(*)::int n from pg_indexes where indexname in ('public_profiles_search_trgm','public_products_search_trgm','site_materials_search_trgm','site_articles_search_trgm')`)).rows[0].n;
+  assert.equal(idx, 4);
+});
