@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
-import { loadDirectory, sb } from '../lib/db';
-import { loadMaterial, loadProducts } from '../lib/catalog';
+import { sb } from '../lib/db';
+import { loadMaterial, loadProduct } from '../lib/catalog';
 
 // Biểu mẫu yêu cầu báo giá: khách không cần tài khoản. Chống lạm dụng ở CSDL (giới hạn theo liên hệ/giờ) + ô bẫy "website".
 const KINDS = ['material', 'product', 'profile', 'general'];
@@ -33,8 +33,8 @@ if (!KINDS.includes(kind)) kind = 'general';
 let target = '';
 try {
   if (kind === 'material') target = (await loadMaterial(ref))?.name ?? '';
-  else if (kind === 'product') target = (await loadProducts()).find((p) => p.id === ref)?.name ?? '';
-  else if (kind === 'profile') target = (await loadDirectory()).rows.find((r) => r.slug === ref)?.display_name ?? '';
+  else if (kind === 'product') target = (await loadProduct(ref))?.name ?? '';
+  else if (kind === 'profile') target = ((await sb?.from('public_profiles_lite').select('snapshot->>display_name').eq('slug', ref).maybeSingle())?.data as { display_name?: string } | null)?.display_name ?? '';
 } catch { /* bỏ qua: chỉ để hiển thị tên */ }
 ---
 <Base title="Yêu cầu báo giá — Agricovi" noindex cache={false}>

@@ -70,18 +70,13 @@ export function profileCard(d: DirRow, snap: ProfileSnap | undefined, products: 
     </div></a>`;
 }
 
-export async function loadDirectory(): Promise<{ rows: DirRow[]; snaps: Map<string, ProfileSnap>; prods: Map<string, ProductRow[]>; badges: Map<string, Badge> }> {
-  if (!sb) throw new Error('Website chưa được cấu hình kết nối dữ liệu.');
-  const { data: rows, error } = await sb.from('public_directory')
-    .select('profile_id, slug, display_name, province, district, description, is_priority')
-    .order('is_priority', { ascending: false }).order('rank_score', { ascending: false }).limit(300);
-  if (error) throw new Error(error.message);
-  const list = (rows ?? []) as DirRow[];
-  const ids = list.map((r) => r.profile_id);
+/** Chi tiết (ảnh nhẹ, sản phẩm, huy hiệu) cho một tập nhỏ hồ sơ đang hiển thị (một trang) */
+async function directoryDetails(list: DirRow[]) {
   const snaps = new Map<string, ProfileSnap>();
   const prods = new Map<string, ProductRow[]>();
   const badges = new Map<string, Badge>();
-  if (ids.length > 0) {
+  const ids = list.map((r) => r.profile_id);
+  if (ids.length > 0 && sb) {
     const [p, q, b] = await Promise.all([
       sb.from('public_profiles_lite').select('profile_id, snapshot').in('profile_id', ids),
       sb.from('public_products_lite').select('listing_id, profile_id, supply_status, supply_updated_on, snapshot').in('profile_id', ids),
@@ -91,5 +86,20 @@ export async function loadDirectory(): Promise<{ rows: DirRow[]; snaps: Map<stri
     for (const r of (p.data ?? []) as { profile_id: string; snapshot: ProfileSnap }[]) snaps.set(r.profile_id, withImageUrls(r.snapshot, 'cs', r.profile_id));
     for (const r of (q.data ?? []) as ProductRow[]) { r.snapshot = withImageUrls(r.snapshot, 'sp', r.listing_id); const a = prods.get(r.profile_id) ?? []; a.push(r); prods.set(r.profile_id, a); }
   }
-  return { rows: list, snaps, prods, badges };
+  return { snaps, prods, badges };
+}
+
+export interface DirectoryQuery { q?: string; province?: string; available?: boolean; page?: number; size?: number }
+/** Một trang danh bạ (phân trang ở CSDL: hàm public_directory_page). page bắt đầu từ 1. */
+export async function loadDirectoryPage(o: DirectoryQuery = {}): Promise<{ rows: DirRow[]; total: number; provinces: string[]; page: number; pages: number; snaps: Map<string, ProfileSnap>; prods: Map<string, ProductRow[]>; badges: Map<string, Badge> }> {
+  if (!sb) throw new Error('Website chưa được cấu hình kết nối dữ liệu.');
+  const size = Math.min(Math.max(o.size ?? 24, 1), 60);
+  const want = Math.max(Math.floor(o.page ?? 1), 1);
+  const { data, error } = await sb.rpc('public_directory_page', { p_q: o.q || null, p_province: o.province || null, p_available: !!o.available, p_offset: (want - 1) * size, p_limit: size });
+  if (error) throw new Error(error.message);
+  const d = data as { total: number; provinces: string[]; rows: DirRow[] };
+  const total = Number(d.total) || 0;
+  const pages = Math.max(Math.ceil(total / size), 1);
+  const rows = d.rows ?? [];
+  return { rows, total, provinces: d.provinces ?? [], page: Math.min(want, pages), pages, ...(await directoryDetails(rows)) };
 }

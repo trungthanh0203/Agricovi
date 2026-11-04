@@ -1,61 +1,45 @@
 ---
 import Base from '../layouts/Base.astro';
+import Pager from '../components/Pager.astro';
+import ShopCard from '../components/ShopCard.astro';
+import { esc, loadDirectoryPage, profileCard } from '../lib/db';
+import { loadShops } from '../lib/catalog';
+
+// Danh bạ phân trang ở CSDL (24 cơ sở mỗi trang); bộ lọc là biểu mẫu GET nên mỗi trang có địa chỉ riêng và được lưu đệm ở biên.
+const sp = Astro.url.searchParams;
+const q = (sp.get('q') ?? '').trim().slice(0, 80);
+const tinh = (sp.get('tinh') ?? '').slice(0, 80);
+const conHang = sp.get('con-hang') === '1';
+const trang = Math.min(Math.max(parseInt(sp.get('trang') ?? '1', 10) || 1, 1), 1000);
+let dir: Awaited<ReturnType<typeof loadDirectoryPage>> | null = null;
+let error = '';
+try { dir = await loadDirectoryPage({ q, province: tinh, available: conHang, page: trang, size: 24 }); } catch (e) { error = e instanceof Error ? e.message : String(e); }
+const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
+const SHOP_MAX = 12;
+const shopsAll = !conHang ? (await loadShops()).filter((s) => (!tinh || s.province === tinh) && (!q || q.split(/\s+/).every((w) => fold([s.name, s.province, s.district, s.description].join(' ')).includes(fold(w))))) : [];
+const shops = shopsAll.slice(0, SHOP_MAX);
+const provinces = dir?.provinces ?? [];
 ---
 <Base title="Danh bạ cơ sở — Agricovi" description="Danh bạ cơ sở sản xuất nông nghiệp đã được kiểm duyệt.">
   <h1>Danh bạ cơ sở</h1>
-  <div class="filters">
-    <input id="q" placeholder="Tìm theo tên cơ sở hoặc sản phẩm" aria-label="Tìm kiếm" />
-    <select id="prov" aria-label="Tỉnh/thành"><option value="">Tất cả tỉnh/thành</option></select>
-    <select id="avail" aria-label="Tình trạng"><option value="">Tất cả</option><option value="1">Chỉ nơi đang có hàng</option></select>
+  <form class="filters" method="get">
+    <input name="q" value={q} placeholder="Tìm theo tên cơ sở hoặc sản phẩm" aria-label="Tìm kiếm" />
+    <select name="tinh" aria-label="Tỉnh/thành"><option value="">Tất cả tỉnh/thành</option>{provinces.map((p) => <option selected={p === tinh}>{p}</option>)}</select>
+    <label class="ck"><input type="checkbox" name="con-hang" value="1" checked={conHang} /> Chỉ nơi đang có hàng</label>
+    <button class="btn solid" type="submit">Lọc</button>
+  </form>
+  {error && <p class="err">{error}</p>}
+  {dir && <p class="muted">{dir.total} cơ sở{dir.pages > 1 ? ` · trang ${dir.page}/${dir.pages}` : ''}</p>}
+  <div class="grid">
+    {dir && dir.rows.length === 0 && <p class="empty">Không tìm thấy cơ sở phù hợp.</p>}
+    {dir && <Fragment set:html={dir.rows.map((d) => profileCard(d, dir!.snaps.get(d.profile_id), dir!.prods.get(d.profile_id) ?? [], dir!.badges.get(d.profile_id))).join('')} />}
   </div>
-  <p id="count" class="muted"></p>
-  <div id="list" class="grid"><p class="muted">Đang tải…</p></div>
-  <h2 id="shopsH" hidden>Gian hàng vật tư</h2>
-  <div id="shops" class="grid"></div>
+  {dir && <Pager page={dir.page} pages={dir.pages} />}
+  {shops.length > 0 && (
+    <>
+      <h2>Gian hàng vật tư</h2>
+      <div class="grid">{shops.map((s) => <ShopCard s={s} />)}</div>
+      {shopsAll.length > SHOP_MAX && <p class="muted">Còn {shopsAll.length - SHOP_MAX} gian hàng khác: hãy nhập từ khóa hoặc chọn tỉnh/thành để thu hẹp.</p>}
+    </>
+  )}
 </Base>
-
-<script>
-  import { esc, loadDirectory, profileCard, sb } from '../lib/db';
-  const list = document.getElementById('list')!;
-  const qEl = document.getElementById('q') as HTMLInputElement;
-  const provEl = document.getElementById('prov') as HTMLSelectElement;
-  const availEl = document.getElementById('avail') as HTMLSelectElement;
-  const countEl = document.getElementById('count')!;
-  const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
-  qEl.value = new URLSearchParams(location.search).get('q') ?? '';
-
-  // Gian hàng vật tư đang hoạt động (chỉ phần công khai)
-  interface ShopRow { slug: string; name: string; description: string | null; province: string; district: string | null; license_verified: boolean }
-  let shopRows: ShopRow[] | null = null;
-  async function renderShops(q: string) {
-    if (shopRows === null) {
-      shopRows = [];
-      if (sb) { const { data } = await sb.from('public_material_shops').select('slug, name, description, province, district, license_verified').order('name').limit(200); shopRows = (data ?? []) as ShopRow[]; }
-    }
-    const out = shopRows.filter((s) => (!provEl.value || s.province === provEl.value) && !availEl.value && (!q || q.split(/\s+/).every((w) => fold([s.name, s.province, s.district ?? '', s.description ?? ''].join(' ')).includes(w))));
-    document.getElementById('shopsH')!.hidden = out.length === 0;
-    document.getElementById('shops')!.innerHTML = out.map((s) => `<a class="card" href="/gian-hang-vat-tu/${encodeURIComponent(s.slug)}"><div class="ph">🧪</div><div class="body"><h3>${esc(s.name)}</h3><p><span class="pill">Gian hàng vật tư</span>${s.license_verified ? ' <span class="stat ok">Đã kiểm tra giấy phép</span>' : ''}</p><p class="muted">📍 ${esc([s.district, s.province].filter(Boolean).join(', '))}</p>${s.description ? `<p class="muted">${esc(s.description.slice(0, 90))}</p>` : ''}</div></a>`).join('');
-  }
-
-  loadDirectory().then(({ rows, snaps, prods, badges }) => {
-    for (const p of [...new Set(rows.map((r) => r.province).filter((x): x is string => Boolean(x)))].sort((a, b) => a.localeCompare(b, 'vi'))) {
-      provEl.insertAdjacentHTML('beforeend', `<option value="${esc(p)}">${esc(p)}</option>`);
-    }
-    const render = () => {
-      const q = fold(qEl.value.trim());
-      const out = rows.filter((d) => {
-        const ps = prods.get(d.profile_id) ?? [];
-        if (provEl.value && d.province !== provEl.value) return false;
-        if (availEl.value && !ps.some((p) => p.supply_status === 'available')) return false;
-        if (!q) return true;
-        const hay = fold([d.display_name, d.province, d.district, d.description, ...ps.map((p) => p.snapshot.name + ' ' + (p.snapshot.crop ?? ''))].join(' '));
-        return q.split(/\s+/).every((w) => hay.includes(w));
-      });
-      countEl.textContent = `${out.length} cơ sở`;
-      void renderShops(q);
-      list.innerHTML = out.length ? out.map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? [], badges.get(d.profile_id))).join('') : '<p class="empty">Không tìm thấy cơ sở phù hợp.</p>';
-    };
-    for (const el of [qEl, provEl, availEl]) el.addEventListener('input', render);
-    render();
-  }).catch((e) => { list.innerHTML = `<p class="err">${esc(e instanceof Error ? e.message : String(e))}</p>`; });
-</script>

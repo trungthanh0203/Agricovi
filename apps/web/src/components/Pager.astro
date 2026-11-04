@@ -1,0 +1,22 @@
+---
+// Thanh chuyển trang: giữ nguyên các bộ lọc hiện có trong địa chỉ, chỉ đổi ?trang=
+interface Props { page: number; pages: number }
+const { page, pages } = Astro.props;
+const href = (n: number) => { const u = new URL(Astro.url); if (n <= 1) u.searchParams.delete('trang'); else u.searchParams.set('trang', String(n)); return u.pathname + u.search; };
+const nums: (number | '…')[] = [];
+for (let i = 1; i <= pages; i++) if (i === 1 || i === pages || Math.abs(i - page) <= 2) nums.push(i); else if (nums[nums.length - 1] !== '…') nums.push('…');
+---
+{pages > 1 && (
+  <nav class="pager" aria-label="Chuyển trang">
+    {page > 1 ? <a href={href(page - 1)} rel="prev">‹ Trước</a> : <span class="off">‹ Trước</span>}
+    {nums.map((n) => (n === '…' ? <span class="gap">…</span> : n === page ? <span class="cur" aria-current="page">{n}</span> : <a href={href(n)}>{n}</a>))}
+    {page < pages ? <a href={href(page + 1)} rel="next">Sau ›</a> : <span class="off">Sau ›</span>}
+  </nav>
+)}
+<style>
+  .pager { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 22px 0 8px; }
+  .pager a, .pager span { min-width: 38px; text-align: center; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; text-decoration: none; color: var(--g-d); font-weight: 600; }
+  .pager a:hover { background: var(--g2); }
+  .pager .cur { background: var(--g); border-color: var(--g); color: #fff; }
+  .pager .off, .pager .gap { color: var(--muted); border-color: transparent; background: transparent; }
+</style>

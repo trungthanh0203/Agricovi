@@ -1,5 +1,5 @@
 import { DEFAULT_CATEGORIES, safeHref } from '@agriconnect/shared';
-import { img, loadDirectory, sb, SUPPLY_LABEL } from './db';
+import { img, loadDirectoryPage, sb, SUPPLY_LABEL, withImageUrls, type DirRow, type ProductRow } from './db';
 
 /**
  * Dữ liệu danh mục, sản phẩm của nhà cung cấp, vật tư và bài viết cho website (W2). Chỉ đọc nội dung công khai.
@@ -81,28 +81,56 @@ export interface ProductItem {
   minOrder: string; season: string; spec: string; description: string; images: string[]; certs: { name: string; status: string }[]; updated: string;
 }
 
-export const loadProducts = (): Promise<ProductItem[]> => cached('products', async () => {
-  const { rows, snaps, prods } = await loadDirectory();
-  const byId = new Map(rows.map((r) => [r.profile_id, r]));
-  const out: ProductItem[] = [];
-  for (const [pid, list] of prods) {
-    const d = byId.get(pid);
-    if (!d) continue;
-    for (const p of list) {
-      const s = p.snapshot;
-      const images = (s.images ?? []).map((i) => img(i.src)).filter(Boolean);
-      out.push({
-        id: p.listing_id, name: s.name, unit: s.unit ?? '', priceFrom: s.price_from == null ? null : Number(s.price_from), priceNote: s.price_note ?? '',
-        image: images[0] ?? '', supply: p.supply_status ?? '', supplyLabel: p.supply_status ? SUPPLY_LABEL[p.supply_status] ?? '' : '',
-        supplier: d.display_name, supplierSlug: d.slug, profileId: pid, province: d.province ?? '', categoryId: s.category_id ?? null, categorySlug: s.category_slug ?? '',
-        crop: s.crop ?? '', trace: s.trace_code ?? '', minOrder: s.min_order ?? '', season: s.season ?? '', spec: s.specification ?? '', description: s.description ?? '',
-        images, certs: (s.certifications ?? []).map((c) => ({ name: c.name, status: c.status })), updated: p.supply_updated_on ?? '',
-      });
-    }
-  }
-  void snaps;
-  return out;
-}, [] as ProductItem[]);
+interface ProductRpcRow extends ProductRow { slug: string; display_name: string; province: string | null }
+function toProduct(r: ProductRpcRow): ProductItem {
+  const s = withImageUrls(r.snapshot, 'sp', r.listing_id);
+  const images = (s.images ?? []).map((i) => img(i.src)).filter(Boolean);
+  return {
+    id: r.listing_id, name: s.name, unit: s.unit ?? '', priceFrom: s.price_from == null ? null : Number(s.price_from), priceNote: s.price_note ?? '',
+    image: images[0] ?? '', supply: r.supply_status ?? '', supplyLabel: r.supply_status ? SUPPLY_LABEL[r.supply_status] ?? '' : '',
+    supplier: r.display_name ?? '', supplierSlug: r.slug, profileId: r.profile_id, province: r.province ?? '', categoryId: s.category_id ?? null, categorySlug: s.category_slug ?? '',
+    crop: s.crop ?? '', trace: s.trace_code ?? '', minOrder: s.min_order ?? '', season: s.season ?? '', spec: s.specification ?? '', description: s.description ?? '',
+    images, certs: (s.certifications ?? []).map((c) => ({ name: c.name, status: c.status })), updated: r.supply_updated_on ?? '',
+  };
+}
+
+export interface ProductQuery { cats?: string[]; q?: string; province?: string; available?: boolean; page?: number; size?: number }
+export interface ProductPage { items: ProductItem[]; total: number; provinces: string[]; page: number; pages: number }
+/** Một trang sản phẩm của nhà cung cấp (phân trang ở CSDL: hàm public_products_page). page bắt đầu từ 1. Lỗi/chậm thì trả trang rỗng. */
+export async function loadProductsPage(o: ProductQuery = {}): Promise<ProductPage> {
+  const size = Math.min(Math.max(o.size ?? 24, 1), 60);
+  const want = Math.max(Math.floor(o.page ?? 1), 1);
+  const empty: ProductPage = { items: [], total: 0, provinces: [], page: 1, pages: 1 };
+  if (!sb) return empty;
+  try {
+    const { data, error } = await Promise.race([
+      sb.rpc('public_products_page', { p_categories: o.cats && o.cats.length ? o.cats : null, p_province: o.province || null, p_q: o.q || null, p_available: !!o.available, p_offset: (want - 1) * size, p_limit: size }),
+      new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 3500)),
+    ]);
+    if (error || !data) return empty;
+    const d = data as { total: number; provinces: string[]; items: ProductRpcRow[] };
+    const total = Number(d.total) || 0;
+    const pages = Math.max(Math.ceil(total / size), 1);
+    return { items: (d.items ?? []).map(toProduct), total, provinces: d.provinces ?? [], page: Math.min(want, pages), pages };
+  } catch { return empty; }
+}
+/** Một sản phẩm theo mã (trang chi tiết, báo giá) */
+export async function loadProduct(id: string): Promise<ProductItem | null> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id) || !sb) return null;
+  try {
+    const { data, error } = await sb.rpc('public_products_page', { p_listing: id, p_limit: 1 });
+    const it = (data as { items?: ProductRpcRow[] } | null)?.items?.[0];
+    return error || !it ? null : toProduct(it);
+  } catch { return null; }
+}
+/** Hàng sản phẩm ở trang chủ theo danh mục (lưu đệm trong bộ nhớ Worker ~60 giây) */
+export const loadHomeProducts = (key: string, cats: string[] | undefined, available: boolean, size: number): Promise<ProductItem[]> =>
+  cached('home:' + key, async () => (await loadProductsPage({ cats, available, size })).items, [] as ProductItem[]);
+/** Vài cơ sở nổi bật ở trang chủ */
+export const loadHomeDirectory = (size = 12) => cached('home-dir:' + size, async () => {
+  const d = await loadDirectoryPage({ size });
+  return { rows: d.rows, snaps: d.snaps, prods: d.prods, badges: d.badges };
+}, null as null | { rows: DirRow[]; snaps: Awaited<ReturnType<typeof loadDirectoryPage>>['snaps']; prods: Awaited<ReturnType<typeof loadDirectoryPage>>['prods']; badges: Awaited<ReturnType<typeof loadDirectoryPage>>['badges'] });
 export const fmtVnd = (n: number) => `${Math.round(n).toLocaleString('vi-VN')}đ`;
 /** "Từ 40.000đ/kg", hoặc giá chữ của nhà cung cấp, hoặc "Liên hệ báo giá" */
 export function priceText(priceFrom: number | null, priceNote: string, unit: string): string {

@@ -1,11 +1,10 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { CERT_LABEL } from '../../lib/db';
-import { catHref, loadCategories, loadProducts, priceText } from '../../lib/catalog';
+import { catHref, loadCategories, loadProduct, priceText } from '../../lib/catalog';
 
 const id = Astro.params.id ?? '';
-const all = await loadProducts();
-const p = all.find((x) => x.id === id) ?? null;
+const p = await loadProduct(id);
 const cats = await loadCategories();
 const cat = p ? cats.find((c) => c.id === p.categoryId) : undefined;
 if (!p) Astro.response.status = 404;

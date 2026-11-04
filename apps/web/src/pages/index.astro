@@ -9,8 +9,8 @@ import ShopCard from '../components/ShopCard.astro';
 import Section from '../components/Section.astro';
 import Rail from '../components/Rail.astro';
 import { loadTradePosts } from '../lib/trade';
-import { catHref, catTree, descendantIds, loadArticles, loadCategories, loadMaterials, loadProducts, loadShops, today } from '../lib/catalog';
-import { esc, img, loadDirectory, profileCard, supplyPill, type DirRow } from '../lib/db';
+import { catHref, catTree, descendantIds, loadArticles, loadCategories, loadHomeDirectory, loadHomeProducts, loadMaterials, loadShops, today } from '../lib/catalog';
+import { esc, profileCard, supplyPill } from '../lib/db';
 import { loadChrome } from '../lib/site';
 import { localizeArticle } from '../lib/translations';
 
@@ -29,20 +29,16 @@ const { top: topCats, kids } = catTree(cats);
 const CAT_ICON: Record<string, string> = {
   'rau-cu-qua': '🥬', 'trai-cay': '🍊', 'vat-nuoi': '🐄', 'gao-nong-san-kho': '🌾', giong: '🌱', 'vat-tu-nong-nghiep': '🧪', 'phu-kien-thiet-bi': '🧰',
 };
-const allProducts = await loadProducts();
 const materials = (await loadMaterials()).slice(0, 10);
 const articles = (await loadArticles()).map((a) => localizeArticle(a, Astro.locals.tr));
-const rowFor = (slug: string) => {
+const rowOf: Record<string, { cat: (typeof cats)[number]; items: Awaited<ReturnType<typeof loadHomeProducts>> }> = {};
+await Promise.all((['trai_cay', 'rau_cu_qua', 'vat_nuoi'] as const).map(async (blockId) => {
+  const slug = blockId.replace(/_/g, '-');
   const c = cats.find((x) => x.slug === slug);
-  if (!c) return null;
-  const ids = descendantIds(cats, c.id);
-  return { cat: c, items: allProducts.filter((p) => p.categoryId && ids.has(p.categoryId)).slice(0, 12) };
-};
-const rowOf: Record<string, NonNullable<ReturnType<typeof rowFor>>> = {};
-for (const [blockId, slug] of [['trai_cay', 'trai-cay'], ['rau_cu_qua', 'rau-cu-qua'], ['vat_nuoi', 'vat-nuoi']] as const) {
-  const r = rowFor(slug);
-  if (r && r.items.length > 0) rowOf[blockId] = r;
-}
+  if (!c) return;
+  const items = await loadHomeProducts(slug, [...descendantIds(cats, c.id)], false, 12);
+  if (items.length > 0) rowOf[blockId] = { cat: c, items };
+}));
 const blocks = chrome.home.filter((b) => b.on);
 const trades = (await loadTradePosts()).slice(0, 10);
 const day = today();
@@ -52,23 +48,15 @@ const shopsHome = (await loadShops()).slice(0, 6);
 let featured: string[] = [];
 let available: string[] = [];
 try {
-  const { rows, snaps, prods, badges } = await loadDirectory();
-  featured = rows.slice(0, 12).map((d) => profileCard(d, snaps.get(d.profile_id), prods.get(d.profile_id) ?? [], badges.get(d.profile_id)));
-  const byId = new Map<string, DirRow>(rows.map((r) => [r.profile_id, r]));
-  for (const [pid, list] of prods) {
-    const d = byId.get(pid);
-    if (!d) continue;
-    for (const p of list) {
-      if (p.supply_status !== 'available') continue;
-      const pic = img(p.snapshot.images?.[0]?.src);
-      available.push(`<a class="card" href="/co-so/${encodeURIComponent(d.slug)}">
-        ${pic ? `<img class="cover" src="${pic}" alt="" loading="lazy" />` : '<div class="cover ph">🥬</div>'}
-        <div class="body"><h3>${esc(p.snapshot.name)}</h3>${supplyPill(p.supply_status)}
-        <p class="muted">${esc(d.display_name)} · ${esc(d.province ?? '')}</p>
-        <p class="muted">${esc([p.snapshot.price_note, p.snapshot.min_order && 'tối thiểu ' + p.snapshot.min_order].filter(Boolean).join(' · '))}</p></div></a>`);
-    }
+  const dir = await loadHomeDirectory(12);
+  if (dir) featured = dir.rows.map((d) => profileCard(d, dir.snaps.get(d.profile_id), dir.prods.get(d.profile_id) ?? [], dir.badges.get(d.profile_id)));
+  for (const p of await loadHomeProducts('available', undefined, true, 14)) {
+    available.push(`<a class="card" href="/san-pham/${encodeURIComponent(p.id)}">
+      ${p.image ? `<img class="cover" src="${p.image}" alt="" loading="lazy" />` : '<div class="cover ph">🥬</div>'}
+      <div class="body"><h3>${esc(p.name)}</h3>${supplyPill(p.supply)}
+      <p class="muted">${esc(p.supplier)} · ${esc(p.province)}</p>
+      <p class="muted">${esc([p.priceNote, p.minOrder && 'tối thiểu ' + p.minOrder].filter(Boolean).join(' · '))}</p></div></a>`);
   }
-  available = available.slice(0, 14);
 } catch (e) {
   dirError = e instanceof Error ? e.message : String(e);
 }

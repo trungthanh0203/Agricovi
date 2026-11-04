@@ -2,7 +2,8 @@
 import Base from '../../layouts/Base.astro';
 import ProductCard from '../../components/ProductCard.astro';
 import MaterialCard from '../../components/MaterialCard.astro';
-import { catHref, catTrail, catTree, descendantIds, loadCategories, loadMaterials, loadProducts } from '../../lib/catalog';
+import Pager from '../../components/Pager.astro';
+import { catHref, catTrail, catTree, descendantIds, loadCategories, loadMaterials, loadProductsPage } from '../../lib/catalog';
 
 const parts = (Astro.params.slug ?? '').split('/').filter(Boolean);
 const slug = parts[parts.length - 1] ?? '';
@@ -13,7 +14,8 @@ if (!cat) Astro.response.status = 404;
 const url = Astro.url;
 const tinh = url.searchParams.get('tinh') ?? '';
 const conHang = url.searchParams.get('con-hang') === '1';
-const q = (url.searchParams.get('q') ?? '').trim();
+const q = (url.searchParams.get('q') ?? '').trim().slice(0, 80);
+const trang = Math.min(Math.max(parseInt(url.searchParams.get('trang') ?? '1', 10) || 1, 1), 1000);
 const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
 
 const ids = cat ? descendantIds(cats, cat.id) : new Set<string>();
@@ -22,9 +24,10 @@ const { kids } = catTree(cats);
 const children = cat ? kids.get(cat.id) ?? [] : [];
 const trail = cat ? catTrail(cats, cat) : [];
 
-const all = cat && !isMaterial ? (await loadProducts()).filter((p) => p.categoryId && ids.has(p.categoryId)) : [];
-const provinces = [...new Set(all.map((p) => p.province).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
-const products = all.filter((p) => (!tinh || p.province === tinh) && (!conHang || p.supply === 'available') && (!q || fold(`${p.name} ${p.crop} ${p.supplier}`).includes(fold(q))));
+// Sản phẩm phân trang ở CSDL (24 mỗi trang); danh sách tỉnh/thành lấy cùng lượt gọi
+const pg = cat && !isMaterial ? await loadProductsPage({ cats: [...ids], q, province: tinh, available: conHang, page: trang, size: 24 }) : null;
+const products = pg?.items ?? [];
+const provinces = pg?.provinces ?? [];
 const materials = cat && isMaterial ? (await loadMaterials()).filter((m) => (m.categoryId && ids.has(m.categoryId)) && (!q || fold(`${m.name} ${m.brand} ${m.summary}`).includes(fold(q)))) : [];
 ---
 {cat ? (
@@ -51,9 +54,10 @@ const materials = cat && isMaterial ? (await loadMaterials()).filter((m) => (m.c
       </>
     ) : (
       <>
-        <p class="muted">{products.length} sản phẩm</p>
-        {products.length === 0 && <p class="empty">Chưa có sản phẩm nào trong mục này. <a href="/danh-ba/">Xem danh bạ nhà cung cấp</a></p>}
+        <p class="muted">{pg?.total ?? 0} sản phẩm{pg && pg.pages > 1 ? ` · trang ${pg.page}/${pg.pages}` : ''}</p>
+        {products.length === 0 && <p class="empty">Chưa có sản phẩm nào phù hợp. <a href="/danh-ba/">Xem danh bạ nhà cung cấp</a></p>}
         <div class="pgrid">{products.map((p) => <ProductCard p={p} />)}</div>
+        {pg && <Pager page={pg.page} pages={pg.pages} />}
       </>
     )}
   </Base>
