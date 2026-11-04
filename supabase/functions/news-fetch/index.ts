@@ -56,11 +56,27 @@ function parseFeed(xml: string): Item[] {
   return out;
 }
 
+const BOT_UA = 'AgricoviNewsBot/1.0 (+https://agricovi.com)';
+const ACCEPTS = ['application/rss+xml, application/xml, text/xml, */*', '*/*']; // một số máy chủ trả 406 với danh sách kiểu nội dung dài: thử lại với */*
+const HTTP_HINT: Record<number, string> = {
+  403: 'Nguồn từ chối máy chủ của chúng ta (403): có thể báo đang chặn robot hoặc dải IP máy chủ. Hãy thử nguồn khác hoặc liên hệ tòa soạn xin cho phép.',
+  404: 'Không tìm thấy địa chỉ RSS (404): kiểm tra lại địa chỉ nguồn.',
+  406: 'Nguồn từ chối yêu cầu (406): kiểm tra lại địa chỉ RSS hoặc liên hệ đơn vị quản lý trang.',
+  429: 'Nguồn giới hạn số lần truy cập (429): thử lại sau.',
+};
 async function readFeed(url: string): Promise<string> {
-  const r = await fetch(url, { headers: { 'User-Agent': 'AgricoviNewsBot/1.0 (+https://agricovi.com)', Accept: 'application/rss+xml, application/xml, text/xml, */*' }, signal: AbortSignal.timeout(15000), redirect: 'follow' });
-  if (!r.ok) throw new Error('Nguồn trả về lỗi HTTP ' + r.status);
-  const text = await r.text();
-  return text.length > MAX_BYTES ? text.slice(0, MAX_BYTES) : text;
+  let status = 0;
+  for (const accept of ACCEPTS) {
+    // luôn xưng đúng tên bot của Agricovi; không giả làm trình duyệt
+    const r = await fetch(url, { headers: { 'User-Agent': BOT_UA, Accept: accept }, signal: AbortSignal.timeout(15000), redirect: 'follow' });
+    status = r.status;
+    if (r.ok) {
+      const text = await r.text();
+      return text.length > MAX_BYTES ? text.slice(0, MAX_BYTES) : text;
+    }
+    if (status !== 406) break;
+  }
+  throw new Error(HTTP_HINT[status] ?? 'Nguồn trả về lỗi HTTP ' + status);
 }
 
 Deno.serve(async (req) => {
