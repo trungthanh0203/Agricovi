@@ -18,7 +18,7 @@ const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  `img-src 'self' data: blob:${SB ? ' ' + SB : ''}`,
   "font-src 'self' data:",
   `connect-src 'self'${SB ? ' ' + SB : ''}`,
   "frame-ancestors 'self'",
@@ -82,7 +82,7 @@ export const onRequest = defineMiddleware(async (ctx, next) => {
   res = secure(res, https);
 
   // Trang 404 cũng được lưu đệm rất ngắn (tối đa 30 giây) để người quét địa chỉ lạ không dồn từng lượt vào CSDL
-  const ttl = res.status === 200 ? edgeTtl(res) : res.status === 404 ? Math.min(edgeTtl(res), 30) : 0;
+  const ttl = res.status === 200 || res.status === 302 ? edgeTtl(res) : res.status === 404 ? Math.min(edgeTtl(res), 30) : 0;
   if (cache && key && ttl > 0) {
     const copy = new Response(res.clone().body, res);
     copy.headers.set('X-Orig-Cache-Control', res.headers.get('Cache-Control') ?? '');

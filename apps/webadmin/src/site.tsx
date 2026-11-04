@@ -77,7 +77,7 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
   async function deleteImage(id: string) {
     if (!window.confirm('Xóa hẳn ảnh này? Không hoàn tác được. Ảnh đang dùng trong trang nào thì phải gỡ khỏi trang đó trước.')) return;
     setErr(null);
-    try { await rpc('site_delete_page_image', { p_id: id }); setUploaded((l) => l.filter((u) => u.id !== id)); setMsg('Đã xóa ảnh.'); } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
+    try { await rpc('site_delete_page_image', { p_id: id }); void supabase!.storage.from('site-images').remove([`site/pages/${id}.jpg`]); setUploaded((l) => l.filter((u) => u.id !== id)); setMsg('Đã xóa ảnh.'); } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
   }
   const [copied, setCopied] = useState('');
   const imgLine = (u: { id: string; alt: string }) => `![${u.alt}](/anh/pg/${u.id})`;
@@ -88,8 +88,10 @@ export function SitePagesPage({ roles }: { roles: string[] }) {
     if (!file || !f) return;
     setImgBusy(true); setErr(null);
     try {
-      const url = await compressImage(file, 1100, 300_000);
-      const id = await rpc<string>('site_upload_page_image', { p_image: url });
+      const up = await uploadSiteImage(file, 'pages', 1600);
+      const id = up.id;
+      await rpc<string>('site_register_page_image', { p_id: id });
+      const url = imageSrc(up.ref);
       const alt = file.name.replace(/\.[^.]+$/, '').replace(/[\[\]()]/g, ' ').trim();
       setUploaded((l) => [{ id, alt, thumb: url }, ...l]);
       setMsg('Đã tải ảnh lên thành công và thêm vào cuối nội dung. Nhớ bấm Lưu để giữ lại.');
@@ -233,7 +235,37 @@ export async function compressImage(file: File, max = 640, limit = 80_000): Prom
   }
   throw new Error('Ảnh quá phức tạp để nén gọn. Hãy chọn ảnh nhỏ hơn hoặc ít chi tiết hơn.');
 }
-const fileToBannerImage = (file: File) => compressImage(file, 1100, 160_000);
+
+/** Địa chỉ xem được của ảnh: tham chiếu kho "sb:site/…" đổi thành địa chỉ công khai của Supabase Storage; ảnh cũ dạng data URL giữ nguyên */
+const SB_URL = (((import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {}).VITE_SUPABASE_URL ?? '').replace(/\/+$/, '');
+export const imageSrc = (v: string | null | undefined): string => (!v ? '' : v.startsWith('sb:') ? `${SB_URL}/storage/v1/object/public/site-images/${v.slice(3)}` : v);
+
+/** Thu nhỏ ảnh thành tệp JPEG (cạnh dài tối đa `max` px), giảm chất lượng dần cho tới khi vừa `limit` byte */
+async function compressToBlob(file: File, max: number, limit: number): Promise<Blob> {
+  if (!file.type.startsWith('image/')) throw new Error('Hãy chọn một tệp ảnh.');
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Không xử lý được ảnh trên thiết bị này.');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(bmp, 0, 0, w, h); bmp.close();
+  for (const q of [0.85, 0.75, 0.62, 0.5]) {
+    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', q));
+    if (blob && blob.size <= limit) return blob;
+  }
+  throw new Error('Ảnh quá lớn hoặc phức tạp để nén gọn. Hãy chọn ảnh nhỏ hơn.');
+}
+/** Tải ảnh lên kho công khai "site-images"; trả về tham chiếu để lưu vào cột ảnh (và mã ảnh = tên tệp) */
+export async function uploadSiteImage(file: File, folder: 'banners' | 'articles' | 'materials' | 'pages', max = 1600): Promise<{ ref: string; id: string }> {
+  const blob = await compressToBlob(file, max, 1_500_000);
+  const id = crypto.randomUUID();
+  const path = `site/${folder}/${id}.jpg`;
+  const { error } = await supabase!.storage.from('site-images').upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
+  if (error) throw new Error(/row-level|policy|not authorized|permission/i.test(error.message) ? 'FORBIDDEN: Bạn chưa được phép tải ảnh lên.' : /bucket/i.test(error.message) ? 'INVALID: Kho ảnh chưa được tạo (cần đẩy migration 0173).' : error.message);
+  return { ref: 'sb:' + path, id };
+}
 
 export function SiteBannersPage({ roles }: { roles: string[] }) {
   const { data, error, reload } = useLoad(async () => {
@@ -262,7 +294,7 @@ export function SiteBannersPage({ roles }: { roles: string[] }) {
   async function pick(file: File | undefined) {
     if (!file || !f) return;
     setBusy(true); setErr(null);
-    try { setF({ ...f, image: await fileToBannerImage(file) }); } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
+    try { setF({ ...f, image: (await uploadSiteImage(file, 'banners', 1600)).ref }); } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
     setBusy(false);
   }
   async function remove() {
@@ -290,7 +322,7 @@ export function SiteBannersPage({ roles }: { roles: string[] }) {
             <label>Liên kết khi bấm (tùy chọn)<input value={f.link} onChange={(e) => setF({ ...f, link: e.target.value.trim() })} placeholder="/danh-ba/ hoặc https://…" /></label>
             <label>Hình ảnh (tùy chọn; ảnh ngang đẹp nhất)
               <input type="file" accept="image/*" disabled={busy} onChange={(e) => void pick(e.target.files?.[0])} />
-              {f.image && <img src={f.image} alt="" style={{ maxWidth: 320, borderRadius: 8, marginTop: 6 }} />}
+              {f.image && <img src={imageSrc(f.image)} alt="" style={{ maxWidth: 320, borderRadius: 8, marginTop: 6 }} />}
               {f.image && <button type="button" onClick={() => setF({ ...f, image: '' })}>Bỏ ảnh</button>}
             </label>
             <label>Thứ tự (số nhỏ hiện trước)<input value={f.sort} inputMode="numeric" onChange={(e) => setF({ ...f, sort: e.target.value })} /></label>
@@ -315,7 +347,7 @@ export function SiteBannersPage({ roles }: { roles: string[] }) {
           <tbody>
             {(data ?? []).map((b) => (
               <tr key={b.id}>
-                <td>{b.image ? <img src={b.image} alt="" style={{ width: 90, borderRadius: 6 }} /> : <small>(không ảnh)</small>}</td>
+                <td>{b.image ? <img src={imageSrc(b.image)} alt="" style={{ width: 90, borderRadius: 6 }} /> : <small>(không ảnh)</small>}</td>
                 <td><strong>{b.title}</strong>{b.subtitle && <small>{b.subtitle}</small>}</td>
                 <td>{b.slot === 'hero' ? 'Băng chuyền' : 'Ô nhỏ'} · thứ tự {b.sort_order}</td>
                 <td>{b.starts_at || b.ends_at ? `${fmtDateTime(b.starts_at)} → ${fmtDateTime(b.ends_at)}` : 'Luôn hiển thị'}</td>

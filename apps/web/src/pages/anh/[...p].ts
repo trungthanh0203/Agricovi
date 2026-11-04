@@ -9,6 +9,8 @@ import { sb } from '../../lib/db';
  */
 export const prerender = false;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const SB_URL = ((import.meta.env.PUBLIC_SUPABASE_URL as string | undefined) ?? '').replace(/\/+$/, '');
+const SB_REF = /^sb:(?!.*\.\.)(site\/(?:banners|articles|materials|pages|profiles|products)\/[0-9a-zA-Z/_.-]{1,160}\.jpg)$/;
 const DATA = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/;
 
 function notFound(): Response {
@@ -47,6 +49,11 @@ export const GET: APIRoute = async ({ params, request }) => {
   if (!kind || !id || !UUID.test(id) || !Number.isInteger(idx) || idx < 0 || idx > 9 || parts.length > 3) return notFound();
   let src: string | null = null;
   try { src = await load(kind, id, idx); } catch { return new Response('Tạm thời chưa tải được ảnh', { status: 503, headers: { 'Cache-Control': 'no-store' } }); }
+  // Ảnh trong kho công khai (tham chiếu sb:site/...): chuyển hướng tới địa chỉ công khai của Supabase Storage (CDN), có lưu đệm ở biên
+  const ref = src ? SB_REF.exec(src) : null;
+  if (ref && SB_URL) {
+    return new Response(null, { status: 302, headers: { Location: `${SB_URL}/storage/v1/object/public/site-images/${ref[1]}`, 'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400' } });
+  }
   const m = src ? DATA.exec(src) : null;
   if (!m) return notFound();
   const etag = etagOf(m[2]!);

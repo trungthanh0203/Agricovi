@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { DEFAULT_HEADER_NAV, parseBody } from '@agriconnect/shared';
-import { canPublish, compressImage, locked, SITE_URL, SiteBadge, STATUS_LABEL, statusOptions } from './site';
+import { canPublish, imageSrc, locked, SITE_URL, SiteBadge, STATUS_LABEL, statusOptions, uploadSiteImage } from './site';
 import { clean, downloadCsv, Err, fmtDateTime, rpc, supabase, useLoad } from '@agriconnect/admin-kit';
 
 /**
@@ -11,7 +11,7 @@ const slugify = (t: string) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]
 const num = (s: string) => (s.trim() === '' ? null : Number(s.replace(/[^0-9.]/g, '')));
 const err2 = (x: unknown) => clean(x instanceof Error ? x.message : String(x));
 
-function ImageField({ value, onChange, max, limit, label }: { value: string; onChange: (v: string) => void; max: number; limit: number; label: string }) {
+function ImageField({ value, onChange, max, folder, label }: { value: string; onChange: (v: string) => void; max: number; folder: 'articles' | 'materials'; label: string }) {
   const [busy, setBusy] = useState(false);
   const [e, setE] = useState<string | null>(null);
   return (
@@ -20,11 +20,11 @@ function ImageField({ value, onChange, max, limit, label }: { value: string; onC
         const f = ev.target.files?.[0];
         if (!f) return;
         setBusy(true); setE(null);
-        compressImage(f, max, limit).then(onChange).catch((x) => setE(err2(x))).finally(() => setBusy(false));
+        uploadSiteImage(f, folder, max).then((u) => onChange(u.ref)).catch((x) => setE(err2(x))).finally(() => setBusy(false));
       }} />
-      {value && <><img src={value} alt="" style={{ maxWidth: 220, borderRadius: 8, marginTop: 6 }} /><button type="button" onClick={() => onChange('')}>Bỏ ảnh</button></>}
+      {value && <><img src={imageSrc(value)} alt="" style={{ maxWidth: 220, borderRadius: 8, marginTop: 6 }} /><button type="button" onClick={() => onChange('')}>Bỏ ảnh</button></>}
       <Err e={e} />
-      <small>Chỉ 1 ảnh, tự thu nhỏ để nhẹ cơ sở dữ liệu.</small>
+      <small>Chỉ 1 ảnh, tự thu nhỏ rồi lưu vào kho ảnh riêng của website.</small>
     </label>
   );
 }
@@ -232,7 +232,7 @@ export function SiteMaterialsPage({ roles }: { roles: string[] }) {
             <label>Giá tham khảo "từ" (đồng)<input value={f.price} inputMode="numeric" onChange={(e) => setF({ ...f, price: e.target.value })} /></label>
             <label>Hoặc ghi chữ (nếu không có giá số)<input value={f.priceNote} maxLength={120} onChange={(e) => setF({ ...f, priceNote: e.target.value })} placeholder="Liên hệ báo giá" /></label>
             <label>Nhà phân phối / nơi liên hệ<input value={f.distributor} maxLength={200} onChange={(e) => setF({ ...f, distributor: e.target.value })} /></label>
-            <ImageField label="Ảnh sản phẩm" value={f.image} max={640} limit={80_000} onChange={(v) => setF({ ...f, image: v })} />
+            <ImageField label="Ảnh sản phẩm" value={f.image} max={1000} folder="materials" onChange={(v) => setF({ ...f, image: v })} />
             <label>Thứ tự<input value={f.sort} inputMode="numeric" onChange={(e) => setF({ ...f, sort: e.target.value })} /></label>
             <label>Trạng thái
               <select value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}>{statusOptions(roles).map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}</select>
@@ -247,7 +247,7 @@ export function SiteMaterialsPage({ roles }: { roles: string[] }) {
           <tbody>
             {rows.map((m) => (
               <tr key={m.id}>
-                <td>{m.image ? <img src={m.image} alt="" style={{ width: 56, borderRadius: 6 }} /> : ''}</td>
+                <td>{m.image ? <img src={imageSrc(m.image)} alt="" style={{ width: 56, borderRadius: 6 }} /> : ''}</td>
                 <td><strong>{m.name}</strong>{m.brand && <small>{m.brand}</small>}</td><td>{catName(m.category_id)}</td>
                 <td>{m.price_from ? `${Number(m.price_from).toLocaleString('vi-VN')} đ` : m.price_note ?? ''}</td><td><SiteBadge s={m.status} /></td>
                 <td className="acts"><button onClick={() => open(m)}>Sửa</button>{m.status === 'published' && SITE_URL && <a href={`${SITE_URL}/vat-tu/${m.slug}`} target="_blank" rel="noopener noreferrer">Xem</a>}</td>
@@ -337,7 +337,7 @@ export function SiteArticlesPage({ roles }: { roles: string[] }) {
               <textarea rows={12} value={f.body} onChange={(e) => setF({ ...f, body: e.target.value })} />
               <small>Dòng trống = sang đoạn mới. <code>## Tiêu đề nhỏ</code> · dòng bắt đầu bằng <code>- </code> là danh sách · <code>[[Chữ trên nút|/duong-dan]]</code> tạo nút.</small>
             </label>
-            <ImageField label="Ảnh đại diện" value={f.image} max={720} limit={90_000} onChange={(v) => setF({ ...f, image: v })} />
+            <ImageField label="Ảnh đại diện" value={f.image} max={1400} folder="articles" onChange={(v) => setF({ ...f, image: v })} />
             <label>Nguồn tin (nếu dẫn lại)<input value={f.sourceName} maxLength={120} onChange={(e) => setF({ ...f, sourceName: e.target.value })} placeholder="Tên báo/đơn vị" /></label>
             <label>Liên kết nguồn (https://…)<input value={f.sourceUrl} onChange={(e) => setF({ ...f, sourceUrl: e.target.value.trim() })} /></label>
             <label>Thời điểm đăng (để trống = ngay khi đăng; chọn tương lai để hẹn giờ)<input type="datetime-local" value={f.publishedAt} onChange={(e) => setF({ ...f, publishedAt: e.target.value })} /></label>
