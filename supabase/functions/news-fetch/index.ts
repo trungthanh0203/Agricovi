@@ -110,5 +110,7 @@ Deno.serve(async (req) => {
       results.push({ name: s.name, added: 0, status: 'Lỗi: ' + msg });
     }
   }
-  return json({ ok: true, results });
+  // Tự xóa bản nháp tin tự động quá 15 ngày chưa ai mở/duyệt
+  const { data: cleaned } = await admin.rpc('news_cleanup');
+  return json({ ok: true, results, cleaned: Number(cleaned) || 0 });
 });

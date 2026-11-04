@@ -2,7 +2,8 @@
 import { DEFAULT_HEADER_NAV, newsSections } from '@agriconnect/shared';
 import Base from '../layouts/Base.astro';
 import ArticleCard from './ArticleCard.astro';
-import { loadArticles, today, type Article } from '../lib/catalog';
+import Pager from './Pager.astro';
+import { loadArticlesPage, type Article } from '../lib/catalog';
 import { localizeArticle } from '../lib/translations';
 
 interface Props { channel: Article['channel']; section?: string }
@@ -18,23 +19,26 @@ const sections = hoiCho ? (nav?.children ?? []).map((c) => ({ slug: c.href.split
 const current = section ? sections.find((s) => s.slug === section) : undefined;
 if (section && !current) Astro.response.status = 404;
 
-const day = today();
-const all = (await loadArticles()).filter((a) => a.channel === channel).map((a) => localizeArticle(a, Astro.locals.tr));
-const isEnded = (a: Article) => (a.end || a.start) < day;
-const byStart = (x: Article, y: Article) => (x.start || '9999').localeCompare(y.start || '9999');
+// Tin phân trang ở CSDL (12 bài mỗi trang). Tin hội chợ: trang chính hiện "Sắp diễn ra" (đủ) và "Đã diễn ra" (8 mục mới nhất), từng mục có trang riêng.
+const trang = Math.min(Math.max(parseInt(Astro.url.searchParams.get('trang') ?? '1', 10) || 1, 1), 1000);
+const tr = (list: Article[]) => list.map((a) => localizeArticle(a, Astro.locals.tr));
 let blocks: { heading?: string; items: Article[] }[] = [];
+let pg: { page: number; pages: number } | null = null;
+let total = 0;
 if (channel === 'hoi_cho') {
-  const upcoming = all.filter((a) => !isEnded(a) || !a.start).sort(byStart);
-  const past = all.filter((a) => a.start && isEnded(a)).sort((x, y) => byStart(y, x));
-  if (section === 'sap-dien-ra') blocks = [{ items: upcoming }];
-  else if (section === 'da-dien-ra') blocks = [{ items: past }];
-  else if (section === 'lich') blocks = [{ items: [...all].sort(byStart) }];
-  else blocks = [{ heading: 'Sắp diễn ra', items: upcoming }, { heading: 'Đã diễn ra', items: past.slice(0, 8) }];
+  if (section === 'sap-dien-ra' || section === 'da-dien-ra' || section === 'lich') {
+    const r = await loadArticlesPage(channel, { mode: section === 'sap-dien-ra' ? 'upcoming' : section === 'da-dien-ra' ? 'past' : 'schedule', page: trang, size: 12 });
+    blocks = [{ items: tr(r.items) }]; pg = r; total = r.total;
+  } else {
+    const [up, past] = await Promise.all([loadArticlesPage(channel, { mode: 'upcoming', size: 12 }), loadArticlesPage(channel, { mode: 'past', size: 8 })]);
+    blocks = [{ heading: 'Sắp diễn ra', items: tr(up.items) }, { heading: 'Đã diễn ra', items: tr(past.items) }];
+    total = up.items.length + past.items.length;
+  }
 } else {
-  blocks = [{ items: section ? all.filter((a) => a.section === section) : all }];
+  const r = await loadArticlesPage(channel, { section: current?.slug, page: trang, size: 12 });
+  blocks = [{ items: tr(r.items) }]; pg = r; total = r.total;
 }
 const heading = current ? `${title}: ${current.label}` : title;
-const total = blocks.reduce((n, b) => n + b.items.length, 0);
 ---
 {!section || current ? (
   <Base title={`${heading} — Agricovi`} description={`${heading} trên Agricovi.`}>
@@ -53,6 +57,7 @@ const total = blocks.reduce((n, b) => n + b.items.length, 0);
         <div class="pgrid">{b.items.map((a) => <ArticleCard a={a} />)}</div>
       </>
     ))}
+    {pg && <Pager page={pg.page} pages={pg.pages} />}
   </Base>
 ) : (
   <Base title="Không tìm thấy mục — Agricovi" noindex cache={false}>

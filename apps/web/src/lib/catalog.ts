@@ -188,6 +188,25 @@ export const loadArticles = (): Promise<Article[]> => cached('articles', async (
   if (error) return [];
   return (data ?? []).map((r) => toArticle(r as Record<string, unknown>));
 }, [] as Article[]);
+export interface ArticlePage { items: Article[]; total: number; page: number; pages: number }
+/** Một trang tin của chuyên mục (phân trang ở CSDL: hàm site_articles_page). mode: all | upcoming | past | schedule (hội chợ). page bắt đầu từ 1. */
+export async function loadArticlesPage(channel: Article['channel'], o: { section?: string; mode?: 'all' | 'upcoming' | 'past' | 'schedule'; page?: number; size?: number } = {}): Promise<ArticlePage> {
+  const size = Math.min(Math.max(o.size ?? 12, 1), 50);
+  const want = Math.max(Math.floor(o.page ?? 1), 1);
+  const empty: ArticlePage = { items: [], total: 0, page: 1, pages: 1 };
+  if (!sb) return empty;
+  try {
+    const { data, error } = await Promise.race([
+      sb.rpc('site_articles_page', { p_channel: channel, p_section: o.section || null, p_mode: o.mode ?? 'all', p_offset: (want - 1) * size, p_limit: size }),
+      new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 3500)),
+    ]);
+    if (error || !data) return empty;
+    const d = data as { total: number; items: Record<string, unknown>[] };
+    const total = Number(d.total) || 0;
+    const pages = Math.max(Math.ceil(total / size), 1);
+    return { items: (d.items ?? []).map(toArticle), total, page: Math.min(want, pages), pages };
+  } catch { return empty; }
+}
 export async function loadArticle(slug: string): Promise<Article | null> {
   if (!sb) return null;
   try {

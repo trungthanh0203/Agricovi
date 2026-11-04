@@ -7,10 +7,11 @@ import { canPublish } from './site';
  * Nguồn tin tự động: danh sách nguồn RSS; mỗi tuần (GitHub Actions) hoặc khi bấm "Lấy tin ngay", hệ thống lấy tiêu đề, tóm tắt và liên kết về
  * làm BẢN NHÁP trong "Bài viết và tin hội chợ". Biên tập viên xem, chỉnh rồi mới đăng. Hướng dẫn: docs/HUONG_DAN_QUAN_TRI_WEBSITE.md.
  */
-interface Src { id: string; name: string; feed_url: string; channel: string; section: string | null; keywords: string[]; is_active: boolean; max_items: number; last_run_at: string | null; last_status: string | null; last_count: number }
-interface Form { id: string | null; name: string; feed_url: string; channel: string; section: string; keywords: string; is_active: boolean; max_items: string }
+interface Src { id: string; name: string; feed_url: string; channel: string; section: string | null; keywords: string[]; is_active: boolean; max_items: number; last_run_at: string | null; last_status: string | null; last_count: number; rules: { section: string | null; keywords: string[] }[] }
+interface Rule { section: string; keywords: string }
+interface Form { id: string | null; name: string; feed_url: string; channel: string; section: string; keywords: string; is_active: boolean; max_items: string; rules: Rule[] }
 const CHANNEL: Record<string, string> = { nong_nghiep: 'Tin nông nghiệp', xuat_khau: 'Tin xuất khẩu', hoi_cho: 'Tin hội chợ' };
-const empty: Form = { id: null, name: '', feed_url: '', channel: 'nong_nghiep', section: '', keywords: '', is_active: true, max_items: '10' };
+const empty: Form = { id: null, name: '', feed_url: '', channel: 'nong_nghiep', section: '', keywords: '', is_active: true, max_items: '10', rules: [] };
 
 export function SiteNewsSourcesPage({ roles }: { roles: string[] }) {
   const { data, error, reload } = useLoad(() => rpc<Src[]>('site_list_news_sources'));
@@ -20,14 +21,14 @@ export function SiteNewsSourcesPage({ roles }: { roles: string[] }) {
   const [busy, setBusy] = useState(false);
   const chief = canPublish(roles);
 
-  const edit = (s: Src) => setF({ id: s.id, name: s.name, feed_url: s.feed_url, channel: s.channel, section: s.section ?? '', keywords: s.keywords.join(', '), is_active: s.is_active, max_items: String(s.max_items) });
+  const edit = (s: Src) => setF({ id: s.id, name: s.name, feed_url: s.feed_url, channel: s.channel, section: s.section ?? '', keywords: s.keywords.join(', '), is_active: s.is_active, max_items: String(s.max_items), rules: (s.rules ?? []).map((r) => ({ section: r.section ?? '', keywords: r.keywords.join(', ') })) });
 
   async function save(e: FormEvent) {
     e.preventDefault();
     if (!f) return;
     setBusy(true); setErr(null);
     try {
-      await rpc('site_save_news_source', { p_id: f.id, p_name: f.name, p_feed_url: f.feed_url, p_channel: f.channel, p_section: f.channel === 'hoi_cho' ? '' : f.section, p_keywords: f.keywords, p_active: f.is_active, p_max: Number(f.max_items) || 10 });
+      await rpc('site_save_news_source', { p_id: f.id, p_name: f.name, p_feed_url: f.feed_url, p_channel: f.channel, p_section: f.channel === 'hoi_cho' ? '' : f.section, p_keywords: f.keywords, p_active: f.is_active, p_max: Number(f.max_items) || 10, p_rules: f.channel === 'hoi_cho' ? [] : f.rules.map((r) => ({ section: r.section, keywords: r.keywords.split(',').map((k) => k.trim()).filter(Boolean) })).filter((r) => r.keywords.length > 0) });
       setF(null); setMsg('Đã lưu nguồn tin.'); reload();
     } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
     setBusy(false);
@@ -73,6 +74,22 @@ export function SiteNewsSourcesPage({ roles }: { roles: string[] }) {
               <label>Mục con trong chuyên mục
                 <select value={f.section} onChange={(e) => setF({ ...f, section: e.target.value })}><option value="">(Chung, không chọn mục con)</option>{newsSections(f.channel as 'nong_nghiep' | 'xuat_khau' | 'hoi_cho').map((s) => <option key={s.slug} value={s.slug}>{s.label}</option>)}</select></label>
             ) : <p className="muted">Tin hội chợ tự chia thành Sắp diễn ra / Đã diễn ra / Lịch theo ngày nên không chọn mục con.</p>}
+            {newsSections(f.channel as 'nong_nghiep' | 'xuat_khau' | 'hoi_cho').length > 0 && (
+              <fieldset className="card" style={{ background: 'transparent' }}>
+                <legend>Tự xếp mục con theo từ khóa (không bắt buộc)</legend>
+                <small>Tin chứa từ khóa nào thì vào mục con tương ứng (quy tắc đầu tiên khớp được dùng). Tin không khớp quy tắc nào vào "Mục con trong chuyên mục" ở trên.</small>
+                {f.rules.map((r, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                    <select value={r.section} onChange={(e) => setF({ ...f, rules: f.rules.map((x, j) => (j === i ? { ...x, section: e.target.value } : x)) })}>
+                      <option value="">(Chung)</option>{newsSections(f.channel as 'nong_nghiep' | 'xuat_khau' | 'hoi_cho').map((x) => <option key={x.slug} value={x.slug}>{x.label}</option>)}
+                    </select>
+                    <input style={{ flex: 1, minWidth: 220 }} value={r.keywords} placeholder="Từ khóa, cách nhau bằng dấu phẩy: nghị định, thuế" onChange={(e) => setF({ ...f, rules: f.rules.map((x, j) => (j === i ? { ...x, keywords: e.target.value } : x)) })} />
+                    <button type="button" onClick={() => setF({ ...f, rules: f.rules.filter((_, j) => j !== i) })}>Bỏ</button>
+                  </div>
+                ))}
+                {f.rules.length < 12 && <div className="toolbar"><button type="button" onClick={() => setF({ ...f, rules: [...f.rules, { section: '', keywords: '' }] })}>+ Thêm quy tắc</button></div>}
+              </fieldset>
+            )}
             <label>Từ khóa lọc (cách nhau bằng dấu phẩy; để trống là lấy hết)
               <input value={f.keywords} onChange={(e) => setF({ ...f, keywords: e.target.value })} placeholder="nông sản, xuất khẩu gạo, hội chợ" />
               <small>Báo tổng hợp nên đặt từ khóa để không lấy tin không liên quan. Không phân biệt dấu và chữ hoa.</small></label>

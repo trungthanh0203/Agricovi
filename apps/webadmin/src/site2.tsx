@@ -261,6 +261,7 @@ export function SiteMaterialsPage({ roles }: { roles: string[] }) {
 
 // ============================================================ Bài viết, tin xuất khẩu, tin hội chợ
 interface ArtRow { id: string; channel: string; section: string | null; slug: string; title: string; summary: string | null; body: string; image: string | null; source_name: string | null; source_url: string | null; event_start: string | null; event_end: string | null; event_place: string | null; event_organizer: string | null; status: string; published_at: string | null; version: number; updated_at: string }
+interface ListRow { id: string; channel: string; section: string | null; slug: string; title: string; status: string; published_at: string | null; source_name: string | null; source_url: string | null; event_start: string | null; event_place: string | null; created_at: string; updated_at: string }
 interface ArtForm { id: string | null; version: number | null; channel: string; section: string; slug: string; title: string; summary: string; body: string; image: string; sourceName: string; sourceUrl: string; start: string; end: string; place: string; organizer: string; status: string; publishedAt: string }
 const CHANNEL_LABEL: Record<string, string> = { nong_nghiep: 'Tin nông nghiệp', xuat_khau: 'Tin xuất khẩu', hoi_cho: 'Tin hội chợ' };
 const CHANNEL_HREF: Record<string, string> = { nong_nghiep: '/tin-nong-nghiep/', xuat_khau: '/tin-xuat-khau/', hoi_cho: '/tin-hoi-cho/' };
@@ -269,19 +270,49 @@ const emptyArt: ArtForm = { id: null, version: null, channel: 'nong_nghiep', sec
 const toLocal = (iso: string | null) => (iso ? new Date(new Date(iso).getTime() - new Date(iso).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '');
 
 export function SiteArticlesPage({ roles }: { roles: string[] }) {
-  const { data, error, reload } = useLoad(async () => {
-    const { data: rows, error: e } = await supabase!.from('site_articles').select('id, channel, section, slug, title, summary, body, image, source_name, source_url, event_start, event_end, event_place, event_organizer, status, published_at, version, updated_at').order('updated_at', { ascending: false });
-    if (e) throw new Error(e.message);
-    return (rows ?? []) as ArtRow[];
-  });
+  // Danh sách phân trang và lọc ở CSDL (không tải thân bài); mở một bài mới tải đủ nội dung
+  const PAGE = 30;
+  const [tab, setTab] = useState<'pending' | 'all'>('pending');
+  const [fChannel, setFChannel] = useState('');
+  const [fSection, setFSection] = useState('');
+  const [fStatus, setFStatus] = useState('');
+  const [qInput, setQInput] = useState('');
+  const [q, setQ] = useState('');
+  const [page, setPage] = useState(1);
+  const { data, error, reload } = useLoad(() => rpc<{ total: number; rows: ListRow[] }>('site_list_articles', { p_pending: tab === 'pending', p_channel: fChannel || null, p_section: fSection || null, p_status: fStatus || null, p_q: q || null, p_offset: (page - 1) * PAGE, p_limit: PAGE }), [tab, fChannel, fSection, fStatus, q, page]);
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [msg, setMsg] = useState<string | null>(null);
+  const [origStatus, setOrigStatus] = useState<string | undefined>(undefined);
+  const [moveChannel, setMoveChannel] = useState('nong_nghiep');
+  const [moveSection, setMoveSection] = useState('');
+  const pages = Math.max(Math.ceil((data?.total ?? 0) / PAGE), 1);
   const [f, setF] = useState<ArtForm | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [filter, setFilter] = useState('');
-  const open = (a: ArtRow | null) => {
-    setErr(null);
+  async function open(row: ListRow | null) {
+    setErr(null); setMsg(null);
+    let a: ArtRow | null = null;
+    if (row) {
+      const { data: full, error: e } = await supabase!.from('site_articles').select('id, channel, section, slug, title, summary, body, image, source_name, source_url, event_start, event_end, event_place, event_organizer, status, published_at, version, updated_at').eq('id', row.id).single();
+      if (e) { setErr(err2(e)); return; }
+      a = full as ArtRow;
+    }
+    setOrigStatus(a?.status);
     setF(a ? { id: a.id, version: a.version, channel: a.channel, section: a.section ?? '', slug: a.slug, title: a.title, summary: a.summary ?? '', body: a.body, image: a.image ?? '', sourceName: a.source_name ?? '', sourceUrl: a.source_url ?? '',
       start: a.event_start ?? '', end: a.event_end ?? '', place: a.event_place ?? '', organizer: a.event_organizer ?? '', status: a.status, publishedAt: toLocal(a.published_at) } : emptyArt);
-  };
+  }
+  async function bulk(action: 'publish' | 'hide' | 'delete' | 'move') {
+    if (sel.size === 0) return;
+    const label = { publish: 'Đăng', hide: 'Ẩn', delete: 'XÓA (không hoàn tác)', move: 'Chuyển mục' }[action];
+    if (!window.confirm(`${label} ${sel.size} bài đã chọn?`)) return;
+    setErr(null); setMsg(null);
+    try {
+      const n = await rpc<number>('site_bulk_articles', { p_ids: [...sel], p_action: action, p_channel: action === 'move' ? moveChannel : null, p_section: action === 'move' ? moveSection : null });
+      setMsg(`Đã xử lý ${n} bài.` + (n < sel.size ? ' Một số bài không đổi vì không hợp lệ với thao tác (ví dụ bài đã đăng không xóa được).' : ''));
+      setSel(new Set()); reload();
+    } catch (x) { setErr(err2(x)); }
+  }
+  const toggle = (id: string) => setSel((s0) => { const n = new Set(s0); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+
   async function save(e: FormEvent) {
     e.preventDefault();
     if (!f) return;
@@ -299,16 +330,38 @@ export function SiteArticlesPage({ roles }: { roles: string[] }) {
     if (!f?.id || !window.confirm('Xóa bài này? Nếu chỉ muốn ẩn, hãy đổi trạng thái thành "Đã gỡ".')) return;
     try { await rpc('site_delete_article', { p_id: f.id }); setF(null); reload(); } catch (x) { setErr(err2(x)); }
   }
-  const isLocked = f ? locked(roles, (data ?? []).find((a) => a.id === f.id)?.status) : false;
-  const rows = (data ?? []).filter((a) => !filter || a.channel === filter);
+  const isLocked = f ? locked(roles, origStatus) : false;
+  const rows = data?.rows ?? [];
   const blocks = f ? parseBody(f.body) : [];
 
   return (
     <>
       <p className="muted">Tin nông nghiệp, tin xuất khẩu và tin hội chợ hiện ở menu Tin trên website. Giá nông sản tham khảo và Lịch thời vụ là bài thuộc mục tương ứng của Tin nông nghiệp.</p>
-      <Err e={error} />
-      {!f && <div className="toolbar"><button className="primary" onClick={() => open(null)}>+ Thêm bài</button>
-        <select value={filter} onChange={(e) => setFilter(e.target.value)}><option value="">Mọi chuyên mục</option>{Object.entries(CHANNEL_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>}
+      <Err e={error} />{msg && <p className="msg ok" role="status">{msg}</p>}
+      {!f && (
+        <>
+          <div className="toolbar">
+            <button className="primary" onClick={() => void open(null)}>+ Thêm bài</button>
+            <button className={tab === 'pending' ? 'primary' : ''} onClick={() => { setTab('pending'); setPage(1); }}>📥 Chờ duyệt (tin có nguồn dẫn)</button>
+            <button className={tab === 'all' ? 'primary' : ''} onClick={() => { setTab('all'); setPage(1); }}>📰 Tất cả bài</button>
+          </div>
+          <div className="toolbar">
+            <select value={fChannel} onChange={(e) => { setFChannel(e.target.value); setFSection(''); setPage(1); }}><option value="">Mọi chuyên mục</option>{Object.entries(CHANNEL_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            {fChannel && sectionsOf(fChannel).length > 0 && <select value={fSection} onChange={(e) => { setFSection(e.target.value); setPage(1); }}><option value="">Mọi mục con</option>{sectionsOf(fChannel).map((x) => <option key={x.slug} value={x.slug}>{x.label}</option>)}</select>}
+            <select value={fStatus} onChange={(e) => { setFStatus(e.target.value); setPage(1); }}><option value="">Mọi trạng thái</option>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            <form onSubmit={(e) => { e.preventDefault(); setQ(qInput.trim()); setPage(1); }} style={{ display: 'flex', gap: 6 }}><input value={qInput} onChange={(e) => setQInput(e.target.value)} placeholder="Tìm theo tiêu đề" /><button>Tìm</button></form>
+          </div>
+          <div className="toolbar">
+            <small>{data?.total ?? 0} bài · trang {page}/{pages} · đã chọn {sel.size}</small>
+            <button disabled={sel.size === 0} onClick={() => void bulk('publish')}>✔ Đăng</button>
+            <button disabled={sel.size === 0} onClick={() => void bulk('hide')}>🙈 Ẩn</button>
+            <button disabled={sel.size === 0} onClick={() => void bulk('delete')}>🗑️ Xóa</button>
+            <select value={moveChannel} onChange={(e) => { setMoveChannel(e.target.value); setMoveSection(''); }}>{Object.entries(CHANNEL_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            {sectionsOf(moveChannel).length > 0 && <select value={moveSection} onChange={(e) => setMoveSection(e.target.value)}><option value="">(Chung)</option>{sectionsOf(moveChannel).map((x) => <option key={x.slug} value={x.slug}>{x.label}</option>)}</select>}
+            <button disabled={sel.size === 0} onClick={() => void bulk('move')}>↪ Chuyển mục</button>
+          </div>
+        </>
+      )}
       {f && (
         <section className="card">
           <h2>{f.id ? 'Sửa bài' : 'Thêm bài'}</h2>
@@ -355,18 +408,22 @@ export function SiteArticlesPage({ roles }: { roles: string[] }) {
         </section>
       )}
       {!f && (
-        <table className="list"><thead><tr><th>Bài</th><th>Chuyên mục</th><th>Trạng thái</th><th>Cập nhật</th><th></th></tr></thead>
+        <table className="list"><thead><tr><th><input type="checkbox" aria-label="Chọn tất cả trên trang" checked={rows.length > 0 && rows.every((r) => sel.has(r.id))} onChange={(e) => setSel(e.target.checked ? new Set(rows.map((r) => r.id)) : new Set())} /></th><th>Bài</th><th>Chuyên mục</th><th>Trạng thái</th><th>Cập nhật</th><th></th></tr></thead>
           <tbody>
             {rows.map((a) => (
               <tr key={a.id}>
-                <td><strong>{a.title}</strong>{a.channel === 'hoi_cho' && a.event_start && <small>Ngày {new Date(a.event_start).toLocaleDateString('vi-VN')}{a.event_place ? ` · ${a.event_place}` : ''}</small>}</td>
+                <td><input type="checkbox" aria-label="Chọn bài" checked={sel.has(a.id)} onChange={() => toggle(a.id)} /></td>
+                <td><strong>{a.title}</strong>{a.source_name && <small>Nguồn: {a.source_name}</small>}{a.channel === 'hoi_cho' && a.event_start && <small>Ngày {new Date(a.event_start).toLocaleDateString('vi-VN')}{a.event_place ? ` · ${a.event_place}` : ''}</small>}</td>
                 <td>{CHANNEL_LABEL[a.channel]}{a.section ? ` / ${sectionsOf(a.channel).find((s) => s.slug === a.section)?.label ?? a.section}` : ''}</td>
                 <td><SiteBadge s={a.status} />{a.status === 'published' && a.published_at && new Date(a.published_at) > new Date() && <small>Hẹn {fmtDateTime(a.published_at)}</small>}</td>
                 <td>{fmtDateTime(a.updated_at)}</td>
-                <td className="acts"><button onClick={() => open(a)}>Sửa</button>{a.status === 'published' && SITE_URL && <a href={`${SITE_URL}/bai-viet/${a.slug}`} target="_blank" rel="noopener noreferrer">Xem</a>}</td>
+                <td className="acts"><button onClick={() => void open(a)}>Sửa</button>{a.status === 'published' && SITE_URL && <a href={`${SITE_URL}/bai-viet/${a.slug}`} target="_blank" rel="noopener noreferrer">Xem</a>}</td>
               </tr>))}
-            {rows.length === 0 && <tr><td colSpan={5} className="muted">Chưa có bài nào.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={6} className="muted">{tab === 'pending' ? 'Không có bài nào chờ duyệt.' : 'Không có bài phù hợp.'}</td></tr>}
           </tbody></table>
+      )}
+      {!f && (
+        <div className="toolbar"><button disabled={page <= 1} onClick={() => setPage(page - 1)}>‹ Trước</button><small>Trang {page}/{pages}</small><button disabled={page >= pages} onClick={() => setPage(page + 1)}>Sau ›</button></div>
       )}
     </>
   );

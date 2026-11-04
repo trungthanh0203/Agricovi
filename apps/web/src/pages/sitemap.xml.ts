@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { DEFAULT_PAGES } from '@agriconnect/shared';
 import { localizePath } from '@agriconnect/shared/src/i18n';
-import { loadArticles, loadCategories, loadMaterials, loadShops } from '../lib/catalog';
+import { loadCategories, loadMaterials, loadShops } from '../lib/catalog';
 import { sb } from '../lib/db';
 
 // Sơ đồ trang cho công cụ tìm kiếm: trang tĩnh, danh mục, sản phẩm, vật tư, bài viết, nhà cung cấp; mỗi trang có cả bản tiếng Việt và tiếng Anh (/en/…).
@@ -22,7 +22,10 @@ export const GET: APIRoute = async ({ url }) => {
       for (const r of (prods ?? []) as { listing_id: string }[]) paths.add(`/san-pham/${r.listing_id}`);
     }
     for (const m of await loadMaterials()) paths.add(`/vat-tu/${m.slug}`);
-    for (const a of await loadArticles()) paths.add(`/bai-viet/${a.slug}`);
+    if (sb) {
+      const { data: arts } = await sb.from('site_articles').select('slug').eq('status', 'published').order('published_at', { ascending: false, nullsFirst: false }).limit(5000);
+      for (const r of (arts ?? []) as { slug: string }[]) paths.add(`/bai-viet/${r.slug}`);
+    }
     for (const sh of await loadShops()) paths.add(`/gian-hang-vat-tu/${sh.slug}`);
     if (sb) {
       const { data: profs } = await sb.from('public_profiles').select('slug').eq('is_visible', true).limit(5000);
