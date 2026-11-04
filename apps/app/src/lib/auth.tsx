@@ -10,7 +10,7 @@ interface AuthState {
   recovering: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   /** trả về true nếu cần xác nhận email trước khi đăng nhập */
-  signUp: (email: string, password: string) => Promise<boolean>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<boolean>;
   sendReset: (email: string) => Promise<void>;
   setNewPassword: (password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -37,9 +37,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       setLoading(false);
     });
+    // Họ tên nhập lúc đăng ký (lưu tạm ở thông tin người dùng vì chưa có phiên khi chờ xác nhận email): ghi thành tên hiển thị một lần rồi xóa
+    const saveSignupName = (s: Session | null) => {
+      const n = (s?.user.user_metadata as { full_name?: string } | undefined)?.full_name;
+      if (!supabase || !s || !n) return;
+      void supabase.rpc('set_display_name', { p_name: n }).then(({ error }) => {
+        if (!error) void supabase!.auth.updateUser({ data: { full_name: null } });
+      });
+    };
+    void supabase.auth.getSession().then(({ data }) => saveSignupName(data.session));
     const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
       // Cùng một người dùng (tab hiện lại, làm mới mã đăng nhập): giữ nguyên đối tượng phiên, không kích hoạt tải lại ở các màn đang mở
       setSession((prev) => (prev && next && prev.user.id === next.user.id ? prev : next));
+      if (event === 'SIGNED_IN') setTimeout(() => saveSignupName(next), 0); // ngoài hàm gọi lại để không khóa các lệnh auth khác
       if (event === 'PASSWORD_RECOVERY') setRecovering(true);
       if (event === 'SIGNED_OUT') setRecovering(false);
       setLoading(false);
@@ -64,11 +74,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
     const { data, error } = await requireClient().auth.signUp({
       email: email.trim(),
       password,
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: window.location.origin, ...(fullName?.trim() ? { data: { full_name: fullName.trim() } } : {}) },
     });
     if (error) throw error;
     return data.session === null; // chưa có phiên => đang chờ xác nhận email

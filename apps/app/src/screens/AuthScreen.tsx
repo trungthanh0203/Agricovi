@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '../lib/auth';
 import { InstallGuide } from '../components/InstallGuide';
 import { PhoneSignupForm } from '../components/PhoneSignupForm';
@@ -15,8 +15,14 @@ export function AuthScreen() {
   const [busy, setBusy] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [byPhone, setByPhone] = useState(false); // đăng ký bằng số điện thoại (không có email)
+  const [fullName, setFullName] = useState('');
+  const [agree, setAgree] = useState(false);
+  const [remember, setRemember] = useState(() => { try { return localStorage.getItem('auth.remember') !== '0'; } catch { return true; } });
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+
+  // Nhớ tài khoản đã đăng nhập lần trước (mật khẩu do trình duyệt / điện thoại tự lưu, app không lưu mật khẩu)
+  useEffect(() => { try { const s = localStorage.getItem('auth.last'); if (s) setIdentifier(s); } catch { /* bỏ qua */ } }, []);
 
   // Khi vừa bấm liên kết đặt lại mật khẩu trong email
   const effective: Mode = recovering ? 'newpass' : mode;
@@ -40,15 +46,18 @@ export function AuthScreen() {
           : 'Chủ Hộ/HTX đăng ký bằng email. Hãy nhập email của bạn.',
       );
     }
+    if (effective === 'signup' && fullName.trim().length < 2) return setError('Hãy nhập họ tên (ít nhất 2 ký tự).');
     if ((effective === 'signup' || effective === 'newpass') && password.length < 8) {
       return setError('Mật khẩu cần ít nhất 8 ký tự.');
     }
+    if (effective === 'signup' && !agree) return setError('Hãy tích chọn đồng ý với điều khoản dịch vụ và chính sách bảo mật.');
     setBusy(true);
     try {
       if (effective === 'signin') {
         await signIn(id, password);
+        try { localStorage.setItem('auth.remember', remember ? '1' : '0'); if (remember) localStorage.setItem('auth.last', id); else localStorage.removeItem('auth.last'); } catch { /* bỏ qua */ }
       } else if (effective === 'signup') {
-        const needsConfirm = await signUp(id, password);
+        const needsConfirm = await signUp(id, password, fullName);
         if (needsConfirm) {
           setInfo('Đã gửi thư xác nhận. Hãy mở email, bấm liên kết xác nhận, rồi quay lại đăng nhập.');
           setMode('signin');
@@ -102,14 +111,20 @@ export function AuthScreen() {
         )}
         {effective === 'signup' && (
           <div className="chips" role="tablist" aria-label="Cách đăng ký">
-            <button type="button" role="tab" aria-selected={!byPhone} className={!byPhone ? 'chip active' : 'chip'} onClick={() => { setByPhone(false); setError(null); }}>Có email</button>
-            <button type="button" role="tab" aria-selected={byPhone} className={byPhone ? 'chip active' : 'chip'} onClick={() => { setByPhone(true); setError(null); }}>Không có email</button>
+            <button type="button" role="tab" aria-selected={!byPhone} className={!byPhone ? 'chip active' : 'chip'} onClick={() => { setByPhone(false); setError(null); }}>Dùng email</button>
+            <button type="button" role="tab" aria-selected={byPhone} className={byPhone ? 'chip active' : 'chip'} onClick={() => { setByPhone(true); setError(null); }}>Dùng điện thoại</button>
           </div>
         )}
         {effective === 'signup' && byPhone && <PhoneSignupForm />}
         {effective === 'signup' && !byPhone && <p className="muted auth-hint">Dành cho chủ Hộ / Hợp tác xã. Nhân viên dùng tài khoản do chủ cơ sở cấp.</p>}
 
         <form onSubmit={onSubmit} noValidate style={effective === 'signup' && byPhone ? { display: 'none' } : undefined}>
+          {effective === 'signup' && (
+            <label>
+              Họ tên
+              <input autoComplete="name" maxLength={80} placeholder="Nguyễn Văn A" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+            </label>
+          )}
           {effective !== 'newpass' && (
             <label>
               {effective === 'signin' ? 'Email hoặc số điện thoại' : 'Email'}
@@ -127,10 +142,13 @@ export function AuthScreen() {
           )}
           {effective !== 'forgot' && (
             <label>
-              {effective === 'newpass' ? 'Mật khẩu mới' : 'Mật khẩu'}
+              {effective === 'newpass' ? 'Mật khẩu mới' : effective === 'signup' ? 'Mật khẩu (ít nhất 8 ký tự)' : 'Mật khẩu'}
               {pwInput}
-              {(effective === 'signup' || effective === 'newpass') && <small>Ít nhất 8 ký tự.</small>}
             </label>
+          )}
+
+          {effective === 'signup' && (
+            <label className="check"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> <span>Đồng ý với điều khoản dịch vụ và chính sách bảo mật của hệ thống</span></label>
           )}
 
           {error && <p className="msg error" role="alert">{error}</p>}
@@ -139,6 +157,9 @@ export function AuthScreen() {
           <button type="submit" className="primary" disabled={busy}>
             {busy ? 'Đang xử lý…' : effective === 'forgot' ? 'Gửi thư đặt lại mật khẩu' : title}
           </button>
+          {effective === 'signin' && (
+            <label className="check"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> <span>Nhớ mật khẩu</span></label>
+          )}
         </form>
 
         {!recovering && (

@@ -83,10 +83,6 @@ export function TemplatesSection() {
       {error && <p className="msg error" role="alert">{error}</p>}
 
       <p className="muted">Hãy xem quy trình mẫu của hệ thống cho sản phẩm của cơ sở và áp dụng tạo mẫu cho cơ sở nếu muốn hoặc tự tạo mẫu ở dưới đây.</p>
-      <div className="chips" role="tablist">
-        <button role="tab" aria-selected={tab === 'system'} className={tab === 'system' ? 'chip active' : 'chip'} onClick={() => setTab('system')}>Quy trình mẫu của hệ thống</button>{' '}
-        <button role="tab" aria-selected={tab === 'org'} className={tab === 'org' ? 'chip active' : 'chip'} onClick={() => setTab('org')}>Quy trình mẫu của cơ sở</button>
-      </div>
       <div className="filters">
         <label>Loại sản phẩm
           <select value={group} onChange={(e) => setGroup(e.target.value)} aria-label="Lọc quy trình theo loại sản phẩm">
@@ -94,6 +90,10 @@ export function TemplatesSection() {
             {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
           </select>
         </label>
+      </div>
+      <div className="chips" role="tablist">
+        <button role="tab" aria-selected={tab === 'system'} className={tab === 'system' ? 'chip active' : 'chip'} onClick={() => setTab('system')}>Quy trình mẫu của hệ thống</button>{' '}
+        <button role="tab" aria-selected={tab === 'org'} className={tab === 'org' ? 'chip active' : 'chip'} onClick={() => setTab('org')}>Quy trình mẫu của cơ sở</button>
       </div>
 
       {tab === 'system' ? (
