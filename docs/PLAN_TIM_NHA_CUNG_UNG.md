@@ -1,6 +1,15 @@
 # Đề xuất: "Tìm nhà cung ứng" trong app (từ gian hàng và sản phẩm trên website)
 
-Trạng thái: **ĐỀ XUẤT, chưa làm** (1/11/2026). Mảng APP đọc, mảng WEB sở hữu dữ liệu; làm theo từng giai đoạn bên dưới.
+Trạng thái: **Giai đoạn 1 ĐÃ LÀM** (1/11/2026, chưa `db push` migration 0177). Phần còn lại là hướng mở, làm sau.
+
+## 0. Quyết định đã chốt (1/11/2026) và phần đã làm
+
+1. Điện thoại: **cách B**, bấm Thêm là chép luôn tên, điện thoại, địa chỉ, tỉnh, xã, loại hàng. Không còn ẩn liên hệ với người dùng app đã đăng nhập (chỉ người có quyền xem mục Chi phí của cơ sở mới tìm được).
+2. App và website dùng chung CSDL nên app **đọc trực tiếp** `material_shops` và `site_materials` qua hàm phía máy chủ (không đi vòng qua website, không cần hàm bên WEB). Chỉ đọc, không đổi cấu trúc bảng của website.
+3. Ô tỉnh của gian hàng trên website (mở và sửa gian hàng) đổi sang chọn trong danh sách 34 tỉnh/thành phố chung (`packages/shared/src/provinces.ts`, app dùng lại), ô "Quận/huyện" đổi thành "Xã/phường".
+4. Đã làm: migration `0177_app_find_web_suppliers` (hàm `app_find_suppliers`, `add_supplier_from_web`, cột `partners.web_shop_id`), màn **Khai báo → Nhà cung ứng → Tìm trên website**, test `find_web_suppliers.test.mjs`. Sau khi bấm Thêm, form sửa của nhà cung ứng mở sẵn để thêm ghi chú. Bấm lặp không nhân đôi; trùng tên với nhà cung ứng có sẵn thì nối vào (chỉ điền chỗ còn trống).
+
+Các mục 3, 4.1 bên dưới là bản đề xuất ban đầu; khi khác với mục 0 thì theo mục 0.
 
 ## 1. Mục tiêu
 

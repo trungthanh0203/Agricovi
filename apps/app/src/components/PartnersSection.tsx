@@ -6,6 +6,8 @@ import { useOrgs } from '../lib/orgs';
 import { createSupplier, listSuppliers, updateSupplier, type Partner, type PartnerInput } from '../lib/partners';
 import { canPerm } from '../lib/permissions';
 import { AddressFields } from './AddressFields';
+import { Collapsible } from './Collapsible';
+import { FindWebSuppliers } from './FindWebSuppliers';
 import { formatAddr, type Addr } from '../lib/vnAddress';
 
 /**
@@ -21,6 +23,7 @@ export function PartnersSection() {
   const [editing, setEditing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const orgId = active?.id;
 
   const load = useCallback(async () => {
@@ -50,6 +53,12 @@ export function PartnersSection() {
       {canEdit && !adding && !editRow && (
         <div className="actions"><button className="primary" disabled={!online} onClick={() => setAdding(true)}>+ Thêm nhà cung ứng</button></div>
       )}
+      {canEdit && !adding && !editRow && online && (
+        <Collapsible title="🔎 Tìm trên website" summary="gian hàng vật tư theo khu vực" inline>
+          <FindWebSuppliers orgId={orgId} onAdded={(id, st) => { setAdding(false); setNotice(st === 'existing' ? 'Gian hàng này đã có trong nhà cung ứng.' : st === 'linked' ? 'Đã nối với nhà cung ứng trùng tên có sẵn. Bổ sung ghi chú rồi lưu.' : 'Đã thêm. Bổ sung ghi chú rồi lưu.'); void load().then(() => setEditing(id)); }} />
+        </Collapsible>
+      )}
+      {notice && <p className="msg ok" role="status">{notice}</p>}
       {canEdit && adding && (
         <SupplierForm title="Thêm nhà cung ứng" busy={busy || !online} onClose={() => setAdding(false)}
           onSave={(f) => run(async () => { await createSupplier(orgId, f); setAdding(false); })} />

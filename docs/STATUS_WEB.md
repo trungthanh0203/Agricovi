@@ -12,4 +12,4 @@ Kế hoạch: `PLAN_WEBSITE.md`. Quyết định: `DECISIONS_WEB.md`. Phần app
 
 - **Tài liệu hướng dẫn trên website (D153, 01/11/2026):** 3 trang tĩnh ở `/huong-dan/he-thong/`, `/trong-cay/`, `/vat-nuoi/` (nguồn `docs/huongdan_*.html`, chép bằng `npm run docs:guides`), có trong menu "Tìm hiểu về Agricovi". Cần deploy website để có hiệu lực.
 
-- **Cần bên WEB (từ APP, 1/11/2026, đề xuất chưa làm):** hàm `app_find_suppliers` (tìm gian hàng vật tư theo tỉnh/từ khóa, không trả điện thoại) và đổi ô tỉnh của gian hàng sang danh sách 34 tỉnh/thành phố chuẩn; xem `docs/PLAN_TIM_NHA_CUNG_UNG.md`.
+- **APP đã làm thay phần WEB (1/11/2026, chủ sản phẩm đồng ý):** app đọc trực tiếp `material_shops`/`site_materials` bằng hàm `app_find_suppliers` (migration 0177, chép cả điện thoại); form mở/sửa gian hàng vật tư (`apps/web/src/pages/gian-hang-vat-tu/mo.astro`, `quan-ly.astro`) đổi ô tỉnh sang chọn từ `PROVINCES` (`packages/shared`), ô huyện thành Xã/phường. Xem `docs/PLAN_TIM_NHA_CUNG_UNG.md`.

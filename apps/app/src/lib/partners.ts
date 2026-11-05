@@ -446,3 +446,23 @@ export async function anonymizeCustomer(id: string, reason: string): Promise<voi
   const { error } = await client().rpc('anonymize_partner', { p_id: id, p_reason: reason });
   if (error) throw new Error(error.message);
 }
+
+/** Gian hàng vật tư trên website (kết quả tìm cho "Tìm trên website") */
+export interface WebShop {
+  id: string; slug: string; name: string; description: string | null; province: string; ward: string | null; address: string | null; phone: string | null;
+  license_verified: boolean; material_count: number; materials: string[]; added_partner_id: string | null;
+}
+
+export async function findWebShops(orgId: string, q: string, province: string, offset = 0): Promise<{ total: number; rows: WebShop[] }> {
+  const { data, error } = await client().rpc('app_find_suppliers', { p_org: orgId, p_q: q.trim() || null, p_province: province || null, p_limit: 20, p_offset: offset });
+  if (error) throw new Error(error.message);
+  return data as { total: number; rows: WebShop[] };
+}
+
+/** Thêm gian hàng vào nhà cung ứng (sao tên, điện thoại, địa chỉ, tỉnh, xã, loại hàng). status: created | existing | linked (nối vào nhà cung ứng trùng tên) */
+export async function addSupplierFromWeb(orgId: string, shopId: string): Promise<{ id: string; status: 'created' | 'existing' | 'linked' }> {
+  requireOnline('thêm nhà cung ứng');
+  const { data, error } = await client().rpc('add_supplier_from_web', { p_org: orgId, p_shop: shopId, p_note: null });
+  if (error) throw new Error(error.message);
+  return data as { id: string; status: 'created' | 'existing' | 'linked' };
+}
