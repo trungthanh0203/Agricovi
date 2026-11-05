@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { OrderSaleForm } from './OrderSaleForm';
+import { AddCustomerFromWeb, matchProvince } from './AddCustomerFromWeb';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { fmtDate } from '../lib/dates';
@@ -132,6 +133,10 @@ function OrderDetail({ id, onBack }: { id: string; onBack: () => void }) {
         </div>
         <p>Người nhận: <strong>{o.recipient}</strong> · <a href={`tel:${o.recipient_phone}`}>📞 {o.recipient_phone}</a></p>
         <p className="muted">{o.address}{o.district ? `, ${o.district}` : ''}, {o.province}</p>
+        {active && (
+          <AddCustomerFromWeb orgId={active.id} canEdit={canPerm(active.perms, 'sales', 'edit')} onDone={setOk}
+            prefill={{ name: o.recipient, phone: o.recipient_phone, province: matchProvince(o.province), ward: o.district, address: o.address, note: `Từ website, đơn ${o.code}` }} />
+        )}
         {o.desired_date && <p className="muted">Muốn nhận ngày {fmtDate(o.desired_date)}</p>}
         {o.buyer_note && <p>Ghi chú của người mua: {o.buyer_note}</p>}
         {o.seller_note && <p className="muted">Ghi chú của bạn: {o.seller_note}</p>}

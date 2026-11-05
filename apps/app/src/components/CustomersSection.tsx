@@ -146,7 +146,7 @@ Tên, điện thoại, địa chỉ, ghi chú sẽ bị xóa và KHÔNG khôi ph
 
 /** Biểu mẫu thêm/sửa khách hàng (cũng dùng khi thêm nhanh lúc ghi lần bán) */
 export function CustomerForm({ title, initial, busy, onSave, onClose }: {
-  title: string; initial?: Customer; busy: boolean; onSave: (f: CustomerInput) => Promise<unknown>; onClose: () => void;
+  title: string; initial?: Partial<Customer>; busy: boolean; onSave: (f: CustomerInput) => Promise<unknown>; onClose: () => void;
 }) {
   const [name, setName] = useState(initial?.name ?? '');
   const cfg = useConfig();

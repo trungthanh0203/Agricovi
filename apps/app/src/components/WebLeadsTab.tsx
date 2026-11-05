@@ -3,7 +3,8 @@ import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
-import { fetchLeadLinks, fetchLeads, LEAD_STATUS_LABEL, linkLeadToCustomer, setLeadStatus, type LeadStatus, type WebLead } from '../lib/webSite';
+import { AddCustomerFromWeb } from './AddCustomerFromWeb';
+import { fetchLeadLinks, fetchLeads, LEAD_STATUS_LABEL, setLeadStatus, type LeadStatus, type WebLead } from '../lib/webSite';
 
 const when = (iso: string) => new Date(iso).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
@@ -82,11 +83,8 @@ export function WebLeadsTab() {
             {links.has(r.id) ? (
               <span className="pill ok">Đã là khách hàng</span>
             ) : canCustomer ? (
-              <button className="secondary" disabled={busy || !online}
-                onClick={() => void act(async () => {
-                  const res = await linkLeadToCustomer(orgId, r.id);
-                  if (res.created === false && !res.already) setOk('Đã nối vào khách hàng có sẵn (trùng số điện thoại).');
-                }, 'Đã thêm vào khách hàng (Khai báo → Khách hàng).')}>Thêm vào khách hàng</button>
+              <AddCustomerFromWeb orgId={orgId} canEdit onDone={(m) => { setOk(m); void load(); }}
+                prefill={{ name: r.sender_name, phone: r.sender_phone, note: ['Từ website', r.target_name ? `quan tâm: ${r.target_name}` : '', r.sender_email ? `email: ${r.sender_email}` : ''].filter(Boolean).join(' · ') }} />
             ) : null}
             {r.status === 'new' ? (
               <button className="secondary" disabled={busy || !online} onClick={() => {
