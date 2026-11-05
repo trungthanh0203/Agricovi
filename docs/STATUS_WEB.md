@@ -11,3 +11,5 @@ Kế hoạch: `PLAN_WEBSITE.md`. Quyết định: `DECISIONS_WEB.md`. Phần app
 - **D74–D75 (25/10/2026)**: thương hiệu **Agricovi** (Kết nối nông nghiệp Việt) và tên miền `agricovi.com` (website), `app.agricovi.com` (app); hướng dẫn triển khai `docs/TRIEN_KHAI_TEN_MIEN.md`; favicon, logo, ảnh chia sẻ link và ảnh minh họa từ `brand/` (chạy `node brand/build-brand.cjs` để tạo lại). **Việc người dùng đang làm:** gắn tên miền ở Cloudflare, SMTP riêng (Resend) cho thư xác nhận (đang lỗi "Error sending confirmation email"), Email Routing `lienhe@agricovi.com`, Search Console. **Chưa `db push` 0046–0053 nếu chưa đẩy; chưa deploy bản có logo/ảnh mới.**
 
 - **Tài liệu hướng dẫn trên website (D153, 01/11/2026):** 3 trang tĩnh ở `/huong-dan/he-thong/`, `/trong-cay/`, `/vat-nuoi/` (nguồn `docs/huongdan_*.html`, chép bằng `npm run docs:guides`), có trong menu "Tìm hiểu về Agricovi". Cần deploy website để có hiệu lực.
+
+- **Cần bên WEB (từ APP, 1/11/2026, đề xuất chưa làm):** hàm `app_find_suppliers` (tìm gian hàng vật tư theo tỉnh/từ khóa, không trả điện thoại) và đổi ô tỉnh của gian hàng sang danh sách 34 tỉnh/thành phố chuẩn; xem `docs/PLAN_TIM_NHA_CUNG_UNG.md`.
