@@ -15,6 +15,7 @@ import type { MyOrg } from '../lib/orgs';
 import { isOwner } from '../lib/roles';
 import { useTable } from '../lib/tables';
 import { useCycleTitle } from '../lib/useCycleTitle';
+import { PROVINCES } from '../lib/vnAddress';
 
 /**
  * Hồ sơ website (D55): giới thiệu cơ sở, liên hệ, hình ảnh, sản phẩm cung ứng, chứng chỉ; chủ đồng ý công khai rồi gửi duyệt.
@@ -162,14 +163,19 @@ function IntroForm({ p, onSaved }: { p: BizProfile; onSaved: () => Promise<unkno
       <label>Tên hiển thị trên website<input value={f.display_name} maxLength={120} onChange={set('display_name')} /></label>
       <label>Câu giới thiệu ngắn<input value={f.tagline} maxLength={160} onChange={set('tagline')} placeholder="Ví dụ: Dưa lưới VietGAP, giao hàng toàn quốc" /></label>
       <label>Mô tả (ít nhất 20 ký tự)<textarea rows={5} value={f.description} onChange={set('description')} /></label>
-      <div className="pair">
-        <label>Tỉnh/thành<input value={f.province} onChange={set('province')} /></label>
-        <label>Quận/huyện (Phường/Xã)<input value={f.district} onChange={set('district')} /></label>
-      </div>
-      <label>Xã/phường<input value={f.commune} onChange={set('commune')} /></label>
+      <label>Tỉnh/thành phố
+        <select value={f.province} onChange={set('province')}>
+          <option value="">— Chọn tỉnh/thành phố —</option>
+          {f.province && !PROVINCES.includes(f.province) && <option value={f.province}>{f.province}</option>}
+          {PROVINCES.map((x) => <option key={x} value={x}>{x}</option>)}
+        </select>
+      </label>
+      <label>Xã/phường<input value={f.commune} maxLength={80} onChange={set('commune')} /></label>
       <label>Địa chỉ hiện công khai đến mức
         <select value={f.location_precision} onChange={set('location_precision')}>
-          <option value="province">Chỉ tỉnh/thành</option><option value="district">Đến quận/huyện</option><option value="commune">Đến xã/phường</option>
+          <option value="province">Chỉ tỉnh/thành phố</option>
+          {f.location_precision === 'district' && <option value="district">Đến quận/huyện (cũ)</option>}
+          <option value="commune">Đến xã/phường</option>
         </select>
       </label>
       <div className="pair">

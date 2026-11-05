@@ -9,6 +9,8 @@ import { canPerm } from '../lib/permissions';
 import { useTable } from '../lib/tables';
 import { housingText, useConfig } from '../lib/config';
 import { areaSizeM2, cellDefaultName, cellsOf, topAreas } from '../lib/areas';
+import { AddressFields } from './AddressFields';
+import { formatAddr, type Addr } from '../lib/vnAddress';
 
 const fmtSize = (a: AreaRow) => (a.area_size != null ? `${a.area_size.toLocaleString('vi-VN')} ${a.area_unit === 'ha' ? 'ha' : 'm²'}` : '');
 const fmtM2 = (m2: number) => (m2 >= 10000 ? `${(m2 / 10000).toLocaleString('vi-VN', { maximumFractionDigits: 2 })} ha` : `${m2.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} m²`);
@@ -98,7 +100,7 @@ export function AreasSection() {
           <Thumb src={a.image} />{isCell ? '↳ ' : ''}{a.name}{a.code ? ` · ${a.code}` : ''}
           {!isCell && kids.length > 0 && <span className="sub">{kids.length} ô sản xuất</span>}
           {(showKind && a.kind) || a.housing ? <span className="sub">{[showKind && a.kind ? kindLabel(a.kind, a.kind_item) : '', a.housing ? `Kiểu ô: ${housingText(a.housing).toLowerCase()}` : ''].filter(Boolean).join(' · ')}</span> : null}
-          {a.location && <span className="sub">📍 {a.location}</span>}
+          {formatAddr({ address: a.location, ward: a.ward, province: a.province}) && <span className="sub">📍 {formatAddr({ address: a.location, ward: a.ward, province: a.province })}</span>}
           {a.description && <span className="sub">{a.description}</span>}
           {a.is_active === false && <span className="sub">Đã dừng</span>}
           {canManage && !isCell && a.is_active !== false && (
@@ -201,7 +203,7 @@ function ZoneForm({ title, initial, hasCells, hasCycles, busy, onSave, onClose }
   const { first, resolve, choiceOf } = useKindResolver();
   const [name, setName] = useState(initial?.name ?? '');
   const [code, setCode] = useState(initial?.code ?? '');
-  const [location, setLocation] = useState(initial?.location ?? '');
+  const [addr, setAddr] = useState<Addr>({ province: initial?.province ?? '', ward: initial?.ward ?? '', address: initial?.location ?? '' });
   const [desc, setDesc] = useState(initial?.description ?? '');
   const [image, setImage] = useState(initial?.image ?? '');
   // phân khu cũ chưa chia ô nhưng còn là nơi chạy vụ trực tiếp (có diện tích, kiểu ô hoặc vụ)
@@ -226,7 +228,7 @@ function ZoneForm({ title, initial, hasCells, hasCycles, busy, onSave, onClose }
           <label>Tên phân khu<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Vườn Đông" /></label>
           <label>Mã khu<input value={code} maxLength={40} onChange={(e) => setCode(e.target.value)} placeholder="Ví dụ: VD" /></label>
         </div>
-        <label>Vị trí<input value={location} maxLength={200} onChange={(e) => setLocation(e.target.value)} placeholder="Xã, huyện, tỉnh hoặc mô tả đường đi" /></label>
+        <AddressFields value={addr} onChange={setAddr} addressLabel="Địa chỉ / vị trí" addressHint="Số nhà, đường, thôn/ấp hoặc mô tả đường đi" />
         {legacyLeaf && (
           <>
             <p className="muted">Phân khu này chưa chia ô sản xuất nên vẫn là nơi chạy vụ trực tiếp. Bạn có thể giữ thông tin dưới đây, hoặc bấm "Chia thành ô sản xuất" ở danh sách.</p>
@@ -258,7 +260,7 @@ function ZoneForm({ title, initial, hasCells, hasCycles, busy, onSave, onClose }
             setErr(null);
             const lk = resolve(legacyChoice);
             const f: FarmInput = {
-              name, location, description: desc, image, code, area_size: n as number | null, area_unit: 'm2',
+              name, location: addr.address, province: addr.province, ward: addr.ward, description: desc, image, code, area_size: n as number | null, area_unit: 'm2',
               ...(legacyLeaf ? { kind: lk.kind, kind_item: lk.kind_item ?? (initial?.kind_item ? null : undefined), housing: lk.kind === 'facility' ? null : legacyHousing || null } : {}),
             };
             const names = Array.from({ length: count }, (_, i) => `${prefix.trim()} ${i + 1}`);

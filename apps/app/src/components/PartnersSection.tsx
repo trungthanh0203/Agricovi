@@ -5,6 +5,8 @@ import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { createSupplier, listSuppliers, updateSupplier, type Partner, type PartnerInput } from '../lib/partners';
 import { canPerm } from '../lib/permissions';
+import { AddressFields } from './AddressFields';
+import { formatAddr, type Addr } from '../lib/vnAddress';
 
 /**
  * Nhà cung ứng của cơ sở (G2-2): danh bạ nơi mua vật tư, giống, dịch vụ. Thêm bằng biểu mẫu, sửa bằng ✎, dừng/dùng lại bằng ⏸/▶.
@@ -65,7 +67,7 @@ export function PartnersSection() {
                 <td>
                   {p.name}
                   {p.goods && <span className="sub">{p.goods}</span>}
-                  {p.address && <span className="sub">{p.address}</span>}
+                  {formatAddr(p) && <span className="sub">{formatAddr(p)}</span>}
                   {!p.is_active && <span className="sub">Đã dừng</span>}
                 </td>
                 <td>{p.phone ? <a href={`tel:${p.phone}`}>{p.phone}</a> : '—'}</td>
@@ -101,7 +103,7 @@ export function SupplierForm({ title, initial, busy, onSave, onClose }: {
 }) {
   const [name, setName] = useState(initial?.name ?? '');
   const [phone, setPhone] = useState(initial?.phone ?? '');
-  const [address, setAddress] = useState(initial?.address ?? '');
+  const [addr, setAddr] = useState<Addr>({ province: initial?.province ?? '', ward: initial?.ward ?? '', address: initial?.address ?? '' });
   const [goods, setGoods] = useState(initial?.goods ?? '');
   const [tax, setTax] = useState(initial?.tax_code ?? '');
   const [bank, setBank] = useState(initial?.bank_account ?? '');
@@ -113,7 +115,7 @@ export function SupplierForm({ title, initial, busy, onSave, onClose }: {
       <div className="inline-form">
         <label>Tên nhà cung ứng<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Đại lý vật tư An Phát" /></label>
         <label>Điện thoại<input value={phone} maxLength={40} inputMode="tel" onChange={(e) => setPhone(e.target.value)} /></label>
-        <label>Địa chỉ<input value={address} maxLength={300} onChange={(e) => setAddress(e.target.value)} /></label>
+        <AddressFields value={addr} onChange={setAddr} maxAddress={300} />
         <label>Loại hàng thường mua<input value={goods} maxLength={300} onChange={(e) => setGoods(e.target.value)} placeholder="Phân bón, thuốc bảo vệ thực vật, giống…" /></label>
         <label>Mã số thuế (nếu có)<input value={tax} maxLength={40} onChange={(e) => setTax(e.target.value)} /></label>
         <label>Tài khoản ngân hàng (nếu có)<input value={bank} maxLength={120} onChange={(e) => setBank(e.target.value)} /></label>
@@ -123,7 +125,7 @@ export function SupplierForm({ title, initial, busy, onSave, onClose }: {
           <button type="button" className="primary" disabled={busy} onClick={() => {
             if (name.trim().length < 2) return setErr('Hãy nhập tên nhà cung ứng (ít nhất 2 ký tự).');
             setErr(null);
-            void onSave({ name, phone, address, goods, tax_code: tax, bank_account: bank, note }).catch(() => undefined);
+            void onSave({ name, phone, address: addr.address, province: addr.province, ward: addr.ward, goods, tax_code: tax, bank_account: bank, note }).catch(() => undefined);
           }}>Lưu</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>

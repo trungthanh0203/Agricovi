@@ -15,6 +15,7 @@ import {
 import { useOrgs, type MyOrg } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { isOwner } from '../lib/roles';
+import { AddressFields } from './AddressFields';
 
 /** HTX: quản lý các hộ thành viên. Cùng một khối dùng cho HTX (danh sách hộ) và cho Hộ (HTX mình thuộc). */
 export function CooperativeSection({ org }: { org: MyOrg }) {
@@ -47,9 +48,9 @@ function useRunner(reload: () => Promise<void>) {
   return { error, info, busy, run, setError, msgRef };
 }
 
-const EMPTY_INFO: HouseholdInfo = { member_code: '', head_name: '', phone: '', address: '', main_products: '', area_ha: null, note: '', activity_status: 'active', certificates: '' };
+const EMPTY_INFO: HouseholdInfo = { member_code: '', head_name: '', phone: '', address: '', province: '', ward: '', main_products: '', area_ha: null, note: '', activity_status: 'active', certificates: '' };
 const infoOf = (h: CoopHousehold): HouseholdInfo => ({
-  member_code: h.member_code ?? '', head_name: h.head_name ?? '', phone: h.phone ?? '', address: h.address ?? '',
+  member_code: h.member_code ?? '', head_name: h.head_name ?? '', phone: h.phone ?? '', address: h.address ?? '', province: h.province ?? '', ward: h.ward ?? '',
   main_products: h.main_products ?? '', area_ha: h.area_ha != null ? Number(h.area_ha) : null, note: h.note ?? '',
   activity_status: h.activity_status ?? 'active', certificates: h.certificates ?? '',
 });
@@ -138,7 +139,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
             <label>Họ tên chủ hộ<input value={f.head_name} maxLength={120} onChange={set('head_name')} /></label>
           </div>
           <label>Số điện thoại<input type="tel" inputMode="tel" value={f.phone} maxLength={30} onChange={set('phone')} /></label>
-          <label>Địa chỉ (thôn/ấp, xã, huyện)<input value={f.address} maxLength={200} onChange={set('address')} /></label>
+          <AddressFields value={{ province: f.province, ward: f.ward, address: f.address }} onChange={(a) => setF((cur) => ({ ...cur, ...a }))} addressHint="Số nhà, đường, thôn/ấp…" />
           <label>Sản phẩm chính<input value={f.main_products} maxLength={200} onChange={set('main_products')} placeholder="Ví dụ: Dưa lưới, heo thịt" /></label>
           <label>Giấy chứng nhận (VietGAP, OCOP…)<input value={f.certificates} maxLength={300} onChange={set('certificates')} placeholder="Ví dụ: VietGAP dưa lưới (hết hạn 06/2027), OCOP 3 sao" /></label>
           <label>Diện tích sản xuất (m²)<input inputMode="numeric" value={areaText} onChange={(e) => setAreaText(e.target.value)} placeholder="Ví dụ: 5000" /></label>

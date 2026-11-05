@@ -18,6 +18,7 @@ export function PhoneSignupForm() {
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [ref, setRef] = useState(storedRef);
+  const [agree, setAgree] = useState(false);
   const [token, setToken] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +31,7 @@ export function PhoneSignupForm() {
     if (orgName.trim().length < 2) return setError('Hãy nhập tên cơ sở (ví dụ "Vườn nhà Lan").');
     if (!phone.trim()) return setError('Hãy nhập số điện thoại có dùng Zalo.');
     if (password.length < 8) return setError('Mật khẩu cần ít nhất 8 ký tự.');
+    if (!agree) return setError('Hãy tích chọn đồng ý với điều khoản dịch vụ và chính sách bảo mật.');
     if (turnstileEnabled && !token) return setError('Hãy chờ khung "xác nhận bạn là người thật" hiện xong rồi thử lại.');
     if (!navigator.onLine) return setError('Đăng ký cần có mạng.');
     setBusy(true);
@@ -80,6 +82,7 @@ export function PhoneSignupForm() {
         <input value={ref} maxLength={20} autoCapitalize="characters" placeholder="Ví dụ: DL-HUNG" onChange={(e) => setRef(e.target.value.toUpperCase())} />
         <small>Nếu người quen hoặc đại lý vật tư đưa mã cho bạn thì nhập vào đây, không có thì để trống.</small>
       </label>
+      <label className="check"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> <span>Đồng ý với điều khoản dịch vụ và chính sách bảo mật của hệ thống</span></label>
       <Turnstile onToken={onToken} />
       {error && <p className="msg error" role="alert">{error}</p>}
       <button type="submit" className="primary" disabled={busy}>{busy ? 'Đang gửi…' : 'Gửi đăng ký'}</button>

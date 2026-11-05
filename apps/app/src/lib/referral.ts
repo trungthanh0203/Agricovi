@@ -14,6 +14,7 @@ export function captureRefFromUrl(): void {
   } catch { /* trình duyệt chặn lưu trữ: bỏ qua */ }
 }
 export const storedRef = (): string => { try { return localStorage.getItem(KEY) ?? ''; } catch { return ''; } };
+export const setStoredRef = (v: string): void => { try { if (v.trim()) localStorage.setItem(KEY, v.trim().toUpperCase()); } catch { /* bỏ qua */ } };
 export const clearStoredRef = (): void => { try { localStorage.removeItem(KEY); } catch { /* bỏ qua */ } };
 
 export interface MyReferral { code: string; active: boolean; pct: number; months: number; referred: number; paying: number; earned_open: number; earned_paid: number }

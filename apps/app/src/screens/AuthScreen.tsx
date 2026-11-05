@@ -3,6 +3,7 @@ import { useAuth } from '../lib/auth';
 import { InstallGuide } from '../components/InstallGuide';
 import { PhoneSignupForm } from '../components/PhoneSignupForm';
 import { friendlyError } from '../lib/errors';
+import { setStoredRef, storedRef } from '../lib/referral';
 import { ContactCard } from '../components/ContactCard';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'newpass';
@@ -17,6 +18,7 @@ export function AuthScreen() {
   const [byPhone, setByPhone] = useState(false); // đăng ký bằng số điện thoại (không có email)
   const [fullName, setFullName] = useState('');
   const [agree, setAgree] = useState(false);
+  const [refCode, setRefCode] = useState(storedRef);
   const [remember, setRemember] = useState(() => { try { return localStorage.getItem('auth.remember') !== '0'; } catch { return true; } });
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -57,6 +59,7 @@ export function AuthScreen() {
         await signIn(id, password);
         try { localStorage.setItem('auth.remember', remember ? '1' : '0'); if (remember) localStorage.setItem('auth.last', id); else localStorage.removeItem('auth.last'); } catch { /* bỏ qua */ }
       } else if (effective === 'signup') {
+        setStoredRef(refCode); // được điền sẵn vào ô Mã giới thiệu khi tạo cơ sở đầu tiên
         const needsConfirm = await signUp(id, password, fullName);
         if (needsConfirm) {
           setInfo('Đã gửi thư xác nhận. Hãy mở email, bấm liên kết xác nhận, rồi quay lại đăng nhập.');
@@ -147,6 +150,13 @@ export function AuthScreen() {
             </label>
           )}
 
+          {effective === 'signup' && (
+            <label>
+              Mã giới thiệu (nếu có)
+              <input value={refCode} maxLength={20} autoCapitalize="characters" placeholder="Ví dụ: DL-HUNG" onChange={(e) => setRefCode(e.target.value.toUpperCase())} />
+              <small>Không có thì để trống.</small>
+            </label>
+          )}
           {effective === 'signup' && (
             <label className="check"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> <span>Đồng ý với điều khoản dịch vụ và chính sách bảo mật của hệ thống</span></label>
           )}

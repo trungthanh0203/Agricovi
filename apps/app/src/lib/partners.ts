@@ -13,6 +13,8 @@ export interface Partner {
   name: string;
   phone: string | null;
   address: string | null;
+  province: string | null;
+  ward: string | null;
   tax_code: string | null;
   bank_account: string | null;
   goods: string | null;
@@ -27,13 +29,15 @@ export interface PartnerInput {
   name: string;
   phone?: string;
   address?: string;
+  province?: string;
+  ward?: string;
   tax_code?: string;
   bank_account?: string;
   goods?: string;
   note?: string;
 }
 
-const COLUMNS = 'id, organization_id, name, phone, address, tax_code, bank_account, goods, note, is_supplier, is_customer, is_active, version';
+const COLUMNS = 'id, organization_id, name, phone, address, province, ward, tax_code, bank_account, goods, note, is_supplier, is_customer, is_active, version';
 const nz = (s: string | undefined) => (s && s.trim() ? s.trim() : null);
 
 function client() {
@@ -59,7 +63,7 @@ export async function createSupplier(orgId: string, f: PartnerInput, id: string 
   const bad = validatePartner(f);
   if (bad) throw new Error(`INVALID_PARTNER: ${bad}`);
   await insertRow('partners', {
-    id, organization_id: orgId, name: f.name.trim(), phone: nz(f.phone), address: nz(f.address), tax_code: nz(f.tax_code),
+    id, organization_id: orgId, name: f.name.trim(), phone: nz(f.phone), address: nz(f.address), province: nz(f.province), ward: nz(f.ward), tax_code: nz(f.tax_code),
     bank_account: nz(f.bank_account), goods: nz(f.goods), note: nz(f.note), is_supplier: true, is_customer: false,
   });
   return id;
@@ -74,6 +78,7 @@ export async function updateSupplier(p: Partner, changes: Partial<PartnerInput> 
   }
   const patch: Record<string, unknown> = { ...changes };
   if (changes.name !== undefined) patch.name = changes.name.trim();
+  for (const k of ['province', 'ward'] as const) if (changes[k] !== undefined) patch[k] = nz(changes[k]);
   return updateVersioned<Partner>('partners', p.id, p.version, patch);
 }
 
@@ -288,7 +293,7 @@ export async function createCustomer(orgId: string, f: CustomerInput, id: string
   const bad = validatePartner(f);
   if (bad) throw new Error(`INVALID_PARTNER: ${bad.replace('nhà cung ứng', 'khách hàng')}`);
   await insertRow('partners', {
-    id, organization_id: orgId, name: f.name.trim(), phone: nz(f.phone), address: nz(f.address), tax_code: nz(f.tax_code),
+    id, organization_id: orgId, name: f.name.trim(), phone: nz(f.phone), address: nz(f.address), province: nz(f.province), ward: nz(f.ward), tax_code: nz(f.tax_code),
     bank_account: nz(f.bank_account), goods: nz(f.goods), note: nz(f.note), is_supplier: false, is_customer: true, customer_kind: f.customer_kind || null,
   });
   return id;
@@ -302,6 +307,7 @@ export async function updateCustomer(p: Pick<Partner, 'id' | 'version'>, changes
   }
   const patch: Record<string, unknown> = { ...changes };
   if (changes.name !== undefined) patch.name = changes.name.trim();
+  for (const k of ['province', 'ward'] as const) if (changes[k] !== undefined) patch[k] = nz(changes[k]);
   return updateVersioned<Customer>('partners', p.id, p.version, patch);
 }
 

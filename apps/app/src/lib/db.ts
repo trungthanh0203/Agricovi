@@ -10,6 +10,9 @@ export interface AreaRow {
   name: string;
   description?: string | null;
   location?: string | null;
+  /** Địa chỉ chuẩn 2 cấp (migration 0176): tỉnh/thành phố và xã/phường; `location` là dòng Địa chỉ */
+  province?: string | null;
+  ward?: string | null;
   area_size?: number | null;
   area_unit?: 'm2' | 'ha';
   image?: string | null;

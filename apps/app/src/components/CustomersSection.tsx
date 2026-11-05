@@ -10,6 +10,8 @@ import {
   anonymizeCustomer, createCustomer, listAllPartners, listCustomers, updateCustomer, type Customer, type CustomerInput, type CustomerKind,
 } from '../lib/partners';
 import { canPerm } from '../lib/permissions';
+import { AddressFields } from './AddressFields';
+import { type Addr } from '../lib/vnAddress';
 
 type Existing = Awaited<ReturnType<typeof listAllPartners>>[number];
 
@@ -151,7 +153,7 @@ export function CustomerForm({ title, initial, busy, onSave, onClose }: {
   const [kind, setKind] = useState<CustomerKind>(customerKindText(initial?.customer_kind));
   const kindChoices = !kind || cfg.customerKinds().includes(kind) ? cfg.customerKinds() : [...cfg.customerKinds(), kind]; // giữ loại cũ dù đã bỏ khỏi cấu hình
   const [phone, setPhone] = useState(initial?.phone ?? '');
-  const [address, setAddress] = useState(initial?.address ?? '');
+  const [addr, setAddr] = useState<Addr>({ province: initial?.province ?? '', ward: initial?.ward ?? '', address: initial?.address ?? '' });
   const [goods, setGoods] = useState(initial?.goods ?? '');
   const [note, setNote] = useState(initial?.note ?? '');
   const [err, setErr] = useState<string | null>(null);
@@ -167,7 +169,7 @@ export function CustomerForm({ title, initial, busy, onSave, onClose }: {
           </select>
         </label>
         <label>Điện thoại<input value={phone} maxLength={40} inputMode="tel" onChange={(e) => setPhone(e.target.value)} /></label>
-        <label>Địa chỉ<input value={address} maxLength={300} onChange={(e) => setAddress(e.target.value)} /></label>
+        <AddressFields value={addr} onChange={setAddr} maxAddress={300} />
         <label>Nhu cầu thường mua<input value={goods} maxLength={300} onChange={(e) => setGoods(e.target.value)} placeholder="Dưa lưới loại 1, số lượng lớn…" /></label>
         <label>Ghi chú<textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} /></label>
         {err && <p className="msg error" role="alert">{err}</p>}
@@ -175,7 +177,7 @@ export function CustomerForm({ title, initial, busy, onSave, onClose }: {
           <button type="button" className="primary" disabled={busy} onClick={() => {
             if (name.trim().length < 2) return setErr('Hãy nhập tên khách hàng (ít nhất 2 ký tự).');
             setErr(null);
-            void onSave({ name, customer_kind: kind, phone, address, goods, note }).catch(() => undefined);
+            void onSave({ name, customer_kind: kind, phone, address: addr.address, province: addr.province, ward: addr.ward, goods, note }).catch(() => undefined);
           }}>Lưu</button>
           <button type="button" className="secondary" onClick={onClose}>Hủy</button>
         </div>

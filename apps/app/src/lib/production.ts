@@ -26,7 +26,8 @@ const CYCLE_COLUMNS = `${CYCLE_COLUMNS_OPTIONS}, prep_mode, prep_area_id, follow
 const AREA_COLUMNS_BASE = 'id, organization_id, name, description, location, area_size, area_unit, image, is_active';
 const AREA_COLUMNS_D98 = `${AREA_COLUMNS_BASE}, code, kind, housing`;
 const AREA_COLUMNS_ITEM = `${AREA_COLUMNS_D98}, kind_item`;
-const AREA_COLUMNS = `${AREA_COLUMNS_ITEM}, parent_id`; // nhà màng dưới phân khu (migration 0136)
+const AREA_COLUMNS_PARENT = `${AREA_COLUMNS_ITEM}, parent_id`; // nhà màng dưới phân khu (migration 0136)
+const AREA_COLUMNS = `${AREA_COLUMNS_PARENT}, province, ward`; // địa chỉ tỉnh/xã (migration 0176)
 
 /** Tải vụ theo từng bậc cột: đầy đủ -> bản trước D98 -> bản gốc, để CSDL chưa cập nhật không làm hỏng đồng bộ */
 async function selectCycles(id?: string) {
@@ -89,6 +90,7 @@ const LOG_COLUMNS =
 
 async function selectAreas() {
   let r = await supabase!.from('production_areas').select(AREA_COLUMNS);
+  if (r.error && missingPlanColumns(r.error)) r = await supabase!.from('production_areas').select(AREA_COLUMNS_PARENT) as typeof r; // chưa db push 0176
   if (r.error && missingPlanColumns(r.error)) r = await supabase!.from('production_areas').select(AREA_COLUMNS_ITEM) as typeof r; // chưa db push 0136
   if (r.error && missingPlanColumns(r.error)) r = await supabase!.from('production_areas').select(AREA_COLUMNS_D98) as typeof r; // chưa db push 0098
   return r.error && missingPlanColumns(r.error) ? supabase!.from('production_areas').select(AREA_COLUMNS_BASE) : r;
@@ -211,6 +213,8 @@ export async function fetchQuotaContexts(householdId: string): Promise<QuotaCont
 export interface FarmInput {
   name: string;
   location?: string | null;
+  province?: string | null;
+  ward?: string | null;
   area_size?: number | null;
   area_unit?: 'm2' | 'ha';
   description?: string | null;
@@ -229,7 +233,7 @@ export async function createArea(organizationId: string, f: FarmInput): Promise<
   const id = crypto.randomUUID();
   const row: AreaRow = {
     id, organization_id: organizationId, name: f.name.trim(), description: f.description?.trim() || null,
-    location: f.location?.trim() || null, area_size: f.area_size ?? null, area_unit: f.area_unit ?? 'm2', image: f.image || null,
+    location: f.location?.trim() || null, province: f.province?.trim() || null, ward: f.ward?.trim() || null, area_size: f.area_size ?? null, area_unit: f.area_unit ?? 'm2', image: f.image || null,
     code: f.code?.trim() || null, kind: f.kind ?? 'crop', housing: f.housing ?? null,
     ...(f.kind_item ? { kind_item: f.kind_item } : {}),
     ...(f.parent_id ? { parent_id: f.parent_id } : {}),
@@ -255,6 +259,8 @@ export async function updateArea(id: string, c: Partial<FarmInput> & { is_active
   if (c.name !== undefined) patch.name = c.name.trim();
   if (c.description !== undefined) patch.description = c.description?.trim() || null;
   if (c.location !== undefined) patch.location = c.location?.trim() || null;
+  if (c.province !== undefined) patch.province = c.province?.trim() || null;
+  if (c.ward !== undefined) patch.ward = c.ward?.trim() || null;
   if (c.area_size !== undefined) patch.area_size = c.area_size;
   if (c.area_unit !== undefined) patch.area_unit = c.area_unit;
   if (c.image !== undefined) patch.image = c.image || null;
