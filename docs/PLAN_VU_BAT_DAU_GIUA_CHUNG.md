@@ -1,6 +1,6 @@
 # Đề xuất: bắt đầu vụ từ giữa chừng (từ một công đoạn / một việc bất kỳ)
 
-Trạng thái: **ĐỀ XUẤT, chờ chủ sản phẩm duyệt** (6/11/2026). Chưa viết code.
+Trạng thái: **GĐ1 ĐÃ LÀM** (6/11/2026, chủ sản phẩm duyệt; chưa `db push` migration 0178): `create_cycle_midstart`, `jump_cycle_to_stage`, màn Tạo vụ (khối "bắt đầu từ giữa chừng"), Chi tiết vụ ("Vụ đang ở đâu? Chuyển tới"), nhãn "làm trước khi dùng app". GĐ2, GĐ3 còn lại.
 
 ## 1. Vấn đề
 

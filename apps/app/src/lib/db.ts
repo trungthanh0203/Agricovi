@@ -36,6 +36,10 @@ export interface CycleRow {
   prep_mode?: 'whole' | 'part' | 'separate' | null;
   prep_area_id?: string | null;
   follows_cycle_id?: string | null;
+  /** Vụ bắt đầu giữa chừng (migration 0178): ngày bắt đầu theo dõi trong app, cách bắt đầu và ghi chú nguồn */
+  tracked_from?: string | null;
+  origin?: 'own' | 'resume' | 'transfer' | null;
+  origin_note?: string | null;
   /** Mô hình quản lý của vụ (null = theo mô hình mặc định của cơ sở) */
   mgmt_model?: string | null;
   /** Mục tùy chọn của mô hình đã bật cho vụ này (mã chức năng) */
@@ -204,6 +208,8 @@ export interface StageRow {
   materials?: { name: string; amount?: string; material_id?: string }[];
   /** Chủ cơ sở bấm Xong khi chưa Ghi việc đủ: lý do (migration 0126) */
   log_waived_reason?: string | null;
+  /** 'pre_app' = việc đã làm trước khi dùng app / trước khi nhận về (migration 0178) */
+  source?: 'app' | 'pre_app';
 }
 
 /** Bản chỉnh của một cơ sở lên mục có sẵn dùng chung (D32) */

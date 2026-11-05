@@ -30,7 +30,8 @@ import { canManageProduction, isOwner } from '../lib/roles';
 import { PublishedCycleBar } from '../components/PublishedCycleBar';
 import { prepLabel, prepLoggable, predecessorOf } from '../lib/prep';
 import { PrepPicker } from '../components/PrepPicker';
-import { setCyclePrep } from '../lib/production';
+import { jumpCycleToStage, setCyclePrep } from '../lib/production';
+import { JumpToStage } from '../components/JumpToStage';
 import type { AreaRow } from '../lib/db';
 import { areaPath } from '../lib/areas';
 
@@ -134,6 +135,9 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
         {cycle.start_date && ` · Bắt đầu ${fmtDate(cycle.start_date)}`}
         {cycle.expected_end_date && ` · Dự kiến xong ${fmtDate(cycle.expected_end_date)}`}
       </p>
+      {cycle.tracked_from && cycle.origin !== 'own' && (
+        <p className="msg ok" role="status">Theo dõi trong app từ {fmtDate(cycle.tracked_from)}: {cycle.origin === 'transfer' ? 'vụ nhận về từ nơi khác' : 'vụ đã chạy trước khi dùng app'}; các việc đánh dấu "làm trước khi dùng app" chưa có nhật ký.{cycle.origin_note ? ` Ghi chú: ${cycle.origin_note}` : ''}</p>
+      )}
       <p className="muted">Mã vụ: <strong>{cycleCode(cycleId)}</strong></p>
       {pre && cycle.status === 'preparing' && (
         pre.ended
@@ -233,6 +237,12 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
         />
       ) : (
         <>
+          {canManage && isActive && online && stages.some((s) => s.status === 'pending') && !stages.some((s) => s.status === 'in_progress') && (
+            <Collapsible inline title="＋ Vụ đang ở đâu? Chuyển tới một việc" summary="cho vụ chạy dở trước khi dùng app">
+              <JumpToStage stages={stages} loggedStageIds={new Set(logs.filter((l) => !l.voided_at && l.stage_id).map((l) => l.stage_id as string))} busy={busy}
+                onJump={(sid, done, date, note) => run(() => jumpCycleToStage(cycleId, sid, done, date, note))} />
+            </Collapsible>
+          )}
           <table className="grid">
             <thead><tr><th>Việc</th><th>Kế hoạch</th><th>Thực tế</th><th></th></tr></thead>
             <tbody>
@@ -265,9 +275,9 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
                       <i className="swatch" style={{ background: stageColor(i) }} />{s.name}{s.duration_days ? ` (${s.duration_days} ngày)` : ''}
                       {s.note && <span className="sub">{s.note}</span>}
                       <span className="sub">
-                        {s.importance === 'high' ? 'Quan trọng · ' : ''}{s.repeat_every_days ? `Lặp mỗi ${s.repeat_every_days} ngày · ` : ''}{STAGE_STATUS_LABEL_VI[s.status]}{late > 0 && s.status !== 'pending' ? ` · trễ ${late} ngày` : ''}
+                        {s.importance === 'high' ? 'Quan trọng · ' : ''}{s.repeat_every_days ? `Lặp mỗi ${s.repeat_every_days} ngày · ` : ''}{STAGE_STATUS_LABEL_VI[s.status]}{s.status === 'done' && s.source === 'pre_app' ? ' (làm trước khi dùng app)' : ''}{late > 0 && s.status !== 'pending' ? ` · trễ ${late} ngày` : ''}
                         {late > 0 && s.status === 'pending' ? ` · chưa bắt đầu, trễ ${late} ngày` : ''}
-                        {s.work_type_id && s.status !== 'pending' ? ` · Đã ghi ${progressOf(s).logged}/${progressOf(s).expected} lần` : logCount.get(s.id) ? ` · ${logCount.get(s.id)} việc đã ghi` : ''}{s.log_waived_reason ? ` · Xong khi chưa ghi đủ, lý do: ${s.log_waived_reason}` : ''}
+                        {s.work_type_id && s.status !== 'pending' && s.source !== 'pre_app' ? ` · Đã ghi ${progressOf(s).logged}/${progressOf(s).expected} lần` : logCount.get(s.id) ? ` · ${logCount.get(s.id)} việc đã ghi` : ''}{s.log_waived_reason ? ` · Xong khi chưa ghi đủ, lý do: ${s.log_waived_reason}` : ''}
                       </span>
                     </td>
                     <td>{fmtDate(s.planned_start)}<span className="sub">→ {fmtDate(s.planned_end)}</span></td>

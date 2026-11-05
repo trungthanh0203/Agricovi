@@ -7,13 +7,16 @@ import { defaultCountUnit } from '../lib/countUnit';
 import { restWarning } from '../lib/milestoneLogic';
 import { Collapsible } from '../components/Collapsible';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
-import { createCycle, fetchQuotaContexts, setCyclePrep, type QuotaContext } from '../lib/production';
+import { createCycle, createCycleMidstart, fetchQuotaContexts, setCyclePrep, type QuotaContext } from '../lib/production';
+import { MidstartPicker, type MidstartValue } from '../components/MidstartPicker';
+import { recordExpense } from '../lib/finance';
+import { useAuth } from '../lib/auth';
 import { myCoopProcurement, type CoopProcurement } from '../lib/members';
 import { addDays, fmtDate } from '../lib/dates';
-import { listTemplates, loadTemplate, stageRanges, totalDays, type StageRow, type TemplateRow } from '../lib/templates';
+import { listTemplates, loadTemplate, stageRanges, totalDays, type PhaseRow, type StageRow, type TemplateRow } from '../lib/templates';
 import { useTable } from '../lib/tables';
 import { useConfig } from '../lib/config';
-import type { AreaRow } from '../lib/db';
+import { db, type AreaRow } from '../lib/db';
 import { HelpButton } from '../components/HelpButton';
 import { PrepPicker } from '../components/PrepPicker';
 import { type PrepMode } from '../lib/prep';
@@ -37,6 +40,15 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const [templateId, setTemplateId] = useState('');
   const [templates, setTemplates] = useState<TemplateRow[] | null>(null);
   const [stages, setStages] = useState<StageRow[]>([]);
+  const [phases, setPhases] = useState<PhaseRow[]>([]);
+  const { session } = useAuth();
+  // bắt đầu giữa chừng (migration 0178)
+  const [mid, setMid] = useState<MidstartValue>({ currentId: '', doneIds: [] });
+  const [midOrigin, setMidOrigin] = useState<'resume' | 'transfer'>('resume');
+  const [midNote, setMidNote] = useState('');
+  const [midCurStart, setMidCurStart] = useState(todayLocal());
+  const [midCost, setMidCost] = useState('');
+  const [midCostNote, setMidCostNote] = useState('');
   const [name, setName] = useState('');
   const [startNow, setStartNow] = useState(true);
   const [startDate, setStartDate] = useState(todayLocal());
@@ -117,9 +129,10 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   }, [ownerId]);
 
   useEffect(() => {
-    if (!templateId || !navigator.onLine) { setStages([]); return; }
+    setMid({ currentId: '', doneIds: [] });
+    if (!templateId || !navigator.onLine) { setStages([]); setPhases([]); return; }
     let alive = true;
-    loadTemplate(templateId).then((r) => { if (alive) setStages(r.stages); }).catch(() => { if (alive) setStages([]); });
+    loadTemplate(templateId).then((r) => { if (alive) { setStages(r.stages); setPhases(r.phases); } }).catch(() => { if (alive) { setStages([]); setPhases([]); } });
     return () => { alive = false; };
   }, [templateId]);
 
@@ -186,9 +199,17 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     if ('error' in cropInfoResult) return setError(cropInfoResult.error);
     // chỉ nhắc, không bắt buộc: số con là gốc để tính hao hụt, mật độ và FCR
     if (isAnimal && !cropInfo.plants.trim() && !window.confirm('Chưa nhập số con nhập. Không có số này app chưa tính được hao hụt, mật độ và FCR (bổ sung sau ở Sửa vụ vẫn được). Vẫn tạo vụ?')) return;
+    const midstart = Boolean(mid.currentId);
+    const costN = midCost.trim() ? Number(midCost.replace(/[.,\s]/g, '')) : 0;
+    if (midstart) {
+      if (!startNow || prepEarly) return setError('Vụ bắt đầu từ giữa chừng là vụ đang sản xuất: hãy chọn "Bắt đầu sản xuất ngay" và cách chuẩn bị "cả ô", hoặc bỏ chọn điểm bắt đầu giữa chừng.');
+      if (startDate > todayLocal() || midCurStart > todayLocal()) return setError('Ngày vụ bắt đầu thật và ngày việc hiện tại bắt đầu không được ở tương lai.');
+      if (midCurStart < startDate) return setError('Ngày việc hiện tại bắt đầu không thể trước ngày vụ bắt đầu.');
+      if (costN > 0 && midCostNote.trim().length < 3) return setError('Chi phí ước tính phải ghi cách ước tính (ví dụ: tiền giống và công làm đất theo trí nhớ).');
+    }
     setBusy(true);
     try {
-      const newId = await createCycle({
+      const base = {
         ownerOrgId: ownerId || active!.id,
         areaId,
         templateId,
@@ -198,7 +219,16 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
         info: cropInfoResult.info,
         targetYield: targetYield.trim() ? Number(targetYield.replace(/[.,\s]/g, '')) : null,
         budget: budget.trim() ? Number(budget.replace(/[.,\s]/g, '')) : null,
-      });
+      } as const;
+      const newId = midstart
+        ? await createCycleMidstart(base, { currentTplStageId: mid.currentId, doneTplStageIds: mid.doneIds, currentStart: midCurStart || null, origin: midOrigin, note: midNote })
+        : await createCycle(base);
+      if (midstart && costN > 0) {
+        const row = await db.cycles.get(newId);
+        try {
+          await recordExpense({ organizationId: ownerId || active!.id, cycle: row ?? null, category: 'other', kind: 'estimated', amount: costN, date: startDate, note: `Trước khi dùng app (ước tính): ${midCostNote.trim()}`, userId: session?.user.id ?? '' });
+        } catch (err) { window.alert(`Đã tạo vụ nhưng chưa ghi được chi phí ước tính: ${friendlyError(err)}. Bạn thêm lại ở Chi phí.`); }
+      }
       if (followsId || prepMode !== 'whole') {
         try { await setCyclePrep(newId, prepMode, prepMode === 'separate' ? prepArea : null, followsId || null); } catch (err) { window.alert(`Đã tạo vụ nhưng chưa lưu được cách chuẩn bị / nối tiếp: ${friendlyError(err)}. Bạn đặt lại ở chi tiết vụ (mục Công đoạn chuẩn bị).`); }
       }
@@ -321,7 +351,34 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           <label>
             Ngày bắt đầu
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            {mid.currentId && <small>Với vụ đang chạy dở: ngày vụ bắt đầu THẬT (có thể trong quá khứ), dùng để tính tuổi và ngày thu hoạch dự kiến.</small>}
           </label>
+
+          {templateId && startNow && !prepEarly && stages.length > 1 && (
+            <Collapsible inline title="＋ Vụ đang chạy dở hoặc nhận từ nơi khác (bắt đầu từ giữa chừng)"
+              summary={mid.currentId ? `Đang ở: ${stages.find((s) => s.id === mid.currentId)?.name ?? ''}` : 'không bắt buộc'}>
+              <MidstartPicker
+                items={[...stages].sort((a, b) => a.seq - b.seq).map((s) => ({ id: s.id, name: s.name, phase: phases.find((p) => p.id === s.phase_id)?.name ?? null }))}
+                value={mid} onChange={setMid} />
+              {mid.currentId && (
+                <>
+                  <label>Cách bắt đầu
+                    <select value={midOrigin} onChange={(e) => setMidOrigin(e.target.value as 'resume' | 'transfer')}>
+                      <option value="resume">Vụ của tôi đã chạy trước khi dùng app</option>
+                      <option value="transfer">Nhận về từ nơi khác (đã làm xong vài công đoạn đầu)</option>
+                    </select>
+                  </label>
+                  <label>Ghi chú nguồn (không bắt buộc)<input value={midNote} maxLength={300} onChange={(e) => setMidNote(e.target.value)} placeholder="Ví dụ: Nhận cây con 25 ngày tuổi từ vườn ươm ông Ba" /></label>
+                  <label>Việc đang làm bắt đầu ngày<input type="date" value={midCurStart} max={todayLocal()} onChange={(e) => setMidCurStart(e.target.value)} /></label>
+                  <div className="pair">
+                    <label>Chi phí đã bỏ ra trước đó (ước tính, đồng)<input value={midCost} inputMode="numeric" onChange={(e) => setMidCost(e.target.value)} placeholder="Không bắt buộc" /></label>
+                    <label>Cách ước tính<input value={midCostNote} maxLength={200} onChange={(e) => setMidCostNote(e.target.value)} placeholder="Ví dụ: giống + công làm đất" /></label>
+                  </div>
+                  <p className="muted">Các việc đã làm trước đó được ghi là "làm trước khi dùng app", không cần nhật ký. Chi phí ước tính giúp giá thành không bị thấp giả; số lượng đã nhập (con, cây) nhập ở mục Giống, diện tích, số lượng.</p>
+                </>
+              )}
+            </Collapsible>
+          )}
 
           {sameArea.length > 0 && (
             <label>

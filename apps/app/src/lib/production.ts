@@ -22,7 +22,8 @@ const CYCLE_COLUMNS_D98 = `${CYCLE_COLUMNS_PLAN}, code, count_unit, supervisor_n
 // mô hình quản lý theo vụ (migration 0102)
 const CYCLE_COLUMNS_MODEL = `${CYCLE_COLUMNS_D98}, mgmt_model`;
 const CYCLE_COLUMNS_OPTIONS = `${CYCLE_COLUMNS_MODEL}, mgmt_options`; // mục tùy chọn của mô hình (migration 0104)
-const CYCLE_COLUMNS = `${CYCLE_COLUMNS_OPTIONS}, prep_mode, prep_area_id, follows_cycle_id`; // công đoạn chuẩn bị và vụ nối tiếp (migration 0137)
+const CYCLE_COLUMNS_PREP = `${CYCLE_COLUMNS_OPTIONS}, prep_mode, prep_area_id, follows_cycle_id`; // công đoạn chuẩn bị và vụ nối tiếp (migration 0137)
+const CYCLE_COLUMNS = `${CYCLE_COLUMNS_PREP}, tracked_from, origin, origin_note`; // vụ bắt đầu giữa chừng (migration 0178)
 const AREA_COLUMNS_BASE = 'id, organization_id, name, description, location, area_size, area_unit, image, is_active';
 const AREA_COLUMNS_D98 = `${AREA_COLUMNS_BASE}, code, kind, housing`;
 const AREA_COLUMNS_ITEM = `${AREA_COLUMNS_D98}, kind_item`;
@@ -36,6 +37,7 @@ async function selectCycles(id?: string) {
     return id ? b.eq('id', id) : b;
   };
   let r = await q(CYCLE_COLUMNS);
+  if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_PREP);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_OPTIONS);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_MODEL);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_D98);
@@ -73,6 +75,8 @@ async function pageStages(cols: string, cycleId?: string | string[]): Promise<Pa
 }
 async function selectStages(cycleId?: string | string[]) {
   const q = (cols: string) => pageStages(cols, cycleId);
+  const rs = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials, log_waived_reason, source'); // việc làm trước khi dùng app (migration 0178)
+  if (!rs.error) return rs;
   const rw = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials, log_waived_reason');
   if (!rw.error) return rw;
   const r0 = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials'); // chưa db push 0126
@@ -342,6 +346,42 @@ export async function createCycle(c: NewCycle): Promise<string> {
   }
   await refreshCycle(id);
   return id;
+}
+
+/** Điểm bắt đầu giữa chừng (migration 0178): việc của quy trình mẫu đang làm, các việc đã làm trước đó, ngày việc hiện tại bắt đầu */
+export interface MidstartInput {
+  currentTplStageId: string;
+  doneTplStageIds: string[];
+  currentStart: string | null;
+  origin: 'resume' | 'transfer';
+  note: string;
+}
+
+/** Tạo vụ đang sản xuất bắt đầu từ giữa quy trình: các việc trước ghi nhận "làm trước khi dùng app" (không đòi nhật ký) */
+export async function createCycleMidstart(c: NewCycle, m: MidstartInput): Promise<string> {
+  requireOnline('tạo vụ');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const id = crypto.randomUUID();
+  const { error } = await supabase.rpc('create_cycle_midstart', {
+    p_id: id, p_owner_org: c.ownerOrgId, p_area: c.areaId, p_template: c.templateId, p_start: c.startDate, p_name: c.name?.trim() || null,
+    p_current_tpl: m.currentTplStageId, p_done_tpl: m.doneTplStageIds, p_current_start: m.currentStart, p_origin: m.origin, p_origin_note: m.note.trim() || null,
+  });
+  if (error) throw new Error(error.message);
+  if ((c.targetYield ?? null) !== null || (c.budget ?? null) !== null) await setCyclePlan(id, c.targetYield ?? null, c.budget ?? null).catch(() => undefined);
+  if (c.info && (c.info.areaM2 !== null || c.info.plants !== null || c.info.variety.trim() || c.info.seedSource.trim() || c.info.seedLot.trim() || c.info.sowingDate || c.info.plantingDate || c.info.code.trim() || c.info.countUnit.trim() || c.info.supervisorName.trim() || c.info.supervisorPhone.trim())) {
+    await setCycleInfo(id, c.info).catch(() => undefined);
+  }
+  await refreshCycle(id);
+  return id;
+}
+
+/** Vụ đang sản xuất mà thực tế đang ở giữa: chuyển tới một việc; các việc đã chọn (chưa có nhật ký) thành "làm trước khi dùng app" */
+export async function jumpCycleToStage(cycleId: string, stageId: string, doneStageIds: string[], date: string | null, note: string): Promise<void> {
+  requireOnline('chuyển việc của vụ');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { error } = await supabase.rpc('jump_cycle_to_stage', { p_cycle: cycleId, p_stage: stageId, p_done: doneStageIds, p_date: date, p_origin_note: note.trim() || null });
+  if (error) throw new Error(error.message);
+  await refreshCycle(cycleId);
 }
 
 /** Đặt sản lượng dự kiến (kg) và ngân sách dự kiến (đồng) của vụ; null = bỏ (cần mạng, người quản lý vụ) */
