@@ -311,7 +311,7 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
   function chooseMid(on: boolean) {
     setMidOn(on);
     if (!on) { setMid({ currentId: '', doneIds: [] }); return; }
-    setPrepMode('whole'); setPrepArea(''); setFollowsId('');
+    setFollowsId('');
     if (startDate > today) setStartDate(today);
   }
 
@@ -354,7 +354,7 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
         amortYears: mode === 'perennial' ? Math.round(Number(amort.replace(',', '.')) || 15) : null,
       } as const;
       const newId = midOn
-        ? await createCycleMidstart(base, { currentTplStageId: mid.currentId, doneTplStageIds: mid.doneIds, currentStart: midCurStart || null, origin: 'resume', note: midNote })
+        ? await createCycleMidstart(base, { currentTplStageId: mid.currentId, doneTplStageIds: mid.doneIds, currentStart: midCurStart || null, origin: 'resume', note: [midNote.trim(), prepMode === 'separate' && prepArea ? `Đã chuẩn bị tại khu ${areaPath(prepArea, areas)}` : ''].filter(Boolean).join(' · ') })
         : await createCycle(base);
       if (midOn && costN > 0) {
         const row = await db.cycles.get(newId);
@@ -362,8 +362,9 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
           await recordExpense({ organizationId: ownerId || active!.id, cycle: row ?? null, category: 'other', kind: 'estimated', amount: costN, date: startDate, note: `Trước khi dùng app (ước tính): ${midCostNote.trim()}`, userId: session?.user.id ?? '' });
         } catch (err) { window.alert(`Đã tạo vụ nhưng chưa ghi được chi phí ước tính: ${friendlyError(err)}. Bạn thêm lại ở Chi phí.`); }
       }
-      if (followsId || prepMode !== 'whole') {
-        try { await setCyclePrep(newId, prepMode, prepMode === 'separate' ? prepArea : null, followsId || null); } catch (err) { window.alert(`Đã tạo vụ nhưng chưa lưu được cách chuẩn bị / chờ vụ khác: ${friendlyError(err)}. Bạn đặt lại ở chi tiết vụ.`); }
+      const prepForDb: PrepMode = midOn ? 'whole' : prepMode;      // vụ đang làm dở đã Đang sản xuất nên không đặt chế độ chuẩn bị riêng (máy chủ chỉ cho vụ Chuẩn bị)
+      if (followsId || prepForDb !== 'whole') {
+        try { await setCyclePrep(newId, prepForDb, prepForDb === 'separate' ? prepArea : null, followsId || null); } catch (err) { window.alert(`Đã tạo vụ nhưng chưa lưu được cách chuẩn bị / chờ vụ khác: ${friendlyError(err)}. Bạn đặt lại ở chi tiết vụ.`); }
       }
       clearDraft();
       onDone(newId); // mở chi tiết vụ kèm mã QR vừa tạo
@@ -552,8 +553,8 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                     <span><strong>Từ đầu</strong><small>Làm từ việc đầu tiên của quy trình.</small></span>
                   </label>
                   <label className={midOn ? 'choice selected' : 'choice'}>
-                    <input type="radio" name="midon" checked={midOn} disabled={prepEarly || Boolean(followsId)} onChange={() => chooseMid(true)} />
-                    <span><strong>Đang làm dở</strong><small>{prepEarly || followsId ? 'Không dùng được khi chuẩn bị ở khu riêng hoặc chờ vụ khác (đổi ở mục Nâng cao bên dưới).' : 'Vụ đã chạy trước khi dùng app: chọn việc đang làm, các việc trước đó ghi là "làm trước khi dùng app".'}</small></span>
+                    <input type="radio" name="midon" checked={midOn} disabled={Boolean(followsId)} onChange={() => chooseMid(true)} />
+                    <span><strong>Đang làm dở</strong><small>{followsId ? 'Không dùng được khi đang chờ vụ khác kết thúc (đổi ở mục Nâng cao bên dưới).' : prepEarly ? 'Các việc đã chuẩn bị ở khu riêng (ví dụ ươm) rồi đưa vào ô: chọn việc đang làm trong ô, các việc trước đó ghi là "làm trước khi dùng app". Khu chuẩn bị chỉ được ghi chú lại.' : 'Vụ đã chạy trước khi dùng app: chọn việc đang làm, các việc trước đó ghi là "làm trước khi dùng app".'}</small></span>
                   </label>
                   {midOn && (
                     <>
@@ -594,7 +595,7 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
               <div>
                 <strong>Nâng cao: chuẩn bị ở khu riêng, chờ vụ khác</strong>
                 <PrepPicker kind={prodKind} mode={prepMode} areaId={prepArea} areas={areas.filter((a) => a.organization_id === active.id)} cycleAreaId={areaId}
-                  onArea={setPrepArea} onMode={(m) => { setPrepMode(m); if (m !== 'whole') { setMidOn(false); setMid({ currentId: '', doneIds: [] }); } }} />
+                  onArea={setPrepArea} onMode={(m) => setPrepMode(m)} />
                 {sameArea.length > 0 && (
                   <label>
                     Chờ vụ khác kết thúc mới bắt đầu (không bắt buộc)
