@@ -198,7 +198,7 @@ export const MORE_GUIDES: Guide[] = [
           'Bấm Lưu: tạo lần bán và công nợ phải thu cùng lúc, đánh dấu đơn "đã ghi doanh thu". Đơn đã ghi rồi thì app cảnh báo để không ghi hai lần.',
         ],
         tip: 'Số doanh thu này đi thẳng vào Tổng kết vụ nên lãi lỗ của vụ tự cập nhật.',
-        go: { tab: 'reports', section: 'sales', label: 'Mở Doanh thu' },
+        go: { tab: 'production', section: 'sales', label: 'Mở Doanh thu' },
       },
       {
         title: 'Đánh giá và giữ uy tín',

@@ -7,6 +7,7 @@ import { LogsScreen } from './LogsScreen';
 import { AttendanceSection } from '../components/AttendanceSection';
 import { ExpenseSection } from '../components/ExpenseSection';
 import { HarvestSection } from '../components/HarvestSection';
+import { SalesSection } from '../components/SalesSection';
 import { pickSection, SubTabs } from '../components/SubTabs';
 import { HelpButton } from '../components/HelpButton';
 import { friendlyError } from '../lib/errors';
@@ -60,6 +61,8 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
       <SubTabs items={items} value={current} onChange={(id) => (id === 'log' ? onLog() : onSection(id))} onBack={() => onSection('' as ProductionSection)} label="Sản xuất" />
       {current === 'harvest' ? (
         <HarvestSection />
+      ) : current === 'sales' ? (
+        <SalesSection />
       ) : current === 'stock' ? (
         <StockPanel />
       ) : current === 'expense' ? (

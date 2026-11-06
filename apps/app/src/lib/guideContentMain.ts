@@ -334,7 +334,7 @@ export const MAIN_GUIDES: Guide[] = [
         details: [
           "Sản xuất → Thu hoạch: ghi ngày, sản lượng và hao hụt. Mất mạng vẫn ghi mới được.",
           "Sửa hoặc hủy phiếu cần có mạng; hủy phải ghi lý do và không khôi phục được.",
-          "Báo cáo → Doanh thu → Ghi bán hàng: khách, số lượng, số tiền.",
+          "Sản xuất → Doanh thu → Ghi bán hàng: khách, số lượng, số tiền.",
           "Khách chưa trả hết thì ghi hạn thu tiền; app nhắc khi quá hạn.",
           "Khách hàng khai báo ở Khai báo → Khách hàng.",
           "Vì sao: Sản lượng thu hoạch tính SAU hao hụt, và là mẫu số để tính giá thành mỗi kg.",
@@ -357,7 +357,7 @@ export const MAIN_GUIDES: Guide[] = [
         details: [
           "Báo cáo → Tổng kết vụ: chọn vụ để xem chi phí, doanh thu, lãi lỗ, giá thành mỗi kg. Xuất bảng CSV được.",
           "Báo cáo → Báo cáo tuần: tóm tắt tuần, so với tuần trước, điểm cần chú ý.",
-          "Báo cáo → Theo nhu cầu: tự chọn loại báo cáo, bộ lọc, xem dạng biểu đồ hoặc bảng.",
+          "Báo cáo → Báo cáo tổng hợp: tự chọn loại báo cáo, bộ lọc, xem dạng biểu đồ hoặc bảng.",
           "Báo cáo → Sổ nhật ký: in hoặc xuất Excel khi cần nộp để kiểm tra.",
           "Vì sao: Giá thành chỉ tính khi đủ số liệu. Thiếu giá vật tư hay chưa có thu hoạch thì app hiện “chưa đủ số liệu” thay vì đưa con số sai.",
         ],
@@ -569,7 +569,7 @@ export const MAIN_GUIDES: Guide[] = [
         details: [
           "Sản xuất → Thu hoạch: ghi ngày, số con, số kg và hao hụt của lần xuất chuồng hoặc thu.",
           "Số con còn lại của đợt tự trừ theo phiếu xuất chuồng.",
-          "Báo cáo → Doanh thu → Ghi bán hàng: khách, số lượng, số tiền; khách chưa trả hết thì ghi hạn thu.",
+          "Sản xuất → Doanh thu → Ghi bán hàng: khách, số lượng, số tiền; khách chưa trả hết thì ghi hạn thu.",
           "Sửa hoặc hủy phiếu cần có mạng; hủy phải ghi lý do.",
           "Vì sao: Số con ghi đúng ở mỗi lần xuất thì hao hụt và giá thành mỗi kg mới đúng.",
         ],
@@ -591,7 +591,7 @@ export const MAIN_GUIDES: Guide[] = [
         details: [
           "Báo cáo → Tổng kết vụ: chi phí, doanh thu, lãi lỗ, giá thành mỗi kg; xuất CSV.",
           "Mở “Xem thêm số liệu” ở thẻ vụ để xem hao hụt, mật độ, FCR.",
-          "Báo cáo tuần và “Theo nhu cầu” giúp so sánh đợt này với đợt trước.",
+          "Báo cáo tuần và “Báo cáo tổng hợp” giúp so sánh đợt này với đợt trước.",
           "Báo cáo → Sổ nhật ký và Bảng kiểm: in hoặc xuất Excel khi cần hồ sơ.",
           "Vì sao: Các chỉ số chỉ tính khi đủ số liệu (số con ban đầu, thức ăn đã ghi, phiếu xuất chuồng). Thiếu thì app hiện “chưa đủ số liệu”, không đưa con số sai.",
         ],

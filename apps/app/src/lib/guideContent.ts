@@ -457,7 +457,7 @@ const BASE_GUIDES: Guide[] = [
         title: 'Nhà cung ứng, khách hàng và công nợ',
         details: [
           'Khai báo nhà cung ứng và khách hàng; ghi mua hàng (nhập kho có hóa đơn), bán hàng kèm hạn trả/thu.',
-          'Báo cáo → Công nợ: xem nợ phải trả, phải thu và tuổi nợ; Báo cáo theo nhu cầu cho báo cáo mua hàng và theo khách.',
+          'Báo cáo → Công nợ: xem nợ phải trả, phải thu và tuổi nợ; Báo cáo tổng hợp cho báo cáo mua hàng và theo khách.',
         ],
         go: { tab: 'reports', section: 'payables', label: 'Mở Công nợ' },
       },

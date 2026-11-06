@@ -27,9 +27,9 @@ export interface Section<Id extends string = string> {
   label: string;
 }
 
-export type ProductionSection = 'cycles' | 'log' | 'logs' | 'stock' | 'expense' | 'harvest' | 'attendance';
+export type ProductionSection = 'cycles' | 'log' | 'logs' | 'stock' | 'expense' | 'harvest' | 'sales' | 'attendance';
 export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'kiosks' | 'customers' | 'positions' | 'teams' | 'members' | 'coop' | 'licenses';
-export type ReportSection = 'payables' | 'sales' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist' | 'logbook';
+export type ReportSection = 'payables' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist' | 'logbook';
 
 /**
  * Chế độ đơn giản (D100): các mục NÂNG CAO bị ẩn khỏi menu cho hộ nhỏ. Chỉ là cách hiển thị: quyền và dữ liệu không đổi, chủ bật lại chế độ đầy đủ bất cứ lúc nào
@@ -58,8 +58,9 @@ export function productionSections(org: MyOrg | null): Section<ProductionSection
     { id: 'cycles' as const, label: 'Vụ nuôi trồng' },
     canPerm(org.perms, 'inventory') ? { id: 'stock' as const, label: 'Quản lý kho' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'expense' as const, label: 'Chi phí' } : null,
+    hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,   // trước Thu hoạch
     canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
-    hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,
+    canPerm(org.perms, 'sales') ? { id: 'sales' as const, label: 'Doanh thu' } : null,                       // sau Thu hoạch (trước đây ở tab Báo cáo)
     (org.features?.logs ?? 'on') !== 'off' ? { id: 'log' as const, label: 'Ghi việc' } : null, // mở thẳng màn Ghi việc (cùng nút ＋ ở giữa thanh dưới)
     { id: 'logs' as const, label: 'Nhật ký việc' },
   ].filter((x): x is Section<ProductionSection> => x !== null));
@@ -116,11 +117,10 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
   if (!org) return [];
   return simpleFilter(org, 'reports', [
     hasRole(org.roles, 'manager') ? { id: 'weekly' as const, label: 'Báo cáo tuần' } : null,
-    REPORT_TYPES.some((t) => t.allowed(org.perms, org.roles)) ? { id: 'custom' as const, label: 'Theo nhu cầu' } : null,
-    canPerm(org.perms, 'expenses') || canPerm(org.perms, 'sales') ? { id: 'payables' as const, label: 'Công nợ' } : null,
-    canPerm(org.perms, 'sales') ? { id: 'sales' as const, label: 'Doanh thu' } : null,
-    { id: 'paybook' as const, label: 'Bảng lương' }, // mọi người xem của mình; chủ/người có quyền Tiền công xem cả cơ sở
+    REPORT_TYPES.some((t) => t.allowed(org.perms, org.roles)) ? { id: 'custom' as const, label: 'Báo cáo tổng hợp' } : null,
     canPerm(org.perms, 'summary') ? { id: 'summary' as const, label: 'Tổng kết vụ' } : null,
+    canPerm(org.perms, 'expenses') || canPerm(org.perms, 'sales') ? { id: 'payables' as const, label: 'Công nợ' } : null,
+    { id: 'paybook' as const, label: 'Bảng lương' }, // mọi người xem của mình; chủ/người có quyền Tiền công xem cả cơ sở
     canPerm(org.perms, 'declare') ? { id: 'logbook' as const, label: 'Sổ nhật ký' } : null,
     canPerm(org.perms, 'declare') ? { id: 'checklist' as const, label: 'Bảng kiểm' } : null,
     canPerm(org.perms, 'website') ? { id: 'website' as const, label: 'Đơn khách từ website' } : null,
