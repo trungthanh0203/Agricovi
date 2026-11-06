@@ -272,18 +272,16 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
     const r = formToCropInfo(cropInfo);
     if ('error' in r) return r.error;
     if (!r.info.areaM2) return 'Hãy nhập diện tích của vụ (lớn hơn 0).';
-    if (prepMode === 'separate' && !prepArea) return 'Hãy chọn khu chuẩn bị riêng, hoặc chọn "Chuẩn bị trong toàn diện tích của vụ".';
-    return null;
-  }
-  function checkStep2(): string | null {
-    if (name.trim().length < 2) return `Hãy nhập tên ${nameWord} (ít nhất 2 ký tự).`;
     if (!cropInfo.variety.trim()) return 'Hãy nhập giống (chưa rõ thì ghi "Chưa rõ giống").';
-    const r = formToCropInfo(cropInfo);
-    if ('error' in r) return r.error;
     if (mode === 'herd') {
       if (groups.some((g) => g.count.trim() && !/^\d+$/.test(g.count.replace(/[.,\s]/g, '')))) return 'Số đầu mỗi nhóm phải là số nguyên.';
       if (herdTotal <= 0) return 'Hãy nhập số đầu tồn của ít nhất một nhóm.';
     } else if (!r.info.plants) return `Hãy nhập số lượng ${cropInfo.countUnit.trim() || defaultUnit} (lớn hơn 0).`;
+    return null;
+  }
+  function checkStep2(): string | null {
+    if (name.trim().length < 2) return `Hãy nhập tên ${nameWord} (ít nhất 2 ký tự).`;
+    if (prepMode === 'separate' && !prepArea) return 'Hãy chọn khu chuẩn bị riêng (mục Nâng cao), hoặc chọn "Chuẩn bị trong toàn diện tích của vụ".';
     if (mode === 'perennial' && (!cropInfo.planting || cropInfo.planting > today)) return 'Hãy nhập ngày trồng (không ở tương lai).';
     if (nonBatch && !periodLabel.trim() && !periodDefault) return 'Hãy nhập tên kỳ đầu tiên.';
     if (!startDate) return nonBatch ? 'Hãy chọn ngày bắt đầu theo dõi.' : 'Hãy chọn ngày bắt đầu vụ.';
@@ -486,7 +484,7 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                       {free.cycles.length > 0 && (
                         <ul className="muted" style={{ margin: '4px 0 0 18px', padding: 0 }}>
                           {free.cycles.map((c) => (
-                            <li key={c.id}>{c.name || 'Vụ'}: {c.area_m2 != null ? `${Math.round(c.area_m2).toLocaleString('vi-VN')} m²` : 'chưa khai diện tích'}{c.intercrop ? ' (dùng chung diện tích)' : ''}{c.end ? ` · đến ${fmtDate(c.end)}` : ''}</li>
+                            <li key={c.id}>{c.name || 'Vụ'}: {c.area_m2 != null ? `${Math.round(c.area_m2).toLocaleString('vi-VN')} m²` : 'chưa khai diện tích'}{c.intercrop ? ' (dùng chung diện tích)' : ''}{c.end ? ` · đến ${fmtDate(c.end)}` : ''} · {CYCLE_STATUS_LABEL_VI[c.status as keyof typeof CYCLE_STATUS_LABEL_VI] ?? c.status}</li>
                           ))}
                         </ul>
                       )}
@@ -500,6 +498,23 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                   )}
 
                   <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="area" required />
+                  <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="variety" required />
+                  {mode === 'herd' ? (
+                    <fieldset>
+                      <legend>Số đầu tồn theo nhóm</legend>
+                      <p className="muted">Nhập số đầu hiện có của từng nhóm (nhóm nào không có thì để trống). Có thể sửa tên nhóm hoặc thêm nhóm.</p>
+                      {groups.map((g, i) => (
+                        <div className="pair" key={i}>
+                          <label>Nhóm<input value={g.group} maxLength={40} onChange={(e) => setGroups((s) => s.map((x, j) => (j === i ? { ...x, group: e.target.value } : x)))} /></label>
+                          <label>Số {cropInfo.countUnit.trim() || defaultUnit}<input value={g.count} inputMode="numeric" onChange={(e) => setGroups((s) => s.map((x, j) => (j === i ? { ...x, count: e.target.value } : x)))} /></label>
+                        </div>
+                      ))}
+                      <div className="btnrow"><button type="button" className="secondary mini" onClick={() => setGroups((s) => [...s, { group: '', count: '' }])}>+ Thêm nhóm</button></div>
+                      <p><strong>Tổng: {herdTotal.toLocaleString('vi-VN')} {cropInfo.countUnit.trim() || defaultUnit}</strong></p>
+                    </fieldset>
+                  ) : (
+                    <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="count" required />
+                  )}
                   {over && (
                     <p className="msg warn" role="status">
                       Vượt chỗ trống của ô khoảng {Math.round(areaM2 - (free?.free_m2 ?? 0)).toLocaleString('vi-VN')} m². Hãy giảm diện tích, hoặc tích "Dùng chung diện tích với vụ khác trong ô" nếu trồng chung diện tích
@@ -510,21 +525,6 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                     <label className="check"><input type="checkbox" checked={intercrop} onChange={(e) => setIntercrop(e.target.checked)} /> <span>Dùng chung diện tích với vụ khác trong ô</span></label>
                   )}
 
-                  <Collapsible inline title="＋ Nâng cao: chuẩn bị ở khu riêng, chờ vụ khác"
-                    summary={[prepMode === 'separate' ? prepLabel('separate', prodKind) : '', followsId ? 'chờ vụ khác' : ''].filter(Boolean).join(' · ') || 'không dùng'}>
-                    <PrepPicker kind={prodKind} mode={prepMode} areaId={prepArea} areas={areas.filter((a) => a.organization_id === active.id)} cycleAreaId={areaId}
-                      onArea={setPrepArea} onMode={(m) => { setPrepMode(m); if (m !== 'whole') { setMidOn(false); setMid({ currentId: '', doneIds: [] }); } }} />
-                    {sameArea.length > 0 && (
-                      <label>
-                        Chờ vụ khác kết thúc mới bắt đầu (không bắt buộc)
-                        <select value={followsId} onChange={(e) => { setFollowsId(e.target.value); if (e.target.value) { setMidOn(false); setMid({ currentId: '', doneIds: [] }); } }}>
-                          <option value="">Không chờ vụ nào</option>
-                          {sameArea.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
-                        </select>
-                        <small>Vụ này lưu ở trạng thái Chuẩn bị; khi vụ đó kết thúc, app nhắc bạn chuyển sang sản xuất.</small>
-                      </label>
-                    )}
-                  </Collapsible>
                 </>
               )}
             </>
@@ -536,23 +536,6 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                 Tên {nameWord}
                 <input value={name} maxLength={120} onChange={(e) => { setNameTouched(true); setName(e.target.value); }} placeholder={mode === 'perennial' ? 'Ví dụ: Vườn na lô A' : mode === 'herd' ? 'Ví dụ: Đàn dê chuồng 2' : 'Ví dụ: Dưa lưới vụ 1 nhà màng 2'} />
               </label>
-              <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="variety" required />
-              {mode === 'herd' ? (
-                <fieldset>
-                  <legend>Số đầu tồn theo nhóm</legend>
-                  <p className="muted">Nhập số đầu hiện có của từng nhóm (nhóm nào không có thì để trống). Có thể sửa tên nhóm hoặc thêm nhóm.</p>
-                  {groups.map((g, i) => (
-                    <div className="pair" key={i}>
-                      <label>Nhóm<input value={g.group} maxLength={40} onChange={(e) => setGroups((s) => s.map((x, j) => (j === i ? { ...x, group: e.target.value } : x)))} /></label>
-                      <label>Số {cropInfo.countUnit.trim() || defaultUnit}<input value={g.count} inputMode="numeric" onChange={(e) => setGroups((s) => s.map((x, j) => (j === i ? { ...x, count: e.target.value } : x)))} /></label>
-                    </div>
-                  ))}
-                  <div className="btnrow"><button type="button" className="secondary mini" onClick={() => setGroups((s) => [...s, { group: '', count: '' }])}>+ Thêm nhóm</button></div>
-                  <p><strong>Tổng: {herdTotal.toLocaleString('vi-VN')} {cropInfo.countUnit.trim() || defaultUnit}</strong></p>
-                </fieldset>
-              ) : (
-                <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="count" required />
-              )}
               {mode === 'perennial' && (
                 <label>
                   Ngày trồng
@@ -570,7 +553,7 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                   </label>
                   <label className={midOn ? 'choice selected' : 'choice'}>
                     <input type="radio" name="midon" checked={midOn} disabled={prepEarly || Boolean(followsId)} onChange={() => chooseMid(true)} />
-                    <span><strong>Đang làm dở</strong><small>{prepEarly || followsId ? 'Không dùng được khi chuẩn bị ở khu riêng hoặc chờ vụ khác (đổi ở Bước 1).' : 'Vụ đã chạy trước khi dùng app: chọn việc đang làm, các việc trước đó ghi là "làm trước khi dùng app".'}</small></span>
+                    <span><strong>Đang làm dở</strong><small>{prepEarly || followsId ? 'Không dùng được khi chuẩn bị ở khu riêng hoặc chờ vụ khác (đổi ở mục Nâng cao bên dưới).' : 'Vụ đã chạy trước khi dùng app: chọn việc đang làm, các việc trước đó ghi là "làm trước khi dùng app".'}</small></span>
                   </label>
                   {midOn && (
                     <>
@@ -608,6 +591,22 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                 </label>
               )}
 
+              <Collapsible inline title="＋ Nâng cao: chuẩn bị ở khu riêng, chờ vụ khác"
+                summary={[prepMode === 'separate' ? prepLabel('separate', prodKind) : '', followsId ? 'chờ vụ khác' : ''].filter(Boolean).join(' · ') || 'không dùng'}>
+                <PrepPicker kind={prodKind} mode={prepMode} areaId={prepArea} areas={areas.filter((a) => a.organization_id === active.id)} cycleAreaId={areaId}
+                  onArea={setPrepArea} onMode={(m) => { setPrepMode(m); if (m !== 'whole') { setMidOn(false); setMid({ currentId: '', doneIds: [] }); } }} />
+                {sameArea.length > 0 && (
+                  <label>
+                    Chờ vụ khác kết thúc mới bắt đầu (không bắt buộc)
+                    <select value={followsId} onChange={(e) => { setFollowsId(e.target.value); if (e.target.value) { setMidOn(false); setMid({ currentId: '', doneIds: [] }); } }}>
+                      <option value="">Không chờ vụ nào</option>
+                      {sameArea.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
+                    </select>
+                    <small>Vụ này lưu ở trạng thái Chuẩn bị; khi vụ đó kết thúc, app nhắc bạn chuyển sang sản xuất.</small>
+                  </label>
+                )}
+              </Collapsible>
+
               <Collapsible inline title="＋ Thông tin thêm (làm sau cũng được)"
                 summary={[cropInfo.source, cropInfo.lot, cropInfo.sowing, cropInfo.code, targetYield && `${targetYield} kg`, budget && `${budget} đ`].filter(Boolean).join(' · ') || undefined}>
                 <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="seedextra" hidePlanting={mode === 'perennial'} />
@@ -632,12 +631,12 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                 <SummaryRow label="Sản phẩm" value={`${cropName(productId)}${picked ? ` · ${picked.name}` : ''}`} onEdit={() => go(1)} />
                 <SummaryRow label="Ô sản xuất" value={`${areaPath(areaId, areas)} · ${Math.round(areaM2).toLocaleString('vi-VN')} m²${intercrop ? ' (dùng chung diện tích)' : ''}`} onEdit={() => go(1)} />
                 {(prepMode === 'separate' || followsId) && (
-                  <SummaryRow label="Nâng cao" value={[prepMode === 'separate' ? `${prepLabel('separate', prodKind)}: ${areaPath(prepArea, areas)}` : '', followsId ? `Chờ vụ ${cycleLabel(allCycles.find((c) => c.id === followsId) ?? { crop_type_id: productId })}` : ''].filter(Boolean).join(' · ')} onEdit={() => go(1)} />
+                  <SummaryRow label="Nâng cao" value={[prepMode === 'separate' ? `${prepLabel('separate', prodKind)}: ${areaPath(prepArea, areas)}` : '', followsId ? `Chờ vụ ${cycleLabel(allCycles.find((c) => c.id === followsId) ?? { crop_type_id: productId })}` : ''].filter(Boolean).join(' · ')} onEdit={() => go(2)} />
                 )}
                 {nonBatch && <SummaryRow label="Kiểu" value={MODE_LABEL[mode]} onEdit={() => go(1)} />}
                 <SummaryRow label={`Tên ${nameWord}`} value={name} onEdit={() => go(2)} />
-                <SummaryRow label="Giống · số lượng" value={`${cropInfo.variety} · ${mode === 'herd' ? herdTotal : cropInfo.plants} ${cropInfo.countUnit.trim() || defaultUnit}`} onEdit={() => go(2)} />
-                {mode === 'herd' && <SummaryRow label="Theo nhóm" value={groups.filter((g) => Number(g.count.replace(/[.,\s]/g, '')) > 0).map((g) => `${g.group}: ${g.count}`).join(' · ')} onEdit={() => go(2)} />}
+                <SummaryRow label="Giống · số lượng" value={`${cropInfo.variety} · ${mode === 'herd' ? herdTotal : cropInfo.plants} ${cropInfo.countUnit.trim() || defaultUnit}`} onEdit={() => go(1)} />
+                {mode === 'herd' && <SummaryRow label="Theo nhóm" value={groups.filter((g) => Number(g.count.replace(/[.,\s]/g, '')) > 0).map((g) => `${g.group}: ${g.count}`).join(' · ')} onEdit={() => go(1)} />}
                 {mode === 'perennial' && <SummaryRow label="Ngày trồng" value={`${fmtDate(cropInfo.planting)} (khấu hao ${amort} năm, kiến thiết ${maturity} năm)`} onEdit={() => go(2)} />}
                 {nonBatch && <SummaryRow label="Kỳ đầu tiên" value={`${periodLabel.trim() || periodDefault}, từ ${fmtDate(startDate)}`} onEdit={() => go(2)} />}
                 {!nonBatch && <SummaryRow label="Bắt đầu" value={midOn ? `Đang làm dở: ${stages.find((s) => s.id === mid.currentId)?.name ?? ''} (vụ bắt đầu thật ${fmtDate(startDate)}, việc này từ ${fmtDate(midCurStart)})` : `Từ đầu, ngày ${fmtDate(startDate)}`} onEdit={() => go(2)} />}
