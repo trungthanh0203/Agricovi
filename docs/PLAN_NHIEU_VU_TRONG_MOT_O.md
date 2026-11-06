@@ -56,6 +56,12 @@ Màn Tạo vụ, ngay sau khi chọn ô, hiện khung:
 2. **Phân bổ chi phí chung của ô** (điện, nước, công chung) cho các vụ theo diện tích × số ngày, bằng loại chi phí "phân bổ" sẵn có (bắt buộc ghi giả định).
 3. **Báo cáo theo ô**: lãi lỗ cả ô, năng suất/m² từng vụ, so sánh các vụ song song.
 
+## 4b. GĐ2 ĐÃ LÀM (8/11/2026, chưa `db push` migration 0180)
+- **Ghi việc chung cho nhiều vụ cùng ô** (chỉ app, không cần máy chủ, vẫn ghi được khi mất mạng): ở Ghi việc, khung "Việc này làm chung cho vụ khác trong ô?" tích các vụ cùng làm; mỗi vụ một nhật ký (cùng nội dung, cùng thời điểm, giai đoạn tự chọn theo loại việc của từng vụ), tất cả lưu cục bộ trong một giao dịch. Vật tư nhập **tổng**, chia theo diện tích (hoặc chia đều; vụ chưa khai diện tích thì chia đều và báo), làm tròn 3 số lẻ, phần dư dồn cho vụ có phần lớn nhất. Các nhật ký cùng nhóm mang dấu `shared_group`, danh sách Nhật ký hiện "Làm chung với n vụ khác". Hủy phải hủy từng nhật ký (mỗi hủy tự hoàn vật tư của vụ đó).
+- **Chia chi phí chung của ô** (Chi phí → "＋ Chia chi phí chung của ô cho các vụ"): `preview_area_expense` xem trước, `allocate_area_expense` ghi; trọng số = diện tích vụ × số ngày chạy trong kỳ, phương pháp số dư lớn nhất nên tổng đúng; mỗi vụ một khoản loại "phân bổ" kèm cách chia; gọi lặp cùng mã thao tác không nhân đôi; chỉ vụ của chính cơ sở, đang chạy/tạm dừng/đã kết thúc; vụ chưa khai diện tích được báo riêng.
+- **Báo cáo theo ô** (Báo cáo → Theo nhu cầu → "Tổng hợp theo ô sản xuất", `report_by_area`): số vụ, diện tích đã dùng/ô, sản lượng, chi phí, doanh thu, lãi lỗ, lãi trên 1.000 m².
+- Còn lại: hủy cả nhóm nhật ký chung một lần, phân bổ chi phí tự động theo định kỳ, chấm công/giờ công chia cho nhiều vụ.
+
 ## 5. Các giai đoạn
 - **GĐ1:** 3.1 (bắt buộc, gợi ý tên, ép ở CSDL) + 3.2 (hàm chỗ trống, khung chỗ trống, cảnh báo vượt, thanh chiếm chỗ) + 3.3 (đơn giản hóa màn Tạo vụ) + cờ trồng xen/vượt. Cần: 1 migration, sửa `CreateCycleScreen`, `CycleInfoFields`, `AreasSection` (thanh chiếm chỗ), test CSDL.
 - **GĐ2:** mục 4.
