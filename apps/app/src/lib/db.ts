@@ -40,6 +40,9 @@ export interface CycleRow {
   tracked_from?: string | null;
   origin?: 'own' | 'resume' | 'transfer' | null;
   origin_note?: string | null;
+  /** Trồng xen (dùng chung diện tích) và vụ tạo khi vượt chỗ trống của ô (migration 0179) */
+  intercrop?: boolean | null;
+  over_capacity?: boolean | null;
   /** Mô hình quản lý của vụ (null = theo mô hình mặc định của cơ sở) */
   mgmt_model?: string | null;
   /** Mục tùy chọn của mô hình đã bật cho vụ này (mã chức năng) */

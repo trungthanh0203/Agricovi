@@ -23,7 +23,8 @@ const CYCLE_COLUMNS_D98 = `${CYCLE_COLUMNS_PLAN}, code, count_unit, supervisor_n
 const CYCLE_COLUMNS_MODEL = `${CYCLE_COLUMNS_D98}, mgmt_model`;
 const CYCLE_COLUMNS_OPTIONS = `${CYCLE_COLUMNS_MODEL}, mgmt_options`; // mục tùy chọn của mô hình (migration 0104)
 const CYCLE_COLUMNS_PREP = `${CYCLE_COLUMNS_OPTIONS}, prep_mode, prep_area_id, follows_cycle_id`; // công đoạn chuẩn bị và vụ nối tiếp (migration 0137)
-const CYCLE_COLUMNS = `${CYCLE_COLUMNS_PREP}, tracked_from, origin, origin_note`; // vụ bắt đầu giữa chừng (migration 0178)
+const CYCLE_COLUMNS_MID = `${CYCLE_COLUMNS_PREP}, tracked_from, origin, origin_note`; // vụ bắt đầu giữa chừng (migration 0178)
+const CYCLE_COLUMNS = `${CYCLE_COLUMNS_MID}, intercrop, over_capacity`; // trồng xen, vượt chỗ trống (migration 0179)
 const AREA_COLUMNS_BASE = 'id, organization_id, name, description, location, area_size, area_unit, image, is_active';
 const AREA_COLUMNS_D98 = `${AREA_COLUMNS_BASE}, code, kind, housing`;
 const AREA_COLUMNS_ITEM = `${AREA_COLUMNS_D98}, kind_item`;
@@ -37,6 +38,7 @@ async function selectCycles(id?: string) {
     return id ? b.eq('id', id) : b;
   };
   let r = await q(CYCLE_COLUMNS);
+  if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_MID);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_PREP);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_OPTIONS);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_MODEL);
@@ -289,8 +291,12 @@ export interface NewCycle {
   /** Kế hoạch (không bắt buộc, D93) */
   targetYield?: number | null;
   budget?: number | null;
-  /** Giống và diện tích (không bắt buộc, D94) */
+  /** Giống, diện tích, số lượng: BẮT BUỘC khi tạo vụ mới (migration 0179); các ô còn lại của thông tin vụ không bắt buộc */
   info?: CropInfo | null;
+  /** Trồng xen: dùng chung diện tích với vụ khác, không tính vào chỗ đã dùng của ô */
+  intercrop?: boolean;
+  /** Chủ cơ sở xác nhận tạo vụ dù vượt diện tích còn trống của ô */
+  confirmOver?: boolean;
 }
 
 /** Giống và diện tích của vụ; diện tích theo m² (D94) */
@@ -335,9 +341,11 @@ export async function createCycle(c: NewCycle): Promise<string> {
   requireOnline('tạo vụ');
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   const id = crypto.randomUUID();
-  const { error } = await supabase.rpc('create_cycle_from_template', {
+  const { error } = await supabase.rpc('create_cycle_checked', {
     p_id: id, p_owner_org: c.ownerOrgId, p_area: c.areaId, p_template: c.templateId,
     p_start: c.startDate, p_status: c.status, p_name: c.name?.trim() || null,
+    p_variety: c.info?.variety ?? '', p_area_m2: c.info?.areaM2 ?? null, p_count: c.info?.plants ?? null,
+    p_intercrop: c.intercrop ?? false, p_confirm_over: c.confirmOver ?? false,
   });
   if (error) throw new Error(error.message);
   if ((c.targetYield ?? null) !== null || (c.budget ?? null) !== null) await setCyclePlan(id, c.targetYield ?? null, c.budget ?? null).catch(() => undefined);
@@ -362,8 +370,10 @@ export async function createCycleMidstart(c: NewCycle, m: MidstartInput): Promis
   requireOnline('tạo vụ');
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   const id = crypto.randomUUID();
-  const { error } = await supabase.rpc('create_cycle_midstart', {
-    p_id: id, p_owner_org: c.ownerOrgId, p_area: c.areaId, p_template: c.templateId, p_start: c.startDate, p_name: c.name?.trim() || null,
+  const { error } = await supabase.rpc('create_cycle_checked', {
+    p_id: id, p_owner_org: c.ownerOrgId, p_area: c.areaId, p_template: c.templateId, p_start: c.startDate, p_status: 'active', p_name: c.name?.trim() || null,
+    p_variety: c.info?.variety ?? '', p_area_m2: c.info?.areaM2 ?? null, p_count: c.info?.plants ?? null,
+    p_intercrop: c.intercrop ?? false, p_confirm_over: c.confirmOver ?? false,
     p_current_tpl: m.currentTplStageId, p_done_tpl: m.doneTplStageIds, p_current_start: m.currentStart, p_origin: m.origin, p_origin_note: m.note.trim() || null,
   });
   if (error) throw new Error(error.message);
@@ -382,6 +392,18 @@ export async function jumpCycleToStage(cycleId: string, stageId: string, doneSta
   const { error } = await supabase.rpc('jump_cycle_to_stage', { p_cycle: cycleId, p_stage: stageId, p_done: doneStageIds, p_date: date, p_origin_note: note.trim() || null });
   if (error) throw new Error(error.message);
   await refreshCycle(cycleId);
+}
+
+/** Chỗ trống của ô trong khoảng thời gian (migration 0179): sức chứa, các vụ đang chiếm chỗ, diện tích trống nhỏ nhất */
+export interface AreaFree {
+  capacity_m2: number | null; peak_used_m2: number; free_m2: number | null; unknown_area_cycles: number;
+  cycles: { id: string; name: string | null; area_m2: number | null; status: string; intercrop: boolean; start: string; end: string | null }[];
+}
+export async function fetchAreaFree(areaId: string, from: string | null, to: string | null): Promise<AreaFree> {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { data, error } = await supabase.rpc('area_free_m2', { p_area: areaId, p_from: from, p_to: to, p_exclude: null });
+  if (error) throw new Error(error.message);
+  return data as AreaFree;
 }
 
 /** Đặt sản lượng dự kiến (kg) và ngân sách dự kiến (đồng) của vụ; null = bỏ (cần mạng, người quản lý vụ) */

@@ -10,7 +10,7 @@ export function PrepPicker({ kind, mode, onMode, areaId, onArea, areas, cycleAre
   kind?: string | null; mode: PrepMode; onMode: (m: PrepMode) => void; areaId: string; onArea: (id: string) => void;
   areas: AreaRow[]; cycleAreaId: string; name?: string;
 }) {
-  const choices = prepChoices(kind);
+  const choices = prepChoices(kind).filter((c) => c.code !== 'part' || mode === 'part'); // vụ mới không còn lựa chọn "1 phần ô": vụ chiếm phần diện tích trống của ô (migration 0179)
   const candidates = orderedAreas(areas.filter((a) => a.is_active !== false && a.id !== cycleAreaId));
   return (
     <fieldset>

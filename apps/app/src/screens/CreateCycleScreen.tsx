@@ -7,7 +7,9 @@ import { defaultCountUnit } from '../lib/countUnit';
 import { restWarning } from '../lib/milestoneLogic';
 import { Collapsible } from '../components/Collapsible';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
-import { createCycle, createCycleMidstart, fetchQuotaContexts, setCyclePrep, type QuotaContext } from '../lib/production';
+import { createCycle, createCycleMidstart, fetchAreaFree, fetchQuotaContexts, setCyclePrep, type AreaFree, type QuotaContext } from '../lib/production';
+import { fromM2, toM2 } from '../lib/areaUnits';
+import { isOwner } from '../lib/roles';
 import { MidstartPicker, type MidstartValue } from '../components/MidstartPicker';
 import { recordExpense } from '../lib/finance';
 import { useAuth } from '../lib/auth';
@@ -64,6 +66,10 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const [followsId, setFollowsId] = useState(''); // nối tiếp sau vụ nào (D124)
   const [prepMode, setPrepMode] = useState<PrepMode>('whole'); // cách chuẩn bị theo ô sản xuất của vụ (D126)
   const [prepArea, setPrepArea] = useState('');
+  const [free, setFree] = useState<AreaFree | null>(null);        // chỗ trống của ô đang chọn (migration 0179)
+  const [intercrop, setIntercrop] = useState(false);              // trồng xen: dùng chung diện tích với vụ khác
+  const [confirmOver, setConfirmOver] = useState(false);          // chủ cơ sở xác nhận tạo vụ vượt chỗ trống
+  const [nameTouched, setNameTouched] = useState(false);
 
   // Phân khu hợp loại với sản phẩm: cùng loại, hoặc phân khu/sản phẩm loại "Khác". Phân khu khác loại vẫn chọn được nhưng có cảnh báo.
   const baseKind = (k?: string | null) => (k === 'growing' || !k ? 'crop' : k);
@@ -146,6 +152,20 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     setTemplateId(list.length === 1 ? list[0]!.id : '');
   }
   useEffect(() => { if (!productId && productsWithTpl.length === 1) pickProduct(productsWithTpl[0]!.id); }, [productsWithTpl.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setFree(null);
+    if (!areaId || !online) return;
+    let alive = true;
+    const from = startDate || todayLocal();
+    fetchAreaFree(areaId, from, addDays(from, Math.max(totalDays(stages), 1))).then((r) => { if (alive) setFree(r); }).catch(() => { if (alive) setFree(null); });
+    return () => { alive = false; };
+  }, [areaId, startDate, stages, online]); // eslint-disable-line react-hooks/exhaustive-deps
+  // tên vụ gợi ý sẵn (người dùng sửa được): "<Sản phẩm> · <Ô>"
+  useEffect(() => {
+    if (nameTouched || !productId || !areaId) return;
+    const nm = cropTypes.find((c) => c.id === productId)?.name ?? '';
+    setName(`${nm} · ${areaPath(areaId, areas)}`);
+  }, [productId, areaId]); // eslint-disable-line react-hooks/exhaustive-deps
   const plan = useMemo(() => {
     const base = startDate || todayLocal();
     const ranges = stageRanges(stages); // việc song song có ngày bắt đầu riêng
@@ -166,15 +186,12 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const running = sameArea.filter((c) => c.status === 'active' || c.status === 'paused');
   const prepEarly = prepMode !== 'whole'; // chuẩn bị 1 phần hoặc ở nhà riêng: vụ ở trạng thái Chuẩn bị nhưng ghi việc được
   const cycleLabel = (c: { name?: string | null; crop_type_id: string; start_date?: string | null }) => cycleTitle(c, cropName(c.crop_type_id));
-  const restBase = areaId && startDate
+  const wholeArea = (() => { const a = parseFloat((cropInfo.area || '').replace(',', '.')); const cap = free?.capacity_m2; return !!cap && a > 0 && toM2(a, cropInfo.unit) >= cap * 0.95; })();
+  const restBase = areaId && startDate && wholeArea
     ? restWarning(areaId, startDate, 7, allCycles, (cid) => allStages.filter((s) => s.cycle_id === cid && s.actual_end).map((s) => s.actual_end as string).sort().pop() ?? null)
     : null;
   // Đang có vụ chạy ở khu này: chuẩn bị trước thì không phải lỗi, chỉ nhắc cách làm (D126)
-  const rest = running.length > 0
-    ? (prepEarly
-      ? `Ô sản xuất này đang có vụ "${cycleLabel(running[0]!)}" đang chạy. Vụ mới ở trạng thái Chuẩn bị, ghi việc chuẩn bị được; chuyển sang sản xuất khi vụ đó xong.`
-      : `${restBase ?? `Ô sản xuất này đang có vụ "${cycleLabel(running[0]!)}" đang chạy.`} Nếu chỉ chuẩn bị trước, hãy chọn "Chuẩn bị trong 1 phần ô sản xuất" hoặc "Nơi chuẩn bị riêng" ở mục Công đoạn chuẩn bị.`)
-    : restBase;
+  const rest = restBase; // nhiều vụ chạy song song trong một ô là bình thường: chỉ nhắc nghỉ ô khi vụ dùng cả ô
   const ownerLabel = (c: QuotaContext) => (c.kind === 'own' ? `Hộ riêng (${c.org_name})` : `HTX ${c.org_name}`);
   const picked = templates?.find((t) => t.id === templateId) ?? null;
   const defaultUnit = defaultCountUnit(prodKind);
@@ -197,8 +214,10 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     if (prepMode === 'separate' && !prepArea) return setError('Hãy chọn nơi chuẩn bị riêng, hoặc chọn cách chuẩn bị khác.');
     const cropInfoResult = formToCropInfo(cropInfo);
     if ('error' in cropInfoResult) return setError(cropInfoResult.error);
-    // chỉ nhắc, không bắt buộc: số con là gốc để tính hao hụt, mật độ và FCR
-    if (isAnimal && !cropInfo.plants.trim() && !window.confirm('Chưa nhập số con nhập. Không có số này app chưa tính được hao hụt, mật độ và FCR (bổ sung sau ở Sửa vụ vẫn được). Vẫn tạo vụ?')) return;
+    if (name.trim().length < 2) return setError('Hãy nhập tên vụ (ít nhất 2 ký tự).');
+    if (!cropInfo.variety.trim()) return setError('Hãy nhập giống (chưa rõ thì ghi "Chưa rõ giống").');
+    if (!cropInfoResult.info.areaM2) return setError('Hãy nhập diện tích của vụ (lớn hơn 0).');
+    if (!cropInfoResult.info.plants) return setError(`Hãy nhập số lượng ${cropInfo.countUnit.trim() || defaultUnit} (lớn hơn 0).`);
     const midstart = Boolean(mid.currentId);
     const costN = midCost.trim() ? Number(midCost.replace(/[.,\s]/g, '')) : 0;
     if (midstart) {
@@ -219,6 +238,8 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
         info: cropInfoResult.info,
         targetYield: targetYield.trim() ? Number(targetYield.replace(/[.,\s]/g, '')) : null,
         budget: budget.trim() ? Number(budget.replace(/[.,\s]/g, '')) : null,
+        intercrop,
+        confirmOver: confirmOver && !intercrop,
       } as const;
       const newId = midstart
         ? await createCycleMidstart(base, { currentTplStageId: mid.currentId, doneTplStageIds: mid.doneIds, currentStart: midCurStart || null, origin: midOrigin, note: midNote })
@@ -318,17 +339,64 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           </label>
           {areaMismatch && <p className="msg warn" role="status">Phân khu này thuộc loại "{cfg.groupLabel(pickedArea?.kind, pickedArea?.kind_item)}", còn sản phẩm thuộc loại "{cfg.groupLabel(prodKind, null)}". Vẫn tạo được, nhưng nên chọn phân khu đúng loại để báo cáo và nhãn hiển thị đúng.</p>}
 
-          {isAnimal && (
-            <>
-              <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="count" />
-              {!cropInfo.plants.trim() && <p className="msg warn" role="status">Nên nhập số con nhập chuồng/thả giống: có số này app mới tính được hao hụt, mật độ và FCR. Không bắt buộc, bổ sung sau cũng được.</p>}
-            </>
+          {areaId && free && (
+            <div className="card slim" role="status">
+              <strong>
+                {free.capacity_m2 == null
+                  ? 'Ô này chưa khai diện tích nên chưa kiểm được chỗ trống (khai ở Khai báo → Phân khu).'
+                  : `Ô rộng ${Math.round(free.capacity_m2).toLocaleString('vi-VN')} m², còn trống ${Math.round(free.free_m2 ?? 0).toLocaleString('vi-VN')} m² trong thời gian của vụ.`}
+              </strong>
+              {free.cycles.length > 0 && (
+                <ul className="muted" style={{ margin: '4px 0 0 18px', padding: 0 }}>
+                  {free.cycles.map((c) => (
+                    <li key={c.id}>{c.name || 'Vụ'}: {c.area_m2 != null ? `${Math.round(c.area_m2).toLocaleString('vi-VN')} m²` : 'chưa khai diện tích'}{c.intercrop ? ' (trồng xen)' : ''}{c.end ? ` · đến ${fmtDate(c.end)}` : ''}</li>
+                  ))}
+                </ul>
+              )}
+              {free.capacity_m2 != null && (
+                <div className="btnrow">
+                  <button type="button" className="secondary mini" onClick={() => setCropInfo((v) => ({ ...v, area: String(Math.round(fromM2(free.free_m2 ?? 0, v.unit) * 100) / 100) }))}>Dùng phần trống</button>
+                  <button type="button" className="secondary mini" onClick={() => setCropInfo((v) => ({ ...v, area: String(Math.round(fromM2(free.capacity_m2 ?? 0, v.unit) * 100) / 100) }))}>Cả ô</button>
+                </div>
+              )}
+            </div>
           )}
 
           <label>
-            Tên vụ (không bắt buộc)
-            <input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Dưa lưới vụ 1 nhà màng 2" />
+            Tên vụ
+            <input value={name} maxLength={120} onChange={(e) => { setNameTouched(true); setName(e.target.value); }} placeholder="Ví dụ: Dưa lưới vụ 1 nhà màng 2" />
           </label>
+
+          <fieldset>
+            <legend>Giống, diện tích, số lượng</legend>
+            <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="variety" required />
+            <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="scale" required />
+            {(() => {
+              const a = parseFloat((cropInfo.area || '').replace(',', '.'));
+              const fm = free?.free_m2;
+              const over = !intercrop && fm != null && a > 0 && toM2(a, cropInfo.unit) > fm + 0.5;
+              return (
+                <>
+                  {over && (
+                    <p className="msg warn" role="status">
+                      Vượt chỗ trống của ô khoảng {Math.round(toM2(a, cropInfo.unit) - fm!).toLocaleString('vi-VN')} m². Hãy giảm diện tích, hoặc tích "Trồng xen" nếu trồng chung diện tích với vụ khác
+                      {active && isOwner(active.roles) ? ', hoặc xác nhận bên dưới nếu diện tích ô khai chưa chính xác.' : '. Chỉ chủ cơ sở xác nhận được việc tạo vượt.'}
+                    </p>
+                  )}
+                  {over && active && isOwner(active.roles) && (
+                    <label className="check"><input type="checkbox" checked={confirmOver} onChange={(e) => setConfirmOver(e.target.checked)} /> <span>Tôi xác nhận tạo vụ dù vượt diện tích còn trống</span></label>
+                  )}
+                  {free && free.capacity_m2 != null && (
+                    <label className="check"><input type="checkbox" checked={intercrop} onChange={(e) => setIntercrop(e.target.checked)} /> <span>Trồng xen (dùng chung diện tích với vụ khác trong ô)</span></label>
+                  )}
+                </>
+              );
+            })()}
+            <Collapsible inline title="＋ Nguồn giống, số lô, ngày gieo, ngày trồng (tùy chọn)"
+              summary={[cropInfo.source, cropInfo.lot, cropInfo.sowing, cropInfo.planting].filter(Boolean).join(' · ') || undefined}>
+              <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="seedextra" />
+            </Collapsible>
+          </fieldset>
 
           <PrepPicker kind={prodKind} mode={prepMode} areaId={prepArea} areas={areas.filter((a) => a.organization_id === active.id)} cycleAreaId={areaId}
             onArea={setPrepArea} onMode={(m) => {
@@ -394,12 +462,6 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           {rest && <p className="msg warn" role="status">{rest}</p>}
 
           {/* Các nhóm không bắt buộc, gom theo nội dung và thu gọn */}
-          <Collapsible inline title="＋ Giống, diện tích, số lượng (không bắt buộc)"
-            summary={[cropInfo.variety, cropInfo.area && `${cropInfo.area} ${cropInfo.unit}`, cropInfo.plants && `${cropInfo.plants} ${cropInfo.countUnit || defaultUnit}`].filter(Boolean).join(' · ') || undefined}>
-            <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts={isAnimal ? 'area' : 'scale'} />
-            <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="seed" />
-          </Collapsible>
-
           <Collapsible inline title="＋ Kế hoạch: sản lượng, ngân sách (không bắt buộc)"
             summary={[targetYield && `${targetYield} kg`, budget && `${budget} đ`].filter(Boolean).join(' · ') || undefined}>
             <div className="pair">

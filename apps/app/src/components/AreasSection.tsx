@@ -94,6 +94,9 @@ export function AreasSection() {
     const m2 = areaSizeM2(a, mine);
     const hasCycles = !isCell && cycles.some((c) => c.area_id === a.id);
     const showKind = isCell || kids.length === 0; // phân khu đã chia ô thì không có loại riêng
+    // chỗ đang dùng của ô: tổng diện tích các vụ đang chạy/chuẩn bị/tạm dừng (không tính trồng xen); phân khu đã chia ô thì xem ở từng ô
+    const live = (isCell || kids.length === 0) ? cycles.filter((c) => c.area_id === a.id && ['preparing', 'active', 'paused'].includes(c.status)) : [];
+    const usedM2 = live.filter((c) => !c.intercrop).reduce((t, c) => t + (c.planted_area_m2 ?? 0), 0);
     return (
       <tr key={a.id} className={a.is_active === false ? 'off' : ''}>
         <td style={isCell ? { paddingLeft: 24 } : undefined}>
@@ -101,6 +104,13 @@ export function AreasSection() {
           {!isCell && kids.length > 0 && <span className="sub">{kids.length} ô sản xuất</span>}
           {(showKind && a.kind) || a.housing ? <span className="sub">{[showKind && a.kind ? kindLabel(a.kind, a.kind_item) : '', a.housing ? `Kiểu ô: ${housingText(a.housing).toLowerCase()}` : ''].filter(Boolean).join(' · ')}</span> : null}
           {formatAddr({ address: a.location, ward: a.ward, province: a.province}) && <span className="sub">📍 {formatAddr({ address: a.location, ward: a.ward, province: a.province })}</span>}
+          {live.length > 0 && (
+            <span className="sub">
+              {live.length} vụ đang dùng{usedM2 > 0 ? ` ${fmtM2(usedM2)}` : ''}{m2 ? ` / ${fmtM2(m2)}` : ''}
+              {m2 ? <span className="progress" style={{ display: "block" }} role="progressbar" aria-label="Diện tích đã dùng" aria-valuenow={Math.min(100, Math.round((usedM2 / m2) * 100))} aria-valuemin={0} aria-valuemax={100}><i style={{ width: `${Math.min(100, (usedM2 / m2) * 100)}%` }} /></span> : null}
+              {usedM2 > (m2 ?? Infinity) ? <span className="pill warn"> vượt diện tích ô</span> : null}
+            </span>
+          )}
           {a.description && <span className="sub">{a.description}</span>}
           {a.is_active === false && <span className="sub">Đã dừng</span>}
           {canManage && !isCell && a.is_active !== false && (

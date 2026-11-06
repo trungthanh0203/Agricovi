@@ -32,8 +32,10 @@ export function formToCropInfo(f: CropInfoForm): { info: CropInfo } | { error: s
 }
 
 /** Các ô giống, diện tích, số cây, nguồn giống, ngày gieo/trồng của vụ (không bắt buộc). Dùng khi tạo vụ và sửa vụ. */
-export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, parts = 'all' }: { value: CropInfoForm; onChange: (v: CropInfoForm) => void; defaultUnit?: string; kind?: ProductKind; parts?: 'all' | 'scale' | 'area' | 'count' | 'seed' | 'manage' }) {
+export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, parts = 'all', required = false }: { required?: boolean; value: CropInfoForm; onChange: (v: CropInfoForm) => void; defaultUnit?: string; kind?: ProductKind; parts?: 'variety' | 'seedextra' | 'all' | 'scale' | 'area' | 'count' | 'seed' | 'manage' }) {
   const show = (p: 'scale' | 'seed' | 'manage') => parts === 'all' || parts === p;
+  const showVariety = show('seed') || parts === 'variety';
+  const showSeedExtra = show('seed') || parts === 'seedextra';
   const showArea = show('scale') || parts === 'area';
   const showCount = show('scale') || parts === 'count';
   const L = infoLabels(kind);
@@ -48,7 +50,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
     <>
       {showArea && <>
       <div className="pair">
-        <label>{L.area}<input value={value.area} inputMode="decimal" onChange={(e) => set({ area: e.target.value })} placeholder="Không bắt buộc" /></label>
+        <label>{L.area}<input value={value.area} inputMode="decimal" onChange={(e) => set({ area: e.target.value })} placeholder={required ? '' : 'Không bắt buộc'} /></label>
         <label>Đơn vị
           <select value={value.unit} onChange={(e) => {
             // đổi đơn vị thì quy đổi lại số đang nhập để diện tích thực không đổi
@@ -64,7 +66,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
       </>}
       {showCount && <>
       <div className="pair">
-        <label>Số {cnt}<input value={value.plants} inputMode="numeric" onChange={(e) => set({ plants: e.target.value })} placeholder="Không bắt buộc" /></label>
+        <label>Số {cnt}<input value={value.plants} inputMode="numeric" onChange={(e) => set({ plants: e.target.value })} placeholder={required ? '' : 'Không bắt buộc'} /></label>
         <label>Mật độ<input value={density !== null ? `${density.toLocaleString('vi-VN')} ${cnt}/1.000 m²` : ''} readOnly placeholder="Tự tính" /></label>
       </div>
       </>}
@@ -83,8 +85,8 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
       </div>
       </Collapsible>
       )}
-      {show('seed') && <>
-      <label>{L.variety}<AutoTextarea value={value.variety} maxLength={120} onChange={(v) => set({ variety: v })} placeholder={L.varietyHint} /></label>
+      {showVariety && <label>{L.variety}<AutoTextarea value={value.variety} maxLength={120} onChange={(v) => set({ variety: v })} placeholder={L.varietyHint} /></label>}
+      {showSeedExtra && <>
       <label>{L.source}<AutoTextarea value={value.source} maxLength={200} onChange={(v) => set({ source: v })} /></label>
       <label>{L.lot}<input value={value.lot} maxLength={80} onChange={(e) => set({ lot: e.target.value })} /></label>
       <div className="pair">
