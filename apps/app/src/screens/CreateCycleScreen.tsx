@@ -370,6 +370,11 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
             <input value={name} maxLength={120} onChange={(e) => { setNameTouched(true); setName(e.target.value); }} placeholder="Ví dụ: Dưa lưới vụ 1 nhà màng 2" />
           </label>
 
+          {!midOn && <label>
+            Ngày bắt đầu vụ
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          </label>}
+
           <fieldset>
             <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="variety" required />
             <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="scale" required />
@@ -417,11 +422,6 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
               <span><strong>Chưa bắt đầu (Chuẩn bị)</strong><small>Không tính vào số vụ của gói.</small></span>
             </label>
           </fieldset>}
-
-          {!midOn && <label>
-            Ngày bắt đầu vụ
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          </label>}
 
           {templateId && stages.length > 0 && (
             <fieldset>
