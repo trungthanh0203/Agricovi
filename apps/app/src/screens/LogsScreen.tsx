@@ -186,6 +186,7 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
             {l.note && <p>{l.note}</p>}
             <div className="badges">
               {l.version > 1 && !l.voided_at && <span className="pill">Đã chỉnh sửa</span>}
+              {(() => { const g = typeof l.data?.shared_group === 'string' ? l.data.shared_group : null; const n = g ? logs.filter((x) => x.id !== l.id && !x.voided_at && x.data?.shared_group === g).length : 0; return n > 0 ? <span className="pill">Làm chung với {n} vụ khác</span> : null; })()}
               {l.voided_at && <span className="pill err">Đã hủy</span>}
               <SyncBadge sync={s} />
             </div>

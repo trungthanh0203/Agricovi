@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { Collapsible } from './Collapsible';
+import { AllocateAreaExpense } from './AllocateAreaExpense';
 import { useAuth } from '../lib/auth';
 import { db, type ExpenseRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
@@ -44,6 +45,9 @@ export function ExpenseSection() {
   const canWrite = canPerm(active?.perms, 'expenses', 'edit');
   // chỉ vụ do chính cơ sở này sở hữu mới ghi được chi phí (quyền ghi theo chủ vụ)
   const ownCycles = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id), [cycles, active]);
+  const allAreas = useTable('areas');
+  // ô có ít nhất một vụ của cơ sở (để chia chi phí chung)
+  const sharedAreas = useMemo(() => allAreas.filter((a) => a.organization_id === active?.id && ownCycles.some((c) => c.area_id === a.id && c.status !== 'cancelled')), [allAreas, ownCycles, active]);
   const cycleLabel = (id: string | null) => {
     if (!id) return 'Chi phí chung của cơ sở';
     const c = cycles.find((x) => x.id === id);
@@ -99,7 +103,14 @@ export function ExpenseSection() {
   return (
     <>
       {canWrite ? (
-        <button className="primary" onClick={() => setMode({ kind: 'new' })} disabled={!online}>Ghi chi phí</button>
+        <>
+          <button className="primary" onClick={() => setMode({ kind: 'new' })} disabled={!online}>Ghi chi phí</button>
+          {online && sharedAreas.length > 0 && (
+            <Collapsible inline title="＋ Chia chi phí chung của ô cho các vụ" summary="điện, nước, công chung… theo diện tích">
+              <AllocateAreaExpense orgId={active.id} areas={sharedAreas} onDone={setMsg} />
+            </Collapsible>
+          )}
+        </>
       ) : (
         <p className="muted">Bạn chỉ được xem chi phí. Chủ cơ sở cấp quyền nhập liệu cho từng người.</p>
       )}

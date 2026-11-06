@@ -605,43 +605,75 @@ export interface NewLog {
  * trong MỘT giao dịch cục bộ (cùng có hoặc cùng không) và gửi theo đúng thứ tự: nhật ký trước, kho sau.
  */
 export async function logActivity(l: NewLog): Promise<string> {
-  const id = crypto.randomUUID();
+  return (await logActivities([l]))[0]!;
+}
+
+/**
+ * Ghi CHUNG một việc cho nhiều vụ cùng ô (hoặc một vụ): mỗi vụ một nhật ký riêng (kèm vật tư đã chia của vụ đó), tất cả lưu trên thiết bị trong
+ * MỘT giao dịch cục bộ (cùng có hoặc cùng không) rồi gửi lần lượt; dùng được khi mất mạng (D24).
+ */
+export async function logActivities(list: NewLog[]): Promise<string[]> {
   const source = navigator.onLine ? 'online' : 'offline';
-  const row = {
-    id,
-    organization_id: (l.cycle?.owner_org_id ?? l.organizationId)!, // có vụ thì máy chủ tự gán lại theo chủ vụ
-    cycle_id: l.cycle?.id ?? null,
-    area_id: l.cycle?.area_id ?? l.areaId ?? null,
-    work_type_id: l.workTypeId,
-    stage_id: l.stageId ?? null,
-    performed_at: l.performedAt,
-    data: l.data,
-    note: l.note.trim() || null,
-  };
-  const day = toLocalInput(new Date(l.performedAt)).slice(0, 10);
+  const ids = list.map(() => crypto.randomUUID());
   await db.transaction('rw', db.logs, db.outbox, async () => {
-    await db.logs.put({ ...row, version: 1, created_by: l.userId, received_at: new Date().toISOString() });
-    await enqueue('activity_logs', { ...row, source, created_by: l.userId, performed_by: l.userId });
-    for (const it of l.used?.items ?? []) {
-      await enqueue('inventory_transactions', {
-        id: crypto.randomUUID(),
-        organization_id: l.used!.organizationId,
-        location_id: l.used!.locationId,
-        material_id: it.materialId,
-        txn_type: 'issue',
-        quantity_delta: -it.quantity,
-        unit_cost: null, // giá vốn do máy chủ tính (bình quân gia quyền), người ghi việc không biết giá
-        txn_date: day,
+    for (let k = 0; k < list.length; k++) {
+      const l = list[k]!;
+      const id = ids[k]!;
+      const row = {
+        id,
+        organization_id: (l.cycle?.owner_org_id ?? l.organizationId)!, // có vụ thì máy chủ tự gán lại theo chủ vụ
         cycle_id: l.cycle?.id ?? null,
-        activity_log_id: id,
-        reason: it.reason?.trim() || null,
-        ...(it.lotId ? { lot_id: it.lotId } : {}),
-        source,
-      });
+        area_id: l.cycle?.area_id ?? l.areaId ?? null,
+        work_type_id: l.workTypeId,
+        stage_id: l.stageId ?? null,
+        performed_at: l.performedAt,
+        data: l.data,
+        note: l.note.trim() || null,
+      };
+      const day = toLocalInput(new Date(l.performedAt)).slice(0, 10);
+      await db.logs.put({ ...row, version: 1, created_by: l.userId, received_at: new Date().toISOString() });
+      await enqueue('activity_logs', { ...row, source, created_by: l.userId, performed_by: l.userId });
+      for (const it of l.used?.items ?? []) {
+        await enqueue('inventory_transactions', {
+          id: crypto.randomUUID(),
+          organization_id: l.used!.organizationId,
+          location_id: l.used!.locationId,
+          material_id: it.materialId,
+          txn_type: 'issue',
+          quantity_delta: -it.quantity,
+          unit_cost: null, // giá vốn do máy chủ tính (bình quân gia quyền), người ghi việc không biết giá
+          txn_date: day,
+          cycle_id: l.cycle?.id ?? null,
+          activity_log_id: id,
+          reason: it.reason?.trim() || null,
+          ...(it.lotId ? { lot_id: it.lotId } : {}),
+          source,
+        });
+      }
     }
   });
   void flushOutbox();
-  return id;
+  return ids;
+}
+
+/**
+ * Chia số lượng vật tư dùng chung cho các vụ: theo diện tích (mặc định) hoặc chia đều. Làm tròn 3 chữ số thập phân, phần dư dồn vào vụ có phần lớn nhất
+ * để tổng các phần đúng bằng số lượng nhập. Vụ nào chưa khai diện tích thì chia đều cả nhóm (trả `fallbackEqual = true` để báo người dùng).
+ */
+export function splitQuantity(total: number, areasM2: (number | null | undefined)[], mode: 'area' | 'equal'): { parts: number[]; fallbackEqual: boolean } {
+  const n = areasM2.length;
+  if (n === 0) return { parts: [], fallbackEqual: false };
+  const useArea = mode === 'area' && areasM2.every((a) => (a ?? 0) > 0);
+  const weights = useArea ? areasM2.map((a) => a as number) : areasM2.map(() => 1);
+  const sum = weights.reduce((t, w) => t + w, 0);
+  const unit = 1000;                                          // 3 chữ số thập phân
+  const totalU = Math.round(total * unit);
+  const raw = weights.map((w) => (totalU * w) / sum);
+  const parts = raw.map((r) => Math.floor(r));
+  let rest = totalU - parts.reduce((t, p) => t + p, 0);
+  const order = raw.map((r, i) => ({ i, frac: r - Math.floor(r) })).sort((a, b) => b.frac - a.frac || a.i - b.i);
+  for (const o of order) { if (rest <= 0) break; parts[o.i]!++; rest--; }
+  return { parts: parts.map((p) => p / unit), fallbackEqual: mode === 'area' && !useArea };
 }
 
 export interface LogEdit {

@@ -11,7 +11,7 @@ import { toLocalInput, useRecordSync } from '../lib/hooks';
 import { useAuth } from '../lib/auth';
 import { formatQty, parseNumber } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
-import { logActivity } from '../lib/production';
+import { logActivities, splitQuantity } from '../lib/production';
 import { hasRole } from '../lib/roles';
 import { useTable } from '../lib/tables';
 import { VoiceNote } from '../components/VoiceNote';
@@ -66,6 +66,14 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const [cycleId, setCycleId] = useState<string>(preset?.cycleId ?? '');
   const effectiveCycleId = cycleId || (options.find((c) => c.id === remembered)?.id ?? options[0]?.id ?? '');
   const cycle = options.find((c) => c.id === effectiveCycleId) ?? null;
+  // Làm chung nhiều vụ cùng ô: các vụ khác đang ghi việc được trong cùng ô với vụ đã chọn
+  const [coIds, setCoIds] = useState<string[]>([]);
+  const [splitMode, setSplitMode] = useState<'area' | 'equal'>('area');
+  const [savedCount, setSavedCount] = useState(1);
+  useEffect(() => { setCoIds([]); }, [effectiveCycleId]);
+  const coCandidates = cycle ? options.filter((c) => c.id !== cycle.id && c.area_id === cycle.area_id) : [];
+  const coCycles = coCandidates.filter((c) => coIds.includes(c.id));
+  const group = cycle ? [cycle, ...coCycles] : [];
 
   // Ghi cho khu vực không gắn vụ (cổng, kho, biogas, hố sát trùng...): mọi khu đang dùng của cơ sở
   const siteAreas = areas.filter((a) => a.organization_id === active?.id && a.is_active !== false && !areas.some((c) => c.parent_id === a.id)).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
@@ -93,6 +101,12 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const byDate = sameType.find((s) => s.planned_start && s.planned_end && dayOfWhen >= s.planned_start && dayOfWhen <= s.planned_end && s.status !== 'done');
   const autoStage = (byDate ?? sameType.find((s) => s.status === 'in_progress') ?? sameType.find((s) => s.status !== 'done'))?.id ?? null;
   const effStage = stageSel === undefined ? autoStage : stageSel;
+  const coStages = useLiveQuery(() => (coIds.length > 0 ? db.stages.where('cycle_id').anyOf(coIds).toArray() : []), [coIds.join(',')], []);
+  const autoStageFor = (cid: string): string | null => {
+    const same = coStages.filter((s) => s.cycle_id === cid && s.work_type_id === workTypeId).sort((a, b) => a.seq - b.seq);
+    const byD = same.find((s) => s.planned_start && s.planned_end && dayOfWhen >= s.planned_start && dayOfWhen <= s.planned_end && s.status !== 'done');
+    return (byD ?? same.find((s) => s.status === 'in_progress') ?? same.find((s) => s.status !== 'done'))?.id ?? null;
+  };
   const [values, setValues] = useState<Record<string, string>>({});
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -186,28 +200,38 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
       items.push({ materialId: row.materialId, quantity: q, lotId: row.lotId || undefined, reason: row.lotReason });
     }
     // Cảnh báo ghi trùng: cùng loại việc, cùng vụ (hoặc khu), cùng ngày đã có bản ghi (quy định: một việc, một người phụ trách ghi)
-    const sameDay = allLogs.filter((l) => !l.voided_at && l.work_type_id === workType.id && (areaMode ? l.area_id === siteArea?.id : l.cycle_id === cycle?.id) && toLocalInput(new Date(l.performed_at)).slice(0, 10) === when.slice(0, 10));
+    const groupIds = new Set(group.map((g) => g.id));
+    const sameDay = allLogs.filter((l) => !l.voided_at && l.work_type_id === workType.id && (areaMode ? l.area_id === siteArea?.id : groupIds.has(l.cycle_id ?? '')) && toLocalInput(new Date(l.performed_at)).slice(0, 10) === when.slice(0, 10));
     if (sameDay.length > 0) {
       const who = sameDay.map((l) => `${new Date(l.performed_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}${l.author_name ? ` (${l.author_name})` : ''}`).join(', ');
-      const msg = `Ngày này đã có ${sameDay.length} bản ghi "${workType.name}" của ${areaMode ? 'khu' : 'vụ'} này, ghi lúc ${who}.${items.length > 0 ? ' Ghi thêm thì vật tư bạn vừa chọn sẽ bị trừ kho thêm một lần nữa.' : ''}
+      const msg = `Ngày này đã có ${sameDay.length} bản ghi "${workType.name}" của ${areaMode ? 'khu' : group.length > 1 ? 'các vụ đã chọn' : 'vụ'} này, ghi lúc ${who}.${items.length > 0 ? ' Ghi thêm thì vật tư bạn vừa chọn sẽ bị trừ kho thêm một lần nữa.' : ''}
 
 Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn vẫn muốn ghi thêm?`;
       if (!window.confirm(msg)) return;
     }
     if (items.length > 0 && !effLocation) return setError('Chưa có kho để trừ vật tư. Hãy nhờ chủ cơ sở thêm kho ở mục "Vật tư & chi phí".');
     setError(null);
-    const id = await logActivity({
-      cycle: areaMode ? null : cycle,
+    // một việc làm chung cho nhiều vụ: mỗi vụ một nhật ký, vật tư chia theo diện tích (hoặc chia đều); các nhật ký cùng một nhóm
+    const shared = !areaMode && group.length > 1;
+    const groupId = shared ? crypto.randomUUID() : null;
+    const splits = items.map((it) => splitQuantity(it.quantity, group.map((g) => g.planted_area_m2), splitMode).parts);
+    const targets = areaMode ? [null] : group;
+    const ids = await logActivities(targets.map((g, k) => ({
+      cycle: g,
       areaId: areaMode ? siteArea!.id : undefined,
       organizationId: active?.id,
       workTypeId: workType.id,
       performedAt: new Date(when).toISOString(),
-      data,
+      data: groupId ? { ...data, shared_group: groupId } : data,
       note,
       userId: session.user.id,
-      stageId: areaMode ? null : effStage,
-      used: items.length > 0 && active ? { organizationId: active.id, locationId: effLocation, items } : undefined,
-    });
+      stageId: areaMode ? null : k === 0 ? effStage : autoStageFor(g!.id),
+      used: items.length > 0 && active
+        ? { organizationId: active.id, locationId: effLocation, items: items.map((it, m) => ({ ...it, quantity: shared ? splits[m]![k]! : it.quantity })).filter((it) => it.quantity > 0) }
+        : undefined,
+    })));
+    const id = ids[0]!;
+    setSavedCount(ids.length);
     if (cycle && !areaMode) { try { localStorage.setItem(LAST_CYCLE_KEY, cycle.id); } catch { /* bỏ qua */ } }
     if (items.length > 0) { try { localStorage.setItem(LAST_LOCATION_KEY, effLocation); } catch { /* bỏ qua */ } }
     setSavedItems(items);
@@ -216,6 +240,8 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
 
   function again() {
     setSavedId(null);
+    setSavedCount(1);
+    setCoIds([]);
     setSavedItems([]);
     setUsed([]);
     setUsedOpen(false);
@@ -233,7 +259,7 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
     const s = sync.get(savedId);
     return (
       <div className="auth">
-        <h1>Đã ghi</h1>
+        <h1>{savedCount > 1 ? `Đã ghi cho ${savedCount} vụ` : 'Đã ghi'}</h1>
         <p className="msg ok" role="status">
           {s && s.state !== 'synced' ? SYNC_STATE_LABEL_VI.local_only : SYNC_STATE_LABEL_VI.synced}
         </p>
@@ -326,6 +352,20 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
           </label>
           )}
 
+          {!areaMode && coCandidates.length > 0 && (
+            <fieldset className="roles">
+              <legend>Việc này làm chung cho vụ khác trong ô?</legend>
+              <p className="muted">Ô này đang chạy nhiều vụ. Việc làm cho cả ô (tưới, phun, dọn…) thì tích các vụ cùng làm: app ghi một nhật ký cho mỗi vụ.</p>
+              {coCandidates.map((c) => (
+                <label className="check" key={c.id}>
+                  <input type="checkbox" checked={coIds.includes(c.id)} onChange={(e) => setCoIds((s) => (e.target.checked ? [...s, c.id] : s.filter((x) => x !== c.id)))} />
+                  <span>{cycleTitle(c, cropName(c.crop_type_id))} · {c.planted_area_m2 ? `${Math.round(c.planted_area_m2).toLocaleString('vi-VN')} m²` : 'chưa khai diện tích'}</span>
+                </label>
+              ))}
+              {coIds.length < coCandidates.length && <button type="button" className="link" onClick={() => setCoIds(coCandidates.map((c) => c.id))}>Chọn tất cả vụ trong ô</button>}
+            </fieldset>
+          )}
+
           <div className="btnrow">
             {[[0, 'Hôm nay'], [1, 'Hôm qua'], [2, 'Hôm kia']].map(([back, label]) => (
               <button key={label as string} type="button" className={dayOfWhen === dayAgo(back as number) ? 'chip active' : 'chip'} onClick={() => { setWhen(`${dayAgo(back as number)}${back === 0 ? toLocalInput(new Date()).slice(10) : when.slice(10)}`); setEndWhen(''); setStageSel(undefined); }}>{label}</button>
@@ -380,6 +420,23 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
                     </div>
                   ))}
                   <button type="button" className="secondary" onClick={() => setUsed((s) => [...s, { materialId: '', qty: '' }])}>+ Thêm dòng</button>
+                  {!areaMode && group.length > 1 && (
+                    <>
+                      <p className="muted">Nhập <strong>tổng</strong> số lượng dùng cho {group.length} vụ; app chia cho từng vụ:</p>
+                      <label>Cách chia
+                        <select value={splitMode} onChange={(e) => setSplitMode(e.target.value as 'area' | 'equal')}>
+                          <option value="area">Theo diện tích của từng vụ</option>
+                          <option value="equal">Chia đều cho các vụ</option>
+                        </select>
+                      </label>
+                      {group.some((g) => !(g.planted_area_m2 && g.planted_area_m2 > 0)) && splitMode === 'area' && <p className="msg warn" role="status">Có vụ chưa khai diện tích nên sẽ chia đều. Khai diện tích ở Sửa vụ để chia theo diện tích.</p>}
+                      {used.filter((r) => r.materialId && parseNumber(r.qty)).map((r, m) => {
+                        const q = parseNumber(r.qty) as number;
+                        const parts = splitQuantity(q, group.map((g) => g.planted_area_m2), splitMode).parts;
+                        return <p className="muted" key={m}>{materials.find((x) => x.id === r.materialId)?.name}: {group.map((g, k) => `${cycleTitle(g, cropName(g.crop_type_id))} ${formatQty(parts[k] ?? 0)}`).join(' · ')} {unitOf(r.materialId)}</p>;
+                      })}
+                    </>
+                  )}
                   {locationsHere.length > 1 && (
                     <label>
                       Lấy từ kho

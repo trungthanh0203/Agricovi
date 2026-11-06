@@ -8,7 +8,7 @@ import type { MemberRole } from '@agriconnect/shared';
  * Báo cáo đã lưu chỉ lưu loại + bộ lọc, mở lại luôn chạy mới.
  */
 
-export type ReportType = 'expenses' | 'sales' | 'harvest' | 'stock' | 'labor' | 'cycles' | 'purchases' | 'customers' | 'procurement';
+export type ReportType = 'expenses' | 'sales' | 'harvest' | 'stock' | 'labor' | 'cycles' | 'purchases' | 'customers' | 'procurement' | 'areas';
 
 export interface ReportTypeInfo {
   id: ReportType;
@@ -43,6 +43,8 @@ export const REPORT_TYPES: ReportTypeInfo[] = [
   { id: 'procurement', label: 'Thu mua / bán cho HTX', hint: 'HTX: thu mua từ hộ (số phiếu, khối lượng, thành tiền, đã trả, còn phải trả). Hộ thuộc HTX: bán cho HTX (đã nhận, còn phải thu)',
     groups: [{ id: 'partner', label: 'Theo hộ / HTX' }, { id: 'crop', label: 'Theo sản phẩm' }, { id: 'month', label: 'Theo tháng' }],
     allowed: (p) => canPerm(p, 'coop') || canPerm(p, 'sales') },
+  { id: 'areas', label: 'Tổng hợp theo ô sản xuất', hint: 'Mỗi ô một dòng: số vụ, diện tích đã dùng, chi phí, doanh thu, lãi lỗ, lãi trên 1.000 m² (các vụ có thời gian chạy trong khoảng chọn)',
+    groups: [], allowed: (p) => canPerm(p, 'summary') },
   { id: 'cycles', label: 'Tổng hợp theo vụ', hint: 'Mỗi vụ một dòng: chi phí, thu hoạch, doanh thu, giá thành',
     groups: [], allowed: (p) => canPerm(p, 'summary') },
 ];
@@ -65,7 +67,10 @@ function needOnline(what: string) {
 
 export async function runReport(orgId: string, type: ReportType, params: ReportParams): Promise<ReportResult> {
   needOnline('xem báo cáo');
-  const { data, error } = type === 'procurement'
+  const rangeFrom = params.from ?? new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10), rangeTo = params.to ?? new Date().toISOString().slice(0, 10);
+  const { data, error } = type === 'areas'
+    ? await client().rpc('report_by_area', { p_org: orgId, p_from: rangeFrom, p_to: rangeTo })
+    : type === 'procurement'
     ? await client().rpc('get_procurement_report', {
       p_org: orgId, p_from: params.from ?? new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10), p_to: params.to ?? new Date().toISOString().slice(0, 10), p_group: params.group || 'partner',
     })
