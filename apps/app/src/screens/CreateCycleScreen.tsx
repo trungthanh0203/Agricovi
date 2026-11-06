@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
@@ -46,6 +46,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const { session } = useAuth();
   // bắt đầu giữa chừng (migration 0178)
   const [mid, setMid] = useState<MidstartValue>({ currentId: '', doneIds: [] });
+  const midBox = useRef<HTMLFieldSetElement>(null);
   const [midOn, setMidOn] = useState(false);   // false = "Từ đầu" (mặc định); true = vụ đang làm dở / nhận từ nơi khác
   const [midOrigin, setMidOrigin] = useState<'resume' | 'transfer'>('resume');
   const [midNote, setMidNote] = useState('');
@@ -154,6 +155,10 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     setTemplateId(list.length === 1 ? list[0]!.id : '');
   }
   useEffect(() => { if (!productId && productsWithTpl.length === 1) pickProduct(productsWithTpl[0]!.id); }, [productsWithTpl.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  // chọn "Đang làm dở": cuộn tới ĐẦU danh sách việc (không để trình duyệt trỏ xuống cuối biểu mẫu)
+  useEffect(() => {
+    if (midOn) window.setTimeout(() => midBox.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60);
+  }, [midOn]);
   useEffect(() => {
     setFree(null);
     if (!areaId || !online) return;
@@ -220,7 +225,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     if (!cropInfo.variety.trim()) return setError('Hãy nhập giống (chưa rõ thì ghi "Chưa rõ giống").');
     if (!cropInfoResult.info.areaM2) return setError('Hãy nhập diện tích của vụ (lớn hơn 0).');
     if (!cropInfoResult.info.plants) return setError(`Hãy nhập số lượng ${cropInfo.countUnit.trim() || defaultUnit} (lớn hơn 0).`);
-    if (midOn && !mid.currentId) return setError('Hãy chạm vào việc đang làm ở mục "Vụ đang ở đâu trong quy trình?", hoặc chọn "Từ đầu".');
+    if (midOn && !mid.currentId) return setError('Hãy chọn vào cột Đang làm của việc bắt đầu ở mục "Vụ đang ở đâu trong quy trình?", hoặc chọn "Từ đầu".');
     const midstart = Boolean(mid.currentId);
     const costN = midCost.trim() ? Number(midCost.replace(/[.,\s]/g, '')) : 0;
     if (midstart) {
@@ -370,11 +375,6 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
             <input value={name} maxLength={120} onChange={(e) => { setNameTouched(true); setName(e.target.value); }} placeholder="Ví dụ: Dưa lưới vụ 1 nhà màng 2" />
           </label>
 
-          {!midOn && <label>
-            Ngày bắt đầu vụ
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          </label>}
-
           <fieldset>
             <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="variety" required />
             <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="scale" required />
@@ -386,7 +386,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
                 <>
                   {over && (
                     <p className="msg warn" role="status">
-                      Vượt chỗ trống của ô khoảng {Math.round(toM2(a, cropInfo.unit) - fm!).toLocaleString('vi-VN')} m². Hãy giảm diện tích, hoặc tích "Trồng xen" nếu trồng chung diện tích với vụ khác
+                      Vượt chỗ trống của ô khoảng {Math.round(toM2(a, cropInfo.unit) - fm!).toLocaleString('vi-VN')} m². Hãy giảm diện tích, hoặc tích "Dùng chung diện tích với vụ khác trong ô" nếu trồng chung diện tích
                       {active && isOwner(active.roles) ? ', hoặc xác nhận bên dưới nếu diện tích ô khai chưa chính xác.' : '. Chỉ chủ cơ sở xác nhận được việc tạo vượt.'}
                     </p>
                   )}
@@ -394,12 +394,12 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
                     <label className="check"><input type="checkbox" checked={confirmOver} onChange={(e) => setConfirmOver(e.target.checked)} /> <span>Tôi xác nhận tạo vụ dù vượt diện tích còn trống</span></label>
                   )}
                   {free && free.capacity_m2 != null && (
-                    <label className="check"><input type="checkbox" checked={intercrop} onChange={(e) => setIntercrop(e.target.checked)} /> <span>Trồng xen (dùng chung diện tích với vụ khác trong ô)</span></label>
+                    <label className="check"><input type="checkbox" checked={intercrop} onChange={(e) => setIntercrop(e.target.checked)} /> <span>Dùng chung diện tích với vụ khác trong ô</span></label>
                   )}
                 </>
               );
             })()}
-            <Collapsible inline title="＋ Nguồn giống, số lô, ngày gieo, ngày trồng (tùy chọn)"
+            <Collapsible inline title="＋ Nguồn giống, lô nhập"
               summary={[cropInfo.source, cropInfo.lot, cropInfo.sowing, cropInfo.planting].filter(Boolean).join(' · ') || undefined}>
               <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="seedextra" />
             </Collapsible>
@@ -424,7 +424,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           </fieldset>}
 
           {templateId && stages.length > 0 && (
-            <fieldset>
+            <fieldset ref={midBox}>
               <legend>Vụ đang ở đâu trong quy trình?</legend>
               <label className={!midOn ? 'choice selected' : 'choice'}>
                 <input type="radio" name="midon" checked={!midOn} onChange={() => { setMidOn(false); setMid({ currentId: '', doneIds: [] }); }} />
@@ -439,7 +439,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
                   <MidstartPicker
                     items={[...stages].sort((a, b) => a.seq - b.seq).map((s) => ({ id: s.id, name: s.name, phase: phases.find((p) => p.id === s.phase_id)?.name ?? null }))}
                     value={mid} onChange={setMid} />
-                  {!mid.currentId && <p className="msg warn" role="status">Hãy chạm vào việc đang làm (hoặc tên một công đoạn) ở bảng trên.</p>}
+                  {!mid.currentId && <p className="msg warn" role="status">Hãy chọn vào cột Đang làm của việc bắt đầu (hoặc bấm tên một công đoạn) ở bảng trên.</p>}
                   <label>Cách bắt đầu
                     <select value={midOrigin} onChange={(e) => setMidOrigin(e.target.value as 'resume' | 'transfer')}>
                       <option value="resume">Vụ của tôi đã chạy trước khi dùng app</option>
@@ -485,6 +485,11 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           </Collapsible>
 
           <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="manage" />
+
+          {!midOn && <label>
+            Ngày bắt đầu vụ
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          </label>}
 
           {plan.length > 0 && (
             <div className="card slim">

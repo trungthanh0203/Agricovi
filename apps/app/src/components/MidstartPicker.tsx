@@ -22,7 +22,7 @@ export function MidstartPicker({ items, value, onChange }: { items: MidstartItem
   }
   return (
     <div className="midstart">
-      <p className="muted">Chạm vào <strong>việc đang làm</strong>. Các việc trước đó tự được đánh dấu "đã làm trước khi dùng app"; bỏ tích việc nào thực tế chưa làm.</p>
+      <p className="muted">Chọn vào cột <strong>Đang làm</strong> của việc bắt đầu. Các việc trước đó tự được đánh dấu "đã làm trước khi dùng app"; bỏ tích việc nào thực tế chưa làm.</p>
       <table className="grid">
         <thead><tr><th>Việc</th><th>Đang làm</th><th>Đã làm trước</th></tr></thead>
         <tbody>
