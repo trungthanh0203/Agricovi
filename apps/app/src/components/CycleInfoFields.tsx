@@ -32,7 +32,7 @@ export function formToCropInfo(f: CropInfoForm): { info: CropInfo } | { error: s
 }
 
 /** Các ô giống, diện tích, số cây, nguồn giống, ngày gieo/trồng của vụ (không bắt buộc). Dùng khi tạo vụ và sửa vụ. */
-export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, parts = 'all', required = false }: { required?: boolean; value: CropInfoForm; onChange: (v: CropInfoForm) => void; defaultUnit?: string; kind?: ProductKind; parts?: 'variety' | 'seedextra' | 'all' | 'scale' | 'area' | 'count' | 'seed' | 'manage' }) {
+export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, parts = 'all', required = false }: { required?: boolean; value: CropInfoForm; onChange: (v: CropInfoForm) => void; defaultUnit?: string; kind?: ProductKind; parts?: 'variety' | 'seedextra' | 'manageflat' | 'all' | 'scale' | 'area' | 'count' | 'seed' | 'manage' }) {
   const show = (p: 'scale' | 'seed' | 'manage') => parts === 'all' || parts === p;
   const showVariety = show('seed') || parts === 'variety';
   const showSeedExtra = show('seed') || parts === 'seedextra';
@@ -85,6 +85,19 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
       </div>
       </Collapsible>
       )}
+      {parts === 'manageflat' && <>
+      <div className="pair">
+        <label>Mã vụ / mã lô<input value={value.code} maxLength={40} onChange={(e) => set({ code: e.target.value })} placeholder="Ví dụ: LO-THIT-10" /></label>
+        <label>Đơn vị đếm
+          <input value={value.countUnit} maxLength={20} list="count-units" onChange={(e) => set({ countUnit: e.target.value })} placeholder={defaultUnit} />
+          <datalist id="count-units"><option value="cây" /><option value="con" /><option value="quả" /><option value="cặp" /></datalist>
+        </label>
+      </div>
+      <div className="pair">
+        <label>Cán bộ kỹ thuật / thú y phụ trách<input value={value.supName} maxLength={120} onChange={(e) => set({ supName: e.target.value })} placeholder="Không bắt buộc" /></label>
+        <label>Điện thoại<input value={value.supPhone} maxLength={30} inputMode="tel" onChange={(e) => set({ supPhone: e.target.value })} /></label>
+      </div>
+      </>}
       {showVariety && <label>{L.variety}<AutoTextarea value={value.variety} maxLength={120} onChange={(v) => set({ variety: v })} placeholder={L.varietyHint} /></label>}
       {showSeedExtra && <>
       <label>{L.source}<AutoTextarea value={value.source} maxLength={200} onChange={(v) => set({ source: v })} /></label>

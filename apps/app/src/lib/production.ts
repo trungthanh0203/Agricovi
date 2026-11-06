@@ -385,6 +385,15 @@ export async function createCycleMidstart(c: NewCycle, m: MidstartInput): Promis
   return id;
 }
 
+/** Đổi quy trình mẫu của vụ chưa bắt đầu (migration 0181): tạo lại việc và mốc theo ngày bắt đầu hiện tại */
+export async function changeCycleTemplate(cycleId: string, templateId: string): Promise<void> {
+  requireOnline('đổi quy trình của vụ');
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { error } = await supabase.rpc('change_cycle_template', { p_cycle: cycleId, p_template: templateId });
+  if (error) throw new Error(error.message);
+  await refreshCycle(cycleId);
+}
+
 /** Vụ đang sản xuất mà thực tế đang ở giữa: chuyển tới một việc; các việc đã chọn (chưa có nhật ký) thành "làm trước khi dùng app" */
 export async function jumpCycleToStage(cycleId: string, stageId: string, doneStageIds: string[], date: string | null, note: string): Promise<void> {
   requireOnline('chuyển việc của vụ');

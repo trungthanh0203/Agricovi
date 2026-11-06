@@ -30,7 +30,8 @@ import { canManageProduction, isOwner } from '../lib/roles';
 import { PublishedCycleBar } from '../components/PublishedCycleBar';
 import { prepLabel, prepLoggable, predecessorOf } from '../lib/prep';
 import { PrepPicker } from '../components/PrepPicker';
-import { jumpCycleToStage, setCyclePrep } from '../lib/production';
+import { changeCycleTemplate, jumpCycleToStage, setCyclePrep } from '../lib/production';
+import { ChangeTemplate } from '../components/ChangeTemplate';
 import { JumpToStage } from '../components/JumpToStage';
 import type { AreaRow } from '../lib/db';
 import { areaPath } from '../lib/areas';
@@ -237,6 +238,12 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
         />
       ) : (
         <>
+          {canEditStages && online && stages.length > 0 && stages.every((s) => s.status === 'pending' && s.source !== 'pre_app') && logs.every((l) => l.voided_at) && harvestCount === 0 && cycle.owner_org_id === active?.id && (
+            <Collapsible inline title="＋ Đổi quy trình" summary={cycle.template_name ?? undefined}>
+              <ChangeTemplate ownerOrgId={cycle.owner_org_id} cropTypeId={cycle.crop_type_id} currentTemplateId={cycle.template_id} busy={busy}
+                onChange={(tid) => run(() => changeCycleTemplate(cycleId, tid))} />
+            </Collapsible>
+          )}
           {canManage && isActive && online && stages.some((s) => s.status === 'pending') && !stages.some((s) => s.status === 'in_progress') && (
             <Collapsible inline title="＋ Vụ đang ở đâu? Chuyển tới một việc" summary="cho vụ chạy dở trước khi dùng app">
               <JumpToStage stages={stages} loggedStageIds={new Set(logs.filter((l) => !l.voided_at && l.stage_id).map((l) => l.stage_id as string))} busy={busy}
