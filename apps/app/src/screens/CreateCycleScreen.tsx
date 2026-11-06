@@ -257,7 +257,7 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
   const nonBatch = mode !== 'batch';
   const herdTotal = groups.reduce((n, g) => n + (Number(g.count.replace(/[.,\s]/g, '')) || 0), 0);
   const periodDefault = mode === 'herd' ? `Quý ${Math.floor((new Date(startDate || today).getMonth()) / 3) + 1}/${(startDate || today).slice(0, 4)}` : `Mùa ${(startDate || today).slice(0, 4)}`;
-  const nameWord = mode === 'perennial' ? 'vườn cây' : mode === 'herd' ? 'đàn' : 'vụ';
+  const nameWord = 'vụ';   // nhãn thống nhất "Tên vụ" cho mọi kiểu (vườn cây, đàn cũng là một vụ dài hạn)
   const kindAnimal = prodKind === 'livestock';
 
   // Trạng thái do ngày bắt đầu quyết định (không còn câu hỏi riêng): đang làm dở = đang sản xuất; ngày sau hôm nay, chuẩn bị ở khu riêng hoặc chờ vụ khác = chuẩn bị
@@ -591,8 +591,8 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                 </label>
               )}
 
-              <Collapsible inline title="＋ Nâng cao: chuẩn bị ở khu riêng, chờ vụ khác"
-                summary={[prepMode === 'separate' ? prepLabel('separate', prodKind) : '', followsId ? 'chờ vụ khác' : ''].filter(Boolean).join(' · ') || 'không dùng'}>
+              <div>
+                <strong>Nâng cao: chuẩn bị ở khu riêng, chờ vụ khác</strong>
                 <PrepPicker kind={prodKind} mode={prepMode} areaId={prepArea} areas={areas.filter((a) => a.organization_id === active.id)} cycleAreaId={areaId}
                   onArea={setPrepArea} onMode={(m) => { setPrepMode(m); if (m !== 'whole') { setMidOn(false); setMid({ currentId: '', doneIds: [] }); } }} />
                 {sameArea.length > 0 && (
@@ -605,7 +605,7 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                     <small>Vụ này lưu ở trạng thái Chuẩn bị; khi vụ đó kết thúc, app nhắc bạn chuyển sang sản xuất.</small>
                   </label>
                 )}
-              </Collapsible>
+              </div>
 
               <Collapsible inline title="＋ Thông tin thêm (làm sau cũng được)"
                 summary={[cropInfo.source, cropInfo.lot, cropInfo.sowing, cropInfo.code, targetYield && `${targetYield} kg`, budget && `${budget} đ`].filter(Boolean).join(' · ') || undefined}>
