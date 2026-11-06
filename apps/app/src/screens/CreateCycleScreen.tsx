@@ -46,6 +46,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
   const { session } = useAuth();
   // bắt đầu giữa chừng (migration 0178)
   const [mid, setMid] = useState<MidstartValue>({ currentId: '', doneIds: [] });
+  const [midOn, setMidOn] = useState(false);   // false = "Từ đầu" (mặc định); true = vụ đang làm dở / nhận từ nơi khác
   const [midOrigin, setMidOrigin] = useState<'resume' | 'transfer'>('resume');
   const [midNote, setMidNote] = useState('');
   const [midCurStart, setMidCurStart] = useState(todayLocal());
@@ -136,6 +137,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
 
   useEffect(() => {
     setMid({ currentId: '', doneIds: [] });
+    setMidOn(false);
     if (!templateId || !navigator.onLine) { setStages([]); setPhases([]); return; }
     let alive = true;
     loadTemplate(templateId).then((r) => { if (alive) { setStages(r.stages); setPhases(r.phases); } }).catch(() => { if (alive) { setStages([]); setPhases([]); } });
@@ -218,6 +220,7 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
     if (!cropInfo.variety.trim()) return setError('Hãy nhập giống (chưa rõ thì ghi "Chưa rõ giống").');
     if (!cropInfoResult.info.areaM2) return setError('Hãy nhập diện tích của vụ (lớn hơn 0).');
     if (!cropInfoResult.info.plants) return setError(`Hãy nhập số lượng ${cropInfo.countUnit.trim() || defaultUnit} (lớn hơn 0).`);
+    if (midOn && !mid.currentId) return setError('Hãy chạm vào việc đang làm ở mục "Vụ đang ở đâu trong quy trình?", hoặc chọn "Từ đầu".');
     const midstart = Boolean(mid.currentId);
     const costN = midCost.trim() ? Number(midCost.replace(/[.,\s]/g, '')) : 0;
     if (midstart) {
@@ -368,7 +371,6 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
           </label>
 
           <fieldset>
-            <legend>Giống, diện tích, số lượng</legend>
             <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="variety" required />
             <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="scale" required />
             {(() => {
@@ -398,13 +400,13 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
             </Collapsible>
           </fieldset>
 
-          <PrepPicker kind={prodKind} mode={prepMode} areaId={prepArea} areas={areas.filter((a) => a.organization_id === active.id)} cycleAreaId={areaId}
+          {!midOn && <PrepPicker kind={prodKind} mode={prepMode} areaId={prepArea} areas={areas.filter((a) => a.organization_id === active.id)} cycleAreaId={areaId}
             onArea={setPrepArea} onMode={(m) => {
               setPrepMode(m);
               if (m !== 'whole' && !followsId && running.length > 0) setFollowsId(running[0]!.id); // gợi ý sẵn: nối tiếp sau vụ đang chạy ở khu này
-            }} />
+            }} />}
 
-          {!prepEarly && <fieldset>
+          {!prepEarly && !midOn && <fieldset>
             <legend>Trạng thái</legend>
             <label className={startNow ? 'choice selected' : 'choice'}>
               <input type="radio" name="start" checked={startNow} onChange={() => setStartNow(true)} />
@@ -416,20 +418,28 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
             </label>
           </fieldset>}
 
-          <label>
-            Ngày bắt đầu
+          {!midOn && <label>
+            Ngày bắt đầu vụ
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            {mid.currentId && <small>Với vụ đang chạy dở: ngày vụ bắt đầu THẬT (có thể trong quá khứ), dùng để tính tuổi và ngày thu hoạch dự kiến.</small>}
-          </label>
+          </label>}
 
-          {templateId && startNow && !prepEarly && stages.length > 1 && (
-            <Collapsible inline title="＋ Vụ đang chạy dở hoặc nhận từ nơi khác (bắt đầu từ giữa chừng)"
-              summary={mid.currentId ? `Đang ở: ${stages.find((s) => s.id === mid.currentId)?.name ?? ''}` : 'không bắt buộc'}>
-              <MidstartPicker
-                items={[...stages].sort((a, b) => a.seq - b.seq).map((s) => ({ id: s.id, name: s.name, phase: phases.find((p) => p.id === s.phase_id)?.name ?? null }))}
-                value={mid} onChange={setMid} />
-              {mid.currentId && (
+          {templateId && stages.length > 0 && (
+            <fieldset>
+              <legend>Vụ đang ở đâu trong quy trình?</legend>
+              <label className={!midOn ? 'choice selected' : 'choice'}>
+                <input type="radio" name="midon" checked={!midOn} onChange={() => { setMidOn(false); setMid({ currentId: '', doneIds: [] }); }} />
+                <span><strong>Từ đầu</strong><small>Vụ mới bắt đầu, làm từ việc đầu tiên của quy trình.</small></span>
+              </label>
+              <label className={midOn ? 'choice selected' : 'choice'}>
+                <input type="radio" name="midon" checked={midOn} onChange={() => { setMidOn(true); setStartNow(true); setPrepMode('whole'); setPrepArea(''); }} />
+                <span><strong>Đang làm dở hoặc nhận từ nơi khác</strong><small>Chọn việc đang làm; các việc trước đó ghi là "làm trước khi dùng app".</small></span>
+              </label>
+              {midOn && (
                 <>
+                  <MidstartPicker
+                    items={[...stages].sort((a, b) => a.seq - b.seq).map((s) => ({ id: s.id, name: s.name, phase: phases.find((p) => p.id === s.phase_id)?.name ?? null }))}
+                    value={mid} onChange={setMid} />
+                  {!mid.currentId && <p className="msg warn" role="status">Hãy chạm vào việc đang làm (hoặc tên một công đoạn) ở bảng trên.</p>}
                   <label>Cách bắt đầu
                     <select value={midOrigin} onChange={(e) => setMidOrigin(e.target.value as 'resume' | 'transfer')}>
                       <option value="resume">Vụ của tôi đã chạy trước khi dùng app</option>
@@ -437,15 +447,19 @@ export function CreateCycleScreen({ onDone, onCancel }: { onDone: (cycleId: stri
                     </select>
                   </label>
                   <label>Ghi chú nguồn (không bắt buộc)<input value={midNote} maxLength={300} onChange={(e) => setMidNote(e.target.value)} placeholder="Ví dụ: Nhận cây con 25 ngày tuổi từ vườn ươm ông Ba" /></label>
-                  <label>Việc đang làm bắt đầu ngày<input type="date" value={midCurStart} max={todayLocal()} onChange={(e) => setMidCurStart(e.target.value)} /></label>
+                  <div className="pair">
+                    <label>Ngày vụ bắt đầu thật<input type="date" value={startDate} max={todayLocal()} onChange={(e) => setStartDate(e.target.value)} /></label>
+                    <label>Việc đang làm bắt đầu ngày<input type="date" value={midCurStart} min={startDate || undefined} max={todayLocal()} onChange={(e) => setMidCurStart(e.target.value)} /></label>
+                  </div>
+                  <small className="muted">Ngày vụ bắt đầu thật có thể ở quá khứ, dùng để tính tuổi và ngày thu hoạch dự kiến. Lịch các việc sau tính từ ngày việc đang làm bắt đầu.</small>
                   <div className="pair">
                     <label>Chi phí đã bỏ ra trước đó (ước tính, đồng)<input value={midCost} inputMode="numeric" onChange={(e) => setMidCost(e.target.value)} placeholder="Không bắt buộc" /></label>
                     <label>Cách ước tính<input value={midCostNote} maxLength={200} onChange={(e) => setMidCostNote(e.target.value)} placeholder="Ví dụ: giống + công làm đất" /></label>
                   </div>
-                  <p className="muted">Các việc đã làm trước đó được ghi là "làm trước khi dùng app", không cần nhật ký. Chi phí ước tính giúp giá thành không bị thấp giả; số lượng đã nhập (con, cây) nhập ở mục Giống, diện tích, số lượng.</p>
+                  <p className="muted">Chi phí ước tính giúp giá thành không bị thấp giả. Số lượng (cây, con) đã nhập ở mục diện tích, số lượng phía trên.</p>
                 </>
               )}
-            </Collapsible>
+            </fieldset>
           )}
 
           {sameArea.length > 0 && (

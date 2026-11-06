@@ -14,7 +14,6 @@ export function PrepPicker({ kind, mode, onMode, areaId, onArea, areas, cycleAre
   const candidates = orderedAreas(areas.filter((a) => a.is_active !== false && a.id !== cycleAreaId));
   return (
     <fieldset>
-      <legend>Công đoạn chuẩn bị</legend>
       {choices.map((c) => (
         <label key={c.code} className={mode === c.code ? 'choice selected' : 'choice'}>
           <input type="radio" name={name} checked={mode === c.code} onChange={() => onMode(c.code)} />
@@ -23,7 +22,7 @@ export function PrepPicker({ kind, mode, onMode, areaId, onArea, areas, cycleAre
       ))}
       {mode === 'separate' && (
         <label>
-          Nơi chuẩn bị
+          Khu chuẩn bị riêng
           <select value={areaId} onChange={(e) => onArea(e.target.value)}>
             <option value="">— Chọn nơi chuẩn bị —</option>
             {candidates.map((a) => <option key={a.id} value={a.id}>{areaPath(a.id, areas)}</option>)}

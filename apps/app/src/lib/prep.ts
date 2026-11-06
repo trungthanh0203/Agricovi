@@ -13,9 +13,9 @@ export const PREP_LOG_DAYS = 45;
 
 export function prepChoices(_kind?: string | null): { code: PrepMode; label: string; hint: string }[] {
   return [
-    { code: 'whole', label: 'Chuẩn bị trong toàn bộ ô sản xuất', hint: 'Như hiện nay: bắt đầu sản xuất ngay, hoặc chờ ở trạng thái Chuẩn bị (lúc này chưa ghi việc được).' },
+    { code: 'whole', label: 'Chuẩn bị trong toàn diện tích của vụ', hint: 'Như hiện nay: bắt đầu sản xuất ngay, hoặc chờ ở trạng thái Chuẩn bị (lúc này chưa ghi việc được).' },
     { code: 'part', label: 'Chuẩn bị trong 1 phần ô sản xuất', hint: 'Phần còn lại của ô vẫn chạy vụ khác. Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được.' },
-    { code: 'separate', label: 'Nơi chuẩn bị riêng', hint: 'Chuẩn bị ở một nơi khác (vườn ươm, nhà sơ chế, ô khác…). Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được.' },
+    { code: 'separate', label: 'Chuẩn bị trong khu riêng', hint: 'Chuẩn bị ở một nơi khác (vườn ươm, nhà sơ chế, ô khác…). Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được.' },
   ];
 }
 
