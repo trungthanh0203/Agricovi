@@ -46,7 +46,7 @@ function loadDraft(orgId: string | undefined): Draft | null {
   try {
     const raw = localStorage.getItem(draftKey(orgId));
     const d = raw ? (JSON.parse(raw) as Draft) : null;
-    return d && d.savedAt && Date.now() - d.savedAt < 7 * 864e5 ? d : null;   // bản nháp quá 7 ngày thì bỏ
+    return d && d.savedAt && Date.now() - d.savedAt < 60 * 60 * 1000 ? d : null;   // bản nháp chỉ giữ trong 1 giờ
   } catch { return null; }
 }
 

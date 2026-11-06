@@ -1,6 +1,6 @@
 # Phương án chốt: Tạo vụ 2 bước nhập + 1 bước xem lại, chuẩn bị chỗ cho cây lâu năm và đàn liên tục
 
-Trạng thái: **ĐÃ LÀM** (12/11/2026, chủ sản phẩm duyệt; chưa `db push` migration 0181 cho phần đổi quy trình): màn Tạo vụ 3 bước, trạng thái do ngày quyết định, nâng cao thu gọn, báo thiếu ô/quy trình kèm nút đi tới và lưu nháp 7 ngày, bỏ "Nhận về từ nơi khác", "Đổi quy trình" ở Chi tiết vụ. Hàng "Kiểu" và các ô vườn cây / đàn sẽ bật khi làm kế hoạch cây lâu năm / đàn liên tục. Thay thế mục 4–7 của `PLAN_TAO_VU_DON_GIAN.md` theo các điều chỉnh của chủ sản phẩm.
+Trạng thái: **ĐÃ LÀM** (12/11/2026, chủ sản phẩm duyệt; chưa `db push` migration 0181 cho phần đổi quy trình): màn Tạo vụ 3 bước, trạng thái do ngày quyết định, nâng cao thu gọn, báo thiếu ô/quy trình kèm nút đi tới và lưu nháp 1 giờ, bỏ "Nhận về từ nơi khác", "Đổi quy trình" ở Chi tiết vụ. Hàng "Kiểu" và các ô vườn cây / đàn sẽ bật khi làm kế hoạch cây lâu năm / đàn liên tục. Thay thế mục 4–7 của `PLAN_TAO_VU_DON_GIAN.md` theo các điều chỉnh của chủ sản phẩm.
 
 ## 1. Điều chỉnh đã nhận
 - Tạo vụ chỉ **2 bước nhập** (mọi thông tin nằm trong 2 bước này) + **Bước 3: Xem lại và tạo vụ**.
