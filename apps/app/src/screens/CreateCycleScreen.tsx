@@ -24,6 +24,7 @@ import { PrepPicker } from '../components/PrepPicker';
 import { prepLabel, type PrepMode } from '../lib/prep';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import type { TabId } from '../lib/tabs';
+import { DEFAULT_HERD_GROUPS, MODE_LABEL, suggestMode, type CycleMode } from '../lib/herd';
 import { areaPath, cycleAreas } from '../lib/areas';
 import { cycleTitle } from '../lib/cycles';
 
@@ -40,6 +41,7 @@ interface Draft {
   step: Step; productId: string; templateId: string; areaId: string; name: string; nameTouched: boolean; cropInfo: CropInfoForm; startDate: string;
   targetYield: string; budget: string; midOn: boolean; mid: MidstartValue; midNote: string; midCurStart: string; midCost: string; midCostNote: string;
   followsId: string; prepMode: PrepMode; prepArea: string; intercrop: boolean;
+  mode: CycleMode; modeTouched: boolean; periodLabel: string; groups: { group: string; count: string }[]; maturity: string; amort: string;
 }
 function loadDraft(orgId: string | undefined): Draft | null {
   if (!orgId) return null;
@@ -96,6 +98,13 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
   const [intercrop, setIntercrop] = useState(draft.current?.intercrop ?? false);
   const [confirmOver, setConfirmOver] = useState(false);          // chủ cơ sở xác nhận tạo vụ vượt chỗ trống
   const topRef = useRef<HTMLDivElement>(null);
+  // kiểu vụ (migration 0182): theo vụ / vườn cây lâu năm / đàn nuôi liên tục
+  const [mode, setMode] = useState<CycleMode>(draft.current?.mode ?? 'batch');
+  const [modeTouched, setModeTouched] = useState(draft.current?.modeTouched ?? false);
+  const [periodLabel, setPeriodLabel] = useState(draft.current?.periodLabel ?? '');
+  const [groups, setGroups] = useState<{ group: string; count: string }[]>(draft.current?.groups ?? DEFAULT_HERD_GROUPS.map((g) => ({ group: g, count: '' })));
+  const [maturity, setMaturity] = useState(draft.current?.maturity ?? '3');
+  const [amort, setAmort] = useState(draft.current?.amort ?? '15');
 
   // Phân khu hợp loại với sản phẩm: cùng loại, hoặc phân khu/sản phẩm loại "Khác". Phân khu khác loại vẫn chọn được nhưng có cảnh báo.
   const baseKind = (k?: string | null) => (k === 'growing' || !k ? 'crop' : k);
@@ -186,6 +195,9 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
   const templatesFor = (templates ?? []).filter((t) => t.crop_type_id === productId);
   function pickProduct(id: string) {
     setProductId(id);
+    const p = cropTypes.find((c) => c.id === id);
+    if (!modeTouched) setMode(p ? suggestMode(p.name, p.kind) : 'batch');
+    else if ((mode === 'perennial' && p?.kind !== 'crop') || (mode === 'herd' && p?.kind !== 'livestock')) setMode('batch');
     const list = (templates ?? []).filter((t) => t.crop_type_id === id);
     setTemplateId(list.length === 1 ? list[0]!.id : '');
   }
@@ -218,9 +230,9 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
   // lưu nháp mỗi khi người dùng đổi lựa chọn
   useEffect(() => {
     if (!active) return;
-    const d: Draft = { savedAt: Date.now(), step, productId, templateId, areaId, name, nameTouched, cropInfo, startDate, targetYield, budget, midOn, mid, midNote, midCurStart, midCost, midCostNote, followsId, prepMode, prepArea, intercrop };
+    const d: Draft = { savedAt: Date.now(), step, productId, templateId, areaId, name, nameTouched, cropInfo, startDate, targetYield, budget, midOn, mid, midNote, midCurStart, midCost, midCostNote, followsId, prepMode, prepArea, intercrop, mode, modeTouched, periodLabel, groups, maturity, amort };
     try { localStorage.setItem(draftKey(active.id), JSON.stringify(d)); } catch { /* bỏ qua */ }
-  }, [active, step, productId, templateId, areaId, name, nameTouched, cropInfo, startDate, targetYield, budget, midOn, mid, midNote, midCurStart, midCost, midCostNote, followsId, prepMode, prepArea, intercrop]);
+  }, [active, step, productId, templateId, areaId, name, nameTouched, cropInfo, startDate, targetYield, budget, midOn, mid, midNote, midCurStart, midCost, midCostNote, followsId, prepMode, prepArea, intercrop, mode, modeTouched, periodLabel, groups, maturity, amort]);
   const clearDraft = () => { if (active) try { localStorage.removeItem(draftKey(active.id)); } catch { /* bỏ qua */ } };
 
   if (!active) return null;
@@ -242,6 +254,11 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
   const defaultUnit = defaultCountUnit(prodKind);
   const total = totalDays(stages);
   const today = todayLocal();
+  const nonBatch = mode !== 'batch';
+  const herdTotal = groups.reduce((n, g) => n + (Number(g.count.replace(/[.,\s]/g, '')) || 0), 0);
+  const periodDefault = mode === 'herd' ? `Quý ${Math.floor((new Date(startDate || today).getMonth()) / 3) + 1}/${(startDate || today).slice(0, 4)}` : `Mùa ${(startDate || today).slice(0, 4)}`;
+  const nameWord = mode === 'perennial' ? 'vườn cây' : mode === 'herd' ? 'đàn' : 'vụ';
+  const kindAnimal = prodKind === 'livestock';
 
   // Trạng thái do ngày bắt đầu quyết định (không còn câu hỏi riêng): đang làm dở = đang sản xuất; ngày sau hôm nay, chuẩn bị ở khu riêng hoặc chờ vụ khác = chuẩn bị
   const futureStart = !midOn && startDate > today;
@@ -259,12 +276,17 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
     return null;
   }
   function checkStep2(): string | null {
-    if (name.trim().length < 2) return 'Hãy nhập tên vụ (ít nhất 2 ký tự).';
+    if (name.trim().length < 2) return `Hãy nhập tên ${nameWord} (ít nhất 2 ký tự).`;
     if (!cropInfo.variety.trim()) return 'Hãy nhập giống (chưa rõ thì ghi "Chưa rõ giống").';
     const r = formToCropInfo(cropInfo);
     if ('error' in r) return r.error;
-    if (!r.info.plants) return `Hãy nhập số lượng ${cropInfo.countUnit.trim() || defaultUnit} (lớn hơn 0).`;
-    if (!startDate) return 'Hãy chọn ngày bắt đầu vụ.';
+    if (mode === 'herd') {
+      if (groups.some((g) => g.count.trim() && !/^\d+$/.test(g.count.replace(/[.,\s]/g, '')))) return 'Số đầu mỗi nhóm phải là số nguyên.';
+      if (herdTotal <= 0) return 'Hãy nhập số đầu tồn của ít nhất một nhóm.';
+    } else if (!r.info.plants) return `Hãy nhập số lượng ${cropInfo.countUnit.trim() || defaultUnit} (lớn hơn 0).`;
+    if (mode === 'perennial' && (!cropInfo.planting || cropInfo.planting > today)) return 'Hãy nhập ngày trồng (không ở tương lai).';
+    if (nonBatch && !periodLabel.trim() && !periodDefault) return 'Hãy nhập tên kỳ đầu tiên.';
+    if (!startDate) return nonBatch ? 'Hãy chọn ngày bắt đầu theo dõi.' : 'Hãy chọn ngày bắt đầu vụ.';
     if (midOn) {
       if (!mid.currentId) return 'Hãy chọn vào cột Đang làm của việc bắt đầu, hoặc chọn "Từ đầu".';
       if (startDate > today || midCurStart > today) return 'Ngày vụ bắt đầu thật và ngày việc hiện tại bắt đầu không được ở tương lai.';
@@ -283,6 +305,10 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
     if (bad) return setError(bad);
     setError(null);
     go((step + 1) as Step);
+  }
+  function chooseMode(m: CycleMode) {
+    setMode(m); setModeTouched(true);
+    if (m !== 'batch') { setMidOn(false); setMid({ currentId: '', doneIds: [] }); }
   }
   function chooseMid(on: boolean) {
     setMidOn(on);
@@ -306,7 +332,7 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
     if (over && !(confirmOver && isOwner(active!.roles))) return setError(isOwner(active!.roles) ? 'Diện tích vượt chỗ trống của ô: hãy tích xác nhận bên dưới, hoặc quay lại Bước 1 giảm diện tích.' : 'Diện tích vượt chỗ trống của ô: chỉ chủ cơ sở xác nhận được. Hãy quay lại Bước 1 giảm diện tích.');
     const parsed = formToCropInfo(cropInfo);
     if ('error' in parsed) return setError(parsed.error);
-    const info = parsed.info;
+    const info = mode === 'herd' ? { ...parsed.info, plants: herdTotal } : parsed.info;
     const costN = midCost.trim() ? Number(midCost.replace(/[.,\s]/g, '')) : 0;
     setBusy(true);
     try {
@@ -322,6 +348,12 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
         budget: budget.trim() ? Number(budget.replace(/[.,\s]/g, '')) : null,
         intercrop,
         confirmOver: confirmOver && !intercrop,
+        mode,
+        plantingDate: mode === 'perennial' ? cropInfo.planting : null,
+        groups: mode === 'herd' ? groups.filter((g) => Number(g.count.replace(/[.,\s]/g, '')) > 0).map((g) => ({ group: g.group.trim(), count: Number(g.count.replace(/[.,\s]/g, '')) })) : undefined,
+        periodLabel: nonBatch ? (periodLabel.trim() || periodDefault) : undefined,
+        maturityYears: mode === 'perennial' ? Number(maturity.replace(',', '.')) || 3 : null,
+        amortYears: mode === 'perennial' ? Math.round(Number(amort.replace(',', '.')) || 15) : null,
       } as const;
       const newId = midOn
         ? await createCycleMidstart(base, { currentTplStageId: mid.currentId, doneTplStageIds: mid.doneIds, currentStart: midCurStart || null, origin: 'resume', note: midNote })
@@ -409,8 +441,21 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                       {productsWithTpl.map((c) => <option key={c.id} value={c.id}>{c.name} · {cfg.groupLabel(c.kind, c.kind_item)}</option>)}
                     </select>
                   </label>
+                  {productId && (prodKind === 'crop' || prodKind === 'livestock') && (
+                    <fieldset>
+                      <legend>{prodKind === 'crop' ? 'Cách trồng' : 'Cách nuôi'}</legend>
+                      <label className={mode === 'batch' ? 'choice selected' : 'choice'}>
+                        <input type="radio" name="cmode" checked={mode === 'batch'} onChange={() => chooseMode('batch')} />
+                        <span><strong>{prodKind === 'crop' ? 'Theo vụ' : 'Nuôi theo lứa'}</strong><small>{prodKind === 'crop' ? 'Thu hoạch xong thì kết thúc vụ, lần sau tạo vụ mới.' : 'Nhập cả lứa rồi xuất; xong lứa thì kết thúc.'}</small></span>
+                      </label>
+                      <label className={mode !== 'batch' ? 'choice selected' : 'choice'}>
+                        <input type="radio" name="cmode" checked={mode !== 'batch'} onChange={() => chooseMode(prodKind === 'crop' ? 'perennial' : 'herd')} />
+                        <span><strong>{prodKind === 'crop' ? 'Vườn cây lâu năm' : 'Đàn nuôi liên tục'}</strong><small>{prodKind === 'crop' ? 'Cây trồng nhiều năm, thu hoạch hằng năm. Theo dõi theo từng mùa hoặc năm, tính tuổi cây và khấu hao vườn.' : 'Có đàn mẹ, con sinh ra, bán dần quanh năm. Theo dõi số đầu từng nhóm, báo cáo theo quý.'}</small></span>
+                      </label>
+                    </fieldset>
+                  )}
                   <label>
-                    Quy trình
+                    {mode === 'perennial' ? 'Quy trình chăm sóc theo mùa / năm' : mode === 'herd' ? 'Lịch chăm sóc đàn theo kỳ' : 'Quy trình'}
                     <select value={templateId} onChange={(e) => setTemplateId(e.target.value)} disabled={!online || templates === null || !productId}>
                       <option value="">{!productId ? 'Chọn sản phẩm trước' : '— Chọn quy trình —'}</option>
                       {templatesFor.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -488,13 +533,35 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
           {step === 2 && (
             <>
               <label>
-                Tên vụ
-                <input value={name} maxLength={120} onChange={(e) => { setNameTouched(true); setName(e.target.value); }} placeholder="Ví dụ: Dưa lưới vụ 1 nhà màng 2" />
+                Tên {nameWord}
+                <input value={name} maxLength={120} onChange={(e) => { setNameTouched(true); setName(e.target.value); }} placeholder={mode === 'perennial' ? 'Ví dụ: Vườn na lô A' : mode === 'herd' ? 'Ví dụ: Đàn dê chuồng 2' : 'Ví dụ: Dưa lưới vụ 1 nhà màng 2'} />
               </label>
               <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="variety" required />
-              <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="count" required />
+              {mode === 'herd' ? (
+                <fieldset>
+                  <legend>Số đầu tồn theo nhóm</legend>
+                  <p className="muted">Nhập số đầu hiện có của từng nhóm (nhóm nào không có thì để trống). Có thể sửa tên nhóm hoặc thêm nhóm.</p>
+                  {groups.map((g, i) => (
+                    <div className="pair" key={i}>
+                      <label>Nhóm<input value={g.group} maxLength={40} onChange={(e) => setGroups((s) => s.map((x, j) => (j === i ? { ...x, group: e.target.value } : x)))} /></label>
+                      <label>Số {cropInfo.countUnit.trim() || defaultUnit}<input value={g.count} inputMode="numeric" onChange={(e) => setGroups((s) => s.map((x, j) => (j === i ? { ...x, count: e.target.value } : x)))} /></label>
+                    </div>
+                  ))}
+                  <div className="btnrow"><button type="button" className="secondary mini" onClick={() => setGroups((s) => [...s, { group: '', count: '' }])}>+ Thêm nhóm</button></div>
+                  <p><strong>Tổng: {herdTotal.toLocaleString('vi-VN')} {cropInfo.countUnit.trim() || defaultUnit}</strong></p>
+                </fieldset>
+              ) : (
+                <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="count" required />
+              )}
+              {mode === 'perennial' && (
+                <label>
+                  Ngày trồng
+                  <input type="date" value={cropInfo.planting} max={today} onChange={(e) => setCropInfo((v) => ({ ...v, planting: e.target.value }))} />
+                  <small>Vườn đã trồng từ trước thì nhập ngày (hoặc gần đúng) lúc trồng; app tính tuổi cây từ ngày này.</small>
+                </label>
+              )}
 
-              {templateId && stages.length > 0 && (
+              {templateId && stages.length > 0 && !nonBatch && (
                 <fieldset>
                   <legend>Bắt đầu thế nào?</legend>
                   <label className={!midOn ? 'choice selected' : 'choice'}>
@@ -528,15 +595,28 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
 
               {!midOn && (
                 <label>
-                  Ngày bắt đầu vụ
+                  {nonBatch ? 'Ngày bắt đầu theo dõi' : 'Ngày bắt đầu vụ'}
                   <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                  <small>Vụ sẽ ở trạng thái <strong>{status === 'active' ? 'Đang sản xuất' : 'Chuẩn bị'}</strong> ({statusWhy}).{status === 'active' ? ' Tính vào số vụ của gói.' : ' Chưa tính vào số vụ của gói.'}</small>
+                  <small>{nonBatch ? 'Từ ngày này app tính chi phí, thu hoạch, doanh thu. ' : ''}Sẽ ở trạng thái <strong>{status === 'active' ? 'Đang sản xuất' : 'Chuẩn bị'}</strong> ({statusWhy}).{status === 'active' ? ' Tính vào số vụ của gói.' : ' Chưa tính vào số vụ của gói.'}</small>
+                </label>
+              )}
+              {nonBatch && (
+                <label>
+                  Kỳ đầu tiên
+                  <input value={periodLabel} maxLength={60} onChange={(e) => setPeriodLabel(e.target.value)} placeholder={periodDefault} />
+                  <small>{mode === 'herd' ? 'Đàn theo dõi theo kỳ (thường là quý). ' : 'Vườn cây theo dõi theo mùa hoặc năm. '}Kỳ đầu chạy theo quy trình đã chọn, hết kỳ bạn đóng kỳ và mở kỳ mới trong Chi tiết.</small>
                 </label>
               )}
 
               <Collapsible inline title="＋ Thông tin thêm (làm sau cũng được)"
                 summary={[cropInfo.source, cropInfo.lot, cropInfo.sowing, cropInfo.code, targetYield && `${targetYield} kg`, budget && `${budget} đ`].filter(Boolean).join(' · ') || undefined}>
-                <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="seedextra" />
+                <CycleInfoFields value={cropInfo} onChange={setCropInfo} defaultUnit={defaultUnit} kind={prodKind} parts="seedextra" hidePlanting={mode === 'perennial'} />
+                {mode === 'perennial' && (
+                  <div className="pair">
+                    <label>Số năm kiến thiết (chưa kinh doanh)<input value={maturity} inputMode="decimal" onChange={(e) => setMaturity(e.target.value)} /></label>
+                    <label>Số năm khấu hao chi phí đầu tư<input value={amort} inputMode="numeric" onChange={(e) => setAmort(e.target.value)} /></label>
+                  </div>
+                )}
                 <div className="pair">
                   <label>Sản lượng dự kiến (kg)<input value={targetYield} inputMode="numeric" onChange={(e) => setTargetYield(e.target.value)} /></label>
                   <label>Ngân sách dự kiến (đồng)<input value={budget} inputMode="numeric" onChange={(e) => setBudget(e.target.value)} /></label>
@@ -554,9 +634,13 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                 {(prepMode === 'separate' || followsId) && (
                   <SummaryRow label="Nâng cao" value={[prepMode === 'separate' ? `${prepLabel('separate', prodKind)}: ${areaPath(prepArea, areas)}` : '', followsId ? `Chờ vụ ${cycleLabel(allCycles.find((c) => c.id === followsId) ?? { crop_type_id: productId })}` : ''].filter(Boolean).join(' · ')} onEdit={() => go(1)} />
                 )}
-                <SummaryRow label="Tên vụ" value={name} onEdit={() => go(2)} />
-                <SummaryRow label="Giống · số lượng" value={`${cropInfo.variety} · ${cropInfo.plants} ${cropInfo.countUnit.trim() || defaultUnit}`} onEdit={() => go(2)} />
-                <SummaryRow label="Bắt đầu" value={midOn ? `Đang làm dở: ${stages.find((s) => s.id === mid.currentId)?.name ?? ''} (vụ bắt đầu thật ${fmtDate(startDate)}, việc này từ ${fmtDate(midCurStart)})` : `Từ đầu, ngày ${fmtDate(startDate)}`} onEdit={() => go(2)} />
+                {nonBatch && <SummaryRow label="Kiểu" value={MODE_LABEL[mode]} onEdit={() => go(1)} />}
+                <SummaryRow label={`Tên ${nameWord}`} value={name} onEdit={() => go(2)} />
+                <SummaryRow label="Giống · số lượng" value={`${cropInfo.variety} · ${mode === 'herd' ? herdTotal : cropInfo.plants} ${cropInfo.countUnit.trim() || defaultUnit}`} onEdit={() => go(2)} />
+                {mode === 'herd' && <SummaryRow label="Theo nhóm" value={groups.filter((g) => Number(g.count.replace(/[.,\s]/g, '')) > 0).map((g) => `${g.group}: ${g.count}`).join(' · ')} onEdit={() => go(2)} />}
+                {mode === 'perennial' && <SummaryRow label="Ngày trồng" value={`${fmtDate(cropInfo.planting)} (khấu hao ${amort} năm, kiến thiết ${maturity} năm)`} onEdit={() => go(2)} />}
+                {nonBatch && <SummaryRow label="Kỳ đầu tiên" value={`${periodLabel.trim() || periodDefault}, từ ${fmtDate(startDate)}`} onEdit={() => go(2)} />}
+                {!nonBatch && <SummaryRow label="Bắt đầu" value={midOn ? `Đang làm dở: ${stages.find((s) => s.id === mid.currentId)?.name ?? ''} (vụ bắt đầu thật ${fmtDate(startDate)}, việc này từ ${fmtDate(midCurStart)})` : `Từ đầu, ngày ${fmtDate(startDate)}`} onEdit={() => go(2)} />}
                 <SummaryRow label="Trạng thái" value={`${status === 'active' ? 'Đang sản xuất' : 'Chuẩn bị'} (${statusWhy})`} />
               </div>
 

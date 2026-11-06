@@ -1,6 +1,9 @@
 # Phương án: cây lâu năm (na, nho…) và đàn nuôi liên tục (dê, bò…)
 
-Trạng thái: **ĐỀ XUẤT, chờ chủ sản phẩm duyệt** (10/11/2026). Chưa viết code. Liên quan: `PLAN_TAO_VU_DON_GIAN.md` (mục 2, 6), `PLAN_NHIEU_VU_TRONG_MOT_O.md`.
+Trạng thái: **C1–C3 ĐÃ LÀM** (12/11/2026, chưa `db push` migration 0182 và 0183). Chưa làm: C4 (theo dõi từng con: số tai, phối giống–đẻ–cai sữa) và báo cáo hồ sơ thuế dùng khấu hao.
+
+Đã làm (cách A, như đề xuất): kiểu vụ `batch | perennial | herd`; bảng `cycle_periods` + `production_stages.period_id`; mở/đóng kỳ (`open_cycle_period`, `close_cycle_period`); vườn cây: ngày trồng bắt buộc, tuổi cây và giai đoạn kiến thiết/kinh doanh, chi phí đầu tư (`expense_records.is_capital`) khấu hao tự động theo năm khấu hao (mặc định kiến thiết 3 năm, khấu hao 15 năm, sửa được), `set_orchard_params`; đàn: số đầu tồn theo nhóm khi tạo, sự kiện số lượng thêm `born`, `move`, `open` và nhóm, `get_herd_balance`; tổng kết theo kỳ `get_cycle_period_summary`, `get_cycle_periods_report`; tạo vụ (hàng "Cách trồng / Cách nuôi" ở Bước 1, ngày trồng / bảng nhóm / kỳ đầu ở Bước 2, gợi ý kiểu theo tên sản phẩm); Chi tiết vụ có khối kỳ, tuổi cây, tổng kết theo kỳ, biến động đàn; 4 mẫu quy trình nháp (nho, na, dê, bò) ở migration 0183 cần cán bộ khuyến nông / thú y thẩm định.
+Quyết định đã áp dụng theo đề xuất: chọn cách A; làm vườn cây và đàn cùng đợt; khấu hao tính trong app; ghi từng con là tùy chọn ở C4; tên "Vườn cây" và "Đàn". Liên quan: `PLAN_TAO_VU_DON_GIAN.md` (mục 2, 6), `PLAN_NHIEU_VU_TRONG_MOT_O.md`.
 
 ## 1. Vì sao "vụ" hiện nay chưa vừa
 

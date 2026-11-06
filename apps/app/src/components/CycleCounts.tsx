@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { useAuth } from '../lib/auth';
 import { useCatalog } from '../lib/catalog';
-import { COUNT_KIND_LABEL, countSummary } from '../lib/countLogic';
+import { COUNT_KIND_LABEL, countSummary, groupHeads } from '../lib/countLogic';
+import { DEFAULT_HERD_GROUPS } from '../lib/herd';
 import { cycleCountUnit } from '../lib/countUnit';
 import { recordCountEvent, voidCountEvent } from '../lib/counts';
 import type { CountEventRow } from '../lib/db';
@@ -12,6 +13,8 @@ import { useTable } from '../lib/tables';
 const fmt = (n: number) => n.toLocaleString('vi-VN');
 const vnDate = (iso: string) => iso.split('-').reverse().join('/');
 const KINDS: CountEventRow['kind'][] = ['dead', 'culled', 'in', 'out'];
+const HERD_KINDS: CountEventRow['kind'][] = ['born', 'move', 'dead', 'culled', 'in', 'out'];
+const NEW_GROUP = '__new';
 
 /**
  * Số lượng của vụ/lứa (P2 gọn): còn lại, tỉ lệ hao, m² mỗi cây/con, và ghi nhanh chết / loại / nhập thêm / xuất.
@@ -28,7 +31,7 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
   const kindOf = cropTypes.find((c) => c.id === cycle?.crop_type_id)?.kind;
   const livestock = kindOf === 'livestock' || kindOf === 'aquatic';
   // vật nuôi: số con ghi ở phiếu thu hoạch/xuất cũng được trừ, để không phải nhập hai lần
-  const harvestOut = livestock ? harvests.filter((h) => h.cycle_id === cycleId && !h.voided_at).reduce((n, h) => n + (h.unit_count ?? 0), 0) : 0;
+  const harvestOut = livestock && cycle?.cycle_mode !== 'herd' ? harvests.filter((h) => h.cycle_id === cycleId && !h.voided_at).reduce((n, h) => n + (h.unit_count ?? 0), 0) : 0;
   const s = useMemo(() => countSummary(cycle ?? {}, events, harvestOut), [cycle, events, harvestOut]);
   const unit = cycleCountUnit(cycle, cropTypes);
 
@@ -36,11 +39,17 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
   const [qty, setQty] = useState('1');
   const [date, setDate] = useState(today);
   const [note, setNote] = useState('');
+  const [group, setGroup] = useState('');            // nhóm đàn của sự kiện (đàn nuôi liên tục)
+  const [toGroup, setToGroup] = useState('');
+  const [newGroup, setNewGroup] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [voiding, setVoiding] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const me = userId ?? session?.user.id;
+  const herd = cycle?.cycle_mode === 'herd';
+  const heads = useMemo(() => groupHeads(events), [events]);
+  const groupNames = useMemo(() => [...new Set([...[...heads.keys()].filter(Boolean), ...DEFAULT_HERD_GROUPS])], [heads]);
   if (!cycle) return null;
   const closed = cycle.status === 'ended' || cycle.status === 'cancelled';
 
@@ -50,12 +59,20 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
     const n = Number(qty.replace(/[.,\s]/g, ''));
     if (!Number.isInteger(n) || n <= 0) return setError(`Số ${unit} phải là số nguyên lớn hơn 0.`);
     if (date > today) return setError('Ngày ghi không được ở tương lai.');
-    if (kind && kind !== 'in' && s.remaining !== null && n > s.remaining) return setError(`Số ${unit} (${fmt(n)}) lớn hơn số còn lại (${fmt(s.remaining)}). Hãy kiểm tra lại.`);
+    if (kind && kind !== 'in' && kind !== 'born' && kind !== 'move' && s.remaining !== null && n > s.remaining) return setError(`Số ${unit} (${fmt(n)}) lớn hơn số còn lại (${fmt(s.remaining)}). Hãy kiểm tra lại.`);
     if (!me || !kind || !cycle) return;
+    const g = group === NEW_GROUP ? newGroup.trim() : group;
+    const tg = toGroup === NEW_GROUP ? newGroup.trim() : toGroup;
+    if (herd) {
+      if (!g) return setError('Hãy chọn nhóm đàn.');
+      if (kind === 'move' && (!tg || tg === g)) return setError('Hãy chọn nhóm đến khác với nhóm đi.');
+      const have = heads.get(g) ?? 0;
+      if (kind !== 'in' && kind !== 'born' && n > have) return setError(`Nhóm "${g}" chỉ có ${fmt(have)} ${unit}, không ghi ${fmt(n)} được.`);
+    }
     setBusy(true); setError(null);
     try {
-      await recordCountEvent({ cycle, kind, quantity: n, date, note, userId: me });
-      setKind(null); setQty('1'); setNote('');
+      await recordCountEvent({ cycle, kind, quantity: n, date, note, userId: me, ...(herd ? { group: g, toGroup: kind === 'move' ? tg : null } : {}) });
+      setKind(null); setQty('1'); setNote(''); setNewGroup('');
     } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
   async function doVoid(id: string) {
@@ -64,13 +81,18 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
   }
 
   return (
-    <Collapsible title={`Số ${unit} và hao hụt`} summary={summary} warn={s.lossPct !== null && s.lossPct >= 10}>
+    <Collapsible title={herd ? `Số ${unit} theo nhóm` : `Số ${unit} và hao hụt`} summary={summary} warn={s.lossPct !== null && s.lossPct >= 10}>
       {error && <p className="msg error" role="alert">{error}</p>}
       {s.initial === null && s.remaining === null && <p className="muted">Chưa có số {unit} ban đầu. Nhập "Số {unit}" ở Sửa vụ, hoặc ghi "Nhập thêm" bên dưới.</p>}
+      {herd && heads.size > 0 && (
+        <div className="card slim">
+          {[...heads.entries()].sort((a, b) => a[0].localeCompare(b[0], 'vi')).map(([g, n]) => <div className="row" key={g || '_'}><span>{g || 'Chưa chia nhóm'}</span><strong>{fmt(n)} {unit}</strong></div>)}
+        </div>
+      )}
       {s.remaining !== null && (
         <div className="card slim">
           {s.initial !== null && <div className="row"><span>Ban đầu</span><strong>{fmt(s.initial)}</strong></div>}
-          {s.added > 0 && <div className="row"><span>Nhập thêm / dặm</span><strong>+{fmt(s.added)}</strong></div>}
+          {s.added > 0 && <div className="row"><span>{herd ? 'Nhập thêm và mới sinh' : 'Nhập thêm / dặm'}</span><strong>+{fmt(s.added)}</strong></div>}
           {s.dead > 0 && <div className="row"><span>Chết</span><strong>−{fmt(s.dead)}</strong></div>}
           {s.culled > 0 && <div className="row"><span>Loại thải</span><strong>−{fmt(s.culled)}</strong></div>}
           {s.out > 0 && <div className="row"><span>Xuất / chuyển đi{harvestOut > 0 ? ' (gồm phiếu thu hoạch)' : ''}</span><strong>−{fmt(s.out)}</strong></div>}
@@ -82,12 +104,33 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
 
       {!closed && !kind && (
         <div className="btnrow">
-          {KINDS.map((k) => <button key={k} className="secondary" onClick={() => { setKind(k); setQty('1'); setError(null); }}>{k === 'in' ? '+ Nhập thêm' : k === 'out' ? '− Xuất' : `− ${COUNT_KIND_LABEL[k]}`}</button>)}
+          {(herd ? HERD_KINDS : KINDS).map((k) => <button key={k} className="secondary" onClick={() => { setKind(k); setQty('1'); setError(null); setGroup(''); setToGroup(''); }}>{k === 'in' ? '+ Nhập thêm' : k === 'born' ? '+ Mới sinh' : k === 'move' ? '⇄ Chuyển nhóm' : k === 'out' ? '− Xuất' : `− ${COUNT_KIND_LABEL[k]}`}</button>)}
         </div>
       )}
       {kind && (
         <div className="inline-form">
           <p><strong>{COUNT_KIND_LABEL[kind]}</strong></p>
+          {herd && (
+            <div className="pair">
+              <label>{kind === 'move' ? 'Từ nhóm' : 'Nhóm'}
+                <select value={group} onChange={(e) => setGroup(e.target.value)}>
+                  <option value="">— Chọn nhóm —</option>
+                  {groupNames.map((g) => <option key={g} value={g}>{g}{heads.has(g) ? ` (${fmt(heads.get(g) ?? 0)})` : ''}</option>)}
+                  <option value={NEW_GROUP}>Nhóm khác…</option>
+                </select>
+              </label>
+              {kind === 'move' && (
+                <label>Sang nhóm
+                  <select value={toGroup} onChange={(e) => setToGroup(e.target.value)}>
+                    <option value="">— Chọn nhóm —</option>
+                    {groupNames.filter((g) => g !== group).map((g) => <option key={g} value={g}>{g}</option>)}
+                    <option value={NEW_GROUP}>Nhóm khác…</option>
+                  </select>
+                </label>
+              )}
+            </div>
+          )}
+          {herd && (group === NEW_GROUP || toGroup === NEW_GROUP) && <label>Tên nhóm mới<input value={newGroup} maxLength={40} onChange={(e) => setNewGroup(e.target.value)} placeholder="Ví dụ: Dê đực giống nhập" /></label>}
           <div className="pair">
             <label>Số {unit}<input value={qty} inputMode="numeric" onChange={(e) => setQty(e.target.value)} /></label>
             <label>Ngày<input type="date" value={date} max={today} onChange={(e) => setDate(e.target.value)} /></label>
@@ -104,7 +147,7 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
       {events.slice(0, 8).map((e) => (
         <div className={e.voided_at ? 'card slim voided' : 'card slim'} key={e.id}>
           <div className="row">
-            <strong className="grow">{COUNT_KIND_LABEL[e.kind] ?? e.kind}: {e.kind === 'in' ? '+' : '−'}{fmt(e.quantity)}</strong>
+            <strong className="grow">{COUNT_KIND_LABEL[e.kind] ?? e.kind}: {e.kind === 'in' || e.kind === 'born' || e.kind === 'open' ? '+' : e.kind === 'move' ? '' : '−'}{fmt(e.quantity)}{e.animal_group ? ` · ${e.animal_group}` : ''}{e.to_group ? ` → ${e.to_group}` : ''}</strong>
             <span className="muted">{vnDate(e.event_date)}</span>
           </div>
           {(e.note || e.author_name) && <p className="muted">{[e.author_name, e.note].filter(Boolean).join(' · ')}</p>}

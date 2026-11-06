@@ -1,3 +1,4 @@
+import { MODE_LABEL } from '../lib/herd';
 import { useEffect, useMemo, useState } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
@@ -272,6 +273,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
             <div className="row">
               <strong>{cycleTitle(c, cropName(c.crop_type_id))} - <span className="mono-code">{cycleCode(c.id)}</span></strong>
               <span className="pill">{CYCLE_STATUS_LABEL_VI[c.status]}{prepLoggable(c) ? ' · chuẩn bị trước' : ''}</span>
+              {c.cycle_mode && c.cycle_mode !== 'batch' && <span className="pill ok">{MODE_LABEL[c.cycle_mode]}</span>}
             </div>
             {(() => {
               const pre = c.status === 'preparing' ? predecessorOf(c, cycles) : null;

@@ -32,6 +32,9 @@ import { prepLabel, prepLoggable, predecessorOf } from '../lib/prep';
 import { PrepPicker } from '../components/PrepPicker';
 import { changeCycleTemplate, jumpCycleToStage, setCyclePrep } from '../lib/production';
 import { ChangeTemplate } from '../components/ChangeTemplate';
+import { CyclePeriods } from '../components/CyclePeriods';
+import { useCyclePeriods } from '../lib/periods';
+import { modeOf } from '../lib/herd';
 import { JumpToStage } from '../components/JumpToStage';
 import type { AreaRow } from '../lib/db';
 import { areaPath } from '../lib/areas';
@@ -48,7 +51,12 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
   const { session } = useAuth();
   const online = useOnline();
   const cycle = useLiveQuery(() => db.cycles.get(cycleId), [cycleId]);
-  const stages = useLiveQuery(() => db.stages.where('cycle_id').equals(cycleId).sortBy('seq'), [cycleId], []);
+  const stagesAll = useLiveQuery(() => db.stages.where('cycle_id').equals(cycleId).sortBy('seq'), [cycleId], []);
+  // vườn cây / đàn: chỉ hiện việc của kỳ đang mở (kỳ cũ xem ở Tổng kết theo kỳ)
+  const mode = modeOf(cycle);
+  const { periods, reload: reloadPeriods } = useCyclePeriods(cycleId, mode !== 'batch');
+  const openPeriod = periods?.find((p) => p.status === 'open') ?? null;
+  const stages = mode === 'batch' || periods === null ? stagesAll : stagesAll.filter((s) => openPeriod && s.period_id === openPeriod.id);
   const logs = useLiveQuery(() => db.logs.where('cycle_id').equals(cycleId).toArray(), [cycleId], []);
   const notes = useLiveQuery(() => db.notes.where('cycle_id').equals(cycleId).toArray(), [cycleId], []);
   const harvestsAll = useTable('harvests'); // phiếu thu hoạch của vụ (việc Thu hoạch tính cả phiếu này khi kiểm đã ghi đủ)
@@ -150,6 +158,9 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
           )
           : <p className="msg warn" role="status">Nối tiếp sau vụ {pre.pred.name || crop} (đang {CYCLE_STATUS_LABEL_VI[pre.pred.status].toLowerCase()}). Khi vụ đó kết thúc, bạn sẽ chuyển vụ này sang sản xuất.</p>
       )}
+      {cycle && mode !== 'batch' && (
+        <CyclePeriods cycle={cycle} periods={periods} reload={reloadPeriods} canManage={canManage} online={online} today={today} busy={busy} run={run} />
+      )}
       <p className="muted">Quy trình: {cycle.template_name ?? 'không có (vụ cũ)'}{cycle.template_version ? ` · bản ${cycle.template_version}` : ''}</p>
       {cycle.note && <p>{cycle.note}</p>}
       {canManage && cycle.status === 'preparing' && cycle.owner_org_id === active?.id && (
@@ -238,13 +249,13 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
         />
       ) : (
         <>
-          {canEditStages && online && stages.length > 0 && stages.every((s) => s.status === 'pending' && s.source !== 'pre_app') && logs.every((l) => l.voided_at) && harvestCount === 0 && cycle.owner_org_id === active?.id && (
+          {mode === 'batch' && canEditStages && online && stages.length > 0 && stages.every((s) => s.status === 'pending' && s.source !== 'pre_app') && logs.every((l) => l.voided_at) && harvestCount === 0 && cycle.owner_org_id === active?.id && (
             <Collapsible inline title="＋ Đổi quy trình" summary={cycle.template_name ?? undefined}>
               <ChangeTemplate ownerOrgId={cycle.owner_org_id} cropTypeId={cycle.crop_type_id} currentTemplateId={cycle.template_id} busy={busy}
                 onChange={(tid) => run(() => changeCycleTemplate(cycleId, tid))} />
             </Collapsible>
           )}
-          {canManage && isActive && online && stages.some((s) => s.status === 'pending') && !stages.some((s) => s.status === 'in_progress') && (
+          {mode === 'batch' && canManage && isActive && online && stages.some((s) => s.status === 'pending') && !stages.some((s) => s.status === 'in_progress') && (
             <Collapsible inline title="＋ Vụ đang ở đâu? Chuyển tới một việc" summary="cho vụ chạy dở trước khi dùng app">
               <JumpToStage stages={stages} loggedStageIds={new Set(logs.filter((l) => !l.voided_at && l.stage_id).map((l) => l.stage_id as string))} busy={busy}
                 onJump={(sid, done, date, note) => run(() => jumpCycleToStage(cycleId, sid, done, date, note))} />

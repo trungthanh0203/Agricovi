@@ -43,6 +43,10 @@ export interface CycleRow {
   /** Trồng xen (dùng chung diện tích) và vụ tạo khi vượt chỗ trống của ô (migration 0179) */
   intercrop?: boolean | null;
   over_capacity?: boolean | null;
+  /** Kiểu vụ (migration 0182): theo mùa, vườn cây lâu năm, đàn nuôi liên tục; năm kiến thiết và năm khấu hao của vườn cây */
+  cycle_mode?: 'batch' | 'perennial' | 'herd' | null;
+  maturity_years?: number | null;
+  amort_years?: number | null;
   /** Mô hình quản lý của vụ (null = theo mô hình mặc định của cơ sở) */
   mgmt_model?: string | null;
   /** Mục tùy chọn của mô hình đã bật cho vụ này (mã chức năng) */
@@ -125,9 +129,12 @@ export interface CountEventRow {
   cycle_id: string;
   organization_id: string;
   event_date: string;
-  kind: 'in' | 'dead' | 'culled' | 'out';
+  kind: 'in' | 'dead' | 'culled' | 'out' | 'born' | 'move' | 'open';
   quantity: number;
   note: string | null;
+  /** Nhóm đàn (migration 0182); chuyển nhóm có thêm nhóm đích */
+  animal_group?: string | null;
+  to_group?: string | null;
   voided_at?: string | null;
   void_reason?: string | null;
   created_by?: string | null;
@@ -213,6 +220,8 @@ export interface StageRow {
   log_waived_reason?: string | null;
   /** 'pre_app' = việc đã làm trước khi dùng app / trước khi nhận về (migration 0178) */
   source?: 'app' | 'pre_app';
+  /** Kỳ của vườn cây / đàn mà việc thuộc về (migration 0182); trống = vụ theo mùa */
+  period_id?: string | null;
 }
 
 /** Bản chỉnh của một cơ sở lên mục có sẵn dùng chung (D32) */
@@ -388,6 +397,8 @@ export interface ExpenseRow {
   amount: number;
   expense_date: string;
   note: string | null;
+  /** Chi phí đầu tư vườn cây: không vào lãi lỗ năm mà khấu hao dần (migration 0182) */
+  is_capital?: boolean;
   voided_at?: string | null;
   void_reason?: string | null;
   version: number;

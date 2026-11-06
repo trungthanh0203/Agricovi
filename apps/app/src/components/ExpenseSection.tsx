@@ -206,6 +206,7 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
   const [amount, setAmount] = useState(editing ? String(editing.amount) : '');
   const [date, setDate] = useState(editing?.expense_date ?? todayLocal());
   const [note, setNote] = useState(editing?.note ?? '');
+  const [capital, setCapital] = useState(editing?.is_capital ?? false);   // chi phí đầu tư vườn cây
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [draftId, setDraftId] = useState(() => crypto.randomUUID());
@@ -215,6 +216,8 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
   const ordered = formCycles(cycles, showAllCycles, editing?.cycle_id ?? cycleId);
   const effCycle = cycleId || (ordered.find((c) => c.id === remembered)?.id ?? 'none');
 
+  const selCycle = effCycle === 'none' ? null : allCycles.find((c) => c.id === (editing ? editing.cycle_id : effCycle)) ?? null;
+  const orchardSel = selCycle?.cycle_mode === 'perennial';
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const a = parseNumber(amount);
@@ -225,13 +228,13 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
     try {
       if (editing) {
         const g = cfg.resolve('expense_groups', category);
-        await editExpense(editing.id, { category: g.base, categoryItem: g.item ?? (editing.category_item ? null : undefined), kind, amount: a!, date, note });
+        await editExpense(editing.id, { category: g.base, categoryItem: g.item ?? (editing.category_item ? null : undefined), kind, amount: a!, date, note, isCapital: orchardSel ? capital : undefined });
         onClose();
         return;
       }
       const cycle = effCycle === 'none' ? null : allCycles.find((c) => c.id === effCycle) ?? null;
       const g = cfg.resolve('expense_groups', category);
-      const id = await recordExpense({ id: draftId, organizationId: orgId, cycle, category: g.base, categoryItem: g.item, kind, amount: a!, date, note, userId });
+      const id = await recordExpense({ id: draftId, organizationId: orgId, cycle, category: g.base, categoryItem: g.item, kind, amount: a!, date, note, userId, isCapital: orchardSel && capital });
       setSavedId(id);
     } catch (err) {
       setError(friendlyError(err));
@@ -293,6 +296,9 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
           </select>
           <small>{EXPENSE_KIND_HINT[kind]}</small>
         </label>
+        {orchardSel && (
+          <label className="check"><input type="checkbox" checked={capital} onChange={(e) => setCapital(e.target.checked)} /> <span>Chi phí đầu tư vườn cây (cây giống, làm đất, giàn, hệ thống tưới…): không tính vào lãi lỗ năm, app khấu hao dần theo số năm khấu hao</span></label>
+        )}
         <label>
           Số tiền (đồng)
           <input value={amount} inputMode="numeric" onChange={(e) => setAmount(e.target.value)} />

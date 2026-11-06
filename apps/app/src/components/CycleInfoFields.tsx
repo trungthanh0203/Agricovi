@@ -32,7 +32,7 @@ export function formToCropInfo(f: CropInfoForm): { info: CropInfo } | { error: s
 }
 
 /** Các ô giống, diện tích, số cây, nguồn giống, ngày gieo/trồng của vụ (không bắt buộc). Dùng khi tạo vụ và sửa vụ. */
-export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, parts = 'all', required = false }: { required?: boolean; value: CropInfoForm; onChange: (v: CropInfoForm) => void; defaultUnit?: string; kind?: ProductKind; parts?: 'variety' | 'seedextra' | 'manageflat' | 'all' | 'scale' | 'area' | 'count' | 'seed' | 'manage' }) {
+export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, parts = 'all', required = false, hidePlanting = false }: { hidePlanting?: boolean; required?: boolean; value: CropInfoForm; onChange: (v: CropInfoForm) => void; defaultUnit?: string; kind?: ProductKind; parts?: 'variety' | 'seedextra' | 'manageflat' | 'all' | 'scale' | 'area' | 'count' | 'seed' | 'manage' }) {
   const show = (p: 'scale' | 'seed' | 'manage') => parts === 'all' || parts === p;
   const showVariety = show('seed') || parts === 'variety';
   const showSeedExtra = show('seed') || parts === 'seedextra';
@@ -104,7 +104,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
       <label>{L.lot}<input value={value.lot} maxLength={80} onChange={(e) => set({ lot: e.target.value })} /></label>
       <div className="pair">
         <label>{L.sowing}<input type="date" value={value.sowing} onChange={(e) => set({ sowing: e.target.value })} /></label>
-        <label>{L.planting}<input type="date" value={value.planting} min={value.sowing || undefined} onChange={(e) => set({ planting: e.target.value })} /></label>
+        {!hidePlanting && <label>{L.planting}<input type="date" value={value.planting} min={value.sowing || undefined} onChange={(e) => set({ planting: e.target.value })} /></label>}
       </div>
       </>}
     </>

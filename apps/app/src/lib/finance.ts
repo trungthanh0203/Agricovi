@@ -37,13 +37,16 @@ export const NEEDS_ASSUMPTION = new Set(['allocated', 'estimated']);
 
 const EXPENSE_COLUMNS_BASE =
   'id, organization_id, cycle_id, category, kind, amount, expense_date, note, voided_at, void_reason, version, created_by, received_at';
-const EXPENSE_COLUMNS = `${EXPENSE_COLUMNS_BASE}, category_item`;
+const EXPENSE_COLUMNS_ITEM = `${EXPENSE_COLUMNS_BASE}, category_item`;
+const EXPENSE_COLUMNS = `${EXPENSE_COLUMNS_ITEM}, is_capital`;   // chi phí đầu tư vườn cây (migration 0182)
 
 /** Tải chi phí gần đây; chưa db push 0100 (chưa có cột category_item) thì tải bản cũ */
 async function expenseQuery(): Promise<{ data: ExpenseRow[] | null; error: { message?: string } | null }> {
   const q = (cols: string) => supabase!.from('expense_records').select(cols).order('expense_date', { ascending: false }).limit(200);
-  const r = await q(EXPENSE_COLUMNS);
-  return (r.error && /column|schema cache/i.test(r.error.message ?? '') ? await q(EXPENSE_COLUMNS_BASE) : r) as unknown as { data: ExpenseRow[] | null; error: { message?: string } | null };
+  let r = await q(EXPENSE_COLUMNS);
+  if (r.error && /column|schema cache/i.test(r.error.message ?? '')) r = await q(EXPENSE_COLUMNS_ITEM);
+  if (r.error && /column|schema cache/i.test(r.error.message ?? '')) r = await q(EXPENSE_COLUMNS_BASE);
+  return r as unknown as { data: ExpenseRow[] | null; error: { message?: string } | null };
 }
 const SALE_COLUMNS =
   'id, organization_id, cycle_id, sold_date, quantity, unit, amount, buyer_note, voided_at, void_reason, version, created_by, received_at';
@@ -84,6 +87,8 @@ export interface NewExpense {
   date: string; // yyyy-mm-dd
   note: string;
   userId: string;
+  /** Chi phí đầu tư vườn cây (migration 0182) */
+  isCapital?: boolean;
 }
 
 export async function recordExpense(e: NewExpense): Promise<string> {
@@ -98,6 +103,7 @@ export async function recordExpense(e: NewExpense): Promise<string> {
     amount: e.amount,
     expense_date: e.date,
     note: e.note.trim() || null,
+    ...(e.isCapital ? { is_capital: true } : {}),
   };
   await insertAndCache(
     'expense_records', { ...row, source: 'online', created_by: e.userId },
@@ -114,12 +120,13 @@ export interface ExpenseEdit {
   amount: number;
   date: string;
   note: string;
+  isCapital?: boolean;
 }
 
 export async function editExpense(id: string, e: ExpenseEdit): Promise<void> {
   const cur = await db.expenses.get(id);
   if (!cur) return;
-  const changes = { category: e.category, ...(e.categoryItem !== undefined ? { category_item: e.categoryItem } : {}), kind: e.kind, amount: e.amount, expense_date: e.date, note: e.note.trim() || null };
+  const changes = { category: e.category, ...(e.categoryItem !== undefined ? { category_item: e.categoryItem } : {}), kind: e.kind, amount: e.amount, expense_date: e.date, note: e.note.trim() || null, ...(e.isCapital !== undefined && e.isCapital !== Boolean(cur.is_capital) ? { is_capital: e.isCapital } : {}) };
   await updateAndCache('expense_records', id, cur.version, changes, 'sửa khoản chi');
 }
 

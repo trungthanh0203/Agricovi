@@ -24,7 +24,8 @@ const CYCLE_COLUMNS_MODEL = `${CYCLE_COLUMNS_D98}, mgmt_model`;
 const CYCLE_COLUMNS_OPTIONS = `${CYCLE_COLUMNS_MODEL}, mgmt_options`; // mục tùy chọn của mô hình (migration 0104)
 const CYCLE_COLUMNS_PREP = `${CYCLE_COLUMNS_OPTIONS}, prep_mode, prep_area_id, follows_cycle_id`; // công đoạn chuẩn bị và vụ nối tiếp (migration 0137)
 const CYCLE_COLUMNS_MID = `${CYCLE_COLUMNS_PREP}, tracked_from, origin, origin_note`; // vụ bắt đầu giữa chừng (migration 0178)
-const CYCLE_COLUMNS = `${CYCLE_COLUMNS_MID}, intercrop, over_capacity`; // trồng xen, vượt chỗ trống (migration 0179)
+const CYCLE_COLUMNS_CAP = `${CYCLE_COLUMNS_MID}, intercrop, over_capacity`; // trồng xen, vượt chỗ trống (migration 0179)
+const CYCLE_COLUMNS = `${CYCLE_COLUMNS_CAP}, cycle_mode, maturity_years, amort_years`; // vườn cây, đàn (migration 0182)
 const AREA_COLUMNS_BASE = 'id, organization_id, name, description, location, area_size, area_unit, image, is_active';
 const AREA_COLUMNS_D98 = `${AREA_COLUMNS_BASE}, code, kind, housing`;
 const AREA_COLUMNS_ITEM = `${AREA_COLUMNS_D98}, kind_item`;
@@ -38,6 +39,7 @@ async function selectCycles(id?: string) {
     return id ? b.eq('id', id) : b;
   };
   let r = await q(CYCLE_COLUMNS);
+  if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_CAP);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_MID);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_PREP);
   if (r.error && missingPlanColumns(r.error)) r = await q(CYCLE_COLUMNS_OPTIONS);
@@ -77,6 +79,8 @@ async function pageStages(cols: string, cycleId?: string | string[]): Promise<Pa
 }
 async function selectStages(cycleId?: string | string[]) {
   const q = (cols: string) => pageStages(cols, cycleId);
+  const rp = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials, log_waived_reason, source, period_id'); // kỳ của vườn cây / đàn (migration 0182)
+  if (!rp.error) return rp;
   const rs = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials, log_waived_reason, source'); // việc làm trước khi dùng app (migration 0178)
   if (!rs.error) return rs;
   const rw = await q(STAGE_COLUMNS + ', phase_code, phase_name, importance, repeat_every_days, guide, materials, log_waived_reason');
@@ -297,6 +301,13 @@ export interface NewCycle {
   intercrop?: boolean;
   /** Chủ cơ sở xác nhận tạo vụ dù vượt diện tích còn trống của ô */
   confirmOver?: boolean;
+  /** Kiểu vụ (migration 0182). Vườn cây cần ngày trồng; đàn cần số đầu tồn theo nhóm (tổng bằng số lượng); tên kỳ đầu tiên (mặc định "Kỳ 1") */
+  mode?: 'batch' | 'perennial' | 'herd';
+  plantingDate?: string | null;
+  groups?: { group: string; count: number }[];
+  periodLabel?: string;
+  maturityYears?: number | null;
+  amortYears?: number | null;
 }
 
 /** Giống và diện tích của vụ; diện tích theo m² (D94) */
@@ -346,6 +357,7 @@ export async function createCycle(c: NewCycle): Promise<string> {
     p_start: c.startDate, p_status: c.status, p_name: c.name?.trim() || null,
     p_variety: c.info?.variety ?? '', p_area_m2: c.info?.areaM2 ?? null, p_count: c.info?.plants ?? null,
     p_intercrop: c.intercrop ?? false, p_confirm_over: c.confirmOver ?? false,
+    ...modeParams(c),
   });
   if (error) throw new Error(error.message);
   if ((c.targetYield ?? null) !== null || (c.budget ?? null) !== null) await setCyclePlan(id, c.targetYield ?? null, c.budget ?? null).catch(() => undefined);
@@ -355,6 +367,12 @@ export async function createCycle(c: NewCycle): Promise<string> {
   await refreshCycle(id);
   return id;
 }
+
+/** Tham số kiểu vụ gửi máy chủ; vụ theo mùa không gửi gì để chạy được cả khi CSDL chưa có migration 0182 */
+const modeParams = (c: NewCycle): Record<string, unknown> => (!c.mode || c.mode === 'batch' ? {} : {
+  p_mode: c.mode, p_planting: c.plantingDate ?? null, p_groups: c.groups && c.groups.length > 0 ? c.groups : null,
+  p_period_label: c.periodLabel?.trim() || null, p_maturity: c.maturityYears ?? null, p_amort: c.amortYears ?? null,
+});
 
 /** Điểm bắt đầu giữa chừng (migration 0178): việc của quy trình mẫu đang làm, các việc đã làm trước đó, ngày việc hiện tại bắt đầu */
 export interface MidstartInput {
