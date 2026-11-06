@@ -1,6 +1,6 @@
 # Đề xuất: nhiều vụ song song trong cùng một ô sản xuất (theo diện tích) và các trường bắt buộc khi tạo vụ
 
-Trạng thái: **ĐỀ XUẤT, chờ chủ sản phẩm duyệt** (7/11/2026). Chưa viết code.
+Trạng thái: **GĐ1 ĐÃ LÀM** (7/11/2026, chủ sản phẩm duyệt; chưa `db push` migration 0179): hàm `area_free_m2`, `create_cycle_checked` (tên, giống, diện tích, số lượng bắt buộc ở CSDL; kiểm chỗ trống, chủ xác nhận vượt, trồng xen), khung chỗ trống ở màn Tạo vụ, thanh chiếm chỗ ở danh sách ô, bỏ lựa chọn "Chuẩn bị 1 phần ô". Chưa làm: nhập diện tích ô ngay tại màn Tạo vụ (hiện hướng dẫn khai ở Phân khu), GĐ2, GĐ3.
 
 ## 1. Tình huống và vì sao quan trọng
 
