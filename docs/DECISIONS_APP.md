@@ -367,3 +367,7 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 ## D157 — Quy trình mẫu: thứ tự và nút; vụ đã công khai có nút cập nhật nhanh
 - Quy trình mẫu: tab "Quy trình mẫu của hệ thống" đứng trước "của cơ sở"; form tạo mẫu: tên, mô tả, **ô chọn sản phẩm ở cuối trước nút "Tạo mẫu"**.
 - Quản lý vụ (`CycleDetailScreen`): với vụ ĐÃ CÔNG KHAI lên website (và không bị quản trị ẩn), trên hai nút Danh sách / Lịch có thêm "Cập nhật mã QR vụ" (lấy số liệu mới nhất, vẽ lại mã QR; người quản lý vụ) và "Cập nhật lên website" (`publish_cycle`, chỉ chủ cơ sở) — `components/PublishedCycleBar.tsx`. Chỉ hiện cho cơ sở chủ vụ.
+
+## D158 — Đọc ảnh hóa đơn nhập kho: thử nghiệm trước, mô hình miễn phí, hộp đồng ý mặc định đồng ý (07/11/2026)
+- Làm đợt thử ngoài app trước (`scripts/invoice-bench/`) với Cloudflare Workers AI (Gemma 3, Llama 3.2 Vision, Mistral 3.1) và Groq (Llama 4 Scout); chưa thử Claude Haiku. Ngưỡng làm tiếp: đầu phiếu ≥ 90% đúng, dòng hàng ≥ 80% đúng, không có lỗi số tiền "im lặng".
+- Phạm vi đầu: hóa đơn/phiếu giao hàng mua vật tư vào màn nhập kho có ghi hóa đơn. Hạn mức tháng: dùng thử 2, Hộ 10–30, HTX 30–90. Gửi ảnh ra dịch vụ ngoài được chấp nhận, hộp đồng ý mặc định đồng ý. Chi tiết: `PLAN_G2_3_CHUP_HOA_DON.md` mục 13.

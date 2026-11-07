@@ -145,3 +145,13 @@ Làm được ngay, chắc chắn đúng, bất kể kết quả thử nghiệm:
 - **Sao chép hóa đơn lần trước** của cùng nhà cung ứng (các dòng hàng giống nhau, chỉ sửa số lượng).
 - Danh sách vật tư **hay mua** của nhà cung ứng đó lên đầu khi chọn.
 - Nhập nhanh số lượng/đơn giá bằng bàn phím số, tự chuyển ô; hiện cảnh báo giá bất thường so với lần trước (lệch trên 30%).
+
+## 13. Quyết định 07/11/2026 (chủ sản phẩm duyệt)
+
+- **Làm theo thứ tự thử nghiệm trước, viết tính năng sau** (đúng mục 11). Công cụ thử: `scripts/invoice-bench/` (`run.mjs` đọc ảnh bằng các mô hình, `report.mjs` tạo trang chấm điểm); hướng dẫn từng bước: `docs/HUONG_DAN_THU_DOC_HOA_DON.md`.
+- **Mô hình đưa vào đợt thử:** Cloudflare Workers AI (Gemma 3 12B, Llama 3.2 11B Vision, Mistral Small 3.1 24B) và Groq (Llama 4 Scout). **Chưa thử Claude Haiku** ở lúc này; vẫn giữ là đường dự phòng trả phí về sau.
+- **Phạm vi đầu:** hóa đơn và phiếu giao hàng mua vật tư, giống, thuốc; đưa vào màn nhập kho có ghi hóa đơn. Nhãn bao bì, chứng từ xuất kho, thu hoạch làm sau.
+- **Gửi ảnh ra dịch vụ bên ngoài: chấp nhận; hộp thông báo/đồng ý trong app mặc định là ĐỒNG Ý** (vẫn nói rõ ảnh được gửi đi và chỉ gửi khi bấm đọc).
+- **Hạn mức mỗi tháng cho mỗi cơ sở:** dùng thử 2 lần; gói Hộ 10–30 lần; gói HTX 30–90 lần (con số cụ thể theo từng gói chốt khi làm; lưu ở CSDL, chỉnh được ở trang quản trị).
+- **Nên có thêm khi làm tính năng (đã nêu với chủ sản phẩm):** nhớ cách gọi tên vật tư theo từng nhà cung cấp để lần sau tự ghép; tra nhà cung cấp theo mã số thuế (kiểm chứng nguồn miễn phí trước); đường nhập hóa đơn điện tử dạng XML; cảnh báo trùng hóa đơn, giá lệch trên 30%, tổng lệch.
+- Nhắc: hạn mức miễn phí của Cloudflare (10.000 neuron/ngày) tính chung cho cả tài khoản, nên cần hạn mức theo gói để không một cơ sở nào dùng hết phần của cả hệ thống.

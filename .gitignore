@@ -14,3 +14,8 @@ supabase/.branches/
 .DS_Store
 # Sinh tự động khi build website (scripts/include-webadmin.mjs)
 apps/web/public/admin/
+
+# Đợt thử đọc hóa đơn: ảnh thật và kết quả không đưa lên git
+scripts/invoice-bench/anh/*
+!scripts/invoice-bench/anh/.gitkeep
+scripts/invoice-bench/ket-qua/
