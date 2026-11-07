@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseModelJson, sanitizeDraft, num } from '../functions/scan-invoice/sanitize.ts';
+import { parseModelJson, sanitizeDraft, sanitizeLabel, num } from '../functions/scan-invoice/sanitize.ts';
 
 // Phần thuần của Edge Function scan-invoice: làm sạch kết quả mô hình (không cần CSDL).
 test('parseModelJson: bỏ rào markdown, sửa dấu phẩy thừa, từ chối chữ không phải JSON', () => {
@@ -53,4 +53,20 @@ test('sanitizeDraft: ép kiểu, cắt độ dài, bỏ dòng không tên, cản
 test('sanitizeDraft: tối đa 60 dòng', () => {
   const d = sanitizeDraft({ dong_hang: Array.from({ length: 200 }, (_, i) => ({ ten: `Hàng ${i}`, so_luong: 1 })) });
   assert.equal(d.dong_hang.length, 60);
+});
+
+test('sanitizeLabel: ép kiểu, giới hạn ngày cách ly, bỏ ký tự lạ, từ chối khi rỗng', () => {
+  const d = sanitizeLabel({
+    ten: '  Vertimec   018EC ', loai: 'lệnh lạ', thanh_phan: 'Abamectin 1.8% w/w', so_dang_ky: 'ABC-123 / 2020', nha_san_xuat: 'Công ty X',
+    thoi_gian_cach_ly_ngay: '7', huong_dan_su_dung: 'Pha 10ml/bình 16 lít\n\n\n\nPhun đều\u0000', canh_bao_an_toan: 'x'.repeat(5000), han_dung: '2027-02-30', so_lo: 'L01',
+  });
+  assert.equal(d.ten, 'Vertimec 018EC');
+  assert.equal(d.loai, null);
+  assert.equal(d.thoi_gian_cach_ly_ngay, 7);
+  assert.equal(d.huong_dan_su_dung, 'Pha 10ml/bình 16 lít\n\nPhun đều');
+  assert.equal(d.canh_bao_an_toan.length, 2000);
+  assert.equal(d.han_dung, null);
+  assert.equal(sanitizeLabel({ thoi_gian_cach_ly_ngay: 9999, ten: 'A' }).thoi_gian_cach_ly_ngay, null);
+  assert.equal(sanitizeLabel({ ten: null, ghi_chu_khong_chac: 'ảnh mờ' }), null);
+  assert.equal(sanitizeLabel(null), null);
 });

@@ -42,3 +42,24 @@ Mất mạng hoặc đã hết lượt đọc trong tháng: app báo rõ, vẫn 
 | "Không đọc được nội dung ảnh này" | Ảnh mờ, thiếu sáng, bị cắt; chụp lại |
 | "Đọc phiếu cần quyền sửa mục Chi phí và mục Kho" | Người dùng chưa được cấp quyền; chủ cơ sở cấp ở Cấu hình |
 | "Tháng này cơ sở đã dùng hết N lần đọc phiếu" | Đã hết lượt theo gói; nâng gói hoặc nhập tay; quản trị chỉnh hạn mức ở Gói và giá |
+
+---
+
+# Chụp nhãn / tờ hướng dẫn để điền sẵn thông tin vật tư
+
+Dùng cùng hàm `scan-invoice` (thêm loại `label`) nên **không cần cài đặt thêm** nếu đã làm các bước ở trên; chỉ cần có migration 0186 đã đẩy và hàm đã triển khai lại **sau bản cập nhật này**:
+```bash
+npx supabase db push
+npx supabase functions deploy scan-invoice
+```
+Hạn mức lượt đọc ảnh **dùng chung** với chụp phiếu nhập hàng (dùng thử 2, Hộ 10–30, HTX 30–90 lần mỗi tháng). Ảnh không được lưu.
+
+## Cách thử
+
+1. Vào **Khai báo → Vật tư** → **+ Thêm vật tư** (hoặc Sửa một vật tư). Người dùng cần quyền sửa Kho và phải có mạng. Bấm **📷 Chụp nhãn / tờ hướng dẫn để điền sẵn**.
+2. Chụp tối đa 3 ảnh (mặt trước, mặt sau, tờ hướng dẫn), tích đồng ý, bấm **Đọc nhãn** (khoảng 10–40 giây).
+3. **Màn kiểm tra:** mỗi trường đọc được có ô tích "dùng". Ô còn trống được tích sẵn; ô đã có giá trị thì hiện giá trị cũ, tích mới thay. Các trường liên quan an toàn (thời gian cách ly, liều dùng, cảnh báo, số đăng ký) có dấu ⚠ nhắc đối chiếu bao bì thật. Số lô, hạn dùng in trên bao thuộc từng lần nhập kho nên không điền vào vật tư.
+4. Nếu **số đăng ký trùng một vật tư đã có**, app báo và có nút mở vật tư đó để cập nhật thay vì tạo trùng.
+5. Bấm **Điền vào form**, xem lại, **Thêm vật tư** / **Lưu thay đổi** như thường lệ. Nhóm vật tư và đơn vị tính được gợi ý nếu khớp với danh mục của cơ sở.
+
+Lỗi thường gặp giống phần chụp phiếu (hết lượt, quá tải trong ngày, ảnh mờ…). Chữ nhỏ, chai cong, bóng loáng dễ đọc sai: chụp từng mặt riêng, đủ sáng.

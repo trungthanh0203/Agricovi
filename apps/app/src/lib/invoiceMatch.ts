@@ -72,3 +72,38 @@ export function unitsDiffer(invoiceUnit: string | null | undefined, stockUnit: s
   const a = norm(invoiceUnit), b = norm(stockUnit);
   return Boolean(a && b && a !== b);
 }
+
+// ---------------------------------------------------------------- đọc nhãn vật tư
+const GROUP_WORDS: Record<string, string[]> = {
+  phan_bon: ['phan'],
+  thuoc_bvtv: ['bvtv', 'bao ve thuc vat', 'tru sau', 'tru benh', 'tru co', 'nong duoc', 'thuoc tru'],
+  thuoc_thu_y: ['thu y'],
+  thuc_an: ['thuc an'],
+  giong: ['giong'],
+};
+
+/** Loại sản phẩm đọc từ nhãn → nhóm vật tư của cơ sở (so theo từ khóa trong tên nhóm); không rõ thì null */
+export function suggestGroup(loai: string | null | undefined, groups: { id: string; label: string }[]): string | null {
+  const words = loai ? GROUP_WORDS[loai] : undefined;
+  if (!words) return null;
+  return groups.find((g) => { const n = norm(g.label); return words.some((w) => n.includes(w)); })?.id ?? null;
+}
+
+const UNIT_SYNONYMS: Record<string, string> = { kilogam: 'kg', kilogram: 'kg', 'ki lo gam': 'kg', lit: 'l', litre: 'l', liter: 'l', gam: 'g', gram: 'g', 'mililit': 'ml' };
+const unitKey = (s: string | null | undefined) => { const n = norm(s); return UNIT_SYNONYMS[n] ?? n; };
+
+/** Đơn vị đọc từ nhãn ("kg", "lít", "gói"…) → đơn vị đã có trong kho; không khớp thì null (người dùng tự chọn) */
+export function suggestUnit(donVi: string | null | undefined, units: { id: string; name: string }[]): string | null {
+  const k = unitKey(donVi);
+  if (!k) return null;
+  return units.find((u) => unitKey(u.name) === k)?.id ?? null;
+}
+
+const regKey = (s: string | null | undefined) => norm(s).replace(/[^a-z0-9]/g, '');
+
+/** Vật tư khác (không phải `selfId`) đã có cùng số đăng ký lưu hành; dùng để chặn tạo trùng */
+export function findByRegNo(reg: string | null | undefined, mats: { id: string; registration_no?: string | null }[], selfId: string | null = null): string | null {
+  const k = regKey(reg);
+  if (k.length < 4) return null;
+  return mats.find((m) => m.id !== selfId && regKey(m.registration_no) === k)?.id ?? null;
+}

@@ -1,4 +1,4 @@
-// Edge Function: ĐỌC ẢNH PHIẾU / HÓA ĐƠN NHẬP KHO (G2-3, D158). App gửi 1–3 ảnh; hàm nhờ mô hình đọc ảnh của Cloudflare Workers AI tách ra
+// Edge Function: ĐỌC ẢNH PHIẾU / HÓA ĐƠN NHẬP KHO và NHÃN / TỜ HƯỚNG DẪN VẬT TƯ (G2-3, D158). App gửi 1–3 ảnh; hàm nhờ mô hình đọc ảnh của Cloudflare Workers AI tách ra
 // nhà cung cấp, số hóa đơn, ngày, tổng tiền và các dòng hàng, rồi trả BẢN NHÁP cho app. Ảnh KHÔNG được lưu ở bất kỳ đâu (chỉ đi qua bộ nhớ);
 // chỉ ghi nhật ký số lần đọc (để tính hạn mức theo gói). Kết quả luôn là bản nháp: app cho người dùng kiểm tra rồi mới lưu.
 //
@@ -8,12 +8,12 @@
 // Mô hình lấy từ cấu hình nền tảng `invoice_scan_model` (mặc định Mistral Small 3.1); đổi ở bảng platform_settings, không cần triển khai lại.
 //
 // Hợp đồng:
-//   POST { organization_id, scan_id (uuid tạo ở app), images: ["data:image/jpeg;base64,..." × 1..3] }
-//     -> { ok: true, draft: {...}, usage: { limit, used, remaining } }
+//   POST { organization_id, scan_id (uuid tạo ở app), kind?: 'invoice' (mặc định) | 'label', images: ["data:image/jpeg;base64,..." × 1..3] }
+//     -> kind invoice: { ok: true, draft: {...}, usage };  kind label: { ok: true, label: {...}, usage }.  Hai loại dùng chung một hạn mức tháng theo gói.
 // Lỗi: HTTP 400/401/403/429/502 { error: "MÃ_LỖI: nội dung tiếng Việt" }. Lần đọc lỗi hệ thống không bị tính vào hạn mức.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-import { PROMPT, parseModelJson, sanitizeDraft } from './sanitize.ts';
+import { LABEL_PROMPT, PROMPT, parseModelJson, sanitizeDraft, sanitizeLabel } from './sanitize.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -62,6 +62,7 @@ Deno.serve(async (req) => {
   const org = String(body.organization_id ?? '');
   const scanId = String(body.scan_id ?? '');
   const images = Array.isArray(body.images) ? body.images.map(String) : [];
+  const kind = body.kind === 'label' ? 'label' : 'invoice';
   if (!UUID.test(org) || !UUID.test(scanId)) return fail('BAD_REQUEST: Thiếu mã cơ sở hoặc mã lần đọc.');
   if (images.length < 1 || images.length > 3) return fail('BAD_REQUEST: Cần từ 1 đến 3 ảnh.');
   for (const im of images) {
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
   }
 
   // quyền + hạn mức + tốc độ (ném lỗi có mã: FORBIDDEN, SCAN_LIMIT, SCAN_NOT_ALLOWED, SCAN_RATE)
-  const begun = await asUser.rpc('begin_invoice_scan', { p_org: org, p_id: scanId, p_images: images.length });
+  const begun = await asUser.rpc('begin_invoice_scan', { p_org: org, p_id: scanId, p_images: images.length, p_kind: kind });
   if (begun.error) {
     const msg = begun.error.message;
     const status = /^FORBIDDEN/.test(msg) ? 403 : /^SCAN_(LIMIT|RATE)/.test(msg) ? 429 : 400;
@@ -88,17 +89,26 @@ Deno.serve(async (req) => {
     const { data: st } = await admin.from('platform_settings').select('value').eq('key', 'invoice_scan_model').maybeSingle();
     if (typeof st?.value === 'string' && /^@cf\/[\w./-]+$/.test(st.value)) model = st.value;
 
-    const content = [{ type: 'text', text: PROMPT }, ...images.map((im) => ({ type: 'image_url', image_url: { url: im } }))];
+    const content = [{ type: 'text', text: kind === 'label' ? LABEL_PROMPT : PROMPT }, ...images.map((im) => ({ type: 'image_url', image_url: { url: im } }))];
     const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${cfAccount}/ai/run/${model}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${cfToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: [{ role: 'user', content }], max_tokens: 3000, temperature: 0 }),
+      body: JSON.stringify({ messages: [{ role: 'user', content }], max_tokens: kind === 'label' ? 4000 : 3000, temperature: 0 }),
     });
     const j = await res.json().catch(() => ({})) as { success?: boolean; result?: Record<string, unknown>; errors?: unknown };
     if (!res.ok || j.success === false) {
       console.error('cloudflare ai error', res.status, JSON.stringify(j.errors ?? j).slice(0, 300));
       await finish(false, 0);
       return fail(res.status === 429 ? 'AI_BUSY: Dịch vụ đọc ảnh đang quá tải trong hôm nay. Hãy thử lại sau hoặc nhập tay.' : 'AI_FAILED: Không đọc được ảnh lúc này. Hãy thử lại sau hoặc nhập tay.', res.status === 429 ? 429 : 502);
+    }
+    if (kind === 'label') {
+      const label = sanitizeLabel(parseModelJson(textOf(j.result)));
+      if (!label) {
+        await finish(false, 0);
+        return fail('AI_UNREADABLE: Không đọc được thông tin vật tư từ ảnh này. Hãy chụp lại rõ hơn (đủ sáng, thấy hết chữ, tránh bóng loáng) hoặc nhập tay.', 422);
+      }
+      await finish(true, 1);
+      return json({ ok: true, label, usage });
     }
     const draft = sanitizeDraft(parseModelJson(textOf(j.result)));
     if (!draft) {

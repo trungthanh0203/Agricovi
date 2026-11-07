@@ -72,3 +72,31 @@ export async function saveAliases(orgId: string, partnerId: string | null, items
   if (payload.length === 0) return;
   await supabase.rpc('save_material_aliases', { p_org: orgId, p_partner: partnerId, p_items: payload }).then(() => undefined, () => undefined);
 }
+
+// ---------------------------------------------------------------- nhãn / tờ hướng dẫn vật tư
+export interface LabelDraft {
+  ten: string | null;
+  loai: 'phan_bon' | 'thuoc_bvtv' | 'thuoc_thu_y' | 'thuc_an' | 'giong' | 'khac' | null;
+  thanh_phan: string | null;
+  so_dang_ky: string | null;
+  nha_san_xuat: string | null;
+  xuat_xu: string | null;
+  quy_cach: string | null;
+  don_vi: string | null;
+  thoi_gian_cach_ly_ngay: number | null;
+  huong_dan_su_dung: string | null;
+  cach_dung: string | null;
+  canh_bao_an_toan: string | null;
+  chi_tieu_chat_luong: string | null;
+  ham_luong_yeu_to_han_che: string | null;
+  so_lo: string | null;
+  han_dung: string | null;
+  ghi_chu_khong_chac: string | null;
+}
+
+/** Đọc nhãn / tờ hướng dẫn vật tư (dùng chung hạn mức lượt đọc ảnh với phiếu nhập hàng; ảnh không được lưu) */
+export async function scanLabel(orgId: string, images: string[]): Promise<{ label: LabelDraft; usage: ScanUsage }> {
+  if (!navigator.onLine) throw new Error('OFFLINE: Đọc nhãn cần có mạng. Bạn vẫn nhập tay được.');
+  const res = await callFunction<{ ok: boolean; label: LabelDraft; usage: ScanUsage }>({ organization_id: orgId, scan_id: crypto.randomUUID(), kind: 'label', images }, 'scan-invoice');
+  return { label: res.label, usage: res.usage };
+}

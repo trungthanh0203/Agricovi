@@ -41,3 +41,23 @@ test('unitsDiffer', () => {
   assert.equal(unitsDiffer('KG', 'kg'), false);
   assert.equal(unitsDiffer(null, 'kg'), false);
 });
+
+test('nhãn vật tư: gợi ý nhóm, đơn vị, chặn trùng số đăng ký', async () => {
+  const { suggestGroup, suggestUnit, findByRegNo } = await import('../../apps/app/src/lib/invoiceMatch.ts');
+  const groups = [{ id: 'fert', label: 'Phân bón' }, { id: 'pest', label: 'Thuốc BVTV' }, { id: 'vet', label: 'Thuốc thú y' }, { id: 'feed', label: 'Thức ăn' }, { id: 'seed', label: 'Giống' }];
+  assert.equal(suggestGroup('phan_bon', groups), 'fert');
+  assert.equal(suggestGroup('thuoc_bvtv', groups), 'pest');
+  assert.equal(suggestGroup('thuoc_thu_y', groups), 'vet');
+  assert.equal(suggestGroup('thuc_an', groups), 'feed');
+  assert.equal(suggestGroup('khac', groups), null);
+  assert.equal(suggestGroup(null, groups), null);
+  const units = [{ id: 'u1', name: 'kg' }, { id: 'u2', name: 'Lít' }, { id: 'u3', name: 'Gói' }];
+  assert.equal(suggestUnit('Kilogam', units), 'u1');
+  assert.equal(suggestUnit('lít', units), 'u2');
+  assert.equal(suggestUnit('goi', units), 'u3');
+  assert.equal(suggestUnit('thùng', units), null);
+  const mats = [{ id: 'm1', registration_no: 'ABC-123/2020' }, { id: 'm2', registration_no: null }];
+  assert.equal(findByRegNo('abc 123 / 2020', mats), 'm1');
+  assert.equal(findByRegNo('ABC-123/2020', mats, 'm1'), null);   // chính vật tư đang sửa
+  assert.equal(findByRegNo('xy', mats), null);
+});

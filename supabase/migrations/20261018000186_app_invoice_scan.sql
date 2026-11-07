@@ -17,6 +17,7 @@ create table invoice_scans (
   user_id uuid not null references auth.users(id),
   status text not null default 'pending' check (status in ('pending', 'ok', 'failed')),
   model text,
+  kind text not null default 'invoice' check (kind in ('invoice', 'label')),   -- phiếu nhập hàng hoặc nhãn/tờ hướng dẫn vật tư (dùng chung hạn mức)
   images integer not null default 1 check (images between 1 and 3),
   line_count integer,
   ms integer,
@@ -60,14 +61,18 @@ revoke execute on function get_invoice_scan_usage(uuid) from public, anon;
 grant execute on function get_invoice_scan_usage(uuid) to authenticated, service_role;
 
 -- Bắt đầu một lần đọc (Edge Function gọi bằng phiên của chính người dùng): kiểm quyền, hạn mức, tốc độ rồi ghi nhận. Gọi lặp cùng mã thì không tính thêm.
-create or replace function begin_invoice_scan(p_org uuid, p_id uuid, p_images integer default 1) returns jsonb
+create or replace function begin_invoice_scan(p_org uuid, p_id uuid, p_images integer default 1, p_kind text default 'invoice') returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare q jsonb; r invoice_scans; recent integer;
 begin
   if auth.uid() is null then raise exception 'FORBIDDEN: Bạn chưa đăng nhập.'; end if;
-  if not (has_perm(p_org, 'expenses', 'edit') and has_perm(p_org, 'inventory', 'edit')) then
+  -- phiếu nhập hàng cần quyền sửa Chi phí và Kho (như "Mua có hóa đơn"); nhãn vật tư chỉ cần quyền sửa Kho (khai báo vật tư)
+  if p_kind = 'label' then
+    if not has_perm(p_org, 'inventory', 'edit') then raise exception 'FORBIDDEN: Đọc nhãn vật tư cần quyền sửa mục Kho.'; end if;
+  elsif not (has_perm(p_org, 'expenses', 'edit') and has_perm(p_org, 'inventory', 'edit')) then
     raise exception 'FORBIDDEN: Đọc phiếu cần quyền sửa mục Chi phí và mục Kho.';
   end if;
+  if p_kind not in ('invoice', 'label') then raise exception 'BAD_REQUEST: Loại đọc ảnh không hợp lệ.'; end if;
   select * into r from invoice_scans where id = p_id;
   if r.id is not null then
     if r.user_id <> auth.uid() or r.organization_id <> p_org then raise exception 'FORBIDDEN: Mã lần đọc không hợp lệ.'; end if;
@@ -82,11 +87,11 @@ begin
   end if;
   select count(*) into recent from invoice_scans where user_id = auth.uid() and created_at > now() - interval '5 minutes';
   if recent >= 6 then raise exception 'SCAN_RATE: Bạn đọc phiếu hơi nhiều trong vài phút qua. Hãy đợi một lát rồi thử lại.'; end if;
-  insert into invoice_scans (id, organization_id, user_id, images) values (p_id, p_org, auth.uid(), greatest(1, least(coalesce(p_images, 1), 3)));
+  insert into invoice_scans (id, organization_id, user_id, kind, images) values (p_id, p_org, auth.uid(), p_kind, greatest(1, least(coalesce(p_images, 1), 3)));
   return jsonb_set(jsonb_set(q, '{used}', to_jsonb((q->>'used')::integer + 1)), '{remaining}', to_jsonb(greatest((q->>'remaining')::integer - 1, 0)));
 end $$;
-revoke execute on function begin_invoice_scan(uuid, uuid, integer) from public, anon;
-grant execute on function begin_invoice_scan(uuid, uuid, integer) to authenticated, service_role;
+revoke execute on function begin_invoice_scan(uuid, uuid, integer, text) from public, anon;
+grant execute on function begin_invoice_scan(uuid, uuid, integer, text) to authenticated, service_role;
 
 -- Kết thúc lần đọc: ok = tính vào hạn mức; failed = không tính
 create or replace function finish_invoice_scan(p_id uuid, p_ok boolean, p_lines integer, p_ms integer, p_model text) returns void

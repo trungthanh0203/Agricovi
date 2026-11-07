@@ -4,6 +4,7 @@ import { db, type LocationRow, type MaterialRow, type UnitRow } from '../lib/db'
 import { type MaterialExt } from '../lib/inventory';
 import { ImagePicker, Thumb } from './ImagePicker';
 import { AreaChoice } from './MemberAreas';
+import { LabelScanner, type LabelPatch } from './LabelScanner';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import {
@@ -51,6 +52,7 @@ export function CatalogSection({ orgId, canWrite, part }: { orgId: string; canWr
 
       {part === 'materials' && formMat !== null && (
         <MaterialForm key={formMat} m={formMat === 'new' ? null : materials.find((x) => x.id === formMat) ?? null} units={allUnits} busy={busy || !writable}
+          orgId={orgId} allMaterials={materials} canScan={writable} onOpenExisting={(id) => setFormMat(id)}
           onClose={() => setFormMat(null)}
           onSave={(v) => run(async () => {
             if (formMat === 'new') await createMaterial(orgId, { name: v.name, description: v.description, category: v.category ?? '', unitId: v.unitId, threshold: v.threshold, ext: v.ext });
@@ -164,8 +166,9 @@ function LocationForm({ l, orgId, busy, onSave, onClose }: {
 }
 
 /** Một biểu mẫu đầy đủ cho cả thêm mới và sửa vật tư (đơn vị tính chỉ chọn lúc thêm mới) */
-function MaterialForm({ m, units, busy, onSave, onClose }: {
+function MaterialForm({ m, units, busy, orgId, allMaterials, canScan, onOpenExisting, onSave, onClose }: {
   m: MaterialRow | null; units: UnitRow[]; busy: boolean;
+  orgId: string; allMaterials: MaterialRow[]; canScan: boolean; onOpenExisting: (id: string) => void;
   onSave: (v: { name: string; description: string; category: string | null; threshold: number | null; unitId: string; ext: MaterialExt }) => Promise<unknown>; onClose: () => void;
 }) {
   const cfg = useConfig();
@@ -181,10 +184,44 @@ function MaterialForm({ m, units, busy, onSave, onClose }: {
   const setE = (k: keyof typeof ext) => (e: { target: { value: string } }) => setExt((x) => ({ ...x, [k]: e.target.value }));
   const [thr, setThr] = useState(m?.reorder_threshold == null ? '' : String(m.reorder_threshold));
   const [err, setErr] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+
+  /** Điền các ô được tích từ kết quả đọc nhãn (chưa lưu; người dùng xem lại rồi bấm Lưu) */
+  function applyLabel(p: LabelPatch) {
+    if (p.name !== undefined) setName(p.name);
+    if (p.desc !== undefined) setDesc(p.desc);
+    if (p.unitId !== undefined && !m) setUnitId(p.unitId);
+    setExt((x) => ({
+      ...x,
+      ...(p.group !== undefined ? { material_group: p.group } : {}),
+      ...(p.brand !== undefined ? { brand: p.brand } : {}),
+      ...(p.manufacturer !== undefined ? { manufacturer: p.manufacturer } : {}),
+      ...(p.registration_no !== undefined ? { registration_no: p.registration_no } : {}),
+      ...(p.active_ingredient !== undefined ? { active_ingredient: p.active_ingredient } : {}),
+      ...(p.withdrawal_days !== undefined ? { withdrawal_days: p.withdrawal_days } : {}),
+      ...(p.usage_guide !== undefined ? { usage_guide: p.usage_guide } : {}),
+      ...(p.usage_method !== undefined ? { usage_method: p.usage_method } : {}),
+      ...(p.safety_warning !== undefined ? { safety_warning: p.safety_warning } : {}),
+      ...(p.quality_specs !== undefined ? { quality_specs: p.quality_specs } : {}),
+      ...(p.limit_elements !== undefined ? { limit_elements: p.limit_elements } : {}),
+    }));
+    setScanning(false);
+  }
+
+  if (scanning) {
+    return (
+      <LabelScanner orgId={orgId} isNew={!m} selfId={m?.id ?? null} materials={allMaterials} units={units} groups={cfg.materialGroups(ext.material_group)}
+        current={{ name, desc, group: ext.material_group, unitId: m ? m.base_unit_id : unitId, brand: ext.brand, manufacturer: ext.manufacturer, registration_no: ext.registration_no,
+          active_ingredient: ext.active_ingredient, withdrawal_days: ext.withdrawal_days, usage_guide: ext.usage_guide, usage_method: ext.usage_method,
+          safety_warning: ext.safety_warning, quality_specs: ext.quality_specs, limit_elements: ext.limit_elements }}
+        onApply={applyLabel} onOpenExisting={onOpenExisting} onCancel={() => setScanning(false)} />
+    );
+  }
   return (
     <div className="card">
       <h2>{m ? `Sửa vật tư: ${m.name}` : 'Thêm vật tư'}</h2>
       <div className="inline-form">
+        {canScan && <button type="button" className="secondary" onClick={() => setScanning(true)}>📷 Chụp nhãn / tờ hướng dẫn để điền sẵn</button>}
         <label>Tên vật tư<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} /></label>
         <label>Nhóm vật tư
           <select value={ext.material_group} onChange={setE('material_group')}>

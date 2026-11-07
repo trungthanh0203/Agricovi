@@ -12,7 +12,7 @@ async function setup() {
   await db.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['worker']::member_role[])`, [org, worker]);
   return { db, owner, stranger, worker, org };
 }
-const begin = (c, who, n, images = 1) => asUser(c.db, who, `select begin_invoice_scan($1,$2,$3) r`, [c.org, sid(n), images]).then((r) => r.rows[0].r);
+const begin = (c, who, n, images = 1, kind = 'invoice') => asUser(c.db, who, `select begin_invoice_scan($1,$2,$3,$4) r`, [c.org, sid(n), images, kind]).then((r) => r.rows[0].r);
 const finish = (c, who, n, ok) => asUser(c.db, who, `select finish_invoice_scan($1,$2,2,1500,'m')`, [sid(n), ok]);
 
 test('hạn mức dùng thử 2 lần/tháng; lần lỗi không tính; gọi lặp cùng mã không tính thêm', async () => {
@@ -84,4 +84,17 @@ test('quản trị: chỉnh hạn mức theo gói, dùng thử và mô hình; ng
   await asUser(c.db, admin, `select admin_set_scan_settings(3, '@cf/meta/llama-3.2-11b-vision-instruct')`);
   assert.equal((await begin(c, c.owner, 1)).limit, 3);
   assert.match(await expectError(asUser(c.db, admin, `select admin_set_scan_settings(3, 'gpt-4')`)), /INVALID_MODEL/);
+});
+
+test('đọc nhãn vật tư: dùng chung hạn mức với phiếu; chỉ cần quyền sửa Kho; loại lạ bị từ chối', async () => {
+  const c = await setup();
+  const q = await begin(c, c.owner, 1, 1, 'label');
+  assert.deepEqual([q.limit, q.used], [2, 1]);
+  await begin(c, c.owner, 2, 1, 'invoice');
+  assert.match(await expectError(begin(c, c.owner, 3, 1, 'label')), /SCAN_LIMIT/);       // chung một kho lượt
+  assert.equal((await c.db.query(`select kind from invoice_scans where id = $1`, [sid(1)])).rows[0].kind, 'label');
+  assert.match(await expectError(begin(c, c.owner, 4, 1, 'xyz')), /BAD_REQUEST/);
+  // nhân viên có quyền sửa Kho (mặc định) đọc nhãn được, nhưng không đọc phiếu nhập hàng
+  const c2 = await setup();
+  assert.match(await expectError(begin(c2, c2.worker, 1, 1, 'invoice')), /FORBIDDEN/);
 });
