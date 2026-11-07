@@ -39,6 +39,12 @@ label.check input { width: auto; }
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
 .kpi { background: var(--card); border: 1px solid var(--line); border-left: 5px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; text-align: left; }
 .kpi span { color: var(--muted); font-size: 13px; } .kpi strong { font-size: 1.7rem; line-height: 1.2; }
+.kpis.compact { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.kpis.compact .kpi { flex-direction: row; align-items: baseline; gap: 4px; padding: 5px 9px; border-left-width: 3px; font-size: 13px; cursor: pointer; }
+.kpis.compact .kpi strong { font-size: 14px; margin-left: auto; }
+.sorthead { background: none; border: 0; padding: 0; font: inherit; font-weight: 600; color: inherit; cursor: pointer; text-align: left; }
+.tablewrap { overflow-x: auto; }
+.pager { justify-content: space-between; margin-top: 8px; }
 .kpi.ok { border-left-color: var(--green); } .kpi.warn { border-left-color: var(--warn); } .kpi.bad { border-left-color: var(--err); } .kpi.info { border-left-color: var(--info); }
 .linkish { cursor: pointer; }
 table { border-collapse: collapse; width: 100%; }

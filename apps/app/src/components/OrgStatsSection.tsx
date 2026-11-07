@@ -6,7 +6,6 @@ import { useOrgs } from '../lib/orgs';
 import { useConfig } from '../lib/config';
 import { supabase } from '../lib/supabase';
 import { EXPENSE_CATEGORY_LABEL, EXPENSE_KIND_LABEL } from '../lib/finance';
-import { MODE_LABEL } from '../lib/herd';
 import { ORDER_PAYMENT_LABEL, ORDER_STATUS_LABEL } from '../lib/webSite';
 import { formatMoney } from '../lib/inventory';
 
@@ -16,31 +15,33 @@ import { formatMoney } from '../lib/inventory';
  */
 const PAGE = 30;
 type Cell = 'text' | 'date' | 'bool' | 'int' | 'num' | 'money' | Record<string, string>;
-interface Col { label: string; cell: Cell }
-interface Kind { id: string; tile: string; cols: Col[]; note?: string }
+/** Mỗi bảng tối đa 5 cột quan trọng (màn điện thoại nhỏ); `i` là số thứ tự cột ở máy chủ, dùng để sắp xếp */
+interface Col { label: string; cell: Cell; i: number }
+interface Kind { id: string; tile: string; cols: Col[] }
 
 const SUB_STATUS: Record<string, string> = { trial: 'Dùng thử', active: 'Đang hoạt động', expired: 'Hết hạn', suspended: 'Tạm khóa' };
 const AREA_KIND: Record<string, string> = { crop: 'Cây trồng', livestock: 'Vật nuôi', aquatic: 'Thủy sản', facility: 'Cơ sở vật chất', other: 'Khác', growing: 'Cây trồng' };
 const WORKER_STATUS: Record<string, string> = { active: 'Đang làm', inactive: 'Đã nghỉ' };
+const k = (label: string, cell: Cell, i: number): Col => ({ label, cell, i });
 
 const KINDS: Kind[] = [
-  { id: 'plans', tile: 'Gói đã mua', cols: [{ label: 'Gói', cell: 'text' }, { label: 'Trạng thái', cell: SUB_STATUS }, { label: 'Từ', cell: 'date' }, { label: 'Đến', cell: 'date' }, { label: 'Số vụ tối đa', cell: 'int' }, { label: 'Giá/quý', cell: 'money' }] },
-  { id: 'areas', tile: 'Phân khu', cols: [{ label: 'Tên', cell: 'text' }, { label: 'Loại', cell: AREA_KIND }, { label: 'Diện tích (m²)', cell: 'int' }, { label: 'Đang dùng', cell: 'bool' }, { label: 'Số ô sản xuất', cell: 'int' }, { label: 'Tạo ngày', cell: 'date' }] },
-  { id: 'cells', tile: 'Ô sản xuất', cols: [{ label: 'Tên', cell: 'text' }, { label: 'Thuộc phân khu', cell: 'text' }, { label: 'Loại', cell: AREA_KIND }, { label: 'Diện tích (m²)', cell: 'int' }, { label: 'Đang dùng', cell: 'bool' }, { label: 'Số vụ đang dùng', cell: 'int' }] },
-  { id: 'warehouses', tile: 'Kho', cols: [{ label: 'Tên kho', cell: 'text' }, { label: 'Đang dùng', cell: 'bool' }, { label: 'Tạo ngày', cell: 'date' }] },
-  { id: 'materials', tile: 'Vật tư', cols: [{ label: 'Tên vật tư', cell: 'text' }, { label: 'Nhóm', cell: 'text' }, { label: 'Đơn vị', cell: 'text' }, { label: 'Đang dùng', cell: 'bool' }, { label: 'Tạo ngày', cell: 'date' }] },
-  { id: 'suppliers', tile: 'Nhà cung ứng', cols: [{ label: 'Tên', cell: 'text' }, { label: 'Điện thoại', cell: 'text' }, { label: 'Tỉnh/thành phố', cell: 'text' }, { label: 'Xã/phường', cell: 'text' }, { label: 'Loại hàng', cell: 'text' }, { label: 'Đang dùng', cell: 'bool' }] },
-  { id: 'staff', tile: 'Nhân sự', cols: [{ label: 'Họ tên', cell: 'text' }, { label: 'Trạng thái', cell: WORKER_STATUS }, { label: 'Có tài khoản app', cell: 'bool' }, { label: 'Thêm ngày', cell: 'date' }] },
-  { id: 'templates', tile: 'Quy trình', cols: [{ label: 'Tên quy trình', cell: 'text' }, { label: 'Sản phẩm', cell: 'text' }, { label: 'Phiên bản', cell: 'int' }, { label: 'Đang dùng', cell: 'bool' }, { label: 'Số việc', cell: 'int' }, { label: 'Tạo ngày', cell: 'date' }] },
+  { id: 'plans', tile: 'Gói đã mua', cols: [k('Gói', 'text', 1), k('Trạng thái', SUB_STATUS, 2), k('Đến', 'date', 4), k('Số vụ tối đa', 'int', 5), k('Giá/quý', 'money', 6)] },
+  { id: 'areas', tile: 'Phân khu', cols: [k('Tên', 'text', 1), k('Loại', AREA_KIND, 2), k('Diện tích (m²)', 'int', 3), k('Số ô sản xuất', 'int', 5), k('Đang dùng', 'bool', 4)] },
+  { id: 'cells', tile: 'Ô sản xuất', cols: [k('Tên', 'text', 1), k('Thuộc phân khu', 'text', 2), k('Diện tích (m²)', 'int', 4), k('Số vụ đang dùng', 'int', 6), k('Đang dùng', 'bool', 5)] },
+  { id: 'warehouses', tile: 'Kho', cols: [k('Tên kho', 'text', 1), k('Đang dùng', 'bool', 2), k('Tạo ngày', 'date', 3)] },
+  { id: 'materials', tile: 'Vật tư', cols: [k('Tên vật tư', 'text', 1), k('Nhóm', 'text', 2), k('Đơn vị', 'text', 3), k('Đang dùng', 'bool', 4), k('Tạo ngày', 'date', 5)] },
+  { id: 'suppliers', tile: 'Nhà cung ứng', cols: [k('Tên', 'text', 1), k('Điện thoại', 'text', 2), k('Tỉnh/thành phố', 'text', 3), k('Loại hàng', 'text', 5), k('Đang dùng', 'bool', 6)] },
+  { id: 'staff', tile: 'Nhân sự', cols: [k('Họ tên', 'text', 1), k('Trạng thái', WORKER_STATUS, 2), k('Có tài khoản app', 'bool', 3), k('Thêm ngày', 'date', 4)] },
+  { id: 'templates', tile: 'Quy trình', cols: [k('Tên quy trình', 'text', 1), k('Sản phẩm', 'text', 2), k('Số việc', 'int', 5), k('Đang dùng', 'bool', 4), k('Tạo ngày', 'date', 6)] },
   ...(['active', 'preparing', 'paused', 'ended'] as const).map((st): Kind => ({
     id: `cycles_${st}`, tile: { active: 'Vụ đang sản xuất', preparing: 'Vụ đang chuẩn bị', paused: 'Vụ tạm dừng', ended: 'Vụ kết thúc' }[st],
-    cols: [{ label: 'Vụ', cell: 'text' }, { label: 'Sản phẩm', cell: 'text' }, { label: 'Ô sản xuất', cell: 'text' }, { label: 'Bắt đầu', cell: 'date' }, { label: 'Dự kiến xong', cell: 'date' }, { label: 'Diện tích (m²)', cell: 'int' }, { label: 'Số lượng', cell: 'int' }, { label: 'Kiểu', cell: MODE_LABEL as unknown as Record<string, string> }],
+    cols: [k('Vụ', 'text', 1), k('Ô sản xuất', 'text', 3), k('Bắt đầu', 'date', 4), k('Diện tích (m²)', 'int', 6), k('Số lượng', 'int', 7)],
   })),
-  { id: 'expenses', tile: 'Lần chi phí', cols: [{ label: 'Ngày', cell: 'date' }, { label: 'Vụ', cell: 'text' }, { label: 'Nhóm chi', cell: EXPENSE_CATEGORY_LABEL }, { label: 'Loại', cell: EXPENSE_KIND_LABEL }, { label: 'Số tiền', cell: 'money' }, { label: 'Đã hủy', cell: 'bool' }] },
-  { id: 'harvests', tile: 'Lần thu hoạch', cols: [{ label: 'Ngày', cell: 'date' }, { label: 'Vụ', cell: 'text' }, { label: 'Phân loại', cell: 'text' }, { label: 'Sản lượng', cell: 'num' }, { label: 'Hao hụt', cell: 'num' }, { label: 'Đã hủy', cell: 'bool' }] },
-  { id: 'sales', tile: 'Lần doanh thu', cols: [{ label: 'Ngày', cell: 'date' }, { label: 'Vụ', cell: 'text' }, { label: 'Số lượng', cell: 'num' }, { label: 'Số tiền', cell: 'money' }, { label: 'Đã hủy', cell: 'bool' }] },
-  { id: 'public_cycles', tile: 'Vụ công khai trên web', cols: [{ label: 'Mã', cell: 'text' }, { label: 'Vụ', cell: 'text' }, { label: 'Đang hiện', cell: 'bool' }, { label: 'Công khai ngày', cell: 'date' }] },
-  { id: 'web_orders', tile: 'Đơn từ web', cols: [{ label: 'Mã đơn', cell: 'text' }, { label: 'Trạng thái', cell: ORDER_STATUS_LABEL as unknown as Record<string, string> }, { label: 'Thanh toán', cell: ORDER_PAYMENT_LABEL as unknown as Record<string, string> }, { label: 'Đặt ngày', cell: 'date' }, { label: 'Giá trị', cell: 'money' }] },
+  { id: 'expenses', tile: 'Lần chi phí', cols: [k('Ngày', 'date', 1), k('Vụ', 'text', 2), k('Nhóm chi', EXPENSE_CATEGORY_LABEL, 3), k('Loại', EXPENSE_KIND_LABEL, 4), k('Số tiền', 'money', 5)] },
+  { id: 'harvests', tile: 'Lần thu hoạch', cols: [k('Ngày', 'date', 1), k('Vụ', 'text', 2), k('Phân loại', 'text', 3), k('Sản lượng', 'num', 4), k('Hao hụt', 'num', 5)] },
+  { id: 'sales', tile: 'Lần doanh thu', cols: [k('Ngày', 'date', 1), k('Vụ', 'text', 2), k('Số lượng', 'num', 3), k('Số tiền', 'money', 4)] },
+  { id: 'public_cycles', tile: 'Vụ công khai trên web', cols: [k('Mã', 'text', 1), k('Vụ', 'text', 2), k('Đang hiện', 'bool', 3), k('Công khai ngày', 'date', 4)] },
+  { id: 'web_orders', tile: 'Đơn từ web', cols: [k('Mã đơn', 'text', 1), k('Trạng thái', ORDER_STATUS_LABEL as unknown as Record<string, string>, 2), k('Thanh toán', ORDER_PAYMENT_LABEL as unknown as Record<string, string>, 3), k('Đặt ngày', 'date', 4), k('Giá trị', 'money', 5)] },
 ];
 
 type Summary = Record<string, unknown> & { plans?: { count: number; current: string | null; status: string; period_end: string | null } | null };
@@ -103,7 +104,7 @@ export function OrgStatsSection() {
   const cellText = (v: unknown, c: Cell, colLabel: string): ReactNode => (kind === 'materials' && colLabel === 'Nhóm' ? (v ? cfg.materialGroupLabel(String(v)) || String(v) : '—') : show(v, c));
 
   function clickCol(i: number) {
-    if (sort === i + 1) setDesc((d) => !d); else { setSort(i + 1); setDesc(false); }
+    if (sort === i) setDesc((d) => !d); else { setSort(i); setDesc(false); }
     setPage(0);
   }
 
@@ -116,8 +117,7 @@ export function OrgStatsSection() {
         {tiles.map((t) => (
           <button key={t.id} type="button" className={kind === t.id ? 'stattile on' : 'stattile'} aria-pressed={kind === t.id}
             onClick={() => { setKind(t.id); setSort(1); setDesc(false); setPage(0); setData(null); }}>
-            <span>{t.tile}</span><strong>{tileValue(t.id)}</strong>
-            {t.id === 'plans' && sum?.plans?.current && <small>Hiện: {sum.plans.current}{sum.plans.period_end ? ` · hạn ${fmtDate(sum.plans.period_end)}` : ''}</small>}
+            <span>{t.tile}:</span> <strong>{tileValue(t.id)}</strong>
           </button>
         ))}
       </div>
@@ -128,9 +128,9 @@ export function OrgStatsSection() {
           <table className="grid sortable">
             <thead>
               <tr>
-                {def.cols.map((c, i) => (
-                  <th key={c.label} aria-sort={sort === i + 1 ? (desc ? 'descending' : 'ascending') : 'none'}>
-                    <button type="button" className="sorthead" onClick={() => clickCol(i)}>{c.label}<i aria-hidden="true">{sort === i + 1 ? (desc ? ' ▼' : ' ▲') : ''}</i></button>
+                {def.cols.map((c) => (
+                  <th key={c.label} aria-sort={sort === c.i ? (desc ? 'descending' : 'ascending') : 'none'}>
+                    <button type="button" className="sorthead" onClick={() => clickCol(c.i)}>{c.label}<i aria-hidden="true">{sort === c.i ? (desc ? ' ▼' : ' ▲') : ''}</i></button>
                   </th>
                 ))}
               </tr>
@@ -139,7 +139,7 @@ export function OrgStatsSection() {
               {data === null && <tr><td colSpan={def.cols.length} className="muted">{loading ? 'Đang tải…' : 'Chưa có dữ liệu.'}</td></tr>}
               {data !== null && data.rows.length === 0 && <tr><td colSpan={def.cols.length} className="muted">Chưa có.</td></tr>}
               {(data?.rows ?? []).map((r, ri) => (
-                <tr key={ri}>{def.cols.map((c, i) => <td key={c.label}>{cellText(r[i], c.cell, c.label)}</td>)}</tr>
+                <tr key={ri}>{def.cols.map((c) => <td key={c.label}>{cellText(r[c.i - 1], c.cell, c.label)}</td>)}</tr>
               ))}
             </tbody>
           </table>
