@@ -27,11 +27,14 @@ function loadEnv() {
 }
 const env = loadEnv();
 
+// Mô hình mặc định; thêm bằng .env: CF_MODELS=@cf/...,@cf/...  và  GROQ_MODELS=id1,id2  (xem tên đang có bằng: node scripts/invoice-bench/run.mjs --models)
+const list = (v) => String(v ?? '').split(',').map((x) => x.trim()).filter(Boolean);
 const ENGINES = [
-  { id: 'cf-gemma3', label: 'Cloudflare · Gemma 3 12B', kind: 'cf', model: '@cf/google/gemma-3-12b-it' },
   { id: 'cf-llama32', label: 'Cloudflare · Llama 3.2 11B Vision', kind: 'cf', model: '@cf/meta/llama-3.2-11b-vision-instruct' },
   { id: 'cf-mistral31', label: 'Cloudflare · Mistral Small 3.1 24B', kind: 'cf', model: '@cf/mistralai/mistral-small-3.1-24b-instruct' },
-  { id: 'groq-scout', label: 'Groq · Llama 4 Scout 17B', kind: 'groq', model: env.GROQ_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct' },
+  { id: 'cf-gemma3', label: 'Cloudflare · Gemma 3 12B', kind: 'cf', model: '@cf/google/gemma-3-12b-it' },
+  ...list(env.CF_MODELS).map((m) => ({ id: `cf:${m.split('/').pop()}`, label: `Cloudflare · ${m.split('/').pop()}`, kind: 'cf', model: m })),
+  ...list(env.GROQ_MODELS || env.GROQ_MODEL).map((m) => ({ id: `groq:${m.split('/').pop()}`, label: `Groq · ${m.split('/').pop()}`, kind: 'groq', model: m })),
 ];
 
 const PROMPT = `Bạn đọc ảnh một hóa đơn / phiếu giao hàng / phiếu bán hàng mua vật tư nông nghiệp (phân bón, thuốc, giống, thức ăn...) của Việt Nam.
@@ -119,7 +122,28 @@ function ready(engine) {
   return Boolean(env.GROQ_API_KEY);
 }
 
+async function listModels() {
+  if (env.GROQ_API_KEY) {
+    const r = await fetch('https://api.groq.com/openai/v1/models', { headers: { Authorization: `Bearer ${env.GROQ_API_KEY}` } });
+    const j = await r.json().catch(() => ({}));
+    console.log('\n== Groq: các mô hình đang có (chỉ vài mô hình hiểu ảnh; tên thường có "vision", "vl", "scout", "maverick", "llama-4", "gemma", "qwen") ==');
+    for (const m of (j.data ?? []).map((x) => x.id).sort()) console.log('  ' + m);
+    if (!r.ok) console.log('  LỖI', r.status, JSON.stringify(j).slice(0, 200));
+  }
+  if (env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_API_TOKEN) {
+    console.log('\n== Cloudflare: mô hình có thể hiểu ảnh hoặc cùng họ ==');
+    for (let page = 1; page <= 6; page++) {
+      const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/ai/models/search?per_page=100&page=${page}`, { headers: { Authorization: `Bearer ${env.CLOUDFLARE_API_TOKEN}` } });
+      const j = await r.json().catch(() => ({}));
+      const rows = j.result ?? [];
+      if (!r.ok || rows.length === 0) { if (!r.ok) console.log('  LỖI', r.status, JSON.stringify(j).slice(0, 200)); break; }
+      for (const m of rows) if (/vision|vl|-vl|gemma|llava|mistral|llama-4|llama-3\.2|qwen|pixtral|ocr|florence|uform|image-to-text/i.test(`${m.name} ${m.task?.name ?? ''}`)) console.log(`  ${m.name}   [${m.task?.name ?? ''}]`);
+    }
+  }
+}
+
 async function main() {
+  if (process.argv.includes('--models')) return listModels();
   const args = process.argv.slice(2);
   const opt = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; };
   const force = args.includes('--force');
@@ -147,12 +171,14 @@ async function main() {
     results.__llamaAgreed = true;
   }
 
+  const dead = new Set();
   console.log(`Đọc ${files.length} ảnh bằng ${usable.length} mô hình (${usable.map((e) => e.id).join(', ')})`);
   for (const [n, file] of files.entries()) {
     const img = await prepare(path.join(IMG_DIR, file));
     const dataUrl = `data:image/jpeg;base64,${img.toString('base64')}`;
     results[file] ??= {};
     for (const e of usable) {
+      if (dead.has(e.id)) continue;
       if (!force && results[file][e.id]?.parsed) continue;
       const t0 = Date.now();
       try {
@@ -162,6 +188,7 @@ async function main() {
         console.log(`[${n + 1}/${files.length}] ${file} · ${e.id}: ${parsed ? `đọc được ${parsed.dong_hang?.length ?? 0} dòng` : 'KHÔNG ra JSON'} (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
       } catch (err) {
         results[file][e.id] = { ok: false, error: String(err.message ?? err), ms: Date.now() - t0 };
+        if ([401, 403, 404].includes(err.status)) { dead.add(e.id); console.log(`   → không dùng được "${e.label}" (tài khoản không có quyền hoặc mô hình không còn): bỏ qua mô hình này ở các ảnh sau`); }
         console.log(`[${n + 1}/${files.length}] ${file} · ${e.id}: LỖI ${String(err.message ?? err).slice(0, 160)}`);
       }
       fs.writeFileSync(RESULTS, JSON.stringify(results, null, 1)); // lưu sau từng lần: dừng giữa chừng không mất
