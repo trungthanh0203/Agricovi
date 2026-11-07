@@ -51,6 +51,12 @@ const year = new Date().getFullYear();
 const social = Object.entries({ Facebook: settings.social.facebook, 'Zalo OA': settings.social.zalo, YouTube: settings.social.youtube, TikTok: settings.social.tiktok })
   .map(([label, href]) => ({ label, href: safeHref(href) })).filter((s) => s.href);
 
+// Nút liên hệ nhanh cố định bên phải: chỉ hiện nút có thông tin trong Cài đặt website
+const zaloHref = safeHref(settings.social.zalo);
+const fbHref = safeHref(settings.social.facebook);
+const telDigits = (settings.contact.hotline ?? '').replace(/[^\d+]/g, '');
+const telHref = telDigits.length >= 6 ? `tel:${telDigits}` : '';
+
 // Trang công khai không chứa dữ liệu riêng của người dùng nên được phép lưu đệm ngắn ở biên Cloudflare
 if (cache) Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
 else Astro.response.headers.set('Cache-Control', 'private, no-store');
@@ -165,6 +171,50 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
         <p class="note">Thông tin do từng cơ sở tự khai và được kiểm duyệt trước khi hiển thị. Nhãn "Tự khai báo" nghĩa là chưa được xác minh độc lập.</p>
       </div>
     </footer>
+    <aside class="fab" aria-label="Liên hệ nhanh">
+      <a class="fab-consult" id="consultBtn" href="/lien-he"><span>Đăng ký tư vấn</span></a>
+      {zaloHref && <a class="fab-b fab-zalo" href={zaloHref} target="_blank" rel="noopener nofollow" aria-label="Chat Zalo" title="Chat Zalo">Zalo</a>}
+      {fbHref && <a class="fab-b fab-fb" href={fbHref} target="_blank" rel="noopener nofollow" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="#fff" d="M13.5 22v-8h2.7l.5-3.3h-3.2V8.6c0-.9.4-1.7 1.8-1.7h1.5V4.1S15.5 4 14.3 4C11.7 4 10 5.6 10 8.3v2.4H7.2V14H10v8z"/></svg></a>}
+      {telHref && <a class="fab-b fab-tel" href={telHref} aria-label="Gọi hotline" title={'Gọi hotline ' + settings.contact.hotline}><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="#fff" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></a>}
+    </aside>
+    <dialog class="consult" id="consultDlg" aria-labelledby="consultTitle">
+      <form id="consultForm" method="dialog">
+        <button class="cx" type="button" id="consultClose" aria-label="Đóng">✕</button>
+        <h2 id="consultTitle">Đăng ký tư vấn</h2>
+        <p class="muted">Để lại thông tin, chúng tôi sẽ gọi lại cho bạn sớm.</p>
+        <div class="hp" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off" /></label></div>
+        <label>Họ và tên<input name="name" required minlength="2" maxlength="80" autocomplete="name" /></label>
+        <label>Số điện thoại<input name="phone" required inputmode="tel" maxlength="20" autocomplete="tel" /></label>
+        <label>Bạn cần tư vấn gì? (không bắt buộc)<textarea name="msg" rows="3" maxlength="500"></textarea></label>
+        <p class="err" id="consultErr" role="alert" hidden></p>
+        <p class="ok" id="consultOk" role="status" hidden><b>Đã gửi.</b> Cảm ơn bạn, chúng tôi sẽ liên hệ lại qua số điện thoại bạn đã nhập.</p>
+        <button class="btn solid" type="submit" id="consultSend">Gửi đăng ký</button>
+      </form>
+    </dialog>
+    <script>
+      // Đăng ký tư vấn: mở hộp nhỏ ngay trên trang; không có JavaScript thì nút dẫn tới trang Liên hệ
+      const cDlg = document.getElementById('consultDlg') as HTMLDialogElement | null;
+      const cForm = document.getElementById('consultForm') as HTMLFormElement | null;
+      if (cDlg && cForm && typeof cDlg.showModal === 'function') {
+        const cErr = document.getElementById('consultErr')!, cOk = document.getElementById('consultOk')!, cSend = document.getElementById('consultSend') as HTMLButtonElement;
+        document.getElementById('consultBtn')?.addEventListener('click', (e) => { e.preventDefault(); cOk.hidden = true; cErr.hidden = true; cSend.hidden = false; cSend.disabled = false; cDlg.showModal(); });
+        document.getElementById('consultClose')?.addEventListener('click', () => cDlg.close());
+        cDlg.addEventListener('click', (e) => { if (e.target === cDlg) cDlg.close(); });
+        cForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (cSend.disabled) return;
+          cSend.disabled = true; cErr.hidden = true;
+          const d = Object.fromEntries(new FormData(cForm).entries());
+          try {
+            const r = await fetch('/tu-van', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
+            const j = await r.json().catch(() => ({} as { error?: string }));
+            if (!r.ok) throw new Error((j as { error?: string }).error || 'Chưa gửi được, hãy thử lại.');
+            cForm.reset(); cOk.hidden = false; cSend.hidden = true;
+            setTimeout(() => { if (cDlg.open) cDlg.close(); }, 3500);
+          } catch (x) { cErr.textContent = x instanceof Error ? x.message : 'Chưa gửi được, hãy thử lại.'; cErr.hidden = false; cSend.disabled = false; }
+        });
+      }
+    </script>
     <script>
       // Ngôn ngữ: nhớ lựa chọn ở máy; bản tiếng Anh dịch cả nội dung chèn bằng mã sau khi trang tải (từ điển nạp riêng, chỉ khi cần)
       document.querySelectorAll<HTMLAnchorElement>('.langsw a').forEach((a) => a.addEventListener('click', () => { try { localStorage.setItem('lang', a.dataset.lang ?? 'vi'); } catch { /* bỏ qua */ } }));
@@ -620,6 +670,26 @@ else Astro.response.headers.set('Cache-Control', 'private, no-store');
   .bar1 .ni.fair > a:hover, .bar1 .ni.fair:focus-within > a { background: linear-gradient(135deg, #e3d6ff, #c9b3f7); color: #3b1d7a; }
 </style>
 
+<style is:global>
+  /* Nút liên hệ nhanh: cố định bên phải màn hình, không trôi khi cuộn trang */
+  .fab { position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; pointer-events: none; }
+  .fab > a { pointer-events: auto; }
+  .fab-consult { writing-mode: vertical-rl; background: linear-gradient(180deg, #1e9650, #0e5e2e); color: #fff !important; text-decoration: none; font-weight: 700; padding: 18px 9px; border-radius: 14px 0 0 14px; box-shadow: 0 4px 14px rgba(0,0,0,.25); margin-bottom: 6px; letter-spacing: .02em; transition: padding .15s; }
+  .fab-consult:hover { padding-right: 14px; }
+  .fab-b { width: 52px; height: 52px; margin-right: 10px; border-radius: 50%; display: grid; place-items: center; color: #fff !important; text-decoration: none; font-weight: 700; font-size: .95rem; box-shadow: 0 4px 12px rgba(0,0,0,.3); transition: transform .15s; }
+  .fab-b:hover { transform: scale(1.08); }
+  .fab-zalo { background: #0068ff; } .fab-fb { background: #1877f2; } .fab-tel { background: #2e9e3f; box-shadow: 0 0 0 6px rgba(46,158,63,.25), 0 4px 12px rgba(0,0,0,.3); }
+  @media (max-width: 640px) { .fab { top: auto; bottom: 16px; transform: none; gap: 10px; } .fab-b { width: 46px; height: 46px; margin-right: 8px; } .fab-consult { padding: 14px 7px; font-size: .9rem; } }
+  @media print { .fab { display: none; } }
+  .consult { border: 0; border-radius: 16px; padding: 22px 22px 20px; width: min(380px, calc(100vw - 24px)); box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+  .consult::backdrop { background: rgba(10,30,18,.5); }
+  .consult h2 { margin: 0 0 4px; } .consult p { margin: 4px 0 10px; }
+  .consult label { display: block; font-weight: 600; margin: 10px 0; }
+  .consult input, .consult textarea { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 10px; font: inherit; margin-top: 4px; }
+  .consult .btn { width: 100%; }
+  .consult .cx { position: absolute; top: 10px; right: 12px; border: 0; background: none; font-size: 1.1rem; cursor: pointer; color: var(--muted); }
+  .consult [hidden] { display: none; }
+</style>
 <style is:global>
   /* ===== Logo thật (D75) ===== */
   .bar1 .logo { padding: 5px 14px; } .logo::before { content: none; } .logo img { display: block; height: 34px; width: auto; }
