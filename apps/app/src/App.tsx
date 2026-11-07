@@ -187,7 +187,7 @@ function Shell() {
     overlay === 'detail' && detailId ? (
       <CycleDetailScreen cycleId={detailId} openQr={qrFirst} openCalendar={detailOpts.calendar} notice={detailOpts.notice} onClose={() => { setQrFirst(false); setDetailOpts({}); setOverlay(null); }} onLog={(p) => { setLogPreset(p); setOverlay('log'); }} onGo={(t, s) => { closeOverlay(); goTo(t, s); }} />
     ) : overlay === 'log' ? (
-      <LogActivityScreen preset={logPreset} onClose={() => { setOverlay(logPreset && detailId ? 'detail' : null); setLogPreset(null); }} />
+      <LogActivityScreen preset={logPreset} onOpenCycle={(id) => { setLogPreset(null); setDetailId(id); setOverlay('detail'); }} onClose={() => { setOverlay(logPreset && detailId ? 'detail' : null); setLogPreset(null); }} />
     ) : overlay === 'model' && detailId ? (
       <div className="auth">
         <h1>Chọn cách quản lý vụ</h1>

@@ -24,6 +24,9 @@ import { HelpButton } from '../components/HelpButton';
 import { canLogCycle } from '../lib/prep';
 import { areaPath } from '../lib/areas';
 import { cycleTitle } from '../lib/cycles';
+import { recentWorkTypeIds } from '../lib/logGroups';
+import { LogTargetPicker } from '../components/LogTargetPicker';
+import { LogWorkPicker } from '../components/LogWorkPicker';
 
 /** Ngày (YYYY-MM-DD, giờ máy) cách hôm nay `back` ngày */
 const dayAgo = (back: number) => { const d = new Date(); d.setDate(d.getDate() - back); return toLocalInput(d).slice(0, 10); };
@@ -32,7 +35,7 @@ const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 const LAST_LOCATION_KEY = 'agriconnect.lastLocation'; // dùng chung với màn nhập kho
 
 /** Luồng "Ghi việc vừa làm" (v1.1 mục 3.4): chọn loại việc -> xác nhận vụ -> lưu. Dùng được offline. */
-export function LogActivityScreen({ onClose, preset }: { onClose: () => void; preset?: LogPreset | null }) {
+export function LogActivityScreen({ onClose, preset, onOpenCycle }: { onClose: () => void; preset?: LogPreset | null; onOpenCycle?: (cycleId: string) => void }) {
   const { session } = useAuth();
   const { active } = useOrgs();
   const sync = useRecordSync();
@@ -71,7 +74,9 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const [splitMode, setSplitMode] = useState<'area' | 'equal'>('area');
   const [savedCount, setSavedCount] = useState(1);
   useEffect(() => { setCoIds([]); }, [effectiveCycleId]);
-  const coCandidates = cycle ? options.filter((c) => c.id !== cycle.id && c.area_id === cycle.area_id) : [];
+  const kindOfCycle = (c: { crop_type_id: string }) => cropTypes.find((x) => x.id === c.crop_type_id)?.kind ?? 'crop';
+  // làm chung: các vụ khác cùng ô, hoặc các vụ cùng loại (ví dụ tiêm vaccine cho hai chuồng) đang ghi việc được
+  const coCandidates = cycle ? options.filter((c) => c.id !== cycle.id && (c.area_id === cycle.area_id || kindOfCycle(c) === kindOfCycle(cycle))) : [];
   const coCycles = coCandidates.filter((c) => coIds.includes(c.id));
   const group = cycle ? [cycle, ...coCycles] : [];
 
@@ -81,6 +86,14 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   const areaMode = forArea ?? (options.length === 0 && siteAreas.length > 0);
   const [areaPick, setAreaPick] = useState(preset?.areaId ?? '');
   const siteArea = siteAreas.find((a) => a.id === areaPick) ?? siteAreas[0] ?? null;
+  // Bước 1 (chọn đối tượng) chỉ hiện khi có từ 2 đối tượng trở lên và chưa được chọn sẵn (mở từ vụ / nhân bản / việc đến hạn thì bỏ qua)
+  const nTargets = options.length + (siteAreas.length > 0 ? 1 : 0);
+  const [targetDone, setTargetDone] = useState(Boolean(preset?.cycleId || preset?.areaId));
+  const lastAtByCycle = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const l of allLogs) if (l.cycle_id && !l.voided_at && (m.get(l.cycle_id) ?? '') < l.performed_at) m.set(l.cycle_id, l.performed_at);
+    return m;
+  }, [allLogs]);
 
   // Loại của việc đang ghi (theo vụ đã chọn, hoặc theo loại khu khi ghi cho khu không gắn vụ) quyết định đầu việc hiện ra và biểu mẫu (điểm 2)
   const wtKind = areaMode ? productKindOfArea(siteArea?.kind) : cropTypes.find((c) => c.id === cycle?.crop_type_id)?.kind;
@@ -136,6 +149,28 @@ export function LogActivityScreen({ onClose, preset }: { onClose: () => void; pr
   };
 
   const workType = workTypes.find((w) => w.id === workTypeId) ?? null;
+
+  // Gợi ý ở bước chọn việc: việc đến hạn hôm nay theo công đoạn của quy trình, và việc người này hay làm gần đây
+  const todayStr = dayAgo(0);
+  const dueIds = areaMode ? [] : stages.filter((s) => s.work_type_id && s.status !== 'done' && (s.status === 'in_progress' || (s.planned_start && s.planned_end && todayStr >= s.planned_start && todayStr <= s.planned_end))).map((s) => s.work_type_id).filter((x): x is string => !!x);
+  const recentIds = recentWorkTypeIds(allLogs, session?.user.id, new Set(workTypes.map((w) => w.id)));
+  const targetLabel = areaMode ? (siteArea ? areaPath(siteArea.id, areas) : 'Khu vực') : cycle ? `${cycleTitle(cycle, cropName(cycle.crop_type_id))} · ${areaName(cycle.area_id)}` : '';
+  const canChangeTarget = nTargets > 1;
+  const backToTarget = () => { setWorkTypeId(null); setStageSel(undefined); setTargetDone(false); };
+  // nút tắt theo loại vụ: số con (nhập, chết, loại, bán) cho vật nuôi / thủy sản; kỳ thu hoạch cho cây lâu năm
+  const cycleKind = cycle ? kindOfCycle(cycle) : undefined;
+  const shortcut = !areaMode && cycle && onOpenCycle && (cycleKind === 'livestock' || cycleKind === 'aquatic' || cycle.cycle_mode === 'perennial') ? (
+    <div className="card slim">
+      <p style={{ margin: 0 }}>
+        {cycle.cycle_mode === 'perennial'
+          ? 'Kỳ / năm thu hoạch của vườn cây: mở để chốt kỳ hoặc xem tổng kết.'
+          : cycle.cycle_mode === 'herd'
+            ? 'Biến động đàn: nhập đàn, chết, loại, chuyển nhóm, bán.'
+            : 'Số con: nhập thêm, chết, loại, xuất bán.'}
+      </p>
+      <button type="button" className="secondary" onClick={() => onOpenCycle(cycle.id)}>{cycle.cycle_mode === 'perennial' ? 'Mở kỳ thu hoạch' : cycle.cycle_mode === 'herd' ? 'Mở biến động đàn' : 'Ghi số con'}</button>
+    </div>
+  ) : null;
 
   // Nhân bản từ một bản ghi cũ (Nhật ký việc → Nhân bản): điền sẵn nội dung, ô thông tin, vật tư; ngày mặc định là bây giờ, chỉ cần chọn lại ngày nếu khác
   const copySrc = useLiveQuery(() => (preset?.copyFromLogId ? db.logs.get(preset.copyFromLogId) : undefined), [preset?.copyFromLogId]);
@@ -285,6 +320,7 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
         <div className="row">
           <h1 className="grow">Ghi việc: {workType.name}</h1>
           <button type="button" className="link inline" onClick={() => { setWorkTypeId(null); setStageSel(undefined); }}>Đổi việc</button>
+          {canChangeTarget && <button type="button" className="link inline" onClick={backToTarget}>Đổi nơi ghi</button>}
           <HelpButton topic="log" />
         </div>
       ) : <div className="row"><h1 className="grow">Ghi việc vừa làm</h1><HelpButton topic="log" /></div>}
@@ -299,17 +335,26 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
           </p>
           <button className="secondary" onClick={onClose}>Quay lại</button>
         </>
+      ) : !workType && !targetDone && nTargets > 1 ? (
+        <LogTargetPicker
+          targets={options.map((c) => ({ id: c.id, title: cycleTitle(c, cropName(c.crop_type_id)), place: areaName(c.area_id), kind: kindOfCycle(c), status: CYCLE_STATUS_LABEL_VI[c.status], lastAt: lastAtByCycle.get(c.id) ?? null }))}
+          rememberedId={options.find((c) => c.id === remembered)?.id ?? null}
+          hasAreas={siteAreas.length > 0}
+          onPickCycle={(id) => { setCycleId(id); setForArea(false); setStageSel(undefined); setTargetDone(true); }}
+          onPickArea={() => { setForArea(true); setTargetDone(true); }}
+          onCancel={onClose}
+        />
       ) : !workType ? (
-        <>
-          <p className="muted">Bạn vừa làm việc gì?</p>
-          <div className="grid2">
-            {workTypes.map((w) => (
-              <button key={w.id} className="bigchoice" onClick={() => setWorkTypeId(w.id)}>{w.name}</button>
-            ))}
-          </div>
-          {workTypes.length === 0 && <p className="muted">Chưa tải được danh sách loại việc. Hãy kết nối mạng một lần để tải về.</p>}
-          <button className="link" onClick={onClose}>Hủy</button>
-        </>
+        <LogWorkPicker
+          targetLabel={targetLabel}
+          onChangeTarget={canChangeTarget ? backToTarget : undefined}
+          workTypes={workTypes}
+          dueIds={dueIds}
+          recentIds={recentIds}
+          shortcuts={shortcut}
+          onPick={setWorkTypeId}
+          onCancel={onClose}
+        />
       ) : (
         <form className="inline-form" onSubmit={onSubmit} noValidate>
           {!areaMode && stages.length > 0 && (
@@ -318,16 +363,6 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
               <select value={effStage ?? ''} onChange={(e) => setStageSel(e.target.value || null)}>
                 <option value="">— Không gắn công đoạn —</option>
                 {stages.map((st) => <option key={st.id} value={st.id}>{st.phase_name ? `${st.phase_name} › ${st.name}` : st.name}</option>)}
-              </select>
-            </label>
-          )}
-
-          {siteAreas.length > 0 && options.length > 0 && (
-            <label>
-              Ghi cho
-              <select value={areaMode ? 'area' : 'cycle'} onChange={(e) => setForArea(e.target.value === 'area')}>
-                <option value="cycle">Một vụ đang sản xuất</option>
-                <option value="area">Khu vực / cơ sở vật chất (không gắn vụ)</option>
               </select>
             </label>
           )}
@@ -342,7 +377,12 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
           ) : (
           <label>
             <CycleWord cap />
-            <select value={effectiveCycleId} onChange={(e) => { setCycleId(e.target.value); setStageSel(undefined); }}>
+            <select value={effectiveCycleId} onChange={(e) => {
+              const next = options.find((c) => c.id === e.target.value);
+              // đổi sang vụ khác loại (trồng / nuôi / thủy sản) thì danh sách việc khác: quay về bước chọn việc
+              if (next && cycle && kindOfCycle(next) !== kindOfCycle(cycle)) setWorkTypeId(null);
+              setCycleId(e.target.value); setStageSel(undefined);
+            }}>
               {options.map((c) => (
                 <option key={c.id} value={c.id}>
                   {cycleTitle(c, cropName(c.crop_type_id))} · {areaName(c.area_id)} ({CYCLE_STATUS_LABEL_VI[c.status]})
@@ -355,7 +395,7 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
           {!areaMode && coCandidates.length > 0 && (
             <fieldset className="roles">
               <legend>Việc này làm chung cho vụ khác trong ô?</legend>
-              <p className="muted">Ô này đang chạy nhiều vụ. Việc làm cho cả ô (tưới, phun, dọn…) thì tích các vụ cùng làm: app ghi một nhật ký cho mỗi vụ.</p>
+              <p className="muted">Có vụ khác cùng ô hoặc cùng loại. Việc làm chung (tưới, phun, tiêm vaccine, dọn…) thì tích các vụ cùng làm: app ghi một nhật ký cho mỗi vụ.</p>
               {coCandidates.map((c) => (
                 <label className="check" key={c.id}>
                   <input type="checkbox" checked={coIds.includes(c.id)} onChange={(e) => setCoIds((s) => (e.target.checked ? [...s, c.id] : s.filter((x) => x !== c.id)))} />

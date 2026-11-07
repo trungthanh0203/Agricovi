@@ -113,7 +113,7 @@ export const HELP: Record<HelpKey, HelpEntry> = {
   log: {
     title: 'Ghi việc',
     what: 'Ghi lại việc vừa làm cho một vụ: làm gì, hôm nào, dùng vật tư gì. Đây là nhật ký của vụ và là nguồn tính chi phí vật tư.',
-    how: ['Chọn vụ và việc, nhập nội dung, ảnh, vật tư đã dùng.', 'Quên ghi thì chọn Hôm qua hoặc Hôm kia.', 'Mất mạng vẫn ghi được, app tự gửi lên khi có mạng.'],
+    how: ['Chọn nơi ghi (vụ trồng, nuôi, thủy sản hoặc khu vực), rồi chọn việc: việc đến hạn và việc hay làm hiện trên cùng; nhập nội dung, ảnh, vật tư đã dùng.', 'Quên ghi thì chọn Hôm qua hoặc Hôm kia.', 'Mất mạng vẫn ghi được, app tự gửi lên khi có mạng.'],
     guide: { id: 'process', step: 5 },
   },
   logs: {
