@@ -40,7 +40,7 @@ const KINDS: Kind[] = [
   { id: 'expenses', tile: 'Lần chi phí', cols: [k('Ngày', 'date', 1), k('Vụ', 'text', 2), k('Nhóm chi', EXPENSE_CATEGORY_LABEL, 3), k('Loại', EXPENSE_KIND_LABEL, 4), k('Số tiền', 'money', 5)] },
   { id: 'harvests', tile: 'Lần thu hoạch', cols: [k('Ngày', 'date', 1), k('Vụ', 'text', 2), k('Phân loại', 'text', 3), k('Sản lượng', 'num', 4), k('Hao hụt', 'num', 5)] },
   { id: 'sales', tile: 'Lần doanh thu', cols: [k('Ngày', 'date', 1), k('Vụ', 'text', 2), k('Số lượng', 'num', 3), k('Số tiền', 'money', 4)] },
-  { id: 'public_cycles', tile: 'Vụ công khai trên web', cols: [k('Mã', 'text', 1), k('Vụ', 'text', 2), k('Đang hiện', 'bool', 3), k('Công khai ngày', 'date', 4)] },
+  { id: 'public_cycles', tile: 'Vụ trên website', cols: [k('Mã', 'text', 1), k('Vụ', 'text', 2), k('Đang hiện', 'bool', 3), k('Công khai ngày', 'date', 4)] },
   { id: 'web_orders', tile: 'Đơn từ web', cols: [k('Mã đơn', 'text', 1), k('Trạng thái', ORDER_STATUS_LABEL as unknown as Record<string, string>, 2), k('Thanh toán', ORDER_PAYMENT_LABEL as unknown as Record<string, string>, 3), k('Đặt ngày', 'date', 4), k('Giá trị', 'money', 5)] },
 ];
 

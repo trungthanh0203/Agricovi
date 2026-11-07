@@ -250,7 +250,7 @@ const ITEM_KINDS: ItemKind[] = [
   { id: 'expenses', label: 'Lần chi phí', cols: [C('Ngày', 'd', 1), C('Vụ', 't', 2), C('Nhóm chi', 't', 3), C('Loại', EXPENSE_KIND, 4)], note: 'Chỉ hiện ngày và nhóm; không hiện số tiền của nhà vườn.' },
   { id: 'harvests', label: 'Lần thu hoạch', cols: [C('Ngày', 'd', 1), C('Vụ', 't', 2), C('Phân loại', 't', 3), C('Cách nhập', SOURCE_LABEL, 4)], note: 'Chỉ hiện ngày và vụ; không hiện sản lượng.' },
   { id: 'sales', label: 'Lần doanh thu', cols: [C('Ngày', 'd', 1), C('Vụ', 't', 2), C('Cách nhập', SOURCE_LABEL, 3)], note: 'Chỉ hiện ngày và vụ; không hiện số tiền.' },
-  { id: 'public_cycles', label: 'Vụ công khai trên web', cols: [C('Mã', 't', 1), C('Vụ', 't', 2), C('Đang hiện', 'b', 3), C('Công khai ngày', 'd', 4)] },
+  { id: 'public_cycles', label: 'Vụ trên website', cols: [C('Mã', 't', 1), C('Vụ', 't', 2), C('Đang hiện', 'b', 3), C('Công khai ngày', 'd', 4)] },
   { id: 'web_orders', label: 'Đơn từ web', cols: [C('Mã đơn', 't', 1), C('Trạng thái', ORDER_STATUS, 2), C('Thanh toán', PAY_STATUS, 3), C('Đặt ngày', 'd', 4)] },
 ];
 const showCell = (v: unknown, c: Cell): string => {
