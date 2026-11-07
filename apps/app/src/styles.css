@@ -734,3 +734,16 @@ button.secondary.soft-toggle[aria-expanded="true"] > i { transform: rotate(45deg
 
 /* Mã giới thiệu (components/ReferralCard.tsx) */
 .referral-code { font-size: 1.6rem; letter-spacing: .08em; text-align: center; margin: 10px 0; padding: 10px; border: 2px dashed var(--green); border-radius: 12px; user-select: all; }
+
+/* Thống kê tổng hợp của cơ sở: ô số liệu bấm được, bảng sắp xếp theo cột, phân trang */
+.statgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 8px 0 12px; }
+.stattile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; color: var(--fg); font: inherit; text-align: left; cursor: pointer; }
+.stattile span { font-size: .8rem; color: var(--muted); }
+.stattile strong { font-size: 1.25rem; }
+.stattile small { font-size: .72rem; color: var(--muted); }
+.stattile.on { border-color: var(--green); background: var(--tint); }
+table.sortable th { padding: 0; }
+.sorthead { width: 100%; background: none; border: 0; padding: 8px 6px; font: inherit; font-weight: 700; color: inherit; text-align: left; cursor: pointer; white-space: nowrap; }
+.pager { align-items: center; justify-content: space-between; }
+.pager button { flex: 0 0 auto; min-width: 84px; margin: 0; }
+@media (min-width: 720px) { .statgrid { grid-template-columns: repeat(4, 1fr); } }

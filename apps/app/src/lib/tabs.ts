@@ -29,7 +29,7 @@ export interface Section<Id extends string = string> {
 
 export type ProductionSection = 'cycles' | 'log' | 'logs' | 'stock' | 'expense' | 'harvest' | 'sales' | 'attendance';
 export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'kiosks' | 'customers' | 'positions' | 'teams' | 'members' | 'coop' | 'licenses';
-export type ReportSection = 'payables' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist' | 'logbook';
+export type ReportSection = 'stats' | 'payables' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist' | 'logbook';
 
 /**
  * Chế độ đơn giản (D100): các mục NÂNG CAO bị ẩn khỏi menu cho hộ nhỏ. Chỉ là cách hiển thị: quyền và dữ liệu không đổi, chủ bật lại chế độ đầy đủ bất cứ lúc nào
@@ -77,24 +77,24 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
     canPerm(org.perms, 'declare') ? { id: 'worktypes' as const, label: 'Việc' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'partners' as const, label: 'Nhà cung ứng' } : null,
-    manager ? { id: 'kiosks' as const, label: 'Máy chấm công' } : null, // máy chấm công và mã PIN (trước đây trong Sản xuất → Chấm công)
-    canPerm(org.perms, 'sales') ? { id: 'customers' as const, label: 'Khách hàng' } : null,
+    canPerm(org.perms, 'sales') ? { id: 'customers' as const, label: 'Khách hàng' } : null, // ngay sau Nhà cung ứng
     manager ? { id: 'licenses' as const, label: 'Giấy phép' } : null, // giấy phép, chứng chỉ của cơ sở (trước đây ở tab Tài khoản)
     // Nhân sự và tổ chức (trước đây ở tab Tổ chức)
     hasRole(org.roles, 'owner') ? { id: 'positions' as const, label: 'Chức vụ' } : null,
     manager ? { id: 'teams' as const, label: 'Tổ chức' } : null,
     manager ? { id: 'members' as const, label: 'Nhân sự' } : null,
     canPerm(org.perms, 'coop') ? { id: 'coop' as const, label: org.type === 'cooperative' ? 'Hộ thành viên' : 'Hợp tác xã' } : null,
+    manager ? { id: 'kiosks' as const, label: 'Máy chấm công' } : null, // máy chấm công và mã PIN, đứng sau Hợp tác xã
   ].filter((x): x is Section<DeclareSection> => x !== null));
 }
 
 /** Khung gom các mục của tab Khai báo theo chức năng liên quan (menu Khai báo hiện 4 khung, trong khung là thanh chọn mục) */
 export interface DeclareGroup { id: string; label: string; icon: string; items: Section<DeclareSection>[] }
 const DECLARE_GROUPS: { id: string; label: string; icon: string; ids: DeclareSection[] }[] = [
-  { id: 'base', label: 'Cơ sở & vật tư', icon: '🏡', ids: ['areas', 'crops', 'places', 'materials', 'partners', 'kiosks'] },
+  { id: 'base', label: 'Cơ sở & vật tư', icon: '🏡', ids: ['areas', 'crops', 'places', 'materials', 'partners', 'customers'] },
   { id: 'org', label: 'Nhân sự', icon: '👥', ids: ['positions', 'teams', 'members'] },
   { id: 'process', label: 'Quy trình', icon: '📋', ids: ['worktypes', 'templates'] },
-  { id: 'legal', label: 'Giấy phép & đối tác', icon: '🤝', ids: ['licenses', 'coop', 'customers'] },
+  { id: 'legal', label: 'Giấy phép & đối tác', icon: '🤝', ids: ['licenses', 'coop', 'kiosks'] },
 ];
 /** Các khung của tab Khai báo mà người dùng có ít nhất một mục (đã lọc theo quyền và chế độ hiển thị); mục nào chưa xếp khung thì vào khung "Khác" */
 export function declareGroups(org: MyOrg | null): DeclareGroup[] {
@@ -124,7 +124,8 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
     canPerm(org.perms, 'declare') ? { id: 'logbook' as const, label: 'Sổ nhật ký' } : null,
     canPerm(org.perms, 'declare') ? { id: 'checklist' as const, label: 'Bảng kiểm' } : null,
     canPerm(org.perms, 'website') ? { id: 'website' as const, label: 'Đơn khách từ website' } : null,
-    canPerm(org.perms, 'website') ? { id: 'commerce' as const, label: 'Hồ sơ website' } : null, // luôn để cuối
+    canPerm(org.perms, 'website') ? { id: 'commerce' as const, label: 'Hồ sơ website' } : null,
+    { id: 'stats' as const, label: 'Thống kê tổng hợp' }, // luôn để cuối; mỗi ô số liệu tự ẩn nếu người dùng không đủ quyền
   ].filter((x): x is Section<ReportSection> => x !== null));
 }
 

@@ -198,14 +198,14 @@ const typeText = (h: TxnHistoryRow) => {
   return h.txn_type === 'adjustment' ? `Điều chỉnh ${h.quantity_delta > 0 ? 'tăng' : 'giảm'}` : TXN_TYPE_LABEL[h.txn_type] ?? h.txn_type;
 };
 
-function detailText(h: TxnHistoryRow, locName: (id: string) => string): string {
+function detailText(h: TxnHistoryRow, locName: (id: string) => string, withAuthor = true): string {
   return [
     locName(h.location_id),
     h.unit_cost != null ? `giá ${formatMoney(h.unit_cost)}` : h.txn_type === 'receipt' ? 'chưa ghi giá' : '',
     h.purchase_bills?.partners?.name ? `mua của ${h.purchase_bills.partners.name}${h.purchase_bills.invoice_no ? ` (HĐ ${h.purchase_bills.invoice_no})` : ''}` : '',
     h.material_lots ? `lô ${h.material_lots.lot_no}${h.material_lots.expiry_date ? ` (hạn ${new Date(h.material_lots.expiry_date).toLocaleDateString('vi-VN')})` : ''}` : '',
     h.activity_log_id ? 'dùng khi ghi việc' : '',
-    authorLabel(h.author_name, h.author_roles) ?? '',
+    withAuthor ? authorLabel(h.author_name, h.author_roles) ?? '' : '',
     h.reason ? `lý do: ${h.reason}` : '',
   ].filter(Boolean).join(' · ');
 }
@@ -320,14 +320,14 @@ function TxnList({ orgId, d, refreshKey }: { orgId: string; d: Data; refreshKey:
       {!navigator.onLine && <p className="msg warn" role="status">Cần có mạng để xem giao dịch.</p>}
       <div className="tablewrap">
         <table className="grid">
-          <thead><tr><th>Ngày / vật tư</th><th>Loại</th><th className="num">Số lượng</th></tr></thead>
+          <thead><tr><th>Ngày / vật tư</th><th>Loại / Người làm</th><th className="num">Số lượng</th></tr></thead>
           <tbody>
             {rows === null && <tr><td colSpan={3} className="muted">Đang tải…</td></tr>}
             {rows !== null && rows.length === 0 && navigator.onLine && <tr><td colSpan={3} className="muted">Không có giao dịch phù hợp.</td></tr>}
             {(rows ?? []).map((h) => (
               <tr key={h.id}>
-                <td>{new Date(h.txn_date).toLocaleDateString('vi-VN')} · <strong>{d.matName(h.material_id)}</strong><span className="sub">{detailText(h, d.locName)}</span></td>
-                <td>{typeText(h)}</td>
+                <td>{new Date(h.txn_date).toLocaleDateString('vi-VN')} · <strong>{d.matName(h.material_id)}</strong><span className="sub">{detailText(h, d.locName, false)}</span></td>
+                <td>{typeText(h)}<span className="sub">{authorLabel(h.author_name, h.author_roles) || 'Không rõ người làm'}</span></td>
                 <td className={h.quantity_delta >= 0 ? 'num pos' : 'num neg'}>{h.quantity_delta > 0 ? '+' : ''}{formatQty(h.quantity_delta)} {d.matUnit(h.material_id)}</td>
               </tr>
             ))}

@@ -297,6 +297,13 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     note: 'Doanh thu đi thẳng vào Tổng kết vụ để tính lãi lỗ.',
     guide: { id: 'crop', step: 11 },
   },
+  stats: {
+    title: 'Thống kê tổng hợp',
+    what: 'Các con số tổng hợp của cơ sở: gói đã mua, phân khu, ô sản xuất, kho, vật tư, nhà cung ứng, nhân sự, quy trình, các nhóm vụ, số lần chi phí, thu hoạch, doanh thu.',
+    how: ['Bấm vào một ô số liệu thì danh sách chi tiết hiện ở bảng bên dưới.', 'Bấm tên cột để sắp xếp tăng hoặc giảm; bảng chia trang 30 dòng.', 'Ô nào bạn không có quyền xem sẽ tự ẩn.'],
+    note: 'Số liệu lấy từ máy chủ nên cần có mạng.',
+    guide: { id: 'crop', step: 11 },
+  },
   summary: {
     title: 'Tổng kết vụ',
     what: 'Chi phí, doanh thu, lãi lỗ và giá thành mỗi kg của từng vụ.',
