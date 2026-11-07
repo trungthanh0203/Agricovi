@@ -125,7 +125,7 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
     canPerm(org.perms, 'declare') ? { id: 'checklist' as const, label: 'Bảng kiểm' } : null,
     canPerm(org.perms, 'website') ? { id: 'website' as const, label: 'Đơn khách từ website' } : null,
     canPerm(org.perms, 'website') ? { id: 'commerce' as const, label: 'Hồ sơ website' } : null,
-    { id: 'stats' as const, label: '📊 Thống kê tổng hợp' }, // luôn để cuối; mỗi ô số liệu tự ẩn nếu người dùng không đủ quyền
+    { id: 'stats' as const, label: 'Thống kê tổng hợp' }, // luôn để cuối; mỗi ô số liệu tự ẩn nếu người dùng không đủ quyền
   ].filter((x): x is Section<ReportSection> => x !== null));
 }
 

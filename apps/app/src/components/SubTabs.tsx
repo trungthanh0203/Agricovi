@@ -15,7 +15,7 @@ export const SECTION_ICONS: Record<string, string> = {
   areas: '🏡', partners: '🚚', customers: '🛒', website: '📬', payables: '💳', crops: '🌾', worktypes: '🧰', templates: '📋', materials: '🧪', places: '🏬',
   commerce: HO_SO_WEB_ICON, kiosks: '📲', process: '📋', staff: '👥', members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
   intro: '📖', crop: '🌾', livestock: '🐖', declare: '🏡', webtalk: '🌐', company: '🏢',
-  expense: '💸', sales: '💰', summary: '📊', weekly: '🗓️', paybook: '💼', custom: '🔎', licenses: '📜', logbook: '📔', checklist: '✅',
+  expense: '💸', sales: '💰', summary: '📊', weekly: '🗓️', paybook: '💼', custom: '🔎', licenses: '📜', logbook: '📔', checklist: '✅', stats: '📈',
 };
 
 /**
