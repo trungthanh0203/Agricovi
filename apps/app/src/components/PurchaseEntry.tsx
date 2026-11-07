@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { SupplierForm } from './PartnersSection';
+import { InvoiceScanner, type ScanApply } from './InvoiceScanner';
+import { saveAliases } from '../lib/invoiceScan';
 import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
@@ -46,6 +48,8 @@ export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: st
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<{ partner: string; invoice: string; total: number; paid: number; due: string | null } | null>(null);
   const [savedPlain, setSavedPlain] = useState<number | null>(null); // nhập kho không hóa đơn: số dòng đã nhập
+  const [scanning, setScanning] = useState(false);   // đang ở màn "Chụp phiếu"
+  const [aliasItems, setAliasItems] = useState<{ name: string; materialId: string }[]>([]); // cặp tên trên phiếu → vật tư, lưu sau khi hóa đơn đã lưu
 
   const reloadPartners = useCallback(async () => {
     if (!navigator.onLine) return;
@@ -113,6 +117,7 @@ export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: st
     setBusy(true);
     try {
       await recordPurchase(input);
+      if (aliasItems.length > 0) { void saveAliases(orgId, partnerId || null, aliasItems); setAliasItems([]); }
       try { localStorage.setItem(LAST_LOCATION_KEY, effLocation); } catch { /* bỏ qua */ }
       setSaved({ partner: partners.find((p) => p.id === partnerId)?.name ?? '', invoice: invoice.trim(), total, paid, due: due || null });
     } catch (err) {
@@ -122,7 +127,24 @@ export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: st
     }
   }
 
+  /** Điền phiếu từ kết quả đọc ảnh đã được người dùng kiểm tra */
+  function applyScan(r: ScanApply) {
+    const newLines = r.lines.map((l) => ({ ...newLine(l.materialId), qty: l.qty, cost: l.cost }));
+    const sumLines = newLines.reduce((acc, l) => { const q = parseNumber(l.qty), c = parseNumber(l.cost); return acc + (q !== null && c !== null && !Number.isNaN(q) && !Number.isNaN(c) ? Math.round(q * c) : 0); }, 0);
+    setHasInvoice(true);
+    setPartnerId(r.partnerId);
+    setInvoice(r.invoiceNo);
+    setBillDate(r.billDate);
+    setLines(newLines);
+    setTotalText(r.total !== null && r.total !== sumLines ? String(r.total) : null);
+    setAliasItems(r.aliasItems);
+    setDraftId(crypto.randomUUID());
+    setError(null);
+    setScanning(false);
+  }
+
   function again() {
+    setAliasItems([]);
     setSaved(null);
     setSavedPlain(null);
     setDraftId(crypto.randomUUID());
@@ -181,9 +203,14 @@ export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: st
     );
   }
 
+  if (scanning) {
+    return <InvoiceScanner orgId={orgId} partners={partners} mats={mats} units={units} reloadPartners={reloadPartners} onApply={applyScan} onCancel={() => setScanning(false)} />;
+  }
+
   return (
     <section>
       <h1>Nhập kho</h1>
+      {canInvoice && online && <button type="button" className="secondary" onClick={() => setScanning(true)}>📷 Chụp phiếu / hóa đơn để điền sẵn</button>}
       {hasInvoice && !online && <p className="msg warn" role="status">Đang offline: lưu hóa đơn cần có mạng. Bỏ tích "Mua có hóa đơn" để nhập kho không cần mạng.</p>}
       <form className="inline-form" onSubmit={onSubmit} noValidate>
         <label className="check">

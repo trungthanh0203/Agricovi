@@ -262,13 +262,14 @@ export async function addDefaultMaterials(orgId: string): Promise<number> {
   return Number(data ?? 0);
 }
 
-export async function createMaterial(orgId: string, m: { name: string; category: string; unitId: string; threshold: number | null; description?: string; ext?: Partial<MaterialExt> }): Promise<void> {
+export async function createMaterial(orgId: string, m: { name: string; category: string; unitId: string; threshold: number | null; description?: string; ext?: Partial<MaterialExt> }): Promise<string> {
   needOnline();
   const ext: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(m.ext ?? {})) ext[k] = typeof v === 'string' ? v.trim() || null : v ?? null;
+  const newId = crypto.randomUUID();
   const { error } = await client().from('materials').insert({
     ...ext,
-    id: crypto.randomUUID(),
+    id: newId,
     organization_id: orgId,
     name: m.name.trim(),
     description: m.description?.trim() || null,
@@ -278,6 +279,7 @@ export async function createMaterial(orgId: string, m: { name: string; category:
   });
   if (error) throw error;
   await syncInventoryDown();
+  return newId;
 }
 
 export async function updateMaterial(id: string, c: { name?: string; description?: string | null; category?: string | null; threshold?: number | null; is_active?: boolean; ext?: Partial<MaterialExt> }): Promise<void> {

@@ -21,3 +21,6 @@ verify_jwt = true
 
 [functions.plan-order]
 verify_jwt = true
+
+[functions.scan-invoice]
+verify_jwt = true

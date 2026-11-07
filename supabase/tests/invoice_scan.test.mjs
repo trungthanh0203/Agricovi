@@ -71,3 +71,17 @@ test('bí danh vật tư: lưu theo nhà cung cấp, gộp lần dùng, chỉ nh
   assert.match(await expectError(asUser(c.db, c.worker, `select save_material_aliases($1,null,'[]'::jsonb)`, [c.org])), /FORBIDDEN/);
   assert.equal(JSON.stringify(rows).includes('hang la'), false);
 });
+
+test('quản trị: chỉnh hạn mức theo gói, dùng thử và mô hình; người thường bị từ chối', async () => {
+  const c = await setup();
+  const admin = await addUser(c.db, 9);
+  await c.db.query(`insert into platform_admins (user_id) values ($1)`, [admin]);
+  const tier = (await c.db.query(`select id from plan_tiers where name = 'HTX cơ bản'`)).rows[0].id;
+  assert.match(await expectError(asUser(c.db, c.owner, `select admin_set_plan_scan_limit($1, 5)`, [tier])), /FORBIDDEN/);
+  await asUser(c.db, admin, `select admin_set_plan_scan_limit($1, 45)`, [tier]);
+  assert.equal((await c.db.query(`select scan_per_month from plan_tiers where id = $1`, [tier])).rows[0].scan_per_month, 45);
+  assert.match(await expectError(asUser(c.db, admin, `select admin_set_plan_scan_limit($1, -1)`, [tier])), /INVALID_LIMIT/);
+  await asUser(c.db, admin, `select admin_set_scan_settings(3, '@cf/meta/llama-3.2-11b-vision-instruct')`);
+  assert.equal((await begin(c, c.owner, 1)).limit, 3);
+  assert.match(await expectError(asUser(c.db, admin, `select admin_set_scan_settings(3, 'gpt-4')`)), /INVALID_MODEL/);
+});

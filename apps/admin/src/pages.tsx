@@ -100,7 +100,7 @@ export function OrgsPage({ onOpen }: { onOpen: (id: string) => void }) {
   );
 }
 
-interface PlanRow { id: string; org_type: 'household' | 'cooperative'; name: string; max_cycles: number; price_per_quarter: number; ranking_weight: number; is_trial_default: boolean; is_active: boolean }
+interface PlanRow { id: string; org_type: 'household' | 'cooperative'; name: string; max_cycles: number; price_per_quarter: number; ranking_weight: number; is_trial_default: boolean; is_active: boolean; scan_per_month?: number }
 const listPlans = async (): Promise<PlanRow[]> => {
   const { data, error } = await supabase!.from('plan_tiers').select('*').order('org_type').order('price_per_quarter');
   if (error) throw new Error(error.message);
@@ -367,19 +367,28 @@ export function PlansPage() {
   const { data, error, reload } = useLoad(listPlans);
   const [edit, setEdit] = useState<PlanRow | 'new' | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [f, setF] = useState({ org_type: 'household', name: '', max_cycles: '2', price: '300000', weight: '1', trial: false, active: true });
+  const [f, setF] = useState({ org_type: 'household', name: '', max_cycles: '2', price: '300000', weight: '1', trial: false, active: true, scan: '10' });
+  const { data: scanSet, reload: reloadScan } = useLoad(async () => {
+    const { data: rows, error: e } = await supabase!.from('platform_settings').select('key, value').in('key', ['invoice_scan_trial_limit', 'invoice_scan_model']);
+    if (e) throw new Error(e.message);
+    const m = Object.fromEntries((rows ?? []).map((r) => [r.key as string, r.value as unknown]));
+    return { trial: String(m.invoice_scan_trial_limit ?? 2), model: String(m.invoice_scan_model ?? '@cf/mistralai/mistral-small-3.1-24b-instruct') };
+  });
+  const [ss, setSs] = useState<{ trial: string; model: string } | null>(null);
+  const [ssMsg, setSsMsg] = useState<string | null>(null);
 
   function open(p: PlanRow | 'new') {
     setEdit(p);
     setErr(null);
-    setF(p === 'new' ? { org_type: 'household', name: '', max_cycles: '2', price: '300000', weight: '1', trial: false, active: true }
-      : { org_type: p.org_type, name: p.name, max_cycles: String(p.max_cycles), price: String(p.price_per_quarter), weight: String(p.ranking_weight), trial: p.is_trial_default, active: p.is_active });
+    setF(p === 'new' ? { org_type: 'household', name: '', max_cycles: '2', price: '300000', weight: '1', trial: false, active: true, scan: '10' }
+      : { org_type: p.org_type, name: p.name, max_cycles: String(p.max_cycles), price: String(p.price_per_quarter), weight: String(p.ranking_weight), trial: p.is_trial_default, active: p.is_active, scan: String(p.scan_per_month ?? 10) });
   }
   async function save(e: FormEvent) {
     e.preventDefault();
     setErr(null);
     try {
-      await rpc('admin_save_plan', { p_id: edit === 'new' ? null : (edit as PlanRow).id, p_org_type: f.org_type, p_name: f.name, p_max_cycles: Number(f.max_cycles), p_price: Number(f.price), p_weight: Number(f.weight), p_trial_default: f.trial, p_active: f.active });
+      const savedId = await rpc<string>('admin_save_plan', { p_id: edit === 'new' ? null : (edit as PlanRow).id, p_org_type: f.org_type, p_name: f.name, p_max_cycles: Number(f.max_cycles), p_price: Number(f.price), p_weight: Number(f.weight), p_trial_default: f.trial, p_active: f.active });
+      await rpc('admin_set_plan_scan_limit', { p_plan: savedId, p_limit: Number(f.scan) });
       setEdit(null);
       reload();
     } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
@@ -388,6 +397,25 @@ export function PlansPage() {
     <>
       <div className="toolbar"><button className="primary" onClick={() => open('new')}>+ Thêm gói</button></div>
       <Err e={error} />
+      {scanSet && (
+        <section className="card">
+          <h2>Đọc ảnh phiếu nhập kho</h2>
+          <form className="form" onSubmit={(e) => {
+            e.preventDefault();
+            const v = ss ?? scanSet;
+            setSsMsg(null);
+            rpc('admin_set_scan_settings', { p_trial_limit: Number(v.trial), p_model: v.model.trim() })
+              .then(() => { setSsMsg('Đã lưu.'); setSs(null); reloadScan(); })
+              .catch((x: unknown) => setSsMsg(clean(x instanceof Error ? x.message : String(x))));
+          }}>
+            <label>Số lần đọc mỗi tháng của cơ sở đang dùng thử<input value={(ss ?? scanSet).trial} inputMode="numeric" onChange={(e) => setSs({ ...(ss ?? scanSet), trial: e.target.value })} /></label>
+            <label>Mô hình đọc ảnh (Cloudflare Workers AI)<input value={(ss ?? scanSet).model} onChange={(e) => setSs({ ...(ss ?? scanSet), model: e.target.value })} /></label>
+            {ssMsg && <p className={ssMsg === 'Đã lưu.' ? 'muted' : 'msg error'}>{ssMsg}</p>}
+            <div className="toolbar"><button className="primary">Lưu</button></div>
+          </form>
+          <p className="muted">Hạn mức theo từng gói đặt ở form "Sửa gói" bên dưới. Ảnh không được lưu; chỉ đếm số lần đọc.</p>
+        </section>
+      )}
       {edit && (
         <section className="card">
           <h2>{edit === 'new' ? 'Thêm gói' : `Sửa gói: ${edit.name}`}</h2>
@@ -396,6 +424,7 @@ export function PlansPage() {
             <label>Tên gói<input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
             <label>Số vụ tối đa<input value={f.max_cycles} inputMode="numeric" onChange={(e) => setF({ ...f, max_cycles: e.target.value })} /></label>
             <label>Giá mỗi quý (đồng)<input value={f.price} inputMode="numeric" onChange={(e) => setF({ ...f, price: e.target.value })} /></label>
+            <label>Số lần đọc ảnh phiếu nhập kho mỗi tháng<input value={f.scan} inputMode="numeric" onChange={(e) => setF({ ...f, scan: e.target.value })} /></label>
             <label>Hệ số ưu tiên hiển thị website<input value={f.weight} inputMode="decimal" onChange={(e) => setF({ ...f, weight: e.target.value })} /></label>
             <label className="check"><input type="checkbox" checked={f.trial} onChange={(e) => setF({ ...f, trial: e.target.checked })} /> Gói dùng thử mặc định của loại này</label>
             <label className="check"><input type="checkbox" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Đang bán</label>
@@ -405,11 +434,11 @@ export function PlansPage() {
           <p className="muted">Đổi giá/hạn mức chỉ áp dụng cho đăng ký mới; gói đang dùng giữ điều khoản đã chụp lúc đăng ký.</p>
         </section>
       )}
-      <table className="list"><thead><tr><th>Gói</th><th>Loại</th><th>Số vụ</th><th>Giá/quý</th><th>Hệ số</th><th></th><th></th></tr></thead>
+      <table className="list"><thead><tr><th>Gói</th><th>Loại</th><th>Số vụ</th><th>Giá/quý</th><th>Đọc phiếu/tháng</th><th>Hệ số</th><th></th><th></th></tr></thead>
         <tbody>{(data ?? []).map((p) => (
           <tr key={p.id} className={p.is_active ? '' : 'off'}>
             <td><strong>{p.name}</strong>{p.is_trial_default && <small>Gói dùng thử mặc định</small>}</td>
-            <td>{p.org_type === 'cooperative' ? 'HTX' : 'Hộ'}</td><td>{p.max_cycles}</td><td>{vnd(p.price_per_quarter)}</td><td>{p.ranking_weight}</td>
+            <td>{p.org_type === 'cooperative' ? 'HTX' : 'Hộ'}</td><td>{p.max_cycles}</td><td>{vnd(p.price_per_quarter)}</td><td>{p.scan_per_month ?? '—'}</td><td>{p.ranking_weight}</td>
             <td>{p.is_active ? '' : 'Ngừng bán'}</td><td><button onClick={() => open(p)}>Sửa</button></td>
           </tr>))}</tbody></table>
     </>
