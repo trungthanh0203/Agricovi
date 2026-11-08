@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { AutoTextarea } from './AutoTextarea';
 import { Collapsible } from './Collapsible';
+import { SeedSourceField, SeedVarietyField } from './SeedFields';
 import { infoLabels, type ProductKind } from '../lib/terms';
 import { AREA_UNITS, fromM2, getAreaUnit, parseDecimal, setAreaUnit, toM2 } from '../lib/areaUnits';
 import type { CropInfo } from '../lib/production';
@@ -98,9 +98,9 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
         <label>Điện thoại<input value={value.supPhone} maxLength={30} inputMode="tel" onChange={(e) => set({ supPhone: e.target.value })} /></label>
       </div>
       </>}
-      {showVariety && <label>{L.variety}<AutoTextarea value={value.variety} maxLength={120} onChange={(v) => set({ variety: v })} placeholder={L.varietyHint} /></label>}
+      {showVariety && <SeedVarietyField label={L.variety} hint={L.varietyHint} value={value.variety} kind={kind} onChange={(v) => set({ variety: v })} />}
       {showSeedExtra && <>
-      <label>{L.source}<AutoTextarea value={value.source} maxLength={200} onChange={(v) => set({ source: v })} /></label>
+      <SeedSourceField label={L.source} variety={value.variety} value={value.source} onChange={(v) => set({ source: v })} />
       <label>{L.lot}<input value={value.lot} maxLength={80} onChange={(e) => set({ lot: e.target.value })} /></label>
       <div className="pair">
         <label>{L.sowing}<input type="date" value={value.sowing} onChange={(e) => set({ sowing: e.target.value })} /></label>
