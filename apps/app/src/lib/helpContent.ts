@@ -360,14 +360,14 @@ export const HELP: Record<HelpKey, HelpEntry> = {
   },
   checklist: {
     title: 'Bảng kiểm',
-    what: 'Bảng kiểm tự đánh giá VietGAP để kiểm tra cơ sở trước khi xin chứng nhận: heo 45 tiêu chí; dưa lưới nhà màng 25 tiêu chí chia 4 nhóm (cơ sở vật chất, đầu vào, thu hoạch, hồ sơ và an toàn lao động).',
+    what: 'Tự kiểm tra cơ sở theo tiêu chí VietGAP trước khi xin chứng nhận hoặc khi đoàn kiểm tra đến, rồi in kết quả và danh sách việc cần khắc phục. Có sẵn bộ heo (45 tiêu chí) và dưa lưới nhà màng (25 tiêu chí).',
     how: [
-      'Lần đầu: bấm "Lấy bộ này về" ở bộ bảng kiểm phù hợp (cần quyền Khai báo).',
-      'Bấm "+ Bắt đầu lần đánh giá mới", rồi chọn Đạt, Không đạt hoặc Không áp dụng cho từng tiêu chí.',
-      'Tiêu chí không đạt thì ghi Biện pháp khắc phục; tiêu chí đạt có thể ghi bằng chứng.',
-      'Trả lời hết rồi bấm "Chốt kết quả". Lần đã chốt không sửa được, chỉ hủy kèm lý do.',
+      'Bước 1: chọn bộ tiêu chí phù hợp loại sản phẩm của cơ sở (cần quyền Khai báo).',
+      'Bước 2: bấm "+ Bắt đầu lần đánh giá mới", nhập ngày và người đánh giá, rồi chọn Đạt, Không đạt hoặc Không áp dụng cho từng tiêu chí. Thanh tiến độ cho biết còn bao nhiêu tiêu chí.',
+      'Tiêu chí không đạt thì ghi biện pháp khắc phục; tiêu chí đạt có thể ghi hồ sơ, sổ sách làm bằng chứng.',
+      'Trả lời hết rồi bấm "Chốt kết quả". Bước 3: bấm "In / lưu PDF" hoặc "Tải Excel" để đưa cho đoàn kiểm tra. Lần đã chốt không sửa được, chỉ hủy kèm lý do.',
     ],
-    note: 'Bộ dưa lưới 25 tiêu chí: đạt khi 100% tiêu chí đạt. Bộ này chưa đối chiếu với bản của đơn vị chứng nhận nên cần đối chiếu rồi đánh dấu.',
+    note: 'Đây là bản tự đánh giá của cơ sở, không thay cho đánh giá của tổ chức chứng nhận. Bộ tiêu chí chưa đối chiếu với bản của tổ chức chứng nhận bạn đăng ký thì cần đối chiếu rồi đánh dấu "Đã đối chiếu" ở mục Tùy chỉnh. Nên đánh giá lại ít nhất mỗi năm.',
     guide: { id: 'crop', step: 13 },
   },
   logbook: {

@@ -235,8 +235,8 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
       )}
 
       <div className="chips" role="tablist" aria-label="Cách xem">
-        <button role="tab" aria-selected={view === 'list'} className={view === 'list' ? 'chip active' : 'chip'} onClick={() => setView('list')}>Danh sách</button>
-        <button role="tab" aria-selected={view === 'calendar'} className={view === 'calendar' ? 'chip active' : 'chip'} onClick={() => setView('calendar')}>Lịch</button>
+        <button role="tab" aria-selected={view === 'list'} className={view === 'list' ? 'chip active' : 'chip'} onClick={() => setView('list')}>Việc theo danh sách</button>
+        <button role="tab" aria-selected={view === 'calendar'} className={view === 'calendar' ? 'chip active' : 'chip'} onClick={() => setView('calendar')}>Việc trên lịch</button>
       </div>
 
       {view === 'calendar' ? (
