@@ -5,8 +5,8 @@ import { SupplierForm } from './PartnersSection';
 import { db, type MaterialRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import { fmtDate } from '../lib/dates';
-import { useOnline } from '../lib/hooks';
-import { createMaterial } from '../lib/inventory';
+import { todayLocal, useOnline } from '../lib/hooks';
+import { createMaterial, fetchLots, type LotOption } from '../lib/inventory';
 import { norm } from '../lib/invoiceMatch';
 import { useOrgs } from '../lib/orgs';
 import { createSupplier, listSuppliers, type Partner } from '../lib/partners';
@@ -190,6 +190,55 @@ export function SeedSourceField({ label, variety, value, onChange }: { label: st
           }} />
       )}
       {error && <p className="msg error" role="alert">{error}</p>}
+    </>
+  );
+}
+
+/** Số lô giống: chọn từ các lô giống đã nhập kho (kèm hạn dùng); chưa nhập kho theo lô thì gõ số lô in trên bao giống. */
+export function SeedLotField({ label, variety, value, onChange }: { label: string; variety: string; value: string; onChange: (v: string) => void }) {
+  const { active } = useOrgs();
+  const online = useOnline();
+  const orgId = active?.id ?? '';
+  const mats = useLiveQuery(() => (orgId ? db.materials.where('organization_id').equals(orgId).toArray() : []), [orgId], [] as MaterialRow[]);
+  const varietyMat = variety.trim() ? mats.find((m) => m.is_active && m.material_group === 'seed' && norm(m.name) === norm(variety)) : undefined;
+  const [lots, setLots] = useState<LotOption[]>([]);
+  const [typing, setTyping] = useState(false);
+
+  useEffect(() => {
+    setLots([]);
+    if (!varietyMat || !online) return;
+    let alive = true;
+    void fetchLots(varietyMat.id).then((r) => { if (alive) setLots(r); });
+    return () => { alive = false; };
+  }, [varietyMat?.id, online]);
+
+  // giống chưa nhập kho theo lô: gõ số lô như trước
+  if (lots.length === 0) {
+    return (
+      <label>{label}<input value={value} maxLength={80} onChange={(e) => onChange(e.target.value)} />
+        {varietyMat && <small className="muted">Giống này chưa có lô nào trong kho. Nhập kho giống kèm số lô thì lần sau chọn được ở đây.</small>}
+      </label>
+    );
+  }
+  const today = todayLocal();
+  const hit = lots.find((l) => l.lot_no.trim().toLowerCase() === value.trim().toLowerCase());
+  const sel = typing ? '__type' : hit ? hit.id : value ? '__type' : '';
+  return (
+    <>
+      <label>{label}
+        <select value={sel} onChange={(e) => {
+          const v = e.target.value;
+          if (v === '__type') { setTyping(true); return; }
+          setTyping(false);
+          onChange(lots.find((l) => l.id === v)?.lot_no ?? '');
+        }}>
+          <option value="">— Chọn lô giống đã nhập kho —</option>
+          {lots.map((l) => <option key={l.id} value={l.id}>{l.lot_no}{l.expiry_date ? ` · hạn ${fmtDate(l.expiry_date)}` : ''}{l.expiry_date && l.expiry_date < today ? ' (HẾT HẠN)' : ''}</option>)}
+          <option value="__type">Lô khác (gõ số lô)</option>
+        </select>
+        {hit?.expiry_date && hit.expiry_date < today && <small className="warn">Lô này đã hết hạn dùng. Hãy kiểm tra lại giống trước khi gieo trồng.</small>}
+      </label>
+      {sel === '__type' && <label>Số lô khác<input value={value} maxLength={80} onChange={(e) => onChange(e.target.value)} /></label>}
     </>
   );
 }

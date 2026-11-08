@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Collapsible } from './Collapsible';
-import { SeedSourceField, SeedVarietyField } from './SeedFields';
+import { SeedLotField, SeedSourceField, SeedVarietyField } from './SeedFields';
 import { infoLabels, type ProductKind } from '../lib/terms';
 import { AREA_UNITS, fromM2, getAreaUnit, parseDecimal, setAreaUnit, toM2 } from '../lib/areaUnits';
 import type { CropInfo } from '../lib/production';
@@ -101,7 +101,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
       {showVariety && <SeedVarietyField label={L.variety} hint={L.varietyHint} value={value.variety} kind={kind} onChange={(v) => set({ variety: v })} />}
       {showSeedExtra && <>
       <SeedSourceField label={L.source} variety={value.variety} value={value.source} onChange={(v) => set({ source: v })} />
-      <label>{L.lot}<input value={value.lot} maxLength={80} onChange={(e) => set({ lot: e.target.value })} /></label>
+      <SeedLotField label={L.lot} variety={value.variety} value={value.lot} onChange={(v) => set({ lot: v })} />
       <div className="pair">
         <label>{L.sowing}<input type="date" value={value.sowing} onChange={(e) => set({ sowing: e.target.value })} /></label>
         {!hidePlanting && <label>{L.planting}<input type="date" value={value.planting} min={value.sowing || undefined} onChange={(e) => set({ planting: e.target.value })} /></label>}
