@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Collapsible } from './Collapsible';
+import { SupervisorFields } from './CatalogPick';
 import { SeedLotField, SeedSourceField, SeedVarietyField } from './SeedFields';
 import { infoLabels, type ProductKind } from '../lib/terms';
 import { AREA_UNITS, fromM2, getAreaUnit, parseDecimal, setAreaUnit, toM2 } from '../lib/areaUnits';
@@ -79,10 +80,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
           <datalist id="count-units"><option value="cây" /><option value="con" /><option value="quả" /><option value="cặp" /></datalist>
         </label>
       </div>
-      <div className="pair">
-        <label>Cán bộ kỹ thuật / thú y phụ trách<input value={value.supName} maxLength={120} onChange={(e) => set({ supName: e.target.value })} placeholder="Không bắt buộc" /></label>
-        <label>Điện thoại<input value={value.supPhone} maxLength={30} inputMode="tel" onChange={(e) => set({ supPhone: e.target.value })} /></label>
-      </div>
+      <SupervisorFields name={value.supName} phone={value.supPhone} onChange={(n, ph) => set({ supName: n, supPhone: ph })} />
       </Collapsible>
       )}
       {parts === 'manageflat' && <>
@@ -93,10 +91,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
           <datalist id="count-units"><option value="cây" /><option value="con" /><option value="quả" /><option value="cặp" /></datalist>
         </label>
       </div>
-      <div className="pair">
-        <label>Cán bộ kỹ thuật / thú y phụ trách<input value={value.supName} maxLength={120} onChange={(e) => set({ supName: e.target.value })} placeholder="Không bắt buộc" /></label>
-        <label>Điện thoại<input value={value.supPhone} maxLength={30} inputMode="tel" onChange={(e) => set({ supPhone: e.target.value })} /></label>
-      </div>
+      <SupervisorFields name={value.supName} phone={value.supPhone} onChange={(n, ph) => set({ supName: n, supPhone: ph })} />
       </>}
       {showVariety && <SeedVarietyField label={L.variety} hint={L.varietyHint} value={value.variety} kind={kind} onChange={(v) => set({ variety: v })} />}
       {showSeedExtra && <>

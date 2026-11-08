@@ -1,3 +1,4 @@
+import { FeedNamePicker } from './CatalogPick';
 import { useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { growthSummary, type GrowthRaw } from '../lib/growthLogic';
@@ -145,7 +146,7 @@ export function CycleGrowth({ cycleId }: { cycleId: string }) {
                 <label>Ngày<input type="date" value={fDate} max={today} onChange={(e) => setFDate(e.target.value)} /></label>
                 <label>Lượng cám (kg)<input value={fKg} inputMode="decimal" onChange={(e) => setFKg(e.target.value)} /></label>
               </div>
-              <label>Loại cám (không bắt buộc)<input value={fName} maxLength={120} onChange={(e) => setFName(e.target.value)} placeholder="Ví dụ: Cám heo vỗ béo" /></label>
+              <FeedNamePicker value={fName} onChange={setFName} />
               <div className="btnrow"><button className="primary" disabled={busy} onClick={() => void addFeed()}>Lưu</button></div>
               <p className="muted">Ghi tổng lượng cho ăn theo ngày. Nếu cơ sở đã xuất cám từ Kho cho vụ này thì app dùng số từ Kho, không cộng thêm số ghi ở đây.</p>
             </div>

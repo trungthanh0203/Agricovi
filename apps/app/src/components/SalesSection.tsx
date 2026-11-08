@@ -357,11 +357,7 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
           <input value={amount} inputMode="numeric" onChange={(e) => setAmount(e.target.value)} />
           {perKg !== null && <small>Tương đương {formatMoney(perKg)}/kg.</small>}
         </label>
-        <label>
-          Người mua, ghi chú (không bắt buộc)
-          <input value={buyer} onChange={(e) => setBuyer(e.target.value)} />
-        </label>
-        {!editing && (customers.length > 0 || quickAdd) && (
+        {!editing && orgId && (
           <fieldset className="roles">
             <legend>Khách hàng và công nợ (không bắt buộc)</legend>
             <label>
@@ -410,6 +406,10 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
             )}
           </fieldset>
         )}
+        <label>
+          {editing ? 'Người mua, ghi chú (không bắt buộc)' : 'Ghi chú (không bắt buộc; bán lẻ không ghi khách thì ghi người mua ở đây)'}
+          <input value={buyer} onChange={(e) => setBuyer(e.target.value)} />
+        </label>
         {error && <p className="msg error" role="alert">{error}</p>}
         {!online && <p className="msg warn">Đang offline. Cần có mạng để lưu; hãy kết nối mạng rồi bấm Lưu.</p>}
         <div className="btnrow">
