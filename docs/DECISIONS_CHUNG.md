@@ -7,7 +7,7 @@ Quyết định dùng cho cả app lẫn website. Phần riêng: `DECISIONS_APP.
 | D1 | App là PWA; hạ tầng GitHub + Supabase + Cloudflare; mua domain trước khi pilot | 18/10/2026 | Chủ sản phẩm | v1.2 mục 2 |
 | D2 | Chấm công/lương là module trong app sản xuất; tính theo **giờ** cộng dồn theo tháng và theo **sản lượng**; bỏ quy đổi giờ-ngày công | 18/10/2026 | Chủ sản phẩm | v1.2 mục 7 |
 | D3 | Cây đầu tiên: dưa lưới | 18/10/2026 | Chủ sản phẩm | v1.2 mục 8 |
-| D4 | Gói theo **số vụ đang chạy cùng lúc**; Hộ 2 vụ 300k/quý, 5 vụ 500k/quý; HTX 5 vụ 1.500k/quý, 10 vụ 3.000k/quý; dùng thử 1 tháng; mọi giá trị cấu hình trong CSDL | 18/10/2026 | Chủ sản phẩm | v1.2 mục 3 |
+| D4 | Gói theo **số vụ đang chạy cùng lúc**; dùng thử 1 tháng; mọi giá trị cấu hình trong CSDL. **Bảng giá hiện hành (chủ sản phẩm điều chỉnh, 11/2026)**: Hộ cơ bản 3 vụ 900k/quý (gói dùng thử mặc định), Hộ nâng cao 6 vụ 1.500k, Hộ cao cấp 15 vụ 2.500k; HTX cơ bản 10 vụ 2.000k (gói dùng thử mặc định), HTX nâng cao 20 vụ 3.600k, HTX cao cấp 40 vụ 7.500k, HTX siêu cấp 100 vụ 15.000k. Giá gốc ban đầu (18/10/2026): Hộ 2 vụ 300k, 5 vụ 500k; HTX 5 vụ 1.500k, 10 vụ 3.000k. Nguồn thật là bảng `plan_tiers` / trang Gói và giá của quản trị nền tảng | 18/10/2026, cập nhật 11/2026 | Chủ sản phẩm | v1.2 mục 3 |
 | D5 | Vụ *Tạm dừng* tính vào hạn mức; dùng thử giới hạn như gói cơ bản | 18/10/2026 | Chủ sản phẩm | v1.2 mục 3.1 |
 | D6 | HTX khai báo số hộ tùy ý, hạn mức chỉ theo tổng vụ; mỗi hộ tối đa 1 HTX; hộ có thể dùng cả gói HTX lẫn gói riêng | 18/10/2026 | Chủ sản phẩm | v1.2 mục 4 |
 | D7 | Vị trí top website: cách (a) — mọi cơ sở đã duyệt đều hiện, gói trả phí chỉ ưu tiên thứ tự | 18/10/2026 | Chủ sản phẩm | v1.2 mục 5 |

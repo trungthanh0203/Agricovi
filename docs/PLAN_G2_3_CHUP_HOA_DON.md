@@ -44,7 +44,7 @@ Một hóa đơn thường tốn khoảng **4.000 token vào** (ảnh khoảng 1
 | Haiku 5.5 (mặc định) | khoảng 0,001 USD | **vài chục đồng** |
 | Sonnet 5.5 (đọc lại kỹ) | khoảng 0,015–0,025 USD | **400–600 đồng** |
 
-Kết luận: chi phí rất nhỏ so với giá gói (300.000–3.000.000 đ/quý). **Hạn mức theo gói chủ yếu để chống lạm dụng và đứt chi phí bất ngờ**, không phải vì đắt. Đề xuất hạn mức mỗi tháng (đặt trong CSDL, chỉnh được ở trang quản trị): dùng thử 10, gói Hộ 30–60, gói HTX 150–300. Đo thực tế với 20–30 hóa đơn mẫu trước khi chốt.
+Kết luận: chi phí rất nhỏ so với giá gói (900.000–15.000.000 đ/quý theo bảng giá hiện hành). **Hạn mức theo gói chủ yếu để chống lạm dụng và đứt chi phí bất ngờ**, không phải vì đắt. Đề xuất hạn mức mỗi tháng (đặt trong CSDL, chỉnh được ở trang quản trị): dùng thử 10, gói Hộ 30–60, gói HTX 150–300. Đo thực tế với 20–30 hóa đơn mẫu trước khi chốt.
 Cần bạn đặt **mức chi tối đa hằng tháng** trong tài khoản Anthropic để không bao giờ vượt ngân sách.
 
 ## 5. Quyền riêng tư và an toàn
