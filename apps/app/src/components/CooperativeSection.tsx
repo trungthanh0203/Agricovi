@@ -1,3 +1,4 @@
+import { ChipsPicker, useCropNames } from './CatalogPick';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { RowMenu } from './RowMenu';
 import { friendlyError } from '../lib/errors';
@@ -67,6 +68,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
   const [email, setEmail] = useState('');
   const [form, setForm] = useState<string | 'new' | null>(null); // hộ đang sửa hoặc thêm mới
   const [name, setName] = useState('');
+  const cropNames = useCropNames();
   const [f, setF] = useState<HouseholdInfo>(EMPTY_INFO);
   const [areaText, setAreaText] = useState('');
   // cấp tài khoản đăng nhập cho hộ do HTX tạo (D147)
@@ -140,7 +142,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
           </div>
           <label>Số điện thoại<input type="tel" inputMode="tel" value={f.phone} maxLength={30} onChange={set('phone')} /></label>
           <AddressFields value={{ province: f.province, ward: f.ward, address: f.address }} onChange={(a) => setF((cur) => ({ ...cur, ...a }))} addressHint="Số nhà, đường, thôn/ấp…" />
-          <label>Sản phẩm chính<input value={f.main_products} maxLength={200} onChange={set('main_products')} placeholder="Ví dụ: Dưa lưới, heo thịt" /></label>
+          <ChipsPicker label="Sản phẩm chính" value={f.main_products} onChange={(v) => setF((x) => ({ ...x, main_products: v }))} options={cropNames} hint="Chưa có sản phẩm nào trong danh mục. Thêm ở Khai báo → Sản phẩm, hoặc bấm ＋ Thêm khác." />
           <label>Giấy chứng nhận (VietGAP, OCOP…)<input value={f.certificates} maxLength={300} onChange={set('certificates')} placeholder="Ví dụ: VietGAP dưa lưới (hết hạn 06/2027), OCOP 3 sao" /></label>
           <label>Diện tích sản xuất (m²)<input inputMode="numeric" value={areaText} onChange={(e) => setAreaText(e.target.value)} placeholder="Ví dụ: 5000" /></label>
           <label>Trạng thái hộ

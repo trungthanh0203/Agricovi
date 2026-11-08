@@ -1,3 +1,4 @@
+import { ChipsPicker, useCropNames } from './CatalogPick';
 import { CustomerOrders } from './CustomerOrders';
 import { useShowMore } from './ShowMore';
 import { customerKindText, useConfig } from '../lib/config';
@@ -154,6 +155,7 @@ export function CustomerForm({ title, initial, busy, onSave, onClose }: {
   const kindChoices = !kind || cfg.customerKinds().includes(kind) ? cfg.customerKinds() : [...cfg.customerKinds(), kind]; // giữ loại cũ dù đã bỏ khỏi cấu hình
   const [phone, setPhone] = useState(initial?.phone ?? '');
   const [addr, setAddr] = useState<Addr>({ province: initial?.province ?? '', ward: initial?.ward ?? '', address: initial?.address ?? '' });
+  const cropNames = useCropNames();
   const [goods, setGoods] = useState(initial?.goods ?? '');
   const [note, setNote] = useState(initial?.note ?? '');
   const [err, setErr] = useState<string | null>(null);
@@ -170,7 +172,7 @@ export function CustomerForm({ title, initial, busy, onSave, onClose }: {
         </label>
         <label>Điện thoại<input value={phone} maxLength={40} inputMode="tel" onChange={(e) => setPhone(e.target.value)} /></label>
         <AddressFields value={addr} onChange={setAddr} maxAddress={300} />
-        <label>Nhu cầu thường mua<input value={goods} maxLength={300} onChange={(e) => setGoods(e.target.value)} placeholder="Dưa lưới loại 1, số lượng lớn…" /></label>
+        <ChipsPicker label="Nhu cầu thường mua" value={goods} onChange={setGoods} options={cropNames} hint="Chưa có sản phẩm nào trong danh mục. Thêm ở Khai báo → Sản phẩm, hoặc bấm ＋ Thêm khác." />
         <label>Ghi chú<textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} /></label>
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">

@@ -1,3 +1,4 @@
+import { NamePicker } from './CatalogPick';
 import { useCallback, useEffect, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { ImagePicker } from './ImagePicker';
@@ -310,6 +311,8 @@ function ProductsBlock({ org, profileId, owner, onChanged }: { org: MyOrg; profi
 
 function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: string; initial: Listing | null; busy: boolean; onSave: (f: ListingForm) => Promise<boolean>; onClose: () => void }) {
   const { cropTypes } = useCatalog();
+  const unitTable = useTable('units');
+  const unitNames = [...new Set([...unitTable.map((u) => u.name), 'thùng', 'túi', 'bó', 'con', 'quả'].map((n) => n.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
   const titleOf = useCycleTitle();
   const cycles = useTable('cycles').filter((c) => c.owner_org_id === orgId);
   const [f, setF] = useState({
@@ -326,10 +329,10 @@ function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: str
     <div className="card">
       <h2>{initial ? `Sửa: ${initial.name}` : 'Thêm sản phẩm cung ứng'}</h2>
       <div className="inline-form">
-        <label>Tên sản phẩm<input value={f.name} maxLength={120} onChange={set('name')} placeholder="Ví dụ: Dưa lưới Taki" /></label>
-        <label>Thuộc sản phẩm đã khai báo (không bắt buộc)
-          <select value={f.crop_type_id} onChange={set('crop_type_id')}><option value="">— Không chọn —</option>{cropTypes.filter((c) => c.is_active).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+        <label>Chọn sản phẩm đã khai báo (tên sẽ tự điền, bạn có thể thêm giống, hạng: ví dụ Dưa lưới Taki)
+          <select value={f.crop_type_id} onChange={(e) => { const nid = e.target.value; setF((x) => { const prev = cropTypes.find((c) => c.id === x.crop_type_id)?.name ?? ''; const nxt = cropTypes.find((c) => c.id === nid)?.name ?? ''; return { ...x, crop_type_id: nid, name: !x.name.trim() || x.name === prev ? nxt : x.name }; }); }}><option value="">— Không chọn —</option>{cropTypes.filter((c) => c.is_active).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
         </label>
+        <label>Tên hiển thị trên website<input value={f.name} maxLength={120} onChange={set('name')} placeholder="Ví dụ: Dưa lưới Taki" /></label>
         {siteCats.length > 0 && (
           <label>Danh mục trên website
             <select value={f.category_id} onChange={set('category_id')}><option value="">— Chưa chọn —</option>{siteCats.map((c) => <option key={c.id} value={c.id}>{catLabel(c)}</option>)}</select>
@@ -339,7 +342,7 @@ function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: str
         <label>Mô tả<textarea rows={3} value={f.description} onChange={set('description')} /></label>
         <label>Quy cách<input value={f.specification} onChange={set('specification')} placeholder="Quả 1,5–2 kg, độ ngọt 12–14 Brix" /></label>
         <div className="pair">
-          <label>Đơn vị bán<input value={f.unit} maxLength={30} onChange={set('unit')} placeholder="kg, thùng…" /></label>
+          <NamePicker label="Đơn vị bán" value={f.unit} onChange={(v) => setF((x) => ({ ...x, unit: v }))} names={unitNames} hint="kg, thùng…" />
           <label>Mùa vụ<input value={f.season} maxLength={120} onChange={set('season')} placeholder="Tháng 10 – 12" /></label>
         </div>
         <div className="pair">

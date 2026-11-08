@@ -1,3 +1,5 @@
+import { NamePicker } from './CatalogPick';
+import { useConfig } from '../lib/config';
 import { useCallback, useEffect, useState } from 'react';
 import { ImagePicker, Img, Thumb } from './ImagePicker';
 import { fmtDate } from '../lib/dates';
@@ -85,6 +87,7 @@ function LicenseForm({ initial, busy, onSave, onClose }: {
   onSave: (f: { name: string; issuer: string | null; number: string | null; issued_date: string | null; expires_date: string | null; image: string | null; note: string | null }) => Promise<unknown>;
   onClose: () => void;
 }) {
+  const cfg = useConfig();
   const [name, setName] = useState(initial?.name ?? '');
   const [issuer, setIssuer] = useState(initial?.issuer ?? '');
   const [number, setNumber] = useState(initial?.number ?? '');
@@ -97,7 +100,7 @@ function LicenseForm({ initial, busy, onSave, onClose }: {
     <div className="card">
       <h2>{initial ? 'Sửa giấy phép, chứng chỉ' : 'Thêm giấy phép, chứng chỉ'}</h2>
       <div className="inline-form">
-        <label>Tên giấy<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Chứng nhận VietGAP" /></label>
+        <NamePicker label="Tên giấy" value={name} onChange={setName} names={cfg.items('license_types')} hint="Ví dụ: Chứng nhận VietGAP" />
         <label>Nơi cấp<input value={issuer} maxLength={160} onChange={(e) => setIssuer(e.target.value)} /></label>
         <label>Số giấy<input value={number} maxLength={80} onChange={(e) => setNumber(e.target.value)} /></label>
         <div className="pair">

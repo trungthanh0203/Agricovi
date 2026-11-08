@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Collapsible } from './Collapsible';
-import { SupervisorFields } from './CatalogPick';
+import { NamePicker, SupervisorFields } from './CatalogPick';
+import { useConfig } from '../lib/config';
 import { SeedLotField, SeedSourceField, SeedVarietyField } from './SeedFields';
 import { infoLabels, type ProductKind } from '../lib/terms';
 import { AREA_UNITS, fromM2, getAreaUnit, parseDecimal, setAreaUnit, toM2 } from '../lib/areaUnits';
@@ -40,6 +41,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
   const showArea = show('scale') || parts === 'area';
   const showCount = show('scale') || parts === 'count';
   const L = infoLabels(kind);
+  const cfg = useConfig();
   const cnt = value.countUnit.trim() || defaultUnit;
   const [, force] = useState(0);
   const set = (patch: Partial<CropInfoForm>) => onChange({ ...value, ...patch });
@@ -75,10 +77,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
       <Collapsible inline title="＋ Thông tin quản lý (không bắt buộc)" summary={[value.code, value.countUnit, value.supName].filter(Boolean).join(' · ') || undefined}>
       <div className="pair">
         <label>Mã vụ / mã lô<input value={value.code} maxLength={40} onChange={(e) => set({ code: e.target.value })} placeholder="Ví dụ: LO-THIT-10" /></label>
-        <label>Đơn vị đếm
-          <input value={value.countUnit} maxLength={20} list="count-units" onChange={(e) => set({ countUnit: e.target.value })} placeholder={defaultUnit} />
-          <datalist id="count-units"><option value="cây" /><option value="con" /><option value="quả" /><option value="cặp" /></datalist>
-        </label>
+        <NamePicker label="Đơn vị đếm" value={value.countUnit} onChange={(v) => set({ countUnit: v })} names={cfg.items('count_units')} hint={defaultUnit} />
       </div>
       <SupervisorFields name={value.supName} phone={value.supPhone} onChange={(n, ph) => set({ supName: n, supPhone: ph })} />
       </Collapsible>
@@ -86,10 +85,7 @@ export function CycleInfoFields({ value, onChange, defaultUnit = 'cây', kind, p
       {parts === 'manageflat' && <>
       <div className="pair">
         <label>Mã vụ / mã lô<input value={value.code} maxLength={40} onChange={(e) => set({ code: e.target.value })} placeholder="Ví dụ: LO-THIT-10" /></label>
-        <label>Đơn vị đếm
-          <input value={value.countUnit} maxLength={20} list="count-units" onChange={(e) => set({ countUnit: e.target.value })} placeholder={defaultUnit} />
-          <datalist id="count-units"><option value="cây" /><option value="con" /><option value="quả" /><option value="cặp" /></datalist>
-        </label>
+        <NamePicker label="Đơn vị đếm" value={value.countUnit} onChange={(v) => set({ countUnit: v })} names={cfg.items('count_units')} hint={defaultUnit} />
       </div>
       <SupervisorFields name={value.supName} phone={value.supPhone} onChange={(n, ph) => set({ supName: n, supPhone: ph })} />
       </>}

@@ -1,3 +1,5 @@
+import { NamePicker } from './CatalogPick';
+import { useConfig } from '../lib/config';
 import { useMemo, useState, type FormEvent } from 'react';
 import { harvestSchemaFor, useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
@@ -13,7 +15,7 @@ import { useAuth } from '../lib/auth';
 import { db, type HarvestRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
 import {
-  editHarvest, GRADE_SUGGESTIONS, recordHarvest, validateHarvest, voidHarvest,
+  editHarvest, recordHarvest, validateHarvest, voidHarvest,
 } from '../lib/harvest';
 import { isPendingUpload, toLocalInput, useOnline, useRecordSync } from '../lib/hooks';
 import { formatQty, parseNumber } from '../lib/inventory';
@@ -210,6 +212,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
 
   const [cycleId, setCycleId] = useState(editing?.cycle_id ?? '');
   const [when, setWhen] = useState(toLocalInput(editing ? new Date(editing.harvested_at) : new Date()));
+  const cfg = useConfig();
   const [grade, setGrade] = useState(editing?.grade ?? '');
   const [qty, setQty] = useState(editing ? String(editing.quantity) : '');
   const [loss, setLoss] = useState(editing?.loss_quantity ? String(editing.loss_quantity) : '');
@@ -321,11 +324,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
           <input value={loss} inputMode="decimal" onChange={(e) => setLoss(e.target.value)} />
           <small>Phần hỏng, chết, loại bỏ… đã tính trong khối lượng thu ở trên.</small>
         </label>
-        <label>
-          Loại cỡ (không bắt buộc)
-          <input value={grade} list="grade-list" onChange={(e) => setGrade(e.target.value)} placeholder="Loại 1, cỡ lớn…" />
-          <datalist id="grade-list">{GRADE_SUGGESTIONS.map((g) => <option key={g} value={g} />)}</datalist>
-        </label>
+        <NamePicker label="Loại cỡ (không bắt buộc)" value={grade} onChange={setGrade} names={cfg.items('harvest_grades')} hint="Loại 1, cỡ lớn…" />
         {schema.length > 0 && (
           <Collapsible inline title="＋ Thông tin thêm theo mẫu của cơ sở" summary="mở để nhập">
             {schema.map((f) => (

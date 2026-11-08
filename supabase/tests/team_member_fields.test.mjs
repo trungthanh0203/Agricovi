@@ -163,3 +163,18 @@ test('loại khách hàng: cấu hình tự do; cột lưu chữ, tối đa 40 k
   await db.query(`insert into partners (id,organization_id,name,is_customer,customer_kind) values (gen_random_uuid(),$1,'Khách A',true,'Quán ăn')`, [org]);
   assert.match(await expectError(db.query(`insert into partners (id,organization_id,name,is_customer,customer_kind) values (gen_random_uuid(),$1,'Khách B',true,repeat('x',41))`, [org])), /check|customer_kind/i);
 });
+
+// Migration 0189: ba danh sách cấu hình mới (loại giấy, phân loại thu hoạch, đơn vị đếm) lưu được; khóa lạ vẫn bị từ chối.
+test('set_org_config: license_types, harvest_grades, count_units hợp lệ; chỉ chủ/quản lý; khóa lạ bị từ chối', async () => {
+  const db = await createDb();
+  const owner = await addUser(db, 1), wk = await addUser(db, 2);
+  const org = (await asUser(db, owner, `select create_organization('household','Hộ A') id`)).rows[0].id;
+  await db.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['worker']::member_role[])`, [org, wk]);
+  for (const k of ['license_types', 'harvest_grades', 'count_units']) {
+    await asUser(db, owner, `select set_org_config($1,$2,array['A',' B ','A','C'])`, [org, k]);
+    assert.deepEqual((await db.query(`select items from org_config where organization_id=$1 and key=$2`, [org, k])).rows[0].items, ['A', 'B', 'C']);
+    assert.match(await expectError(asUser(db, wk, `select set_org_config($1,$2,array['A'])`, [org, k])), /FORBIDDEN/);
+  }
+  assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'license_types',array['${'x'.repeat(41)}'])`, [org])), /INVALID_ITEMS/);
+  assert.match(await expectError(asUser(db, owner, `select set_org_config($1,'nursery_mode',array['a'])`, [org])), /INVALID_KEY/);
+});

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useCatalog } from '../lib/catalog';
+import { joinItems, parseItems } from '../lib/config';
 import { CustomerForm } from './CustomersSection';
 import { SupplierForm } from './PartnersSection';
 import { db, type MaterialRow } from '../lib/db';
@@ -155,5 +157,44 @@ export function SupervisorFields({ name, phone, onChange }: { name: string; phon
       {(other || (!hit && name)) && typed}
       {hit && <p className="muted">Điện thoại: {phone || 'chưa có'}</p>}
     </>
+  );
+}
+
+/** Tên các loại sản phẩm đang dùng của cơ sở (cây trồng, vật nuôi, thủy sản…), đọc từ máy nên nhanh và dùng được offline */
+export function useCropNames(): string[] {
+  const { cropTypes } = useCatalog();
+  return cropTypes.filter((c) => c.is_active).map((c) => c.name).sort((a, b) => a.localeCompare(b, 'vi'));
+}
+
+/**
+ * Chọn NHIỀU mục từ một danh sách (bấm để bật/tắt), lưu thành chữ cách nhau bằng dấu phẩy như trước.
+ * Mục đã ghi từ trước nhưng không có trong danh sách vẫn hiện (đánh dấu) để không mất; "＋ Thêm khác" cho mục ngoài danh sách.
+ */
+export function ChipsPicker({ label, value, onChange, options, hint }: { label: string; value: string; onChange: (v: string) => void; options: string[]; hint?: string }) {
+  const chosen = parseItems(value);
+  const has = (n: string) => chosen.some((x) => norm(x) === norm(n));
+  const extra = chosen.filter((x) => !options.some((o) => norm(o) === norm(x)));
+  const [adding, setAdding] = useState(false);
+  const [text, setText] = useState('');
+  const toggle = (n: string) => onChange(joinItems(has(n) ? chosen.filter((x) => norm(x) !== norm(n)) : [...chosen, n]));
+  return (
+    <fieldset className="roles">
+      <legend>{label}</legend>
+      <div className="chips">
+        {options.map((o) => <button key={o} type="button" className={has(o) ? 'chip active' : 'chip'} aria-pressed={has(o)} onClick={() => toggle(o)}>{o}</button>)}
+        {extra.map((o) => <button key={o} type="button" className="chip active" aria-pressed title="Đang ghi, chưa có trong danh sách (bấm để bỏ)" onClick={() => toggle(o)}>{o} ✕</button>)}
+        {!adding && <button type="button" className="chip" onClick={() => setAdding(true)}>＋ Thêm khác</button>}
+      </div>
+      {options.length === 0 && extra.length === 0 && hint && <small className="muted">{hint}</small>}
+      {adding && (
+        <div className="pair">
+          <input value={text} maxLength={60} placeholder="Tên mục khác" onChange={(e) => setText(e.target.value)} />
+          <div className="btnrow">
+            <button type="button" className="secondary" onClick={() => { const t = text.trim(); if (t && !has(t)) onChange(joinItems([...chosen, t])); setText(''); setAdding(false); }}>Thêm</button>
+            <button type="button" className="link" onClick={() => { setText(''); setAdding(false); }}>Hủy</button>
+          </div>
+        </div>
+      )}
+    </fieldset>
   );
 }

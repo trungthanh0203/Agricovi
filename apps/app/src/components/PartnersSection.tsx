@@ -1,3 +1,5 @@
+import { useConfig } from '../lib/config';
+import { ChipsPicker } from './CatalogPick';
 import { useShowMore } from './ShowMore';
 import { useCallback, useEffect, useState } from 'react';
 import { friendlyError } from '../lib/errors';
@@ -113,6 +115,8 @@ export function SupplierForm({ title, initial, busy, onSave, onClose }: {
   const [name, setName] = useState(initial?.name ?? '');
   const [phone, setPhone] = useState(initial?.phone ?? '');
   const [addr, setAddr] = useState<Addr>({ province: initial?.province ?? '', ward: initial?.ward ?? '', address: initial?.address ?? '' });
+  const cfgAll = useConfig();
+  const groupNames = cfgAll.materialGroups().map((g) => g.label);
   const [goods, setGoods] = useState(initial?.goods ?? '');
   const [tax, setTax] = useState(initial?.tax_code ?? '');
   const [bank, setBank] = useState(initial?.bank_account ?? '');
@@ -125,7 +129,7 @@ export function SupplierForm({ title, initial, busy, onSave, onClose }: {
         <label>Tên nhà cung ứng<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Đại lý vật tư An Phát" /></label>
         <label>Điện thoại<input value={phone} maxLength={40} inputMode="tel" onChange={(e) => setPhone(e.target.value)} /></label>
         <AddressFields value={addr} onChange={setAddr} maxAddress={300} />
-        <label>Loại hàng thường mua<input value={goods} maxLength={300} onChange={(e) => setGoods(e.target.value)} placeholder="Phân bón, thuốc bảo vệ thực vật, giống…" /></label>
+        <ChipsPicker label="Loại hàng thường mua" value={goods} onChange={setGoods} options={groupNames} />
         <label>Mã số thuế (nếu có)<input value={tax} maxLength={40} onChange={(e) => setTax(e.target.value)} /></label>
         <label>Tài khoản ngân hàng (nếu có)<input value={bank} maxLength={120} onChange={(e) => setBank(e.target.value)} /></label>
         <label>Ghi chú<textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} /></label>

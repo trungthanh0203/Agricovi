@@ -58,6 +58,19 @@ export const CONFIG_DEFS: ConfigDef[] = [
     hint: 'Dùng để chọn Loại khách khi thêm/sửa Khách hàng. Chỉ để phân loại, thêm, bớt hoặc đổi tên tùy ý (khách cũ giữ nguyên loại đã chọn).',
   },
   {
+    id: 'license_types', title: 'Loại giấy phép, chứng chỉ', mode: 'free',
+    defaults: ['VietGAP', 'GlobalGAP', 'OCOP', 'Chứng nhận hữu cơ', 'Cơ sở đủ điều kiện an toàn thực phẩm', 'Giấy phép kinh doanh', 'Giấy chứng nhận quyền sử dụng đất', 'Giấy kiểm dịch', 'Khác'],
+    hint: 'Dùng để chọn Tên giấy ở Khai báo → Giấy phép, chứng chỉ. Thêm, bớt hoặc đổi tên tùy ý (giấy cũ giữ nguyên tên đã ghi).',
+  },
+  {
+    id: 'harvest_grades', title: 'Phân loại khi thu hoạch', mode: 'free', defaults: ['Loại 1', 'Loại 2', 'Loại 3', 'Cỡ lớn', 'Cỡ vừa', 'Cỡ nhỏ', 'Loại bỏ'],
+    hint: 'Dùng để chọn Loại cỡ khi ghi thu hoạch (ví dụ Loại 1, Cỡ lớn, hoặc theo cân nặng). Thêm, bớt hoặc đổi tên tùy ý (phiếu cũ giữ nguyên).',
+  },
+  {
+    id: 'count_units', title: 'Đơn vị đếm của vụ', mode: 'free', defaults: ['cây', 'con', 'quả', 'cặp', 'bụi', 'khóm'],
+    hint: 'Dùng để chọn Đơn vị đếm khi tạo/sửa vụ (số cây, số con…). Thêm, bớt hoặc đổi tên tùy ý (vụ cũ giữ nguyên).',
+  },
+  {
     id: 'housing', title: 'Kiểu ô', mode: 'free', defaults: ['Kín', 'Hở', 'Nửa kín hở'],
     hint: 'Dùng để chọn Kiểu ô của ô sản xuất (ví dụ nhà màng kín hay hở, chuồng kín hay hở). Thêm, bớt hoặc đổi tên tùy ý.',
   },
