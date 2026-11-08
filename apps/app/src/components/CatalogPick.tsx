@@ -180,7 +180,7 @@ export function ChipsPicker({ label, value, onChange, options, hint }: { label: 
   return (
     <fieldset className="roles">
       <legend>{label}</legend>
-      <div className="chips">
+      <div className="pickchips">
         {options.map((o) => <button key={o} type="button" className={has(o) ? 'chip active' : 'chip'} aria-pressed={has(o)} onClick={() => toggle(o)}>{o}</button>)}
         {extra.map((o) => <button key={o} type="button" className="chip active" aria-pressed title="Đang ghi, chưa có trong danh sách (bấm để bỏ)" onClick={() => toggle(o)}>{o} ✕</button>)}
         {!adding && <button type="button" className="chip" onClick={() => setAdding(true)}>＋ Thêm khác</button>}
