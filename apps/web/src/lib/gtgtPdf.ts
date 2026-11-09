@@ -1,13 +1,15 @@
 // Chuyển file XML tờ khai 01/GTGT (HTKK, Thông tư 26/2015/TT-BTC) sang PDF ngay trên trình duyệt.
 // Không gửi gì lên máy chủ và không ghi CSDL. Thư viện PDF và font chỉ được tải khi người dùng bấm "Chuyển đổi".
+// Bố cục theo bản in của HTKK (mẫu docs/0315595632000-01_GTGT-Q42021-L00.pdf): khổ Letter, chữ 9,7pt, khung "Mẫu số" bên phải, bảng viền xám nhạt.
 
 export const MAX_XML_BYTES = 5 * 1024 * 1024;
 const NS = 'http://kekhaithue.gdt.gov.vn/TKhaiThue';
 
 export interface Gtgt {
-  period: string; periodSlug: string; first: boolean; times: string;
+  period: string; periodSlug: string; first: boolean; times: string; industry: string; formDesc: string; accountItem: string;
   name: string; mst: string; address: string; district: string; province: string; phone: string; fax: string; email: string;
   agent: { name: string; mst: string; address: string; district: string; province: string; phone: string; fax: string; email: string; contractNo: string; contractDate: string };
+  extended: boolean; extendReason: string;
   staffName: string; staffCert: string; signDate: { d: string; m: string; y: string };
   ct: Record<string, number>; noActivity: boolean;
 }
@@ -34,132 +36,181 @@ export function parseGtgt(xml: string): Gtgt {
   const periodSlug = (kind === 'Q' ? `Q${no}` : kind === 'M' ? `T${no}` : 'ky') + '-' + (kyYear ?? '');
   const ct: Record<string, number> = {};
   for (const k of ['21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '32a', '33', '34', '35', '36', '37', '38', '39', '40a', '40b', '40', '41', '42', '43']) ct[k] = num(doc, 'ct' + k);
-  const sign = ddmmyyyy(text(doc, 'ngayKy'));
+  const sign = ddmmyyyy(text(doc, 'ngayKy') || text(doc, 'ngayLapTKhai'));
 
   return {
     period, periodSlug, first: text(doc, 'loaiTKhai') !== 'B', times: text(doc, 'loaiTKhai') === 'B' ? text(doc, 'soLan') : '',
+    industry: text(doc, 'ten_NganhNghe'), formDesc: desc, accountItem: text(doc, 'tieuMucHachToan'),
     name: text(doc, 'tenNNT'), mst: text(doc, 'mst'), address: text(doc, 'dchiNNT'),
     district: text(doc, 'tenHuyenNNT'), province: text(doc, 'tenTinhNNT'), phone: text(doc, 'dthoaiNNT'), fax: text(doc, 'faxNNT'), email: text(doc, 'emailNNT'),
     agent: {
       name: text(doc, 'tenDLyThue'), mst: text(doc, 'mstDLyThue'), address: text(doc, 'dchiDLyThue'), district: text(doc, 'tenHuyenDLyThue'), province: text(doc, 'tenTinhDLyThue'),
       phone: text(doc, 'dthoaiDLyThue'), fax: text(doc, 'faxDLyThue'), email: text(doc, 'emailDLyThue'), contractNo: text(doc, 'soHDDLyThue'), contractDate: text(doc, 'ngayKyHDDLyThue'),
     },
+    extended: !!text(doc, 'maLyDoGiaHan'), extendReason: text(doc, 'lyDoGiaHan'),
     staffName: text(doc, 'tenNVDLyThue'), staffCert: text(doc, 'ccchiHNghe'), signDate: sign,
     ct, noActivity: ct['21'] === 1,
   };
 }
 
-const money = (n: number) => n.toLocaleString('de-DE'); // dấu chấm ngăn hàng nghìn, như bản in HTKK
+const money = (n: number) => n.toLocaleString('de-DE'); // dấu chấm ngăn hàng nghìn
 // pdfmake chỉ coi là địa chỉ web khi có đủ http(s)://
 const fonts = () => ({
   Tinos: { normal: location.origin + '/fonts/Tinos-Regular.ttf', bold: location.origin + '/fonts/Tinos-Bold.ttf', italics: location.origin + '/fonts/Tinos-Italic.ttf', bolditalics: location.origin + '/fonts/Tinos-BoldItalic.ttf' },
 });
 
 type Cell = Record<string, unknown>;
-const GRAY = '#d9d9d9';
+const FS = 9.7;               // cỡ chữ của bản in HTKK
+const LINE = 11.2;            // chiều cao một dòng chữ
+const PAD = 3.45;             // đệm trên/dưới ô để dòng đơn cao khoảng 18,4pt như mẫu
+const OUTER = '#808080', INNER = '#cccccc';
+// Cột bảng (tổng 549pt = từ lề trái 38 tới 587): STT | Chỉ tiêu | [mã] | Giá trị | [mã] | Thuế
+const COLS = [24.8, 303, 31, 72, 31, 72];
 
 function buildDoc(t: Gtgt): Record<string, unknown> {
-  const fs = 10.5;
-  const code = (c: string, v: number | null, opts: { bold?: boolean } = {}): Cell => ({
-    columns: [{ text: `[${c}]`, width: 30, fontSize: 9.5 }, { text: v === null ? '' : money(v), alignment: 'right', bold: opts.bold }],
-    margin: [2, 2, 3, 2],
-  });
-  const gray = (): Cell => ({ text: '', fillColor: GRAY });
-  const lab = (s: string, bold = false, indent = 0): Cell => ({ text: s, bold, margin: [2 + indent, 2, 2, 2] });
-  const stt = (s: string, bold = false): Cell => ({ text: s, bold, alignment: 'center', margin: [0, 2, 0, 2] });
+  const bold = (s: string) => ({ text: s, bold: true });
+  // Ước lượng số dòng của ô Chỉ tiêu để canh giữa theo chiều dọc mã và số
+  const linesOf = (label: string, b: boolean, span: number) => Math.max(1, Math.ceil((label.length * (b ? 4.7 : 4.4)) / (COLS.slice(1, 1 + span).reduce((a, c) => a + c, 0) - 6)));
+  const vpad = (n: number) => PAD + ((n - 1) * LINE) / 2;
 
-  // Một dòng: [STT, chỉ tiêu, ô giá trị, ô thuế]; undefined = ô tô xám (không áp dụng)
-  const row = (s: string, label: string, a: [string, number] | undefined, b: [string, number] | undefined, o: { bold?: boolean; indent?: number } = {}): Cell[] => [
-    stt(s, o.bold), lab(label, o.bold, o.indent ?? 0), a ? code(a[0], a[1]) : gray(), b ? code(b[0], b[1]) : gray(),
-  ];
-  const head = (s: string, label: string): Cell[] => [stt(s, true), { ...lab(label, true), colSpan: 3 }, {}, {}];
-  const v = (k: string): [string, number] => [k, t.ct[k] ?? 0];
+  const sttCell = (s: string, n: number): Cell => ({ text: s, bold: true, alignment: 'center', margin: [0, vpad(n), 0, vpad(n)] });
+  const code = (c: string, n: number): Cell => ({ text: `[${c}]`, bold: true, alignment: 'center', margin: [0, vpad(n), 0, vpad(n)] });
+  const val = (v: number, n: number): Cell => ({ text: money(v), noWrap: true, alignment: 'right', margin: [0, vpad(n), 3, vpad(n)] });
+  const empty = (): Cell => ({ text: '' });
 
-  const body: Cell[][] = [
-    [{ text: 'STT', bold: true, alignment: 'center', margin: [0, 3] }, { text: 'Chỉ tiêu', bold: true, alignment: 'center', margin: [0, 3] },
-      { text: 'Giá trị HHDV\n(chưa có thuế GTGT)', bold: true, alignment: 'center' }, { text: 'Thuế GTGT', bold: true, alignment: 'center', margin: [0, 8, 0, 0] }],
-    [stt('A', true), { ...lab('Không phát sinh hoạt động mua, bán trong kỳ (đánh dấu "X")'), colSpan: 2 }, {},
-      { columns: [{ text: '[21]', width: 30, fontSize: 9.5 }, { text: t.noActivity ? 'X' : '', alignment: 'center', bold: true }], margin: [2, 2, 3, 2] }],
-    [stt('B', true), lab('Thuế giá trị gia tăng còn được khấu trừ kỳ trước chuyển sang', true), gray(), code('22', t.ct['22'] ?? 0)],
-    head('C', 'Kê khai thuế giá trị gia tăng phải nộp Ngân sách nhà nước'),
-    head('I', 'Hàng hóa, dịch vụ (HHDV) mua vào trong kỳ'),
-    row('1', 'Giá trị và thuế GTGT của hàng hóa, dịch vụ mua vào', v('23'), v('24')),
-    row('2', 'Tổng số thuế GTGT được khấu trừ kỳ này', undefined, v('25')),
-    head('II', 'Hàng hóa, dịch vụ bán ra trong kỳ'),
-    row('1', 'Hàng hóa, dịch vụ bán ra không chịu thuế GTGT', v('26'), undefined),
-    row('2', 'Hàng hóa, dịch vụ bán ra chịu thuế GTGT ([27]=[29]+[30]+[32]+[32a]; [28]=[31]+[33])', v('27'), v('28')),
-    row('a', 'Hàng hóa, dịch vụ bán ra chịu thuế suất 0%', v('29'), undefined, { indent: 8 }),
-    row('b', 'Hàng hóa, dịch vụ bán ra chịu thuế suất 5%', v('30'), v('31'), { indent: 8 }),
-    row('c', 'Hàng hóa, dịch vụ bán ra chịu thuế suất 10%', v('32'), v('33'), { indent: 8 }),
-    row('d', 'Hàng hóa, dịch vụ bán ra không tính thuế', v('32a'), undefined, { indent: 8 }),
-    row('3', 'Tổng doanh thu và thuế GTGT của HHDV bán ra ([34]=[26]+[27]; [35]=[28])', v('34'), v('35')),
-    [stt('III', true), lab('Thuế GTGT phát sinh trong kỳ ([36]=[35]-[25])', true), gray(), code('36', t.ct['36'] ?? 0)],
-    head('IV', 'Điều chỉnh tăng, giảm thuế GTGT còn được khấu trừ của các kỳ trước'),
-    row('1', 'Điều chỉnh giảm', undefined, v('37')),
-    row('2', 'Điều chỉnh tăng', undefined, v('38')),
-    [stt('V', true), lab('Thuế GTGT đã nộp ở địa phương khác của hoạt động kinh doanh xây dựng, lắp đặt, bán hàng, bất động sản ngoại tỉnh', true), gray(), code('39', t.ct['39'] ?? 0)],
-    head('VI', 'Xác định nghĩa vụ thuế GTGT phải nộp trong kỳ:'),
-    row('1', 'Thuế GTGT phải nộp của hoạt động sản xuất kinh doanh trong kỳ ([40a]=[36]-[22]+[37]-[38]-[39]≥0)', undefined, v('40a')),
-    row('2', 'Thuế GTGT mua vào của dự án đầu tư được bù trừ với thuế GTGT còn phải nộp của hoạt động sản xuất kinh doanh cùng kỳ tính thuế', undefined, v('40b')),
-    row('3', 'Thuế GTGT còn phải nộp trong kỳ ([40]=[40a]-[40b])', undefined, v('40')),
-    row('4', 'Thuế GTGT chưa được khấu trừ hết kỳ này (nếu ([41]=[36]-[22]+[37]-[38]-[39]<0)', undefined, v('41')),
-    row('4.1', 'Tổng số thuế GTGT đề nghị hoàn', undefined, v('42'), { indent: 8 }),
-    row('4.2', 'Thuế GTGT còn được khấu trừ chuyển kỳ sau ([43]=[41]-[42])', undefined, v('43'), { indent: 8 }),
-  ];
-
-  // Mã số thuế: từng chữ số một ô, như bản in HTKK
-  const boxes = (mst: string): Cell => {
-    const d = mst.replace(/\D/g, '');
-    const cells: Cell[] = []; const widths: number[] = [];
-    for (let i = 0; i < 13; i++) {
-      if (i === 10) { cells.push({ text: '-', alignment: 'center', border: [false, false, false, false] }); widths.push(8); }
-      const ch = d[i] ?? '';
-      cells.push({ text: ch, alignment: 'center', fontSize: 10, margin: [0, 0, 0, 0] }); widths.push(13);
-    }
-    return { table: { widths, heights: 14, body: [cells] }, layout: { hLineWidth: () => 0.5, vLineWidth: () => 0.5 }, margin: [0, 0, 0, 0] };
+  // Một dòng của bảng: nhãn + (ô giá trị) + (ô thuế). Ô trống được gộp với ô bên cạnh như bản in HTKK.
+  const row = (s: string, label: string, a: string | null, b: string | null, o: { b?: boolean; indent?: number } = {}): Cell[] => {
+    const span = a ? 1 : 3;
+    const n = linesOf(label, !!o.b, span);
+    const lab: Cell = { text: label, bold: !!o.b, margin: [3 + (o.indent ?? 0), PAD, 2, PAD], ...(span > 1 ? { colSpan: span } : {}) };
+    const cells: Cell[] = [sttCell(s, n), lab];
+    for (let i = 1; i < span; i++) cells.push(empty());
+    if (a) { cells.push(code(a, n), val(t.ct[a] ?? 0, n)); }
+    if (b) { cells.push(code(b, n), val(t.ct[b] ?? 0, n)); }
+    else { cells.push({ text: '', colSpan: 2 }, empty()); }
+    return cells;
   };
-  const field = (code: string, label: string, value: string): Cell => ({ text: [{ text: `[${code}] ${label}: ` }, { text: value }], margin: [0, 1.5, 0, 1.5] });
-  const mstRow = (code: string, mst: string): Cell => ({ columns: [{ text: `[${code}] Mã số thuế:`, width: 'auto', margin: [0, 3, 8, 0] }, boxes(mst)], margin: [0, 2, 0, 2] });
-  const two = (a: Cell, b: Cell): Cell => ({ columns: [{ ...a, width: '*' }, { ...b, width: '*' }], columnGap: 10 });
+  const head = (s: string, label: string): Cell[] => [sttCell(s, 1), { text: label, bold: true, margin: [3, PAD, 2, PAD], colSpan: 5 }, empty(), empty(), empty(), empty()];
+
+  const hd = (s: string, extra: Cell = {}): Cell => ({ text: s, bold: true, alignment: 'center', margin: [0, PAD + 2, 0, PAD + 2], ...extra });
+  const body: Cell[][] = [
+    [hd('STT'), hd('Chỉ tiêu'), hd('Giá trị HHDV\n(chưa có thuế GTGT)', { colSpan: 2 }), empty(), hd('Thuế\nGTGT', { colSpan: 2 }), empty()],
+    // Dòng A: ô đánh dấu [21]
+    [sttCell('A', 1), { text: 'Không phát sinh hoạt động mua, bán trong kỳ (đánh dấu "X")', bold: true, margin: [3, PAD, 2, PAD] }, code('21', 1),
+      { text: t.noActivity ? '[X]' : '[]', alignment: 'center', margin: [0, PAD, 0, PAD] }, { text: '', colSpan: 2 }, empty()],
+    row('B', 'Thuế GTGT còn được khấu trừ kỳ trước chuyển sang', null, '22', { b: true }),
+    head('C', 'Kê khai thuế GTGT phải nộp Ngân sách nhà nước'),
+    head('I', 'Hàng hoá, dịch vụ (HHDV) mua vào trong kỳ'),
+    row('1', 'Giá trị và thuế GTGT của hàng hoá, dịch vụ mua vào', '23', '24'),
+    row('2', 'Tổng số thuế GTGT được khấu trừ kỳ này', null, '25'),
+    head('II', 'Hàng hoá, dịch vụ bán ra trong kỳ'),
+    row('1', 'Hàng hóa, dịch vụ bán ra không chịu thuế GTGT', '26', null),
+    row('2', 'Hàng hóa, dịch vụ bán ra chịu thuế GTGT ([27]=[29]+[30]+[32]+[32a]; [28]=[31]+[33])', '27', '28'),
+    row('a', 'Hàng hoá, dịch vụ bán ra chịu thuế suất 0%', '29', null),
+    row('b', 'Hàng hoá, dịch vụ bán ra chịu thuế suất 5%', '30', '31'),
+    row('c', 'Hàng hoá, dịch vụ bán ra chịu thuế suất 10%', '32', '33'),
+    row('d', 'Hàng hoá, dịch vụ bán ra không tính thuế', '32a', null),
+    row('3', 'Tổng doanh thu và thuế GTGT của HHDV bán ra ([34]=[26]+[27]; [35]=[28])', '34', '35'),
+    row('III', 'Thuế GTGT phát sinh trong kỳ ([36]=[35]-[25])', null, '36'),
+    head('IV', 'Điều chỉnh tăng, giảm thuế GTGT còn được khấu trừ của các kỳ trước'),
+    row('1', 'Điều chỉnh giảm', null, '37'),
+    row('2', 'Điều chỉnh tăng', null, '38'),
+    row('V', 'Thuế GTGT đã nộp ở địa phương khác của hoạt động kinh doanh xây dựng, lắp đặt, bán hàng, bất động sản ngoại tỉnh', null, '39', { b: true }),
+    head('VI', 'Xác định nghĩa vụ thuế GTGT phải nộp trong kỳ:'),
+    row('1', 'Thuế GTGT phải nộp của hoạt động sản xuất kinh doanh trong kỳ ([40a]=[36]-[22]+[37]-[38] - [39]≥ 0)', null, '40a', { b: true }),
+    row('2', 'Thuế GTGT mua vào của dự án đầu tư được bù trừ với thuế GTGT còn phải nộp của hoạt động sản xuất kinh doanh cùng kỳ tính thuế', null, '40b', { b: true }),
+    row('3', 'Thuế GTGT còn phải nộp trong kỳ ([40]=[40a]-[40b])', null, '40', { b: true }),
+    row('4', 'Thuế GTGT chưa khấu trừ hết kỳ này (nếu [41]=[36]-[22]+[37]-[38]-[39] < 0)', null, '41', { b: true }),
+    row('4.1', 'Tổng số thuế GTGT đề nghị hoàn', null, '42', { b: true }),
+    row('4.2', 'Thuế GTGT còn được khấu trừ chuyển kỳ sau ([43]=[41]-[42])', null, '43', { b: true }),
+  ];
+  // Các dòng tiêu đề nhóm (C, I, II, IV, VI) in đậm; riêng III và các dòng con 1, 2 của I, II, IV in thường như mẫu (đã đặt ở trên)
+
+  // ---- Phần đầu: các trường thông tin
+  const f = (c: string, label: string, value: string, strong = false): Cell => ({ text: [{ text: `[${c}] `, bold: true }, { text: label, bold: strong }, { text: value ? ' ' + value : '' }] });
+  const one = (c: string, label: string, value: string, strong = false): Cell => ({ ...f(c, label, value, strong), margin: [0, 0, 0, 1.8] });
+  const cols = (cells: Cell[], widths: (number | string)[]): Cell => ({ columns: cells, columnGap: 0, width: '*', ...{ widths }, margin: [0, 0, 0, 1.8] });
+  const three = (a: Cell, b: Cell, c: Cell): Cell => ({ columns: [{ ...a, width: 144 }, { ...b, width: 88 }, { ...c, width: '*' }], margin: [0, 0, 0, 1.8] });
+  const two = (a: Cell, b: Cell): Cell => ({ columns: [{ ...a, width: 144 }, { ...b, width: '*' }], margin: [0, 0, 0, 1.8] });
+  void cols;
   const ag = t.agent;
-  const dots = (s: string) => s || '';
-  const fmtDay = t.signDate.d ? `ngày ${t.signDate.d} tháng ${t.signDate.m} năm ${t.signDate.y}` : 'ngày ..... tháng ..... năm .....';
+  const ctr = (s: string, o: Cell = {}): Cell => ({ text: s, alignment: 'center', ...o });
+  const desc = t.formDesc.replace(/^\(\s*/, '( ').replace(/\s*\)$/, ' )');
 
   return {
-    pageSize: 'A4', pageMargins: [42, 36, 42, 36],
-    defaultStyle: { font: 'Tinos', fontSize: fs, lineHeight: 1.1 },
+    pageSize: 'LETTER', pageMargins: [37, 8, 37, 24],
+    defaultStyle: { font: 'Tinos', fontSize: FS, lineHeight: 1 },
     info: { title: `Tờ khai 01/GTGT ${t.period} - ${t.mst}`, creator: '', producer: '' },
+    footer: (current: number, total: number) => ({ text: `${current}/${total}`, alignment: 'center', fontSize: 11.6, margin: [0, 9, 0, 0] }),
     content: [
-      { text: 'Mẫu số: 01/GTGT', bold: true, alignment: 'right' },
-      { text: '(Ban hành kèm theo Thông tư số 26/2015/TT-BTC ngày 27/02/2015 của Bộ Tài chính)', italics: true, alignment: 'right', fontSize: 9, margin: [0, 0, 0, 4] },
-      { text: 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', bold: true, alignment: 'center', fontSize: 11.5 },
-      { text: 'Độc lập - Tự do - Hạnh phúc', bold: true, alignment: 'center', fontSize: 11.5 },
-      { canvas: [{ type: 'line', x1: 190, y1: 3, x2: 325, y2: 3, lineWidth: 0.8 }], margin: [0, 0, 0, 6] },
-      { text: 'TỜ KHAI THUẾ GIÁ TRỊ GIA TĂNG', bold: true, alignment: 'center', fontSize: 14 },
-      { text: '(Dành cho người nộp thuế khai thuế giá trị gia tăng theo phương pháp khấu trừ)', italics: true, alignment: 'center', margin: [0, 0, 0, 4] },
-      { text: [{ text: '[01] Kỳ tính thuế: ' }, { text: t.period, bold: true }], alignment: 'center', margin: [0, 0, 0, 3] },
-      { columns: [{ text: `[02] Lần đầu: [${t.first ? 'X' : ' '}]`, width: '*', alignment: 'right', margin: [0, 0, 30, 0] }, { text: `[03] Bổ sung lần thứ: ${t.first ? '' : t.times}`, width: '*', margin: [30, 0, 0, 0] }], margin: [0, 0, 0, 6] },
-      field('04', 'Tên người nộp thuế', t.name),
-      mstRow('05', t.mst),
-      field('06', 'Địa chỉ', t.address),
-      two(field('07', 'Quận/huyện', t.district), field('08', 'Tỉnh/thành phố', t.province)),
-      two(field('09', 'Điện thoại', t.phone), two(field('10', 'Fax', t.fax), field('11', 'E-mail', t.email))),
-      field('12', 'Tên đại lý thuế (nếu có)', dots(ag.name)),
-      mstRow('13', ag.mst),
-      field('14', 'Địa chỉ', ag.address),
-      two(field('15', 'Quận/huyện', ag.district), field('16', 'Tỉnh/thành phố', ag.province)),
-      two(field('17', 'Điện thoại', ag.phone), two(field('18', 'Fax', ag.fax), field('19', 'E-mail', ag.email))),
-      field('20', 'Hợp đồng đại lý thuế: Số', `${ag.contractNo}${ag.contractDate ? '   Ngày: ' + ag.contractDate : '   Ngày:'}`),
-      { text: 'Đơn vị tiền: đồng Việt Nam', italics: true, alignment: 'right', margin: [0, 4, 0, 2] },
-      { table: { widths: [26, '*', 118, 118], headerRows: 1, dontBreakRows: true, body }, layout: { hLineWidth: () => 0.6, vLineWidth: () => 0.6 } },
-      { text: 'Tôi cam đoan số liệu khai trên là đúng và chịu trách nhiệm trước pháp luật về những số liệu đã khai./.', margin: [0, 10, 0, 8] },
       {
         columns: [
-          { width: '*', stack: [{ text: 'NHÂN VIÊN ĐẠI LÝ THUẾ', bold: true }, { text: `Họ và tên: ${t.staffName}` }, { text: `Chứng chỉ hành nghề số: ${t.staffCert}` }] },
-          { width: '*', alignment: 'center', stack: [{ text: `......., ${fmtDay}`, italics: true }, { text: 'NGƯỜI NỘP THUẾ hoặc', bold: true }, { text: 'ĐẠI DIỆN HỢP PHÁP CỦA NGƯỜI NỘP THUẾ', bold: true }, { text: 'Ký, ghi rõ họ tên; chức vụ và đóng dấu (nếu có)', italics: true, fontSize: 9.5 }] },
+          {
+            width: '*', stack: [
+              ctr('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', { bold: true, margin: [0, 0, 0, 1] }),
+              ctr('Độc lập-Tự do-Hạnh phúc', { bold: true }),
+              ctr('-------------------------', { margin: [0, 0, 0, 2] }),
+              ctr('TỜ KHAI THUẾ GIÁ TRỊ GIA TĂNG (MẪU SỐ 01/GTGT)', { bold: true, margin: [0, 0, 0, 1] }),
+              ctr('(Dành cho người nộp thuế khai thuế giá trị gia tăng theo phương pháp khấu trừ)', { italics: true, margin: [0, 0, 0, 1] }),
+              ctr(`Ngành nghề: ${t.industry}`, { margin: [0, 0, 0, 1] }),
+              { ...ctr('', { margin: [0, 0, 0, 1] }), text: [{ text: '[01]', bold: true }, { text: ` Kỳ tính thuế: ${t.period}` }] },
+              { ...ctr('', { margin: [0, 0, 0, 0] }), text: [{ text: '[02]', bold: true }, { text: ` Lần đầu: [${t.first ? 'X' : ' '}] ` }, { text: '[03]', bold: true }, { text: ` Bổ sung lần thứ: [${t.first ? ' ' : t.times}]` }] },
+            ],
+          },
+          {
+            width: 96, margin: [0, 0, 0, 0],
+            table: { widths: ['*'], body: [[{ stack: [{ text: [{ text: 'Mẫu số: ' }, { text: '01/GTGT', bold: true }], alignment: 'center' }, { text: desc, italics: true, fontSize: 7.2, alignment: 'center', lineHeight: 1.1 }], margin: [2, 1, 2, 2] }]] },
+            layout: { hLineColor: () => '#e0e0e0', vLineColor: () => '#e0e0e0', hLineWidth: () => 0.6, vLineWidth: () => 0.6, paddingLeft: () => 1, paddingRight: () => 1, paddingTop: () => 0, paddingBottom: () => 0 },
+          },
+        ],
+        margin: [0, 0, 0, 17],
+      },
+      one('04', 'Tên người nộp thuế:', t.name, true),
+      one('05', 'Mã số thuế:', t.mst, true),
+      one('06', 'Địa chỉ:', t.address),
+      two(f('07', 'Quận/Huyện:', t.district), f('08', 'Tỉnh/Thành phố:', t.province)),
+      three(f('09', 'Điện thoại:', t.phone), f('10', 'Fax:', t.fax), f('11', 'E-mail:', t.email)),
+      { text: '', margin: [0, 0, 0, 1.8] },
+      one('12', 'Tên đại lý thuế (nếu có):', ag.name, true),
+      one('13', 'Mã số thuế:', ag.mst, true),
+      one('14', 'Địa chỉ:', ag.address),
+      two(f('15', 'Quận/Huyện:', ag.district), f('16', 'Tỉnh/Thành phố:', ag.province)),
+      three(f('17', 'Điện thoại:', ag.phone), f('18', 'Fax:', ag.fax), f('19', 'E-mail:', ag.email)),
+      { columns: [{ width: 144, text: [{ text: '[20] ', bold: true }, { text: `Hợp đồng đại lý thuế: Số${ag.contractNo ? ' ' + ag.contractNo : ''}` }] }, { width: '*', text: `Ngày:${ag.contractDate ? ' ' + ag.contractDate : ''}` }], margin: [0, 0, 0, 1.8] },
+      { text: `Gia hạn [${t.extended ? 'X' : ''}]`, margin: [1, 2, 0, 4] },
+      { text: `Lý do gia hạn:${t.extendReason ? ' ' + t.extendReason : ''}`, margin: [1, 0, 0, 4] },
+      { text: 'Đơn vị tiền: đồng Việt Nam', italics: true, alignment: 'right', margin: [0, 0, 0, 2] },
+      {
+        table: { widths: COLS, dontBreakRows: true, body },
+        layout: {
+          hLineWidth: () => 0.6, vLineWidth: () => 0.6,
+          hLineColor: (i: number, node: { table: { body: unknown[] } }) => (i === 0 || i === node.table.body.length ? OUTER : INNER),
+          vLineColor: (i: number, node: { table: { widths: unknown[] } }) => (i === 0 || i === node.table.widths.length ? OUTER : INNER),
+          paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0,
+        },
+      },
+      { text: 'Tôi cam đoan số liệu khai trên là đúng và chịu trách nhiệm trước pháp luật về những số liệu đã khai./...', margin: [0, 6, 0, 16] },
+      {
+        columns: [
+          { width: 343, margin: [3, 0, 0, 0], stack: [bold('NHÂN VIÊN ĐẠI LÝ THUẾ'), { text: `Họ và tên:${t.staffName ? ' ' + t.staffName : ''}`, margin: [0, 12, 0, 12] }, { text: `Chứng chỉ hành nghề số:${t.staffCert ? ' ' + t.staffCert : ''}` }] },
+          {
+            width: 190, alignment: 'center', stack: [
+              { text: t.signDate.d ? `Ngày ${t.signDate.d} tháng ${t.signDate.m} năm ${t.signDate.y}` : 'Ngày ..... tháng ..... năm .....', italics: true, margin: [0, 0, 0, 8] },
+              bold('NGƯỜI NỘP THUẾ hoặc'), bold('ĐẠI DIỆN HỢP PHÁP CỦA NGƯỜI NỘP THUẾ'),
+              { text: 'Ký, ghi rõ họ tên, chức vụ và đóng dấu (nếu có)', italics: true, margin: [0, 1, 0, 0] },
+            ],
+          },
         ],
         unbreakable: true,
       },
+      { text: 'Ghi chú:', bold: true, italics: true, decoration: 'underline', margin: [0, 26, 0, 12] },
+      { text: '- GTGT: Giá trị Gia tăng', italics: true, margin: [0, 0, 0, 1] },
+      { text: '- HHDV: Hàng hoá dịch vụ', italics: true, margin: [0, 0, 0, 13] },
+      ...(t.accountItem ? [
+        { text: 'Hỗ trợ hạch toán MLNSNN', bold: true, italics: true, decoration: 'underline' },
+        { text: `Hạch toán chỉ tiêu [40] vào tiểu mục ${t.accountItem}` },
+        { canvas: [{ type: 'line', x1: 0, y1: 6, x2: 538, y2: 6, lineWidth: 0.6, lineColor: '#bbbbbb' }] },
+      ] : []),
     ],
   };
 }
