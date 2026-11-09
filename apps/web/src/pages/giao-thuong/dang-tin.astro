@@ -1,6 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { TRADE_TAGS, TRADE_UNITS } from '@agriconnect/shared';
+import { PROVINCES, TRADE_TAGS, TRADE_UNITS } from '@agriconnect/shared';
 ---
 <Base title="Đăng tin giao thương — Agricovi" noindex cache={false}>
   <div class="prose">
@@ -18,8 +18,8 @@ import { TRADE_TAGS, TRADE_UNITS } from '@agriconnect/shared';
           <label>Đơn vị<select name="unit" required>{TRADE_UNITS.map((u) => <option value={u}>{u}</option>)}</select></label>
           <label>Giá thấp nhất (đồng/đơn vị, không bắt buộc)<input name="pmin" inputmode="numeric" /></label>
           <label>Giá cao nhất (không bắt buộc)<input name="pmax" inputmode="numeric" /></label>
-          <label>Tỉnh/thành<input name="province" required maxlength="60" placeholder="Ví dụ: Long An" /></label>
-          <label>Quận/huyện (Phường/Xã) (không bắt buộc)<input name="district" maxlength="60" /></label>
+          <label>Tỉnh/thành<select name="province" required><option value="">— Chọn tỉnh/thành —</option>{PROVINCES.map((p) => <option value={p}>{p}</option>)}</select></label>
+          <label>Xã/phường (không bắt buộc)<input name="district" maxlength="60" /></label>
           <label><span id="whenLbl">Cần hàng trước ngày</span><input name="when" type="date" /></label>
           <label>Tin hiển thị trong
             <select name="days"><option value="7">7 ngày</option><option value="14" selected>14 ngày</option><option value="30">30 ngày</option></select>
@@ -93,6 +93,9 @@ import { TRADE_TAGS, TRADE_UNITS } from '@agriconnect/shared';
         sel.value = p.category_id ?? '';
         el('product').value = p.product_name ?? ''; el('qty').value = p.quantity != null ? String(p.quantity) : ''; el('unit').value = p.unit;
         el('pmin').value = p.price_min != null ? String(p.price_min) : ''; el('pmax').value = p.price_max != null ? String(p.price_max) : '';
+        // tin cũ gõ tay có thể không nằm trong danh sách: thêm đúng giá trị đó để không mất khi sửa
+        const sel = f.elements.namedItem('province') as HTMLSelectElement;
+        if (p.province && ![...sel.options].some((o) => o.value === p.province)) sel.add(new Option(p.province + ' (cũ, hãy chọn lại)', p.province));
         el('province').value = p.province; el('district').value = p.district ?? ''; el('when').value = p.when_date ?? ''; el('desc').value = p.description ?? '';
         const dsel = f.elements.namedItem('days') as HTMLSelectElement;
         dsel.insertAdjacentHTML('afterbegin', '<option value="">Giữ nguyên hạn hiện tại</option>'); dsel.value = '';

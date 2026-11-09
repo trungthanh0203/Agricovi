@@ -17,6 +17,7 @@ import Base from '../layouts/Base.astro';
 <script>
   import { auth, BUYER_KIND_LABEL, call, friendly, loadAccount, session, signOut, type WebAccount } from '../lib/auth';
   import { esc } from '../lib/db';
+  import { PROVINCES } from '@agriconnect/shared';
 
   const app = document.getElementById('app')!;
   const TABS: [string, string][] = [['ho-so', 'Hồ sơ'], ['dia-chi', 'Địa chỉ nhận hàng'], ['yeu-thich', 'Yêu thích'], ['bao-gia', 'Yêu cầu báo giá của tôi'], ['xml-pdf', 'Chuyển XML tờ khai sang PDF'], ['mat-khau', 'Mật khẩu']];
@@ -85,8 +86,8 @@ import Base from '../layouts/Base.astro';
       <div class="row2"><label>Tên gọi (Nhà, Cơ quan…)<input name="label" required maxlength="40" value="${esc(a.label ?? '')}" /></label>
       <label>Người nhận<input name="recipient" required minlength="2" maxlength="80" value="${esc(a.recipient ?? '')}" /></label>
       <label>Số điện thoại người nhận<input name="phone" type="tel" required maxlength="20" value="${esc(a.phone ?? '')}" /></label>
-      <label>Tỉnh/thành<input name="province" required maxlength="60" value="${esc(a.province ?? '')}" /></label>
-      <label>Quận/huyện (Phường/Xã)<input name="district" maxlength="60" value="${esc(a.district ?? '')}" /></label>
+      <label>Tỉnh/thành<select name="province" required><option value="">— Chọn tỉnh/thành —</option>${(PROVINCES.includes(a.province ?? '') || !a.province ? PROVINCES : [a.province, ...PROVINCES]).map((p) => `<option value="${esc(p)}"${p === a.province ? ' selected' : ''}>${esc(p)}${PROVINCES.includes(p) ? '' : ' (cũ, hãy chọn lại)'}</option>`).join('')}</select></label>
+      <label>Xã/phường<input name="district" maxlength="60" value="${esc(a.district ?? '')}" /></label>
       <label>Địa chỉ cụ thể<input name="address" required minlength="3" maxlength="200" value="${esc(a.address ?? '')}" /></label></div>
       <label class="ck2" style="display:flex;gap:8px;font-weight:400"><input type="checkbox" name="def" style="width:auto"${a.is_default ? ' checked' : ''} /> Đặt làm địa chỉ mặc định</label>
       <div><button class="btn solid" type="submit">Lưu</button> <button class="btn" type="button" id="cancel">Hủy</button></div></form>`;
