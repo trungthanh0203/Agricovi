@@ -355,7 +355,10 @@ export function normalizeHomeBlocks(raw: unknown): HomeBlock[] {
 // Giao thương (W4): đơn vị, yêu cầu chất lượng, nhãn trạng thái
 // ---------------------------------------------------------------------------
 export const TRADE_UNITS = ['kg', 'tấn', 'quả', 'trái', 'bó', 'thùng', 'bao', 'con', 'chai', 'lít', 'cây', 'khay'] as const;
-export const TRADE_TAGS = ['VietGAP', 'Hữu cơ', 'Có truy xuất nguồn gốc', 'Loại 1', 'Đồng đều kích cỡ', 'Giao tận nơi', 'Có hóa đơn', 'Có kiểm định'] as const;
+// Đơn vị bán vật tư (chọn trong danh sách để mọi nơi dùng cùng một cách viết); đơn vị cũ gõ tay ngoài danh sách vẫn giữ khi sửa
+export const MATERIAL_UNITS = ['kg', 'g', 'tấn', 'lít', 'ml', 'chai', 'lọ', 'gói', 'hộp', 'bao', 'thùng', 'túi', 'can', 'cái', 'bộ', 'cuộn', 'mét', 'cây', 'khay'] as const;
+export const unitOptions = (cur: string | null | undefined, list: readonly string[] = MATERIAL_UNITS): string[] => (cur && !list.includes(cur) ? [cur, ...list] : [...list]);
+export const TRADE_TAGS =['VietGAP', 'Hữu cơ', 'Có truy xuất nguồn gốc', 'Loại 1', 'Đồng đều kích cỡ', 'Giao tận nơi', 'Có hóa đơn', 'Có kiểm định'] as const;
 export const TRADE_KIND_LABEL: Record<string, string> = { buy: 'Cần mua', sell: 'Cần bán' };
 export const TRADE_STATUS_LABEL: Record<string, string> = { pending: 'Chờ duyệt', published: 'Đang hiển thị', closed: 'Đã đóng', rejected: 'Chưa được duyệt', hidden: 'Đã bị ẩn' };
 

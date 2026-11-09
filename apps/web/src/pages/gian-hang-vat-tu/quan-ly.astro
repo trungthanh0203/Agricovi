@@ -6,7 +6,7 @@ import Base from '../../layouts/Base.astro';
 </Base>
 
 <script>
-  import { PROVINCES } from '@agriconnect/shared';
+  import { PROVINCES, unitOptions } from '@agriconnect/shared';
   import { call, friendly, loadAccount, session, auth } from '../../lib/auth';
   import { esc } from '../../lib/db';
   import { smallImage } from '../../lib/image';
@@ -68,7 +68,7 @@ import Base from '../../layouts/Base.astro';
         ${editing.id && cur.status === 'published' ? '<p class="muted">Vật tư đang hiển thị: sửa <b>giá, đơn vị</b> áp dụng ngay; sửa tên, mô tả, thành phần, hướng dẫn, ảnh, danh mục sẽ <b>phải duyệt lại</b> (tạm ẩn tới khi duyệt).</p>' : ''}
         <label>Tên vật tư<input name="name" required minlength="2" maxlength="160" value="${esc(String(cur.name ?? ''))}" /></label>
         <label>Danh mục<select name="cat" required><option value="">— Chọn —</option>${catOptions((cur.category_id as string | null) ?? null)}</select></label>
-        <div class="formgrid"><label>Thương hiệu<input name="brand" maxlength="80" value="${esc(String(cur.brand ?? ''))}" /></label><label>Đơn vị bán<input name="unit" maxlength="30" placeholder="kg, bao, chai…" value="${esc(String(cur.unit ?? ''))}" /></label>
+        <div class="formgrid"><label>Thương hiệu<input name="brand" maxlength="80" value="${esc(String(cur.brand ?? ''))}" /></label><label>Đơn vị bán<select name="unit"><option value="">— Chọn —</option>${unitOptions(cur.unit ? String(cur.unit) : null).map((u) => `<option value="${esc(u)}"${u === cur.unit ? ' selected' : ''}>${esc(u)}</option>`).join('')}</select></label>
           <label>Giá "từ" (đồng)<input name="price" inputmode="numeric" value="${cur.price_from ? esc(String(Math.round(Number(cur.price_from)))) : ''}" /></label><label>Hoặc ghi chữ<input name="pnote" maxlength="120" placeholder="Liên hệ báo giá" value="${esc(String(cur.price_note ?? ''))}" /></label></div>
         <label>Mô tả ngắn<input name="summary" maxlength="300" value="${esc(String(cur.summary ?? ''))}" /></label>
         <label>Thành phần<textarea name="ingr" rows="2" maxlength="500">${esc(String(cur.ingredients ?? ''))}</textarea></label>

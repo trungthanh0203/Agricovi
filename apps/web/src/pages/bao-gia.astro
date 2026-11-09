@@ -2,13 +2,17 @@
 import Base from '../layouts/Base.astro';
 import { sb } from '../lib/db';
 import { loadMaterial, loadProduct } from '../lib/catalog';
+import { MATERIAL_UNITS } from '@agriconnect/shared';
 
 // Biểu mẫu yêu cầu báo giá: khách không cần tài khoản. Chống lạm dụng ở CSDL (giới hạn theo liên hệ/giờ) + ô bẫy "website".
 const KINDS = ['material', 'product', 'profile', 'general'];
 const sp = Astro.url.searchParams;
 let kind = sp.get('loai') ?? 'general';
 let ref = sp.get('ma') ?? '';
-const v = { name: '', phone: '', email: '', qty: '', msg: '' };
+const FREQ = ['Một lần', 'Mỗi tuần', 'Mỗi tháng', 'Mỗi vụ'];
+// Số lượng chọn từ ô số + đơn vị + tần suất, ghép lại thành một dòng khi gửi (CSDL không đổi)
+const qtyText = (n: string, u: string, f: string) => (n.trim() ? [n.trim(), u, f && f !== FREQ[0] ? f.toLowerCase() : ''].filter(Boolean).join(' ') : '');
+const v = { name: '', phone: '', email: '', qtyn: '', qtyu: 'kg', qtyf: FREQ[0]!, msg: '' };
 let error = '';
 let done = false;
 
@@ -16,13 +20,13 @@ if (Astro.request.method === 'POST') {
   const f = await Astro.request.formData();
   const g = (k: string) => String(f.get(k) ?? '').slice(0, 1200);
   kind = g('loai'); ref = g('ma');
-  Object.assign(v, { name: g('name'), phone: g('phone'), email: g('email'), qty: g('qty'), msg: g('msg') });
+  Object.assign(v, { name: g('name'), phone: g('phone'), email: g('email'), qtyn: g('qtyn'), qtyu: g('qtyu'), qtyf: g('qtyf'), msg: g('msg') });
   if (g('website')) done = true; // ô bẫy: người thật không thấy ô này
   else if (!KINDS.includes(kind)) error = 'Yêu cầu không hợp lệ.';
   else if (!sb) error = 'Website chưa được cấu hình kết nối dữ liệu.';
   else {
     const { error: e } = await sb.rpc('submit_quote_request', {
-      p_kind: kind, p_target: ref || null, p_name: v.name, p_phone: v.phone || null, p_email: v.email || null, p_qty: v.qty || null, p_message: v.msg,
+      p_kind: kind, p_target: ref || null, p_name: v.name, p_phone: v.phone || null, p_email: v.email || null, p_qty: qtyText(v.qtyn, v.qtyu, v.qtyf) || null, p_message: v.msg,
     });
     if (e) error = e.message.replace(/^[A-Z_]{4,}: /, '');
     else done = true;
@@ -55,7 +59,11 @@ try {
         <label>Họ tên<input name="name" required minlength="2" maxlength="80" value={v.name} autocomplete="name" /></label>
         <label>Số điện thoại<input name="phone" inputmode="tel" maxlength="20" value={v.phone} autocomplete="tel" /></label>
         <label>Email (nếu không có số điện thoại)<input name="email" type="email" maxlength="120" value={v.email} autocomplete="email" /></label>
-        <label>Số lượng cần mua (không bắt buộc)<input name="qty" maxlength="120" value={v.qty} placeholder="Ví dụ: 200 kg mỗi tuần" /></label>
+        <div class="formgrid" style="grid-template-columns:2fr 1fr 1.4fr">
+          <label>Số lượng cần mua<input name="qtyn" type="number" min="0" step="any" inputmode="decimal" value={v.qtyn} placeholder="Ví dụ: 200" /></label>
+          <label>Đơn vị<select name="qtyu">{MATERIAL_UNITS.map((u) => <option value={u} selected={u === v.qtyu}>{u}</option>)}</select></label>
+          <label>Mua theo<select name="qtyf">{FREQ.map((f) => <option value={f} selected={f === v.qtyf}>{f}</option>)}</select></label>
+        </div>
         <label>Nội dung<textarea name="msg" required rows="4" maxlength="1000" placeholder="Bạn cần gì, giao ở đâu, khi nào?">{v.msg}</textarea></label>
         <p class="muted">Thông tin của bạn chỉ dùng để nhà cung cấp liên hệ báo giá và không được công khai. Vui lòng không dán đường dẫn trong nội dung.</p>
         <p class="muted" id="autoNote" hidden>Đã tự điền từ tài khoản của bạn; bạn có thể sửa.</p>
@@ -68,6 +76,8 @@ try {
 <script>
   // Đã đăng nhập: tự điền họ tên, số điện thoại, email từ tài khoản; gửi bằng phiên đăng nhập để người dùng xem lại ở "Yêu cầu của tôi".
   import { call, friendly, loadAccount, session } from '../lib/auth';
+  // cùng cách ghép số lượng như phía máy chủ ở đầu trang: "200 kg mỗi tuần"
+  const qtyText = (n: string, u: string, fr: string) => (n.trim() ? [n.trim(), u, fr && fr !== 'Một lần' ? fr.toLowerCase() : ''].filter(Boolean).join(' ') : '');
   const f = document.getElementById('qf') as HTMLFormElement | null;
   async function init() {
     if (!f || !(await session())) return;
@@ -81,7 +91,7 @@ try {
       const d = new FormData(f);
       const btn = document.getElementById('qgo') as HTMLButtonElement; btn.disabled = true;
       try {
-        await call('submit_quote_request', { p_kind: d.get('loai'), p_target: d.get('ma') || null, p_name: d.get('name'), p_phone: d.get('phone') || null, p_email: d.get('email') || null, p_qty: d.get('qty') || null, p_message: d.get('msg') });
+        await call('submit_quote_request', { p_kind: d.get('loai'), p_target: d.get('ma') || null, p_name: d.get('name'), p_phone: d.get('phone') || null, p_email: d.get('email') || null, p_qty: qtyText(String(d.get('qtyn') ?? ''), String(d.get('qtyu') ?? ''), String(d.get('qtyf') ?? '')) || null, p_message: d.get('msg') });
         f.outerHTML = '<div class="ok"><p><b>Đã gửi yêu cầu.</b> Nhà cung cấp sẽ liên hệ lại với bạn. Bạn xem lại ở <a href="/tai-khoan/#bao-gia">Tài khoản → Yêu cầu báo giá của tôi</a>.</p><p><a class="btn solid" href="/">Về trang chủ</a></p></div>';
       } catch (x) {
         btn.disabled = false;

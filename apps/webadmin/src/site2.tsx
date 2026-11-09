@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { newsSections, parseBody, type NEWS_CHANNEL_HREF } from '@agriconnect/shared';
+import { MATERIAL_UNITS, newsSections, parseBody, unitOptions, type NEWS_CHANNEL_HREF } from '@agriconnect/shared';
 import { canPublish, imageSrc, locked, SITE_URL, SiteBadge, STATUS_LABEL, statusOptions, uploadSiteImage } from './site';
 import { clean, downloadCsv, Err, fmtDateTime, rpc, supabase, useLoad } from '@agriconnect/admin-kit';
 
@@ -181,12 +181,22 @@ export function SiteMaterialsPage({ roles }: { roles: string[] }) {
       const idx = CSV_COLS.map(([key, aliases]) => [key, head.findIndex((h) => aliases.includes(h))] as const);
       if (idx.find(([k]) => k === 'name')![1] < 0) throw new Error('Không thấy cột "Tên" ở dòng tiêu đề.');
       const items = rows.slice(1).map((r) => Object.fromEntries(idx.filter(([, i]) => i >= 0).map(([k, i]) => [k, (r[i] ?? '').trim()])));
+      // Đơn vị: quy về tên chuẩn trong danh sách (không phân biệt hoa/thường, dấu); tên lạ giữ nguyên và báo để biên tập xem lại
+      const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').toLowerCase().trim();
+      const std = new Map<string, string>([...MATERIAL_UNITS.map((u) => [fold(u), u] as const), ['kilogram', 'kg'], ['ki lo gam', 'kg'], ['lit', 'lít'], ['tan', 'tấn']]);
+      const oddUnits = new Set<string>();
+      for (const it of items) {
+        const u = String((it as Record<string, string>).unit ?? '');
+        if (!u) continue;
+        const s = std.get(fold(u));
+        if (s) (it as Record<string, string>).unit = s; else oddUnits.add(u);
+      }
       let created = 0; const skipped: string[] = [];
       for (let i = 0; i < items.length; i += 200) {
         const res = await rpc<{ created: number; skipped: { name: string; why: string }[] }>('site_import_materials', { p_rows: items.slice(i, i + 200) });
         created += res.created; skipped.push(...res.skipped.map((s) => `${s.name || '(trống)'}: ${s.why}`));
       }
-      setCsvMsg(`Đã nhập ${created} vật tư (ở dạng Nháp, hãy kiểm tra rồi đăng).${skipped.length ? ` Bỏ qua ${skipped.length} dòng: ${skipped.slice(0, 8).join('; ')}${skipped.length > 8 ? '…' : ''}` : ''}`);
+      setCsvMsg(`Đã nhập ${created} vật tư (ở dạng Nháp, hãy kiểm tra rồi đăng).${skipped.length ? ` Bỏ qua ${skipped.length} dòng: ${skipped.slice(0, 8).join('; ')}${skipped.length > 8 ? '…' : ''}` : ''}${oddUnits.size ? ` Đơn vị ngoài danh sách (đã giữ nguyên, nên mở sửa và chọn lại): ${[...oddUnits].slice(0, 8).join(', ')}.` : ''}`);
       reload();
     } catch (x) { setCsvMsg('LỖI: ' + err2(x)); }
   }
@@ -228,7 +238,7 @@ export function SiteMaterialsPage({ roles }: { roles: string[] }) {
             <label>Thành phần<textarea rows={2} maxLength={500} value={f.ingredients} onChange={(e) => setF({ ...f, ingredients: e.target.value })} /></label>
             <label>Hướng dẫn sử dụng<textarea rows={3} maxLength={1500} value={f.usage} onChange={(e) => setF({ ...f, usage: e.target.value })} /></label>
             <label>Lưu ý an toàn<textarea rows={2} maxLength={800} value={f.safety} onChange={(e) => setF({ ...f, safety: e.target.value })} /></label>
-            <label>Đơn vị bán<input value={f.unit} maxLength={30} onChange={(e) => setF({ ...f, unit: e.target.value })} placeholder="kg, bao, chai…" /></label>
+            <label>Đơn vị bán<select value={f.unit} onChange={(e) => setF({ ...f, unit: e.target.value })}><option value="">(Chưa chọn)</option>{unitOptions(f.unit || null).map((u) => <option key={u} value={u}>{u}</option>)}</select></label>
             <label>Giá tham khảo "từ" (đồng)<input value={f.price} inputMode="numeric" onChange={(e) => setF({ ...f, price: e.target.value })} /></label>
             <label>Hoặc ghi chữ (nếu không có giá số)<input value={f.priceNote} maxLength={120} onChange={(e) => setF({ ...f, priceNote: e.target.value })} placeholder="Liên hệ báo giá" /></label>
             <label>Nhà phân phối / nơi liên hệ<input value={f.distributor} maxLength={200} onChange={(e) => setF({ ...f, distributor: e.target.value })} /></label>
