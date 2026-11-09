@@ -4,6 +4,7 @@ import {
   type SiteFooterCol, type SiteLink, type SiteNavItem, type SiteSettings,
 } from '@agriconnect/shared';
 import { clean, Err, fmtDateTime, rpc, supabase, useLoad } from '@agriconnect/admin-kit';
+import { LinkSelect } from './linkpicker';
 
 /**
  * Quản trị nội dung website (W1, D60–D61): trang tĩnh, banner, menu, thông tin chung, người biên tập.
@@ -351,7 +352,7 @@ export function SiteBannersPage({ roles }: { roles: string[] }) {
             </label>
             <label>Tiêu đề<input value={f.title} maxLength={120} onChange={(e) => setF({ ...f, title: e.target.value })} /></label>
             <label>Dòng phụ (tùy chọn)<input value={f.subtitle} maxLength={200} onChange={(e) => setF({ ...f, subtitle: e.target.value })} /></label>
-            <label>Liên kết khi bấm (tùy chọn)<input value={f.link} onChange={(e) => setF({ ...f, link: e.target.value.trim() })} placeholder="/danh-ba/ hoặc https://…" /></label>
+            <label>Liên kết khi bấm (tùy chọn)<LinkSelect value={f.link} onChange={(link) => setF({ ...f, link })} /></label>
             <label>Hình ảnh (tùy chọn; ảnh ngang đẹp nhất)
               <input type="file" accept="image/*" disabled={busy} onChange={(e) => void pick(e.target.files?.[0])} />
               {f.image && <img src={imageSrc(f.image)} alt="" style={{ maxWidth: 320, borderRadius: 8, marginTop: 6 }} />}
@@ -395,45 +396,69 @@ export function SiteBannersPage({ roles }: { roles: string[] }) {
 // ============================================================ Menu
 type MenuKey = 'header_nav' | 'about_menu' | 'footer_cols';
 const MENU_META: Record<MenuKey, { label: string; hint: string }> = {
-  header_nav: { label: 'Thanh chuyên mục (hàng dưới của đầu trang)', hint: 'Mỗi dòng: Tên | đường dẫn. Dòng bắt đầu bằng "- " là mục con của dòng trên.' },
-  about_menu: { label: 'Menu "Tìm hiểu về…" (thanh xanh)', hint: 'Mỗi dòng: Tên | đường dẫn.' },
-  footer_cols: { label: 'Các cột liên kết ở chân trang', hint: 'Dòng bắt đầu bằng "# " là tên cột; các dòng sau là liên kết dạng Tên | đường dẫn.' },
+  header_nav: { label: 'Thanh chuyên mục (hàng dưới của đầu trang)', hint: 'Mỗi dòng là một mục: chọn trang đích trong danh sách. Bấm "→" để biến thành mục con của dòng trên, "←" để đưa lại thành mục chính.' },
+  about_menu: { label: 'Menu "Tìm hiểu về…" (thanh xanh)', hint: 'Mỗi dòng là một liên kết: chọn trang đích trong danh sách.' },
+  footer_cols: { label: 'Các cột liên kết ở chân trang', hint: 'Thêm "Cột mới" rồi thêm các liên kết bên dưới; chọn trang đích trong danh sách.' },
 };
-const linkLine = (l: SiteLink) => `${l.label} | ${l.href}`;
-function serialize(key: MenuKey, items: unknown): string {
-  if (key === 'header_nav') return (items as SiteNavItem[]).map((i) => [linkLine(i), ...(i.children ?? []).map((c) => `- ${linkLine(c)}`)].join('\n')).join('\n');
-  if (key === 'about_menu') return (items as SiteLink[]).map(linkLine).join('\n');
-  return (items as SiteFooterCol[]).map((c) => [`# ${c.title}`, ...c.links.map(linkLine)].join('\n')).join('\n');
+// Một dòng của trình soạn: 'col' = tên cột chân trang, 'item' = mục/liên kết, 'sub' = mục con (chỉ thanh chuyên mục)
+interface MenuRow { t: 'col' | 'item' | 'sub'; label: string; href: string }
+function toRows(key: MenuKey, items: unknown): MenuRow[] {
+  if (key === 'header_nav') return (items as SiteNavItem[]).flatMap((i) => [{ t: 'item' as const, label: i.label, href: i.href }, ...(i.children ?? []).map((c) => ({ t: 'sub' as const, label: c.label, href: c.href }))]);
+  if (key === 'about_menu') return (items as SiteLink[]).map((l) => ({ t: 'item' as const, label: l.label, href: l.href }));
+  return (items as SiteFooterCol[]).flatMap((c) => [{ t: 'col' as const, label: c.title, href: '' }, ...c.links.map((l) => ({ t: 'item' as const, label: l.label, href: l.href }))]);
 }
-function parseLink(line: string, n: number): SiteLink {
-  const i = line.lastIndexOf('|');
-  const label = line.slice(0, i).trim(), href = line.slice(i + 1).trim();
-  if (i < 0 || !label) throw new Error(`Dòng ${n}: cần dạng "Tên | đường dẫn".`);
-  if (!safeHref(href)) throw new Error(`Dòng ${n}: đường dẫn phải bắt đầu bằng / hoặc https://.`);
-  return { label, href };
-}
-function parseMenu(key: MenuKey, text: string): unknown {
-  const lines = text.split('\n').map((l, i) => ({ l: l.trim(), n: i + 1 })).filter((x) => x.l);
+function fromRows(key: MenuKey, rows: MenuRow[]): unknown {
+  const link = (r: MenuRow, n: number): SiteLink => {
+    if (!r.label.trim()) throw new Error(`Dòng ${n}: cần nhập tên hiển thị.`);
+    if (!safeHref(r.href)) throw new Error(`Dòng ${n} ("${r.label}"): hãy chọn trang đích (hoặc nhập địa chỉ bắt đầu bằng / hoặc https://).`);
+    return { label: r.label.trim(), href: r.href.trim() };
+  };
   if (key === 'footer_cols') {
     const cols: SiteFooterCol[] = [];
-    for (const { l, n } of lines) {
-      if (l.startsWith('# ')) cols.push({ title: l.slice(2).trim(), links: [] });
-      else if (cols.length === 0) throw new Error(`Dòng ${n}: cần có dòng tên cột "# …" trước.`);
-      else cols[cols.length - 1]!.links.push(parseLink(l, n));
-    }
+    rows.forEach((r, i) => {
+      if (r.t === 'col') { if (!r.label.trim()) throw new Error(`Dòng ${i + 1}: cột cần có tên.`); cols.push({ title: r.label.trim(), links: [] }); }
+      else if (cols.length === 0) throw new Error(`Dòng ${i + 1}: cần "Cột mới" trước khi thêm liên kết.`);
+      else cols[cols.length - 1]!.links.push(link(r, i + 1));
+    });
     return cols;
   }
   const items: SiteNavItem[] = [];
-  for (const { l, n } of lines) {
-    if (l.startsWith('- ')) {
-      if (key !== 'header_nav' || items.length === 0) throw new Error(`Dòng ${n}: mục con chỉ dùng trong thanh chuyên mục, sau một mục chính.`);
-      const last = items[items.length - 1]!;
-      last.children = [...(last.children ?? []), parseLink(l.slice(2), n)];
-    } else items.push(parseLink(l, n));
-  }
+  rows.forEach((r, i) => {
+    if (r.t === 'sub') { if (items.length === 0) throw new Error(`Dòng ${i + 1}: mục con phải nằm sau một mục chính.`); const last = items[items.length - 1]!; last.children = [...(last.children ?? []), link(r, i + 1)]; }
+    else items.push(link(r, i + 1));
+  });
   return items;
 }
 const DEFAULT_MENU: Record<MenuKey, unknown> = { header_nav: DEFAULT_HEADER_NAV, about_menu: DEFAULT_ABOUT_MENU, footer_cols: DEFAULT_FOOTER_COLS };
+
+function MenuEditor({ k, rows, setRows, can }: { k: MenuKey; rows: MenuRow[]; setRows: (r: MenuRow[]) => void; can: boolean }) {
+  const set = (i: number, p: Partial<MenuRow>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)));
+  const move = (i: number, d: -1 | 1) => { const j = i + d; if (j < 0 || j >= rows.length) return; const c = [...rows]; [c[i], c[j]] = [c[j]!, c[i]!]; setRows(c); };
+  return (
+    <div>
+      {rows.map((r, i) => (
+        <div key={i} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', margin: '6px 0', paddingLeft: r.t === 'sub' ? 28 : r.t === 'col' ? 6 : 0, background: r.t === 'col' ? '#eef6f0' : undefined, borderRadius: 6 }}>
+          {r.t === 'col' ? <b>Cột:</b> : r.t === 'sub' ? <span aria-hidden="true">↳</span> : null}
+          <input disabled={!can} value={r.label} maxLength={80} placeholder={r.t === 'col' ? 'Tên cột' : 'Tên hiển thị'} style={{ width: 200 }} onChange={(e) => set(i, { label: e.target.value })} />
+          {r.t !== 'col' && <LinkSelect disabled={!can} value={r.href} onChange={(href) => set(i, { href })} onPick={(d) => { if (!r.label.trim()) set(i, { label: d.label, href: d.href }); }} />}
+          {can && <>
+            <button type="button" title="Lên" disabled={i === 0} onClick={() => move(i, -1)}>↑</button>
+            <button type="button" title="Xuống" disabled={i === rows.length - 1} onClick={() => move(i, 1)}>↓</button>
+            {k === 'header_nav' && r.t === 'item' && i > 0 && <button type="button" title="Thành mục con của dòng trên" onClick={() => set(i, { t: 'sub' })}>→</button>}
+            {k === 'header_nav' && r.t === 'sub' && <button type="button" title="Đưa lại thành mục chính" onClick={() => set(i, { t: 'item' })}>←</button>}
+            <button type="button" title="Xóa dòng" onClick={() => setRows(rows.filter((_, j) => j !== i))}>✕</button>
+          </>}
+        </div>
+      ))}
+      {can && (
+        <div className="toolbar">
+          <button type="button" onClick={() => setRows([...rows, { t: 'item', label: '', href: '' }])}>+ Thêm liên kết</button>
+          {k === 'footer_cols' && <button type="button" onClick={() => setRows([...rows, { t: 'col', label: '', href: '' }])}>+ Cột mới</button>}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function SiteMenusPage({ roles }: { roles: string[] }) {
   const { data, error, reload } = useLoad(async () => {
@@ -441,17 +466,17 @@ export function SiteMenusPage({ roles }: { roles: string[] }) {
     if (e) throw new Error(e.message);
     return Object.fromEntries((rows ?? []).map((r) => [r.key as string, { items: r.items as unknown, version: r.version as number }]));
   });
-  const [text, setText] = useState<Record<string, string>>({});
+  const [rows, setRows] = useState<Record<string, MenuRow[]>>({});
   const [msg, setMsg] = useState<Record<string, string>>({});
   useEffect(() => {
     if (!data) return;
-    setText(Object.fromEntries((Object.keys(MENU_META) as MenuKey[]).map((k) => [k, serialize(k, data[k]?.items ?? DEFAULT_MENU[k])])));
+    setRows(Object.fromEntries((Object.keys(MENU_META) as MenuKey[]).map((k) => [k, toRows(k, data[k]?.items ?? DEFAULT_MENU[k])])));
   }, [data]);
   const can = canPublish(roles);
 
   async function save(k: MenuKey) {
     try {
-      const items = parseMenu(k, text[k] ?? '');
+      const items = fromRows(k, rows[k] ?? []);
       await rpc('site_save_menu', { p_key: k, p_items: items, p_version: data?.[k]?.version ?? null });
       setMsg({ ...msg, [k]: 'Đã lưu. Website cập nhật trong vòng khoảng 1 phút.' });
       reload();
@@ -465,11 +490,11 @@ export function SiteMenusPage({ roles }: { roles: string[] }) {
         <section className="card" key={k}>
           <h2>{MENU_META[k].label}</h2>
           <p className="muted">{MENU_META[k].hint} {!data?.[k] && 'Đang dùng cấu hình mặc định; bấm Lưu để tạo bản của bạn.'}</p>
-          <textarea rows={k === 'about_menu' ? 5 : 12} value={text[k] ?? ''} disabled={!can} onChange={(e) => setText({ ...text, [k]: e.target.value })} />
+          <MenuEditor k={k} rows={rows[k] ?? []} setRows={(r) => setRows({ ...rows, [k]: r })} can={can} />
           {msg[k] && <p className={`msg ${msg[k]!.startsWith('LỖI') ? 'error' : 'ok'}`} role="status">{msg[k]}</p>}
           <div className="toolbar">
             <button className="primary" disabled={!can} onClick={() => void save(k)}>Lưu</button>
-            <button disabled={!can} onClick={() => setText({ ...text, [k]: serialize(k, DEFAULT_MENU[k]) })}>Đặt lại về mặc định</button>
+            <button disabled={!can} onClick={() => setRows({ ...rows, [k]: toRows(k, DEFAULT_MENU[k]) })}>Đặt lại về mặc định</button>
           </div>
         </section>
       ))}

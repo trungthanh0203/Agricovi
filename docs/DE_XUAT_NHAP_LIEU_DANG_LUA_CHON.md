@@ -1,6 +1,6 @@
 # Rà soát ô nhập tay có thể đổi thành lựa chọn (website + quản trị website)
 
-Ngày rà soát: 09/11/2026. Mảng WEB. **Chưa sửa gì**; chờ chủ sản phẩm duyệt từng mục (cột "Đề xuất").
+Ngày rà soát: 09/11/2026. Mảng WEB. **Đã duyệt và làm xong ngày 09/11/2026: A1–A6 và B1** (migration 0190). Chưa làm: B2 và nhóm C (chờ chủ sản phẩm chọn).
 
 Nguyên tắc: ô nào có tập giá trị hữu hạn và dùng để lọc/thống kê/liên kết thì cho chọn; ô mô tả riêng của người dùng (tên, địa chỉ cụ thể, ghi chú) giữ gõ tay.
 
