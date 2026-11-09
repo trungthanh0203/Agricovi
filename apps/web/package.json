@@ -12,6 +12,7 @@
     "@agriconnect/shared": "*",
     "@astrojs/cloudflare": "^14.4.2",
     "@supabase/supabase-js": "^2.45.4",
-    "astro": "^7.4.2"
+    "astro": "^7.4.2",
+    "pdfmake": "^0.3.14"
   }
 }

@@ -19,7 +19,7 @@ import Base from '../layouts/Base.astro';
   import { esc } from '../lib/db';
 
   const app = document.getElementById('app')!;
-  const TABS: [string, string][] = [['ho-so', 'Hồ sơ'], ['dia-chi', 'Địa chỉ nhận hàng'], ['yeu-thich', 'Yêu thích'], ['bao-gia', 'Yêu cầu báo giá của tôi'], ['mat-khau', 'Mật khẩu']];
+  const TABS: [string, string][] = [['ho-so', 'Hồ sơ'], ['dia-chi', 'Địa chỉ nhận hàng'], ['yeu-thich', 'Yêu thích'], ['bao-gia', 'Yêu cầu báo giá của tôi'], ['xml-pdf', 'Chuyển XML tờ khai sang PDF'], ['mat-khau', 'Mật khẩu']];
   let acc: WebAccount;
 
   const tab = () => (TABS.some(([k]) => k === location.hash.slice(1)) ? location.hash.slice(1) : 'ho-so');
@@ -54,6 +54,7 @@ import Base from '../layouts/Base.astro';
     if (t === 'dia-chi') return addressTab();
     if (t === 'yeu-thich') return favTab();
     if (t === 'bao-gia') return quoteTab();
+    if (t === 'xml-pdf') return xmlPdfTab();
     return passwordTab();
   }
 
@@ -130,6 +131,39 @@ import Base from '../layouts/Base.astro';
     let list: Q[] = [];
     try { list = await call<Q[]>('my_sent_quotes'); } catch (e) { msg += note('err', friendly(e)); }
     shell(`${msg}${list.length === 0 ? '<p class="empty">Bạn chưa gửi yêu cầu báo giá nào khi đã đăng nhập.</p>' : list.map((q) => `<div class="panel"><b>${esc(q.target_name ?? 'Yêu cầu chung')}</b> <span class="pill">${q.status === 'handled' ? 'Đã được xử lý' : 'Đang chờ'}</span> <span class="muted">${esc(new Date(q.created_at).toLocaleString('vi-VN'))}</span><p style="margin:.4em 0">${esc(q.message)}${q.quantity_note ? `<br><span class="muted">Số lượng: ${esc(q.quantity_note)}</span>` : ''}</p></div>`).join('')}`);
+  }
+
+  // Công cụ phụ: chọn file XML tờ khai 01/GTGT (HTKK) -> PDF để in nộp. Chạy hoàn toàn trên máy người dùng, không gửi hay lưu gì lên hệ thống.
+  function xmlPdfTab() {
+    shell(`<div class="panel"><h2 style="margin-top:0">Chuyển tờ khai 01/GTGT từ XML sang PDF</h2>
+      <p class="muted">Chọn file XML tờ khai xuất từ phần mềm HTKK, bấm "Chuyển đổi" rồi tải file PDF về máy. File chỉ được xử lý ngay trên máy của bạn, hệ thống không lưu lại gì.</p>
+      <p class="muted">Hiện hỗ trợ: Tờ khai thuế GTGT mẫu 01/GTGT theo Thông tư 26/2015/TT-BTC.</p>
+      <div id="xmsg" aria-live="polite"></div>
+      <label>File XML tờ khai (tối đa 5 MB)<input id="xfile" type="file" accept=".xml,text/xml,application/xml" /></label>
+      <p><button class="btn solid" id="xgo" type="button" disabled>Chuyển đổi</button></p></div>`);
+    const fileEl = document.getElementById('xfile') as HTMLInputElement, go = document.getElementById('xgo') as HTMLButtonElement, box = document.getElementById('xmsg')!;
+    let url = '';
+    const clear = () => { if (url) { URL.revokeObjectURL(url); url = ''; } };
+    fileEl.addEventListener('change', () => { clear(); box.innerHTML = ''; go.disabled = !fileEl.files?.length; });
+    go.addEventListener('click', async () => {
+      const f = fileEl.files?.[0];
+      if (!f || go.disabled) return;
+      clear(); box.innerHTML = '';
+      go.disabled = true; go.textContent = 'Đang chuyển đổi…';
+      try {
+        const lib = await import('../lib/gtgtPdf');
+        if (!/\.xml$/i.test(f.name)) throw new lib.XmlError('Chỉ nhận file có đuôi .xml.');
+        if (f.size > lib.MAX_XML_BYTES) throw new lib.XmlError('File lớn hơn 5 MB nên không xử lý được.');
+        const data = lib.parseGtgt(await f.text());
+        const blob = await lib.makeGtgtPdf(data);
+        url = URL.createObjectURL(blob);
+        const name = lib.pdfFileName(data);
+        box.innerHTML = `<p class="ok" role="status"><b>Đã chuyển xong.</b> Kỳ tính thuế: ${esc(data.period)} · MST ${esc(data.mst)}.</p>
+          <p><a class="btn solid" id="xdl" href="${url}" download="${esc(name)}">Tải file PDF</a> <small class="muted">${esc(name)}</small></p>`;
+      } catch (x) {
+        box.innerHTML = note('err', x instanceof Error && x.name !== 'TypeError' && x.message ? x.message : 'Chưa chuyển đổi được. Hãy kiểm tra lại file XML hoặc thử lại.');
+      } finally { go.disabled = !fileEl.files?.length; go.textContent = 'Chuyển đổi'; }
+    });
   }
 
   function passwordTab(msg = '') {
