@@ -1,3 +1,4 @@
+import { LOGIN_FLAG } from './usageTracker';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
@@ -72,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const { error } = await client.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    try { localStorage.setItem(LOGIN_FLAG, identifier.includes('@') ? 'email' : 'phone'); } catch { /* bỏ qua */ } // để theo dõi sử dụng ghi nhận lần đăng nhập
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, fullName?: string) => {

@@ -1,3 +1,4 @@
+import { screenKey, useUsageTracker } from './lib/usageTracker';
 import { db } from './lib/db';
 import { useAutoScrollToForm } from './lib/autoScrollToForm';
 import { Fragment, Suspense, useCallback, useEffect, useState } from 'react';
@@ -140,6 +141,7 @@ function Shell() {
   // Tab Khai báo, Cấu hình, Báo cáo chỉ hiện với người có quyền (xem lib/tabs.ts)
   const tabs = visibleTabs(active);
   const tab: TabId = tabs.includes(tabState) ? tabState : 'home';
+  useUsageTracker(me?.user.id, active?.id, screenKey(tab, subs[tab], overlay)); // theo dõi sử dụng ngầm (D160): nhẹ, lỗi bỏ qua
   const setSub = (t: TabId) => (s: string) => setSubs((cur) => ({ ...cur, [t]: s }));
   const goTo = useCallback((t: TabId, section?: string) => {
     setTab(t);

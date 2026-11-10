@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js';
 import { clean, rpc, supabase } from '@agriconnect/admin-kit';
 import { AuditPage, OrgDetailPage, OrgSummaryPage, OrgsPage, OverviewPage, PaymentsPage, PlansPage, RolesPage, SettingsPage, SignupsPage, PlanOrdersPage } from './pages';
 import { PartnersPage } from './partners';
+import { ActivityPage } from './activity';
 import '@agriconnect/admin-kit/src/styles.css';
 
 /**
@@ -25,6 +26,7 @@ const PAGES: { id: string; label: string; icon: string }[] = [
   { id: 'partners', label: 'Đối tác', icon: '🤝' },
   { id: 'roles', label: 'Tên vai trò', icon: '🛡️' },
   { id: 'settings', label: 'Cấu hình', icon: '⚙️' },
+  { id: 'activity', label: 'Hoạt động người dùng', icon: '🕒' },
   { id: 'audit', label: 'Nhật ký kiểm toán', icon: '📜' },
 ];
 
@@ -89,6 +91,7 @@ function Admin({ session }: { session: Session }) {
         {page === 'partners' && <PartnersPage />}
         {page === 'roles' && <RolesPage />}
         {page === 'settings' && <SettingsPage />}
+        {page === 'activity' && <ActivityPage />}
         {page === 'audit' && <AuditPage />}
       </main>
     </div>
