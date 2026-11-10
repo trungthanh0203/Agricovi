@@ -6,7 +6,7 @@ Trang quản trị nền tảng → **Hoạt động người dùng** cho biết
 ```bash
 npx supabase db push
 ```
-(migration `0190`), rồi triển khai lại **app** và **trang quản trị**. Người dùng mở lại app 1–2 lần để nhận bản mới; số liệu chỉ có **từ lúc bật**, không có lịch sử trước đó.
+(migration `0191`), rồi triển khai lại **app** và **trang quản trị**. Người dùng mở lại app 1–2 lần để nhận bản mới; số liệu chỉ có **từ lúc bật**, không có lịch sử trước đó.
 
 ## Cách ghi nhận
 - App gửi ngầm một tín hiệu mỗi ~60 giây khi đang mở và nhìn thấy màn hình (không làm chậm; lỗi hoặc mất mạng thì bỏ qua). Thời gian ở từng màn hình cộng dồn rồi gửi kèm, không ghi từng lần chuyển màn.

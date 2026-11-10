@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDb, addUser, asUser, expectError } from './harness.mjs';
 
-// Migration 0190: theo dõi sử dụng — ghi của chính mình, nhiều thiết bị, tổng hợp ngày, quản trị đọc, dọn dữ liệu cũ.
+// Migration 0191: theo dõi sử dụng — ghi của chính mình, nhiều thiết bị, tổng hợp ngày, quản trị đọc, dọn dữ liệu cũ.
 const U = (n) => `b2000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const DEV_A = U(101), DEV_B = U(102);
 
