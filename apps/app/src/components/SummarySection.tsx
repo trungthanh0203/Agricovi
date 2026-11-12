@@ -93,21 +93,6 @@ export function SummarySection() {
   }, [cycleId]);
 
   useEffect(() => { void load(); }, [load]);
-  // đến từ thẻ số ở Quản lý vụ: cuộn tới đúng khối chi tiết, nháy nhẹ cho dễ thấy (chỉ một lần)
-  useEffect(() => {
-    if (!summary) return;
-    let part: string | null = null;
-    try { part = sessionStorage.getItem('agriconnect.summaryFocus'); sessionStorage.removeItem('agriconnect.summaryFocus'); } catch { /* bỏ qua */ }
-    if (!part) return;
-    const id = part === 'cost' ? 'sum-cost' : part === 'profit' ? 'sum-unitcost' : 'sum-harvest';
-    window.setTimeout(() => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      el.classList.add('flash');
-      window.setTimeout(() => el.classList.remove('flash'), 1800);
-    }, 80);
-  }, [summary]);
   // số bản ghi chờ gửi cập nhật theo hàng đợi; gửi xong thì tính lại tổng kết
   const prevPending = useRef(0);
   useEffect(() => {
@@ -179,7 +164,7 @@ export function SummarySection() {
             <p key={i} className={n.level === 'warn' ? 'msg warn' : 'msg'} role="status">{n.text}</p>
           ))}
 
-          <div className="card" id="sum-cost">
+          <div className="card">
             <h2>Chi phí đã ghi</h2>
             <Row k="Thực chi không phải vật tư" v={formatMoney(summary.cash_paid_other)} />
             <Row k="Vật tư đã dùng (từ kho)" v={formatMoney(summary.material_used_cost)} />
@@ -201,7 +186,7 @@ export function SummarySection() {
             </ChartCard>
           )}
 
-          <div className="card" id="sum-harvest">
+          <div className="card">
             <h2>Sản lượng và doanh thu</h2>
             <Row k="Tổng thu hoạch" v={`${vnNumber(summary.harvested_gross_qty)} kg`} />
             <Row k="Hao hụt" v={`${vnNumber(summary.harvest_loss_qty)} kg`} />
@@ -241,7 +226,7 @@ export function SummarySection() {
             </div>
           ) : null}
 
-          <div className="card" id="sum-unitcost">
+          <div className="card">
             <h2>Giá thành mỗi kg</h2>
             {summary.cost_per_kg !== null ? (
               <>

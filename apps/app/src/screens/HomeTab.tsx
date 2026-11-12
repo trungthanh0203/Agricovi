@@ -7,6 +7,7 @@ import { ExpiringLots } from '../components/ExpiringLots';
 import { HomeReminders } from '../components/MilestonePanels';
 import { HomeStats } from '../components/HomeStats';
 import { CycleProgressList } from '../components/CycleProgressList';
+import { TodayPlan } from '../components/TodayPlan';
 import { HomeLinks } from '../components/HomeLinks';
 import { useMyName } from '../lib/profile';
 import { WebInboxCard } from '../components/WebInboxCard';
@@ -85,7 +86,7 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
 
       <HomeLinks org={active} onGo={onGo} />
 
-      <CycleProgressList cycleIds={mineIds} onOpenCycle={onOpenCycle} />
+      <TodayPlan cycleIds={mineIds} onOpenCycle={onOpenCycle} />
 
       {reminders.length + actionReminders.length > 0 && (
         <div className="card">
@@ -181,6 +182,7 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
 
       <HomeReminders />
       <ExpiringLots />
+      <CycleProgressList cycleIds={mineIds} onOpenCycle={onOpenCycle} />
       <HomeStats cycleIds={mineIds} onGo={onGo} />
 
     </section>

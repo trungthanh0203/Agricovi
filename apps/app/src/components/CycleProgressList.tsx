@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Collapsible } from './Collapsible';
 import { AreaFilter, topAreaIdOf } from './AreaFilter';
 import { cycleProgress, sortByDue } from '../lib/cycles';
 import { fmtDate } from '../lib/dates';
@@ -21,8 +22,7 @@ export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<str
     .map((c) => ({ c, p: cycleProgress(stages.filter((s) => s.cycle_id === c.id), today) }));
   if (running.length === 0) return null;
   return (
-    <>
-      <h2 className="sect">Tiến độ các vụ đang chạy</h2>
+    <Collapsible title="Tiến độ các vụ đang chạy" summary={`${running.length} vụ${progress.some(({ p }) => p.delay > 0) ? ` · ${progress.filter(({ p }) => p.delay > 0).length} vụ trễ` : ''}`} warn={progress.some(({ p }) => p.delay > 0)}>
       <AreaFilter areas={areas} usedAreaIds={running.map((c) => c.area_id)} value={areaFilter} onChange={setAreaFilter} />
       {progress.length === 0 && <p className="muted">Không có vụ đang chạy ở phân khu này.</p>}
       {progress.map(({ c, p }) => (
@@ -47,6 +47,6 @@ export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<str
           )}
         </div>
       ))}
-    </>
+    </Collapsible>
   );
 }

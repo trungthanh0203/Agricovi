@@ -1,6 +1,5 @@
 import { MODE_LABEL } from '../lib/herd';
 import { useEffect, useMemo, useState } from 'react';
-import { canPerm } from '../lib/permissions';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
 import { StockPanel } from './StockPanel';
@@ -306,10 +305,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
                 </p>
               </>
             )}
-            {hasAnyStat(statById.get(c.id)) && <CycleStatsStrip s={statById.get(c.id)!} onOpenDetail={active && c.owner_org_id === active.id && canPerm(active.perms, 'summary') ? (part) => {
-              try { localStorage.setItem('agriconnect.lastCycle', c.id); sessionStorage.setItem('agriconnect.summaryFocus', part); } catch { /* bỏ qua */ }
-              onGo('reports', 'summary');
-            } : undefined}countUnit={cycleCountUnit(c, cropTypes)} areaLabel={infoLabels(cropTypes.find((t) => t.id === c.crop_type_id)?.kind).area} />}
+            {hasAnyStat(statById.get(c.id)) && <CycleStatsStrip s={statById.get(c.id)!} countUnit={cycleCountUnit(c, cropTypes)} areaLabel={infoLabels(cropTypes.find((t) => t.id === c.crop_type_id)?.kind).area} />}
             <div className="actions">
               <button className="secondary" onClick={() => onOpenCycle(c.id)}>Quản lý vụ</button>
               <button className="secondary soft-toggle" aria-expanded={qrId === c.id} onClick={() => setQrId(qrId === c.id ? null : c.id)}><span>Mã QR của vụ</span><i aria-hidden="true" /></button>

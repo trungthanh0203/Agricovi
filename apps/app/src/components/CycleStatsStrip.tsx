@@ -7,13 +7,7 @@ import { budgetTone, pctOf, statWarnings, type CycleStat } from '../lib/cycleSta
 const money = (n: number) => `${Math.round(n).toLocaleString('vi-VN')} đ`;
 const kg = (n: number) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} kg`;
 
-/** Phần của Tổng kết vụ mà mỗi thẻ số dẫn tới */
-export type StatPart = 'cost' | 'harvest' | 'revenue' | 'profit';
-
-function Tile({ label, value, tone, title, onClick }: { label: string; value: string; tone?: 'ok' | 'bad' | 'info' | 'neutral'; title?: string; onClick?: () => void }) {
-  if (onClick) {
-    return <button type="button" className={`mini-kpi ${tone ?? 'neutral'} tappable`} title={title ?? 'Bấm để xem chi tiết ở Tổng kết vụ'} onClick={onClick}><span>{label}</span><strong>{value}</strong></button>;
-  }
+function Tile({ label, value, tone, title }: { label: string; value: string; tone?: 'ok' | 'bad' | 'info' | 'neutral'; title?: string }) {
   return <div className={`mini-kpi ${tone ?? 'neutral'}`} title={title}><span>{label}</span><strong>{value}</strong></div>;
 }
 
@@ -37,7 +31,7 @@ function Plan({ label, pct, text }: { label: string; pct: number; text: string }
  * Dòng thống kê của một vụ trong danh sách mùa vụ (D93): 4 số chính (Chi phí · Thu hoạch · Doanh thu · Lãi/lỗ), thanh so với kế hoạch
  * (ngân sách, sản lượng), và "Xem thêm" chia nhóm Chi phí / Sản lượng / Hiệu quả / Tiến độ và công / Tiền chưa thu. Chỉ hiện số người xem có quyền.
  */
-export function CycleStatsStrip({ s, countUnit = 'cây', areaLabel = 'Diện tích trồng', onOpenDetail }: { s: CycleStat; countUnit?: string; areaLabel?: string; onOpenDetail?: (part: StatPart) => void }) {
+export function CycleStatsStrip({ s, countUnit = 'cây', areaLabel = 'Diện tích trồng' }: { s: CycleStat; countUnit?: string; areaLabel?: string }) {
   const budgetPct = pctOf(s.cost_total, s.budget_amount);
   const yieldPct = pctOf(s.harvest_net, s.target_yield_kg);
   const warns = statWarnings(s);
@@ -50,15 +44,13 @@ export function CycleStatsStrip({ s, countUnit = 'cây', areaLabel = 'Diện tí
   return (
     <div className="cycle-stats">
       <div className="mini-kpis">
-        {s.cost_total !== null && <Tile label="Chi phí" value={shortMoney(s.cost_total)} tone="bad" title={money(s.cost_total)} onClick={onOpenDetail && (() => onOpenDetail('cost'))} />}
-        {s.harvest_net !== null && <Tile label="Thu hoạch" value={kg(s.harvest_net)} tone="info" onClick={onOpenDetail && (() => onOpenDetail('harvest'))} />}
-        {s.revenue !== null && <Tile label="Doanh thu" value={shortMoney(s.revenue)} tone="ok" title={money(s.revenue)} onClick={onOpenDetail && (() => onOpenDetail('revenue'))} />}
-        {s.profit !== null && <Tile label={s.profit >= 0 ? 'Lãi tạm tính' : 'Lỗ tạm tính'} value={shortMoney(Math.abs(s.profit))} tone={s.profit >= 0 ? 'ok' : 'bad'} title={money(s.profit)} onClick={onOpenDetail && (() => onOpenDetail('profit'))} />}
+        {s.cost_total !== null && <Tile label="Chi phí" value={shortMoney(s.cost_total)} tone="bad" title={money(s.cost_total)} />}
+        {s.harvest_net !== null && <Tile label="Thu hoạch" value={kg(s.harvest_net)} tone="info" />}
+        {s.revenue !== null && <Tile label="Doanh thu" value={shortMoney(s.revenue)} tone="ok" title={money(s.revenue)} />}
+        {s.profit !== null && <Tile label={s.profit >= 0 ? 'Lãi tạm tính' : 'Lỗ tạm tính'} value={shortMoney(Math.abs(s.profit))} tone={s.profit >= 0 ? 'ok' : 'bad'} title={money(s.profit)} />}
       </div>
       {(s.open_incidents ?? 0) > 0 && <p className="yield-line"><span className="pill warn">Sự cố</span> {s.open_incidents} đang mở{(s.overdue_actions ?? 0) > 0 ? `, ${s.overdue_actions} việc khắc phục quá hạn` : ''}</p>}
       {s.yield_per_1000m2 !== null && <p className="muted yield-line">Năng suất: <strong>{kg(s.yield_per_1000m2 * f)}/{perLabel}</strong>{s.area_m2 !== null ? ` · diện tích ${fmtArea(s.area_m2, unitId)}` : ''}</p>}
-      {budgetPct !== null && s.budget_amount !== null && s.cost_total !== null && <Plan label="Ngân sách đã dùng" pct={budgetPct} text={`${shortMoney(s.cost_total)} / ${shortMoney(s.budget_amount)}`} />}
-      {yieldPct !== null && s.target_yield_kg !== null && s.harvest_net !== null && <Plan label="Sản lượng so với dự kiến" pct={yieldPct} text={`${kg(s.harvest_net)} / ${kg(s.target_yield_kg)}`} />}
       <Collapsible inline title="Xem thêm số liệu" summary={warns.length > 0 ? `${warns.length} lưu ý` : undefined} warn={warns.length > 0}>
         {s.cost_total !== null && s.cost_material !== null && s.cost_labor !== null && s.cost_other !== null && (
           <>
@@ -112,6 +104,8 @@ export function CycleStatsStrip({ s, countUnit = 'cây', areaLabel = 'Diện tí
         {s.receivable !== null && s.receivable > 0 && (<><h3 className="sub">Tiền chưa thu</h3><Row label="Khách còn nợ của vụ này" value={money(s.receivable)} /></>)}
         {warns.length > 0 && <div className="msg warn" role="status">{warns.map((w) => <p key={w}>{w}</p>)}</div>}
       </Collapsible>
+      {budgetPct !== null && s.budget_amount !== null && s.cost_total !== null && <Plan label="Ngân sách đã dùng" pct={budgetPct} text={`${shortMoney(s.cost_total)} / ${shortMoney(s.budget_amount)}`} />}
+      {yieldPct !== null && s.target_yield_kg !== null && s.harvest_net !== null && <Plan label="Sản lượng so với dự kiến" pct={yieldPct} text={`${kg(s.harvest_net)} / ${kg(s.target_yield_kg)}`} />}
     </div>
   );
 }
