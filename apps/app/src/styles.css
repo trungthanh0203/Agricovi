@@ -763,3 +763,13 @@ table.sortable th { padding: 0; }
   .checkrep table.grid { width: 100%; min-width: 0; border-collapse: collapse; }
   .checkrep th, .checkrep td { border: 1px solid #444; padding: 3px 5px; vertical-align: top; text-align: left; }
 }
+
+/* Bước 3 tạo vụ: chữ thường, dòng xen kẽ màu */
+.sumrow { padding: 7px 8px; border-radius: 6px; }
+.sumrow:nth-child(even) { background: var(--tint); }
+.card.slim .sumrow + .sumrow { margin-top: 0; }
+/* thẻ số bấm được */
+button.mini-kpi.tappable { font: inherit; color: inherit; cursor: pointer; border-left: 0; border-right: 0; border-bottom: 0; width: 100%; }
+button.mini-kpi.tappable:active { filter: brightness(.95); }
+.card.flash { animation: sumflash 1.8s ease-out; }
+@keyframes sumflash { 0% { box-shadow: 0 0 0 3px var(--c-info); } 100% { box-shadow: 0 0 0 0 transparent; } }

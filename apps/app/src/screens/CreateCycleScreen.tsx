@@ -687,9 +687,9 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
 
 function SummaryRow({ label, value, onEdit }: { label: string; value: string; onEdit?: () => void }) {
   return (
-    <div className="row">
+    <div className="row sumrow">
       <span className="muted" style={{ minWidth: 96 }}>{label}</span>
-      <strong className="grow">{value}</strong>
+      <span className="grow">{value}</span>
       {onEdit && <button type="button" className="link inline" onClick={onEdit}>Sửa</button>}
     </div>
   );
