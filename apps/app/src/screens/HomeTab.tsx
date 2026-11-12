@@ -90,7 +90,7 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
 
       {reminders.length + actionReminders.length > 0 && (
         <div className="card">
-          <h2>Nhắc việc ({reminders.length + actionReminders.length})</h2>
+          <h2>Ghi chú cần nhớ ({reminders.length + actionReminders.length})</h2>
           {noteError && <p className="msg error" role="alert">{noteError}</p>}
           {actionReminders.map((a) => {
             const c = cycles.find((x) => x.id === a.cycle_id);

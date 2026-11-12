@@ -18,7 +18,7 @@ export function TodayPlan({ cycleIds, onOpenCycle }: { cycleIds: Set<string>; on
   const items = stages
     .filter((s) => s.status !== 'done' && runningById.has(s.cycle_id) && s.planned_end && (s.planned_start ?? s.planned_end) <= today)
     .map((s) => ({ s, late: diffDays(s.planned_end!.slice(0, 10), today) })) // late > 0: đã quá hạn
-    .filter((x) => x.late <= 30) // việc trễ quá 30 ngày coi như bỏ dở, không nhắc mỗi ngày
+    .filter((x) => x.late <= 15) // việc trễ quá 15 ngày coi như bỏ dở, không nhắc mỗi ngày
     .sort((a, b) => b.late - a.late || a.s.seq - b.s.seq);
   if (running.length === 0) return null;
   return (
