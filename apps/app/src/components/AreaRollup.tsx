@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChartCard, HBarList, XYChart } from './charts';
+import { ChartCard, HBarList, ProportionBar, XYChart } from './charts';
 import { clip, compactNumber } from '../lib/chartMath';
 import { cachedCycleStats, fetchCycleStats, type CycleStats } from '../lib/cycleStats';
 import { rollupByArea } from '../lib/areas';
@@ -45,8 +45,7 @@ export function AreaRollup() {
   );
   const measures = [
     { key: 'profit', label: 'Lãi / lỗ', money: true },
-    { key: 'revenue', label: 'Doanh thu', money: true },
-    { key: 'cost', label: 'Chi phí', money: true },
+    { key: 'compare', label: 'Doanh thu và chi phí', money: true },
     { key: 'harvest', label: 'Thu hoạch', money: false },
     { key: 'cycles', label: 'Số vụ', money: false },
   ].filter((m) => money || !m.money);
@@ -56,25 +55,43 @@ export function AreaRollup() {
     .sort((a, b) => Math.abs(b.v) - Math.abs(a.v))
     .map(({ r, v }) => ({
       label: r.area.name, value: Math.abs(v),
-      note: [cur.key === 'profit' ? (v >= 0 ? 'lãi' : 'lỗ') : '', cur.key !== 'cycles' ? `${r.cycles} vụ` : r.running > 0 ? `${r.running} đang chạy` : ''].filter(Boolean).join(' · ') || undefined,
-      tone: cur.key === 'profit' ? (v >= 0 ? 'ok' : 'bad') : cur.key === 'cost' ? 'bad' : cur.key === 'revenue' ? 'ok' : 'info',
+      note: [cur.key === 'profit' ? (v >= 0 ? 'lãi' : 'lỗ') : '', `${r.cycles} vụ`].filter(Boolean).join(' · '),
+      tone: cur.key === 'profit' ? (v >= 0 ? 'ok' : 'bad') : 'info',
     }));
-  const fmtVal = cur.key === 'harvest' ? kg0 : cur.key === 'cycles' ? (n: number) => `${n} vụ` : formatMoney;
-  const cmp = money ? [...rows].filter((r) => (r.cost ?? 0) > 0 || (r.revenue ?? 0) > 0).sort((a, b) => (b.cost ?? 0) - (a.cost ?? 0)).slice(0, 8) : [];
+  const fmtVal = cur.key === 'harvest' ? kg0 : formatMoney;
+  const cmp = [...rows].filter((r) => (r.cost ?? 0) > 0 || (r.revenue ?? 0) > 0).sort((a, b) => (b.cost ?? 0) - (a.cost ?? 0)).slice(0, 8);
+  // số vụ chia khúc theo trạng thái (đang chạy, chuẩn bị, tạm dừng, đã kết thúc), mỗi phân khu một thanh
+  const STATUS = [
+    { key: 'active', label: 'Đang chạy', tone: 'ok' }, { key: 'preparing', label: 'Chuẩn bị', tone: 'info' },
+    { key: 'paused', label: 'Tạm dừng', tone: 'warn' }, { key: 'ended', label: 'Đã kết thúc', tone: 'other' },
+  ];
+  const statusOf = (ids: Set<string>) => STATUS.map((st) => ({ label: st.label, tone: st.tone, value: cycles.filter((c) => c.owner_org_id === active.id && ids.has(c.area_id) && c.status === st.key).length }));
+  const zoneIds = (r: (typeof rows)[number]) => new Set([r.area.id, ...mine.filter((a) => a.parent_id === r.area.id).map((a) => a.id)]);
+  const subtitle = cur.key === 'profit' ? 'Xanh là lãi, đỏ là lỗ; chữ nhỏ ghi số vụ' : cur.key === 'compare' ? 'Mỗi phân khu hai cột: doanh thu (xanh) cao hơn chi phí (đỏ) là có lãi' : cur.key === 'cycles' ? 'Mỗi thanh là một phân khu, chia khúc theo trạng thái của vụ' : 'Chữ nhỏ ghi số vụ của phân khu';
   return (
     <>
-      <ChartCard title={`${cur.label} theo phân khu`} subtitle={cur.key === 'profit' ? 'Xanh là lãi, đỏ là lỗ; chữ nhỏ ghi số vụ' : 'Chữ nhỏ ghi số vụ của phân khu'}>
+      <ChartCard title={`${cur.label} theo phân khu`} subtitle={subtitle}>
         <div className="chips" role="group" aria-label="Chọn số liệu để vẽ">
           {measures.map((m) => <button key={m.key} className={m.key === cur.key ? 'chip active' : 'chip'} aria-pressed={m.key === cur.key} onClick={() => setMeasure(m.key)}>{m.label}</button>)}
         </div>
-        <HBarList items={items} format={fmtVal} ariaLabel={`${cur.label} theo phân khu`} />
+        {cur.key === 'cycles' ? (
+          <>
+            {[{ name: 'Tất cả phân khu', ids: new Set(rows.flatMap((r) => [...zoneIds(r)])) }, ...rows.map((r) => ({ name: r.area.name, ids: zoneIds(r) }))].map((z) => (
+              <div key={z.name} style={{ marginBottom: 10 }}>
+                <strong>{z.name}</strong>
+                <ProportionBar segments={statusOf(z.ids).filter((x) => x.value > 0)} format={(n) => `${n} vụ`} ariaLabel={`Số vụ theo trạng thái: ${z.name}`} />
+              </div>
+            ))}
+          </>
+        ) : cur.key === 'compare' ? (
+          cmp.length === 0 ? <p className="muted">Chưa có chi phí hay doanh thu để vẽ.</p> : (
+            <XYChart kind="bar" labels={cmp.map((r) => r.area.name)} shortLabels={cmp.map((r) => clip(r.area.name, 9))} format={formatMoney} axisFormat={compactNumber}
+              series={[{ label: 'Chi phí', tone: 'bad' }, { label: 'Doanh thu', tone: 'ok' }]} values={[cmp.map((r) => r.cost ?? 0), cmp.map((r) => r.revenue ?? 0)]} ariaLabel="Doanh thu và chi phí theo phân khu" />
+          )
+        ) : (
+          <HBarList items={items} format={fmtVal} ariaLabel={`${cur.label} theo phân khu`} />
+        )}
       </ChartCard>
-      {cmp.length > 0 && (
-        <ChartCard title="Chi phí so với doanh thu" subtitle="Mỗi phân khu hai cột: nhìn cột xanh cao hơn đỏ là có lãi">
-          <XYChart kind="bar" labels={cmp.map((r) => r.area.name)} shortLabels={cmp.map((r) => clip(r.area.name, 9))} format={formatMoney} axisFormat={compactNumber}
-            series={[{ label: 'Chi phí', tone: 'bad' }, { label: 'Doanh thu', tone: 'ok' }]} values={[cmp.map((r) => r.cost ?? 0), cmp.map((r) => r.revenue ?? 0)]} ariaLabel="Chi phí và doanh thu theo phân khu" />
-        </ChartCard>
-      )}
       <div className="card">
         <h2>Bảng số liệu</h2>
       <div className="tablewrap">

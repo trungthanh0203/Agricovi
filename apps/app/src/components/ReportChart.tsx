@@ -18,12 +18,13 @@ export function ReportChart({ result }: { result: ReportResult }) {
   const options = chartOptions(result);
   const measure = options.some((o) => o.key === picked) ? picked : options[0]?.key ?? '';
   const spec = buildChartSpec(result, measure);
-  if (!spec) return <p className="muted">{result.rows.length === 0 ? 'Không có số liệu trong khoảng này.' : 'Các số của báo cáo này đều bằng 0 nên chưa vẽ được biểu đồ. Hãy xem dạng bảng.'}</p>;
+  // các nút chọn số liệu luôn hiện, kể cả khi số đang chọn toàn bằng 0, để đổi sang số khác ngay không phải qua tab Bảng
   const chooser = options.length > 1 && (
     <div className="chips" role="group" aria-label="Chọn số liệu để vẽ">
       {options.map((o) => <button key={o.key} className={o.key === measure ? 'chip active' : 'chip'} aria-pressed={o.key === measure} onClick={() => setPicked(o.key)}>{o.label}</button>)}
     </div>
   );
+  if (!spec) return <>{chooser}<p className="muted">{result.rows.length === 0 ? 'Không có số liệu trong khoảng này.' : 'Số liệu này đều bằng 0 nên chưa vẽ được. Hãy chọn số liệu khác ở trên, hoặc xem dạng bảng.'}</p></>;
   const range = `${result.from.split('-').reverse().join('/')} – ${result.to.split('-').reverse().join('/')}`;
 
   if (spec.kind === 'bars') {
