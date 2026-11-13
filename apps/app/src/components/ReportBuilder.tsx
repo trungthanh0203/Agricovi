@@ -15,9 +15,6 @@ import { downloadCsv } from '../lib/summary';
 import { useTable } from '../lib/tables';
 import { useCycleTitle } from '../lib/useCycleTitle';
 
-const monthStart = (d: string) => `${d.slice(0, 7)}-01`;
-const prevMonth = (d: string) => { const x = new Date(`${monthStart(d)}T00:00:00`); x.setMonth(x.getMonth() - 1); return x.toLocaleDateString('en-CA'); };
-
 /**
  * Báo cáo theo nhu cầu (D48): chọn loại, nhóm theo, khoảng ngày, vụ → xem bảng + tổng → xuất CSV hoặc lưu lại (của tôi / chia sẻ cả cơ sở).
  * Cần mạng; máy chủ tính số và kiểm quyền theo mục.
@@ -71,7 +68,14 @@ export function ReportBuilder() {
     setCycleId(s.params.cycle_id ?? '');
     void run(s.report_type, s.params);
   }
-  const preset = (a: string, b: string) => { setFrom(a); setTo(b); };
+  // Chọn vụ thì tự điền Từ ngày / Đến ngày theo thời gian của vụ (kết thúc thực tế, hoặc dự kiến, hoặc hôm nay)
+  function pickCycle(id: string) {
+    setCycleId(id);
+    const c = cycles.find((x) => x.id === id);
+    if (!c) return;
+    if (c.start_date) setFrom(c.start_date.slice(0, 10));
+    setTo((c.expected_end_date ?? today).slice(0, 10));
+  }
   const tot = result ? reportTotals(result) : {};
 
   return (
@@ -108,19 +112,14 @@ export function ReportBuilder() {
               <select value={grp} onChange={(e) => setGroup(e.target.value)}>{info.groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}</select>
             </label>
           )}
-          <div className="chips" role="group" aria-label="Chọn nhanh khoảng thời gian">
-            <button className="chip" onClick={() => preset(addDays(today, -29), today)}>30 ngày qua</button>
-            <button className="chip" onClick={() => preset(monthStart(today), today)}>Tháng này</button>
-            <button className="chip" onClick={() => { const s = prevMonth(today); preset(s, addDays(monthStart(today), -1)); }}>Tháng trước</button>
-            <button className="chip" onClick={() => preset(`${today.slice(0, 4)}-01-01`, today)}>Năm nay</button>
-          </div>
+          {/* Tạm ẩn các nút chọn nhanh (30 ngày qua, tháng này, tháng trước, năm nay) */}
           <div className="pair">
             <label>Từ ngày<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
             <label>Đến ngày<input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
           </div>
           {info.id !== 'purchases' && info.id !== 'customers' && (
             <label>Vụ (không bắt buộc)
-              <select value={cycleId} onChange={(e) => setCycleId(e.target.value)}>
+              <select value={cycleId} onChange={(e) => pickCycle(e.target.value)}>
                 <option value="">— Tất cả các vụ —</option>
                 {cycles.map((c) => <option key={c.id} value={c.id}>{titleOf(c)}</option>)}
               </select>
