@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { niceScale, groupOthers, pct, compactNumber, monthShort, dayShort, clip, labelStep } from '../../apps/app/src/lib/chartMath.ts';
-import { buildChartSpec } from '../../apps/app/src/lib/reportChart.ts';
+import { buildChartSpec, chartOptions } from '../../apps/app/src/lib/reportChart.ts';
 
 // G2-7 (biểu đồ): phần tính toán thuần của biểu đồ và việc chọn loại biểu đồ cho từng báo cáo. Không cần CSDL.
 
@@ -90,7 +90,15 @@ test('theo khách, nhà cung ứng, vật tư, người: thanh ngang số đo ch
   assert.equal(cus.kind, 'hbars');
   assert.deepEqual(cus.items.map((i) => i.label), ['Bình', 'An']);
   const pur = buildChartSpec({ type: 'purchases', group: 'material', columns: cols(['label', 'qty', 'amount']), rows: [{ label: 'NPK', qty: 5, amount: 100 }] });
-  assert.equal(pur, null); // báo cáo theo vật tư không có cột "total": không đoán bừa
+  assert.equal(pur.kind, 'hbars'); // theo vật tư không có cột "total": vẽ theo cột số đo thực có (amount), không còn báo "không có số liệu"
+  assert.equal(pur.items[0].label, 'NPK');
+  assert.deepEqual(chartOptions({ type: 'purchases', group: 'material', columns: cols(['label', 'qty', 'amount']), rows: [] }).map((o) => o.key), ['amount', 'qty']);
+  // tổng hợp theo ô/phân khu (type areas) và thu mua (procurement) cũng vẽ được; số âm vẽ đỏ
+  const ar = buildChartSpec({ type: 'areas', group: 'zone', columns: cols(['label', 'cycles', 'cost', 'revenue', 'profit']), rows: [{ label: 'A', cycles: 1, cost: 5, revenue: 3, profit: -2 }] });
+  assert.equal(ar.kind, 'bars');
+  const neg = buildChartSpec({ type: 'areas', group: 'zone', columns: cols(['label', 'cycles', 'cost', 'revenue', 'profit']), rows: [{ label: 'A', cycles: 1, cost: 5, revenue: 3, profit: -2 }] }, 'profit');
+  assert.equal(neg.kind, 'hbars');
+  assert.equal(neg.items[0].tone, 'bad');
 });
 
 test('tổng hợp theo vụ: so sánh chi phí và doanh thu; không có dữ liệu thì không vẽ', () => {
