@@ -1,3 +1,4 @@
+import { CycleSelect } from '../components/CycleSelect';
 import { useMemo, useState } from 'react';
 import { fieldsForKind, productKindOfArea, useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
@@ -136,15 +137,9 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
       )}
 
       <div className="filters">
-        <label>
-          <CycleWord cap />
-          <select value={cycleId} onChange={(e) => { setCycleId(e.target.value); setLimit(PAGE); }}>
-            <option value="">Tất cả vụ</option>
-            {myCycles.map((c) => (
-              <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>
-            ))}
-          </select>
-        </label>
+        <div style={{ flex: '1 1 100%' }}>
+          <CycleSelect label={<CycleWord cap />} cycles={myCycles} value={cycleId} onChange={(v) => { setCycleId(v); setLimit(PAGE); }} labelOf={cycleLabel} emptyLabel="Tất cả vụ" />
+        </div>
         <label>
           Loại việc
           <select value={typeId} onChange={(e) => { setTypeId(e.target.value); setLimit(PAGE); }}>

@@ -1,3 +1,4 @@
+import { CycleSelect } from './CycleSelect';
 import { NamePicker } from './CatalogPick';
 import { useConfig } from '../lib/config';
 import { useMemo, useState, type FormEvent } from 'react';
@@ -123,13 +124,7 @@ export function HarvestSection() {
 
       <Collapsible inline title="Bộ lọc" summary={`${cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả vụ'}${showVoided ? ' · cả phiếu đã hủy' : ''}`}>
       <div className="filters">
-          <label>
-            <CycleWord cap />
-            <select value={cycleFilter} onChange={(e) => setCycleFilter(e.target.value)}>
-              <option value="">Tất cả vụ</option>
-              {myCycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
-            </select>
-          </label>
+          <CycleSelect label={<CycleWord cap />} cycles={myCycles} value={cycleFilter} onChange={setCycleFilter} labelOf={cycleLabel} emptyLabel="Tất cả vụ" />
           <label className="check">
             <input type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
             Hiện cả phiếu đã hủy
@@ -293,12 +288,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
           <p className="muted">{cycleLabel(editing.cycle_id)} — không đổi được vụ; muốn đổi hãy hủy phiếu và ghi lại. Mọi thay đổi được lưu lịch sử.</p>
         ) : (
           <>
-          <label>
-            <CycleWord cap />
-            <select value={effCycleId} onChange={(e) => setCycleId(e.target.value)}>
-              {ordered.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
-            </select>
-          </label>
+          <CycleSelect label={<CycleWord cap />} cycles={ordered} value={effCycleId} onChange={setCycleId} labelOf={cycleLabel} />
           {(cycles.length > ordered.length || showAllCycles) && (
             <label className="check"><input type="checkbox" checked={showAllCycles} onChange={(e) => setShowAllCycles(e.target.checked)} /> Hiện cả vụ không còn sản xuất</label>
           )}

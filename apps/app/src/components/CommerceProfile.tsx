@@ -1,3 +1,4 @@
+import { CycleSelect } from './CycleSelect';
 import { NamePicker } from './CatalogPick';
 import { useCallback, useEffect, useState } from 'react';
 import { Collapsible } from './Collapsible';
@@ -350,10 +351,10 @@ function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: str
           <label>Giá ghi chữ<input value={f.price_note} maxLength={120} onChange={set('price_note')} placeholder="Liên hệ / 35.000đ/kg" /></label>
           <label>Đặt tối thiểu<input value={f.min_order} maxLength={120} onChange={set('min_order')} placeholder="50 kg" /></label>
         </div>
-        <label>Vụ để người mua xem truy xuất (không bắt buộc)
-          <select value={f.cycle_id} onChange={set('cycle_id')}><option value="">— Không liên kết —</option>{cycles.map((c) => <option key={c.id} value={c.id}>{titleOf(c)}</option>)}</select>
-          <small>Chỉ hiện truy xuất nếu vụ đó đã được bạn bấm "Mở công khai website".</small>
-        </label>
+        <CycleSelect label="Vụ để người mua xem truy xuất (không bắt buộc)" cycles={cycles} value={f.cycle_id} emptyLabel="— Không liên kết —"
+          onChange={(v) => setF((x) => ({ ...x, cycle_id: v }))}
+          labelOf={(id) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : ''; }} />
+        <small>Chỉ hiện truy xuất nếu vụ đó đã được bạn bấm "Mở công khai website".</small>
         <label className="check"><input type="checkbox" checked={f.include} onChange={(e) => setF({ ...f, include: e.target.checked })} /> Đưa sản phẩm này lên website</label>
         {err && <p className="msg error" role="alert">⚠ {err}</p>}
         <div className="btnrow">

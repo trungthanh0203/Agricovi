@@ -1,3 +1,4 @@
+import { CycleSelect } from './CycleSelect';
 import { useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { useCatalog } from '../lib/catalog';
@@ -73,11 +74,8 @@ export function LogbookSection() {
       {!online && <p className="msg warn" role="status">Đang offline: sổ nhật ký cần có mạng để dựng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
       <div className="no-print">
-        <label>Vụ
-          <select value={cycle?.id ?? ''} onChange={(e) => { setCycleId(e.target.value); setBookId(''); setData(null); }}>
-            {mine.map((c) => <option key={c.id} value={c.id}>{cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')}{c.code ? ` (${c.code})` : ''} · {areaName(c.area_id, areas)}</option>)}
-          </select>
-        </label>
+        <CycleSelect label="Vụ" cycles={mine} value={cycle?.id ?? ''} onChange={(v) => { setCycleId(v); setBookId(''); setData(null); }} showStatus={false}
+          labelOf={(id) => { const c = mine.find((x) => x.id === id); return c ? `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')}${c.code ? ` (${c.code})` : ''} · ${areaName(c.area_id, areas)}` : ''; }} />
         <div className="pair">
           <label>Từ ngày<input type="date" value={effFrom} onChange={(e) => setFrom(e.target.value)} /></label>
           <label>Đến ngày<input type="date" value={to} max={today} onChange={(e) => setTo(e.target.value)} /></label>

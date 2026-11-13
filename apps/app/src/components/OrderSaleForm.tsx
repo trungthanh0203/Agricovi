@@ -1,3 +1,4 @@
+import { CycleSelect } from './CycleSelect';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
@@ -151,12 +152,9 @@ export function OrderSaleForm({ orderId, onClose, onDone }: { orderId: string; o
         {lines.map((l) => (
           <div className="member" key={l.itemId}>
             <strong>{l.name}</strong>{l.unit && <span className="muted"> (đơn đặt tính theo {l.unit})</span>}
-            <label>Vụ
-              <select value={l.cycleId} onChange={(e) => setLines((s) => s.map((x) => (x.itemId === l.itemId ? { ...x, cycleId: e.target.value } : x)))}>
-                <option value="">— Chọn vụ —</option>
-                {cycles.map((c) => <option key={c.id} value={c.id}>{titleOf(c)}</option>)}
-              </select>
-            </label>
+            <CycleSelect label="Vụ" cycles={cycles} value={l.cycleId} emptyLabel="— Chọn vụ —"
+              onChange={(v) => setLines((s) => s.map((x) => (x.itemId === l.itemId ? { ...x, cycleId: v } : x)))}
+              labelOf={(id) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : ''; }} />
             <div className="pair">
               <label>Số kg<input value={l.qty} inputMode="decimal" onChange={(e) => setLines((s) => s.map((x) => (x.itemId === l.itemId ? { ...x, qty: e.target.value } : x)))} /></label>
               <label>Số tiền (đ)<input value={l.amount} inputMode="numeric" onChange={(e) => setLines((s) => s.map((x) => (x.itemId === l.itemId ? { ...x, amount: e.target.value } : x)))} /></label>

@@ -8,7 +8,7 @@ const CHIP_LABEL: Record<(typeof ORDER)[number], string> = { active: 'Đang sả
  * Bộ chọn vụ có lọc theo trạng thái: một hàng nút (Tất cả, Đang sản xuất, Chuẩn bị, Tạm dừng, Kết thúc, kèm số vụ; trạng thái không có vụ thì ẩn)
  * và dropdown chỉ liệt kê các vụ thuộc nhóm đang lọc, nên danh sách ngắn, dễ nhìn. Mặc định "Tất cả". Vụ đang chọn luôn có trong dropdown dù không thuộc nhóm lọc.
  */
-export function CycleSelect({ label, cycles, value, onChange, labelOf, emptyLabel, showStatus = true }: {
+export function CycleSelect({ label, cycles, value, onChange, labelOf, emptyLabel, leading, showStatus = true }: {
   label: ReactNode;
   cycles: { id: string; status: string }[];
   value: string;
@@ -16,6 +16,8 @@ export function CycleSelect({ label, cycles, value, onChange, labelOf, emptyLabe
   labelOf: (id: string) => string;
   /** Có thì thêm lựa chọn rỗng đầu danh sách (ví dụ "Tất cả các vụ") */
   emptyLabel?: string;
+  /** Các lựa chọn đặc biệt đứng đầu danh sách (ví dụ "Tất cả", "Chi phí chung") khi cần nhiều hơn một */
+  leading?: { value: string; label: string }[];
   /** Ghi trạng thái cuối tên vụ (khi đang xem "Tất cả") */
   showStatus?: boolean;
 }) {
@@ -40,6 +42,7 @@ export function CycleSelect({ label, cycles, value, onChange, labelOf, emptyLabe
         {label}
         <select value={value} onChange={(e) => onChange(e.target.value)}>
           {emptyLabel !== undefined && <option value="">{emptyLabel}</option>}
+          {leading?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           {list.map((c) => <option key={c.id} value={c.id}>{labelOf(c.id)}{showStatus && f === 'all' ? ` (${CYCLE_STATUS_LABEL_VI[c.status as keyof typeof CYCLE_STATUS_LABEL_VI] ?? c.status})` : ''}</option>)}
         </select>
       </label>

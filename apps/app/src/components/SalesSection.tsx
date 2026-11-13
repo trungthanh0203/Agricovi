@@ -1,3 +1,4 @@
+import { CycleSelect } from './CycleSelect';
 import { exportFinanceCsv, useFinanceTotals, type ExpenseTotals, type SaleTotals } from '../lib/financeTotals';
 import { LoadOlder, useShowMore } from './ShowMore';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
@@ -119,13 +120,7 @@ export function SalesSection() {
 
       <Collapsible inline title="Bộ lọc" summary={`${cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả vụ'}${custFilter ? ` · khách ${customersInSales.find((c) => c[0] === custFilter)?.[1] ?? ''}` : ''}${showVoided ? ' · cả khoản đã hủy' : ''}`}>
       <div className="filters">
-          <label>
-            <CycleWord cap />
-            <select value={cycleFilter} onChange={(e) => setCycleFilter(e.target.value)}>
-              <option value="">Tất cả vụ</option>
-              {ownCycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
-            </select>
-          </label>
+          <CycleSelect label={<CycleWord cap />} cycles={ownCycles} value={cycleFilter} onChange={setCycleFilter} labelOf={cycleLabel} emptyLabel="Tất cả vụ" />
           {customersInSales.length > 0 && (
             <label>
               Khách mua
@@ -332,12 +327,7 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
           <p className="muted">{cycleLabel(editing.cycle_id)} — không đổi được vụ; muốn đổi hãy hủy khoản bán và ghi lại. Mọi thay đổi được lưu lịch sử.</p>
         ) : (
           <>
-          <label>
-            <CycleWord cap />
-            <select value={effCycle} onChange={(e) => setCycleId(e.target.value)}>
-              {ordered.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
-            </select>
-          </label>
+          <CycleSelect label={<CycleWord cap />} cycles={ordered} value={effCycle} onChange={setCycleId} labelOf={cycleLabel} />
           {(cycles.length > ordered.length || showAllCycles) && (
             <label className="check"><input type="checkbox" checked={showAllCycles} onChange={(e) => setShowAllCycles(e.target.checked)} /> Hiện cả vụ không còn sản xuất</label>
           )}

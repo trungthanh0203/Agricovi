@@ -1,3 +1,4 @@
+import { CycleSelect } from './CycleSelect';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Collapsible } from './Collapsible';
 import { AttendanceList, type ListPreset } from './AttendanceList';
@@ -151,16 +152,12 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
   );
 }
 
-type CycleOpt = { id: string; name?: string | null; crop_type_id?: string | null; start_date?: string | null };
-const CycleSelect = ({ cycles, value, onChange }: { cycles: CycleOpt[]; value: string; onChange: (v: string) => void }) => {
+type CycleOpt = { id: string; status?: string; name?: string | null; crop_type_id?: string | null; start_date?: string | null };
+const ShiftCycleSelect = ({ cycles, value, onChange }: { cycles: CycleOpt[]; value: string; onChange: (v: string) => void }) => {
   const titleOf = useCycleTitle();
   return cycles.length === 0 ? null : (
-  <label>Vụ (không bắt buộc)
-    <select value={value} onChange={(e) => onChange(e.target.value)}>
-      <option value="">— Không gắn vụ —</option>
-      {cycles.map((c) => <option key={c.id} value={c.id}>{titleOf(c)}</option>)}
-    </select>
-  </label>
+  <CycleSelect label="Vụ (không bắt buộc)" cycles={cycles.map((c) => ({ id: c.id, status: c.status ?? '' }))} value={value} onChange={onChange} emptyLabel="— Không gắn vụ —"
+    labelOf={(id) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : ''; }} />
   );
 };
 
@@ -200,7 +197,7 @@ function ShiftForm({ workers, cycles, busy, onSave }: { workers: WorkerLite[]; c
         <label>Đến giờ<input type="time" value={to} onChange={(e) => setTo(e.target.value)} /></label>
       </div>
       <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
-      <CycleSelect cycles={cycles} value={cyc} onChange={setCyc} />
+      <ShiftCycleSelect cycles={cycles} value={cyc} onChange={setCyc} />
       <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
       {err && <p className="msg error" role="alert">{err}</p>}
       {ok && <p className="msg ok" role="status">{ok}</p>}

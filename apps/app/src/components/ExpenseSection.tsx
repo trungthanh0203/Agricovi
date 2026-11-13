@@ -1,3 +1,4 @@
+import { CycleSelect } from './CycleSelect';
 import { exportFinanceCsv, useFinanceTotals, type ExpenseTotals, type SaleTotals } from '../lib/financeTotals';
 import { LoadOlder, useShowMore } from './ShowMore';
 import { useMemo, useState, type FormEvent } from 'react';
@@ -117,14 +118,8 @@ export function ExpenseSection() {
 
       <Collapsible inline title="Bộ lọc" summary={`${cycleFilter === 'none' ? 'Chi phí chung' : cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả'}${showVoided ? ' · cả khoản đã hủy' : ''}`}>
       <div className="filters">
-          <label>
-            <CycleWord cap />
-            <select value={cycleFilter} onChange={(e) => setCycleFilter(e.target.value)}>
-              <option value="">Tất cả</option>
-              <option value="none">Chi phí chung (không gắn vụ)</option>
-              {ownCycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
-            </select>
-          </label>
+          <CycleSelect label={<CycleWord cap />} cycles={ownCycles} value={cycleFilter} onChange={setCycleFilter} labelOf={cycleLabel}
+            leading={[{ value: '', label: 'Tất cả' }, { value: 'none', label: 'Chi phí chung (không gắn vụ)' }]} />
           <label className="check">
             <input type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
             Hiện cả khoản đã hủy
@@ -270,14 +265,9 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
           <p className="muted">{cycleLabel(editing.cycle_id)} — không đổi được vụ; muốn đổi hãy hủy khoản chi và ghi lại. Mọi thay đổi được lưu lịch sử.</p>
         ) : (
           <>
-          <label>
-            Thuộc vụ
-            <select value={effCycle} onChange={(e) => setCycleId(e.target.value)}>
-              <option value="none">Chi phí chung (không gắn vụ)</option>
-              {ordered.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
-            </select>
-            <small>Chi phí gắn vụ mới vào được tổng kết vụ.</small>
-          </label>
+          <CycleSelect label="Thuộc vụ" cycles={ordered} value={effCycle} onChange={setCycleId} labelOf={cycleLabel}
+            leading={[{ value: 'none', label: 'Chi phí chung (không gắn vụ)' }]} />
+          <small>Chi phí gắn vụ mới vào được tổng kết vụ.</small>
           {(cycles.length > ordered.length || showAllCycles) && (
             <label className="check"><input type="checkbox" checked={showAllCycles} onChange={(e) => setShowAllCycles(e.target.checked)} /> Hiện cả vụ không còn sản xuất</label>
           )}
