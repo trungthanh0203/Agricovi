@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
+import { CycleSelect } from './CycleSelect';
 import { KpiTile } from './HomeStats';
 import { ReportChart } from './ReportChart';
 import { useAuth } from '../lib/auth';
@@ -118,12 +119,8 @@ export function ReportBuilder() {
             <label>Đến ngày<input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
           </div>
           {info.id !== 'purchases' && info.id !== 'customers' && (
-            <label>Vụ (không bắt buộc)
-              <select value={cycleId} onChange={(e) => pickCycle(e.target.value)}>
-                <option value="">— Tất cả các vụ —</option>
-                {cycles.map((c) => <option key={c.id} value={c.id}>{titleOf(c)}</option>)}
-              </select>
-            </label>
+            <CycleSelect label="Vụ (không bắt buộc)" cycles={cycles} value={cycleId} onChange={pickCycle} emptyLabel="— Tất cả các vụ —"
+              labelOf={(id) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : ''; }} />
           )}
           <button className="primary" disabled={busy || !online} onClick={() => void run(info.id, params())}>{busy ? 'Đang tính…' : 'Xem báo cáo'}</button>
         </div>

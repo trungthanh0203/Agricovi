@@ -14,6 +14,7 @@ import { perHeadSummary } from '../lib/summaryByKind';
 import { buildSummaryCsv, canCompare, summaryNotes, vnNumber, type CycleSummary } from '../lib/summaryReport';
 import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
+import { CycleSelect } from './CycleSelect';
 import { AreaRollup } from './AreaRollup';
 import { areaPath, areaName } from '../lib/areas';
 import { cycleTitle } from '../lib/cycles';
@@ -136,12 +137,7 @@ export function SummarySection() {
       </div>
       {tab === 'zone' && <AreaRollup />}
       {tab === 'detail' && <>
-      <label>
-        <CycleWord cap />
-        <select value={cycleId} onChange={(e) => setPicked(e.target.value)}>
-          {ordered.map((c) => <option key={c.id} value={c.id}>{label(c.id)} ({CYCLE_STATUS_LABEL_VI[c.status]})</option>)}
-        </select>
-      </label>
+      <CycleSelect label={<CycleWord cap />} cycles={ordered} value={cycleId} onChange={setPicked} labelOf={label} />
 
       <div className="actions">
         <button className="secondary" disabled={loading || !navigator.onLine} onClick={() => void load()}>
