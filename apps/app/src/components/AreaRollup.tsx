@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Collapsible } from './Collapsible';
+import { ChartCard, DonutChart, HBarList } from './charts';
 import { cachedCycleStats, fetchCycleStats, type CycleStats } from '../lib/cycleStats';
 import { rollupByArea } from '../lib/areas';
 import { formatMoney } from '../lib/inventory';
@@ -26,9 +26,11 @@ export function AreaRollup() {
 
   const mine = useMemo(() => areas.filter((a) => a.organization_id === active?.id), [areas, active?.id]);
   const rows = useMemo(() => rollupByArea(mine, cycles.filter((c) => c.owner_org_id === active?.id), stats?.cycles ?? []), [mine, cycles, stats, active?.id]);
-  if (!active || !mine.some((a) => a.parent_id) || rows.length === 0) return null;
+  if (!active) return null;
+  if (!mine.some((a) => a.parent_id) || rows.length === 0) return <p className="muted">Chưa có phân khu nào có vụ để tổng hợp. Phân khu chia ô sản xuất và có vụ sẽ hiện ở đây.</p>;
   const money = Boolean(stats?.can_money);
   const kg = (v: number | null) => (v == null ? '—' : `${v.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} kg`);
+  const kg0 = (n: number) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} kg`;
   const vnd = (v: number | null) => (v == null ? '—' : formatMoney(v));
   const cells = (r: (typeof rows)[number]) => (
     <>
@@ -39,8 +41,40 @@ export function AreaRollup() {
       {money && <td className="num">{vnd(r.profit)}</td>}
     </>
   );
+  const byCost = rows.filter((r) => (r.cost ?? 0) > 0).map((r) => ({ label: r.area.name, value: r.cost ?? 0 }));
+  const byRevenue = rows.filter((r) => (r.revenue ?? 0) > 0).map((r) => ({ label: r.area.name, value: r.revenue ?? 0 })).sort((a, b) => b.value - a.value);
+  const byProfit = rows.filter((r) => r.profit != null && r.profit !== 0)
+    .map((r) => ({ label: r.area.name, value: Math.abs(r.profit ?? 0), tone: (r.profit ?? 0) >= 0 ? 'ok' : 'bad', note: (r.profit ?? 0) >= 0 ? 'lãi' : 'lỗ' }))
+    .sort((a, b) => b.value - a.value);
+  const byHarvest = rows.filter((r) => (r.harvest ?? 0) > 0).map((r) => ({ label: r.area.name, value: r.harvest ?? 0 })).sort((a, b) => b.value - a.value);
+  const byCycles = rows.map((r) => ({ label: r.area.name, value: r.cycles, note: r.running > 0 ? `${r.running} đang chạy` : undefined })).sort((a, b) => b.value - a.value);
   return (
-    <Collapsible title="Tổng hợp theo phân khu" summary={`${rows.length} phân khu`}>
+    <>
+      <ChartCard title="Số vụ theo phân khu" subtitle="Gồm cả vụ đã kết thúc">
+        <HBarList items={byCycles} format={(n) => `${n} vụ`} ariaLabel="Số vụ theo phân khu" />
+      </ChartCard>
+      {money && byProfit.length > 0 && (
+        <ChartCard title="Lãi / lỗ tạm tính theo phân khu" subtitle="Thanh xanh là lãi, thanh đỏ là lỗ">
+          <HBarList items={byProfit} format={formatMoney} ariaLabel="Lãi lỗ theo phân khu" />
+        </ChartCard>
+      )}
+      {money && byRevenue.length > 0 && (
+        <ChartCard title="Doanh thu theo phân khu">
+          <HBarList items={byRevenue} format={formatMoney} tone="ok" ariaLabel="Doanh thu theo phân khu" />
+        </ChartCard>
+      )}
+      {money && byCost.length > 0 && (
+        <ChartCard title="Chi phí chiếm bao nhiêu ở mỗi phân khu" subtitle="Phần nào tốn nhiều tiền nhất">
+          <DonutChart items={byCost} format={formatMoney} centerLabel="Tổng chi phí" ariaLabel="Cơ cấu chi phí theo phân khu" />
+        </ChartCard>
+      )}
+      {byHarvest.length > 0 && (
+        <ChartCard title="Sản lượng thu hoạch theo phân khu">
+          <HBarList items={byHarvest} format={kg0} tone="info" ariaLabel="Sản lượng theo phân khu" />
+        </ChartCard>
+      )}
+      <div className="card">
+        <h2>Bảng số liệu</h2>
       <div className="tablewrap">
         <table className="grid">
           <thead><tr><th>Phân khu</th><th className="num">Vụ</th>{money && <th className="num">Chi phí</th>}<th className="num">Thu hoạch</th>{money && <th className="num">Doanh thu</th>}{money && <th className="num">Lãi / lỗ</th>}</tr></thead>
@@ -52,7 +86,8 @@ export function AreaRollup() {
           </tbody>
         </table>
       </div>
-      <p className="muted">Số tạm tính, cộng từ các vụ của từng khu (cả vụ đã kết thúc). Muốn xem chi tiết một vụ, chọn vụ ở bên dưới.</p>
-    </Collapsible>
+      <p className="muted">Số tạm tính, cộng từ các vụ của từng khu (cả vụ đã kết thúc). Muốn xem chi tiết một vụ, chuyển sang tab "Tổng hợp vụ chi tiết".</p>
+      </div>
+    </>
   );
 }

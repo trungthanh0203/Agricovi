@@ -12,8 +12,9 @@ export const topAreaIdOf = (areaId: string, areaById: Map<string, AreaRow>): str
 export function AreaFilter({ areas, usedAreaIds, value, onChange }: { areas: AreaRow[]; usedAreaIds: string[]; value: string; onChange: (id: string) => void }) {
   const options = useMemo(() => {
     const byId = new Map(areas.map((a) => [a.id, a]));
-    const tops = new Set(usedAreaIds.map((id) => topAreaIdOf(id, byId)).filter((x): x is string => !!x));
-    return topAreas(areas).filter((a) => tops.has(a.id));
+    const counts = new Map<string, number>(); // số vụ của từng phân khu (gồm các ô bên trong)
+    for (const id of usedAreaIds) { const t = topAreaIdOf(id, byId); if (t) counts.set(t, (counts.get(t) ?? 0) + 1); }
+    return topAreas(areas).filter((a) => counts.has(a.id)).map((a) => ({ id: a.id, name: a.name, count: counts.get(a.id) ?? 0 }));
   }, [areas, usedAreaIds]);
   if (options.length < 2) return null;
   return (
@@ -22,7 +23,7 @@ export function AreaFilter({ areas, usedAreaIds, value, onChange }: { areas: Are
         Phân khu
         <select value={value} onChange={(e) => onChange(e.target.value)}>
           <option value="">Tất cả phân khu</option>
-          {options.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          {options.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.count} vụ)</option>)}
         </select>
       </label>
     </div>

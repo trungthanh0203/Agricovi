@@ -44,6 +44,7 @@ export function SummarySection() {
 
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
   const [picked, setPicked] = useState('');
+  const [tab, setTab] = useState<'zone' | 'detail'>('zone');
   const cycleId = picked || (ordered.find((c) => c.id === remembered)?.id ?? ordered[0]?.id ?? '');
   // diện tích và năng suất (D94): theo đơn vị người dùng chọn (m² thì tính trên 1.000 m²)
   const cycleRow = cycles.find((c) => c.id === cycleId) ?? null;
@@ -129,7 +130,12 @@ export function SummarySection() {
 
   return (
     <>
-      <AreaRollup />
+      <div className="chips" role="tablist" aria-label="Cách xem tổng kết">
+        <button role="tab" aria-selected={tab === 'zone'} className={tab === 'zone' ? 'chip active' : 'chip'} onClick={() => setTab('zone')}>Tổng hợp vụ theo phân khu</button>
+        <button role="tab" aria-selected={tab === 'detail'} className={tab === 'detail' ? 'chip active' : 'chip'} onClick={() => setTab('detail')}>Tổng hợp vụ chi tiết</button>
+      </div>
+      {tab === 'zone' && <AreaRollup />}
+      {tab === 'detail' && <>
       <label>
         <CycleWord cap />
         <select value={cycleId} onChange={(e) => setPicked(e.target.value)}>
@@ -248,6 +254,7 @@ export function SummarySection() {
           </div>
         </>
       )}
+      </>}
     </>
   );
 }
