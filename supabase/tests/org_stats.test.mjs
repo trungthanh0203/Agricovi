@@ -23,6 +23,7 @@ async function setup() {
   await db.query(`update production_cycles set status='ended' where id=$1`, [cid(2)]);
   for (let i = 1; i <= 35; i++) await db.query(`insert into expense_records (id,organization_id,cycle_id,category,kind,amount,expense_date) values (gen_random_uuid(),$1,$2,'other','cash_paid',$3,$4::date)`, [org, cid(1), i * 1000, `2026-10-${String((i % 28) + 1).padStart(2, '0')}`]);
   await db.query(`insert into partners (id,organization_id,name,is_supplier,phone) values (gen_random_uuid(),$1,'Đại lý X',true,'0900000001')`, [org]);
+  await db.query(`insert into partners (id,organization_id,name,is_supplier,is_customer,phone) values (gen_random_uuid(),$1,'Khách Y',false,true,'0900000002')`, [org]);
   return { db, owner, wk, stranger, org };
 }
 const items = (c, who, kind, sort = 1, desc = false, off = 0) => asUser(c.db, who, `select org_stats_items($1,$2,$3,$4,30,$5) r`, [c.org, kind, sort, desc, off]);
@@ -30,12 +31,13 @@ const items = (c, who, kind, sort = 1, desc = false, off = 0) => asUser(c.db, wh
 test('tóm tắt: đúng số, mục không đủ quyền là null', async () => {
   const c = await setup();
   const s = (await asUser(c.db, c.owner, `select org_stats_summary($1) r`, [c.org])).rows[0].r;
-  assert.deepEqual([s.areas, s.cells, s.cycles_active, s.cycles_ended, s.cycles_preparing, s.expenses, s.suppliers, s.templates].map(Number), [1, 1, 1, 1, 0, 35, 1, 1]);
+  assert.deepEqual([s.areas, s.cells, s.cycles_active, s.cycles_ended, s.cycles_preparing, s.expenses, s.suppliers, s.templates, s.customers].map(Number), [1, 1, 1, 1, 0, 35, 1, 1, 1]);
   assert.ok(Number(s.plans.count) >= 0 && s.plans.current);
   const w = (await asUser(c.db, c.wk, `select org_stats_summary($1) r`, [c.org])).rows[0].r;
   assert.equal(w.plans, null);
   assert.equal(w.expenses, null);
   assert.equal(w.staff, null);
+  assert.equal(w.customers, null);
   assert.equal(Number(w.areas), 1);
   assert.match(await expectError(asUser(c.db, c.stranger, `select org_stats_summary($1)`, [c.org])), /FORBIDDEN/);
 });
@@ -63,11 +65,11 @@ test('danh sách: sắp xếp theo cột (tăng/giảm), phân trang 30 dòng, t
 
 test('danh sách: kiểm quyền từng mục; loại lạ bị từ chối', async () => {
   const c = await setup();
-  for (const k of ['plans', 'staff', 'expenses', 'sales', 'suppliers', 'warehouses', 'materials', 'web_orders', 'public_cycles']) {
+  for (const k of ['plans', 'staff', 'expenses', 'sales', 'suppliers', 'customers', 'warehouses', 'materials', 'web_orders', 'public_cycles']) {
     assert.match(await expectError(items(c, c.wk, k)), /FORBIDDEN/, k);
     assert.match(await expectError(items(c, c.stranger, k)), /FORBIDDEN/, k);
   }
-  for (const k of ['plans', 'areas', 'cells', 'warehouses', 'materials', 'suppliers', 'staff', 'templates', 'cycles_active', 'cycles_preparing', 'cycles_paused', 'cycles_ended', 'expenses', 'harvests', 'sales', 'public_cycles', 'web_orders']) {
+  for (const k of ['plans', 'areas', 'cells', 'warehouses', 'materials', 'suppliers', 'customers', 'staff', 'templates', 'cycles_active', 'cycles_preparing', 'cycles_paused', 'cycles_ended', 'expenses', 'harvests', 'sales', 'public_cycles', 'web_orders']) {
     assert.ok(Array.isArray((await items(c, c.owner, k)).rows[0].r.rows), k);
   }
   assert.match(await expectError(items(c, c.owner, 'xyz')), /INVALID_KIND/);

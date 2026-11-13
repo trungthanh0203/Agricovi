@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChartCard, HBarList, ProportionBar, XYChart } from './charts';
-import { clip, compactNumber } from '../lib/chartMath';
+import { ChartCard, HBarList, ProportionBar } from './charts';
 import { cachedCycleStats, fetchCycleStats, type CycleStats } from '../lib/cycleStats';
 import { rollupByArea } from '../lib/areas';
 import { formatMoney } from '../lib/inventory';
@@ -67,7 +66,7 @@ export function AreaRollup() {
   ];
   const statusOf = (ids: Set<string>) => STATUS.map((st) => ({ label: st.label, tone: st.tone, value: cycles.filter((c) => c.owner_org_id === active.id && ids.has(c.area_id) && c.status === st.key).length }));
   const zoneIds = (r: (typeof rows)[number]) => new Set([r.area.id, ...mine.filter((a) => a.parent_id === r.area.id).map((a) => a.id)]);
-  const subtitle = cur.key === 'profit' ? 'Xanh là lãi, đỏ là lỗ; chữ nhỏ ghi số vụ' : cur.key === 'compare' ? 'Mỗi phân khu hai cột: doanh thu (xanh) cao hơn chi phí (đỏ) là có lãi' : cur.key === 'cycles' ? 'Mỗi thanh là một phân khu, chia khúc theo trạng thái của vụ' : 'Chữ nhỏ ghi số vụ của phân khu';
+  const subtitle = cur.key === 'profit' ? 'Xanh là lãi, đỏ là lỗ; chữ nhỏ ghi số vụ' : cur.key === 'compare' ? 'Mỗi phân khu hai thanh: doanh thu (xanh) dài hơn chi phí (đỏ) là có lãi' : cur.key === 'cycles' ? 'Mỗi thanh là một phân khu, chia khúc theo trạng thái của vụ' : 'Chữ nhỏ ghi số vụ của phân khu';
   return (
     <>
       <ChartCard title={`${cur.label} theo phân khu`} subtitle={subtitle}>
@@ -85,8 +84,8 @@ export function AreaRollup() {
           </>
         ) : cur.key === 'compare' ? (
           cmp.length === 0 ? <p className="muted">Chưa có chi phí hay doanh thu để vẽ.</p> : (
-            <XYChart kind="bar" labels={cmp.map((r) => r.area.name)} shortLabels={cmp.map((r) => clip(r.area.name, 9))} format={formatMoney} axisFormat={compactNumber}
-              series={[{ label: 'Chi phí', tone: 'bad' }, { label: 'Doanh thu', tone: 'ok' }]} values={[cmp.map((r) => r.cost ?? 0), cmp.map((r) => r.revenue ?? 0)]} ariaLabel="Doanh thu và chi phí theo phân khu" />
+            <HBarList format={formatMoney} ariaLabel="Doanh thu và chi phí theo phân khu"
+              items={cmp.flatMap((r) => [{ label: `${r.area.name} — Doanh thu`, value: r.revenue ?? 0, tone: 'ok' }, { label: `${r.area.name} — Chi phí`, value: r.cost ?? 0, tone: 'bad' }])} />
           )
         ) : (
           <HBarList items={items} format={fmtVal} ariaLabel={`${cur.label} theo phân khu`} />

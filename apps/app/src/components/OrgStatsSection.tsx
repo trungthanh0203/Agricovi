@@ -31,6 +31,7 @@ const KINDS: Kind[] = [
   { id: 'warehouses', tile: 'Kho', cols: [k('Tên kho', 'text', 1), k('Đang dùng', 'bool', 2), k('Tạo ngày', 'date', 3)] },
   { id: 'materials', tile: 'Vật tư', cols: [k('Tên vật tư', 'text', 1), k('Nhóm', 'text', 2), k('Đơn vị', 'text', 3), k('Đang dùng', 'bool', 4), k('Tạo ngày', 'date', 5)] },
   { id: 'suppliers', tile: 'Nhà cung ứng', cols: [k('Tên', 'text', 1), k('Điện thoại', 'text', 2), k('Tỉnh/thành phố', 'text', 3), k('Loại hàng', 'text', 5), k('Đang dùng', 'bool', 6)] },
+  { id: 'customers', tile: 'Khách hàng', cols: [k('Tên', 'text', 1), k('Điện thoại', 'text', 2), k('Tỉnh/thành phố', 'text', 3), k('Đang dùng', 'bool', 4), k('Thêm ngày', 'date', 5)] },
   { id: 'staff', tile: 'Nhân sự', cols: [k('Họ tên', 'text', 1), k('Trạng thái', WORKER_STATUS, 2), k('Có tài khoản app', 'bool', 3), k('Thêm ngày', 'date', 4)] },
   { id: 'templates', tile: 'Quy trình', cols: [k('Tên quy trình', 'text', 1), k('Sản phẩm', 'text', 2), k('Số việc', 'int', 5), k('Đang dùng', 'bool', 4), k('Tạo ngày', 'date', 6)] },
   ...(['active', 'preparing', 'paused', 'ended'] as const).map((st): Kind => ({
