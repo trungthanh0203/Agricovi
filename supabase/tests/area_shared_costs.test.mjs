@@ -68,6 +68,7 @@ test('báo cáo theo ô: mỗi ô một dòng, kiểm quyền', async () => {
   assert.equal(Number(row.cost), 1000000);
   const z = (await asUser(c.db, c.owner, `select report_by_area($1,'2026-10-01'::date,'2026-12-31'::date,'zone') r`, [c.org])).rows[0].r;
   assert.equal(z.group, 'zone');
+  assert.equal(Number(z.rows[0].cycles_active) + Number(z.rows[0].cycles_preparing) + Number(z.rows[0].cycles_paused) + Number(z.rows[0].cycles_ended), 2); // chia theo trạng thái khớp tổng số vụ
   assert.equal(z.rows.length, 1);
   assert.equal(Number(z.rows[0].cycles), 2);
   assert.equal(Number(z.rows[0].cost), 1000000);

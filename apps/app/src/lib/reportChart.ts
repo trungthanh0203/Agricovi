@@ -21,7 +21,8 @@ export interface ChartItem { label: string; value: number; tone?: Tone; note?: s
 export type ChartSpec =
   | { kind: 'bars'; title: string; labels: string[]; shortLabels: string[]; series: SeriesSpec[]; values: number[][] }
   | { kind: 'donut'; title: string; valueKind: ValueKind; unit: string; items: { label: string; value: number }[] }
-  | { kind: 'hbars'; title: string; valueKind: ValueKind; unit: string; tone: Tone; items: ChartItem[] };
+  | { kind: 'hbars'; title: string; valueKind: ValueKind; unit: string; tone: Tone; items: ChartItem[] }
+  | { kind: 'segments'; title: string; items: { label: string; segments: { label: string; value: number; tone: string }[] }[] };
 
 /** Một lựa chọn "vẽ theo" cho người xem */
 export interface ChartOption { key: string; label: string }
@@ -49,11 +50,17 @@ const TIME_DEFAULT: Record<string, string[]> = {
   harvest: ['net', 'loss'], stock: ['receipt', 'issue'], purchases: ['total', 'owed'], customers: ['amount', 'owed'],
 };
 
+/** Số vụ chia theo trạng thái: các cột của báo cáo theo phân khu/ô, vẽ thành thanh chia khúc cho mục "Số vụ" */
+const STATUS_COLS = [
+  { key: 'cycles_active', label: 'Đang sản xuất', tone: 'ok' }, { key: 'cycles_preparing', label: 'Chuẩn bị', tone: 'info' },
+  { key: 'cycles_paused', label: 'Tạm dừng', tone: 'warn' }, { key: 'cycles_ended', label: 'Kết thúc', tone: 'other' },
+];
+
 /** Cột số đo vẽ được: cột số, bỏ cột nhãn; nếu báo cáo có đánh dấu cột cộng được thì chỉ lấy các cột đó (bỏ tỉ lệ, đơn giá) */
 function measureCols(r: Input): Col[] {
   const cols = (r.columns as Col[]).filter((c) => c.key !== 'label' && c.kind !== 'text');
   const additive = cols.filter((c) => c.sum);
-  return additive.length > 0 ? additive : cols;
+  return (additive.length > 0 ? additive : cols).filter((c) => !c.key.startsWith('cycles_')); // cột theo trạng thái chỉ dùng cho thanh chia khúc của "Số vụ"
 }
 
 const kindOf = (c: Col): ValueKind => (c.kind === 'money' || MONEY_KEYS.has(c.key) ? 'money' : c.kind === 'int' ? 'int' : 'num');
@@ -72,9 +79,11 @@ export function chartOptions(r: Input): ChartOption[] {
   if (ms.length === 0) return [];
   const has = (k: string) => ms.some((c) => c.key === k);
   const out: ChartOption[] = [];
-  if (has('cost') && has('revenue')) out.push({ key: COMPARE_KEY, label: 'Chi phí và doanh thu' });
-  const first = PREFER.map((k) => ms.find((c) => c.key === k)).find(Boolean) ?? ms[0]!;
-  const ordered = [first, ...ms.filter((c) => c.key !== first.key)];
+  if (has('cost') && has('revenue')) out.push({ key: COMPARE_KEY, label: 'Doanh thu và chi phí' });
+  // chi phí và doanh thu gộp một biểu đồ (lựa chọn đầu), nên không liệt kê riêng từng cột
+  const rest = out.length > 0 ? ms.filter((c) => c.key !== 'cost' && c.key !== 'revenue') : ms;
+  const first = PREFER.map((k) => rest.find((c) => c.key === k)).find(Boolean) ?? rest[0];
+  const ordered = first ? [first, ...rest.filter((c) => c.key !== first.key)] : [];
   for (const c of ordered) out.push({ key: c.key, label: c.label });
   return out;
 }
@@ -94,15 +103,23 @@ export function buildChartSpec(r: Input, measureKey?: string): ChartSpec | null 
   const key = measureKey && opts.some((o) => o.key === measureKey) ? measureKey : opts[0]!.key;
   const labelOf = (x: Row) => String(x.label ?? '—');
 
-  // So sánh chi phí và doanh thu (tổng hợp theo vụ, theo ô, theo phân khu)
+  // Doanh thu và chi phí gộp một biểu đồ thanh ngang: mỗi mục hai thanh liền nhau (xanh doanh thu, đỏ chi phí), số ở cuối thanh
   if (key === COMPARE_KEY) {
     const top = [...rows].sort((a, b) => n(b.cost) - n(a.cost)).slice(0, TOP);
-    return {
-      kind: 'bars', title: 'Chi phí và doanh thu',
-      labels: top.map(labelOf), shortLabels: top.map((x) => clip(labelOf(x), 9)),
-      series: [{ key: 'cost', label: 'Tổng chi phí', tone: 'bad', kind: 'money' }, { key: 'revenue', label: 'Doanh thu đã ghi', tone: 'ok', kind: 'money' }],
-      values: [top.map((x) => n(x.cost)), top.map((x) => n(x.revenue))],
-    };
+    const items: ChartItem[] = top.flatMap((x) => [
+      { label: `${labelOf(x)} — Doanh thu`, value: n(x.revenue), tone: 'ok' as Tone },
+      { label: `${labelOf(x)} — Chi phí`, value: n(x.cost), tone: 'bad' as Tone },
+    ]);
+    if (items.every((i) => i.value === 0)) return null;
+    return { kind: 'hbars', title: 'Doanh thu và chi phí', valueKind: 'money', unit: 'đ', tone: 'info', items };
+  }
+
+  // Số vụ chia khúc theo trạng thái (báo cáo theo phân khu/ô): mỗi mục một thanh
+  if (key === 'cycles' && (r.columns as Col[]).some((c) => c.key === 'cycles_active')) {
+    const items = rows.map((x) => ({ label: labelOf(x), segments: STATUS_COLS.map((s) => ({ label: s.label, tone: s.tone, value: n(x[s.key]) })).filter((s) => s.value > 0) }))
+      .filter((i) => i.segments.length > 0);
+    if (items.length === 0) return null;
+    return { kind: 'segments', title: 'Số vụ theo trạng thái', items };
   }
 
   const col = ms.find((c) => c.key === key)!;

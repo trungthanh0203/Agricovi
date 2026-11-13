@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChartCard, DonutChart, HBarList, XYChart } from './charts';
+import { ChartCard, DonutChart, HBarList, ProportionBar, XYChart } from './charts';
 import { compactNumber } from '../lib/chartMath';
 import { buildChartSpec, chartOptions, type ValueKind } from '../lib/reportChart';
 import { fmtCell, type ReportResult } from '../lib/reports';
@@ -27,6 +27,19 @@ export function ReportChart({ result }: { result: ReportResult }) {
   if (!spec) return <>{chooser}<p className="muted">{result.rows.length === 0 ? 'Không có số liệu trong khoảng này.' : 'Số liệu này đều bằng 0 nên chưa vẽ được. Hãy chọn số liệu khác ở trên, hoặc xem dạng bảng.'}</p></>;
   const range = `${result.from.split('-').reverse().join('/')} – ${result.to.split('-').reverse().join('/')}`;
 
+  if (spec.kind === 'segments') {
+    return (
+      <>{chooser}<ChartCard title={spec.title} subtitle={range}
+        table={{ columns: ['Mục', 'Trạng thái và số vụ'], rows: spec.items.map((i) => [i.label, i.segments.map((s) => `${s.label}: ${s.value}`).join(', ')]) }}>
+        {spec.items.map((i) => (
+          <div key={i.label} style={{ marginBottom: 10 }}>
+            <strong>{i.label}</strong>
+            <ProportionBar segments={i.segments} format={(n) => `${n} vụ`} ariaLabel={`Số vụ theo trạng thái: ${i.label}`} />
+          </div>
+        ))}
+      </ChartCard></>
+    );
+  }
   if (spec.kind === 'bars') {
     const kinds = spec.series.map((s) => s.kind);
     const f = (n: number) => fmt(kinds[0]!, kinds[0] === 'money' ? '' : '')(n);

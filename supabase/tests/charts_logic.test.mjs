@@ -95,7 +95,12 @@ test('theo khách, nhà cung ứng, vật tư, người: thanh ngang số đo ch
   assert.deepEqual(chartOptions({ type: 'purchases', group: 'material', columns: cols(['label', 'qty', 'amount']), rows: [] }).map((o) => o.key), ['amount', 'qty']);
   // tổng hợp theo ô/phân khu (type areas) và thu mua (procurement) cũng vẽ được; số âm vẽ đỏ
   const ar = buildChartSpec({ type: 'areas', group: 'zone', columns: cols(['label', 'cycles', 'cost', 'revenue', 'profit']), rows: [{ label: 'A', cycles: 1, cost: 5, revenue: 3, profit: -2 }] });
-  assert.equal(ar.kind, 'bars');
+  assert.equal(ar.kind, 'hbars');
+  const stCols = cols(['label', 'cycles', 'cycles_active', 'cycles_preparing', 'cycles_paused', 'cycles_ended']);
+  const seg = buildChartSpec({ type: 'areas', group: 'zone', columns: stCols, rows: [{ label: 'A', cycles: 3, cycles_active: 2, cycles_preparing: 0, cycles_paused: 0, cycles_ended: 1 }] }, 'cycles');
+  assert.equal(seg.kind, 'segments');
+  assert.deepEqual(seg.items[0].segments.map((x) => [x.label, x.value]), [['Đang sản xuất', 2], ['Kết thúc', 1]]);
+  assert.ok(!chartOptions({ type: 'areas', group: 'zone', columns: stCols, rows: [] }).some((o) => o.key.startsWith('cycles_')));
   const neg = buildChartSpec({ type: 'areas', group: 'zone', columns: cols(['label', 'cycles', 'cost', 'revenue', 'profit']), rows: [{ label: 'A', cycles: 1, cost: 5, revenue: 3, profit: -2 }] }, 'profit');
   assert.equal(neg.kind, 'hbars');
   assert.equal(neg.items[0].tone, 'bad');
@@ -104,9 +109,10 @@ test('theo khách, nhà cung ứng, vật tư, người: thanh ngang số đo ch
 test('tổng hợp theo vụ: so sánh chi phí và doanh thu; không có dữ liệu thì không vẽ', () => {
   const cyc = buildChartSpec({ type: 'cycles', group: 'default', columns: cols(['label', 'cost', 'net', 'revenue', 'cps']),
     rows: [{ label: 'Vụ A rất dài tên', cost: 100, net: 1, revenue: 300, cps: 1 }, { label: 'Vụ B', cost: 500, net: 1, revenue: 200, cps: 1 }] });
-  assert.equal(cyc.kind, 'bars');
-  assert.deepEqual(cyc.labels, ['Vụ B', 'Vụ A rất dài tên']); // chi phí lớn trước
-  assert.equal(cyc.series[1].tone, 'ok');
+  assert.equal(cyc.kind, 'hbars'); // doanh thu và chi phí gộp một biểu đồ thanh ngang, mỗi mục hai thanh
+  assert.deepEqual(cyc.items.map((i) => i.label), ['Vụ B — Doanh thu', 'Vụ B — Chi phí', 'Vụ A rất dài tên — Doanh thu', 'Vụ A rất dài tên — Chi phí']); // chi phí lớn trước
+  assert.deepEqual(cyc.items.map((i) => i.tone), ['ok', 'bad', 'ok', 'bad']);
+  assert.ok(!chartOptions({ type: 'cycles', group: 'default', columns: cols(['label', 'cost', 'net', 'revenue']), rows: [] }).some((o) => o.key === 'cost' || o.key === 'revenue')); // không liệt kê riêng
   assert.equal(buildChartSpec({ type: 'expenses', group: 'month', columns: cols(['label', 'amount']), rows: [] }), null);
   assert.equal(buildChartSpec({ type: 'expenses', group: 'category', columns: cols(['label', 'amount']), rows: [{ label: 'X', amount: 0 }] }), null);
 });
