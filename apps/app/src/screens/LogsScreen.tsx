@@ -136,10 +136,8 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
         </div>
       )}
 
+      <CycleSelect label={<CycleWord cap />} cycles={myCycles} value={cycleId} onChange={(v) => { setCycleId(v); setLimit(PAGE); }} labelOf={cycleLabel} emptyLabel="Tất cả vụ" />
       <div className="filters">
-        <div style={{ flex: '1 1 100%' }}>
-          <CycleSelect label={<CycleWord cap />} cycles={myCycles} value={cycleId} onChange={(v) => { setCycleId(v); setLimit(PAGE); }} labelOf={cycleLabel} emptyLabel="Tất cả vụ" />
-        </div>
         <label>
           Loại việc
           <select value={typeId} onChange={(e) => { setTypeId(e.target.value); setLimit(PAGE); }}>

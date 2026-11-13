@@ -26,15 +26,23 @@ export function CycleSelect({ label, cycles, value, onChange, labelOf, emptyLabe
   const chips = ORDER.filter((st) => count(st) > 0);
   const f = filter === 'all' || count(filter) > 0 ? filter : 'all';
   const shown = f === 'all' ? cycles : cycles.filter((c) => c.status === f);
+  // đổi nhóm lọc: nếu vụ đang chọn không thuộc nhóm mới thì bỏ chọn (về "Tất cả"/lựa chọn rỗng nếu có, không thì vụ đầu của nhóm) để danh sách và lựa chọn khớp nhau
+  function pick(next: 'all' | (typeof ORDER)[number]) {
+    setFilter(next);
+    const cur = cycles.find((c) => c.id === value);
+    if (next === 'all' || !cur || cur.status === next) return;
+    if (emptyLabel !== undefined || leading?.some((o) => o.value === '')) onChange('');
+    else { const first = cycles.find((c) => c.status === next); if (first) onChange(first.id); }
+  }
   const current = cycles.find((c) => c.id === value);
   const list = current && !shown.some((c) => c.id === value) ? [current, ...shown] : shown;
   return (
     <>
       {chips.length > 1 && (
         <div className="chips" role="group" aria-label="Lọc vụ theo trạng thái">
-          <button type="button" className={f === 'all' ? 'chip active' : 'chip'} aria-pressed={f === 'all'} onClick={() => setFilter('all')}>Tất cả ({cycles.length})</button>
+          <button type="button" className={f === 'all' ? 'chip active' : 'chip'} aria-pressed={f === 'all'} onClick={() => pick('all')}>Tất cả ({cycles.length})</button>
           {chips.map((st) => (
-            <button type="button" key={st} className={f === st ? 'chip active' : 'chip'} aria-pressed={f === st} onClick={() => setFilter(st)}>{CHIP_LABEL[st]} ({count(st)})</button>
+            <button type="button" key={st} className={f === st ? 'chip active' : 'chip'} aria-pressed={f === st} onClick={() => pick(st)}>{CHIP_LABEL[st]} ({count(st)})</button>
           ))}
         </div>
       )}
