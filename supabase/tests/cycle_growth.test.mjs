@@ -73,3 +73,50 @@ test('ADG và FCR tính từ lần cân đầu/cuối và cám dùng giữa hai 
   // cân giảm: không tính FCR
   assert.equal(growthSummary({ ...raw, weighings: [{ date: '2026-11-01', pigs: 10, avg_kg: 60 }, { date: '2026-12-01', pigs: 10, avg_kg: 55 }] }, cycle, [], [], true).fcr, null);
 });
+
+
+// Mục 14 lát 2 (migration 0200): cân nặng xuất chuồng dự kiến + dự báo ngày xuất (phần thuần)
+import { forecastHarvest } from '../../apps/app/src/lib/growthLogic.ts';
+
+test('cân nặng xuất chuồng dự kiến: chủ/quản lý đặt, nhân viên không; hợp lệ; get_cycle_growth trả kèm', async () => {
+  const { db, owner, wk, other, growth } = await setup();
+  assert.equal((await growth(owner)).target_weight_kg, null);
+  assert.match(await expectError(asUser(db, wk, `select set_cycle_target_weight($1, 110)`, [CYC])), /FORBIDDEN/);
+  assert.match(await expectError(asUser(db, other, `select set_cycle_target_weight($1, 110)`, [CYC])), /FORBIDDEN/);
+  assert.match(await expectError(asUser(db, owner, `select set_cycle_target_weight($1, 0)`, [CYC])), /INVALID_WEIGHT/);
+  assert.match(await expectError(asUser(db, owner, `select set_cycle_target_weight($1, 6000)`, [CYC])), /INVALID_WEIGHT/);
+  await asUser(db, owner, `select set_cycle_target_weight($1, 110.5)`, [CYC]);
+  assert.equal(Number((await growth(owner)).target_weight_kg), 110.5);
+  assert.equal(Number((await growth(wk)).target_weight_kg), 110.5);      // người làm xem được để thấy dự báo
+  await asUser(db, owner, `select set_cycle_target_weight($1, null)`, [CYC]);   // xóa mục tiêu
+  assert.equal((await growth(owner)).target_weight_kg, null);
+});
+
+test('dự báo ngày xuất: khoảng ngày theo đà gần đây và trung bình cả lứa; đã đạt; thiếu dữ liệu; lần cân cũ; so với kế hoạch', () => {
+  const W = (date, avg_kg) => ({ date, avg_kg, pigs: 20 });
+  const today = '2026-12-10';
+  // không có mục tiêu / chưa đủ lần cân
+  assert.equal(forecastHarvest([W('2026-11-01', 30), W('2026-12-01', 60)], null, today).state, 'no_target');
+  assert.equal(forecastHarvest([W('2026-12-01', 60)], 100, today).state, 'need_weighings');
+  // 2 lần cân: 30 kg → 60 kg trong 30 ngày = 1 kg/ngày (1000 g); mục tiêu 100: cần 40 kg → 40 ngày kể từ 01/12 → 10/01/2027
+  const a = forecastHarvest([W('2026-11-01', 30), W('2026-12-01', 60)], 100, today);
+  assert.deepEqual([a.state, a.fromDate, a.toDate, a.adgFastG, a.adgSlowG], ['ok', '2027-01-10', '2027-01-10', 1000, 1000]);
+  // 3 lần cân: đà gần đây nhanh hơn (60→75 trong 10 ngày = 1,5 kg/ngày): cần 25 kg → 17 ngày; trung bình cả lứa 45 kg/40 ngày = 1,125 kg/ngày → 23 ngày; tính từ 11/12
+  const b = forecastHarvest([W('2026-11-01', 30), W('2026-12-01', 60), W('2026-12-11', 75)], 100, '2026-12-12', '2027-01-01');
+  assert.deepEqual([b.state, b.adgFastG, b.adgSlowG], ['ok', 1500, 1125]);
+  assert.equal(b.fromDate, '2026-12-28');
+  assert.equal(b.toDate, '2027-01-03');
+  assert.equal(b.vsPlanDays, 2);                       // ngày chậm nhất muộn hơn kế hoạch 01/01/2027 hai ngày
+  assert.equal(b.daysToFrom, 16);
+  // đã đạt: lần cân đầu tiên ≥ mục tiêu
+  const c = forecastHarvest([W('2026-11-01', 30), W('2026-12-01', 105), W('2026-12-05', 108)], 100, today);
+  assert.deepEqual([c.state, c.reachedOn], ['reached', '2026-12-01']);
+  // không tăng cân hoặc tụt cân: không dự báo
+  assert.equal(forecastHarvest([W('2026-11-01', 60), W('2026-12-01', 58)], 100, today).state, 'no_growth');
+  // quá 2 năm: chưa dự báo được
+  assert.equal(forecastHarvest([W('2026-11-01', 30), W('2027-11-01', 31)], 100, '2027-11-02').state, 'too_far');
+  // lần cân cuối quá 14 ngày: đánh dấu cũ để nhắc cân lại; dự báo đã qua thì daysTo âm
+  const d = forecastHarvest([W('2026-10-01', 30), W('2026-10-21', 50)], 60, '2026-12-10');
+  assert.equal(d.stale, true);
+  assert.ok(d.daysToTo < 0);
+});

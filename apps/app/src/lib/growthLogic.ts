@@ -10,6 +10,8 @@ import { countSummary, type CountEventLite } from './countLogic';
 export interface Weighing { date: string; pigs: number | null; avg_kg: number; id?: string | null; manual?: boolean }
 export interface FeedByDate { date: string; kg: number }
 export interface GrowthRaw {
+  /** Cân nặng xuất chuồng dự kiến (kg/con) do cơ sở đặt (migration 0200) */
+  target_weight_kg?: number | null;
   weighings: Weighing[];
   feed: { can_view: boolean; stock_by_date: FeedByDate[]; other_unit: boolean; logs_by_date: FeedByDate[]; manual_entries?: { id: string; date: string; kg: number; name: string | null }[] };
 }
@@ -69,5 +71,71 @@ export function growthSummary(
   return {
     ...base, days: span, adgG: adg, heads: heads ?? null, feedBetweenKg: between === null ? null : r(between, 1),
     fcr: ok ? r(between / (gain * heads), 2) : null, needMore: between === null || between <= 0 ? 'feed' : null,
+  };
+}
+
+
+// ---------------------------------------------------------------- dự báo ngày xuất chuồng (mục 14, lát 2)
+/**
+ * Dự báo ngày đạt cân xuất chuồng từ các lần cân mẫu (số ƯỚC TÍNH, không thay cân thực tế). Thiếu dữ liệu thì nói rõ thiếu gì, không bịa ngày.
+ *  - Tốc độ tăng cân (kg/con/ngày): (a) giữa hai lần cân CUỐI nếu có từ 3 lần cân và cách nhau từ 3 ngày (đà gần đây), (b) từ lần cân đầu tới lần cuối (trung bình cả lứa).
+ *    Có cả hai thì cho KHOẢNG ngày (nhanh nhất – chậm nhất); chỉ một thì một ngày.
+ *  - Ngày ước tính tính từ NGÀY CÂN CUỐI: ngày cân cuối + (cân mục tiêu − cân cuối) ÷ tốc độ. Lần cân cuối quá cũ (hơn 14 ngày so với hôm nay) thì nhắc cân lại.
+ *  - Dự báo vượt 2 năm thì coi như chưa dự báo được.
+ */
+export type ForecastState = 'no_target' | 'need_weighings' | 'reached' | 'no_growth' | 'too_far' | 'ok';
+export interface HarvestForecast {
+  state: ForecastState;
+  targetKg: number | null;
+  lastDate: string | null;
+  lastAvgKg: number | null;
+  /** đã đạt: ngày của lần cân đầu tiên đạt hoặc vượt mục tiêu */
+  reachedOn: string | null;
+  /** khoảng ngày dự báo (yyyy-mm-dd); trùng nhau nếu chỉ có một ước tính */
+  fromDate: string | null;
+  toDate: string | null;
+  /** tốc độ g/con/ngày dùng để ước (nhanh, chậm) */
+  adgFastG: number | null;
+  adgSlowG: number | null;
+  /** số ngày kể từ hôm nay tới đầu/cuối khoảng (âm = đã qua mà chưa đạt: nên cân lại) */
+  daysToFrom: number | null;
+  daysToTo: number | null;
+  stale: boolean;
+  /** so với ngày xuất dự kiến của vụ: dương = dự báo muộn hơn kế hoạch (ngày); null nếu vụ chưa có ngày dự kiến */
+  vsPlanDays: number | null;
+}
+
+const addDaysIso = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * DAY).toISOString().slice(0, 10);
+const MAX_FORECAST_DAYS = 730;
+
+export function forecastHarvest(weighings: Weighing[], targetKg: number | null | undefined, today: string, plannedEnd?: string | null): HarvestForecast {
+  const base: HarvestForecast = {
+    state: 'no_target', targetKg: targetKg ?? null, lastDate: null, lastAvgKg: null, reachedOn: null, fromDate: null, toDate: null,
+    adgFastG: null, adgSlowG: null, daysToFrom: null, daysToTo: null, stale: false, vsPlanDays: null,
+  };
+  if (!targetKg || targetKg <= 0) return base;
+  const w = [...weighings].filter((x) => x.avg_kg > 0).sort((a, b) => a.date.localeCompare(b.date));
+  if (w.length < 2) return { ...base, state: 'need_weighings', lastDate: w[w.length - 1]?.date ?? null, lastAvgKg: w[w.length - 1]?.avg_kg ?? null };
+  const first = w[0]!, last = w[w.length - 1]!, prev = w[w.length - 2]!;
+  const common = { ...base, lastDate: last.date, lastAvgKg: last.avg_kg, stale: days(last.date, today) > 14 };
+  const hit = w.find((x) => x.avg_kg >= targetKg);
+  if (hit) return { ...common, state: 'reached', reachedOn: hit.date };
+
+  const rates: number[] = []; // kg/con/ngày
+  const spanAll = days(first.date, last.date);
+  if (spanAll > 0 && last.avg_kg > first.avg_kg) rates.push((last.avg_kg - first.avg_kg) / spanAll);
+  const spanRecent = days(prev.date, last.date);
+  if (w.length > 2 && spanRecent >= 3 && last.avg_kg > prev.avg_kg) rates.push((last.avg_kg - prev.avg_kg) / spanRecent);
+  if (rates.length === 0) return { ...common, state: 'no_growth' };
+
+  const need = targetKg - last.avg_kg;
+  const fast = Math.max(...rates), slow = Math.min(...rates);
+  const dFast = Math.ceil(need / fast), dSlow = Math.ceil(need / slow);
+  if (dSlow > MAX_FORECAST_DAYS) return { ...common, state: 'too_far', adgFastG: r(fast * 1000, 0), adgSlowG: r(slow * 1000, 0) };
+  const fromDate = addDaysIso(last.date, dFast), toDate = addDaysIso(last.date, dSlow);
+  return {
+    ...common, state: 'ok', fromDate, toDate, adgFastG: r(fast * 1000, 0), adgSlowG: r(slow * 1000, 0),
+    daysToFrom: days(today, fromDate), daysToTo: days(today, toDate),
+    vsPlanDays: plannedEnd ? days(plannedEnd, toDate) : null,
   };
 }
