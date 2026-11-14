@@ -119,3 +119,64 @@ test('lập phiếu từ phiếu thu hoạch: cần hộ cho xem, mỗi lần th
   assert.equal((await hv()).harvests.length, 1);   // phiếu thu hoạch d1 hiện lại (d2 đã thu mua)
   assert.equal(Number((await rep(c.boss, c.coop)).rows[0].receipts), 1);
 });
+
+// D162 (migration 0199): khối lượng thực cân, mua một phần, ngày thu mua, tự đánh số phiếu, ảnh chứng từ.
+test('phiếu từ phiếu thu hoạch v2: mặc định trừ hao hụt, nhập số cân thực tế, mua một phần rồi mua xong; ngày hợp lệ', async () => {
+  const c = await setup();
+  await c.db.query(`insert into harvest_records (id,organization_id,cycle_id,harvested_at,quantity,loss_quantity,grade) values ($1,$2,$3,now() - interval '3 days',200,20,'A')`, [id('d', 1), c.hh, id('3', 1)]);
+  const hv = async () => (await asUser(c.db, c.boss, `select coop_household_harvests($1,$2) r`, [c.coop, c.hh])).rows[0].r.harvests;
+  const mk = (n, o = {}) => asUser(c.db, c.boss, `select create_procurement_from_harvest($1,$2,$3,$4,null,$5,null,$6,$7,null,$8::date) r`,
+    [id('7', n), c.coop, id('d', 1), o.price ?? 20000, o.inv ?? null, o.qty ?? null, o.close ?? true, o.date ?? null]);
+  const h0 = (await hv())[0];
+  assert.deepEqual([Number(h0.quantity), Number(h0.loss_quantity), Number(h0.purchased_qty)], [200, 20, 0]);
+  // ngày không hợp lệ: trước ngày thu hoạch, trong tương lai; khối lượng 0
+  assert.match(await expectError(mk(1, { date: new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10) })), /trước ngày thu hoạch/);
+  assert.match(await expectError(mk(1, { date: new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10) })), /sau ngày hôm nay/);
+  assert.match(await expectError(mk(1, { qty: 0 })), /INVALID_QTY/);
+  // mua một phần: HTX cân thực tế 100 kg, hộ còn hàng → phiếu thu hoạch vẫn còn trong danh sách, kèm số đã mua
+  await mk(1, { qty: 100, close: false });
+  let r = (await c.db.query(`select quantity, harvest_qty, amount, harvest_closed, invoice_no from procurement_receipts where id=$1`, [id('7', 1)])).rows[0];
+  assert.deepEqual([Number(r.quantity), Number(r.harvest_qty), Number(r.amount), r.harvest_closed], [100, 180, 2000000, false]);
+  const left = await hv();
+  assert.equal(left.length, 1);
+  assert.equal(Number(left[0].purchased_qty), 100);
+  // mua tiếp phần còn lại với số cân thực tế khác số hộ ghi (cân lệch), đánh dấu mua xong → hết khỏi danh sách
+  await mk(2, { qty: 82.5, close: true });
+  assert.equal((await hv()).length, 0);
+  assert.match(await expectError(mk(3, { qty: 5 })), /ALREADY_PURCHASED/);
+  // mặc định (không nhập số cân) = số hộ ghi trừ hao hụt: dùng phiếu thu hoạch khác
+  await c.db.query(`insert into harvest_records (id,organization_id,cycle_id,harvested_at,quantity,loss_quantity) values ($1,$2,$3,now(),300,50)`, [id('d', 2), c.hh, id('3', 1)]);
+  await asUser(c.db, c.boss, `select create_procurement_from_harvest($1,$2,$3,10000,null,null,null)`, [id('7', 9), c.coop, id('d', 2)]);   // bản 7 tham số (app cũ)
+  assert.equal(Number((await c.db.query(`select quantity from procurement_receipts where id=$1`, [id('7', 9)])).rows[0].quantity), 250);
+});
+
+test('tự đánh số phiếu TM-năm-0001; số tự nhập được giữ nguyên; mỗi HTX đánh số riêng', async () => {
+  const c = await setup();
+  await c.db.query(`insert into harvest_records (id,organization_id,cycle_id,harvested_at,quantity) values ($1,$2,$3,now(),50),($4,$2,$3,now(),60)`, [id('d', 1), c.hh, id('3', 1), id('d', 2)]);
+  const yr = new Date().getFullYear();
+  await asUser(c.db, c.boss, `select create_procurement_from_harvest($1,$2,$3,10000,null,null,null)`, [id('7', 1), c.coop, id('d', 1)]);
+  await create(c, c.boss, 2);                                                     // phiếu nhập tay cũng được đánh số
+  await create(c, c.boss, 3, { inv: 'PM-GIAY-77' });                                // số tự nhập giữ nguyên
+  await asUser(c.db, c.boss, `select create_procurement_from_harvest($1,$2,$3,10000,null,'  ',null)`, [id('7', 4), c.coop, id('d', 2)]);   // chỉ có dấu cách = để trống
+  const inv = (await c.db.query(`select invoice_no from procurement_receipts order by created_at, id`)).rows.map((x) => x.invoice_no);
+  assert.deepEqual(inv.filter((x) => x.startsWith('TM-')).sort(), [`TM-${yr}-0001`, `TM-${yr}-0002`, `TM-${yr}-0003`]);
+  assert.ok(inv.includes('PM-GIAY-77'));
+});
+
+test('ảnh chứng từ: chỉ đường dẫn của HTX mình, loại receipts; chỉ HTX thấy; người có quyền HTX ghi được ảnh vào kho, người khác thì không', async () => {
+  const c = await setup();
+  await create(c, c.boss, 1);
+  const img = `storage:${c.coop}/receipts/aaaaaaaa-0000-4000-8000-000000000001.jpg`;
+  assert.match(await expectError(asUser(c.db, c.boss, `select set_procurement_attachment($1,$2)`, [id('7', 1), `storage:${c.hh}/receipts/x.jpg`])), /INVALID_ATTACHMENT/);
+  assert.match(await expectError(asUser(c.db, c.farmer, `select set_procurement_attachment($1,$2)`, [id('7', 1), img])), /FORBIDDEN/);
+  await asUser(c.db, c.boss, `select set_procurement_attachment($1,$2)`, [id('7', 1), img]);
+  const k = (await asUser(c.db, c.boss, `select get_procurement_ledger($1,'coop',false) l`, [c.coop])).rows[0].l;
+  const h = (await asUser(c.db, c.farmer, `select get_procurement_ledger($1,'household',false) l`, [c.hh])).rows[0].l;
+  assert.equal(k[0].attachment, img);
+  assert.equal(h[0].attachment, null);                                              // hộ không thấy ảnh chứng từ của HTX
+  await asUser(c.db, c.boss, `select set_procurement_attachment($1,null)`, [id('7', 1)]);   // gỡ ảnh
+  // kho ảnh: chủ HTX ghi được ảnh loại receipts; hộ (không thuộc cơ sở HTX) không ghi được vào kho của HTX
+  const name = `${c.coop}/receipts/aaaaaaaa-0000-4000-8000-000000000002.jpg`;
+  await asUser(c.db, c.boss, `insert into storage.objects (bucket_id, name) values ('org-media', $1)`, [name]);
+  assert.match(await expectError(asUser(c.db, c.farmer, `insert into storage.objects (bucket_id, name) values ('org-media', $1)`, [`${c.coop}/receipts/aaaaaaaa-0000-4000-8000-000000000003.jpg`])), /row-level|violates/i);
+});
