@@ -10,6 +10,7 @@ import {
 } from '../lib/payBook';
 import type { TabId } from '../lib/tabs';
 import { PaySettleBar } from './PaySettleBar';
+import { PieceJobsSection } from './PieceJobsSection';
 import {
   buildPayBookCsv, buildPayslipText, groupByTeam, hoursText, PAY_STATUS_LABEL, personState, rangeOf, shiftAnchor, sumRows,
   type PayDetail, type PayItem, type PayOverview, type PayRow, type RangeMode,
@@ -158,12 +159,13 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
     <>
       {header}
       {settle && <PaySettleBar orgId={orgId} state={settle} onChanged={refreshAll} onGo={onGo} />}
+      {canSeeAll && mode === 'month' && <PieceJobsSection orgId={orgId} range={range} people={rows.filter((r) => r.status === 'active').map((r) => ({ worker_id: r.worker_id, name: r.name }))} online={online} onChanged={refreshAll} />}
       {rows.length === 0 && <p className="muted">{busy ? 'Đang tải…' : 'Chưa có người nào.'}</p>}
       {rows.length > 0 && (
         <div className="kpis">
           <KpiTile label="Tổng thực nhận" value={shortMoney(total.net)} tone="info" title={fmtVnd(total.net)} note={`đã chốt ${shortMoney(total.net_locked)}`} />
           <KpiTile label="Giờ công" value={hoursText(total.hours)} note={`${rows.length} người`} />
-          <KpiTile label="Lương và công" value={shortMoney(total.hourly + total.salary)} title={fmtVnd(total.hourly + total.salary)} note="giờ + lương cố định" />
+          <KpiTile label="Lương và công" value={shortMoney(total.hourly + total.salary + total.piece)} title={fmtVnd(total.hourly + total.salary + total.piece)} note={total.piece > 0 ? 'giờ + lương cố định + khoán' : 'giờ + lương cố định'} />
           <KpiTile label="Thưởng − phạt − tạm ứng" value={shortMoney(total.bonus - total.deduction - total.advance)} tone={total.bonus - total.deduction - total.advance < 0 ? 'warn' : 'ok'} />
         </div>
       )}
@@ -229,7 +231,7 @@ function PersonView({ row, detail, range, adjust, orgName, label }: {
   const open = row.net - row.net_locked;
   const items = detail?.items ?? [];
   const days = items.filter((i) => i.kind === 'hours' || i.kind === 'pending' || i.kind === 'open' || i.kind === 'rejected');
-  const others = items.filter((i) => i.kind === 'salary' || i.kind === 'bonus' || i.kind === 'deduction' || i.kind === 'advance').sort((a, b) => b.date.localeCompare(a.date));
+  const others = items.filter((i) => i.kind === 'salary' || i.kind === 'piece' || i.kind === 'bonus' || i.kind === 'deduction' || i.kind === 'advance').sort((a, b) => b.date.localeCompare(a.date));
   return (
     <>
       <h2 className="sect">{row.name}{row.team_name ? ` · ${row.team_name}` : ''}</h2>
@@ -238,6 +240,7 @@ function PersonView({ row, detail, range, adjust, orgName, label }: {
         <KpiTile label="Giờ công" value={hoursText(row.hours)} note={`${row.days} ngày`} />
         <KpiTile label="Tiền công theo giờ" value={shortMoney(row.hourly)} title={fmtVnd(row.hourly)} />
         <KpiTile label="Lương cố định" value={shortMoney(row.salary)} title={fmtVnd(row.salary)} />
+        {row.piece > 0 && <KpiTile label="Tiền khoán" value={shortMoney(row.piece)} title={fmtVnd(row.piece)} tone="ok" />}
         <KpiTile label="Thưởng" value={shortMoney(row.bonus)} tone={row.bonus > 0 ? 'ok' : 'neutral'} />
         <KpiTile label="Phạt / khấu trừ" value={shortMoney(row.deduction)} tone={row.deduction > 0 ? 'bad' : 'neutral'} />
         <KpiTile label="Tạm ứng" value={shortMoney(row.advance)} tone={row.advance > 0 ? 'warn' : 'neutral'} />
@@ -260,7 +263,7 @@ function PersonView({ row, detail, range, adjust, orgName, label }: {
         <p className="muted">Công sai? Vào Sản xuất → Chấm công, chọn ngày đó và bấm đề nghị sửa công.</p>
       </Collapsible>
 
-      <Collapsible title="Lương cố định, thưởng, phạt, tạm ứng" summary={`${others.length} khoản`} defaultOpen={others.length > 0 || !!adjust}>
+      <Collapsible title="Lương cố định, khoán, thưởng, phạt, tạm ứng" summary={`${others.length} khoản`} defaultOpen={others.length > 0 || !!adjust}>
         {adjust && !form && (
           <div className="chips">
             {(['bonus', 'deduction', 'advance'] as const).map((k) => (
@@ -290,9 +293,9 @@ function PersonView({ row, detail, range, adjust, orgName, label }: {
         {detail && others.length === 0 && <p className="muted">Không có khoản nào trong kỳ này.</p>}
         {others.map((i, n) => (
           <div className="row member" key={`${i.id ?? n}`}>
-            <span className="grow"><strong>{i.kind === 'salary' ? `Lương cố định tháng ${i.label ?? ''}` : ADJ_KIND_LABEL[i.kind as 'bonus' | 'deduction' | 'advance']}</strong>
+            <span className="grow"><strong>{i.kind === 'salary' ? `Lương cố định tháng ${i.label ?? ''}` : ADJ_KIND_LABEL[i.kind as 'piece' | 'bonus' | 'deduction' | 'advance']}</strong>
               <span className="sub">{i.kind === 'salary' ? '' : `${fmtDate(i.date)} — ${i.label ?? ''}`}</span>
-              {adjust && i.id && i.kind !== 'salary' && (
+              {adjust && i.id && i.kind !== 'salary' && i.kind !== 'piece' && (
                 <span className="sub">
                   <button type="button" className="link inline" disabled={aBusy} onClick={() => { setAError(null); setForm({ id: i.id, kind: i.kind as 'bonus' | 'deduction' | 'advance', amount: String(Math.abs(i.amount)), reason: i.label ?? '' }); }}>Sửa</button>
                   <button type="button" className="link inline" disabled={aBusy} onClick={() => void remove(i.id!)}>Xóa</button>

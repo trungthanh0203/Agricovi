@@ -41,6 +41,7 @@ export function PaySettleBar({ orgId, state, onChanged, onGo }: {
   if (b.open_shifts > 0) todo.push({ text: `${b.open_shifts} ca đang mở (chưa ra ca)`, go: { tab: 'production', section: 'attendance', label: 'Mở Chấm công' } });
   if (b.pending_requests > 0) todo.push({ text: `${b.pending_requests} yêu cầu sửa công chờ duyệt`, go: { tab: 'production', section: 'attendance', label: 'Mở Chấm công' } });
   if (b.missing_rate.length > 0) todo.push({ text: `Chưa có cách trả công: ${b.missing_rate.map((m) => `${m.name} (${m.days} ngày)`).join(', ')}`, go: { tab: 'declare', section: 'members', label: 'Mở Nhân sự' } });
+  if ((b.draft_piece_jobs ?? 0) > 0) todo.push({ text: `${b.draft_piece_jobs} phiếu khoán chưa nghiệm thu (nghiệm thu hoặc hủy ở mục Phiếu khoán bên dưới)` });
   if (b.uncomputed > 0 && state.status !== 'none') todo.push({ text: `${b.uncomputed} ca công mới chưa tính vào bảng lương (bấm Tính lại)` });
 
   return (

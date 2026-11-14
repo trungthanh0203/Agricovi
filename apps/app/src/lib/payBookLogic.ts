@@ -7,7 +7,7 @@ import { addMonths, fmtIso, parseDay } from './dates';
 
 export interface PayRow {
   worker_id: string; name: string; user_id: string | null; status: string; team_id: string | null; team_name: string | null;
-  hours: number; pending_hours: number; days: number; hourly: number; salary: number; bonus: number; deduction: number; advance: number;
+  hours: number; pending_hours: number; days: number; hourly: number; salary: number; piece: number; bonus: number; deduction: number; advance: number;
   net: number; net_locked: number; no_rate_days: number;
   /** số khoản theo trạng thái (đã chốt / đã tính / ước tính / đang trong ca) */
   n_locked: number; n_calculated: number; n_estimate: number; n_open: number;
@@ -16,7 +16,7 @@ export interface PayOverview { from: string; to: string; generated_at: string; c
 
 export type PayStatus = 'locked' | 'calculated' | 'estimate' | 'no_rate' | 'pending' | 'open' | 'rejected';
 export interface PayItem {
-  kind: 'hours' | 'pending' | 'open' | 'rejected' | 'salary' | 'bonus' | 'deduction' | 'advance';
+  kind: 'hours' | 'pending' | 'open' | 'rejected' | 'salary' | 'piece' | 'bonus' | 'deduction' | 'advance';
   date: string; id: string | null; minutes: number; amount: number; rate: number | null; status: PayStatus; label: string | null;
   started_at: string | null; ended_at: string | null; break_minutes: number | null;
 }
@@ -63,7 +63,7 @@ export function sumRows(rs: PayRow[], name = 'Tổng'): PayRow {
   const s = (k: keyof PayRow) => rs.reduce((t, r) => t + Number(r[k] ?? 0), 0);
   return {
     worker_id: '', name, user_id: null, status: 'active', team_id: null, team_name: null,
-    hours: Math.round(s('hours') * 100) / 100, pending_hours: Math.round(s('pending_hours') * 100) / 100, days: s('days'), hourly: s('hourly'), salary: s('salary'),
+    hours: Math.round(s('hours') * 100) / 100, pending_hours: Math.round(s('pending_hours') * 100) / 100, days: s('days'), hourly: s('hourly'), salary: s('salary'), piece: s('piece'),
     bonus: s('bonus'), deduction: s('deduction'), advance: s('advance'), net: s('net'), net_locked: s('net_locked'), no_rate_days: s('no_rate_days'),
     n_locked: s('n_locked'), n_calculated: s('n_calculated'), n_estimate: s('n_estimate'), n_open: s('n_open'),
   };
@@ -74,10 +74,10 @@ export const hoursText = (h: number) => `${h.toLocaleString('vi-VN', { maximumFr
 /** Bảng CSV cho danh sách (tất cả / theo tổ) */
 export function buildPayBookCsv(rows: PayRow[], range: { from: string; to: string }): string {
   const q = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
-  const head = ['Người', 'Tổ', 'Giờ công', 'Số ngày công', 'Tiền công theo giờ', 'Lương cố định', 'Thưởng', 'Phạt', 'Tạm ứng', 'Thực nhận', 'Trong đó đã chốt'];
+  const head = ['Người', 'Tổ', 'Giờ công', 'Số ngày công', 'Tiền công theo giờ', 'Lương cố định', 'Tiền khoán', 'Thưởng', 'Phạt', 'Tạm ứng', 'Thực nhận', 'Trong đó đã chốt'];
   const lines = [`${q('Bảng lương')},${q(`${range.from} đến ${range.to}`)}`, head.map(q).join(',')];
   for (const r of [...rows, sumRows(rows)]) {
-    lines.push([r.name, r.team_name ?? '', r.hours, r.days, r.hourly, r.salary, r.bonus, r.deduction, r.advance, r.net, r.net_locked].map((v) => (typeof v === 'number' ? v : q(v))).join(','));
+    lines.push([r.name, r.team_name ?? '', r.hours, r.days, r.hourly, r.salary, r.piece, r.bonus, r.deduction, r.advance, r.net, r.net_locked].map((v) => (typeof v === 'number' ? v : q(v))).join(','));
   }
   return '﻿' + lines.join('\n');
 }
@@ -100,8 +100,8 @@ export function buildPayslipText(r: PayRow, items: PayItem[], rangeLabel: string
   L.push(`• Giờ công: ${hoursText(r.hours)} (${r.days} ngày)`);
   if (r.hourly) L.push(`• Tiền công theo giờ: ${money(r.hourly)}`);
   if (r.salary) L.push(`• Lương cố định: ${money(r.salary)}`);
-  const adj = items.filter((i) => i.kind === 'bonus' || i.kind === 'deduction' || i.kind === 'advance');
-  for (const a of adj) L.push(`• ${a.kind === 'bonus' ? 'Thưởng' : a.kind === 'deduction' ? 'Phạt/khấu trừ' : 'Tạm ứng'}: ${a.amount < 0 ? '−' : '+'}${money(Math.abs(a.amount))}${a.label ? ` (${a.label})` : ''}`);
+  const adj = items.filter((i) => i.kind === 'piece' || i.kind === 'bonus' || i.kind === 'deduction' || i.kind === 'advance');
+  for (const a of adj) L.push(`• ${a.kind === 'piece' ? 'Khoán' : a.kind === 'bonus' ? 'Thưởng' : a.kind === 'deduction' ? 'Phạt/khấu trừ' : 'Tạm ứng'}: ${a.amount < 0 ? '−' : '+'}${money(Math.abs(a.amount))}${a.label ? ` (${a.label})` : ''}`);
   L.push(`THỰC NHẬN: ${money(r.net)}`);
   const open = r.net - r.net_locked;
   L.push(open > 0.5 ? `(Đã chốt ${money(r.net_locked)}; phần còn lại là dự tính, có thể đổi tới khi chủ khóa kỳ lương.)` : '(Số liệu đã chốt.)');

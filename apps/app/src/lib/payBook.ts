@@ -7,7 +7,7 @@ const num = (v: unknown) => Number(v ?? 0);
 const normRow = (r: Record<string, unknown>): PayRow => ({
   worker_id: String(r.worker_id), name: String(r.name ?? ''), user_id: (r.user_id as string | null) ?? null, status: String(r.status ?? 'active'),
   team_id: (r.team_id as string | null) ?? null, team_name: (r.team_name as string | null) ?? null,
-  hours: num(r.hours), pending_hours: num(r.pending_hours), days: num(r.days), hourly: num(r.hourly), salary: num(r.salary), bonus: num(r.bonus),
+  hours: num(r.hours), pending_hours: num(r.pending_hours), days: num(r.days), hourly: num(r.hourly), salary: num(r.salary), piece: num(r.piece), bonus: num(r.bonus),
   deduction: num(r.deduction), advance: num(r.advance), net: num(r.net), net_locked: num(r.net_locked), no_rate_days: num(r.no_rate_days),
   n_locked: num(r.n_locked), n_calculated: num(r.n_calculated), n_estimate: num(r.n_estimate), n_open: num(r.n_open),
 });
@@ -66,7 +66,7 @@ export async function fetchPaySeries(orgId: string, worker: string | null = null
 export interface SettleState {
   month: string; from: string; to: string; period_id: string | null; status: string; overlap_legacy: boolean; can_edit: boolean; is_owner: boolean;
   blockers: {
-    pending_attendance: number; open_shifts: number; pending_requests: number; uncomputed: number; blocked: boolean; messages: string[];
+    pending_attendance: number; open_shifts: number; pending_requests: number; uncomputed: number; draft_piece_jobs?: number; blocked: boolean; messages: string[];
     missing_rate: { worker_id: string; name: string; days: number }[];
   };
 }

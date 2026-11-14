@@ -816,3 +816,6 @@ button.mini-kpi.tappable:active { filter: brightness(.95); }
   .dossier h3 { break-after: avoid; }
   .dossier tr { break-inside: avoid; }
 }
+
+/* Phiếu khoán (mục 11) */
+.pct-input { width: 64px; margin-left: 8px; display: inline-block; }

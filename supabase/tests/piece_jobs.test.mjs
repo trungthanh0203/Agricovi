@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDb, addUser, asUser, expectError } from './harness.mjs';
+import { equalPcts, previewShares, modeText } from '../../apps/app/src/lib/pieceJobs.ts';
 
 // Migration 0197-0198 (mục 11): phiếu khoán nối vào kỳ lương tháng, Bảng lương và chi phí nhân công của vụ.
 
@@ -147,4 +148,13 @@ test('chốt lương: phiếu nháp trong tháng chặn khóa kỳ; nghiệm thu
   const ov = await c.overview(c.owner);
   assert.equal(ov.reduce((s, x) => s + x.piece, 0), 200000);
   assert.equal(ov.reduce((s, x) => s + x.net_locked, 0), 200000);
+});
+
+test('logic hiển thị: chia đều giữ tổng 100, xem trước tiền khớp cách chia của máy chủ', () => {
+  assert.deepEqual(equalPcts(3), [33.33, 33.33, 33.34]);
+  assert.equal(equalPcts(3).reduce((s, x) => s + x, 0).toFixed(2), '100.00');
+  assert.deepEqual(previewShares(100000, [33.3333, 33.3333, 33.3333]), [33333, 33333, 33334]);
+  assert.deepEqual(previewShares(665667, [60, 40]), [399400, 266267]);
+  assert.equal(modeText({ pay_mode: 'output', unit: 'kg', unit_price: 2000, lump_amount: null }), '2.000 đ/kg');
+  assert.equal(modeText({ pay_mode: 'lump', unit: null, unit_price: null, lump_amount: 3000000 }), 'Trọn gói 3.000.000 đ');
 });

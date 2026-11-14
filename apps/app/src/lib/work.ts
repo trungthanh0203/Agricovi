@@ -37,7 +37,7 @@ export interface RateRow {
 export interface PeriodRow { id: string; organization_id: string; start_date: string; end_date: string; status: 'draft' | 'pending_confirmation' | 'reviewed' | 'pending_approval' | 'locked' }
 export interface StatementRow { id: string; period_id: string; worker_id: string; total_estimated: number; total_approved: number | null }
 export interface LineRow { id: string; statement_id: string; line_type: 'hours' | 'output' | 'salary'; quantity: number; unit: string; rate_amount: number; amount: number; explanation: string }
-export interface AdjustmentRow { id: string; worker_id: string; period_id: string | null; kind: 'bonus' | 'deduction' | 'advance'; amount: number; reason: string }
+export interface AdjustmentRow { id: string; worker_id: string; period_id: string | null; kind: 'bonus' | 'deduction' | 'advance' | 'piece'; amount: number; reason: string }
 export interface PayrollResult { lines: number; salary_lines?: number; missing_rate_hours: number; missing_rate_output: number; total: number; workers: number }
 
 export const ATT_STATUS_LABEL: Record<AttendanceRow['status'], string> = {
@@ -49,7 +49,7 @@ export const OUTPUT_STATUS_LABEL: Record<OutputRow['status'], string> = {
 export const PERIOD_STATUS_LABEL: Record<PeriodRow['status'], string> = {
   draft: 'Đang soạn', pending_confirmation: 'Chờ xác nhận', reviewed: 'Đã rà soát', pending_approval: 'Chờ duyệt', locked: 'Đã khóa',
 };
-export const ADJ_KIND_LABEL: Record<AdjustmentRow['kind'], string> = { bonus: 'Thưởng', deduction: 'Phạt / khấu trừ', advance: 'Tạm ứng' };
+export const ADJ_KIND_LABEL: Record<AdjustmentRow['kind'], string> = { bonus: 'Thưởng', deduction: 'Phạt / khấu trừ', advance: 'Tạm ứng', piece: 'Tiền khoán' };
 
 const num = <T extends object>(rows: T[] | null, keys: (keyof T)[]): T[] =>
   (rows ?? []).map((r) => {
@@ -247,7 +247,7 @@ export function buildPayrollCsv(period: { start_date: string; end_date: string; 
   const name = (id: string) => workers.find((w) => w.id === id)?.full_name ?? '';
   for (const s of statements) {
     for (const l of lines.filter((x) => x.statement_id === s.id)) rows.push([name(s.worker_id), l.line_type === 'hours' ? 'Giờ công' : 'Sản lượng', l.explanation, l.quantity, l.unit, l.rate_amount, l.amount]);
-    for (const a of adjustments.filter((x) => x.worker_id === s.worker_id)) rows.push([name(s.worker_id), ADJ_KIND_LABEL[a.kind], a.reason, '', '', '', a.kind === 'bonus' ? a.amount : -a.amount]);
+    for (const a of adjustments.filter((x) => x.worker_id === s.worker_id)) rows.push([name(s.worker_id), ADJ_KIND_LABEL[a.kind], a.reason, '', '', '', a.kind === 'bonus' || a.kind === 'piece' ? a.amount : -a.amount]);
     rows.push([name(s.worker_id), 'TỔNG', period.status === 'locked' ? 'Đã duyệt (khóa kỳ)' : 'Dự tính (chưa khóa)', '', '', '', period.status === 'locked' ? s.total_approved ?? s.total_estimated : s.total_estimated]);
   }
   const NL = String.fromCharCode(13, 10);
