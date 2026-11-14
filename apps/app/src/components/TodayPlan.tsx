@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { diffDays, fmtDate } from '../lib/dates';
 import { todayLocal } from '../lib/hooks';
 import { useTable } from '../lib/tables';
 import { useCycleTitle } from '../lib/useCycleTitle';
+
+const PAGE = 15; // số dòng mỗi trang
 
 /**
  * Nhắc việc hôm nay: các việc theo KẾ HOẠCH của vụ đang sản xuất mà hôm nay đang trong khoảng thời gian làm
@@ -10,6 +13,7 @@ import { useCycleTitle } from '../lib/useCycleTitle';
  */
 export function TodayPlan({ cycleIds, onOpenCycle }: { cycleIds: Set<string>; onOpenCycle: (id: string) => void }) {
   const titleOf = useCycleTitle();
+  const [page, setPage] = useState(0);
   const cycles = useTable('cycles');
   const stages = useTable('stages');
   const today = todayLocal();
@@ -21,11 +25,14 @@ export function TodayPlan({ cycleIds, onOpenCycle }: { cycleIds: Set<string>; on
     .filter((x) => x.late <= 15) // việc trễ quá 15 ngày coi như bỏ dở, không nhắc mỗi ngày
     .sort((a, b) => b.late - a.late || a.s.seq - b.s.seq);
   if (running.length === 0) return null;
+  const pages = Math.max(1, Math.ceil(items.length / PAGE));
+  const cur = Math.min(page, pages - 1);
+  const shown = items.slice(cur * PAGE, (cur + 1) * PAGE);
   return (
     <div className="card">
       <h2>Nhắc việc hôm nay ({items.length})</h2>
       {items.length === 0 && <p className="muted">Hôm nay không có việc nào theo kế hoạch.</p>}
-      {items.map(({ s, late }) => {
+      {shown.map(({ s, late }) => {
         const c = runningById.get(s.cycle_id)!;
         return (
           <div className="note-row" key={s.id}>
@@ -37,6 +44,13 @@ export function TodayPlan({ cycleIds, onOpenCycle }: { cycleIds: Set<string>; on
           </div>
         );
       })}
+      {items.length > PAGE && (
+        <div className="btnrow pager">
+          <button type="button" className="secondary" disabled={cur === 0} onClick={() => setPage(cur - 1)}>‹ Trước</button>
+          <span className="muted">Trang {cur + 1}/{pages} · {items.length} việc</span>
+          <button type="button" className="secondary" disabled={cur + 1 >= pages} onClick={() => setPage(cur + 1)}>Sau ›</button>
+        </div>
+      )}
     </div>
   );
 }
