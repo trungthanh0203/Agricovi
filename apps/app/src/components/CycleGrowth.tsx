@@ -1,6 +1,7 @@
 import { FeedNamePicker } from './CatalogPick';
 import { useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
+import { FeedNormPanel } from './FeedNormPanel';
 import { forecastHarvest, growthSummary, type GrowthRaw } from '../lib/growthLogic';
 import { useCatalog } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
@@ -97,6 +98,7 @@ export function CycleGrowth({ cycleId }: { cycleId: string }) {
 
   const summary = !g ? (online ? 'Đang tải…' : 'Cần có mạng') : g.adgG === null ? 'cần ít nhất 2 lần cân' : `${num(g.adgG)} g/con/ngày${g.fcr !== null ? ` · FCR ${num(g.fcr, 2)}` : ''}${forecast?.state === 'ok' && forecast.toDate ? ` · xuất ~${vn(forecast.toDate).slice(0, 5)}` : ''}`;
   return (
+    <>
     <Collapsible title="Tăng trọng và FCR" summary={summary}>
       {error && <p className="msg error" role="alert">{error}</p>}
       {g && (
@@ -198,5 +200,7 @@ export function CycleGrowth({ cycleId }: { cycleId: string }) {
       )}
       <p className="muted">Số ước tính từ cân mẫu, để theo dõi xu hướng; không thay cho cân xuất chuồng.</p>
     </Collapsible>
+    {cycle && online && <FeedNormPanel cycle={cycle} raw={raw} canEdit={canTarget} />}
+    </>
   );
 }

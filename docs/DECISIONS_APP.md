@@ -417,3 +417,10 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - Lịch vaccine dựng trên mốc nhắc việc (0086): mốc có thêm loại `vaccine`; ngày tiêm tính từ ngày bắt đầu lứa nên đổi ngày nhập chuồng thì lịch tự dời. Đánh dấu "Đã tiêm" ghi người, ngày và số lô vaccine (không bắt buộc).
 - Không nạp lịch cố định. Chỉ có nút "Nạp lịch tiêm tham khảo (heo)" ở lứa nuôi, có hỏi xác nhận và ghi rõ "cần thú y xác nhận"; chủ tự sửa/xóa. Loại vật nuôi khác chưa có mẫu.
 - Mốc của quy trình mẫu chưa có loại vaccine (lịch tiêm là việc theo từng lứa do thú y chốt). Chưa tự in lịch tiêm vào Sổ nhật ký.
+
+## D167 — Mục 14 lát 4: định mức thức ăn theo ngày tuổi (migration 0204)
+
+- **Tùy chọn, mỗi lứa tối đa một bảng**; lứa không đặt thì không đổi gì. Không có ô nhập hằng ngày mới: cám thực dùng lấy từ chuỗi đã có của "Tăng trọng và FCR" (xuất kho nhóm Thức ăn, hoặc cám ghi tay), số con lấy từ "Số cây/con và hao hụt" (tính theo từng ngày). `get_cycle_growth` không đổi.
+- Bảng gồm các dòng "từ ngày tuổi X: Y kg/con/ngày", áp dụng đến dòng kế tiếp (không thể chồng/hở); lưu nguyên khối, ghi có phiên bản, lệch phiên bản báo CONFLICT. Không nạp số mặc định (tùy giống, hãng cám); có thể chép từ lứa trước cùng cơ sở.
+- Tùy chọn cho nhiều tình huống: tuổi con giống lúc nhập, đơn vị nhập kg hoặc g, kỳ so sánh (7 ngày gần đây, hoặc cả lứa), ngưỡng lệch 5–100% (mặc định 20).
+- So theo kỳ vì cám xuất kho thường theo bao. Thiếu định mức, thiếu số con hoặc chưa ghi cám trong kỳ thì nói rõ thiếu gì, không kết luận ăn thừa/thiếu. Chưa làm: tách theo giai đoạn cám, theo nhóm đàn.
