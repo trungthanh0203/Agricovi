@@ -13,7 +13,6 @@ import { useAuth } from '../lib/auth';
 import { useTable } from '../lib/tables';
 import { fetchPayables, fetchReceivables, summarizePayables } from '../lib/partners';
 
-const HomeTrend = lazy(() => import('./HomeTrend')); // biểu đồ tải lười, không làm nặng gói đầu
 const HomeWeekly = lazy(() => import('./HomeWeekly'));
 const HomePay = lazy(() => import('./HomePay'));
 
@@ -183,7 +182,6 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
         {canSale && <KpiTile label="Doanh thu tháng này" value={shortMoney(stat.earned)} tone="ok" title={fullMoney(stat.earned)} note="đồng" />}
       </div>
       {hasRole(active.roles, 'manager') && <Suspense fallback={null}><HomeWeekly orgId={active.id} onOpen={() => onGo('reports', 'weekly')} /></Suspense>}
-      {(canExpense || canSale || canHarvest) && <Suspense fallback={null}><HomeTrend orgId={active.id} /></Suspense>}
       {(stockAlerts.length > 0) && (
         <div className="card alert-warn">
           <h2>Cảnh báo kho</h2>
