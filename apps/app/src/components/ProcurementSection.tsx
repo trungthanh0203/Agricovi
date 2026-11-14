@@ -12,6 +12,7 @@ import { useOrgs } from '../lib/orgs';
 import { downloadCsv } from '../lib/summary';
 import { canPerm } from '../lib/permissions';
 import type { TabId } from '../lib/tabs';
+import { contractPriceFor, fetchContracts, type TradeContract } from '../lib/tradeContracts';
 import {
   createProcurementReceipt, createReceiptFromHarvest, fetchProcurementLedger, fetchUnpurchasedHarvests, type UnpurchasedHarvest, listProcurementPayments, payProcurement, PROC_STATUS_LABEL,
   setProcurementAttachment, voidProcurementPayment, voidProcurementReceipt, type ProcLine, type ProcPayment,
@@ -187,7 +188,7 @@ function ReceiptCard({ line: l, as, ownName, canEdit, busy, onPay, onVoidPayment
   );
 }
 
-interface Pick { qty: string; price: string; keep: boolean }
+interface Pick { qty: string; price: string; keep: boolean; /** đơn giá lấy từ hợp đồng (số hợp đồng) để nhắc người lập phiếu */ contractNo?: string }
 const netOf = (h: UnpurchasedHarvest) => Math.max(h.quantity - h.loss_quantity, 0);
 const dayOf = (iso: string) => new Date(new Date(iso).getTime() + 7 * 3600000).toISOString().slice(0, 10); // ngày theo giờ Việt Nam
 
@@ -212,12 +213,14 @@ function NewReceiptForm({ coopId, busy, onRun, onDone, onCancel }: {
   const [invoice, setInvoice] = useState('');
   const [note, setNote] = useState('');
   const [image, setImage] = useState('');
+  const [contracts, setContracts] = useState<TradeContract[]>([]);   // hợp đồng bao tiêu đã ký: gợi ý đơn giá
   const [err, setErr] = useState<string | null>(null);
   const [draftId] = useState(() => crypto.randomUUID());   // bấm Lưu lặp không lập hai phiếu
 
   useEffect(() => {
     listCoopHouseholds(coopId).then((h) => setHouseholds(h)).catch((e) => setErr(friendlyError(e)));
     listProcurementItems(coopId).then((r) => setItems(r.filter((x) => x.is_active))).catch(() => undefined);
+    fetchContracts(coopId).then(setContracts).catch(() => undefined);   // chưa có hợp đồng hoặc chưa db push 0202: bỏ qua
   }, [coopId]);
   useEffect(() => {
     setCycles([]); setCycle('');
@@ -243,7 +246,8 @@ function NewReceiptForm({ coopId, busy, onRun, onDone, onCancel }: {
       if (!on) { delete n[h.id]; return n; }
       const first = Object.values(s)[0];
       const ref = refPrice(h.crop_type_id);
-      n[h.id] = { qty: String(netOf(h)), price: ref != null ? String(ref) : first?.price ?? '', keep: false };
+      const ct = contractPriceFor(contracts, hh, h.crop_type_id, todayLocal());   // hợp đồng đã ký ưu tiên hơn giá tham khảo
+      n[h.id] = { qty: String(netOf(h)), price: ct ? String(ct.price) : ref != null ? String(ref) : first?.price ?? '', keep: false, contractNo: ct?.contractNo };
       return n;
     });
   }
@@ -320,7 +324,7 @@ function NewReceiptForm({ coopId, busy, onRun, onDone, onCancel }: {
                   <div className="inline-form">
                     <div className="pair">
                       <label>Số kg HTX cân thực tế<input inputMode="decimal" value={x.qty} onChange={(e) => setPick(h.id, { qty: e.target.value })} /></label>
-                      <label>Đơn giá (đ/kg){refPrice(h.crop_type_id) != null && <span className="muted"> · giá tham khảo {formatMoney(refPrice(h.crop_type_id)!)}</span>}<input inputMode="numeric" value={x.price} onChange={(e) => setPick(h.id, { price: e.target.value })} /></label>
+                      <label>Đơn giá (đ/kg){x.contractNo ? <span className="muted"> · theo hợp đồng {x.contractNo}</span> : refPrice(h.crop_type_id) != null && <span className="muted"> · giá tham khảo {formatMoney(refPrice(h.crop_type_id)!)}</span>}<input inputMode="numeric" value={x.price} onChange={(e) => setPick(h.id, { price: e.target.value })} /></label>
                     </div>
                     {a !== null && a > 0 && Math.abs(a - net) > 0.05 && <p className="muted">Hộ ghi còn {formatQty(net)} kg, HTX cân {formatQty(a)} kg ({a > net ? '+' : '−'}{formatQty(Math.abs(a - net))} kg).</p>}
                     <label className="check"><input type="checkbox" checked={x.keep} onChange={(e) => setPick(h.id, { keep: e.target.checked })} /> Hộ còn hàng, chưa mua hết (giữ lại để mua tiếp sau)</label>

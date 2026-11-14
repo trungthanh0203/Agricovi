@@ -28,7 +28,7 @@ export interface Section<Id extends string = string> {
   label: string;
 }
 
-export type ProductionSection = 'cycles' | 'log' | 'logs' | 'stock' | 'expense' | 'harvest' | 'sales' | 'attendance' | 'procure';
+export type ProductionSection = 'cycles' | 'log' | 'logs' | 'stock' | 'expense' | 'harvest' | 'sales' | 'attendance' | 'procure' | 'contracts';
 export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'kiosks' | 'customers' | 'positions' | 'teams' | 'members' | 'coop' | 'licenses';
 export type ReportSection = 'stats' | 'payables' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist' | 'logbook' | 'export' | 'statement';
 
@@ -63,6 +63,7 @@ export function productionSections(org: MyOrg | null): Section<ProductionSection
     canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
     canPerm(org.perms, 'sales') ? { id: 'sales' as const, label: 'Doanh thu' } : null,                       // sau Thu hoạch (trước đây ở tab Báo cáo)
     org.type === 'cooperative' && canPerm(org.perms, 'coop') ? { id: 'procure' as const, label: 'Thu mua từ hộ' } : null, // HTX lập phiếu thu mua khi hộ giao hàng (D162); theo dõi tiền ở Báo cáo → Công nợ
+    (org.type === 'cooperative' && canPerm(org.perms, 'coop', 'edit')) || (canPerm(org.perms, 'sales', 'edit') && featureOn(org.id, 'contract')) ? { id: 'contracts' as const, label: 'Hợp đồng' } : null, // HTX: bao tiêu với hộ; cơ sở khác bật "Tính năng nâng cao" mới thấy (mục 13)
     (org.features?.logs ?? 'on') !== 'off' ? { id: 'log' as const, label: 'Ghi việc' } : null, // mở thẳng màn Ghi việc (cùng nút ＋ ở giữa thanh dưới)
     { id: 'logs' as const, label: 'Nhật ký việc' },
   ].filter((x): x is Section<ProductionSection> => x !== null));

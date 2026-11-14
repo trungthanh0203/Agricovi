@@ -226,14 +226,15 @@ function PasswordForm() {
 function AdvancedFeatures({ orgId }: { orgId: string }) {
   const mapOn = useFeature(orgId, 'map');
   const exportOn = useFeature(orgId, 'export');
+  const contractOn = useFeature(orgId, 'contract');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  async function toggle(f: 'map' | 'export', v: boolean) {
+  async function toggle(f: 'map' | 'export' | 'contract', v: boolean) {
     setBusy(true); setError(null);
     try { await setFeature(orgId, f, v); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
   return (
-    <Collapsible title="Tính năng nâng cao" summary={mapOn || exportOn ? `đang bật: ${[mapOn ? 'bản đồ thửa' : '', exportOn ? 'hồ sơ xuất khẩu' : ''].filter(Boolean).join(', ')}` : 'đang tắt (cơ sở nhỏ không cần)'}>
+    <Collapsible title="Tính năng nâng cao" summary={mapOn || exportOn || contractOn ? `đang bật: ${[mapOn ? 'bản đồ thửa' : '', exportOn ? 'hồ sơ xuất khẩu' : '', contractOn ? 'hợp đồng' : ''].filter(Boolean).join(', ')}` : 'đang tắt (cơ sở nhỏ không cần)'}>
       <p className="muted">Dành cho cơ sở lớn hoặc có xuất khẩu, truy xuất nguồn gốc. Không bật thì app giữ nguyên, gọn như hiện tại.</p>
       {error && <p className="msg error" role="alert">{error}</p>}
       <label className="check">
@@ -243,6 +244,10 @@ function AdvancedFeatures({ orgId }: { orgId: string }) {
       <label className="check">
         <input type="checkbox" checked={exportOn} disabled={busy} onChange={(e) => void toggle('export', e.target.checked)} />
         {' '}<strong>Hồ sơ xuất khẩu</strong>: gom nhật ký, vật tư, thu hoạch, giấy phép và tọa độ thửa của một vụ thành bộ hồ sơ để in hoặc gửi bên mua. Xuất hiện trong Báo cáo → Hồ sơ xuất khẩu.
+      </label>
+      <label className="check">
+        <input type="checkbox" checked={contractOn} disabled={busy} onChange={(e) => void toggle('contract', e.target.checked)} />
+        {' '}<strong>Hợp đồng bán hàng</strong>: lập hợp đồng mua bán với khách hàng, in sẵn để ký tay. Xuất hiện trong Sản xuất → Hợp đồng. (Hợp tác xã luôn có sẵn hợp đồng bao tiêu với hộ thành viên.)
       </label>
     </Collapsible>
   );

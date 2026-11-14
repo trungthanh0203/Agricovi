@@ -834,3 +834,12 @@ button.mini-kpi.tappable:active { filter: brightness(.95); }
   .statement table.grid { font-size: 9px; }
   .statement th, .statement td { border: 1px solid #444; padding: 2px 3px; }
 }
+
+/* Hợp đồng mẫu (mục 13 lát 2): in A4 dọc */
+.contract-doc h2 { text-align: center; margin: 2px 0; font-size: 1rem; }
+.contract-doc h2.ct-title { margin-top: 12px; font-size: 1.15rem; }
+.contract-doc .ct-center { text-align: center; margin: 2px 0; }
+.contract-doc .ct-line { margin: 1px 0 1px 12px; }
+.contract-doc .ct-para { margin: 2px 0 2px 12px; text-align: justify; }
+.contract-doc .ct-note { font-size: 11px; margin-top: 18px; }
+@media print { .contract-doc { page: report; font-size: 12.5px; } .contract-doc p { margin: 3px 0; } }

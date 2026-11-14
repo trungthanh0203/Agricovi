@@ -377,6 +377,13 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     note: 'Ghi việc đầy đủ và đúng ngày thì sổ mới đáng tin.',
     guide: { id: 'process', step: 7 },
   },
+  contracts: {
+    title: 'Hợp đồng',
+    what: 'Lập hợp đồng bao tiêu (HTX với hộ thành viên) hoặc hợp đồng bán cho khách, điền sẵn từ thông tin đã có và in để ký tay.',
+    how: ['Chọn loại hợp đồng, chọn hộ hoặc khách, nhập sản phẩm, giá, thời gian giao nhận, thanh toán.', 'Lưu bản nháp, bấm Xem / In để in A4.', 'Sau khi hai bên ký, bấm Đã ký; xong việc bấm Đã hoàn thành.'],
+    note: 'Mẫu tham khảo, cần luật sư xem trước khi ký. Hợp đồng đã ký không sửa điều khoản; muốn đổi thì lập hợp đồng mới.',
+    guide: { id: 'process', step: 7 },
+  },
   statement: {
     title: 'Bảng kê thu mua',
     what: 'HTX lập bảng kê thu mua nông sản trực tiếp từ hộ thành viên (người sản xuất) từ các phiếu thu mua đã có, để in hoặc tải Excel.',

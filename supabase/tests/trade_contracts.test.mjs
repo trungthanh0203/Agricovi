@@ -82,3 +82,44 @@ test('trạng thái: nháp sửa/xóa được; ký cần ngày hợp lệ; đã
   await asUser(c.db, c.boss, `select set_trade_contract_status($1,'cancelled',null,'Hộ không còn sản phẩm')`, [e]);
   assert.equal((await c.list(c.boss, c.coop)).find((x) => x.id === e).cancel_reason, 'Hộ không còn sản phẩm');
 });
+
+import { buildContractDoc, contractPriceFor } from '../../apps/app/src/lib/tradeContracts.ts';
+
+test('mẫu văn bản: điền sẵn bên mua/bán theo loại, giá theo cách tính, thanh toán, điều khoản bổ sung; thiếu thông tin thì để dòng chấm; gợi ý giá từ hợp đồng đã ký', () => {
+  const base = { id: 'c1', organization_id: 'o', kind: 'procure', contract_no: 'HĐ-2026-0001', counterparty_org_id: 'h1', partner_id: null, counterparty_name: 'Hộ Nguyễn Văn An', counterparty_rep: 'Nguyễn Văn An',
+    counterparty_phone: null, counterparty_address: null, counterparty_tax_code: null, crop_type_id: 'cr1', product_name: 'Sầu riêng Ri6', cycle_id: null, quantity_kg: 5000, price_mode: 'fixed', unit_price: 80000,
+    quality_note: 'Loại 1', delivery_from: '2026-12-01', delivery_to: '2027-01-15', delivery_place: 'Kho HTX', payment_days: 7, payment_method: 'transfer', extra_terms: 'Phạt 2% giá trị lô nếu giao trễ.\nHai bên ưu tiên hợp tác lâu dài.',
+    status: 'signed', signed_on: '2026-11-10', valid_to: '2027-02-01', cancel_reason: null, created_at: '' };
+  const d = buildContractDoc(base, 'HTX Nông sản A');
+  assert.equal(d.title, 'HỢP ĐỒNG BAO TIÊU, THU MUA NÔNG SẢN');
+  assert.equal(d.number, 'Số: HĐ-2026-0001');
+  assert.equal(d.parties[0].heading, 'BÊN A (Bên mua)');                      // bao tiêu: HTX là bên mua
+  assert.ok(d.parties[0].lines[0].includes('HTX Nông sản A'));
+  assert.ok(d.parties[1].lines.some((l) => l.includes('Hộ Nguyễn Văn An')));
+  assert.ok(d.parties[1].lines.some((l) => l.startsWith('Địa chỉ: …')));       // chưa có địa chỉ: để dòng chấm, không tự lấy dữ liệu cá nhân
+  const text = d.articles.map((a) => a.title + ' ' + a.paras.join(' ')).join('\n');
+  assert.match(text, /Sầu riêng Ri6/);
+  assert.match(text, /khoảng 5\.000 kg/);
+  assert.match(text, /80\.000 đồng\/kg, cố định/);
+  assert.match(text, /từ ngày 01\/12\/2026 đến ngày 15\/01\/2027/);
+  assert.match(text, /trong vòng 7 ngày kể từ ngày giao nhận/);
+  assert.match(text, /chuyển khoản/);
+  assert.match(text, /Điều 9\. Điều khoản bổ sung Phạt 2% giá trị lô nếu giao trễ\. Hai bên ưu tiên/);
+  assert.equal(d.closing, 'Ký ngày 10/11/2026.');
+  // hợp đồng bán: cơ sở là bên bán (A); giá sàn; trả ngay
+  const s = buildContractDoc({ ...base, kind: 'sale', price_mode: 'floor', unit_price: 25000, payment_days: null, counterparty_tax_code: '0312345678', extra_terms: null, status: 'draft', signed_on: null }, 'Hộ An');
+  assert.equal(s.title, 'HỢP ĐỒNG MUA BÁN NÔNG SẢN');
+  assert.equal(s.parties[0].heading, 'BÊN A (Bên bán)');
+  assert.ok(s.parties[1].lines.includes('Mã số thuế: 0312345678'));
+  const st = s.articles.map((a) => a.paras.join(' ')).join('\n');
+  assert.match(st, /không thấp hơn 25\.000 đồng\/kg/);
+  assert.match(st, /ngay khi giao nhận xong/);
+  assert.equal(s.closing, 'Ngày … tháng … năm …');
+  assert.ok(!s.articles.some((a) => a.title.includes('bổ sung')));
+  // gợi ý giá cho phiếu thu mua: hợp đồng đã ký, còn hiệu lực, đúng hộ và sản phẩm; hợp đồng giá thị trường/nháp/hết hạn không dùng
+  const list = [base, { ...base, id: 'c2', contract_no: 'HĐ-2026-0002', unit_price: 90000, signed_on: '2026-11-20' }, { ...base, id: 'c3', status: 'draft' },
+    { ...base, id: 'c4', price_mode: 'market', unit_price: null }, { ...base, id: 'c5', valid_to: '2026-01-01' }, { ...base, id: 'c6', counterparty_org_id: 'h9' }];
+  assert.deepEqual(contractPriceFor(list, 'h1', 'cr1', '2026-12-05'), { price: 90000, contractNo: 'HĐ-2026-0002' });   // lấy hợp đồng ký gần nhất
+  assert.equal(contractPriceFor(list, 'h1', 'cr_khac', '2026-12-05'), null);
+  assert.equal(contractPriceFor(list, 'h2', 'cr1', '2026-12-05'), null);
+});

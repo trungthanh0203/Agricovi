@@ -18,6 +18,8 @@ import { cancelTransferRequest, listTransferRequests, requestCycleToOwn, TRANSFE
 import { cycleCode } from '../lib/qr';
 import { CycleQr } from '../components/CycleQr';
 import { ProcurementSection } from '../components/ProcurementSection';
+import { ContractsSection } from '../components/ContractsSection';
+import { useFeature } from '../lib/features';
 import { CycleProfitReport } from '../components/CycleProfitReport';
 import { CycleStatsStrip } from '../components/CycleStatsStrip';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
@@ -54,6 +56,7 @@ interface Props {
 /** Tab Sản xuất: Mùa vụ (trạng thái các vụ, ghi việc), Thu hoạch, Kho. Phân khu và danh mục nằm ở tab Khai báo. */
 export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, onLogFor, onLog, onHistory, onGo, onClone }: Props) {
   const { active } = useOrgs();
+  useFeature(active?.id, 'contract'); // làm mới bản lưu để mục Hợp đồng hiện/ẩn đúng
   const items = productionSections(active);
   const current = pickSection(items, section);
 
@@ -69,6 +72,8 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
         <StockPanel />
       ) : current === 'expense' ? (
         <ExpenseSection />
+      ) : current === 'contracts' ? (
+        <ContractsSection />
       ) : current === 'procure' ? (
         <ProcurementSection as="coop" view="entry" onGo={onGo} />
       ) : current === 'attendance' ? (
