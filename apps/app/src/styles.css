@@ -843,3 +843,6 @@ button.mini-kpi.tappable:active { filter: brightness(.95); }
 .contract-doc .ct-para { margin: 2px 0 2px 12px; text-align: justify; }
 .contract-doc .ct-note { font-size: 11px; margin-top: 18px; }
 @media print { .contract-doc { page: report; font-size: 12.5px; } .contract-doc p { margin: 3px 0; } }
+
+/* Nút đóng/mở danh sách ô sản xuất ở dòng phân khu */
+.fold-btn { margin-right: 6px; min-width: 28px; }

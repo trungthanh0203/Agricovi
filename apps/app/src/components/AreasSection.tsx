@@ -77,6 +77,7 @@ export function AreasSection() {
   const [busy, setBusy] = useState(false);
   const mapOn = useFeature(active?.id, 'map');
   const { geos, reload: reloadGeos } = useAreaGeos(active?.id, mapOn);
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});   // phân khu đang mở/đóng danh sách ô sản xuất (mặc định đóng khi có hơn 6 ô)
   const [mapFor, setMapFor] = useState<string | 'all' | null>(null); // khu đang vẽ ranh, hoặc 'all' = xem mọi khu
   if (!active) return null;
 
@@ -97,6 +98,10 @@ export function AreasSection() {
   const newCell = (parentId: string, name: string, k: CellKind, size?: number | null, unit?: 'm2' | 'ha'): FarmInput =>
     ({ name, kind: k.kind, kind_item: k.kind_item ?? undefined, housing: k.housing, area_size: size ?? null, area_unit: unit ?? 'm2', parent_id: parentId });
 
+  const isOpen = (a: AreaRow, nKids: number) => openMap[a.id] ?? nKids <= 6;
+  const anyFoldable = tops.some((t) => cellsOf(mine, t.id).filter(visible).length > 0);
+  const setAllOpen = (open: boolean) => setOpenMap(Object.fromEntries(tops.map((t) => [t.id, open])));
+
   const renderRow = (a: AreaRow, isCell: boolean) => {
     const kids = isCell ? [] : cellsOf(mine, a.id);
     const m2 = areaSizeM2(a, mine);
@@ -108,8 +113,12 @@ export function AreasSection() {
     return (
       <tr key={a.id} className={a.is_active === false ? 'off' : ''}>
         <td style={isCell ? { paddingLeft: 24 } : undefined}>
+          {!isCell && kids.length > 0 && (
+            <button type="button" className="icon fold-btn" aria-expanded={isOpen(a, kids.length)} aria-label={`${isOpen(a, kids.length) ? 'Đóng' : 'Mở'} danh sách ${kids.length} ô sản xuất của ${a.name}`}
+              onClick={() => setOpenMap((m) => ({ ...m, [a.id]: !isOpen(a, kids.length) }))}>{isOpen(a, kids.length) ? '▾' : '▸'}</button>
+          )}
           <Thumb src={a.image} />{isCell ? '↳ ' : ''}{a.name}{a.code ? ` · ${a.code}` : ''}
-          {!isCell && kids.length > 0 && <span className="sub">{kids.length} ô sản xuất</span>}
+          {!isCell && kids.length > 0 && <span className="sub">{kids.length} ô sản xuất{!isOpen(a, kids.length) ? ' (đang đóng, bấm ▸ để mở)' : ''}</span>}
           {(showKind && a.kind) || a.housing ? <span className="sub">{[showKind && a.kind ? kindLabel(a.kind, a.kind_item) : '', a.housing ? `Kiểu ô: ${housingText(a.housing).toLowerCase()}` : ''].filter(Boolean).join(' · ')}</span> : null}
           {formatAddr({ address: a.location, ward: a.ward, province: a.province}) && <span className="sub">📍 {formatAddr({ address: a.location, ward: a.ward, province: a.province })}</span>}
           {live.length > 0 && (
@@ -121,6 +130,7 @@ export function AreasSection() {
           )}
           {mapOn && a.is_active !== false && (() => {
             const g = geos.find((x) => x.area_id === a.id);
+            if (isCell && !g) return null; // ranh vẽ ở cấp phân khu (thửa); ô sản xuất kế thừa, không cần vẽ riêng
             return (
               <span className="sub">
                 <button type="button" className="link" onClick={() => { closeAll(); setMapFor(a.id); }}>
@@ -133,9 +143,9 @@ export function AreasSection() {
           {a.is_active === false && <span className="sub">Đã dừng</span>}
           {canManage && !isCell && a.is_active !== false && (
             <span className="sub">
-              <button type="button" className="link" disabled={busy || !online} onClick={() => { closeAll(); setCellFor({ parent: a, mode: 'one' }); }}>+ Thêm ô sản xuất</button>
+              <button type="button" className="link" disabled={busy || !online} onClick={() => { closeAll(); setOpenMap((m) => ({ ...m, [a.id]: true })); setCellFor({ parent: a, mode: 'one' }); }}>+ Thêm ô sản xuất</button>
               {' · '}
-              <button type="button" className="link" disabled={busy || !online} onClick={() => { closeAll(); setCellFor({ parent: a, mode: 'many' }); }}>+ Thêm nhiều ô cùng lúc</button>
+              <button type="button" className="link" disabled={busy || !online} onClick={() => { closeAll(); setOpenMap((m) => ({ ...m, [a.id]: true })); setCellFor({ parent: a, mode: 'many' }); }}>+ Thêm nhiều ô cùng lúc</button>
               {kids.length === 0 && hasCycles && (
                 <>{' · '}<button type="button" className="link" disabled={busy || !online} onClick={() => { closeAll(); setCellFor({ parent: a, mode: 'split' }); }}>Chia thành ô sản xuất</button></>
               )}
@@ -197,11 +207,17 @@ export function AreasSection() {
           })} />
       )}
 
+      {anyFoldable && (
+        <p className="muted">
+          <button type="button" className="link inline" onClick={() => setAllOpen(true)}>Mở hết các ô sản xuất</button>{' · '}
+          <button type="button" className="link inline" onClick={() => setAllOpen(false)}>Đóng hết</button>
+        </p>
+      )}
       <table className="grid">
         <thead><tr><th>Phân khu ({tops.length})</th><th className="num">Diện tích</th>{canManage && <th></th>}</tr></thead>
         <tbody>
           {rowCount === 0 && <tr><td colSpan={3} className="muted">Chưa có phân khu nào.{canManage ? ' Hãy thêm phân khu đầu tiên ở nút trên.' : ''}</td></tr>}
-          {tops.flatMap((t) => [renderRow(t, false), ...cellsOf(mine, t.id).filter(visible).map((c) => renderRow(c, true))])}
+          {tops.flatMap((t) => { const kids = cellsOf(mine, t.id).filter(visible); return [renderRow(t, false), ...(isOpen(t, kids.length) ? kids.map((c) => renderRow(c, true)) : [])]; })}
         </tbody>
       </table>
       <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả khu đã dừng</label>
