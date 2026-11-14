@@ -140,11 +140,11 @@ begin
   create temp table smp_area (k int, id uuid default gen_random_uuid(), name text) on commit drop;
   insert into smp_area (k, name) select g, 'Trại ' || chr(64 + g) from generate_series(1, 8) g;
   insert into production_areas (id, organization_id, name, code, kind, area_size, area_unit, location, description)
-    select id, v_org, name, 'MAUL-PK' || k, 'crop', 4000, 'm2', 'Khu sản xuất công nghệ cao – ' || name, 'Mẫu quy mô lớn' from smp_area;
+    select id, v_org, name, 'MAUL-PK' || k, 'crop', 4000, 'm2', 'Khu sản xuất công nghệ cao – ' || name, null from smp_area; -- không ghi chú nhãn: xóa mẫu nhận biết qua mã MAUL-
   create temp table smp_cell (k int, c int, id uuid default gen_random_uuid(), name text) on commit drop;
   insert into smp_cell (k, c, name) select k, c, 'Nhà màng lớn ' || chr(64 + k) || c from generate_series(1, 8) k, generate_series(1, 5) c;
   insert into production_areas (id, organization_id, parent_id, name, code, kind, housing, area_size, area_unit, description)
-    select ce.id, v_org, a.id, ce.name, 'MAUL-PK' || ce.k || '-NM' || ce.c, 'crop', 'Nhà màng', 1000, 'm2', 'Mẫu quy mô lớn'
+    select ce.id, v_org, a.id, ce.name, 'MAUL-PK' || ce.k || '-NM' || ce.c, 'crop', 'Nhà màng', 1000, 'm2', null
       from smp_cell ce join smp_area a on a.k = ce.k;
   create temp table smp_loc (k int, n int, id uuid default gen_random_uuid()) on commit drop;
   insert into smp_loc (k, n) select k, n from generate_series(1, 8) k, generate_series(1, 2) n;
