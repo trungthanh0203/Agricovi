@@ -28,6 +28,11 @@ export interface ProcLine {
   total_amount: number;
   crop_name: string | null;
   cycle_id: string | null;
+  /** Số hộ ghi ở phiếu thu hoạch (sau hao hụt) lúc lập phiếu; null với phiếu nhập tay hoặc phiếu cũ */
+  harvest_qty: number | null;
+  harvest_id: string | null;
+  /** Ảnh chứng từ (phiếu cân, biên nhận): chỉ HTX thấy */
+  attachment: string | null;
   paid: number;
   remaining: number;
   status: ProcStatus;
@@ -36,7 +41,7 @@ export interface ProcLine {
 
 export async function fetchProcurementLedger(orgId: string, as: 'coop' | 'household', onlyOpen = true): Promise<ProcLine[]> {
   const rows = await rpc<ProcLine[]>('get_procurement_ledger', { p_org: orgId, p_as: as, p_only_open: onlyOpen });
-  return rows.map((r) => ({ ...r, quantity: Number(r.quantity), unit_price: Number(r.unit_price), total_amount: Number(r.total_amount), paid: Number(r.paid), remaining: Number(r.remaining) }));
+  return rows.map((r) => ({ ...r, harvest_qty: r.harvest_qty == null ? null : Number(r.harvest_qty), harvest_id: r.harvest_id ?? null, attachment: r.attachment ?? null, quantity: Number(r.quantity), unit_price: Number(r.unit_price), total_amount: Number(r.total_amount), paid: Number(r.paid), remaining: Number(r.remaining) }));
 }
 
 export interface NewReceipt {
@@ -48,13 +53,28 @@ export const createProcurementReceipt = (r: NewReceipt) => rpc<unknown>('create_
   p_price: r.unitPrice, p_due: r.dueDate, p_invoice: r.invoiceNo || null, p_note: r.note || null,
 });
 
-export interface UnpurchasedHarvest { id: string; cycle_id: string; cycle_name: string; harvested_at: string; grade: string | null; quantity: number; lot_code: string | null; crop_type_id: string; crop_name: string }
+export interface UnpurchasedHarvest { id: string; cycle_id: string; cycle_name: string; harvested_at: string; grade: string | null; quantity: number; loss_quantity: number; purchased_qty: number; lot_code: string | null; crop_type_id: string; crop_name: string }
 export async function fetchUnpurchasedHarvests(coopId: string, householdId: string): Promise<{ shared: boolean; harvests: UnpurchasedHarvest[] }> {
   const d = await rpc<{ shared: boolean; harvests: UnpurchasedHarvest[] }>('coop_household_harvests', { p_coop: coopId, p_household: householdId });
-  return { shared: d.shared, harvests: d.harvests.map((h) => ({ ...h, quantity: Number(h.quantity) })) };
+  return { shared: d.shared, harvests: d.harvests.map((h) => ({ ...h, quantity: Number(h.quantity), loss_quantity: Number(h.loss_quantity ?? 0), purchased_qty: Number(h.purchased_qty ?? 0) })) };
 }
-export const createReceiptFromHarvest = (id: string, coopId: string, harvestId: string, unitPrice: number, dueDate: string | null, invoiceNo: string, note: string) =>
-  rpc<unknown>('create_procurement_from_harvest', { p_id: id, p_coop: coopId, p_harvest: harvestId, p_price: unitPrice, p_due: dueDate, p_invoice: invoiceNo || null, p_note: note || null });
+export interface HarvestReceiptInput {
+  id: string; coopId: string; harvestId: string; unitPrice: number; dueDate: string | null; invoiceNo: string; note: string;
+  /** Khối lượng HTX cân thực tế (kg); null = số hộ ghi trừ hao hụt */
+  quantity: number | null;
+  /** true (mặc định): phiếu thu hoạch đã mua xong; false: hộ còn hàng, mua tiếp được */
+  close: boolean;
+  /** Ngày thu mua (ngày HTX nhận hàng); null = ngày thu hoạch */
+  date: string | null;
+  attachment: string | null;
+}
+export const createReceiptFromHarvest = (i: HarvestReceiptInput) =>
+  rpc<unknown>('create_procurement_from_harvest', {
+    p_id: i.id, p_coop: i.coopId, p_harvest: i.harvestId, p_price: i.unitPrice, p_due: i.dueDate, p_invoice: i.invoiceNo || null, p_note: i.note || null,
+    p_qty: i.quantity, p_close: i.close, p_attachment: i.attachment || null, p_date: i.date,
+  });
+/** Đính hoặc gỡ ảnh chứng từ của phiếu (chỉ HTX) */
+export const setProcurementAttachment = (receiptId: string, attachment: string | null) => rpc<unknown>('set_procurement_attachment', { p_receipt: receiptId, p_attachment: attachment || null });
 
 export const payProcurement = (receiptId: string, i: PayInput, id: string = i.opId ?? crypto.randomUUID()) =>
   rpc<unknown>('pay_procurement', { p_id: id, p_receipt: receiptId, p_amount: i.amount, p_paid_on: i.paidOn, p_method: i.method, p_note: i.note || null });

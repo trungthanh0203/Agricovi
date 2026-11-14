@@ -7,7 +7,7 @@ import { supabase } from './supabase';
  * Kho ảnh riêng 'org-media' (G2-1, D75). Cột image của bản ghi giữ tham chiếu ngắn "storage:<mã cơ sở>/<loại>/<mã ảnh>.jpg"
  * (ảnh nhỏ là cùng tên thêm "_t"); ảnh cũ dạng data URL vẫn dùng được song song cho tới khi chuyển xong.
  */
-export type ImageKind = 'areas' | 'crops' | 'materials' | 'licenses';
+export type ImageKind = 'areas' | 'crops' | 'materials' | 'licenses' | 'receipts';
 export const BUCKET = 'org-media';
 const PREFIX = 'storage:';
 

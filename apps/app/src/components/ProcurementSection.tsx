@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { KpiTile, shortMoney } from './HomeStats';
+import { Img, ImagePicker } from './ImagePicker';
 import { PayForm, pillClass } from './PayablesSection';
 import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
@@ -10,16 +11,18 @@ import { coopHouseholdOverview, listCoopHouseholds, listProcurementItems, type C
 import { useOrgs } from '../lib/orgs';
 import { downloadCsv } from '../lib/summary';
 import { canPerm } from '../lib/permissions';
+import type { TabId } from '../lib/tabs';
 import {
-  createProcurementReceipt, createReceiptFromHarvest, fetchProcurementLedger, fetchUnpurchasedHarvests, type UnpurchasedHarvest, listProcurementPayments, payProcurement, PROC_STATUS_LABEL, voidProcurementPayment, voidProcurementReceipt,
-  type ProcLine, type ProcPayment,
+  createProcurementReceipt, createReceiptFromHarvest, fetchProcurementLedger, fetchUnpurchasedHarvests, type UnpurchasedHarvest, listProcurementPayments, payProcurement, PROC_STATUS_LABEL,
+  setProcurementAttachment, voidProcurementPayment, voidProcurementReceipt, type ProcLine, type ProcPayment,
 } from '../lib/procurement';
 
 /**
- * Thu mua từ hộ (D149). HTX (as="coop"): lập phiếu thu mua của hộ thành viên, ghi trả tiền, hủy kèm lý do; công nợ HTX còn phải trả hộ.
+ * Thu mua từ hộ (D149, sửa ở D162). HTX (as="coop"): lập phiếu thu mua của hộ thành viên, ghi trả tiền, hủy kèm lý do; công nợ HTX còn phải trả hộ.
  * Hộ (as="household"): chỉ xem các phiếu HTX đã mua và còn phải thu. Hai bên cùng thấy một sổ nên tiền không lệch.
+ * Hai nơi dùng: view="entry" ở Sản xuất → Thu mua từ hộ (LẬP phiếu, việc hằng ngày ở điểm thu mua) và view="ledger" ở Báo cáo → Công nợ (THEO DÕI tiền: chưa trả, quá hạn, trả tiền).
  */
-export function ProcurementSection({ as }: { as: 'coop' | 'household' }) {
+export function ProcurementSection({ as, view = 'ledger', onGo }: { as: 'coop' | 'household'; view?: 'ledger' | 'entry'; onGo?: (tab: TabId, section?: string) => void }) {
   const { active } = useOrgs();
   const online = useOnline();
   const orgId = active?.id;
@@ -29,11 +32,12 @@ export function ProcurementSection({ as }: { as: 'coop' | 'household' }) {
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const entry = view === 'entry';
 
   const load = useCallback(async () => {
     if (!orgId || !navigator.onLine) return;
-    try { setRows(await fetchProcurementLedger(orgId, as, !showPaid)); setError(null); } catch (e) { setError(friendlyError(e)); }
-  }, [orgId, as, showPaid]);
+    try { setRows(await fetchProcurementLedger(orgId, as, entry ? false : !showPaid)); setError(null); } catch (e) { setError(friendlyError(e)); }
+  }, [orgId, as, showPaid, entry]);
   useEffect(() => { void load(); }, [load]);
 
   const groups = useMemo(() => {
@@ -45,6 +49,8 @@ export function ProcurementSection({ as }: { as: 'coop' | 'household' }) {
     }
     return [...m.values()];
   }, [rows]);
+  // màn lập phiếu: các phiếu mới nhất của mọi hộ (không gom theo hộ)
+  const recent = useMemo(() => [...(rows ?? [])].sort((a, b) => b.receipt_date.localeCompare(a.receipt_date) || a.partner_name.localeCompare(b.partner_name, 'vi')).slice(0, 15), [rows]);
 
   if (!active || !orgId) return null;
   const canEdit = as === 'coop' && canPerm(active.perms, 'coop', 'edit');
@@ -56,20 +62,32 @@ export function ProcurementSection({ as }: { as: 'coop' | 'household' }) {
     setBusy(true); setError(null); setOk(null);
     try { await fn(); setOk(done); await load(); return true; } catch (e) { setError(friendlyError(e)); await load(); return false; } finally { setBusy(false); }
   }
+  const card = (l: ProcLine, name: string) => (
+    <ReceiptCard key={l.receipt_id} line={l} as={as} ownName={active.name} canEdit={canEdit} busy={busy || !online}
+      onPay={(i) => act(() => payProcurement(l.receipt_id, i), `Đã ghi trả ${formatMoney(i.amount)} cho ${name}.`)}
+      onVoidPayment={(id, r) => act(() => voidProcurementPayment(id, r), 'Đã hủy lần trả tiền, số còn phải trả được tính lại.')}
+      onVoid={(r) => act(() => voidProcurementReceipt(l.receipt_id, r), 'Đã hủy phiếu thu mua.')}
+      onAttach={(img) => act(() => setProcurementAttachment(l.receipt_id, img), img ? 'Đã đính ảnh chứng từ.' : 'Đã gỡ ảnh chứng từ.')} />
+  );
 
   return (
     <>
       <p className="muted">
-        {as === 'coop'
-          ? 'Phiếu thu mua: HTX mua sản phẩm của hộ thành viên. Số tiền này là giao dịch giữa HTX và hộ, không tính vào chi phí/doanh thu của vụ. Hộ cũng thấy phiếu của mình.'
-          : 'Các phiếu HTX đã mua sản phẩm của hộ và số tiền HTX còn phải trả cho hộ. Chỉ HTX ghi phiếu và ghi trả tiền; hộ chỉ xem để đối chiếu.'}
+        {entry
+          ? 'Lập phiếu khi hộ giao hàng: chọn hộ, chọn các phiếu thu hoạch của hộ, nhập số HTX cân thực tế và đơn giá. Theo dõi tiền còn phải trả, quá hạn và ghi trả tiền ở Báo cáo → Công nợ.'
+          : as === 'coop'
+            ? 'Theo dõi tiền HTX còn phải trả hộ thành viên, ghi trả tiền, hủy phiếu. Số tiền này là giao dịch giữa HTX và hộ, không tính vào chi phí/doanh thu của vụ. Hộ cũng thấy phiếu của mình.'
+            : 'Các phiếu HTX đã mua sản phẩm của hộ và số tiền HTX còn phải trả cho hộ. Chỉ HTX ghi phiếu và ghi trả tiền; hộ chỉ xem để đối chiếu.'}
       </p>
       {error && <p className="msg error" role="alert">{error}</p>}
       {ok && <p className="msg ok" role="status">{ok}</p>}
-      {canEdit && <button className="primary" disabled={!online || adding} onClick={() => setAdding(true)}>+ Lập phiếu thu mua</button>}
-      {adding && canEdit && <NewReceiptForm coopId={orgId} busy={busy} onCancel={() => setAdding(false)} onRun={act} onDone={() => setAdding(false)} />}
+      {entry && canEdit && <button className="primary" disabled={!online || adding} onClick={() => setAdding(true)}>+ Lập phiếu thu mua</button>}
+      {entry && adding && canEdit && <NewReceiptForm coopId={orgId} busy={busy} onCancel={() => setAdding(false)} onRun={act} onDone={() => setAdding(false)} />}
+      {!entry && canEdit && onGo && (
+        <p className="muted">Lập phiếu thu mua mới ở <button type="button" className="link inline" onClick={() => onGo('production', 'procure')}>Sản xuất → Thu mua từ hộ</button>.</p>
+      )}
 
-      {rows !== null && rows.length > 0 && (
+      {!entry && rows !== null && rows.length > 0 && (
         <div className="kpis">
           <KpiTile label={as === 'coop' ? 'HTX còn phải trả' : 'HTX còn phải trả hộ'} value={shortMoney(owed)} title={formatMoney(owed)} tone={owed > 0 ? 'warn' : 'ok'} />
           <KpiTile label="Quá hạn" value={shortMoney(overdue)} title={formatMoney(overdue)} tone={overdue > 0 ? 'bad' : 'ok'} />
@@ -77,22 +95,25 @@ export function ProcurementSection({ as }: { as: 'coop' | 'household' }) {
         </div>
       )}
       {rows === null && !error && <p className="muted">{online ? 'Đang tải…' : 'Cần có mạng để xem phiếu thu mua.'}</p>}
-      {rows !== null && rows.length === 0 && <p className="muted">{showPaid ? 'Chưa có phiếu thu mua nào.' : 'Không còn khoản nào chưa thanh toán.'}</p>}
+      {rows !== null && rows.length === 0 && <p className="muted">{entry ? 'Chưa có phiếu thu mua nào.' : showPaid ? 'Chưa có phiếu thu mua nào.' : 'Không còn khoản nào chưa thanh toán.'}</p>}
 
-      {groups.map((g) => {
+      {entry && recent.length > 0 && (
+        <>
+          <h2 className="sect">Phiếu mới lập</h2>
+          {recent.map((l) => (<div key={l.receipt_id}><p className="muted"><strong>{l.partner_name}</strong></p>{card(l, l.partner_name)}</div>))}
+        </>
+      )}
+      {!entry && groups.map((g) => {
         const open = g.lines.reduce((s, l) => s + l.remaining, 0);
         const late = g.lines.filter((l) => l.status === 'overdue').length;
         return (
           <Collapsible key={g.id} title={g.name} summary={`Còn ${as === 'coop' ? 'phải trả' : 'phải thu'} ${formatMoney(open)}${late > 0 ? ` · ${late} phiếu quá hạn` : ''}`} warn={late > 0} defaultOpen={late > 0}>
-            {g.lines.map((l) => <ReceiptCard key={l.receipt_id} line={l} as={as} ownName={active.name} canEdit={canEdit} busy={busy || !online}
-              onPay={(i) => act(() => payProcurement(l.receipt_id, i), `Đã ghi trả ${formatMoney(i.amount)} cho ${g.name}.`)}
-              onVoidPayment={(id, r) => act(() => voidProcurementPayment(id, r), 'Đã hủy lần trả tiền, số còn phải trả được tính lại.')}
-              onVoid={(r) => act(() => voidProcurementReceipt(l.receipt_id, r), 'Đã hủy phiếu thu mua.')} />)}
+            {g.lines.map((l) => card(l, g.name))}
           </Collapsible>
         );
       })}
-      <label className="check"><input type="checkbox" checked={showPaid} onChange={(e) => setShowPaid(e.target.checked)} /> Hiện cả phiếu đã thanh toán đủ</label>
-      {rows !== null && rows.length > 0 && (
+      {!entry && <label className="check"><input type="checkbox" checked={showPaid} onChange={(e) => setShowPaid(e.target.checked)} /> Hiện cả phiếu đã thanh toán đủ</label>}
+      {!entry && rows !== null && rows.length > 0 && (
         <button type="button" className="secondary" onClick={() => exportCsv(rows, as)}>Xuất CSV</button>
       )}
       <p className="muted">Báo cáo tổng hợp theo hộ, sản phẩm, tháng: vào Báo cáo → "Thu mua / bán cho HTX".</p>
@@ -100,15 +121,17 @@ export function ProcurementSection({ as }: { as: 'coop' | 'household' }) {
   );
 }
 
-function ReceiptCard({ line: l, as, ownName, canEdit, busy, onPay, onVoidPayment, onVoid }: {
+function ReceiptCard({ line: l, as, ownName, canEdit, busy, onPay, onVoidPayment, onVoid, onAttach }: {
   line: ProcLine; as: 'coop' | 'household'; ownName: string; canEdit: boolean; busy: boolean;
   onPay: (i: import('../lib/partners').PayInput) => Promise<boolean>; onVoidPayment: (id: string, reason: string) => Promise<boolean>; onVoid: (reason: string) => Promise<boolean>;
+  onAttach: (img: string | null) => Promise<boolean>;
 }) {
-  const [panel, setPanel] = useState<'pay' | 'history' | null>(null);
+  const [panel, setPanel] = useState<'pay' | 'history' | 'photo' | null>(null);
   const [pays, setPays] = useState<ProcPayment[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const loadPays = useCallback(async () => { try { setPays(await listProcurementPayments(l.receipt_id)); setErr(null); } catch (e) { setErr(friendlyError(e)); } }, [l.receipt_id]);
   useEffect(() => { if (panel === 'history') void loadPays(); }, [panel, loadPays]);
+  const diff = l.harvest_qty != null ? l.quantity - l.harvest_qty : 0;
   return (
     <div className="card slim">
       <div className="row">
@@ -116,11 +139,15 @@ function ReceiptCard({ line: l, as, ownName, canEdit, busy, onPay, onVoidPayment
         <span className={pillClass(l.status)}>{PROC_STATUS_LABEL[l.status]}</span>
       </div>
       <p className="muted">{l.crop_name ? `${l.crop_name} · ` : ''}{formatQty(l.quantity)} kg × {formatMoney(l.unit_price)}/kg{l.due_date ? ` · hạn trả ${fmtDate(l.due_date)}` : ''}</p>
+      {l.harvest_qty != null && Math.abs(diff) > 0.05 && (
+        <p className="muted">Hộ ghi {formatQty(l.harvest_qty)} kg, HTX cân {formatQty(l.quantity)} kg ({diff > 0 ? '+' : '−'}{formatQty(Math.abs(diff))} kg).</p>
+      )}
       {l.note && <p className="muted">{l.note}</p>}
       <p>Tổng {formatMoney(l.total_amount)} · Đã trả {formatMoney(l.paid)} · <strong>Còn {as === 'coop' ? 'phải trả' : 'phải thu'} {formatMoney(l.remaining)}</strong></p>
       <div className="actions">
         {canEdit && l.remaining > 0 && <button className="secondary" disabled={busy} onClick={() => setPanel(panel === 'pay' ? null : 'pay')}>Ghi trả tiền</button>}
         <button className="secondary" onClick={() => setPanel(panel === 'history' ? null : 'history')}>Các lần trả</button>
+        {as === 'coop' && (l.attachment || canEdit) && <button className="secondary" onClick={() => setPanel(panel === 'photo' ? null : 'photo')}>{l.attachment ? '🖼 Ảnh chứng từ' : '＋ Ảnh chứng từ'}</button>}
         <button className="secondary" onClick={() => printReceipt(l, as, ownName)}>In phiếu</button>
         {canEdit && l.paid === 0 && <button className="secondary" disabled={busy} onClick={() => {
           const r = window.prompt('Lý do hủy phiếu thu mua này? (ví dụ: nhập nhầm khối lượng)');
@@ -130,6 +157,13 @@ function ReceiptCard({ line: l, as, ownName, canEdit, busy, onPay, onVoidPayment
       {panel === 'pay' && (
         <PayForm label="Trả tiền cho hộ" max={l.remaining} busy={busy} amountLabel="Số tiền trả (đ)" dateLabel="Ngày trả" submitLabel="Ghi trả tiền"
           onSave={async (i) => { const ok = await onPay(i); if (ok) setPanel(null); return ok; }} />
+      )}
+      {panel === 'photo' && (
+        <div>
+          {l.attachment && <Img value={l.attachment} size="f" alt="Ảnh chứng từ" className="proc-photo" />}
+          {canEdit && <ImagePicker store="receipts" label={l.attachment ? 'Đổi ảnh chứng từ' : 'Chụp / chọn ảnh chứng từ (phiếu cân, biên nhận)'} value={l.attachment ?? ''} disabled={busy} onChange={(v) => void onAttach(v || null)} />}
+          <p className="muted">Ảnh chỉ HTX xem được, dùng để đối chiếu khi cần; số liệu trên phiếu vẫn là số đã nhập.</p>
+        </div>
       )}
       {panel === 'history' && (
         <div>
@@ -153,13 +187,17 @@ function ReceiptCard({ line: l, as, ownName, canEdit, busy, onPay, onVoidPayment
   );
 }
 
+interface Pick { qty: string; price: string; keep: boolean }
+const netOf = (h: UnpurchasedHarvest) => Math.max(h.quantity - h.loss_quantity, 0);
+const dayOf = (iso: string) => new Date(new Date(iso).getTime() + 7 * 3600000).toISOString().slice(0, 10); // ngày theo giờ Việt Nam
+
 function NewReceiptForm({ coopId, busy, onRun, onDone, onCancel }: {
   coopId: string; busy: boolean; onCancel: () => void; onDone: () => void; onRun: (fn: () => Promise<unknown>, done: string) => Promise<boolean>;
 }) {
   const [mode, setMode] = useState<'manual' | 'harvest'>('harvest');   // mặc định lập từ phiếu thu hoạch của hộ
   const [harvests, setHarvests] = useState<UnpurchasedHarvest[] | null>(null);
   const [harvShared, setHarvShared] = useState(true);
-  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [picked, setPicked] = useState<Record<string, Pick>>({});
   const ids = useRef(new Map<string, string>());   // mã phiếu cố định cho từng phiếu thu hoạch: bấm Lưu lặp không lập hai phiếu
   const [households, setHouseholds] = useState<CoopHousehold[]>([]);
   const [items, setItems] = useState<ProcurementRow[]>([]);
@@ -173,6 +211,7 @@ function NewReceiptForm({ coopId, busy, onRun, onDone, onCancel }: {
   const [due, setDue] = useState('');
   const [invoice, setInvoice] = useState('');
   const [note, setNote] = useState('');
+  const [image, setImage] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [draftId] = useState(() => crypto.randomUUID());   // bấm Lưu lặp không lập hai phiếu
 
@@ -187,40 +226,66 @@ function NewReceiptForm({ coopId, busy, onRun, onDone, onCancel }: {
   }, [coopId, hh]);
 
   useEffect(() => {
-    setHarvests(null); setPicked(new Set());
+    setHarvests(null); setPicked({});
     if (!hh || mode !== 'harvest') return;
     fetchUnpurchasedHarvests(coopId, hh).then((d) => { setHarvests(d.harvests); setHarvShared(d.shared); }).catch((e) => setErr(friendlyError(e)));
   }, [coopId, hh, mode]);
 
+  const refPrice = (cropTypeId: string) => items.find((x) => x.crop_type_id === cropTypeId)?.ref_price_per_kg ?? null;
   function pickCrop(id: string) {
     setCrop(id);
-    const it = items.find((x) => x.crop_type_id === id);
-    if (it?.ref_price_per_kg != null && !price) setPrice(String(it.ref_price_per_kg));
+    const r = refPrice(id);
+    if (r != null && !price) setPrice(String(r));
   }
+  function togglePick(h: UnpurchasedHarvest, on: boolean) {
+    setPicked((s) => {
+      const n = { ...s };
+      if (!on) { delete n[h.id]; return n; }
+      const first = Object.values(s)[0];
+      const ref = refPrice(h.crop_type_id);
+      n[h.id] = { qty: String(netOf(h)), price: ref != null ? String(ref) : first?.price ?? '', keep: false };
+      return n;
+    });
+  }
+  const setPick = (id: string, patch: Partial<Pick>) => setPicked((s) => ({ ...s, [id]: { ...s[id]!, ...patch } }));
   const q = parseNumber(qty), p = parseNumber(price);
   const amount = q && p ? Math.round(q * p) : 0;
+  const chosen = (harvests ?? []).filter((h) => picked[h.id]);
+  const sum = chosen.reduce((t, h) => { const x = picked[h.id]!; const a = parseNumber(x.qty), b = parseNumber(x.price); return { kg: t.kg + (a ?? 0), money: t.money + (a && b ? Math.round(a * b) : 0) }; }, { kg: 0, money: 0 });
 
   function submit() {
     setErr(null);
     if (!hh) return setErr('Hãy chọn hộ bán.');
+    if (date > todayLocal()) return setErr('Ngày thu mua không được sau ngày hôm nay.');
+    if (due && due < date) return setErr('Hạn trả tiền không được trước ngày thu mua.');
     if (mode === 'harvest') {
-      if (picked.size === 0) return setErr('Hãy chọn ít nhất một phiếu thu hoạch.');
-      if (p === null || p < 0) return setErr('Hãy nhập đơn giá (đồng/kg).');
-      const chosen = (harvests ?? []).filter((h) => picked.has(h.id));
+      if (chosen.length === 0) return setErr('Hãy chọn ít nhất một phiếu thu hoạch.');
+      for (const h of chosen) {
+        const x = picked[h.id]!;
+        const a = parseNumber(x.qty), b = parseNumber(x.price);
+        const label = `${fmtDate(h.harvested_at)} · ${h.crop_name}`;
+        if (a === null || a <= 0) return setErr(`Phiếu ${label}: hãy nhập số kg HTX cân thực tế (lớn hơn 0).`);
+        if (b === null || b < 0) return setErr(`Phiếu ${label}: hãy nhập đơn giá (đồng/kg).`);
+        if (date < dayOf(h.harvested_at)) return setErr(`Ngày thu mua không được trước ngày thu hoạch (${fmtDate(h.harvested_at)}).`);
+      }
       void onRun(async () => {
         for (const h of chosen) {
           if (!ids.current.has(h.id)) ids.current.set(h.id, crypto.randomUUID());
-          await createReceiptFromHarvest(ids.current.get(h.id)!, coopId, h.id, Math.round(p), due || null, invoice.trim(), note.trim());
+          const x = picked[h.id]!;
+          await createReceiptFromHarvest({
+            id: ids.current.get(h.id)!, coopId, harvestId: h.id, unitPrice: Math.round(parseNumber(x.price)!), dueDate: due || null, invoiceNo: invoice.trim(), note: note.trim(),
+            quantity: parseNumber(x.qty)!, close: !x.keep, date, attachment: image || null,
+          });
         }
       }, `Đã lập ${chosen.length} phiếu thu mua từ phiếu thu hoạch.`).then((ok) => { if (ok) onDone(); });
       return;
     }
     if (!q || q <= 0) return setErr('Hãy nhập khối lượng (kg) lớn hơn 0.');
     if (p === null || p < 0) return setErr('Hãy nhập đơn giá (đồng/kg).');
-    if (date > todayLocal()) return setErr('Ngày thu mua không được sau ngày hôm nay.');
-    if (due && due < date) return setErr('Hạn trả tiền không được trước ngày thu mua.');
-    void onRun(() => createProcurementReceipt({ id: draftId, coopId, householdId: hh, cycleId: cycle || null, cropId: crop || null, date, quantity: q, unitPrice: Math.round(p), dueDate: due || null, invoiceNo: invoice.trim(), note: note.trim() }),
-      'Đã lập phiếu thu mua.').then((ok) => { if (ok) onDone(); });
+    void onRun(async () => {
+      await createProcurementReceipt({ id: draftId, coopId, householdId: hh, cycleId: cycle || null, cropId: crop || null, date, quantity: q, unitPrice: Math.round(p), dueDate: due || null, invoiceNo: invoice.trim(), note: note.trim() });
+      if (image) await setProcurementAttachment(draftId, image);
+    }, 'Đã lập phiếu thu mua.').then((ok) => { if (ok) onDone(); });
   }
 
   return (
@@ -240,23 +305,38 @@ function NewReceiptForm({ coopId, busy, onRun, onDone, onCancel }: {
         <>
           {harvests === null && !err && <p className="muted">Đang tải phiếu thu hoạch…</p>}
           {harvests !== null && !harvShared && <p className="msg warn" role="status">Hộ chưa cho HTX xem dữ liệu sản xuất nên chưa lấy được phiếu thu hoạch. Có thể lập phiếu bằng cách nhập tay.</p>}
-          {harvests !== null && harvShared && harvests.length === 0 && <p className="muted">Hộ không còn phiếu thu hoạch nào chưa thu mua.</p>}
-          {(harvests ?? []).map((h) => (
-            <label key={h.id} className="check">
-              <input type="checkbox" checked={picked.has(h.id)} onChange={(e) => setPicked((s0) => { const n = new Set(s0); if (e.target.checked) n.add(h.id); else n.delete(h.id); return n; })} />
-              {fmtDate(h.harvested_at)} · {h.crop_name} · {formatQty(h.quantity)} kg{h.grade ? ` · loại ${h.grade}` : ''}{h.lot_code ? ` · lô ${h.lot_code}` : ''} · {h.cycle_name}
-            </label>
-          ))}
-          {picked.size > 0 && (() => {
-            const kg = (harvests ?? []).filter((h) => picked.has(h.id)).reduce((t, h) => t + h.quantity, 0);
-            return <p><strong>{picked.size} phiếu · {formatQty(kg)} kg{p ? ` · thành tiền ${formatMoney(Math.round(kg * p))}` : ''}</strong></p>;
-          })()}
-          <label>Đơn giá (đ/kg, áp cho các phiếu đã chọn)<input inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value)} /></label>
+          {harvests !== null && harvShared && harvests.length === 0 && <p className="muted">Hộ không còn phiếu thu hoạch nào chưa thu mua xong.</p>}
+          {(harvests ?? []).map((h) => {
+            const x = picked[h.id];
+            const a = x ? parseNumber(x.qty) : null;
+            const net = netOf(h);
+            return (
+              <div key={h.id}>
+                <label className="check">
+                  <input type="checkbox" checked={Boolean(x)} onChange={(e) => togglePick(h, e.target.checked)} />
+                  {fmtDate(h.harvested_at)} · {h.crop_name} · hộ ghi {formatQty(h.quantity)} kg{h.loss_quantity > 0 ? ` (hao hụt ${formatQty(h.loss_quantity)}, còn ${formatQty(net)})` : ''}{h.grade ? ` · loại ${h.grade}` : ''}{h.lot_code ? ` · lô ${h.lot_code}` : ''} · {h.cycle_name}{h.purchased_qty > 0 ? ` · đã mua ${formatQty(h.purchased_qty)} kg` : ''}
+                </label>
+                {x && (
+                  <div className="inline-form">
+                    <div className="pair">
+                      <label>Số kg HTX cân thực tế<input inputMode="decimal" value={x.qty} onChange={(e) => setPick(h.id, { qty: e.target.value })} /></label>
+                      <label>Đơn giá (đ/kg){refPrice(h.crop_type_id) != null && <span className="muted"> · giá tham khảo {formatMoney(refPrice(h.crop_type_id)!)}</span>}<input inputMode="numeric" value={x.price} onChange={(e) => setPick(h.id, { price: e.target.value })} /></label>
+                    </div>
+                    {a !== null && a > 0 && Math.abs(a - net) > 0.05 && <p className="muted">Hộ ghi còn {formatQty(net)} kg, HTX cân {formatQty(a)} kg ({a > net ? '+' : '−'}{formatQty(Math.abs(a - net))} kg).</p>}
+                    <label className="check"><input type="checkbox" checked={x.keep} onChange={(e) => setPick(h.id, { keep: e.target.checked })} /> Hộ còn hàng, chưa mua hết (giữ lại để mua tiếp sau)</label>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {chosen.length > 0 && <p><strong>{chosen.length} phiếu · {formatQty(sum.kg)} kg{sum.money > 0 ? ` · thành tiền ${formatMoney(sum.money)}` : ''}</strong></p>}
           <div className="pair">
-            <label>Hạn trả tiền<input type="date" value={due} onChange={(e) => setDue(e.target.value)} /></label>
-            <label>Số phiếu (nếu có)<input value={invoice} maxLength={60} onChange={(e) => setInvoice(e.target.value)} /></label>
+            <label>Ngày thu mua<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
+            <label>Hạn trả tiền<input type="date" value={due} min={date} onChange={(e) => setDue(e.target.value)} /></label>
           </div>
+          <label>Số phiếu<input value={invoice} maxLength={60} onChange={(e) => setInvoice(e.target.value)} placeholder="Để trống: tự đánh số (TM-năm-0001)" /></label>
           <label>Ghi chú<input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} /></label>
+          <ImagePicker store="receipts" label="Ảnh chứng từ: phiếu cân, biên nhận (không bắt buộc)" value={image} onChange={setImage} disabled={busy} />
         </>
       )}
       {mode === 'manual' && <>
@@ -283,8 +363,9 @@ function NewReceiptForm({ coopId, busy, onRun, onDone, onCancel }: {
         <label>Ngày thu mua<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
         <label>Hạn trả tiền<input type="date" value={due} min={date} onChange={(e) => setDue(e.target.value)} /></label>
       </div>
-      <label>Số phiếu (nếu có)<input value={invoice} maxLength={60} onChange={(e) => setInvoice(e.target.value)} /></label>
+      <label>Số phiếu<input value={invoice} maxLength={60} onChange={(e) => setInvoice(e.target.value)} placeholder="Để trống: tự đánh số (TM-năm-0001)" /></label>
       <label>Ghi chú<input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} placeholder="Ví dụ: loại A, đã cân tại kho HTX" /></label>
+      <ImagePicker store="receipts" label="Ảnh chứng từ: phiếu cân, biên nhận (không bắt buộc)" value={image} onChange={setImage} disabled={busy} />
       </>}
       {err && <p className="msg error" role="alert">{err}</p>}
       <div className="actions">

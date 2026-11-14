@@ -17,6 +17,7 @@ import { AreaFilter, topAreaIdOf } from '../components/AreaFilter';
 import { cancelTransferRequest, listTransferRequests, requestCycleToOwn, TRANSFER_STATUS_LABEL, type TransferRequest } from '../lib/cycleTransfer';
 import { cycleCode } from '../lib/qr';
 import { CycleQr } from '../components/CycleQr';
+import { ProcurementSection } from '../components/ProcurementSection';
 import { CycleProfitReport } from '../components/CycleProfitReport';
 import { CycleStatsStrip } from '../components/CycleStatsStrip';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
@@ -68,6 +69,8 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
         <StockPanel />
       ) : current === 'expense' ? (
         <ExpenseSection />
+      ) : current === 'procure' ? (
+        <ProcurementSection as="coop" view="entry" onGo={onGo} />
       ) : current === 'attendance' ? (
         <AttendanceSection onOpenCycle={onOpenCycle} onLogFor={onLogFor} />
       ) : current === 'logs' ? (

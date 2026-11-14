@@ -30,7 +30,7 @@ export function ReportsTab({ section, onSection, onGo }: { section?: string; onS
     <section>
       <div className="row"><h1 className="grow">Báo cáo</h1>{current === null && <HelpButton topic="tab-reports" />}</div>
       <SubTabs items={items} value={current} onChange={onSection} onBack={() => onSection('' as ReportSection)} label="Báo cáo" />
-      {current === 'stats' ? <OrgStatsSection /> : current === 'website' ? <WebSiteSection /> : current === 'payables' ? <DebtsSection /> : current === 'summary' ? <SummarySection /> : current === 'weekly' ? <WeeklyReport onSection={onSection} /> : current === 'paybook' ? <PayrollBook onGo={onGo} /> : current === 'custom' ? <ReportBuilder /> : current === 'commerce' ? <CommerceProfile org={active} /> : current === 'checklist' ? <ChecklistSection /> : current === 'logbook' ? <LogbookSection /> : current === 'export' ? <ExportDossierSection /> : null}
+      {current === 'stats' ? <OrgStatsSection /> : current === 'website' ? <WebSiteSection /> : current === 'payables' ? <DebtsSection onGo={onGo} /> : current === 'summary' ? <SummarySection /> : current === 'weekly' ? <WeeklyReport onSection={onSection} /> : current === 'paybook' ? <PayrollBook onGo={onGo} /> : current === 'custom' ? <ReportBuilder /> : current === 'commerce' ? <CommerceProfile org={active} /> : current === 'checklist' ? <ChecklistSection /> : current === 'logbook' ? <LogbookSection /> : current === 'export' ? <ExportDossierSection /> : null}
     </section>
   );
 }

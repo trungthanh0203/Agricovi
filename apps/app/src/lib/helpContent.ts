@@ -377,6 +377,13 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     note: 'Ghi việc đầy đủ và đúng ngày thì sổ mới đáng tin.',
     guide: { id: 'process', step: 7 },
   },
+  procure: {
+    title: 'Thu mua từ hộ',
+    what: 'HTX lập phiếu thu mua khi hộ thành viên giao hàng: chọn phiếu thu hoạch của hộ, nhập số kg HTX cân thực tế và đơn giá.',
+    how: ['Chọn hộ bán rồi chọn các phiếu thu hoạch của hộ.', 'Nhập số kg cân thực tế và đơn giá cho từng phiếu (có thể mua một phần).', 'Lưu phiếu; số phiếu tự đánh số nếu để trống. Có thể đính ảnh phiếu cân.'],
+    note: 'Theo dõi tiền còn phải trả, quá hạn và ghi trả tiền ở Báo cáo → Công nợ → Thu mua từ hộ.',
+    guide: { id: 'process', step: 7 },
+  },
   export: {
     title: 'Hồ sơ xuất khẩu',
     what: 'Gom nhật ký, vật tư, thu hoạch, giấy phép và tọa độ thửa của một vụ thành bộ hồ sơ nguồn gốc để gửi bên mua (mục nâng cao, chủ bật ở Tài khoản).',

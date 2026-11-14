@@ -5,12 +5,13 @@ import { PayablesSection } from './PayablesSection';
 import { ReceivablesSection } from './ReceivablesSection';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
+import type { TabId } from '../lib/tabs';
 
 /**
  * Công nợ: hai tab "Phải trả" (nợ nhà cung ứng, quyền Chi phí) và "Phải thu" (khách còn nợ, quyền Doanh thu).
  * Chỉ hiện tab người dùng có quyền xem. Thêm tab "Thu mua từ hộ" (HTX) / "Bán cho HTX" (hộ thuộc HTX) cho phiếu thu mua HTX–hộ (D149).
  */
-export function DebtsSection() {
+export function DebtsSection({ onGo }: { onGo?: (tab: TabId, section?: string) => void }) {
   const { active } = useOrgs();
   const canPay = canPerm(active?.perms, 'expenses');
   const canRecv = canPerm(active?.perms, 'sales');
@@ -35,7 +36,7 @@ export function DebtsSection() {
           {procAs && <button role="tab" aria-selected={cur === 'proc'} className={cur === 'proc' ? 'chip active' : 'chip'} onClick={() => setTab('proc')}>{procAs === 'coop' ? 'Thu mua từ hộ' : 'Bán cho HTX'}</button>}
         </div>
       )}
-      {cur === 'proc' && procAs ? <ProcurementSection as={procAs} /> : cur === 'pay' ? <PayablesSection /> : <ReceivablesSection />}
+      {cur === 'proc' && procAs ? <ProcurementSection as={procAs} view="ledger" onGo={onGo} /> : cur === 'pay' ? <PayablesSection /> : <ReceivablesSection />}
     </>
   );
 }

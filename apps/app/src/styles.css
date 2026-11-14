@@ -819,3 +819,6 @@ button.mini-kpi.tappable:active { filter: brightness(.95); }
 
 /* Phiếu khoán (mục 11) */
 .pct-input { width: 64px; margin-left: 8px; display: inline-block; }
+
+/* Thu mua từ hộ: ảnh chứng từ */
+.proc-photo { max-width: 100%; border-radius: 8px; border: 1px solid var(--line); display: block; margin-bottom: 8px; }
