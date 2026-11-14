@@ -77,7 +77,7 @@ export function AreasSection() {
   const [busy, setBusy] = useState(false);
   const mapOn = useFeature(active?.id, 'map');
   const { geos, reload: reloadGeos } = useAreaGeos(active?.id, mapOn);
-  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});   // phân khu đang mở/đóng danh sách ô sản xuất (mặc định đóng khi có hơn 6 ô)
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});   // phân khu đang mở/đóng danh sách ô sản xuất (mặc định đóng hết)
   const [mapFor, setMapFor] = useState<string | 'all' | null>(null); // khu đang vẽ ranh, hoặc 'all' = xem mọi khu
   if (!active) return null;
 
@@ -98,9 +98,7 @@ export function AreasSection() {
   const newCell = (parentId: string, name: string, k: CellKind, size?: number | null, unit?: 'm2' | 'ha'): FarmInput =>
     ({ name, kind: k.kind, kind_item: k.kind_item ?? undefined, housing: k.housing, area_size: size ?? null, area_unit: unit ?? 'm2', parent_id: parentId });
 
-  const isOpen = (a: AreaRow, nKids: number) => openMap[a.id] ?? nKids <= 6;
-  const anyFoldable = tops.some((t) => cellsOf(mine, t.id).filter(visible).length > 0);
-  const setAllOpen = (open: boolean) => setOpenMap(Object.fromEntries(tops.map((t) => [t.id, open])));
+  const isOpen = (a: AreaRow, _nKids?: number) => openMap[a.id] ?? false;   // mặc định luôn đóng
 
   const renderRow = (a: AreaRow, isCell: boolean) => {
     const kids = isCell ? [] : cellsOf(mine, a.id);
@@ -207,12 +205,6 @@ export function AreasSection() {
           })} />
       )}
 
-      {anyFoldable && (
-        <p className="muted">
-          <button type="button" className="link inline" onClick={() => setAllOpen(true)}>Mở hết các ô sản xuất</button>{' · '}
-          <button type="button" className="link inline" onClick={() => setAllOpen(false)}>Đóng hết</button>
-        </p>
-      )}
       <table className="grid">
         <thead><tr><th>Phân khu ({tops.length})</th><th className="num">Diện tích</th>{canManage && <th></th>}</tr></thead>
         <tbody>
