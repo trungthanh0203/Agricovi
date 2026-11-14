@@ -773,3 +773,25 @@ button.mini-kpi.tappable { font: inherit; color: inherit; cursor: pointer; borde
 button.mini-kpi.tappable:active { filter: brightness(.95); }
 .card.flash { animation: sumflash 1.8s ease-out; }
 @keyframes sumflash { 0% { box-shadow: 0 0 0 3px var(--c-info); } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+/* Báo cáo lãi/lỗ vụ một trang (in A4 dọc, trang tên "report" để không ảnh hưởng sổ nhật ký A4 ngang) */
+.profit-report h2 { margin: 0 0 4px; text-align: center; }
+.profit-report .pr-sub { text-align: center; margin: 0 0 4px; }
+.pr-table { width: 100%; margin: 10px 0; }
+.pr-table th { text-align: left; font-weight: 500; }
+.pr-table td { text-align: right; font-weight: 700; white-space: nowrap; }
+.pr-sub-row th, .pr-sub-row td { font-weight: 400; color: var(--muted); }
+.pr-total th, .pr-total td { font-size: 1.1em; font-weight: 800; }
+.pr-total.ok td { color: var(--c-ok, #1b7f3b); }
+.pr-total.bad td { color: var(--c-bad, #b3261e); }
+.pr-warn { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 13px; margin: 8px 0; }
+.pr-warn ul { margin: 4px 0 0; padding-left: 18px; }
+.pr-foot { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; margin-top: 14px; }
+.pr-foot > div:first-child { flex: 1; }
+.pr-qr { width: 130px; text-align: center; font-size: 11px; }
+.pr-qr .qrbox { width: 130px; }
+@page report { size: A4 portrait; margin: 12mm; }
+@media print {
+  .profit-report { page: report; }
+  .profit-report .pr-table th, .profit-report .pr-table td { border-bottom: 1px solid #999; padding: 4px 2px; }
+}

@@ -3,6 +3,7 @@
 Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi tiết từng mốc cũ (bước C, Giai đoạn 2, lương, Đợt 1…): `STATUS_APP_LICHSU.md` (chỉ tra cứu khi cần, không đọc hết).
 
 ## Đang làm
+- **14/11/2026 (mục 5 báo cáo đối thủ, không migration)**: nút **Báo cáo lãi lỗ (in/PDF)** ở từng vụ (Sản xuất): trang A4 dọc gồm doanh thu, chi phí 3 nhóm, lãi/lỗ, sản lượng, giá thành/kg, ô ký và mã QR truy xuất (không chứa số tiền). Chỉ hiện khi người xem có quyền xem tiền. Chưa kiểm in trên máy thật.
 - **03/11/2026 (D131, migration 0159, cần `db push` và `npx supabase functions deploy owner-signup`)**: **mã giới thiệu + đối tác + hoa hồng**: mục Đối tác ở quản trị nền tảng, khối Đối tác giới thiệu ở chi tiết cơ sở, ô mã ở đăng ký, mã riêng của người dùng ở Hỗ trợ & Chia sẻ. Test `referral`. Push theo thứ tự 0135 → 0159.
 - **31/10/2026 (D130, migration 0140, cần `db push`)**: **thông tin liên hệ** sửa ở Quản trị nền tảng → Cấu hình; hiện ở đăng nhập/đăng ký, màn chờ duyệt và tab mới **Hỗ trợ & Chia sẻ**. Test `contact_info`. Push theo thứ tự 0135 → 0140.
 - **31/10/2026 (D129, migration 0139, cần `db push`)**: **bảng kiểm VietGAP dưa lưới nhà màng đủ 25 tiêu chí (4 nhóm, đạt khi 100%)** theo file của chủ sản phẩm, thay bộ 18 tiêu chí; biểu mẫu Thu hoạch/Chi phí/Doanh thu/Xuất kho chỉ liệt kê vụ đang sản xuất (ô tích hiện cả vụ). Test `checklists`. Push theo thứ tự 0135 → 0139.

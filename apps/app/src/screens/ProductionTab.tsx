@@ -17,6 +17,7 @@ import { AreaFilter, topAreaIdOf } from '../components/AreaFilter';
 import { cancelTransferRequest, listTransferRequests, requestCycleToOwn, TRANSFER_STATUS_LABEL, type TransferRequest } from '../lib/cycleTransfer';
 import { cycleCode } from '../lib/qr';
 import { CycleQr } from '../components/CycleQr';
+import { CycleProfitReport } from '../components/CycleProfitReport';
 import { CycleStatsStrip } from '../components/CycleStatsStrip';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
 import { fmtArea, getAreaUnit } from '../lib/areaUnits';
@@ -146,6 +147,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const [showCancelled, setShowCancelled] = useState(false);   // hiện cả vụ đã hủy (xóa vụ làm sai)
   const [editId, setEditId] = useState<string | null>(null);
   const [qrId, setQrId] = useState<string | null>(null);
+  const [reportId, setReportId] = useState<string | null>(null);
   const [pubId, setPubId] = useState<string | null>(null);
   const [stats, setStats] = useState<CycleStats | null>(() => (active ? cachedCycleStats(active.id) : null));
 
@@ -308,12 +310,22 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
             {hasAnyStat(statById.get(c.id)) && <CycleStatsStrip s={statById.get(c.id)!} countUnit={cycleCountUnit(c, cropTypes)} areaLabel={infoLabels(cropTypes.find((t) => t.id === c.crop_type_id)?.kind).area} />}
             <div className="actions">
               <button className="secondary" onClick={() => onOpenCycle(c.id)}>Quản lý vụ</button>
+              {statById.get(c.id)?.profit != null && (
+                <button className="secondary soft-toggle" aria-expanded={reportId === c.id} onClick={() => setReportId(reportId === c.id ? null : c.id)}><span>Báo cáo lãi lỗ (in/PDF)</span><i aria-hidden="true" /></button>
+              )}
               <button className="secondary soft-toggle" aria-expanded={qrId === c.id} onClick={() => setQrId(qrId === c.id ? null : c.id)}><span>Mã QR của vụ</span><i aria-hidden="true" /></button>
               {isOwner(active.roles) && c.owner_org_id === active.id && !active.simple && (
                 <button className="secondary soft-toggle" aria-expanded={pubId === c.id} onClick={() => setPubId(pubId === c.id ? null : c.id)}><span>🌐 Mở công khai website</span><i aria-hidden="true" /></button>
               )}
             </div>
             {pubId === c.id && <PublishCycle cycleId={c.id} />}
+            {reportId === c.id && statById.get(c.id) && (
+              <CycleProfitReport s={statById.get(c.id)!} info={{
+                cycleId: c.id, title: cycleTitle(c, cropName(c.crop_type_id)), orgName: active.name, cropName: cropName(c.crop_type_id),
+                areaPath: areaPath(c.area_id, areas) || '', startDate: c.start_date ?? null, endDate: c.expected_end_date ?? null,
+                statusLabel: CYCLE_STATUS_LABEL_VI[c.status],
+              }} />
+            )}
             {qrId === c.id && <CycleQr cycleId={c.id} label={cycleTitle(c, cropName(c.crop_type_id))} />}
             {editId === c.id && (
               <CycleEditForm cycle={c} busy={!online} defaultUnit={cycleCountUnit({ crop_type_id: c.crop_type_id, count_unit: null }, cropTypes)} kind={cropTypes.find((t) => t.id === c.crop_type_id)?.kind} onClose={() => setEditId(null)}
