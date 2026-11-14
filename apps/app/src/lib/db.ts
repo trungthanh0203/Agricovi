@@ -183,6 +183,9 @@ export interface MilestoneRow {
   done_at: string | null;
   done_by: string | null;
   done_name: string | null;
+  /** 'vaccine' = mũi tiêm (D166); thiếu = việc nhắc thường */
+  kind?: 'task' | 'vaccine';
+  lot_no?: string | null;
 }
 
 /** Việc khắc phục của sự cố */

@@ -6,15 +6,33 @@ import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import {
   addCycleMilestone, addTemplateMilestone, deleteCycleMilestone, deleteTemplateMilestone, listTemplateMilestones, MILESTONE_SUGGESTIONS,
-  setMilestoneDone, type MilestoneInput, type TemplateMilestone,
+  setMilestoneDone, VACCINE_SAMPLE_PIG, type MilestoneInput, type TemplateMilestone,
 } from '../lib/milestones';
 import { MILESTONE_STATUS_LABEL, milestoneDue, milestoneStatus, milestoneWhen, type MilestoneStatus } from '../lib/milestoneLogic';
 import { useOrgs } from '../lib/orgs';
 import { useTable } from '../lib/tables';
 import { cycleTitle } from '../lib/cycles';
+import type { MilestoneRow } from '../lib/db';
 
 const vn = (iso: string | null) => (iso ? iso.split('-').reverse().join('/') : '—');
 const pillClass = (s: MilestoneStatus) => (s === 'overdue' ? 'pill err' : s === 'today' || s === 'soon' ? 'pill warn' : s === 'done' ? 'pill ok' : 'pill');
+
+/** Nút "Đã làm xong"; mũi tiêm vaccine thì hỏi thêm số lô (không bắt buộc) */
+function DoneButton({ m, disabled, onDone }: { m: MilestoneRow; disabled: boolean; onDone: (lot?: string) => void }) {
+  const [asking, setAsking] = useState(false);
+  const [lot, setLot] = useState('');
+  if (m.kind !== 'vaccine') return <button className="secondary" disabled={disabled} onClick={() => onDone()}>Đã làm xong</button>;
+  if (!asking) return <button className="secondary" disabled={disabled} onClick={() => setAsking(true)}>Đã tiêm</button>;
+  return (
+    <div className="inline-form">
+      <label>Số lô vaccine (không bắt buộc)<input value={lot} maxLength={60} onChange={(e) => setLot(e.target.value)} placeholder="In trên chai/hộp vaccine" /></label>
+      <div className="btnrow">
+        <button className="primary" disabled={disabled} onClick={() => onDone(lot)}>Xác nhận đã tiêm</button>
+        <button type="button" className="secondary" onClick={() => setAsking(false)}>Hủy</button>
+      </div>
+    </div>
+  );
+}
 
 /** Trang chủ: các mốc nhắc đến hạn trong 3 ngày tới hoặc đã quá hạn, của các vụ chưa kết thúc. Không hiện gì nếu không có. */
 export function HomeReminders() {
@@ -44,11 +62,11 @@ export function HomeReminders() {
       {rows.map(({ m, c, status, due }) => (
         <div className="card slim" key={m.id}>
           <div className="row"><strong className="grow">{m.title}</strong><span className={pillClass(status)}>{MILESTONE_STATUS_LABEL[status]} · {vn(due)}</span></div>
-          <p className="muted">{label(c)}{m.note ? ` · ${m.note}` : ''}</p>
-          <button className="secondary" disabled={!online || busyId === m.id} onClick={() => {
+          <p className="muted">{m.kind === 'vaccine' ? 'Mũi tiêm · ' : ''}{label(c)}{m.note ? ` · ${m.note}` : ''}</p>
+          <DoneButton m={m} disabled={!online || busyId === m.id} onDone={(lot) => {
             setBusyId(m.id); setError(null);
-            void setMilestoneDone(m.id, true).catch((e) => setError(friendlyError(e))).finally(() => setBusyId(null));
-          }}>Đã làm xong</button>
+            void setMilestoneDone(m.id, true, lot).catch((e) => setError(friendlyError(e))).finally(() => setBusyId(null));
+          }} />
         </div>
       ))}
       {!online && <p className="muted">Đang offline: xem được, đánh dấu "đã làm" cần có mạng.</p>}
@@ -57,7 +75,7 @@ export function HomeReminders() {
 }
 
 /** Chi tiết vụ: mọi mốc của vụ kèm ngày đến hạn; người quản lý vụ thêm/xóa mốc riêng (ví dụ lịch vaccine do thú y chốt) */
-export function CycleMilestones({ cycle, canManage, canMark }: { cycle: CycleRow; canManage: boolean; canMark: boolean }) {
+export function CycleMilestones({ cycle, canManage, canMark, animal = false }: { cycle: CycleRow; canManage: boolean; canMark: boolean; animal?: boolean }) {
   const online = useOnline();
   const all = useTable('milestones');
   const items = useMemo(() => all.filter((m) => m.cycle_id === cycle.id), [all, cycle.id]);
@@ -80,17 +98,28 @@ export function CycleMilestones({ cycle, canManage, canMark }: { cycle: CycleRow
         return (
           <div className="card slim" key={i.id}>
             <div className="row"><strong className="grow">{i.title}</strong><span className={pillClass(s)}>{MILESTONE_STATUS_LABEL[s]}{s !== 'done' && milestoneDue(i, cycle) ? ` · ${vn(milestoneDue(i, cycle))}` : ''}</span></div>
-            <p className="muted">{milestoneWhen(i)}{i.note ? ` · ${i.note}` : ''}{i.done_at ? ` · ${i.done_name ?? ''} ${new Date(i.done_at).toLocaleDateString('vi-VN')}` : ''}</p>
+            <p className="muted">{i.kind === 'vaccine' ? 'Mũi tiêm · ' : ''}{milestoneWhen(i)}{i.note ? ` · ${i.note}` : ''}{i.done_at ? ` · ${i.done_name ?? ''} ${new Date(i.done_at).toLocaleDateString('vi-VN')}${i.lot_no ? ` · lô ${i.lot_no}` : ''}` : ''}</p>
             <div className="btnrow">
-              {canMark && <button className="secondary" disabled={busy || !online} onClick={() => void run(() => setMilestoneDone(i.id, !i.done_at))}>{i.done_at ? 'Bỏ đánh dấu' : 'Đã làm xong'}</button>}
+              {canMark && i.done_at && <button className="secondary" disabled={busy || !online} onClick={() => void run(() => setMilestoneDone(i.id, false))}>Bỏ đánh dấu</button>}
+              {canMark && !i.done_at && <DoneButton m={i} disabled={busy || !online} onDone={(lot) => void run(() => setMilestoneDone(i.id, true, lot))} />}
               {canManage && <button className="link inline" disabled={busy || !online} onClick={() => { if (window.confirm('Xóa mốc an toàn này khỏi vụ?')) void run(() => deleteCycleMilestone(i.id)); }}>Xóa</button>}
             </div>
           </div>
         );
       })}
-      {canManage && !form && <button className="secondary" disabled={!online} onClick={() => setForm(true)}>+ Thêm mốc an toàn</button>}
+      {canManage && !form && <button className="secondary" disabled={!online} onClick={() => setForm(true)}>{animal ? '+ Thêm mốc / mũi tiêm' : '+ Thêm mốc an toàn'}</button>}
+      {canManage && animal && !form && !items.some((i) => i.kind === 'vaccine') && (
+        <div>
+          <button className="secondary" disabled={busy || !online} onClick={() => {
+            if (window.confirm('Nạp lịch tiêm tham khảo cho heo? Đây chỉ là mẫu gợi ý, bạn cần cho thú y của trại xác nhận và sửa/xóa các mũi không dùng.')) {
+              void run(async () => { for (const v of VACCINE_SAMPLE_PIG) await addCycleMilestone(cycle.id, v); });
+            }
+          }}>Nạp lịch tiêm tham khảo (heo)</button>
+          <p className="muted">Mẫu gợi ý, cần thú y của trại xác nhận.</p>
+        </div>
+      )}
       {canManage && form && (
-        <MilestoneForm m={m} offset={offset} setM={setM} setOffset={setOffset} busy={busy || !online}
+        <MilestoneForm m={m} offset={offset} setM={setM} setOffset={setOffset} busy={busy || !online} animal={animal}
           onSave={(v) => run(async () => { await addCycleMilestone(cycle.id, v); setForm(false); setM({ title: '', anchor: 'start', offset: 0, note: '' }); setOffset('0'); })}
           onClose={() => setForm(false)} />
       )}
@@ -99,12 +128,20 @@ export function CycleMilestones({ cycle, canManage, canMark }: { cycle: CycleRow
   );
 }
 
-function MilestoneForm({ m, offset, setM, setOffset, busy, onSave, onClose }: {
-  m: MilestoneInput; offset: string; setM: (v: MilestoneInput) => void; setOffset: (v: string) => void; busy: boolean; onSave: (v: MilestoneInput) => void; onClose: () => void;
+function MilestoneForm({ m, offset, setM, setOffset, busy, animal = false, onSave, onClose }: {
+  m: MilestoneInput; offset: string; setM: (v: MilestoneInput) => void; setOffset: (v: string) => void; busy: boolean; animal?: boolean; onSave: (v: MilestoneInput) => void; onClose: () => void;
 }) {
   const [err, setErr] = useState<string | null>(null);
   return (
     <div className="inline-form">
+      {animal && (
+        <label>Loại
+          <select value={m.kind ?? 'task'} onChange={(e) => setM({ ...m, kind: e.target.value as 'task' | 'vaccine' })}>
+            <option value="task">Việc nhắc (tẩy giun, ngưng thuốc…)</option>
+            <option value="vaccine">Mũi tiêm vaccine</option>
+          </select>
+        </label>
+      )}
       <label>Nội dung nhắc<input value={m.title} maxLength={160} onChange={(e) => setM({ ...m, title: e.target.value })} placeholder="Ví dụ: Tiêm vaccine lần 1, Ngưng bón phân" /></label>
       <div className="pair">
         <label>Tính từ

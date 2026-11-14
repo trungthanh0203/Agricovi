@@ -6,7 +6,7 @@ import { supabase } from './supabase';
  * Mốc nhắc việc an toàn (P4 gọn, D100). Xem được cả khi mất mạng (bản lưu trên máy); thêm/xóa/đánh dấu "đã làm" cần mạng (D24).
  * Ngày đến hạn không lưu mà tính từ ngày của vụ: xem milestoneLogic.ts.
  */
-const COLUMNS = 'id, cycle_id, organization_id, title, anchor, offset_days, note, done_at, done_by, done_name';
+const COLUMNS = 'id, cycle_id, organization_id, title, anchor, offset_days, note, done_at, done_by, done_name, kind, lot_no';
 
 /** Tải về máy; bảng chưa có (CSDL chưa cập nhật) thì bỏ qua, không làm hỏng đồng bộ chung */
 export async function syncMilestonesDown(): Promise<void> {
@@ -24,18 +24,18 @@ function client() {
   return supabase;
 }
 
-export async function setMilestoneDone(id: string, done: boolean): Promise<void> {
+export async function setMilestoneDone(id: string, done: boolean, lot?: string): Promise<void> {
   requireOnline('đánh dấu mốc an toàn');
-  const { data, error } = await client().rpc('set_milestone_done', { p_id: id, p_done: done });
+  const { data, error } = await client().rpc('set_milestone_done', { p_id: id, p_done: done, p_lot: lot?.trim() || null });
   if (error) throw new Error(error.message);
   await db.milestones.put(data as MilestoneRow);
 }
 
-export interface MilestoneInput { title: string; anchor: 'start' | 'end'; offset: number; note: string }
+export interface MilestoneInput { title: string; anchor: 'start' | 'end'; offset: number; note: string; kind?: 'task' | 'vaccine' }
 
 export async function addCycleMilestone(cycleId: string, m: MilestoneInput): Promise<void> {
   requireOnline('thêm mốc an toàn');
-  const { data, error } = await client().rpc('add_cycle_milestone', { p_cycle: cycleId, p_title: m.title, p_anchor: m.anchor, p_offset: m.offset, p_note: m.note || null });
+  const { data, error } = await client().rpc('add_cycle_milestone', { p_cycle: cycleId, p_title: m.title, p_anchor: m.anchor, p_offset: m.offset, p_note: m.note || null, p_kind: m.kind ?? 'task' });
   if (error) throw new Error(error.message);
   await db.milestones.put(data as MilestoneRow);
 }
@@ -77,3 +77,14 @@ export const MILESTONE_SUGGESTIONS: Record<'crop' | 'livestock', (MilestoneInput
   ],
   livestock: [],
 };
+
+/**
+ * Lịch tiêm THAM KHẢO cho heo (D166): chỉ là điểm xuất phát để chủ bấm nạp rồi sửa/xóa. Số ngày tuổi thay đổi theo hãng vaccine,
+ * vùng dịch và hướng dẫn của thú y, nên PHẢI được thú y của trại xác nhận trước khi dùng. Các loại vật nuôi khác chưa có mẫu.
+ */
+export const VACCINE_SAMPLE_PIG: MilestoneInput[] = [
+  { title: 'Tiêm Mycoplasma / Circovirus', anchor: 'start', offset: 14, note: 'Mẫu tham khảo, thú y xác nhận', kind: 'vaccine' },
+  { title: 'Tiêm dịch tả heo', anchor: 'start', offset: 28, note: 'Mẫu tham khảo, thú y xác nhận', kind: 'vaccine' },
+  { title: 'Tiêm lở mồm long móng', anchor: 'start', offset: 42, note: 'Mẫu tham khảo, thú y xác nhận', kind: 'vaccine' },
+  { title: 'Tiêm tai xanh (PRRS)', anchor: 'start', offset: 56, note: 'Mẫu tham khảo, thú y xác nhận', kind: 'vaccine' },
+];

@@ -411,3 +411,9 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - **Chỗ dùng:** Sản xuất → **Hợp đồng** (HTX luôn thấy; cơ sở khác bật "Hợp đồng bán hàng" ở Cấu hình → Tính năng nâng cao, khóa `contract` của `org_features`). **Tích hợp:** phiếu thu mua từ phiếu thu hoạch gợi ý đơn giá từ **hợp đồng bao tiêu đã ký còn hiệu lực** (giá cố định hoặc giá sàn, đúng hộ và sản phẩm), ưu tiên hơn giá tham khảo của danh mục bao tiêu. Hộ thành viên chưa xem được hợp đồng của mình (để sau). Test `trade_contracts`.
 - **Đổi chỗ (14/11/2026):** mục **Tính năng nâng cao** chuyển từ Tài khoản sang **Cấu hình**, nằm ngay dưới **Quy trình mẫu** (chỉ chủ cơ sở thấy và bật/tắt).
 - **Bản đồ thửa — vẽ ranh chỉ ở cấp phân khu (14/11/2026):** không vẽ ranh riêng cho **ô sản xuất** (nhà màng, chuồng, ao) vì ranh thửa/EUDR tính ở cấp thửa đất (phân khu), ô sản xuất kế thừa; hồ sơ xuất khẩu đã lấy ranh phân khu cha khi ô chưa có. Nút "Vẽ ranh" bị ẩn ở dòng ô (chỉ hiện nếu ô đã có ranh từ trước để xem hoặc xóa); dữ liệu và chức năng phía máy chủ không đổi. Khai báo → Phân khu: dòng phân khu có nút **▸/▾ đóng/mở** danh sách ô sản xuất (mặc định luôn đóng; thêm ô thì tự mở phân khu đó).
+
+## D166 — Mục 14 lát 3: lịch vaccine (migration 0203)
+
+- Lịch vaccine dựng trên mốc nhắc việc (0086): mốc có thêm loại `vaccine`; ngày tiêm tính từ ngày bắt đầu lứa nên đổi ngày nhập chuồng thì lịch tự dời. Đánh dấu "Đã tiêm" ghi người, ngày và số lô vaccine (không bắt buộc).
+- Không nạp lịch cố định. Chỉ có nút "Nạp lịch tiêm tham khảo (heo)" ở lứa nuôi, có hỏi xác nhận và ghi rõ "cần thú y xác nhận"; chủ tự sửa/xóa. Loại vật nuôi khác chưa có mẫu.
+- Mốc của quy trình mẫu chưa có loại vaccine (lịch tiêm là việc theo từng lứa do thú y chốt). Chưa tự in lịch tiêm vào Sổ nhật ký.

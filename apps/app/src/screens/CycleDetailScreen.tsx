@@ -181,7 +181,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
           : <p className="muted">Thuốc/phân đã dùng đều đã hết thời gian cách ly (mới nhất {w.safe_date.split('-').reverse().join('/')}).</p>;
       })()}
 
-      {cycle && <CycleMilestones cycle={cycle} canManage={canManage} canMark={Boolean(session)} />}
+      {cycle && <CycleMilestones cycle={cycle} canManage={canManage} canMark={Boolean(session)} animal={cropKind === 'livestock' || cropKind === 'aquatic'} />}
 
       {active && <CycleCounts cycleId={cycleId} canManage={canManage} userId={session?.user.id} online={online} today={today} />}
       {active && <CycleMeasures cycleId={cycleId} canManage={canManage} online={online} />}
