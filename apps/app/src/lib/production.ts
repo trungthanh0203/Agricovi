@@ -5,6 +5,7 @@ import { beginSyncMeasure } from './perf';
 import { refreshCatalogIfStale } from './templates';
 import { syncHarvestsDown } from './harvest';
 import { syncCountEventsDown } from './counts';
+import { syncMeasuresDown } from './measures';
 import { syncMilestonesDown } from './milestones';
 import { syncIncidentsDown, syncWithdrawalsDown } from './incidents';
 import { toLocalInput } from './hooks';
@@ -154,6 +155,7 @@ async function syncDownRaw(): Promise<void> {
     syncFinanceDown().catch((e) => console.warn('Không tải được chi phí/doanh thu', e)),
     syncIncidentsDown().catch((e) => console.warn('Không tải được sự cố', e)),
     syncCountEventsDown().catch((e) => console.warn('Không tải được số lượng', e)),
+    syncMeasuresDown().catch((e) => console.warn('Không tải được số đo', e)),
     syncMilestonesDown().catch((e) => console.warn('Không tải được mốc an toàn', e)),
     syncWithdrawalsDown().catch((e) => console.warn('Không tải được thời gian cách ly', e)),
   ]);

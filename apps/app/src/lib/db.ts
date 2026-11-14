@@ -123,6 +123,35 @@ export interface IncidentRow {
   created_at?: string;
 }
 
+/** Số đo nhập tay của vụ (migration 0195) */
+export interface MeasureReadingRow {
+  id: string;
+  cycle_id: string;
+  organization_id: string;
+  area_id?: string | null;
+  metric: string;
+  value: number;
+  measured_at: string;
+  note: string | null;
+  voided_at?: string | null;
+  void_reason?: string | null;
+  created_by?: string | null;
+  author_name?: string | null;
+  created_at?: string;
+}
+
+/** Ngưỡng cảnh báo / chỉ số riêng của cơ sở; id = `${organization_id}|${metric}` (tạo ở máy) */
+export interface MeasureLimitRow {
+  id: string;
+  organization_id: string;
+  metric: string;
+  label: string | null;
+  unit: string | null;
+  min_value: number | null;
+  max_value: number | null;
+  is_active: boolean;
+}
+
 /** Biến động số lượng của vụ: nhập thêm/dặm, chết, loại, xuất (P2, D100) */
 export interface CountEventRow {
   id: string;
@@ -459,6 +488,8 @@ export class LocalDb extends Dexie {
   withdrawals!: Table<WithdrawalRow, string>;
   incidentActions!: Table<IncidentActionRow, string>;
   countEvents!: Table<CountEventRow, string>;
+  measureReadings!: Table<MeasureReadingRow, string>;
+  measureLimits!: Table<MeasureLimitRow, string>;
   milestones!: Table<MilestoneRow, string>;
   localShifts!: Table<LocalShift, string>;
   media!: Table<MediaRow, string>;
@@ -571,6 +602,11 @@ export class LocalDb extends Dexie {
     // v15 (D100): mốc nhắc việc an toàn của vụ
     this.version(15).stores({
       milestones: 'id, cycle_id',
+    });
+    // v16 (mục 6): số đo nhập tay và ngưỡng cảnh báo
+    this.version(16).stores({
+      measureReadings: 'id, cycle_id',
+      measureLimits: 'id, organization_id',
     });
   }
 }

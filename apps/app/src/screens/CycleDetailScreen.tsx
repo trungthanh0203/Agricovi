@@ -4,6 +4,7 @@ import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { CycleCalendar } from '../components/CycleCalendar';
 import { Collapsible } from '../components/Collapsible';
 import { CycleCounts } from '../components/CycleCounts';
+import { CycleMeasures } from '../components/CycleMeasures';
 import { CycleGrowth } from '../components/CycleGrowth';
 import { CycleMilestones } from '../components/MilestonePanels';
 import { IncidentsSection } from '../components/IncidentsSection';
@@ -183,6 +184,7 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
       {cycle && <CycleMilestones cycle={cycle} canManage={canManage} canMark={Boolean(session)} />}
 
       {active && <CycleCounts cycleId={cycleId} canManage={canManage} userId={session?.user.id} online={online} today={today} />}
+      {active && <CycleMeasures cycleId={cycleId} canManage={canManage} online={online} />}
 
       {active && !active.simple && <CycleGrowth cycleId={cycleId} />}
 
