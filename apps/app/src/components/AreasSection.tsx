@@ -1,3 +1,6 @@
+import { Suspense, lazy } from 'react';
+import { useFeature } from '../lib/features';
+import { useAreaGeos } from '../lib/areaGeo';
 import { useState } from 'react';
 import { ImagePicker, Thumb } from './ImagePicker';
 import { type AreaKind, type AreaRow } from '../lib/db';
@@ -57,6 +60,8 @@ function KindRow({ choice, onChoice, housing, onHousing, currentHousing }: {
  * nơi chạy vụ, có đủ thông tin: tên, mã ô, loại ô, kiểu ô, diện tích, mô tả, ảnh. Một phân khu có thể có các ô khác loại. Diện tích phân khu tự cộng từ các ô.
  * Mỗi phân khu có nút thêm ô (một cái, nhiều cái một lần) và, nếu đang có vụ, nút "Chia thành ô sản xuất". Cần mạng để thêm/sửa (D24).
  */
+const AreaMapPanel = lazy(() => import('./AreaMapPanel')); // tải riêng: chỉ cơ sở bật Bản đồ thửa mới tốn dung lượng
+
 export function AreasSection() {
   const { active } = useOrgs();
   const cfg = useConfig();
@@ -70,6 +75,9 @@ export function AreasSection() {
   const [cellFor, setCellFor] = useState<{ parent: AreaRow; mode: 'one' | 'many' | 'split' } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const mapOn = useFeature(active?.id, 'map');
+  const { geos, reload: reloadGeos } = useAreaGeos(active?.id, mapOn);
+  const [mapFor, setMapFor] = useState<string | 'all' | null>(null); // khu đang vẽ ranh, hoặc 'all' = xem mọi khu
   if (!active) return null;
 
   const canManage = canPerm(active.perms, 'declare', 'edit');
@@ -85,7 +93,7 @@ export function AreasSection() {
     setError(null);
     try { await fn(); } catch (err) { setError(friendlyError(err)); throw err; } finally { setBusy(false); }
   }
-  const closeAll = () => { setAdding(false); setEditing(null); setCellFor(null); };
+  const closeAll = () => { setAdding(false); setEditing(null); setCellFor(null); setMapFor(null); };
   const newCell = (parentId: string, name: string, k: CellKind, size?: number | null, unit?: 'm2' | 'ha'): FarmInput =>
     ({ name, kind: k.kind, kind_item: k.kind_item ?? undefined, housing: k.housing, area_size: size ?? null, area_unit: unit ?? 'm2', parent_id: parentId });
 
@@ -111,6 +119,16 @@ export function AreasSection() {
               {usedM2 > (m2 ?? Infinity) ? <span className="pill warn"> vượt diện tích ô</span> : null}
             </span>
           )}
+          {mapOn && a.is_active !== false && (() => {
+            const g = geos.find((x) => x.area_id === a.id);
+            return (
+              <span className="sub">
+                <button type="button" className="link" onClick={() => { closeAll(); setMapFor(a.id); }}>
+                  {g ? `🗺 Ranh trên bản đồ: ${fmtM2(g.area_m2)}` : '🗺 Vẽ ranh trên bản đồ'}
+                </button>
+              </span>
+            );
+          })()}
           {a.description && <span className="sub">{a.description}</span>}
           {a.is_active === false && <span className="sub">Đã dừng</span>}
           {canManage && !isCell && a.is_active !== false && (
@@ -141,6 +159,19 @@ export function AreasSection() {
       {!online && canManage && <p className="msg warn" role="status">Đang offline: thêm và sửa phân khu cần có mạng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
+      {mapOn && !mapFor && <button className="secondary" onClick={() => { closeAll(); setMapFor('all'); }}>🗺 Xem bản đồ các khu</button>}
+      {mapOn && mapFor && (() => {
+        const target = mapFor === 'all' ? null : mine.find((x) => x.id === mapFor) ?? null;
+        return (
+          <Suspense fallback={<p className="muted">Đang mở bản đồ…</p>}>
+            <AreaMapPanel key={mapFor} areas={mine.map((x) => ({ id: x.id, name: x.name }))} geos={geos} editId={target?.id} canEdit={canManage} online={online}
+              currentSizeM2={target ? areaSizeM2(target, mine) : null}
+              onSaved={() => void reloadGeos()}
+              onUseSize={target ? (m2) => run(() => updateArea(target.id, { area_size: m2, area_unit: 'm2' })) : undefined}
+              onClose={() => setMapFor(null)} />
+          </Suspense>
+        );
+      })()}
       {canManage && !adding && !editRow && !cellFor && (
         <button className="secondary" disabled={!online} onClick={() => setAdding(true)}>+ Thêm phân khu</button>
       )}

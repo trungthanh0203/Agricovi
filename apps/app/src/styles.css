@@ -795,3 +795,9 @@ button.mini-kpi.tappable:active { filter: brightness(.95); }
   .profit-report { page: report; }
   .profit-report .pr-table th, .profit-report .pr-table td { border-bottom: 1px solid #999; padding: 4px 2px; }
 }
+
+/* Bản đồ thửa (mục 9) */
+.geo-map { height: 360px; width: 100%; border-radius: 10px; border: 1px solid var(--line); overflow: hidden; z-index: 0; }
+.geo-dot { background: #fff; border: 3px solid #00c853; border-radius: 50%; box-shadow: 0 0 0 2px rgba(0, 0, 0, .35); }
+.geo-label { background: rgba(0, 0, 0, .65); color: #fff; border: 0; font-weight: 700; box-shadow: none; }
+.geo-label::before { display: none; }

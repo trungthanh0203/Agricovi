@@ -10,6 +10,7 @@ import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { listLicenses, type LicenseRow } from '../lib/licenses';
 import { useOrgs } from '../lib/orgs';
+import { setFeature, useFeature } from '../lib/features';
 import { PERM_LEVEL_LABEL, PERM_MODULE_LABEL, PERM_MODULES } from '../lib/permissions';
 import { changeMyPassword, fetchDisplayName, fetchMyWork, renameOrg, saveDisplayName, type MyWork } from '../lib/profile';
 import { buildAccountQr } from '../lib/qr';
@@ -108,6 +109,8 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
           <p className="muted">Hiện luôn ở chế độ đầy đủ. Việc hiện hay ẩn các mục nay được quyết định theo <strong>cách quản lý của từng vụ</strong>: chọn khi tạo vụ, đổi ở Chi tiết vụ → Cách quản lý vụ này.</p>
         </Collapsible>
       )}
+
+      {active && isOwner(active.roles) && <AdvancedFeatures orgId={active.id} />}
 
       {active && isOwner(active.roles) && (
         <Collapsible title="Kho ảnh" summary="chuyển ảnh cũ sang kho ảnh mới">
@@ -217,3 +220,25 @@ function PasswordForm() {
   );
 }
 
+
+
+/** Tính năng nâng cao, mặc định TẮT: dành cho cơ sở lớn/xuất khẩu; cơ sở nhỏ không bật thì không thấy thêm gì ở các màn khác. */
+function AdvancedFeatures({ orgId }: { orgId: string }) {
+  const mapOn = useFeature(orgId, 'map');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function toggle(v: boolean) {
+    setBusy(true); setError(null);
+    try { await setFeature(orgId, 'map', v); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+  }
+  return (
+    <Collapsible title="Tính năng nâng cao" summary={mapOn ? 'đang bật: bản đồ thửa' : 'đang tắt (cơ sở nhỏ không cần)'}>
+      <p className="muted">Dành cho cơ sở lớn hoặc có xuất khẩu, truy xuất nguồn gốc. Không bật thì app giữ nguyên, gọn như hiện tại.</p>
+      {error && <p className="msg error" role="alert">{error}</p>}
+      <label className="check">
+        <input type="checkbox" checked={mapOn} disabled={busy} onChange={(e) => void toggle(e.target.checked)} />
+        {' '}<strong>Bản đồ thửa</strong>: vẽ ranh khu trên bản đồ vệ tinh, lưu tọa độ, tự tính diện tích (điều kiện cho xuất khẩu, EUDR). Xuất hiện trong Khai báo → Phân khu.
+      </label>
+    </Collapsible>
+  );
+}
