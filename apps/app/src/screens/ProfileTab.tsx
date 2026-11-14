@@ -10,7 +10,6 @@ import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { listLicenses, type LicenseRow } from '../lib/licenses';
 import { useOrgs } from '../lib/orgs';
-import { setFeature, useFeature } from '../lib/features';
 import { PERM_LEVEL_LABEL, PERM_MODULE_LABEL, PERM_MODULES } from '../lib/permissions';
 import { changeMyPassword, fetchDisplayName, fetchMyWork, renameOrg, saveDisplayName, type MyWork } from '../lib/profile';
 import { buildAccountQr } from '../lib/qr';
@@ -109,8 +108,6 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
           <p className="muted">Hiện luôn ở chế độ đầy đủ. Việc hiện hay ẩn các mục nay được quyết định theo <strong>cách quản lý của từng vụ</strong>: chọn khi tạo vụ, đổi ở Chi tiết vụ → Cách quản lý vụ này.</p>
         </Collapsible>
       )}
-
-      {active && isOwner(active.roles) && <AdvancedFeatures orgId={active.id} />}
 
       {active && isOwner(active.roles) && (
         <Collapsible title="Kho ảnh" summary="chuyển ảnh cũ sang kho ảnh mới">
@@ -217,38 +214,5 @@ function PasswordForm() {
       {msg && <p className={msg.ok ? 'msg ok' : 'msg error'} role="status">{msg.text}</p>}
       <button type="submit" className="primary" disabled={busy}>Đổi mật khẩu</button>
     </form>
-  );
-}
-
-
-
-/** Tính năng nâng cao, mặc định TẮT: dành cho cơ sở lớn/xuất khẩu; cơ sở nhỏ không bật thì không thấy thêm gì ở các màn khác. */
-function AdvancedFeatures({ orgId }: { orgId: string }) {
-  const mapOn = useFeature(orgId, 'map');
-  const exportOn = useFeature(orgId, 'export');
-  const contractOn = useFeature(orgId, 'contract');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  async function toggle(f: 'map' | 'export' | 'contract', v: boolean) {
-    setBusy(true); setError(null);
-    try { await setFeature(orgId, f, v); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
-  }
-  return (
-    <Collapsible title="Tính năng nâng cao" summary={mapOn || exportOn || contractOn ? `đang bật: ${[mapOn ? 'bản đồ thửa' : '', exportOn ? 'hồ sơ xuất khẩu' : '', contractOn ? 'hợp đồng' : ''].filter(Boolean).join(', ')}` : 'đang tắt (cơ sở nhỏ không cần)'}>
-      <p className="muted">Dành cho cơ sở lớn hoặc có xuất khẩu, truy xuất nguồn gốc. Không bật thì app giữ nguyên, gọn như hiện tại.</p>
-      {error && <p className="msg error" role="alert">{error}</p>}
-      <label className="check">
-        <input type="checkbox" checked={mapOn} disabled={busy} onChange={(e) => void toggle('map', e.target.checked)} />
-        {' '}<strong>Bản đồ thửa</strong>: vẽ ranh khu trên bản đồ vệ tinh, lưu tọa độ, tự tính diện tích (điều kiện cho xuất khẩu, EUDR). Xuất hiện trong Khai báo → Phân khu.
-      </label>
-      <label className="check">
-        <input type="checkbox" checked={exportOn} disabled={busy} onChange={(e) => void toggle('export', e.target.checked)} />
-        {' '}<strong>Hồ sơ xuất khẩu</strong>: gom nhật ký, vật tư, thu hoạch, giấy phép và tọa độ thửa của một vụ thành bộ hồ sơ để in hoặc gửi bên mua. Xuất hiện trong Báo cáo → Hồ sơ xuất khẩu.
-      </label>
-      <label className="check">
-        <input type="checkbox" checked={contractOn} disabled={busy} onChange={(e) => void toggle('contract', e.target.checked)} />
-        {' '}<strong>Hợp đồng bán hàng</strong>: lập hợp đồng mua bán với khách hàng, in sẵn để ký tay. Xuất hiện trong Sản xuất → Hợp đồng. (Hợp tác xã luôn có sẵn hợp đồng bao tiêu với hộ thành viên.)
-      </label>
-    </Collapsible>
   );
 }

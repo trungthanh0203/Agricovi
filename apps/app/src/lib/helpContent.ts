@@ -400,7 +400,7 @@ export const HELP: Record<HelpKey, HelpEntry> = {
   },
   export: {
     title: 'Hồ sơ xuất khẩu',
-    what: 'Gom nhật ký, vật tư, thu hoạch, giấy phép và tọa độ thửa của một vụ thành bộ hồ sơ nguồn gốc để gửi bên mua (mục nâng cao, chủ bật ở Tài khoản).',
+    what: 'Gom nhật ký, vật tư, thu hoạch, giấy phép và tọa độ thửa của một vụ thành bộ hồ sơ nguồn gốc để gửi bên mua (mục nâng cao, chủ bật ở Cấu hình → Tính năng nâng cao).',
     how: ['Chọn vụ và khoảng thời gian.', 'Xem mục "Còn thiếu gì trước khi gửi" và bổ sung.', 'In / lưu PDF, hoặc tải bảng Excel và ranh thửa (GeoJSON).'],
     note: 'Đây là bộ dữ liệu theo mẫu chung; mẫu riêng của bên mua hoặc nước nhập khẩu luôn được ưu tiên.',
     guide: { id: 'process', step: 7 },

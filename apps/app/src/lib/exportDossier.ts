@@ -37,7 +37,7 @@ export function dossierGaps(i: DossierInput): Gap[] {
   const info = (text: string) => gaps.push({ level: 'info', text });
   const c = d.cycle;
 
-  if (!geo) warn('Chưa có tọa độ thửa. Bên mua và EUDR cần vị trí thửa: bật "Bản đồ thửa" (Tài khoản → Tính năng nâng cao) rồi vẽ ranh khu ở Khai báo → Phân khu.');
+  if (!geo) warn('Chưa có tọa độ thửa. Bên mua và EUDR cần vị trí thửa: bật "Bản đồ thửa" (Cấu hình → Tính năng nâng cao) rồi vẽ ranh khu ở Khai báo → Phân khu.');
   else {
     if (geo.ring.length < 3) warn('Ranh thửa chưa đủ 3 góc.');
     const declared = c?.planted_area_m2 ?? null;
