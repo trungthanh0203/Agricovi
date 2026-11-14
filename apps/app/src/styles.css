@@ -801,3 +801,18 @@ button.mini-kpi.tappable:active { filter: brightness(.95); }
 .geo-dot { background: #fff; border: 3px solid #00c853; border-radius: 50%; box-shadow: 0 0 0 2px rgba(0, 0, 0, .35); }
 .geo-label { background: rgba(0, 0, 0, .65); color: #fff; border: 0; font-weight: 700; box-shadow: none; }
 .geo-label::before { display: none; }
+
+/* Hồ sơ xuất khẩu (mục 10): in A4 dọc */
+.dossier h2 { text-align: center; margin: 4px 0; }
+.dossier h3 { margin: 14px 0 4px; font-size: 1rem; }
+.dossier table.grid { font-size: 13px; width: 100%; }
+.dossier table.grid th { text-align: left; font-weight: 600; width: 38%; }
+.dossier thead th { width: auto; }
+.dossier-declare { margin-top: 16px; break-inside: avoid; }
+@media print {
+  .dossier { page: report; }
+  .dossier table.grid { font-size: 10px; }
+  .dossier th, .dossier td { border: 1px solid #444; padding: 3px 4px; }
+  .dossier h3 { break-after: avoid; }
+  .dossier tr { break-inside: avoid; }
+}

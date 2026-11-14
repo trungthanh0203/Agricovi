@@ -6,8 +6,8 @@ import { supabase } from './supabase';
  * Tính năng nâng cao của cơ sở (mặc định TẮT, chủ bật ở Tài khoản → Tính năng nâng cao; migration 0196).
  * Cơ sở nhỏ không bật thì không thấy gì thêm. Bản lưu trên máy để mở app khi mất mạng vẫn đúng.
  */
-export type FeatureKey = 'map';
-const ALL: FeatureKey[] = ['map'];
+export type FeatureKey = 'map' | 'export';
+const ALL: FeatureKey[] = ['map', 'export'];
 
 const KEY = (org: string, f: string) => `agriconnect.feature.${org}.${f}`;
 const listeners = new Set<() => void>();
@@ -15,6 +15,9 @@ const listeners = new Set<() => void>();
 function cached(org: string, f: string): boolean {
   try { return localStorage.getItem(KEY(org, f)) === '1'; } catch { return false; }
 }
+
+/** Đọc bản lưu trên máy (không phải hook) để dùng khi dựng menu */
+export const featureOn = (orgId: string | undefined, f: FeatureKey): boolean => (orgId ? cached(orgId, f) : false);
 
 export async function refreshFeatures(orgId: string): Promise<void> {
   if (!supabase || !navigator.onLine) return;

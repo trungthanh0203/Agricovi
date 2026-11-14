@@ -225,19 +225,24 @@ function PasswordForm() {
 /** Tính năng nâng cao, mặc định TẮT: dành cho cơ sở lớn/xuất khẩu; cơ sở nhỏ không bật thì không thấy thêm gì ở các màn khác. */
 function AdvancedFeatures({ orgId }: { orgId: string }) {
   const mapOn = useFeature(orgId, 'map');
+  const exportOn = useFeature(orgId, 'export');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  async function toggle(v: boolean) {
+  async function toggle(f: 'map' | 'export', v: boolean) {
     setBusy(true); setError(null);
-    try { await setFeature(orgId, 'map', v); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+    try { await setFeature(orgId, f, v); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
   return (
-    <Collapsible title="Tính năng nâng cao" summary={mapOn ? 'đang bật: bản đồ thửa' : 'đang tắt (cơ sở nhỏ không cần)'}>
+    <Collapsible title="Tính năng nâng cao" summary={mapOn || exportOn ? `đang bật: ${[mapOn ? 'bản đồ thửa' : '', exportOn ? 'hồ sơ xuất khẩu' : ''].filter(Boolean).join(', ')}` : 'đang tắt (cơ sở nhỏ không cần)'}>
       <p className="muted">Dành cho cơ sở lớn hoặc có xuất khẩu, truy xuất nguồn gốc. Không bật thì app giữ nguyên, gọn như hiện tại.</p>
       {error && <p className="msg error" role="alert">{error}</p>}
       <label className="check">
-        <input type="checkbox" checked={mapOn} disabled={busy} onChange={(e) => void toggle(e.target.checked)} />
+        <input type="checkbox" checked={mapOn} disabled={busy} onChange={(e) => void toggle('map', e.target.checked)} />
         {' '}<strong>Bản đồ thửa</strong>: vẽ ranh khu trên bản đồ vệ tinh, lưu tọa độ, tự tính diện tích (điều kiện cho xuất khẩu, EUDR). Xuất hiện trong Khai báo → Phân khu.
+      </label>
+      <label className="check">
+        <input type="checkbox" checked={exportOn} disabled={busy} onChange={(e) => void toggle('export', e.target.checked)} />
+        {' '}<strong>Hồ sơ xuất khẩu</strong>: gom nhật ký, vật tư, thu hoạch, giấy phép và tọa độ thửa của một vụ thành bộ hồ sơ để in hoặc gửi bên mua. Xuất hiện trong Báo cáo → Hồ sơ xuất khẩu.
       </label>
     </Collapsible>
   );

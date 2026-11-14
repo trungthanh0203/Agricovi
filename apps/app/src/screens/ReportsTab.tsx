@@ -10,6 +10,8 @@ import { SummarySection } from '../components/SummarySection';
 import { WeeklyReport } from '../components/WeeklyReport';
 import { ChecklistSection } from '../components/ChecklistSection';
 import { LogbookSection } from '../components/LogbookSection';
+import { ExportDossierSection } from '../components/ExportDossierSection';
+import { useFeature } from '../lib/features';
 import { useOrgs } from '../lib/orgs';
 import { reportSections, type ReportSection, type TabId } from '../lib/tabs';
 
@@ -19,6 +21,7 @@ import { reportSections, type ReportSection, type TabId } from '../lib/tabs';
  */
 export function ReportsTab({ section, onSection, onGo }: { section?: string; onSection: (s: ReportSection) => void; onGo?: (tab: TabId, section?: string) => void }) {
   const { active } = useOrgs();
+  useFeature(active?.id, 'export'); // làm mới bản lưu để menu hiện/ẩn đúng
   if (!active) return null;
   const items = reportSections(active);
   const current = pickSection(items, section);
@@ -27,7 +30,7 @@ export function ReportsTab({ section, onSection, onGo }: { section?: string; onS
     <section>
       <div className="row"><h1 className="grow">Báo cáo</h1>{current === null && <HelpButton topic="tab-reports" />}</div>
       <SubTabs items={items} value={current} onChange={onSection} onBack={() => onSection('' as ReportSection)} label="Báo cáo" />
-      {current === 'stats' ? <OrgStatsSection /> : current === 'website' ? <WebSiteSection /> : current === 'payables' ? <DebtsSection /> : current === 'summary' ? <SummarySection /> : current === 'weekly' ? <WeeklyReport onSection={onSection} /> : current === 'paybook' ? <PayrollBook onGo={onGo} /> : current === 'custom' ? <ReportBuilder /> : current === 'commerce' ? <CommerceProfile org={active} /> : current === 'checklist' ? <ChecklistSection /> : current === 'logbook' ? <LogbookSection /> : null}
+      {current === 'stats' ? <OrgStatsSection /> : current === 'website' ? <WebSiteSection /> : current === 'payables' ? <DebtsSection /> : current === 'summary' ? <SummarySection /> : current === 'weekly' ? <WeeklyReport onSection={onSection} /> : current === 'paybook' ? <PayrollBook onGo={onGo} /> : current === 'custom' ? <ReportBuilder /> : current === 'commerce' ? <CommerceProfile org={active} /> : current === 'checklist' ? <ChecklistSection /> : current === 'logbook' ? <LogbookSection /> : current === 'export' ? <ExportDossierSection /> : null}
     </section>
   );
 }
