@@ -822,3 +822,15 @@ button.mini-kpi.tappable:active { filter: brightness(.95); }
 
 /* Thu mua từ hộ: ảnh chứng từ */
 .proc-photo { max-width: 100%; border-radius: 8px; border: 1px solid var(--line); display: block; margin-bottom: 8px; }
+
+/* Bảng kê thu mua (mục 13): in A4 ngang, trang riêng để không đổi khổ của các báo cáo khác */
+.statement h2 { text-align: center; margin: 4px 0; font-size: 1.05rem; }
+.statement table.grid { font-size: 12px; width: 100%; }
+.statement td.num { text-align: right; white-space: nowrap; }
+.statement td.bad { color: var(--c-bad, #b3261e); font-weight: 600; }
+@page wide { size: A4 landscape; margin: 10mm; }
+@media print {
+  .statement { page: wide; }
+  .statement table.grid { font-size: 9px; }
+  .statement th, .statement td { border: 1px solid #444; padding: 2px 3px; }
+}

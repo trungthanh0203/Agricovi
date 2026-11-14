@@ -377,6 +377,13 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     note: 'Ghi việc đầy đủ và đúng ngày thì sổ mới đáng tin.',
     guide: { id: 'process', step: 7 },
   },
+  statement: {
+    title: 'Bảng kê thu mua',
+    what: 'HTX lập bảng kê thu mua nông sản trực tiếp từ hộ thành viên (người sản xuất) từ các phiếu thu mua đã có, để in hoặc tải Excel.',
+    how: ['Nhập thông tin người bán (họ tên, CCCD, địa chỉ) cho từng hộ, kèm xác nhận người bán đã đồng ý.', 'Chọn kỳ rồi bấm Dựng bảng kê, xem mục "Còn thiếu gì trước khi nộp".', 'In / lưu PDF hoặc tải Excel.'],
+    note: 'Mẫu tham khảo, cần đối chiếu mẫu hiện hành của cơ quan thuế và hỏi kế toán. Thông tin người bán là dữ liệu cá nhân, chỉ nhập khi được đồng ý.',
+    guide: { id: 'process', step: 7 },
+  },
   procure: {
     title: 'Thu mua từ hộ',
     what: 'HTX lập phiếu thu mua khi hộ thành viên giao hàng: chọn phiếu thu hoạch của hộ, nhập số kg HTX cân thực tế và đơn giá.',

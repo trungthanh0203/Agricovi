@@ -96,3 +96,30 @@ test('xóa thông tin người bán (rút lại đồng ý): chỉ HTX có quy�
   assert.equal(rows[0].seller, null);
   assert.ok((await c.db.query(`select 1 from audit_events where action='delete_seller'`)).rows.length === 1);
 });
+
+import { statementGaps, statementCsv, statementTotals, CASH_LIMIT } from '../../apps/app/src/lib/purchaseStatement.ts';
+
+test('logic bảng kê: nhắc thiếu thông tin người bán và tiền mặt từ 5 triệu; CSV giữ số 0 đầu của CCCD và có dòng cộng', () => {
+  const seller = { full_name: 'Nguyễn Văn An', id_number: '079123456789', address: 'Ấp 3, Đồng Nai', phone: null };
+  const row = (o) => ({ receipt_id: 'r', receipt_date: '2026-11-05', invoice_no: 'TM-2026-0001', household_org_id: 'h1', household_name: 'Hộ An', seller, crop_name: 'Sầu riêng', quantity: 100, unit_price: 25000, amount: 2500000, paid: 0, cash_paid: 0, ...o });
+  assert.equal(CASH_LIMIT, 5000000);
+  const rows = [
+    row({ receipt_id: 'a' }),
+    row({ receipt_id: 'b', amount: 12000000, quantity: 400, unit_price: 30000, cash_paid: 7000000 }),
+    row({ receipt_id: 'c', household_org_id: 'h2', household_name: 'Hộ Bình', seller: null }),
+    row({ receipt_id: 'd', household_org_id: 'h2', household_name: 'Hộ Bình', seller: null, amount: 4000000, cash_paid: 4000000 }),   // dưới 5 triệu: tiền mặt không nhắc
+  ];
+  const g = statementGaps(rows);
+  assert.equal(g.filter((x) => x.level === 'warn').length, 2);
+  assert.match(g[0].text, /Hộ Bình \(2 phiếu\)/);
+  assert.match(g[1].text, /TM-2026-0001.*7\.000\.000 đ/);
+  assert.equal(statementGaps([])[0].level, 'info');
+  const t = statementTotals(rows);
+  assert.deepEqual([t.receipts, t.quantity, t.amount, t.cash], [4, 400 + 100 + 100 + 100, 2500000 + 12000000 + 2500000 + 4000000, 11000000]);
+  const csv = statementCsv({ from: '2026-11-01', to: '2026-11-30', generated_at: '', rows: [rows[0], rows[2]] }, 'HTX A');
+  assert.equal(csv.charCodeAt(0), 0xfeff);
+  assert.ok(csv.includes('="079123456789"'));
+  assert.ok(csv.includes('(chưa có thông tin người bán: Hộ Bình)'));
+  assert.ok(csv.includes('Cộng;'));
+  assert.ok(csv.includes('Kỳ: từ 01/11/2026 đến 30/11/2026'));
+});

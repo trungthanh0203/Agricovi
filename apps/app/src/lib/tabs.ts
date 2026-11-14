@@ -30,7 +30,7 @@ export interface Section<Id extends string = string> {
 
 export type ProductionSection = 'cycles' | 'log' | 'logs' | 'stock' | 'expense' | 'harvest' | 'sales' | 'attendance' | 'procure';
 export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'kiosks' | 'customers' | 'positions' | 'teams' | 'members' | 'coop' | 'licenses';
-export type ReportSection = 'stats' | 'payables' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist' | 'logbook' | 'export';
+export type ReportSection = 'stats' | 'payables' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist' | 'logbook' | 'export' | 'statement';
 
 /**
  * Chế độ đơn giản (D100): các mục NÂNG CAO bị ẩn khỏi menu cho hộ nhỏ. Chỉ là cách hiển thị: quyền và dữ liệu không đổi, chủ bật lại chế độ đầy đủ bất cứ lúc nào
@@ -39,7 +39,7 @@ export type ReportSection = 'stats' | 'payables' | 'summary' | 'weekly' | 'paybo
 export const SIMPLE_HIDDEN: Record<'production' | 'declare' | 'reports', string[]> = {
   production: ['attendance'],
   declare: ['worktypes', 'partners', 'kiosks', 'customers', 'positions', 'teams', 'coop'],
-  reports: ['custom', 'paybook', 'website', 'commerce', 'checklist', 'logbook', 'export'],
+  reports: ['custom', 'paybook', 'website', 'commerce', 'checklist', 'logbook', 'export', 'statement'],
 };
 
 /**
@@ -125,6 +125,7 @@ export function reportSections(org: MyOrg | null): Section<ReportSection>[] {
     { id: 'paybook' as const, label: 'Bảng lương' }, // mọi người xem của mình; chủ/người có quyền Tiền công xem cả cơ sở
     canPerm(org.perms, 'declare') ? { id: 'logbook' as const, label: 'Sổ nhật ký' } : null,
     canPerm(org.perms, 'declare') ? { id: 'checklist' as const, label: 'Bảng kiểm' } : null,
+    org.type === 'cooperative' && canPerm(org.perms, 'coop', 'edit') ? { id: 'statement' as const, label: 'Bảng kê thu mua' } : null, // HTX: bảng kê thu mua nông sản từ hộ (mục 13)
     canPerm(org.perms, 'declare') && featureOn(org.id, 'export') ? { id: 'export' as const, label: 'Hồ sơ xuất khẩu' } : null, // tính năng nâng cao, mặc định tắt
     canPerm(org.perms, 'website') ? { id: 'website' as const, label: 'Đơn khách từ website' } : null,
     canPerm(org.perms, 'website') ? { id: 'commerce' as const, label: 'Hồ sơ website' } : null,
