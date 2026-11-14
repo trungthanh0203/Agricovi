@@ -4,6 +4,7 @@ import { friendlyError } from '../lib/errors';
 import { setNoteDone } from '../lib/production';
 import { useCatalog } from '../lib/catalog';
 import { ExpiringLots } from '../components/ExpiringLots';
+import { LossAlerts } from '../components/LossAlerts';
 import { HomeReminders } from '../components/MilestonePanels';
 import { HomeStats } from '../components/HomeStats';
 import { CycleProgressList } from '../components/CycleProgressList';
@@ -182,6 +183,7 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
 
       <HomeReminders />
       <ExpiringLots />
+      <LossAlerts cycleIds={mineIds} onOpenCycle={onOpenCycle} />
       <CycleProgressList cycleIds={mineIds} onOpenCycle={onOpenCycle} />
       <HomeStats cycleIds={mineIds} onGo={onGo} />
 

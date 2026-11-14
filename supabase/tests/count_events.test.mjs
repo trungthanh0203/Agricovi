@@ -71,3 +71,35 @@ test('số còn lại, tỉ lệ hao, mật độ: tính từ số ban đầu c�
   assert.equal(countSummary(cyc, ev, 40).remaining, 375); // 40 con đã xuất ở phiếu thu hoạch của vật nuôi
   assert.equal(countSummary({ plant_count: null, planted_area_m2: null }, [], 0).remaining, null); // chưa có số liệu thì không bịa
 });
+
+// Mục 14 (lát 1): cảnh báo hao hụt cộng dồn và 7 ngày, ngưỡng lấy từ bảng ngưỡng của cơ sở. Phần thuần.
+import { lossStatus, lossThresholds, lossMessages } from '../../apps/app/src/lib/countLogic.ts';
+
+test('cảnh báo hao hụt: mặc định cộng dồn 10%, 7 ngày tắt; ngưỡng cơ sở đổi được; chỉ tính sự kiện chưa hủy trong 7 ngày', () => {
+  const cyc = { plant_count: 1000 };
+  const ev = (kind, quantity, event_date, extra = {}) => ({ kind, quantity, event_date, ...extra });
+  const today = '2026-11-14';
+  const th0 = lossThresholds([]);
+  assert.deepEqual(th0, { cumPct: 10, weekPct: null });
+  // 80 con chết cách đây 30 ngày, 30 con chết trong 3 ngày gần đây → cộng dồn 11% (≥ 10%), 7 ngày: 30 / 920 ≈ 3,26% (đầu cửa sổ 890 + 30 con)
+  const events = [ev('dead', 80, '2026-10-15'), ev('dead', 30, '2026-11-12'), ev('dead', 500, '2026-11-13', { voided_at: '2026-11-13T10:00:00Z' })];
+  const a = lossStatus(cyc, events, 0, th0, today);
+  assert.deepEqual([a.cumPct, a.weekLoss, a.weekPct, a.cumAlert, a.weekAlert], [11, 30, 3.26, true, false]);
+  assert.deepEqual(lossMessages(a, th0, 'con'), ['Hao hụt cộng dồn 11%, đã tới ngưỡng 10%.']);
+  // cơ sở đặt ngưỡng 7 ngày 2% và cộng dồn 15%
+  const th1 = lossThresholds([{ metric: 'loss_cum_pct', max_value: 15, is_active: true }, { metric: 'loss_week_pct', max_value: 2, is_active: true }]);
+  const b = lossStatus(cyc, events, 0, th1, today);
+  assert.deepEqual([b.cumAlert, b.weekAlert], [false, true]);
+  assert.match(lossMessages(b, th1, 'con')[0], /7 ngày gần đây hao 3,26% \(30 con\), vượt ngưỡng 2%/);
+  // ngưỡng 7 ngày bị tắt (is_active false) hoặc không có giá trị: không báo; ngày ngoài cửa sổ 7 ngày không tính
+  assert.equal(lossThresholds([{ metric: 'loss_week_pct', max_value: 2, is_active: false }]).weekPct, null);
+  const old = lossStatus(cyc, [ev('dead', 50, '2026-11-07')], 0, th1, today);   // đúng 7 ngày trước: ngoài cửa sổ (6 ngày + hôm nay)
+  assert.equal(old.weekLoss, 0);
+  // chưa có biến động hoặc chưa có số ban đầu: không cảnh báo, không bịa số
+  const none = lossStatus({ plant_count: null }, [], 0, th1, today);
+  assert.deepEqual([none.cumPct, none.cumAlert, none.weekAlert, none.remaining], [null, false, false, null]);
+  // nhập thêm trong cửa sổ không làm sai mẫu số: còn 900 + chết 20 − nhập 100 → đầu cửa sổ 820 con (20/820 = 2,44%)
+  const c = lossStatus({ plant_count: 1000 }, [ev('dead', 180, '2026-10-01'), ev('in', 100, '2026-11-12'), ev('dead', 20, '2026-11-13')], 0, th1, today);
+  assert.equal(c.remaining, 900);
+  assert.equal(c.weekPct, 2.44);
+});

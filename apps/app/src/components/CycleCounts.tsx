@@ -2,12 +2,15 @@ import { useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { useAuth } from '../lib/auth';
 import { useCatalog } from '../lib/catalog';
-import { COUNT_KIND_LABEL, countSummary, groupHeads } from '../lib/countLogic';
+import { COUNT_KIND_LABEL, countSummary, groupHeads, LOSS_CUM_KEY, LOSS_WEEK_KEY, lossMessages, lossStatus, lossThresholds } from '../lib/countLogic';
 import { DEFAULT_HERD_GROUPS } from '../lib/herd';
 import { cycleCountUnit } from '../lib/countUnit';
 import { recordCountEvent, voidCountEvent } from '../lib/counts';
 import type { CountEventRow } from '../lib/db';
 import { friendlyError } from '../lib/errors';
+import { saveMeasureLimit } from '../lib/measures';
+import { useOrgs } from '../lib/orgs';
+import { parseNumber } from '../lib/measureLogic';
 import { useTable } from '../lib/tables';
 
 const fmt = (n: number) => n.toLocaleString('vi-VN');
@@ -22,6 +25,8 @@ const NEW_GROUP = '__new';
  */
 export function CycleCounts({ cycleId, canManage, userId, online, today }: { cycleId: string; canManage: boolean; userId: string | undefined; online: boolean; today: string }) {
   const { session } = useAuth();
+  const { active } = useOrgs();
+  const allLimits = useTable('measureLimits');
   const cycles = useTable('cycles');
   const allEvents = useTable('countEvents');
   const harvests = useTable('harvests');
@@ -34,6 +39,13 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
   const harvestOut = livestock && cycle?.cycle_mode !== 'herd' ? harvests.filter((h) => h.cycle_id === cycleId && !h.voided_at).reduce((n, h) => n + (h.unit_count ?? 0), 0) : 0;
   const s = useMemo(() => countSummary(cycle ?? {}, events, harvestOut), [cycle, events, harvestOut]);
   const unit = cycleCountUnit(cycle, cropTypes);
+  const limits = useMemo(() => allLimits.filter((l) => l.organization_id === cycle?.owner_org_id), [allLimits, cycle?.owner_org_id]);
+  const th = useMemo(() => lossThresholds(limits), [limits]);
+  const loss = useMemo(() => lossStatus(cycle ?? {}, events, harvestOut, th, today), [cycle, events, harvestOut, th, today]);
+  const lossMsgs = useMemo(() => lossMessages(loss, th, unit), [loss, th, unit]);
+  const [limCum, setLimCum] = useState<string | null>(null);
+  const [limWeek, setLimWeek] = useState<string | null>(null);
+  const [limMsg, setLimMsg] = useState<string | null>(null);
 
   const [kind, setKind] = useState<CountEventRow['kind'] | null>(null);
   const [qty, setQty] = useState('1');
@@ -80,9 +92,24 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
     try { await voidCountEvent(id, reason); setVoiding(null); setReason(''); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
 
+  const canLimits = Boolean(active && cycle && active.id === cycle.owner_org_id && (active.roles.includes('owner') || active.roles.includes('manager')));
+  async function saveLimits() {
+    if (!cycle) return;
+    const c = (limCum ?? String(th.cumPct)).trim() === '' ? null : parseNumber(limCum ?? String(th.cumPct));
+    const w = (limWeek ?? (th.weekPct === null ? '' : String(th.weekPct))).trim() === '' ? null : parseNumber(limWeek ?? '');
+    if ((c !== null && (Number.isNaN(c) || c <= 0 || c > 100)) || (w !== null && (Number.isNaN(w) || w <= 0 || w > 100))) return setError('Ngưỡng phải là số từ 0 đến 100 (%).');
+    setBusy(true); setError(null); setLimMsg(null);
+    try {
+      await saveMeasureLimit(cycle.owner_org_id, { metric: LOSS_CUM_KEY, label: 'Hao hụt cộng dồn', unit: '%', min: null, max: c });
+      await saveMeasureLimit(cycle.owner_org_id, { metric: LOSS_WEEK_KEY, label: 'Hao hụt 7 ngày', unit: '%', min: null, max: w, active: w !== null });
+      setLimCum(null); setLimWeek(null); setLimMsg('Đã lưu ngưỡng.');
+    } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+  }
+
   return (
-    <Collapsible title={herd ? `Số ${unit} theo nhóm` : `Số ${unit} và hao hụt`} summary={summary} warn={s.lossPct !== null && s.lossPct >= 10}>
+    <Collapsible title={herd ? `Số ${unit} theo nhóm` : `Số ${unit} và hao hụt`} summary={summary} warn={lossMsgs.length > 0}>
       {error && <p className="msg error" role="alert">{error}</p>}
+      {lossMsgs.map((m) => <p className="msg warn" role="status" key={m}>{m} Hãy kiểm tra chuồng/ao, nước, thức ăn và hỏi cán bộ thú y/kỹ thuật nếu cần.</p>)}
       {s.initial === null && s.remaining === null && <p className="muted">Chưa có số {unit} ban đầu. Nhập "Số {unit}" ở Sửa vụ, hoặc ghi "Nhập thêm" bên dưới.</p>}
       {herd && heads.size > 0 && (
         <div className="card slim">
@@ -142,6 +169,20 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
             <button className="secondary" onClick={() => setKind(null)}>Hủy</button>
           </div>
         </div>
+      )}
+
+      {canLimits && (
+        <Collapsible inline title="⚙ Ngưỡng cảnh báo hao hụt" summary={`cộng dồn ${String(th.cumPct).replace('.', ',')}% · 7 ngày ${th.weekPct === null ? 'tắt' : `${String(th.weekPct).replace('.', ',')}%`}`}>
+          <p className="muted">Áp cho mọi vụ/lứa của cơ sở. Chỉ là nhắc, không chặn việc ghi. Nên hỏi cán bộ thú y/kỹ thuật để chọn mức phù hợp.</p>
+          {limMsg && <p className="msg ok" role="status">{limMsg}</p>}
+          <div className="inline-form">
+            <div className="pair">
+              <label>Cộng dồn (%) <span className="muted">· để trống = 10</span><input inputMode="decimal" value={limCum ?? String(th.cumPct)} onChange={(e) => setLimCum(e.target.value)} /></label>
+              <label>7 ngày gần đây (%) <span className="muted">· để trống = tắt</span><input inputMode="decimal" value={limWeek ?? (th.weekPct === null ? '' : String(th.weekPct))} onChange={(e) => setLimWeek(e.target.value)} placeholder="Ví dụ: 1" /></label>
+            </div>
+            <div className="btnrow"><button type="button" className="primary" disabled={busy || !online} onClick={() => void saveLimits()}>Lưu ngưỡng</button></div>
+          </div>
+        </Collapsible>
       )}
 
       {events.slice(0, 8).map((e) => (
