@@ -16,6 +16,7 @@ export const SECTION_ICONS: Record<string, string> = {
   commerce: HO_SO_WEB_ICON, kiosks: '📲', process: '📋', staff: '👥', members: '👥', positions: '🛡️', teams: '🧑‍🤝‍🧑', coop: '🤝',
   intro: '📖', crop: '🌾', livestock: '🐖', declare: '🏡', webtalk: '🌐', company: '🏢',
   expense: '💸', sales: '💰', summary: '📊', weekly: '🗓️', paybook: '💼', custom: '🔎', licenses: '📜', logbook: '📔', checklist: '✅', stats: '📈',
+  procure: '⚖️', contracts: '📑', export: '🚢', statement: '🧾',
 };
 
 /**
