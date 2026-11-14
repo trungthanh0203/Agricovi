@@ -1,7 +1,7 @@
 import { FeedNamePicker } from './CatalogPick';
 import { useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
-import { growthSummary, type GrowthRaw } from '../lib/growthLogic';
+import { forecastHarvest, growthSummary, type GrowthRaw } from '../lib/growthLogic';
 import { useCatalog } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
 import { supabase } from '../lib/supabase';
@@ -46,6 +46,7 @@ export function CycleGrowth({ cycleId }: { cycleId: string }) {
   const [fDate, setFDate] = useState(today);
   const [fKg, setFKg] = useState('');
   const [fName, setFName] = useState('');
+  const [tKg, setTKg] = useState<string | null>(null);   // ô cân nặng xuất chuồng dự kiến (null = chưa sửa)
 
   useEffect(() => {
     if (!animal || !online || !supabase) return;
@@ -60,7 +61,15 @@ export function CycleGrowth({ cycleId }: { cycleId: string }) {
 
   const g = useMemo(() => (raw && cycle ? growthSummary(raw, cycle, events.filter((e) => e.cycle_id === cycleId && !e.voided_at), harvests.filter((h) => h.cycle_id === cycleId), true) : null),
     [raw, cycle, events, harvests, cycleId]);
+  const forecast = useMemo(() => (raw && g ? forecastHarvest(g.weighings, raw.target_weight_kg ?? null, todayLocal(), cycle?.expected_end_date ?? null) : null), [raw, g, cycle?.expected_end_date]);
   if (!animal) return null;
+  const canTarget = online && cycle?.owner_org_id === active?.id && hasRole(active?.roles, 'manager') && cycle?.status !== 'ended' && cycle?.status !== 'cancelled';
+  async function saveTarget(clear = false) {
+    const raw0 = (tKg ?? (raw?.target_weight_kg != null ? String(raw.target_weight_kg) : '')).trim();
+    const kg = clear || raw0 === '' ? null : parseNumber(raw0);
+    if (kg !== null && (Number.isNaN(kg) || kg <= 0 || kg > 5000)) return setError('Cân nặng xuất chuồng phải lớn hơn 0 và không quá 5.000 kg mỗi con.');
+    await run(async () => { await rpc('set_cycle_target_weight', { p_cycle: cycleId, p_kg: kg }); setTKg(null); });
+  }
 
   const canWrite = online && cycle?.owner_org_id === active?.id && hasRole(active?.roles, 'manager', 'worker') && cycle?.status !== 'ended' && cycle?.status !== 'cancelled';
   async function run(fn: () => Promise<void>) {
@@ -86,12 +95,46 @@ export function CycleGrowth({ cycleId }: { cycleId: string }) {
     void run(() => rpc('void_cycle_measure', { p_kind: kindName, p_id: id, p_reason: reason }));
   }
 
-  const summary = !g ? (online ? 'Đang tải…' : 'Cần có mạng') : g.adgG === null ? 'cần ít nhất 2 lần cân' : `${num(g.adgG)} g/con/ngày${g.fcr !== null ? ` · FCR ${num(g.fcr, 2)}` : ''}`;
+  const summary = !g ? (online ? 'Đang tải…' : 'Cần có mạng') : g.adgG === null ? 'cần ít nhất 2 lần cân' : `${num(g.adgG)} g/con/ngày${g.fcr !== null ? ` · FCR ${num(g.fcr, 2)}` : ''}${forecast?.state === 'ok' && forecast.toDate ? ` · xuất ~${vn(forecast.toDate).slice(0, 5)}` : ''}`;
   return (
     <Collapsible title="Tăng trọng và FCR" summary={summary}>
       {error && <p className="msg error" role="alert">{error}</p>}
       {g && (
         <>
+          <div className="card slim">
+            <div className="row"><strong className="grow">Dự báo ngày xuất chuồng</strong>{forecast?.targetKg ? <span className="muted">mục tiêu {num(forecast.targetKg, 1)} kg/con</span> : null}</div>
+            {forecast && forecast.state === 'no_target' && <p className="muted">Chưa đặt cân nặng xuất chuồng dự kiến. Nhập bên dưới để app ước ngày đạt cân từ các lần cân mẫu.</p>}
+            {forecast && forecast.state === 'need_weighings' && <p className="muted">Cần ít nhất 2 lần cân ở các ngày khác nhau để dự báo.</p>}
+            {forecast && forecast.state === 'reached' && <p className="msg ok" role="status">Đã đạt cân xuất chuồng từ lần cân {forecast.reachedOn ? vn(forecast.reachedOn) : ''} (lần cân gần nhất {num(forecast.lastAvgKg, 1)} kg/con).</p>}
+            {forecast && forecast.state === 'no_growth' && <p className="muted">Các lần cân chưa cho thấy tăng cân nên chưa dự báo được. Hãy kiểm tra lại số cân.</p>}
+            {forecast && forecast.state === 'too_far' && <p className="muted">Với đà tăng cân hiện tại, phải hơn 2 năm mới đạt cân mục tiêu nên chưa dự báo được.</p>}
+            {forecast && forecast.state === 'ok' && forecast.fromDate && forecast.toDate && (
+              <>
+                <p>
+                  Ước đạt <strong>{num(forecast.targetKg, 1)} kg/con</strong> khoảng <strong>{forecast.fromDate === forecast.toDate ? vn(forecast.toDate) : `${vn(forecast.fromDate)} – ${vn(forecast.toDate)}`}</strong>
+                  {forecast.daysToTo !== null && forecast.daysToTo >= 0 ? ` (còn khoảng ${forecast.daysToFrom !== null && forecast.daysToFrom > 0 && forecast.daysToFrom !== forecast.daysToTo ? `${forecast.daysToFrom}–${forecast.daysToTo}` : forecast.daysToTo} ngày)` : ''}.
+                </p>
+                {forecast.daysToTo !== null && forecast.daysToTo < 0 && <p className="msg warn" role="status">Đã quá ngày dự báo mà chưa có lần cân mới. Hãy cân lại để cập nhật.</p>}
+                <p className="muted">Theo tăng cân {forecast.adgFastG === forecast.adgSlowG ? `${num(forecast.adgSlowG)} g/con/ngày` : `${num(forecast.adgSlowG)}–${num(forecast.adgFastG)} g/con/ngày (trung bình cả lứa và đà gần đây)`}.</p>
+                {forecast.vsPlanDays !== null && cycle?.expected_end_date && Math.abs(forecast.vsPlanDays) >= 3 && (
+                  <p className="muted">Ngày xuất dự kiến của vụ là {vn(cycle.expected_end_date)}: dự báo {forecast.vsPlanDays > 0 ? `muộn hơn khoảng ${forecast.vsPlanDays} ngày` : `sớm hơn khoảng ${-forecast.vsPlanDays} ngày`}.</p>
+                )}
+              </>
+            )}
+            {forecast && forecast.stale && forecast.state !== 'reached' && forecast.state !== 'no_target' && <p className="msg warn" role="status">Lần cân cuối là {forecast.lastDate ? vn(forecast.lastDate) : ''}, đã hơn 14 ngày. Nên cân lại để dự báo sát hơn.</p>}
+            {forecast && forecast.state !== 'no_target' && <p className="muted">Số ước tính từ cân mẫu, không thay cân thực tế khi xuất.</p>}
+            {canTarget && (
+              <div className="inline-form">
+                <div className="pair">
+                  <label>Cân nặng xuất chuồng dự kiến (kg/con)<input inputMode="decimal" value={tKg ?? (raw?.target_weight_kg != null ? String(raw.target_weight_kg) : '')} onChange={(e) => setTKg(e.target.value)} placeholder="Ví dụ: 110" /></label>
+                </div>
+                <div className="btnrow">
+                  <button type="button" className="primary" disabled={busy || tKg === null} onClick={() => void saveTarget()}>Lưu mục tiêu</button>
+                  {raw?.target_weight_kg != null && <button type="button" className="secondary" disabled={busy} onClick={() => void saveTarget(true)}>Bỏ mục tiêu</button>}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="card slim">
             <div className="row"><span>Tăng trọng mỗi ngày (ADG)</span><strong>{g.adgG !== null ? `${num(g.adgG)} g/con/ngày` : '—'}</strong></div>
             <div className="row"><span>FCR (kg cám / kg tăng)</span><strong>{num(g.fcr, 2)}</strong></div>
