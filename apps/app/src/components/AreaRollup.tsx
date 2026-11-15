@@ -99,10 +99,10 @@ export function AreaRollup() {
         <h2>Bảng số liệu</h2>
       <div className="tablewrap">
         <table className="grid">
-          <thead><tr><th>Phân khu / Vụ</th>{money && <th className="num">Chi phí</th>}<th className="num">Thu hoạch</th>{money && <th className="num">Doanh thu</th>}{money && <th className="num">Lãi / lỗ</th>}</tr></thead>
+          <thead><tr><th className="fold-col">Phân khu / Vụ</th>{money && <th className="num">Chi phí</th>}<th className="num">Thu hoạch</th>{money && <th className="num">Doanh thu</th>}{money && <th className="num">Lãi / lỗ</th>}</tr></thead>
           <tbody>
             {rows.flatMap((r) => [
-              <tr key={r.area.id}><td>
+              <tr key={r.area.id}><td className={r.cells.some((c) => c.cycles > 0) ? 'fold-col has-fold' : 'fold-col'}>
                 {r.cells.some((c) => c.cycles > 0) && (
                   <button type="button" className="icon fold-btn" aria-expanded={isOpen(r.area.id)}
                     aria-label={`${isOpen(r.area.id) ? 'Đóng' : 'Mở'} danh sách ${r.cells.filter((c) => c.cycles > 0).length} ô sản xuất của ${r.area.name}`}
@@ -111,7 +111,7 @@ export function AreaRollup() {
                 <strong>{r.area.name}</strong>
                 <div className="muted">{cycleText(r)}{r.cells.some((c) => c.cycles > 0) ? ` · ${r.cells.filter((c) => c.cycles > 0).length} ô sản xuất${isOpen(r.area.id) ? '' : ' (đang đóng, bấm ▸ để mở)'}` : ''}</div>
               </td>{cells(r)}</tr>,
-              ...(isOpen(r.area.id) ? r.cells.filter((c) => c.cycles > 0) : []).map((c) => <tr key={c.area.id}><td style={{ paddingLeft: 24 }}>↳ {c.area.name}<div className="muted">{cycleText(c)}</div></td>{cells(c)}</tr>),
+              ...(isOpen(r.area.id) ? r.cells.filter((c) => c.cycles > 0) : []).map((c) => <tr key={c.area.id}><td className="fold-col" style={{ paddingLeft: 24 }}>↳ {c.area.name}<div className="muted">{cycleText(c)}</div></td>{cells(c)}</tr>),
             ])}
           </tbody>
         </table>

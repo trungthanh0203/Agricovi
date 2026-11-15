@@ -110,7 +110,7 @@ export function AreasSection() {
     const usedM2 = live.filter((c) => !c.intercrop).reduce((t, c) => t + (c.planted_area_m2 ?? 0), 0);
     return (
       <tr key={a.id} className={a.is_active === false ? 'off' : ''}>
-        <td style={isCell ? { paddingLeft: 24 } : undefined}>
+        <td className={!isCell && kids.length > 0 ? 'fold-col has-fold' : 'fold-col'} style={isCell ? { paddingLeft: 24 } : undefined}>
           {!isCell && kids.length > 0 && (
             <button type="button" className="icon fold-btn" aria-expanded={isOpen(a, kids.length)} aria-label={`${isOpen(a, kids.length) ? 'Đóng' : 'Mở'} danh sách ${kids.length} ô sản xuất của ${a.name}`}
               onClick={() => setOpenMap((m) => ({ ...m, [a.id]: !isOpen(a, kids.length) }))}>{isOpen(a, kids.length) ? '▾' : '▸'}</button>
@@ -206,7 +206,7 @@ export function AreasSection() {
       )}
 
       <table className="grid">
-        <thead><tr><th>Phân khu ({tops.length})</th><th className="num">Diện tích</th>{canManage && <th></th>}</tr></thead>
+        <thead><tr><th className="fold-col">Phân khu ({tops.length})</th><th className="num">Diện tích</th>{canManage && <th></th>}</tr></thead>
         <tbody>
           {rowCount === 0 && <tr><td colSpan={3} className="muted">Chưa có phân khu nào.{canManage ? ' Hãy thêm phân khu đầu tiên ở nút trên.' : ''}</td></tr>}
           {tops.flatMap((t) => { const kids = cellsOf(mine, t.id).filter(visible); return [renderRow(t, false), ...(isOpen(t, kids.length) ? kids.map((c) => renderRow(c, true)) : [])]; })}

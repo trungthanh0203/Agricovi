@@ -846,3 +846,8 @@ button.mini-kpi.tappable:active { filter: brightness(.95); }
 
 /* Nút đóng/mở danh sách ô sản xuất ở dòng phân khu */
 .fold-btn { margin-right: 6px; min-width: 28px; }
+/* Cột Phân khu: nút đóng/mở nằm góc trên bên phải; trên điện thoại cột luôn rộng bằng nửa màn hình */
+td.fold-col, th.fold-col { position: relative; }
+td.fold-col > .fold-btn { position: absolute; top: 4px; right: 4px; margin: 0; }
+td.fold-col.has-fold { padding-right: 40px; }
+@media (max-width: 600px) { td.fold-col, th.fold-col { width: 50vw; min-width: 50vw; max-width: 50vw; overflow-wrap: anywhere; } }
