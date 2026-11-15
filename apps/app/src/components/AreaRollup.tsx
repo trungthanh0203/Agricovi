@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AreaFilter } from './AreaFilter';
 import { ChartCard, HBarList } from './charts';
 import { cachedCycleStats, fetchCycleStats, type CycleStats } from '../lib/cycleStats';
 import { rollupByArea } from '../lib/areas';
@@ -16,6 +17,8 @@ export function AreaRollup() {
   const cycles = useTable('cycles');
   const [measure, setMeasure] = useState('profit');
   const [status, setStatus] = useState<'all' | 'active' | 'preparing' | 'paused' | 'ended'>('all'); // lọc vụ theo trạng thái cho cả biểu đồ và bảng
+  const [areaFilter, setAreaFilter] = useState('');   // lọc theo một phân khu ('' = tất cả)
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});   // phân khu đang mở danh sách ô sản xuất (mặc định đóng, trừ khi đang lọc đúng phân khu đó)
   const [stats, setStats] = useState<CycleStats | null>(null);
   useEffect(() => {
     if (!active) return;
@@ -28,7 +31,9 @@ export function AreaRollup() {
 
   const mine = useMemo(() => areas.filter((a) => a.organization_id === active?.id), [areas, active?.id]);
   const orgCycles = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id && c.status !== 'cancelled'), [cycles, active?.id]);
-  const rows = useMemo(() => rollupByArea(mine, orgCycles.filter((c) => status === 'all' || c.status === status), stats?.cycles ?? []), [mine, orgCycles, status, stats]);
+  const statusCycles = useMemo(() => orgCycles.filter((c) => status === 'all' || c.status === status), [orgCycles, status]);
+  const allRows = useMemo(() => rollupByArea(mine, statusCycles, stats?.cycles ?? []), [mine, statusCycles, stats]);
+  const rows = useMemo(() => (areaFilter && allRows.some((r) => r.area.id === areaFilter) ? allRows.filter((r) => r.area.id === areaFilter) : allRows), [allRows, areaFilter]);
   if (!active) return null;
   if (!mine.some((a) => a.parent_id) || orgCycles.length === 0) return <p className="muted">Chưa có phân khu nào có vụ để tổng hợp. Phân khu chia ô sản xuất và có vụ sẽ hiện ở đây.</p>;
   const money = Boolean(stats?.can_money);
@@ -36,6 +41,7 @@ export function AreaRollup() {
   const kg0 = (n: number) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} kg`;
   const vnd = (v: number | null) => (v == null ? '—' : formatMoney(v));
   const cycleText = (r: (typeof rows)[number]) => `${r.cycles} vụ${r.running > 0 ? ` (${r.running} đang chạy)` : ''}`;
+  const isOpen = (id: string) => openMap[id] ?? (areaFilter === id);
   const cells = (r: (typeof rows)[number]) => (
     <>
       {money && <td className="num">{vnd(r.cost)}</td>}
@@ -67,13 +73,14 @@ export function AreaRollup() {
   const statusChips = (
     <div className="chips" role="group" aria-label="Lọc vụ theo trạng thái">
       {stChips.filter((x) => x.k === 'all' || stCount(x.k) > 0).map((x) => (
-        <button key={x.k} type="button" className={status === x.k ? 'chip active' : 'chip'} aria-pressed={status === x.k} onClick={() => setStatus(x.k)}>{x.l} ({stCount(x.k)})</button>
+        <button key={x.k} type="button" className={status === x.k ? 'chip active' : 'chip'} aria-pressed={status === x.k} onClick={() => setStatus(x.k)}>{x.k === 'all' ? 'Tất cả vụ' : x.l} ({stCount(x.k)})</button>
       ))}
     </div>
   );
   return (
     <>
       {statusChips}
+      <AreaFilter areas={mine} usedAreaIds={statusCycles.map((c) => c.area_id)} value={areaFilter} onChange={setAreaFilter} />
       {rows.length === 0 && <p className="muted">Không có vụ nào ở trạng thái này.</p>}
       <ChartCard title={`${cur.label} theo phân khu`} subtitle={subtitle}>
         <div className="chips" role="group" aria-label="Chọn số liệu để vẽ">
@@ -95,8 +102,16 @@ export function AreaRollup() {
           <thead><tr><th>Phân khu / Vụ</th>{money && <th className="num">Chi phí</th>}<th className="num">Thu hoạch</th>{money && <th className="num">Doanh thu</th>}{money && <th className="num">Lãi / lỗ</th>}</tr></thead>
           <tbody>
             {rows.flatMap((r) => [
-              <tr key={r.area.id}><td><strong>{r.area.name}</strong><div className="muted">{cycleText(r)}</div></td>{cells(r)}</tr>,
-              ...r.cells.filter((c) => c.cycles > 0).map((c) => <tr key={c.area.id}><td style={{ paddingLeft: 24 }}>↳ {c.area.name}<div className="muted">{cycleText(c)}</div></td>{cells(c)}</tr>),
+              <tr key={r.area.id}><td>
+                {r.cells.some((c) => c.cycles > 0) && (
+                  <button type="button" className="icon fold-btn" aria-expanded={isOpen(r.area.id)}
+                    aria-label={`${isOpen(r.area.id) ? 'Đóng' : 'Mở'} danh sách ${r.cells.filter((c) => c.cycles > 0).length} ô sản xuất của ${r.area.name}`}
+                    onClick={() => setOpenMap((m) => ({ ...m, [r.area.id]: !isOpen(r.area.id) }))}>{isOpen(r.area.id) ? '▾' : '▸'}</button>
+                )}
+                <strong>{r.area.name}</strong>
+                <div className="muted">{cycleText(r)}{r.cells.some((c) => c.cycles > 0) ? ` · ${r.cells.filter((c) => c.cycles > 0).length} ô sản xuất${isOpen(r.area.id) ? '' : ' (đang đóng, bấm ▸ để mở)'}` : ''}</div>
+              </td>{cells(r)}</tr>,
+              ...(isOpen(r.area.id) ? r.cells.filter((c) => c.cycles > 0) : []).map((c) => <tr key={c.area.id}><td style={{ paddingLeft: 24 }}>↳ {c.area.name}<div className="muted">{cycleText(c)}</div></td>{cells(c)}</tr>),
             ])}
           </tbody>
         </table>
