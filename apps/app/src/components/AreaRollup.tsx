@@ -35,9 +35,9 @@ export function AreaRollup() {
   const kg = (v: number | null) => (v == null ? '—' : `${v.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} kg`);
   const kg0 = (n: number) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} kg`;
   const vnd = (v: number | null) => (v == null ? '—' : formatMoney(v));
+  const cycleText = (r: (typeof rows)[number]) => `${r.cycles} vụ${r.running > 0 ? ` (${r.running} đang chạy)` : ''}`;
   const cells = (r: (typeof rows)[number]) => (
     <>
-      <td className="num">{r.cycles}{r.running > 0 ? ` (${r.running} đang chạy)` : ''}</td>
       {money && <td className="num">{vnd(r.cost)}</td>}
       <td className="num">{kg(r.harvest)}</td>
       {money && <td className="num">{vnd(r.revenue)}</td>}
@@ -92,11 +92,11 @@ export function AreaRollup() {
         <h2>Bảng số liệu</h2>
       <div className="tablewrap">
         <table className="grid">
-          <thead><tr><th>Phân khu</th><th className="num">Vụ</th>{money && <th className="num">Chi phí</th>}<th className="num">Thu hoạch</th>{money && <th className="num">Doanh thu</th>}{money && <th className="num">Lãi / lỗ</th>}</tr></thead>
+          <thead><tr><th>Phân khu / Vụ</th>{money && <th className="num">Chi phí</th>}<th className="num">Thu hoạch</th>{money && <th className="num">Doanh thu</th>}{money && <th className="num">Lãi / lỗ</th>}</tr></thead>
           <tbody>
             {rows.flatMap((r) => [
-              <tr key={r.area.id}><td><strong>{r.area.name}</strong></td>{cells(r)}</tr>,
-              ...r.cells.filter((c) => c.cycles > 0).map((c) => <tr key={c.area.id}><td style={{ paddingLeft: 24 }}>↳ {c.area.name}</td>{cells(c)}</tr>),
+              <tr key={r.area.id}><td><strong>{r.area.name}</strong><div className="muted">{cycleText(r)}</div></td>{cells(r)}</tr>,
+              ...r.cells.filter((c) => c.cycles > 0).map((c) => <tr key={c.area.id}><td style={{ paddingLeft: 24 }}>↳ {c.area.name}<div className="muted">{cycleText(c)}</div></td>{cells(c)}</tr>),
             ])}
           </tbody>
         </table>
