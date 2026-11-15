@@ -89,6 +89,24 @@ export function WeeklyReport({ onSection }: { onSection: (s: ReportSection) => v
         {error && <p className="err">{error}</p>}
       </div>
 
+      <div className={`card ${attentionCount(a) > 0 ? 'alert-warn' : ''}`}>
+        <h2>Cần chú ý lúc này</h2>
+        {attentionCount(a) === 0 && <p className="muted">Không có gì cần xử lý gấp.</p>}
+        {a.overdue_payables && a.overdue_payables.count > 0 && (
+          <p><span className="pill err">Quá hạn</span> {a.overdue_payables.count} hóa đơn mua ({money(a.overdue_payables.amount)}) <button type="button" className="link inline" onClick={() => onSection('payables')}>Xem công nợ</button></p>
+        )}
+        {a.overdue_receivables && a.overdue_receivables.count > 0 && (
+          <p><span className="pill err">Quá hạn</span> {a.overdue_receivables.count} khoản phải thu ({money(a.overdue_receivables.amount)}) <button type="button" className="link inline" onClick={() => onSection('payables')}>Xem công nợ</button></p>
+        )}
+        {!!a.low_stock && <p><span className="pill warn">Kho</span> {a.low_stock} vật tư sắp hết hoặc đã hết</p>}
+        {a.late_cycles > 0 && <p><span className="pill warn">Tiến độ</span> {a.late_cycles} vụ trễ tiến độ</p>}
+        {a.open_incidents > 0 && <p><span className="pill warn">Sự cố</span> {a.open_incidents} sự cố đang mở{a.overdue_actions > 0 ? `, ${a.overdue_actions} việc khắc phục quá hạn` : ''}</p>}
+        {a.pending_attendance > 0 && <p><span className="pill warn">Chấm công</span> {a.pending_attendance} ca công chờ xác nhận</p>}
+        {!!a.web_orders_waiting && (
+          <p><span className="pill warn">Website</span> {a.web_orders_waiting} đơn chờ báo giá <button type="button" className="link inline" onClick={() => onSection('website')}>Xem đơn</button></p>
+        )}
+      </div>
+
       <div className="kpis">
         {tile('logs', 'Việc đã ghi', (n) => String(n), (n) => String(n))}
         {tile('harvest_kg', 'Thu hoạch', (n) => `${num(n)} kg`, (n) => `${num(n)} kg`, 'sau hao hụt')}
@@ -112,24 +130,6 @@ export function WeeklyReport({ onSection }: { onSection: (s: ReportSection) => v
         <XYChart kind="bar" labels={full} shortLabels={labels} format={(n) => `${n} việc`} axisFormat={compactNumber}
           series={[{ label: 'Việc đã ghi', tone: 'info' }]} values={[r.daily.map((d) => d.logs)]} ariaLabel="Số việc đã ghi từng ngày trong tuần" />
       </ChartCard>
-
-      <div className={`card ${attentionCount(a) > 0 ? 'alert-warn' : ''}`}>
-        <h2>Cần chú ý lúc này</h2>
-        {attentionCount(a) === 0 && <p className="muted">Không có gì cần xử lý gấp.</p>}
-        {a.overdue_payables && a.overdue_payables.count > 0 && (
-          <p><span className="pill err">Quá hạn</span> {a.overdue_payables.count} hóa đơn mua ({money(a.overdue_payables.amount)}) <button type="button" className="link inline" onClick={() => onSection('payables')}>Xem công nợ</button></p>
-        )}
-        {a.overdue_receivables && a.overdue_receivables.count > 0 && (
-          <p><span className="pill err">Quá hạn</span> {a.overdue_receivables.count} khoản phải thu ({money(a.overdue_receivables.amount)}) <button type="button" className="link inline" onClick={() => onSection('payables')}>Xem công nợ</button></p>
-        )}
-        {!!a.low_stock && <p><span className="pill warn">Kho</span> {a.low_stock} vật tư sắp hết hoặc đã hết</p>}
-        {a.late_cycles > 0 && <p><span className="pill warn">Tiến độ</span> {a.late_cycles} vụ trễ tiến độ</p>}
-        {a.open_incidents > 0 && <p><span className="pill warn">Sự cố</span> {a.open_incidents} sự cố đang mở{a.overdue_actions > 0 ? `, ${a.overdue_actions} việc khắc phục quá hạn` : ''}</p>}
-        {a.pending_attendance > 0 && <p><span className="pill warn">Chấm công</span> {a.pending_attendance} ca công chờ xác nhận</p>}
-        {!!a.web_orders_waiting && (
-          <p><span className="pill warn">Website</span> {a.web_orders_waiting} đơn chờ báo giá <button type="button" className="link inline" onClick={() => onSection('website')}>Xem đơn</button></p>
-        )}
-      </div>
 
       <div className="btnrow">
         <button type="button" onClick={() => void share()}>Chia sẻ tóm tắt</button>

@@ -52,12 +52,12 @@ export function AreaRollup() {
   );
   const measures = [
     { key: 'profit', label: 'Lãi / lỗ', money: true },
-    { key: 'compare', label: 'Doanh thu và chi phí', money: true },
+    { key: 'unitcost', label: 'Giá thành / kg', money: true },
     { key: 'harvest', label: 'Thu hoạch', money: false },
     { key: 'cycles', label: 'Số vụ', money: false },
   ].filter((m) => money || !m.money);
   const cur = measures.find((m) => m.key === measure) ?? measures[0]!;
-  const valueOf = (r: (typeof rows)[number]): number => Number((r as unknown as Record<string, number | null>)[cur.key] ?? 0);
+  const valueOf = (r: (typeof rows)[number]): number => cur.key === 'unitcost' ? ((r.harvest ?? 0) > 0 ? Math.round((r.cost ?? 0) / Number(r.harvest)) : 0) : Number((r as unknown as Record<string, number | null>)[cur.key] ?? 0);
   const items = rows.map((r) => ({ r, v: valueOf(r) })).filter((x) => x.v !== 0)
     .sort((a, b) => Math.abs(b.v) - Math.abs(a.v))
     .map(({ r, v }) => ({
@@ -66,8 +66,7 @@ export function AreaRollup() {
       tone: cur.key === 'profit' ? (v >= 0 ? 'ok' : 'bad') : 'info',
     }));
   const fmtVal = cur.key === 'harvest' ? kg0 : formatMoney;
-  const cmp = [...rows].filter((r) => (r.cost ?? 0) > 0 || (r.revenue ?? 0) > 0).sort((a, b) => (b.cost ?? 0) - (a.cost ?? 0)).slice(0, 8);
-  const subtitle = cur.key === 'profit' ? 'Xanh là lãi, đỏ là lỗ; chữ nhỏ ghi số vụ' : cur.key === 'compare' ? 'Mỗi phân khu hai thanh: doanh thu (xanh) dài hơn chi phí (đỏ) là có lãi' : 'Chữ nhỏ ghi số vụ của phân khu';
+  const subtitle = cur.key === 'profit' ? 'Xanh là lãi, đỏ là lỗ; chữ nhỏ ghi số vụ' : cur.key === 'unitcost' ? 'Chi phí chia cho số kg thu hoạch: thanh càng ngắn càng tiết kiệm. Chỉ tính phân khu đã có thu hoạch' : 'Chữ nhỏ ghi số vụ của phân khu';
   const stChips = [{ k: 'all', l: 'Tất cả' }, { k: 'active', l: 'Đang sản xuất' }, { k: 'preparing', l: 'Chuẩn bị' }, { k: 'paused', l: 'Tạm dừng' }, { k: 'ended', l: 'Kết thúc' }] as const;
   const stCount = (k: string) => (k === 'all' ? orgCycles.length : orgCycles.filter((c) => c.status === k).length);
   const statusChips = (
@@ -86,14 +85,7 @@ export function AreaRollup() {
         <div className="chips" role="group" aria-label="Chọn số liệu để vẽ">
           {measures.map((m) => <button key={m.key} className={m.key === cur.key ? 'chip active' : 'chip'} aria-pressed={m.key === cur.key} onClick={() => setMeasure(m.key)}>{m.label}</button>)}
         </div>
-        {cur.key === 'compare' ? (
-          cmp.length === 0 ? <p className="muted">Chưa có chi phí hay doanh thu để vẽ.</p> : (
-            <HBarList format={formatMoney} ariaLabel="Doanh thu và chi phí theo phân khu"
-              items={cmp.flatMap((r) => [{ label: `${r.area.name} — Doanh thu`, value: r.revenue ?? 0, tone: 'ok' }, { label: `${r.area.name} — Chi phí`, value: r.cost ?? 0, tone: 'bad' }])} />
-          )
-        ) : (
-          <HBarList items={items} format={fmtVal} ariaLabel={`${cur.label} theo phân khu`} />
-        )}
+        <HBarList items={items} format={cur.key === 'unitcost' ? (n: number) => `${formatMoney(n)}/kg` : fmtVal} ariaLabel={`${cur.label} theo phân khu`} />
       </ChartCard>
       <div className="card">
         <h2>Bảng số liệu</h2>
