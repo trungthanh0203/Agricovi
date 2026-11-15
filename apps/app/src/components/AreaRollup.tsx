@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AreaFilter } from './AreaFilter';
-import { ChartCard, HBarList } from './charts';
 import { cachedCycleStats, fetchCycleStats, type CycleStats } from '../lib/cycleStats';
 import { rollupByArea } from '../lib/areas';
 import { formatMoney } from '../lib/inventory';
@@ -15,7 +14,6 @@ export function AreaRollup() {
   const { active } = useOrgs();
   const areas = useTable('areas');
   const cycles = useTable('cycles');
-  const [measure, setMeasure] = useState('profit');
   const [status, setStatus] = useState<'all' | 'active' | 'preparing' | 'paused' | 'ended'>('all'); // lọc vụ theo trạng thái cho cả biểu đồ và bảng
   const [areaFilter, setAreaFilter] = useState('');   // lọc theo một phân khu ('' = tất cả)
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});   // phân khu đang mở danh sách ô sản xuất (mặc định đóng, trừ khi đang lọc đúng phân khu đó)
@@ -38,7 +36,6 @@ export function AreaRollup() {
   if (!mine.some((a) => a.parent_id) || orgCycles.length === 0) return <p className="muted">Chưa có phân khu nào có vụ để tổng hợp. Phân khu chia ô sản xuất và có vụ sẽ hiện ở đây.</p>;
   const money = Boolean(stats?.can_money);
   const kg = (v: number | null) => (v == null ? '—' : `${v.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} kg`);
-  const kg0 = (n: number) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} kg`;
   const vnd = (v: number | null) => (v == null ? '—' : formatMoney(v));
   const cycleText = (r: (typeof rows)[number]) => `${r.cycles} vụ${r.running > 0 ? ` (${r.running} đang chạy)` : ''}`;
   const isOpen = (id: string) => openMap[id] ?? (areaFilter === id);
@@ -50,23 +47,6 @@ export function AreaRollup() {
       {money && <td className="num">{vnd(r.profit)}</td>}
     </>
   );
-  const measures = [
-    { key: 'profit', label: 'Lãi / lỗ', money: true },
-    { key: 'unitcost', label: 'Giá thành / kg', money: true },
-    { key: 'harvest', label: 'Thu hoạch', money: false },
-    { key: 'cycles', label: 'Số vụ', money: false },
-  ].filter((m) => money || !m.money);
-  const cur = measures.find((m) => m.key === measure) ?? measures[0]!;
-  const valueOf = (r: (typeof rows)[number]): number => cur.key === 'unitcost' ? ((r.harvest ?? 0) > 0 ? Math.round((r.cost ?? 0) / Number(r.harvest)) : 0) : Number((r as unknown as Record<string, number | null>)[cur.key] ?? 0);
-  const items = rows.map((r) => ({ r, v: valueOf(r) })).filter((x) => x.v !== 0)
-    .sort((a, b) => Math.abs(b.v) - Math.abs(a.v))
-    .map(({ r, v }) => ({
-      label: r.area.name, value: Math.abs(v),
-      note: [cur.key === 'profit' ? (v >= 0 ? 'lãi' : 'lỗ') : '', `${r.cycles} vụ`].filter(Boolean).join(' · '),
-      tone: cur.key === 'profit' ? (v >= 0 ? 'ok' : 'bad') : 'info',
-    }));
-  const fmtVal = cur.key === 'harvest' ? kg0 : formatMoney;
-  const subtitle = cur.key === 'profit' ? 'Xanh là lãi, đỏ là lỗ; chữ nhỏ ghi số vụ' : cur.key === 'unitcost' ? 'Chi phí chia cho số kg thu hoạch: thanh càng ngắn càng tiết kiệm. Chỉ tính phân khu đã có thu hoạch' : 'Chữ nhỏ ghi số vụ của phân khu';
   const stChips = [{ k: 'all', l: 'Tất cả' }, { k: 'active', l: 'Đang sản xuất' }, { k: 'preparing', l: 'Chuẩn bị' }, { k: 'paused', l: 'Tạm dừng' }, { k: 'ended', l: 'Kết thúc' }] as const;
   const stCount = (k: string) => (k === 'all' ? orgCycles.length : orgCycles.filter((c) => c.status === k).length);
   const statusChips = (
@@ -81,12 +61,6 @@ export function AreaRollup() {
       {statusChips}
       <AreaFilter areas={mine} usedAreaIds={statusCycles.map((c) => c.area_id)} value={areaFilter} onChange={setAreaFilter} />
       {rows.length === 0 && <p className="muted">Không có vụ nào ở trạng thái này.</p>}
-      <ChartCard title={`${cur.label} theo phân khu`} subtitle={subtitle}>
-        <div className="chips" role="group" aria-label="Chọn số liệu để vẽ">
-          {measures.map((m) => <button key={m.key} className={m.key === cur.key ? 'chip active' : 'chip'} aria-pressed={m.key === cur.key} onClick={() => setMeasure(m.key)}>{m.label}</button>)}
-        </div>
-        <HBarList items={items} format={cur.key === 'unitcost' ? (n: number) => `${formatMoney(n)}/kg` : fmtVal} ariaLabel={`${cur.label} theo phân khu`} />
-      </ChartCard>
       <div className="card">
         <h2>Bảng số liệu</h2>
       <div className="tablewrap">
