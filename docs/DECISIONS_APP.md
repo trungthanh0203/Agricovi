@@ -424,3 +424,10 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - Bảng gồm các dòng "từ ngày tuổi X: Y kg/con/ngày", áp dụng đến dòng kế tiếp (không thể chồng/hở); lưu nguyên khối, ghi có phiên bản, lệch phiên bản báo CONFLICT. Không nạp số mặc định (tùy giống, hãng cám); có thể chép từ lứa trước cùng cơ sở.
 - Tùy chọn cho nhiều tình huống: tuổi con giống lúc nhập, đơn vị nhập kg hoặc g, kỳ so sánh (7 ngày gần đây, hoặc cả lứa), ngưỡng lệch 5–100% (mặc định 20).
 - So theo kỳ vì cám xuất kho thường theo bao. Thiếu định mức, thiếu số con hoặc chưa ghi cám trong kỳ thì nói rõ thiếu gì, không kết luận ăn thừa/thiếu. Chưa làm: tách theo giai đoạn cám, theo nhóm đàn.
+
+## D168 — Kiểm kho theo đợt (migration 0205)
+
+- Trước đây chỉ có "Điều chỉnh tồn" từng vật tư. Nay thêm **đợt kiểm kê một kho** (Sản xuất → Kho → Kiểm kho): mở đợt (chụp tồn sổ sách từng vật tư và từng lô) → đếm → chốt. **Chốt không sửa tồn trực tiếp** mà thêm giao dịch `adjustment` (lý do "Kiểm kê ngày…", mang đúng lô) nên kho vẫn chỉ thêm; "Điều chỉnh tồn" lẻ giữ nguyên.
+- Mỗi kho một đợt nháp tại một thời điểm; dòng để trống là chưa đếm (không điều chỉnh); lệch tính theo tồn HIỆN TẠI lúc chốt (giữa chừng có xuất nhập vẫn đúng); dòng lệch quá ngưỡng (mặc định 20%, chọn lúc mở đợt) bắt buộc ghi chú. Số đếm lưu theo dòng có phiên bản (CONFLICT nếu hai người sửa cùng dòng). Chốt một lần rồi bất biến; hủy nháp cần lý do.
+- Đếm mù là tùy chọn (mặc định tắt): máy chủ không trả số sổ sách khi đang nháp; chỉ để người đếm khỏi đoán, không phải lớp bảo mật. Ghi/đọc theo quyền Kho (sửa/xem); cần mạng (D24). Biên bản in/PDF có ước giá trị lệch theo giá nhập bình quân.
+- Chưa làm: nhắc kiểm kho định kỳ ở Trang chủ, thẻ "lần kiểm gần nhất", quét mã vạch, chia đếm theo người.

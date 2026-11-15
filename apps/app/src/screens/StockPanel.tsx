@@ -5,6 +5,7 @@ import { PurchaseEntry } from '../components/PurchaseEntry';
 import { StockEntry } from '../components/StockEntry';
 import { StockIssue, StockReturn, StockTransfer } from '../components/StockMove';
 import { StockReports } from '../components/StockReports';
+import { StockTake } from '../components/StockTake';
 import { Thumb } from '../components/ImagePicker';
 import { useConfig } from '../lib/config';
 import { db } from '../lib/db';
@@ -17,7 +18,7 @@ import { canPerm } from '../lib/permissions';
 import { authorLabel } from '../lib/roles';
 import { useTable } from '../lib/tables';
 
-type Mode = 'list' | 'receipt' | 'adjustment' | 'purchase' | 'issue' | 'transfer' | 'return';
+type Mode = 'list' | 'receipt' | 'adjustment' | 'purchase' | 'issue' | 'transfer' | 'return' | 'stocktake';
 
 /**
  * Kho (mục con của Sản xuất): tồn kho dạng lưới có tìm kiếm và bộ lọc, sổ kho từng vật tư (nhập – xuất – điều chỉnh kèm tồn sau mỗi dòng),
@@ -34,8 +35,9 @@ export function StockPanel() {
   if (mode === 'issue') return <StockIssue orgId={active.id} onClose={() => setMode('list')} />;
   if (mode === 'transfer') return <StockTransfer orgId={active.id} onClose={() => setMode('list')} />;
   if (mode === 'return') return <StockReturn orgId={active.id} onClose={() => setMode('list')} />;
+  if (mode === 'stocktake') return <StockTake orgId={active.id} canWrite={canWrite} onClose={() => setMode('list')} />;
   if (mode !== 'list') return <StockEntry orgId={active.id} mode={mode} onClose={() => setMode('list')} />;
-  return <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setMode('purchase')} onAdjust={() => setMode('adjustment')} onIssue={() => setMode('issue')} onTransfer={() => setMode('transfer')} onReturn={() => setMode('return')} />;
+  return <StockList orgId={active.id} canWrite={canWrite} onReceipt={() => setMode('purchase')} onAdjust={() => setMode('adjustment')} onIssue={() => setMode('issue')} onTransfer={() => setMode('transfer')} onReturn={() => setMode('return')} onStocktake={() => setMode('stocktake')} />;
 }
 
 function useStockData(orgId: string) {
@@ -54,7 +56,7 @@ function useStockData(orgId: string) {
 
 type View = 'stock' | 'txns' | 'report';
 
-function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, onReturn }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void; onIssue: () => void; onTransfer: () => void; onReturn: () => void; onPurchase?: () => void }) {
+function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, onReturn, onStocktake }: { orgId: string; canWrite: boolean; onReceipt: () => void; onAdjust: () => void; onIssue: () => void; onTransfer: () => void; onReturn: () => void; onStocktake: () => void; onPurchase?: () => void }) {
   const d = useStockData(orgId);
   const [view, setView] = useState<View>('stock');
   const [ledgerOf, setLedgerOf] = useState<string | null>(null);
@@ -73,8 +75,10 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, 
           <button className="secondary" onClick={onTransfer}>Chuyển kho</button>
           <button className="secondary" onClick={onReturn}>Trả về kho</button>
           <button className="secondary" onClick={onAdjust}>Điều chỉnh tồn</button>
+          <button className="secondary" onClick={onStocktake}>Kiểm kho</button>
         </div>
       )}
+      {!canWrite && <div className="actions"><button className="secondary" onClick={onStocktake}>Xem các đợt kiểm kho</button></div>}
       {pendingCount > 0 && <p className="msg warn" role="status">Có giao dịch kho chưa gửi lên máy chủ; số tồn dưới đây đã tính cả các giao dịch này.</p>}
       <div className="seg" role="tablist" aria-label="Chế độ xem kho">
         <button role="tab" aria-selected={view === 'stock'} className={view === 'stock' ? 'on' : ''} onClick={() => setView('stock')}>Tồn kho</button>
