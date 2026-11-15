@@ -851,3 +851,14 @@ td.fold-col, th.fold-col { position: relative; }
 td.fold-col > .fold-btn { position: absolute; top: 4px; right: 4px; margin: 0; }
 td.fold-col.has-fold { padding-right: 40px; }
 @media (max-width: 600px) { td.fold-col, th.fold-col { width: 50vw; min-width: 50vw; max-width: 50vw; overflow-wrap: anywhere; } }
+
+/* Chọn phân khu làm việc (nhân sự): mỗi phân khu một khung, ô sản xuất xếp dưới */
+.area-pick { display: grid; gap: 8px; margin-top: 6px; }
+.area-box { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+.area-box.on { border-color: var(--primary, #2e7d32); background: rgba(46, 125, 50, .07); }
+.area-box .area-head { align-items: flex-start; }
+.area-box .area-head small { color: var(--muted, #666); font-weight: 400; }
+.area-cells { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; margin: 6px 0 2px 32px; }
+.area-cells label.check { min-width: 0; font-size: .9rem; }
+.area-all { margin: 4px 0 0 32px; font-size: .88rem; overflow-wrap: anywhere; }
+.area-sum { margin: 0; font-size: .85rem; }

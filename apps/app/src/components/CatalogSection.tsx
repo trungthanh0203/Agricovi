@@ -148,7 +148,7 @@ function LocationForm({ l, orgId, busy, onSave, onClose }: {
         <label>Mô tả (không bắt buộc)<textarea rows={2} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Vị trí, loại hàng chứa…" /></label>
         <fieldset className="roles">
           <legend>Dùng cho phân khu</legend>
-          <AreaChoice orgId={orgId} value={areaSel} onChange={setAreaSel} />
+          <AreaChoice orgId={orgId} value={areaSel} onChange={setAreaSel} nested={false} />
         </fieldset>
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">

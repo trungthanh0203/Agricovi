@@ -431,3 +431,5 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - Mỗi kho một đợt nháp tại một thời điểm; dòng để trống là chưa đếm (không điều chỉnh); lệch tính theo tồn HIỆN TẠI lúc chốt (giữa chừng có xuất nhập vẫn đúng); dòng lệch quá ngưỡng (mặc định 20%, chọn lúc mở đợt) bắt buộc ghi chú. Số đếm lưu theo dòng có phiên bản (CONFLICT nếu hai người sửa cùng dòng). Chốt một lần rồi bất biến; hủy nháp cần lý do.
 - Đếm mù là tùy chọn (mặc định tắt): máy chủ không trả số sổ sách khi đang nháp; chỉ để người đếm khỏi đoán, không phải lớp bảo mật. Ghi/đọc theo quyền Kho (sửa/xem); cần mạng (D24). Biên bản in/PDF có ước giá trị lệch theo giá nhập bình quân.
 - Chưa làm: nhắc kiểm kho định kỳ ở Trang chủ, thẻ "lần kiểm gần nhất", quét mã vạch, chia đếm theo người.
+
+- D169 (15/11/2026): Công do **chủ** nhập ở "Chấm công cho người làm" được **Hợp lệ ngay** (đủ số phút, ghi người duyệt); quản lý/tổ trưởng nhập vẫn Chờ xác nhận (sửa D56 cho riêng chủ; migration 0206). Chọn phân khu làm việc cho nhân sự: tick phân khu = gồm mọi ô sản xuất bên trong (đã đúng từ 0136), giao diện trình bày lại thành từng khung phân khu.

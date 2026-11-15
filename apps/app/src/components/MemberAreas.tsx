@@ -4,18 +4,52 @@ import { setMemberAreas } from '../lib/members';
 import { useTable } from '../lib/tables';
 import { orderedAreas } from '../lib/areas';
 
-/** Chọn phân khu làm việc: "Tất cả" (null) hoặc một số phân khu. Dùng ở hồ sơ nhân sự và khi tạo tài khoản nhân viên. */
-export function AreaChoice({ orgId, value, onChange }: { orgId: string; value: string[] | null; onChange: (v: string[] | null) => void }) {
+/**
+ * Chọn phân khu làm việc: "Tất cả" (null) hoặc một số phân khu/ô sản xuất. Dùng ở hồ sơ nhân sự và khi tạo tài khoản nhân viên.
+ * Mỗi phân khu là một khung riêng: tick phân khu = gồm TẤT CẢ ô sản xuất bên trong (máy chủ tự hiểu, D136), các ô hiện dưới dạng chữ mờ;
+ * không tick phân khu thì mới hiện từng ô để chọn riêng. `nested` = true khi nơi dùng hiểu phân khu cha gồm ô con (nhân sự).
+ */
+export function AreaChoice({ orgId, value, onChange, nested = true }: { orgId: string; value: string[] | null; onChange: (v: string[] | null) => void; nested?: boolean }) {
   const areas = orderedAreas(useTable('areas').filter((a) => a.organization_id === orgId));
   const all = value === null;
   const picked = value ?? [];
+  const ids = new Set(areas.map((a) => a.id));
+  const kids = (id: string) => areas.filter((a) => a.parent_id === id);
+  const tops = nested ? areas.filter((a) => !a.parent_id || !ids.has(a.parent_id)) : areas;
   const toggle = (id: string) => onChange(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
+  // tick phân khu cha thì bỏ tick các ô con (đã được gồm sẵn)
+  const toggleParent = (id: string) => {
+    if (picked.includes(id)) return onChange(picked.filter((x) => x !== id));
+    const childIds = new Set(kids(id).map((k) => k.id));
+    onChange([...picked.filter((x) => !childIds.has(x)), id]);
+  };
+  const nCell = picked.filter((id) => areas.find((a) => a.id === id)?.parent_id).length;
+  const nTop = picked.length - nCell;
   return (
     <>
       <label className="check"><input type="radio" checked={all} onChange={() => onChange(null)} /> Tất cả phân khu</label>
       <label className="check"><input type="radio" checked={!all} onChange={() => onChange(picked)} /> Chỉ những phân khu được chọn</label>
-      {!all && <div className="cols2">{areas.map((a) => <label className="check" key={a.id} style={a.parent_id ? { paddingLeft: 20 } : undefined}><input type="checkbox" checked={picked.includes(a.id)} onChange={() => toggle(a.id)} /> {a.parent_id ? '↳ ' : ''}{a.name}</label>)}</div>}
-      {!all && areas.length === 0 && <p className="muted">Chưa có phân khu nào. Khai báo phân khu trước.</p>}
+      {!all && (
+        <div className="area-pick">
+          {tops.map((a) => {
+            const ch = nested ? kids(a.id) : [];
+            const on = picked.includes(a.id);
+            return (
+              <div className={'area-box' + (on ? ' on' : '')} key={a.id}>
+                <label className="check area-head"><input type="checkbox" checked={on} onChange={() => (ch.length > 0 ? toggleParent(a.id) : toggle(a.id))} />
+                  <span><strong>{a.name}</strong>{ch.length > 0 && <small> · {ch.length} ô sản xuất</small>}</span></label>
+                {ch.length > 0 && (on
+                  ? <p className="area-all muted">✓ Gồm tất cả {ch.length} ô: {ch.map((k) => k.name).join(', ')}</p>
+                  : <div className="area-cells">{ch.map((k) => (
+                      <label className="check" key={k.id}><input type="checkbox" checked={picked.includes(k.id)} onChange={() => toggle(k.id)} /> {k.name}</label>
+                    ))}</div>)}
+              </div>
+            );
+          })}
+          {areas.length === 0 && <p className="muted">Chưa có phân khu nào. Khai báo phân khu trước.</p>}
+          {areas.length > 0 && <p className="muted area-sum">{picked.length === 0 ? 'Chưa chọn gì.' : `Đã chọn ${nTop} phân khu${nCell ? ` và ${nCell} ô sản xuất riêng` : ''}.`}{nested && areas.some((a) => a.parent_id) ? ' Tick phân khu = gồm mọi ô bên trong; muốn chọn riêng từng ô thì để trống phân khu.' : ''}</p>}
+        </div>
+      )}
     </>
   );
 }
@@ -47,13 +81,7 @@ export function MemberAreas({ orgId, userId, initial, onSaved }: { orgId: string
   };
   return (
     <div className="inline-form">
-      <label className="check"><input type="radio" checked={all} onChange={() => setAll(true)} /> Tất cả phân khu</label>
-      <label className="check"><input type="radio" checked={!all} onChange={() => setAll(false)} /> Chỉ những phân khu được chọn</label>
-      {!all && <div className="cols2">{areas.map((a) => (
-        <label className="check" key={a.id} style={a.parent_id ? { paddingLeft: 20 } : undefined}><input type="checkbox" checked={picked.includes(a.id)} onChange={() => toggle(a.id)} /> {a.parent_id ? '↳ ' : ''}{a.name}</label>
-      ))}</div>}
-      {!all && areas.length === 0 && <p className="muted">Chưa có phân khu nào. Khai báo phân khu trước.</p>}
-      {!all && areas.some((a) => a.parent_id) && <p className="muted">Chọn một phân khu thì người này thấy tất cả ô sản xuất bên trong; chọn riêng một ô thì chỉ thấy ô đó.</p>}
+      <AreaChoice orgId={orgId} value={all ? null : picked} onChange={(v) => { setAll(v === null); if (v) setPicked(v); }} />
       {msg && <p className={msg.ok ? 'msg ok' : 'msg error'} role="status">{msg.text}</p>}
       <div className="btnrow">
         <button type="button" className="primary" disabled={busy} onClick={() => void save()}>Lưu</button>
