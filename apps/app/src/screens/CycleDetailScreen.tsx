@@ -53,11 +53,11 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
   const online = useOnline();
   const cycle = useLiveQuery(() => db.cycles.get(cycleId), [cycleId]);
   const stagesAll = useLiveQuery(() => db.stages.where('cycle_id').equals(cycleId).sortBy('seq'), [cycleId], []);
-  // vườn cây / đàn: chỉ hiện việc của kỳ đang mở (kỳ cũ xem ở Tổng kết theo kỳ)
+  // đàn nuôi liên tục: chỉ hiện việc của kỳ đang mở (kỳ cũ xem ở Tổng kết theo kỳ). Vườn cây không dùng kỳ nữa (D176): mỗi mùa là một vụ riêng.
   const mode = modeOf(cycle);
-  const { periods, reload: reloadPeriods } = useCyclePeriods(cycleId, mode !== 'batch');
+  const { periods, reload: reloadPeriods } = useCyclePeriods(cycleId, mode === 'herd');
   const openPeriod = periods?.find((p) => p.status === 'open') ?? null;
-  const stages = mode === 'batch' || periods === null ? stagesAll : stagesAll.filter((s) => openPeriod && s.period_id === openPeriod.id);
+  const stages = mode !== 'herd' || periods === null ? stagesAll : stagesAll.filter((s) => openPeriod && s.period_id === openPeriod.id);
   const logs = useLiveQuery(() => db.logs.where('cycle_id').equals(cycleId).toArray(), [cycleId], []);
   const notes = useLiveQuery(() => db.notes.where('cycle_id').equals(cycleId).toArray(), [cycleId], []);
   const harvestsAll = useTable('harvests'); // phiếu thu hoạch của vụ (việc Thu hoạch tính cả phiếu này khi kiểm đã ghi đủ)

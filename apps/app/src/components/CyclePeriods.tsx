@@ -46,7 +46,7 @@ export function CyclePeriods({ cycle, periods, reload, canManage, online, today,
 
   const [report, setReport] = useState<PeriodSummary[] | null>(null);
   const [repErr, setRepErr] = useState<string | null>(null);
-  const reloadReport = () => { if (online) fetchPeriodsReport(cycle.id).then((r) => { setReport(r); setRepErr(null); }).catch((e) => setRepErr(friendlyError(e))); };
+  const reloadReport = () => { if (online && mode !== 'perennial') fetchPeriodsReport(cycle.id).then((r) => { setReport(r); setRepErr(null); }).catch((e) => setRepErr(friendlyError(e))); };
   useEffect(() => { reloadReport(); }, [cycle.id, periods, online]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [balFrom, setBalFrom] = useState(open?.start_date ?? cycle.start_date ?? today);
@@ -76,7 +76,7 @@ export function CyclePeriods({ cycle, periods, reload, canManage, online, today,
       <div className="card slim">
         <div className="row"><strong className="grow">{MODE_LABEL[mode]}</strong>{mode === 'perennial' && <span className={construction ? 'pill warn' : 'pill ok'}>{construction ? 'Kiến thiết cơ bản' : 'Kinh doanh'}</span>}</div>
         {age && <p className="muted">Tuổi cây: <strong>{age}</strong> (trồng {fmtDate(cycle.planting_date)})</p>}
-        {periods === null ? <p className="muted">Đang tải kỳ…</p> : open ? (
+        {mode === 'perennial' ? null : periods === null ? <p className="muted">Đang tải kỳ…</p> : open ? (
           <>
             <p>Kỳ hiện tại: <strong>{open.label}</strong> · từ {fmtDate(open.start_date)}{open.end_date ? ` đến ${fmtDate(open.end_date)} (dự kiến)` : ''}</p>
             {canManage && !closed && (
@@ -116,7 +116,7 @@ export function CyclePeriods({ cycle, periods, reload, canManage, online, today,
         </Collapsible>
       )}
 
-      {!open && periods !== null && canManage && !closed && (
+      {mode !== 'perennial' && !open && periods !== null && canManage && !closed && (
         <Collapsible inline title="＋ Mở kỳ mới" defaultOpen>
           <div className="inline-form">
             <label>Tên kỳ<input value={label} maxLength={60} onChange={(e) => setLabel(e.target.value)} placeholder={mode === 'herd' ? 'Ví dụ: Quý 2/2027' : 'Ví dụ: Mùa 2027'} /></label>
@@ -151,29 +151,28 @@ export function CyclePeriods({ cycle, periods, reload, canManage, online, today,
         </Collapsible>
       )}
 
-      <Collapsible title="Tổng kết theo kỳ" summary={report ? `${report.length} kỳ` : online ? 'đang tải…' : 'cần có mạng'}>
+      {mode !== 'perennial' && <Collapsible title="Tổng kết theo kỳ" summary={report ? `${report.length} kỳ` : online ? 'đang tải…' : 'cần có mạng'}>
         {repErr && <p className="msg error" role="alert">{repErr}</p>}
         {report && report.length === 0 && <p className="muted">Chưa có kỳ nào.</p>}
         {report && report.length > 0 && (
           <table className="grid">
-            <thead><tr><th>Kỳ</th><th>Thu hoạch (kg)</th><th>Doanh thu</th><th>Chi phí{mode === 'perennial' ? ' + khấu hao' : ''}</th><th>Lãi / lỗ</th>{mode === 'perennial' ? <th>kg/cây</th> : <th>Chi phí/đầu</th>}</tr></thead>
+            <thead><tr><th>Kỳ</th><th>Thu hoạch (kg)</th><th>Doanh thu</th><th>Chi phí</th><th>Lãi / lỗ</th><th>Chi phí/đầu</th></tr></thead>
             <tbody>
               {report.map((r) => (
                 <tr key={r.period_id}>
-                  <td>{r.label}<span className="sub">{fmtDate(r.start)} – {r.end ? fmtDate(r.end) : 'nay'}{r.status === 'open' ? ' · đang mở' : ''}{mode === 'perennial' && r.age_years != null ? ` · ${fmt(r.age_years, 1)} tuổi` : ''}</span></td>
+                  <td>{r.label}<span className="sub">{fmtDate(r.start)} – {r.end ? fmtDate(r.end) : 'nay'}{r.status === 'open' ? ' · đang mở' : ''}</span></td>
                   <td>{fmt(r.harvest_net, 1)}</td>
                   <td>{formatMoney(r.revenue)}</td>
-                  <td>{formatMoney(r.total_cost)}{mode === 'perennial' && r.depreciation > 0 ? <span className="sub">gồm khấu hao {formatMoney(r.depreciation)}</span> : null}</td>
+                  <td>{formatMoney(r.total_cost)}</td>
                   <td>{formatMoney(r.profit)}</td>
-                  <td>{mode === 'perennial' ? fmt(r.yield_per_plant, 2) : formatMoney(r.cost_per_head ?? 0)}</td>
+                  <td>{formatMoney(r.cost_per_head ?? 0)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
-        {mode === 'perennial' && report && report.some((r) => r.capital_total > 0) && <p className="muted">Chi phí đầu tư vườn cây đã ghi: {formatMoney(Math.max(...report.map((r) => r.capital_total)))}. Chi phí đầu tư không tính vào chi phí kỳ mà khấu hao dần.</p>}
         <p className="muted">Số liệu của khoảng ngày từng kỳ. Tiền công tính theo kỳ lương kết thúc trong kỳ.</p>
-      </Collapsible>
+      </Collapsible>}
 
       {mode === 'herd' && (
         <Collapsible title="Biến động đàn" summary={bal ? `${bal.reduce((n, g) => n + g.closing, 0)} đầu cuối kỳ` : undefined}>

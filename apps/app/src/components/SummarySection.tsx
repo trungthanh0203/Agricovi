@@ -181,13 +181,6 @@ export function SummarySection() {
             </p>
           </div>
 
-          {summary.total_cost > 0 && (
-            <ChartCard title="Cơ cấu chi phí đã ghi" subtitle="Tổng = các khoản ở trên cộng lại" footer="Tiền mua vật tư không cộng vào tổng vì đã tính khi dùng."
-              table={{ columns: ['Khoản', 'Số tiền'], rows: costParts.map((p) => [p.label, formatMoney(p.value)]) }}>
-              <DonutChart items={costParts} format={formatMoney} centerLabel="Tổng chi phí" ariaLabel="Cơ cấu chi phí của vụ" />
-            </ChartCard>
-          )}
-
           <div className="card">
             <h2>Sản lượng và doanh thu</h2>
             <Row k="Tổng thu hoạch" v={`${vnNumber(summary.harvested_gross_qty)} kg`} />
