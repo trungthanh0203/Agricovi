@@ -96,3 +96,24 @@ export function rollupByArea(areas: AreaRow[], cycles: { id: string; area_id: st
     return { ...total, cells };
   }).filter((r) => r.cycles > 0);
 }
+
+/** Một dòng do máy chủ cộng sẵn cho một khu (get_area_rollup, D177) */
+export interface AreaRollupServerRow { area_id: string; cycles: number; running: number; cost: number | null; harvest: number | null; revenue: number | null; profit: number | null }
+
+/** Dựng cây phân khu / ô sản xuất từ các dòng máy chủ đã cộng sẵn (cùng hình dạng với rollupByArea) */
+export function rollupFromServer(areas: AreaRow[], rows: AreaRollupServerRow[]): AreaRollupRow[] {
+  const by = new Map(rows.map((r) => [r.area_id, r]));
+  const leaf = (area: AreaRow): AreaRollupRow => {
+    const r = by.get(area.id);
+    return { area, cycles: r?.cycles ?? 0, running: r?.running ?? 0, cost: r?.cost ?? null, harvest: r?.harvest ?? null, revenue: r?.revenue ?? null, profit: r?.profit ?? null, cells: [] };
+  };
+  return topAreas(areas).filter((t) => t.kind !== 'facility').map((t) => {
+    const own = leaf(t);
+    const cells = cellsOf(areas, t.id).map(leaf);
+    const total = [own, ...cells].reduce<AreaRollupRow>((s, r) => ({
+      ...s, cycles: s.cycles + r.cycles, running: s.running + r.running,
+      cost: addN(s.cost, r.cost), harvest: addN(s.harvest, r.harvest), revenue: addN(s.revenue, r.revenue), profit: addN(s.profit, r.profit),
+    }), { area: t, cycles: 0, running: 0, cost: null, harvest: null, revenue: null, profit: null, cells: [] });
+    return { ...total, cells };
+  }).filter((r) => r.cycles > 0);
+}
