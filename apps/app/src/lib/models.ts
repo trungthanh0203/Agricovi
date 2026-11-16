@@ -124,7 +124,7 @@ export const SECTION_FEATURE: Record<string, Feature | null> = {
   areas: null, crops: null, templates: null, materials: 'stock', places: 'stock', worktypes: 'logs', partners: 'partners', customers: 'partners',
   positions: 'positions', teams: 'teams', members: 'people', coop: null, licenses: 'licenses',
   // Sản xuất
-  cycles: null, harvest: null, expense: null, logs: 'logs', stock: 'stock', attendance: 'attendance',
+  cycles: null, harvest: null, expense: null, logs: 'logs', stock: 'stock', attendance: 'attendance', piecework: 'payroll',
   // Báo cáo
   weekly: 'weekly', custom: 'custom_reports', payables: null, sales: null, paybook: 'payroll', summary: null,
   logbook: 'logbook', checklist: 'checklist', website: 'web', commerce: 'web',

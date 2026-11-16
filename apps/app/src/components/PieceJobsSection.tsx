@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Collapsible } from './Collapsible';
 import { useCatalog } from '../lib/catalog';
 import { cycleTitle } from '../lib/cycles';
@@ -21,11 +21,11 @@ const money = (s: string) => Number(s.replace(/[.,\s]/g, ''));
 const UNITS = ['kg', 'thùng', 'cây', 'quả', 'bó', 'm²'];
 
 /**
- * Phiếu khoán trong Bảng lương (mục 11). Lập phiếu = giao khoán (việc, vụ, đơn giá hoặc trọn gói, những người nhận); nghiệm thu = nhập sản lượng thực tế,
+ * Phiếu khoán (mục 11; màn riêng ở Sản xuất, sau Chấm công). Lập phiếu = giao khoán (việc, vụ, đơn giá hoặc trọn gói, những người nhận); nghiệm thu = nhập sản lượng thực tế,
  * tiền tự cộng vào "thực nhận" của từng người trong tháng và vào chi phí nhân công của vụ. Người chỉ có tên trong phiếu thì thấy phần của mình ở Bảng lương.
  */
-export function PieceJobsSection({ orgId, range, people, online, onChanged }: {
-  orgId: string; range: { from: string; to: string }; people: { worker_id: string; name: string }[]; online: boolean; onChanged: () => void;
+export function PieceJobsSection({ orgId, range, people, online, onChanged, standalone = false }: {
+  orgId: string; range: { from: string; to: string }; people: { worker_id: string; name: string }[]; online: boolean; onChanged: () => void; standalone?: boolean;
 }) {
   const cycles = useTable('cycles');
   const { cropTypes } = useCatalog();
@@ -47,7 +47,7 @@ export function PieceJobsSection({ orgId, range, people, online, onChanged }: {
 
   const jobs = data?.jobs ?? [];
   const drafts = jobs.filter((j) => j.status === 'draft').length;
-  if (data && jobs.length === 0 && !data.can_edit) return null; // người không có quyền lập và chưa có phiếu nào: không hiện thêm gì
+  if (!standalone && data && jobs.length === 0 && !data.can_edit) return null; // người không có quyền lập và chưa có phiếu nào: không hiện thêm gì
   const canEdit = Boolean(data?.can_edit);
 
   async function run(fn: () => Promise<unknown>) {
@@ -84,7 +84,7 @@ export function PieceJobsSection({ orgId, range, people, online, onChanged }: {
   const togglePick = (id: string) => setForm((f) => (f ? { ...f, picked: f.picked.includes(id) ? f.picked.filter((x) => x !== id) : [...f.picked, id] } : f));
 
   return (
-    <Collapsible title="Phiếu khoán" summary={jobs.length === 0 ? 'chưa có' : `${jobs.length} phiếu${drafts > 0 ? ` · ${drafts} chờ nghiệm thu` : ''}`} warn={drafts > 0} defaultOpen={drafts > 0}>
+    <Wrap standalone={standalone} summary={jobs.length === 0 ? 'chưa có' : `${jobs.length} phiếu${drafts > 0 ? ` · ${drafts} chờ nghiệm thu` : ''}`} warn={drafts > 0} defaultOpen={drafts > 0}>
       <p className="muted">Trả công theo việc (theo kg, thùng… hoặc trọn gói), có thể giao cho nhiều người. Nghiệm thu xong, tiền tự vào lương tháng của từng người và vào chi phí nhân công của vụ. Giờ công và lương cố định vẫn tính như cũ.</p>
       {error && <p className="msg error" role="alert">{error}</p>}
 
@@ -197,6 +197,11 @@ export function PieceJobsSection({ orgId, range, people, online, onChanged }: {
           </div>
         );
       })}
-    </Collapsible>
+    </Wrap>
   );
+}
+
+/** Màn riêng (Sản xuất → Phiếu khoán) hiện thẳng nội dung; nhúng nơi khác thì gói trong khối thu gọn */
+function Wrap({ standalone, summary, warn, defaultOpen, children }: { standalone: boolean; summary: string; warn: boolean; defaultOpen: boolean; children: ReactNode }) {
+  return standalone ? <>{children}</> : <Collapsible title="Phiếu khoán" summary={summary} warn={warn} defaultOpen={defaultOpen}>{children}</Collapsible>;
 }

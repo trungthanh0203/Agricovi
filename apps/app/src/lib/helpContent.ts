@@ -166,6 +166,16 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     ],
     guide: { id: 'staff', step: 7 },
   },
+  piecework: {
+    title: 'Phiếu khoán',
+    what: 'Giao khoán một việc cho một hoặc nhiều người, trả theo sản lượng (kg, thùng…) hoặc trọn gói.',
+    how: [
+      'Bấm "＋ Lập phiếu khoán": việc, vụ (nếu có), ngày làm, cách khoán và người nhận (chia đều hoặc theo %).',
+      'Làm xong bấm "Nghiệm thu" và nhập sản lượng thực tế: tiền tự vào lương tháng của từng người và vào chi phí nhân công của vụ.',
+      'Hủy phiếu đã nghiệm thu sẽ gỡ tiền khỏi lương; kỳ lương đã khóa thì không hủy được.',
+      'Phiếu chưa nghiệm thu trong tháng sẽ chặn việc khóa kỳ lương.',
+    ],
+  },
 
   // ---- Khai báo ----
   areas: {

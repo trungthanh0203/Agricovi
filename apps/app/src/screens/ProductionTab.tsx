@@ -1,3 +1,4 @@
+import { PieceworkSection } from '../components/PieceworkSection';
 import { MODE_LABEL } from '../lib/herd';
 import { useEffect, useMemo, useState } from 'react';
 import { useCatalog } from '../lib/catalog';
@@ -79,6 +80,8 @@ export function ProductionTab({ section, onSection, onCreateCycle, onOpenCycle, 
         <ProcurementSection as="coop" view="entry" onGo={onGo} />
       ) : current === 'attendance' ? (
         <AttendanceSection onOpenCycle={onOpenCycle} onLogFor={onLogFor} />
+      ) : current === 'piecework' ? (
+        <PieceworkSection />
       ) : current === 'logs' ? (
         <LogsScreen embedded onClose={() => onSection('' as ProductionSection)} onClone={onClone} />
       ) : current === 'cycles' ? (

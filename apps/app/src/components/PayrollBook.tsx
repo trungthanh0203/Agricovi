@@ -10,7 +10,6 @@ import {
 } from '../lib/payBook';
 import type { TabId } from '../lib/tabs';
 import { PaySettleBar } from './PaySettleBar';
-import { PieceJobsSection } from './PieceJobsSection';
 import {
   buildPayBookCsv, buildPayslipText, groupByTeam, hoursText, PAY_STATUS_LABEL, personState, rangeOf, shiftAnchor, sumRows,
   type PayDetail, type PayItem, type PayOverview, type PayRow, type RangeMode,
@@ -159,7 +158,6 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
     <>
       {header}
       {settle && <PaySettleBar orgId={orgId} state={settle} onChanged={refreshAll} onGo={onGo} />}
-      {canSeeAll && mode === 'month' && <PieceJobsSection orgId={orgId} range={range} people={rows.filter((r) => r.status === 'active').map((r) => ({ worker_id: r.worker_id, name: r.name }))} online={online} onChanged={refreshAll} />}
       {rows.length === 0 && <p className="muted">{busy ? 'Đang tải…' : 'Chưa có người nào.'}</p>}
       {rows.length > 0 && (
         <div className="kpis">
