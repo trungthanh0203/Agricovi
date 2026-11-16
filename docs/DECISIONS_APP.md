@@ -433,3 +433,7 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - Chưa làm: nhắc kiểm kho định kỳ ở Trang chủ, thẻ "lần kiểm gần nhất", quét mã vạch, chia đếm theo người.
 
 - D169 (15/11/2026): Công do **chủ** nhập ở "Chấm công cho người làm" được **Hợp lệ ngay** (đủ số phút, ghi người duyệt); quản lý/tổ trưởng nhập vẫn Chờ xác nhận (sửa D56 cho riêng chủ; migration 0206). Chọn phân khu làm việc cho nhân sự: tick phân khu = gồm mọi ô sản xuất bên trong (đã đúng từ 0136), giao diện trình bày lại thành từng khung phân khu.
+
+- D170 (16/11/2026): Vụ chưa kết thúc mà chưa có doanh thu thì giao diện **không hiện lãi/lỗ** (hiện "Chưa bán"); vật nuôi **xuất dở** (còn con) chưa tính giá thành/kg và lãi/kg, ghi "Đã xuất X con, còn Y con" (migration 0207). Tổng lãi/lỗ theo phân khu chỉ cộng vụ đã có doanh thu hoặc đã kết thúc. Chi phí loại "Vật tư" chi tiền trực tiếp gắn vụ có cảnh báo "chưa vào giá thành"; giống/thức ăn/thuốc phải nhập kho rồi xuất cho vụ.
+- D171 (16/11/2026): Công đã xác nhận nhưng chưa vào bảng lương được **tính tạm** vào chi phí nhân công của vụ (giờ đã duyệt × đơn giá giờ), nằm trong "ước tính"; khi lập bảng lương thì dòng lương thay, không cộng trùng. Vừa có công ghi tay vừa có công chấm công chỉ **cảnh báo**, không tự loại (migration 0208).
+- D172 (16/11/2026): Tăng tốc số liệu tóm tắt: view `inventory_issue_costs` chỉ tính giá nhập bình quân khi dòng xuất không có giá riêng (đo trên 60 vụ: thống kê toàn cơ sở 3–7 giây xuống khoảng 0,4–0,6 giây; view toàn cơ sở 249 giây xuống 0,3 giây). Kết quả không đổi (migration 0209).

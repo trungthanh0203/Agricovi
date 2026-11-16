@@ -416,8 +416,10 @@ begin
   -- =============================================================== CHI PHÍ
   insert into expense_records (id, organization_id, cycle_id, category, kind, amount, expense_date, note, partner_id)
     select gen_random_uuid(), v_org, y.id, 'labor'::expense_category, 'cash_paid'::expense_kind,
-           (y.heads * 200000 * least(1, greatest(0, (v_today - y.start_d)::numeric / 128)))::bigint, least(y.start_d + 120, v_today - 1), 'Công chăm sóc, vệ sinh chuồng, xuất chuồng', null::uuid
-      from hp_cyc y where y.status in ('ended', 'active') and y.start_d < v_today - 1   -- chi phí công ghi theo vụ (chấm công chỉ vào giá thành khi chốt kỳ lương)
+           (y.heads * 200000 * (case when y.status = 'ended' then 1 else least(1, greatest(0, (v_today - 46 - y.start_d)::numeric / 128)) end))::bigint,
+           case when y.status = 'ended' then least(y.start_d + 120, v_today - 1) else v_today - 46 end,
+           case when y.status = 'ended' then 'Công chăm sóc, vệ sinh chuồng, xuất chuồng' else 'Công ghi tay giai đoạn trước 45 ngày gần nhất (45 ngày gần nhất tính theo chấm công)' end, null::uuid
+      from hp_cyc y where (y.status = 'ended' or (y.status = 'active' and y.start_d < v_today - 46))   -- công trong 45 ngày gần nhất tính từ chấm công, không ghi tay trùng
     union all
     select gen_random_uuid(), v_org, y.id, 'utility', 'allocated', 6000000, least(y.start_d + 60, v_today - 1), 'Phân bổ điện, nước theo chuồng', null
       from hp_cyc y where y.status in ('ended', 'active') and y.start_d < v_today - 1

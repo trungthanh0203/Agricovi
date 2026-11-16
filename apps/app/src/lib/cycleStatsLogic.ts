@@ -15,6 +15,8 @@ export interface CycleStat {
   /** Sự cố đang mở và việc khắc phục quá hạn (D95) */
   open_incidents: number | null; overdue_actions: number | null;
   /** Vật nuôi đang xuất dở (D170): chưa tính giá thành/lãi theo kg */
+  /** Công chấm công chưa vào bảng lương được tính tạm (D171) */
+  labor_unposted?: number | null; labor_unposted_missing_rate?: number | null; labor_manual?: number | null;
   partial_out?: boolean | null; heads_out?: number | null; heads_left?: number | null;
   missing_cost: boolean | null; has_estimate: boolean | null; missing_harvest: boolean | null; missing_revenue: boolean | null;
 }
@@ -48,6 +50,8 @@ export function statWarnings(s: CycleStat): string[] {
   const w: string[] = [];
   if (s.missing_cost) w.push('Có vật tư đã dùng chưa có giá nên chi phí có thể thấp hơn thực tế.');
   if (s.has_estimate) w.push('Chi phí có phần ước tính hoặc tiền công chưa chốt.');
+  if ((s.labor_manual ?? 0) > 0 && (s.labor_unposted ?? 0) > 0) w.push('Vụ vừa có tiền công ghi tay vừa có công chấm công chưa vào bảng lương: hãy kiểm tra xem có tính trùng không.');
+  if ((s.labor_unposted_missing_rate ?? 0) > 0) w.push(`${s.labor_unposted_missing_rate} ca công chưa có đơn giá giờ nên chưa tính vào chi phí.`);
   if (s.missing_harvest) w.push('Chưa ghi thu hoạch nên chưa tính được giá thành mỗi kg.');
   if (s.missing_revenue) w.push('Chưa ghi doanh thu.');
   return w;
