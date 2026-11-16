@@ -315,12 +315,12 @@ begin
      where wt.code = 'harvesting' and ps.status in ('done', 'in_progress') and ps.planned_start <= v_today - 1;
   update smp_h set cust = case when n % 5 = 0 then null else 1 + (k + c + n) % 10 end,
                    price = 24000 + k * 500 + c * 300;
-  update smp_h set amount = round(qty * price)::bigint;
+  update smp_h set amount = round(qty * 0.98 * price)::bigint;   -- bán đúng sản lượng thực (sau hao hụt 2%)
   insert into harvest_records (id, organization_id, cycle_id, harvested_at, grade, quantity, unit, loss_quantity, note)
-    select id, v_org, cycle_id, (d + time '06:30') at time zone v_tz, case when n % 3 = 0 then 'B' else 'A' end, qty, 'kg', round((5 + random() * 10)::numeric, 1), 'Mẫu quy mô lớn'
+    select id, v_org, cycle_id, (d + time '06:30') at time zone v_tz, case when n % 3 = 0 then 'B' else 'A' end, qty, 'kg', round(qty * 0.02, 1), 'Mẫu quy mô lớn'
       from smp_h;
   insert into sales_records (id, organization_id, cycle_id, sold_date, quantity, unit, amount, buyer_note, partner_id, invoice_no, due_date)
-    select h.id, v_org, h.cycle_id, h.d, h.qty, 'kg', h.amount, case when h.cust is null then 'Bán lẻ tại vườn' else p.name end, p.id,
+    select h.id, v_org, h.cycle_id, h.d, round(h.qty * 0.98, 1), 'kg', h.amount, case when h.cust is null then 'Bán lẻ tại vườn' else p.name end, p.id,
            case when h.cust is not null then 'BHL-' || chr(64 + h.k) || h.c || '-' || h.n end,
            case when h.cust is not null then h.d + case when h.cust % 2 = 0 then 15 else 30 end end
       from smp_h h left join smp_partner p on p.kind = 'cus' and p.idx = h.cust;
@@ -334,11 +334,7 @@ begin
   -- =============================================================== CHI PHÍ
   insert into expense_records (id, organization_id, cycle_id, category, kind, amount, expense_date, note, partner_id)
     select gen_random_uuid(), v_org, y.id, 'labor'::expense_category, 'cash_paid'::expense_kind, ((16 + (y.k + y.c) % 5) * 1000000 * case when y.status = 'ended' then 1 else 0.5 end)::bigint,
-           case when y.status = 'ended' then y.start_d + 76 else least(y.start_d + 45, v_today - 1) end, 'Công chăm sóc, làm giàn, thu hoạch', null
-      from smp_cyc y where y.status in ('ended', 'active')
-    union all
-    select gen_random_uuid(), v_org, y.id, 'material', 'cash_paid', ((7 + y.k % 3) * 1000000)::bigint, y.start_d + 3, 'Mua vật tư đầu vụ',
-           (select id from smp_partner where kind = 'sup' and idx = 1 + (y.k + y.c) % 8)
+           case when y.status = 'ended' then y.start_d + 76 else least(y.start_d + 45, v_today - 1) end, 'Công chăm sóc, làm giàn, thu hoạch', null::uuid
       from smp_cyc y where y.status in ('ended', 'active')
     union all
     select gen_random_uuid(), v_org, y.id, 'utility', 'allocated', 3000000, least(y.start_d + 60, v_today - 1), 'Phân bổ điện, nước theo diện tích nhà màng', null

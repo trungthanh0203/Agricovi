@@ -69,14 +69,14 @@ export function CycleStatsStrip({ s, countUnit = 'cây', areaLabel = 'Diện tí
             {s.harvest_loss !== null && <Row label="Hao hụt" value={`${kg(s.harvest_loss)}${lossPct !== null ? ` (${lossPct}%)` : ''}`} />}
             {s.harvest_net !== null && <Row label="Thu hoạch sau hao hụt" value={kg(s.harvest_net)} />}
             {s.sold !== null && <Row label="Đã bán" value={kg(s.sold)} />}
-            {s.unsold !== null && <Row label="Còn tồn chưa bán" value={kg(Math.max(0, s.unsold))} />}
+            {s.unsold !== null && <Row label="Còn tồn chưa bán" value={`${kg(Math.max(0, s.unsold))}${s.avg_price !== null && s.unsold > 0 ? ` (ước ${shortMoney(s.unsold * s.avg_price)} theo giá bán TB)` : ''}`} />}
             {s.avg_price !== null && <Row label="Giá bán trung bình" value={`${money(s.avg_price)}/kg`} />}
           </>
         )}
         {(s.cost_per_kg !== null || s.profit_per_kg !== null) && (
           <>
             <h3 className="sub">Hiệu quả</h3>
-            {s.cost_per_kg !== null && <Row label="Giá thành mỗi kg" value={`${money(s.cost_per_kg)}/kg`} />}
+            {s.cost_per_kg !== null && <Row label={s.status === 'active' ? 'Giá thành mỗi kg (tạm tính, vụ còn đang thu)' : 'Giá thành mỗi kg'} value={`${money(s.cost_per_kg)}/kg`} />}
             {s.profit_per_kg !== null && <Row label={s.profit_per_kg >= 0 ? 'Lãi mỗi kg' : 'Lỗ mỗi kg'} value={`${money(Math.abs(s.profit_per_kg))}/kg`} />}
           </>
         )}

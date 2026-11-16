@@ -335,9 +335,6 @@ begin
            case when y.status = 'ended' then y.start_d + 76 else least(y.start_d + 45, v_today - 1) end, 'Công chăm sóc, làm giàn, thu hoạch'
       from smp_cyc y where y.status in ('ended', 'active')
     union all
-    select gen_random_uuid(), y.owner_org, y.id, 'material', 'cash_paid', ((4 + y.k % 3) * 1000000)::bigint, y.start_d + 3, 'Mua vật tư đầu vụ'
-      from smp_cyc y where y.status in ('ended', 'active')
-    union all
     select gen_random_uuid(), y.owner_org, y.id, 'utility', 'allocated', 1500000, least(y.start_d + 60, v_today - 1), 'Phân bổ điện, nước theo diện tích nhà màng'
       from smp_cyc y where y.status in ('ended', 'active');
 

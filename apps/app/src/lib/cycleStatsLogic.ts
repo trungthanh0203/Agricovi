@@ -52,6 +52,7 @@ export function statWarnings(s: CycleStat): string[] {
   if (s.has_estimate) w.push('Chi phí có phần ước tính hoặc tiền công chưa chốt.');
   if ((s.labor_manual ?? 0) > 0 && (s.labor_unposted ?? 0) > 0) w.push('Vụ vừa có tiền công ghi tay vừa có công chấm công chưa vào bảng lương: hãy kiểm tra xem có tính trùng không.');
   if ((s.labor_unposted_missing_rate ?? 0) > 0) w.push(`${s.labor_unposted_missing_rate} ca công chưa có đơn giá giờ nên chưa tính vào chi phí.`);
+  if (s.sold !== null && s.harvest_net !== null && s.harvest_net > 0 && s.sold > s.harvest_net + 0.5) w.push(`Đã bán ${Math.round(s.sold).toLocaleString('vi-VN')} kg nhiều hơn thu hoạch sau hao hụt ${Math.round(s.harvest_net).toLocaleString('vi-VN')} kg: hãy kiểm tra số thu hoạch hoặc số bán.`);
   if (s.missing_harvest) w.push('Chưa ghi thu hoạch nên chưa tính được giá thành mỗi kg.');
   if (s.missing_revenue) w.push('Chưa ghi doanh thu.');
   return w;

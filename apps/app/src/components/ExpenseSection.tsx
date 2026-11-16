@@ -1,7 +1,7 @@
 import { CycleSelect } from './CycleSelect';
 import { exportFinanceCsv, useFinanceTotals, type ExpenseTotals, type SaleTotals } from '../lib/financeTotals';
 import { LoadOlder, useShowMore } from './ShowMore';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { Collapsible } from './Collapsible';
@@ -73,6 +73,15 @@ export function ExpenseSection() {
   const sumKind = (kinds: string[]) => (srv ? (kinds[0] === 'cash_paid' ? srv.cash_paid : kinds[0] === 'material_used' ? srv.material_used : srv.allocated_estimated) : localSum(kinds));
   const totalN = srv ? srv.n : valid.length;
   const [csvBusy, setCsvBusy] = useState(false);
+
+  /** Khoản mua vật tư chi tiền trực tiếp gắn vụ: chuyển sang "Vật tư đã dùng" để tính vào giá thành vụ (D174) */
+  async function countAsUsed(e: ExpenseRow) {
+    if (!window.confirm('Tính khoản này vào giá thành của vụ? Chỉ chọn nếu vật tư đã dùng cho vụ và KHÔNG nhập qua kho (nếu đã nhập kho thì tiền sẽ được tính khi xuất kho, chọn ở đây sẽ bị tính hai lần).')) return;
+    try {
+      await editExpense(e.id, { category: e.category, kind: 'material_used', amount: e.amount, date: e.expense_date, note: e.note ?? '' });
+      setMsg(null);
+    } catch (err) { setMsg(friendlyError(err)); }
+  }
 
   async function confirmVoid(id: string) {
     if (reason.trim().length < 3) return setMsg('Hãy ghi lý do hủy (ít nhất 3 ký tự).');
@@ -156,6 +165,9 @@ export function ExpenseSection() {
           {canWrite && online && !e.voided_at && voiding !== e.id && (
             <div className="actions">
               <button className="secondary" onClick={() => setMode({ kind: 'edit', id: e.id })}>Sửa</button>
+              {e.kind === 'cash_paid' && e.category === 'material' && e.cycle_id && (
+                <button className="secondary" title="Khoản mua vật tư này chưa tính vào giá thành vụ. Bấm nếu vật tư đã dùng cho vụ và không nhập qua kho." onClick={() => void countAsUsed(e)}>Tính vào giá thành vụ</button>
+              )}
               <button className="secondary" onClick={() => { setVoiding(e.id); setReason(''); setMsg(null); }}>Hủy khoản chi</button>
             </div>
           )}
@@ -198,6 +210,11 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
   const [cycleId, setCycleId] = useState(editing ? editing.cycle_id ?? 'none' : '');
   const [category, setCategory] = useState(cfg.choiceOf('expense_groups', editing?.category ?? 'other', editing?.category_item)); // mã mục đang chọn
   const [kind, setKind] = useState(editing?.kind ?? 'cash_paid');
+  // chi phí vật tư gắn vụ: mặc định "Vật tư đã dùng" để vào giá thành; mua nhập kho thì ghi ở Kho (D174)
+  useEffect(() => {
+    if (editing) return;
+    if (cycleId && cycleId !== 'none' && cfg.resolve('expense_groups', category).base === 'material' && kind === 'cash_paid') setKind('material_used');
+  }, [cycleId, category]); // eslint-disable-line react-hooks/exhaustive-deps
   const [amount, setAmount] = useState(editing ? String(editing.amount) : '');
   const [date, setDate] = useState(editing?.expense_date ?? todayLocal());
   const [note, setNote] = useState(editing?.note ?? '');
