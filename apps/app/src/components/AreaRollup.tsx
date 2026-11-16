@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AreaFilter } from './AreaFilter';
-import { cachedCycleStats, fetchCycleStats, type CycleStats } from '../lib/cycleStats';
+import { AreaFilter, topAreaIdOf } from './AreaFilter';
+import { cachedCycleStats, STATS_MAX_CYCLES, type CycleStats } from '../lib/cycleStats';
+import { CycleStatsLoader } from './CycleStatsLoader';
 import { rollupByArea } from '../lib/areas';
 import { formatMoney } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
@@ -20,17 +21,17 @@ export function AreaRollup() {
   const [stats, setStats] = useState<CycleStats | null>(null);
   useEffect(() => {
     if (!active) return;
-    setStats(cachedCycleStats(active.id));
-    if (!navigator.onLine) return;
-    let alive = true;
-    fetchCycleStats(active.id).then((s) => { if (alive) setStats(s); }).catch(() => undefined);
-    return () => { alive = false; };
+    setStats(cachedCycleStats(active.id));   // số liệu tải theo vụ đang xem (CycleStatsLoader, D173)
   }, [active?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const mine = useMemo(() => areas.filter((a) => a.organization_id === active?.id), [areas, active?.id]);
   const orgCycles = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id && c.status !== 'cancelled'), [cycles, active?.id]);
   const statusCycles = useMemo(() => orgCycles.filter((c) => status === 'all' || c.status === status), [orgCycles, status]);
-  const allRows = useMemo(() => rollupByArea(mine, statusCycles, stats?.cycles ?? []), [mine, statusCycles, stats]);
+  // chỉ tải số liệu cho các vụ đang xem (đúng trạng thái và phân khu đã chọn); quá nhiều vụ thì yêu cầu chọn hẹp lại (D173)
+  const areaById = useMemo(() => new Map(mine.map((a) => [a.id, a])), [mine]);
+  const wantCycles = useMemo(() => (areaFilter && mine.some((a) => a.id === areaFilter) ? statusCycles.filter((c) => topAreaIdOf(c.area_id, areaById) === areaFilter) : statusCycles), [statusCycles, areaFilter, areaById, mine]);
+  const tooMany = wantCycles.length > STATS_MAX_CYCLES;
+  const allRows = useMemo(() => rollupByArea(mine, tooMany ? [] : statusCycles, stats?.cycles ?? []), [mine, statusCycles, stats, tooMany]);
   const rows = useMemo(() => (areaFilter && allRows.some((r) => r.area.id === areaFilter) ? allRows.filter((r) => r.area.id === areaFilter) : allRows), [allRows, areaFilter]);
   if (!active) return null;
   if (!mine.some((a) => a.parent_id) || orgCycles.length === 0) return <p className="muted">Chưa có phân khu nào có vụ để tổng hợp. Phân khu chia ô sản xuất và có vụ sẽ hiện ở đây.</p>;
@@ -60,7 +61,9 @@ export function AreaRollup() {
     <>
       {statusChips}
       <AreaFilter areas={mine} usedAreaIds={statusCycles.map((c) => c.area_id)} value={areaFilter} onChange={setAreaFilter} />
-      {rows.length === 0 && <p className="muted">Không có vụ nào ở trạng thái này.</p>}
+      {!tooMany && <CycleStatsLoader orgId={active.id} ids={wantCycles.map((c) => c.id)} refreshKey={wantCycles.map((c) => `${c.id}:${c.version}:${c.status}`).join(',')} onData={setStats} />}
+      {tooMany && <p className="msg warn" role="status">Có {wantCycles.length} vụ nên chưa tải số liệu. Hãy chọn một phân khu hoặc một trạng thái (ví dụ "Đang sản xuất") để xem.</p>}
+      {rows.length === 0 && !tooMany && <p className="muted">Không có vụ nào ở trạng thái này.</p>}
       <div className="card">
         <h2>Bảng số liệu</h2>
       <div className="tablewrap">

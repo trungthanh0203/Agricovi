@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { AreaFilter, topAreaIdOf } from './AreaFilter';
 import { cycleProgress, sortByDue } from '../lib/cycles';
-import { cachedCycleStats, fetchCycleStats, type CycleStats } from '../lib/cycleStats';
+import { cachedCycleStats, type CycleStats } from '../lib/cycleStats';
+import { CycleStatsLoader } from './CycleStatsLoader';
 import { budgetTone, pctOf, profitPending, profitPendingText } from '../lib/cycleStatsLogic';
 import { useOrgs } from '../lib/orgs';
 import { shortMoney } from './HomeStats';
@@ -38,11 +39,7 @@ export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<str
   const [stats, setStats] = useState<CycleStats | null>(null);
   useEffect(() => {
     if (!active) return;
-    setStats(cachedCycleStats(active.id));
-    if (!navigator.onLine) return;
-    let alive = true;
-    fetchCycleStats(active.id).then((s) => { if (alive) setStats(s); }).catch(() => undefined);
-    return () => { alive = false; };
+    setStats(cachedCycleStats(active.id));   // số liệu tải theo các vụ đang hiện (CycleStatsLoader, D173)
   }, [active?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const statById = useMemo(() => new Map((stats?.cycles ?? []).map((s) => [s.cycle_id, s])), [stats]);
   const today = todayLocal();
@@ -54,6 +51,7 @@ export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<str
   if (running.length === 0) return null;
   return (
     <Collapsible title="Tiến độ các vụ đang chạy" summary={`${running.length} vụ${progress.some(({ p }) => p.delay > 0) ? ` · ${progress.filter(({ p }) => p.delay > 0).length} vụ trễ` : ''}`} warn={progress.some(({ p }) => p.delay > 0)}>
+      {active && <CycleStatsLoader orgId={active.id} ids={progress.map(({ c }) => c.id)} refreshKey={progress.map(({ c }) => `${c.id}:${c.version}`).join(',')} onData={setStats} />}
       <AreaFilter areas={areas} usedAreaIds={running.map((c) => c.area_id)} value={areaFilter} onChange={setAreaFilter} />
       {progress.length === 0 && <p className="muted">Không có vụ đang chạy ở phân khu này.</p>}
       {progress.map(({ c, p }) => (

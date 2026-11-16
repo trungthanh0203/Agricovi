@@ -24,7 +24,8 @@ import { CycleProfitReport } from '../components/CycleProfitReport';
 import { CycleStatsStrip } from '../components/CycleStatsStrip';
 import { CycleInfoFields, cropInfoToForm, formToCropInfo, type CropInfoForm } from '../components/CycleInfoFields';
 import { fmtArea, getAreaUnit } from '../lib/areaUnits';
-import { cachedCycleStats, fetchCycleStats, type CycleStats } from '../lib/cycleStats';
+import { cachedCycleStats, type CycleStats } from '../lib/cycleStats';
+import { CycleStatsLoader } from '../components/CycleStatsLoader';
 import { hasAnyStat } from '../lib/cycleStatsLogic';
 import { PublishCycle } from '../components/PublishCycle';
 import { fmtDate } from '../lib/dates';
@@ -167,16 +168,8 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
     fetchQuotaContexts(active.id).then(setContexts).catch(() => setContexts([]));
   }, [active, canManage]);
 
-  // số liệu tóm tắt của các vụ (máy chủ tính, theo quyền); mất mạng thì dùng bản đã lưu
-  const cyclesKey = cycles.map((c) => `${c.id}:${c.version}:${c.status}`).join(',');
-  useEffect(() => {
-    if (!active) return;
-    setStats(cachedCycleStats(active.id));
-    if (!navigator.onLine) return;
-    let alive = true;
-    fetchCycleStats(active.id).then((s) => { if (alive) setStats(s); }).catch(() => undefined);
-    return () => { alive = false; };
-  }, [active?.id, cyclesKey, online]); // eslint-disable-line react-hooks/exhaustive-deps
+  // số liệu tóm tắt của các vụ (máy chủ tính, theo quyền): chỉ tải cho các vụ đang hiện (xem CycleStatsLoader, D173); mất mạng thì dùng bản đã lưu
+  useEffect(() => { if (active) setStats(cachedCycleStats(active.id)); }, [active?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!active || active.type !== 'household' || !navigator.onLine) { setTransfers([]); return; }
@@ -274,6 +267,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
         </div>
       )}
       <AreaFilter areas={areas.filter((a) => a.organization_id === active.id)} usedAreaIds={myCyclesAll.map((c) => c.area_id)} value={areaFilter} onChange={(v) => { setAreaFilter(v); setVn(50); }} />
+      <CycleStatsLoader orgId={active.id} ids={shown.filter((c) => c.owner_org_id === active.id).map((c) => c.id)} refreshKey={`${shown.map((c) => `${c.id}:${c.version}:${c.status}`).join(',')}|${online}`} onData={setStats} />
       {myCycles.length > 0 && shown.length === 0 && <p className="muted">Không có vụ nào ở nhóm này.</p>}
       {curGroup === 'ended' && cancelledCount > 0 && (
         <label className="check"><input type="checkbox" checked={showCancelled} onChange={(e) => { setShowCancelled(e.target.checked); setVn(50); }} /> Hiện cả vụ đã hủy ({cancelledCount})</label>

@@ -24,6 +24,8 @@ export function normalizeStats(d: Record<string, unknown>): CycleStats {
       area_m2: N(x.area_m2), plant_count: N(x.plant_count), variety: (x.variety as string | null) ?? null, density_per_1000m2: N(x.density_per_1000m2), yield_per_1000m2: N(x.yield_per_1000m2),
       kg_per_plant: N(x.kg_per_plant), cost_per_1000m2: N(x.cost_per_1000m2), revenue_per_1000m2: N(x.revenue_per_1000m2), profit_per_1000m2: N(x.profit_per_1000m2),
       open_incidents: N(x.open_incidents), overdue_actions: N(x.overdue_actions),
+      partial_out: B(x.partial_out), heads_out: N(x.heads_out), heads_left: N(x.heads_left),
+      labor_unposted: N(x.labor_unposted), labor_unposted_missing_rate: N(x.labor_unposted_missing_rate), labor_manual: N(x.labor_manual),
       missing_cost: B(x.missing_cost), has_estimate: B(x.has_estimate), missing_harvest: B(x.missing_harvest), missing_revenue: B(x.missing_revenue),
     })),
   };
@@ -33,11 +35,28 @@ export const cachedCycleStats = (orgId: string): CycleStats | null => {
   try { const raw = localStorage.getItem(KEY(orgId)); return raw ? normalizeStats(JSON.parse(raw) as Record<string, unknown>) : null; } catch { return null; }
 };
 
-export async function fetchCycleStats(orgId: string): Promise<CycleStats> {
+/** Số vụ tối đa hỏi máy chủ một lần (máy chủ cũng giới hạn 200) và số vụ tối đa app chịu tải số liệu một lúc (D173) */
+const CHUNK = 100;
+export const STATS_MAX_CYCLES = 120;
+
+/**
+ * Tải số liệu tóm tắt CHỈ cho các vụ cần hiển thị (D173), không tính cả cơ sở. Kết quả gộp vào bản lưu trên máy theo mã vụ
+ * (vụ đã tải trước đó giữ nguyên cho tới khi tải lại) và trả về toàn bộ bản gộp để màn hình tra theo mã vụ.
+ */
+export async function fetchCycleStatsFor(orgId: string, ids: string[]): Promise<CycleStats> {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  const { data, error } = await supabase.rpc('get_cycles_stats', { p_org: orgId });
-  if (error) throw new Error(error.message);
-  const r = normalizeStats(data as Record<string, unknown>);
-  try { localStorage.setItem(KEY(orgId), JSON.stringify(r)); } catch { /* bỏ qua */ }
-  return r;
+  const base = cachedCycleStats(orgId);
+  const byId = new Map((base?.cycles ?? []).map((c) => [c.cycle_id, c]));
+  let head = base ? { generated_at: base.generated_at, can_money: base.can_money, can_ops: base.can_ops } : { generated_at: '', can_money: false, can_ops: false };
+  const want = ids.slice(0, STATS_MAX_CYCLES);
+  for (let i = 0; i < want.length; i += CHUNK) {
+    const { data, error } = await supabase.rpc('get_cycles_stats_for', { p_org: orgId, p_cycle_ids: want.slice(i, i + CHUNK) });
+    if (error) throw new Error(error.message);
+    const r = normalizeStats(data as Record<string, unknown>);
+    head = { generated_at: r.generated_at, can_money: r.can_money, can_ops: r.can_ops };
+    for (const c of r.cycles) byId.set(c.cycle_id, c);
+  }
+  const merged: CycleStats = { ...head, cycles: [...byId.values()].slice(-1000) };
+  try { localStorage.setItem(KEY(orgId), JSON.stringify(merged)); } catch { /* bỏ qua */ }
+  return merged;
 }
