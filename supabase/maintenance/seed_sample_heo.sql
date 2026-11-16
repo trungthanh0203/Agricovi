@@ -4,7 +4,7 @@
 -- NỘI DUNG
 --   · 2 phân khu ("Trại heo A", "Trại heo B"), mỗi phân khu 5 chuồng (ô sản xuất) = 10 chuồng; mỗi phân khu 2 kho (thức ăn; thuốc – vật tư)
 --   · Sản phẩm "Heo thịt" (loại vật nuôi) nếu cơ sở chưa có; mỗi phân khu 2 quy trình: 1 sao từ mẫu hệ thống "Heo thịt VietGAP" (25 việc, 5 công đoạn), 1 quy trình riêng rút gọn (10 việc)
---   · MỖI CHUỒNG 6 VỤ (lứa) 100–120 con: 2 ĐÃ KẾT THÚC, 2 ĐANG CHẠY (chạy song song ở hai ngăn, tuổi khác nhau), 2 ĐANG CHUẨN BỊ => 60 vụ
+--   · MỖI CHUỒNG 6 VỤ (lứa) 100–120 con: 2 ĐÃ KẾT THÚC, 2 ĐANG CHẠY (chạy song song ở hai ngăn, tuổi khác nhau; vụ vào sau được đánh dấu "vượt chỗ trống" như khi chủ xác nhận), 2 ĐANG CHUẨN BỊ => 60 vụ
 --     - Đã kết thúc: "tốt" (hao hụt thấp, lãi), "bệnh" (hao cao, có sự cố đã xử lý, lãi mỏng/lỗ), "xuất chia hai đợt" (giá đợt sau thấp, có khách nợ)
 --     - Đang chạy: từ "đang chuẩn bị chuồng" đến "đang xuất chuồng"; vụ "lệch" có sự cố đang mở, việc khắc phục quá hạn, mũi vaccine trễ, ăn thấp hơn định mức
 --     - Đang chuẩn bị: có quy trình/ lịch việc, hoặc chưa gắn quy trình
@@ -252,12 +252,15 @@ begin
                          and not (y.slot = 'P2' and y.c % 2 = 0);   -- vài vụ chuẩn bị chưa gắn quy trình
   insert into production_cycles (id, owner_org_id, area_id, crop_type_id, status, start_date, expected_end_date, end_date, name, code, template_id, template_name,
                                  template_version, plant_count, count_unit, variety_name, seed_source, seed_lot, target_yield_kg, target_weight_kg, budget_amount,
-                                 planting_date, cycle_mode, mgmt_model, note)
+                                 planting_date, cycle_mode, mgmt_model, over_capacity, note)
     select y.id, v_org, ce.id, v_crop, y.status, y.start_d, y.start_d + 128, y.end_d,
            'Heo thịt ' || ce.name || ' – ' || y.label, 'MAUHEO-' || chr(64 + y.k) || y.c || '-L' || y.slotno,
            y.tpl, y.tpl_name, case when y.tpl is not null then 1 end, y.heads, 'con', 'Heo lai 3 máu (Landrace × Yorkshire × Duroc)',
            'Trại giống heo Tân Hòa', 'TH-' || to_char(y.start_d, 'YYMM') || '-' || y.c, y.heads * 100, 105, y.heads * 4600000,
-           y.in_d, 'batch', case when y.k = 1 then 'vietgap' else 'managed' end, 'Dữ liệu mẫu heo'
+           y.in_d, 'batch', case when y.k = 1 then 'vietgap' else 'managed' end,
+           -- vụ vào chuồng khi chuồng còn vụ khác đang nuôi (chuồng chia hai ngăn): đánh dấu như khi chủ xác nhận vượt chỗ
+           exists (select 1 from hp_cyc z where z.k = y.k and z.c = y.c and z.id <> y.id and z.start_d < y.start_d and z.start_d + 128 >= y.start_d),
+           'Dữ liệu mẫu heo'
       from hp_cyc y join hp_cell ce on ce.k = y.k and ce.c = y.c;
 
   -- giai đoạn: sao từ quy trình giống create_cycle_from_template
