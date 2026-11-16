@@ -142,7 +142,7 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     title: 'Chi phí',
     what: 'Ghi các khoản chi không phải vật tư kho: nhân công thuê ngoài, điện nước, thuê, khấu hao…',
     how: ['Chọn nhóm chi phí và nhập số tiền.', 'Chi của riêng một vụ thì gắn vụ; chi chung cả cơ sở thì để trống vụ.'],
-    note: 'Đừng ghi tiền mua vật tư ở đây: vật tư đã được tính khi dùng, ghi lại sẽ bị tính hai lần.',
+    note: 'Đừng ghi tiền mua vật tư ở đây: vật tư đã được tính khi dùng, ghi lại sẽ bị tính hai lần. Giống (heo, cá, cây giống), thức ăn, thuốc: nhập kho rồi xuất cho vụ thì mới vào giá thành.',
     guide: { id: 'stock', step: 7 },
   },
   harvest: {

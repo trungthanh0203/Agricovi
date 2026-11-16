@@ -286,6 +286,9 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
           </select>
           <small>{EXPENSE_KIND_HINT[kind]}</small>
         </label>
+        {cycleId && cycleId !== 'none' && kind === 'cash_paid' && cfg.resolve('expense_groups', category).base === 'material' && (
+          <p className="msg warn" role="note">Khoản mua vật tư bằng tiền này <strong>chưa tính vào giá thành của vụ</strong> (vật tư chỉ tính khi xuất kho cho vụ). Với giống (heo, cá, cây), thức ăn, thuốc: hãy nhập kho rồi xuất cho vụ ở mục Kho nếu muốn tính vào giá thành.</p>
+        )}
         {orchardSel && (
           <label className="check"><input type="checkbox" checked={capital} onChange={(e) => setCapital(e.target.checked)} /> <span>Chi phí đầu tư vườn cây (cây giống, làm đất, giàn, hệ thống tưới…): không tính vào lãi lỗ năm, app khấu hao dần theo số năm khấu hao</span></label>
         )}
