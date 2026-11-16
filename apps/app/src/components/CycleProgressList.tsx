@@ -3,7 +3,7 @@ import { Collapsible } from './Collapsible';
 import { AreaFilter, topAreaIdOf } from './AreaFilter';
 import { cycleProgress, sortByDue } from '../lib/cycles';
 import { cachedCycleStats, fetchCycleStats, type CycleStats } from '../lib/cycleStats';
-import { budgetTone, pctOf } from '../lib/cycleStatsLogic';
+import { budgetTone, pctOf, profitPending, profitPendingText } from '../lib/cycleStatsLogic';
 import { useOrgs } from '../lib/orgs';
 import { shortMoney } from './HomeStats';
 import { fmtDate } from '../lib/dates';
@@ -85,7 +85,8 @@ export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<str
               <>
                 {bp !== null && s.budget_amount !== null && s.cost_total !== null && <Bar label="Ngân sách đã dùng" pct={bp} tone={budgetTone(bp)} text={`${shortMoney(s.cost_total)} / ${shortMoney(s.budget_amount)}`} />}
                 {yp !== null && s.target_yield_kg !== null && s.harvest_net !== null && <Bar label="Sản lượng so với dự kiến" pct={yp} tone="ok" text={`${kg(s.harvest_net)} / ${kg(s.target_yield_kg)}`} />}
-                {s.profit !== null && (
+                {s.profit !== null && profitPending(s) && <p className="muted yield-line">Lãi / lỗ: {profitPendingText(s)}.</p>}
+                {s.profit !== null && !profitPending(s) && (
                   <p className="muted yield-line">
                     {s.profit >= 0 ? 'Lãi tạm tính' : 'Lỗ tạm tính'}: <span className={s.profit >= 0 ? 'pill ok' : 'pill err'}>{shortMoney(Math.abs(s.profit))} đ</span>
                   </p>

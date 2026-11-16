@@ -2,7 +2,7 @@ import { Collapsible } from './Collapsible';
 import { ProportionBar } from './charts';
 import { shortMoney } from './HomeStats';
 import { AREA_UNITS, fmtArea, getAreaUnit } from '../lib/areaUnits';
-import { budgetTone, pctOf, statWarnings, type CycleStat } from '../lib/cycleStatsLogic';
+import { budgetTone, pctOf, profitPending, profitPendingText, statWarnings, type CycleStat } from '../lib/cycleStatsLogic';
 
 const money = (n: number) => `${Math.round(n).toLocaleString('vi-VN')} đ`;
 const kg = (n: number) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} kg`;
@@ -47,8 +47,10 @@ export function CycleStatsStrip({ s, countUnit = 'cây', areaLabel = 'Diện tí
         {s.cost_total !== null && <Tile label="Chi phí" value={shortMoney(s.cost_total)} tone="bad" title={money(s.cost_total)} />}
         {s.harvest_net !== null && <Tile label="Thu hoạch" value={kg(s.harvest_net)} tone="info" />}
         {s.revenue !== null && <Tile label="Doanh thu" value={shortMoney(s.revenue)} tone="ok" title={money(s.revenue)} />}
-        {s.profit !== null && <Tile label={s.profit >= 0 ? 'Lãi tạm tính' : 'Lỗ tạm tính'} value={shortMoney(Math.abs(s.profit))} tone={s.profit >= 0 ? 'ok' : 'bad'} title={money(s.profit)} />}
+        {s.profit !== null && profitPending(s) && <Tile label="Lãi / lỗ" value={s.partial_out ? 'Chưa xuất hết' : 'Chưa bán'} tone="info" title={profitPendingText(s)} />}
+        {s.profit !== null && !profitPending(s) && <Tile label={s.profit >= 0 ? 'Lãi tạm tính' : 'Lỗ tạm tính'} value={shortMoney(Math.abs(s.profit))} tone={s.profit >= 0 ? 'ok' : 'bad'} title={money(s.profit)} />}
       </div>
+      {s.partial_out && <p className="muted yield-line">{profitPendingText(s)}.</p>}
       {(s.open_incidents ?? 0) > 0 && <p className="yield-line"><span className="pill warn">Sự cố</span> {s.open_incidents} đang mở{(s.overdue_actions ?? 0) > 0 ? `, ${s.overdue_actions} việc khắc phục quá hạn` : ''}</p>}
       {s.yield_per_1000m2 !== null && <p className="muted yield-line">Năng suất: <strong>{kg(s.yield_per_1000m2 * f)}/{perLabel}</strong>{s.area_m2 !== null ? ` · diện tích ${fmtArea(s.area_m2, unitId)}` : ''}</p>}
       <Collapsible inline title="Xem thêm số liệu" summary={warns.length > 0 ? `${warns.length} lưu ý` : undefined} warn={warns.length > 0}>

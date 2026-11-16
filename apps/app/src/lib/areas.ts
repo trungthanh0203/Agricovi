@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { AreaRow } from './db';
-import type { CycleStat } from './cycleStatsLogic';
+import { profitPending, type CycleStat } from './cycleStatsLogic';
 import { useTable } from './tables';
 
 /**
@@ -79,7 +79,7 @@ function leafRollup(area: AreaRow, cycles: { id: string; area_id: string; status
   for (const c of mine) {
     const s = stats.get(c.id);
     if (!s) continue;
-    row.cost = addN(row.cost, s.cost_total); row.harvest = addN(row.harvest, s.harvest_net); row.revenue = addN(row.revenue, s.revenue); row.profit = addN(row.profit, s.profit);
+    row.cost = addN(row.cost, s.cost_total); row.harvest = addN(row.harvest, s.harvest_net); row.revenue = addN(row.revenue, s.revenue); row.profit = addN(row.profit, profitPending(s) ? null : s.profit);
   }
   return row;
 }

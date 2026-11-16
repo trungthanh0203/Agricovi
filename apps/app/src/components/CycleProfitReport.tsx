@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CycleStat } from '../lib/cycleStatsLogic';
-import { statWarnings } from '../lib/cycleStatsLogic';
+import { profitPending, profitPendingText, statWarnings } from '../lib/cycleStatsLogic';
 import { buildCycleQr, cycleCode, fetchCycleTrace, qrSvg } from '../lib/qr';
 import { useOnline } from '../lib/hooks';
 
@@ -63,7 +63,8 @@ export function CycleProfitReport({ info, s }: { info: ProfitReportInfo; s: Cycl
             {s.cost_material !== null && <tr className="pr-sub-row"><th>· Vật tư đã dùng</th><td>{money(s.cost_material)}</td></tr>}
             {s.cost_labor !== null && <tr className="pr-sub-row"><th>· Tiền công</th><td>{money(s.cost_labor)}</td></tr>}
             {s.cost_other !== null && <tr className="pr-sub-row"><th>· Chi khác</th><td>{money(s.cost_other)}</td></tr>}
-            {profit !== null && <tr className={`pr-total ${profit >= 0 ? 'ok' : 'bad'}`}><th>{profit >= 0 ? 'LÃI tạm tính' : 'LỖ tạm tính'}</th><td>{money(Math.abs(profit))}</td></tr>}
+            {profit !== null && profitPending(s) && <tr className="pr-total"><th>Lãi / lỗ</th><td>{profitPendingText(s)}</td></tr>}
+            {profit !== null && !profitPending(s) && <tr className={`pr-total ${profit >= 0 ? 'ok' : 'bad'}`}><th>{profit >= 0 ? 'LÃI tạm tính' : 'LỖ tạm tính'}</th><td>{money(Math.abs(profit))}</td></tr>}
           </tbody>
         </table>
 

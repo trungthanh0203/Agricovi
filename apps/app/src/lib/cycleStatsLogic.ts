@@ -14,7 +14,22 @@ export interface CycleStat {
   cost_per_1000m2: number | null; revenue_per_1000m2: number | null; profit_per_1000m2: number | null;
   /** Sự cố đang mở và việc khắc phục quá hạn (D95) */
   open_incidents: number | null; overdue_actions: number | null;
+  /** Vật nuôi đang xuất dở (D170): chưa tính giá thành/lãi theo kg */
+  partial_out?: boolean | null; heads_out?: number | null; heads_left?: number | null;
   missing_cost: boolean | null; has_estimate: boolean | null; missing_harvest: boolean | null; missing_revenue: boolean | null;
+}
+
+/**
+ * Vụ chưa kết thúc và chưa có doanh thu thì CHƯA có lãi/lỗ để nói (D170): chi phí đã bỏ ra nhưng chưa bán, hiện "lỗ" sẽ gây hiểu nhầm.
+ * Số lãi/lỗ của máy chủ vẫn đúng về phép tính; chỉ giao diện không hiện và không cộng vào tổng lãi/lỗ.
+ */
+export function profitPending(s: Pick<CycleStat, 'status' | 'revenue' | 'partial_out'>): boolean {
+  return s.status !== 'ended' && (s.partial_out === true || !(s.revenue !== null && s.revenue > 0));
+}
+
+/** Lý do chưa có lãi/lỗ, viết cho người xem */
+export function profitPendingText(s: Pick<CycleStat, 'partial_out' | 'heads_out' | 'heads_left'>): string {
+  return s.partial_out ? `Đã xuất ${s.heads_out ?? 0} con, còn ${s.heads_left ?? 0} con: lãi/lỗ và giá thành/kg tính khi xuất hết` : 'Chưa có doanh thu (chưa bán)';
 }
 
 /** Phần trăm đã dùng so với kế hoạch (làm tròn); null khi chưa có kế hoạch hoặc kế hoạch bằng 0 */
