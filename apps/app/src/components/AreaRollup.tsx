@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AreaFilter } from './AreaFilter';
-import { cachedAreaRollup, fetchAreaRollup, type AreaRollupData } from '../lib/areaRollup';
+import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
+import { AREA_CYCLES_PAGE, cachedAreaRollup, fetchAreaCycles, fetchAreaRollup, type AreaCycleItem, type AreaRollupData } from '../lib/areaRollup';
 import { rollupFromServer } from '../lib/areas';
-import { addDays } from '../lib/dates';
+import { addDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal } from '../lib/hooks';
 import { formatMoney } from '../lib/inventory';
@@ -28,6 +29,9 @@ export function AreaRollup() {
   const [data, setData] = useState<AreaRollupData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // danh sách vụ của từng khu: chỉ tải khi mở khu, từng trang 50 vụ (D178)
+  const [lists, setLists] = useState<Record<string, { items: AreaCycleItem[]; total: number; loading: boolean; error?: string }>>({});
+  const [openList, setOpenList] = useState<Record<string, boolean>>({});
 
   const mine = useMemo(() => areas.filter((a) => a.organization_id === active?.id), [areas, active?.id]);
   const orgCycles = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id && c.status !== 'cancelled'), [cycles, active?.id]);
@@ -50,18 +54,37 @@ export function AreaRollup() {
 
   // tải số liệu đã cộng sẵn cho bộ lọc đang chọn (nhẹ: vài chục dòng); mất mạng thì dùng bản đã lưu
   const key = `${status}|${from ?? ''}|${to ?? ''}`;
+  const [refreshTick, setRefreshTick] = useState(0);   // bấm "Tính lại số liệu" thì tăng
   useEffect(() => {
     if (!active) return;
     setData(cachedAreaRollup(active.id, key));
+    setLists({}); setOpenList({});   // đổi bộ lọc thì bỏ các danh sách vụ đã mở
     if (!navigator.onLine) return;
     let alive = true;
     setLoading(true); setError(null);
-    fetchAreaRollup(active.id, key, status === 'all' ? null : [status], from, to)
+    fetchAreaRollup(active.id, key, status === 'all' ? null : [status], from, to, refreshTick > 0)
       .then((r) => { if (alive) setData(r); })
       .catch((e) => { if (alive) setError(friendlyError(e)); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [active?.id, key, orgCycles.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active?.id, key, orgCycles.length, refreshTick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadList(areaId: string, more: boolean) {
+    if (!active) return;
+    const cur = lists[areaId];
+    setLists((m) => ({ ...m, [areaId]: { items: more ? (cur?.items ?? []) : [], total: cur?.total ?? 0, loading: true } }));
+    try {
+      const p = await fetchAreaCycles(active.id, areaId, status === 'all' ? null : [status], from, to, more ? (cur?.items.length ?? 0) : 0);
+      setLists((m) => ({ ...m, [areaId]: { items: [...(more ? (m[areaId]?.items ?? []) : []), ...p.items], total: p.total, loading: false } }));
+    } catch (e) {
+      setLists((m) => ({ ...m, [areaId]: { items: m[areaId]?.items ?? [], total: m[areaId]?.total ?? 0, loading: false, error: friendlyError(e) } }));
+    }
+  }
+  function toggleList(areaId: string) {
+    const next = !openList[areaId];
+    setOpenList((m) => ({ ...m, [areaId]: next }));
+    if (next && !lists[areaId]) void loadList(areaId, false);
+  }
 
   const allRows = useMemo(() => (data ? rollupFromServer(mine, data.rows) : []), [mine, data]);
   const rows = useMemo(() => (areaFilter && allRows.some((r) => r.area.id === areaFilter) ? allRows.filter((r) => r.area.id === areaFilter) : allRows), [allRows, areaFilter]);
@@ -72,6 +95,29 @@ export function AreaRollup() {
   const vnd = (v: number | null) => (v == null ? '—' : formatMoney(v));
   const cycleText = (r: (typeof rows)[number]) => `${r.cycles} vụ${r.running > 0 ? ` (${r.running} đang chạy)` : ''}`;
   const isOpen = (id: string) => openMap[id] ?? (areaFilter === id);
+  // các dòng vụ của một khu đang mở (D178): tải khi mở, từng trang 50 vụ
+  const colSpan = 2 + (money ? 3 : 0);
+  const cycleRows = (areaId: string) => {
+    if (!openList[areaId]) return [];
+    const l = lists[areaId];
+    const out: JSX.Element[] = [];
+    (l?.items ?? []).forEach((it) => out.push(
+      <tr key={`v${it.cycle_id}`}>
+        <td className="fold-col" style={{ paddingLeft: 40 }}>• {it.name}
+          <div className="muted">{CYCLE_STATUS_LABEL_VI[it.status as CycleStatus] ?? it.status}{it.start_date ? ` · ${fmtDate(it.start_date)}` : ''}{it.status === 'ended' && it.end_date ? ` → ${fmtDate(it.end_date)}` : ''}</div>
+        </td>
+        {money && <td className="num">{vnd(it.cost)}</td>}
+        <td className="num">{kg(it.harvest)}</td>
+        {money && <td className="num">{vnd(it.revenue)}</td>}
+        {money && <td className="num">{it.profit === null && it.pending ? 'Chưa bán' : vnd(it.profit)}</td>}
+      </tr>));
+    if (l?.loading) out.push(<tr key={`l${areaId}`}><td colSpan={colSpan} className="muted" style={{ paddingLeft: 40 }}>Đang tải danh sách vụ…</td></tr>);
+    else if (l?.error) out.push(<tr key={`e${areaId}`}><td colSpan={colSpan} className="msg error" style={{ paddingLeft: 40 }}>{l.error} <button type="button" className="link inline" onClick={() => void loadList(areaId, (l?.items.length ?? 0) > 0)}>Thử lại</button></td></tr>);
+    else if (l && l.items.length === 0) out.push(<tr key={`z${areaId}`}><td colSpan={colSpan} className="muted" style={{ paddingLeft: 40 }}>Không có vụ nào ở bộ lọc này.</td></tr>);
+    else if (l && l.items.length < l.total) out.push(<tr key={`m${areaId}`}><td colSpan={colSpan} style={{ paddingLeft: 40 }}><button type="button" className="link inline" onClick={() => void loadList(areaId, true)}>Xem thêm {Math.min(AREA_CYCLES_PAGE, l.total - l.items.length)} vụ (còn {l.total - l.items.length})</button></td></tr>);
+    return out;
+  };
+  const listBtn = (areaId: string) => <button type="button" className="link inline" onClick={() => toggleList(areaId)}>{openList[areaId] ? 'Ẩn danh sách vụ' : 'Xem các vụ'}</button>;
   const cells = (r: (typeof rows)[number]) => (
     <>
       {money && <td className="num">{vnd(r.cost)}</td>}
@@ -106,6 +152,7 @@ export function AreaRollup() {
       {error && <p className="msg error" role="alert">{error}</p>}
       {!data && !loading && !error && !navigator.onLine && <p className="muted">Cần có mạng để xem số liệu lần đầu.</p>}
       {data && rows.length === 0 && !loading && <p className="muted">Không có vụ nào ở bộ lọc này.</p>}
+      {data && !loading && navigator.onLine && <p className="muted">Số vụ đã kết thúc được lưu sẵn để mở nhanh. <button type="button" className="link inline" onClick={() => setRefreshTick((n) => n + 1)}>Tính lại số liệu</button></p>}
       <div className="card">
         <h2>Bảng số liệu</h2>
       <div className="tablewrap">
@@ -120,9 +167,10 @@ export function AreaRollup() {
                     onClick={() => setOpenMap((m) => ({ ...m, [r.area.id]: !isOpen(r.area.id) }))}>{isOpen(r.area.id) ? '▾' : '▸'}</button>
                 )}
                 <strong>{r.area.name}</strong>
-                <div className="muted">{cycleText(r)}{r.cells.some((c) => c.cycles > 0) ? ` · ${r.cells.filter((c) => c.cycles > 0).length} ô sản xuất${isOpen(r.area.id) ? '' : ' (đang đóng, bấm ▸ để mở)'}` : ''}</div>
+                <div className="muted">{cycleText(r)}{r.cells.some((c) => c.cycles > 0) ? ` · ${r.cells.filter((c) => c.cycles > 0).length} ô sản xuất${isOpen(r.area.id) ? '' : ' (đang đóng, bấm ▸ để mở)'}` : ''} · {listBtn(r.area.id)}</div>
               </td>{cells(r)}</tr>,
-              ...(isOpen(r.area.id) ? r.cells.filter((c) => c.cycles > 0) : []).map((c) => <tr key={c.area.id}><td className="fold-col" style={{ paddingLeft: 24 }}>↳ {c.area.name}<div className="muted">{cycleText(c)}</div></td>{cells(c)}</tr>),
+              ...cycleRows(r.area.id),
+              ...(isOpen(r.area.id) ? r.cells.filter((c) => c.cycles > 0) : []).flatMap((c) => [<tr key={c.area.id}><td className="fold-col" style={{ paddingLeft: 24 }}>↳ {c.area.name}<div className="muted">{cycleText(c)} · {listBtn(c.area.id)}</div></td>{cells(c)}</tr>, ...cycleRows(c.area.id)]),
             ])}
           </tbody>
         </table>
