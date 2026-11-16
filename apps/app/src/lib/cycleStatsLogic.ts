@@ -17,6 +17,8 @@ export interface CycleStat {
   /** Vật nuôi đang xuất dở (D170): chưa tính giá thành/lãi theo kg */
   /** Công chấm công chưa vào bảng lương được tính tạm (D171) */
   labor_unposted?: number | null; labor_unposted_missing_rate?: number | null; labor_manual?: number | null;
+  /** Vườn cây theo mùa vụ (D176) */
+  cycle_mode?: string | null; orchard_cycle_id?: string | null; orchard_depreciation?: number | null; capital_total?: number | null; depreciated_to_date?: number | null; seasons?: number | null;
   partial_out?: boolean | null; heads_out?: number | null; heads_left?: number | null;
   missing_cost: boolean | null; has_estimate: boolean | null; missing_harvest: boolean | null; missing_revenue: boolean | null;
 }
@@ -25,12 +27,14 @@ export interface CycleStat {
  * Vụ chưa kết thúc và chưa có doanh thu thì CHƯA có lãi/lỗ để nói (D170): chi phí đã bỏ ra nhưng chưa bán, hiện "lỗ" sẽ gây hiểu nhầm.
  * Số lãi/lỗ của máy chủ vẫn đúng về phép tính; chỉ giao diện không hiện và không cộng vào tổng lãi/lỗ.
  */
-export function profitPending(s: Pick<CycleStat, 'status' | 'revenue' | 'partial_out'>): boolean {
+export function profitPending(s: Pick<CycleStat, 'status' | 'revenue' | 'partial_out' | 'cycle_mode' | 'seasons'>): boolean {
+  if (s.cycle_mode === 'perennial' && (s.seasons ?? 0) > 0) return true;   // vườn đã có vụ mùa: lãi/lỗ xem ở từng vụ mùa
   return s.status !== 'ended' && (s.partial_out === true || !(s.revenue !== null && s.revenue > 0));
 }
 
 /** Lý do chưa có lãi/lỗ, viết cho người xem */
-export function profitPendingText(s: Pick<CycleStat, 'partial_out' | 'heads_out' | 'heads_left'>): string {
+export function profitPendingText(s: Pick<CycleStat, 'partial_out' | 'heads_out' | 'heads_left' | 'cycle_mode' | 'seasons'>): string {
+  if (s.cycle_mode === 'perennial' && (s.seasons ?? 0) > 0) return 'Vườn cây: xem lãi/lỗ ở từng mùa vụ (khấu hao đầu tư đã chia vào các vụ mùa)';
   return s.partial_out ? `Đã xuất ${s.heads_out ?? 0} con, còn ${s.heads_left ?? 0} con: lãi/lỗ và giá thành/kg tính khi xuất hết` : 'Chưa có doanh thu (chưa bán)';
 }
 

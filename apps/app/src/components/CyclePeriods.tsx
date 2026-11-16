@@ -4,7 +4,7 @@ import { addDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { MODE_LABEL, modeOf } from '../lib/herd';
 import { formatMoney } from '../lib/inventory';
-import { closeCyclePeriod, fetchHerdBalance, fetchPeriodsReport, openCyclePeriod, setOrchardParams, type CyclePeriod, type HerdGroupBalance, type PeriodSummary } from '../lib/periods';
+import { closeCyclePeriod, fetchHerdBalance, fetchPeriodsReport, openCyclePeriod, openOrchardSeason, setOrchardParams, type CyclePeriod, type HerdGroupBalance, type PeriodSummary } from '../lib/periods';
 import { listTemplates, type TemplateRow } from '../lib/templates';
 import type { CycleRow } from '../lib/db';
 
@@ -59,6 +59,9 @@ export function CyclePeriods({ cycle, periods, reload, canManage, online, today,
     fetchHerdBalance(cycle.id, balFrom, balTo).then((r) => { setBal(r); setBalErr(null); }).catch((e) => setBalErr(friendlyError(e)));
   }, [mode, cycle.id, balFrom, balTo, online]);
 
+  const [seasonName, setSeasonName] = useState(`Mùa ${today.slice(0, 4)}`);
+  const [seasonStart, setSeasonStart] = useState(today);
+  const [seasonMsg, setSeasonMsg] = useState<string | null>(null);
   const [plant, setPlant] = useState(cycle.planting_date ?? '');
   const [mat, setMat] = useState(String(cycle.maturity_years ?? 3));
   const [am, setAm] = useState(String(cycle.amort_years ?? 15));
@@ -91,6 +94,27 @@ export function CyclePeriods({ cycle, periods, reload, canManage, online, today,
         )}
         {error && <p className="msg error" role="alert">{error}</p>}
       </div>
+
+      {mode === 'perennial' && canManage && !closed && (
+        <Collapsible inline title="＋ Mở mùa vụ mới của vườn" summary="mỗi mùa thu hoạch một vụ riêng" defaultOpen>
+          <div className="inline-form">
+            <p className="muted">Mỗi mùa thu hoạch là một vụ riêng: chi phí, thu hoạch, doanh thu ghi vào vụ đó nên lãi/lỗ rõ từng mùa. Chi phí đầu tư vườn (cây giống, làm đất, giàn) được chia khấu hao vào các vụ mùa, không tính hết vào một mùa.</p>
+            <label>Tên mùa vụ<input value={seasonName} maxLength={60} onChange={(e) => setSeasonName(e.target.value)} placeholder="Ví dụ: Mùa na 2027" /></label>
+            <label>Bắt đầu từ ngày<input type="date" value={seasonStart} onChange={(e) => setSeasonStart(e.target.value)} /></label>
+            <label>Quy trình
+              <select value={tpl} onChange={(e) => setTpl(e.target.value)}>
+                {templates.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.template_stages.length} việc)</option>)}
+              </select>
+              {templates.length === 0 && <small>Chưa có quy trình mẫu cho sản phẩm này. Tạo ở Khai báo → Quy trình mẫu.</small>}
+            </label>
+            {seasonMsg && <p className="msg ok" role="status">{seasonMsg}</p>}
+            <div className="btnrow">
+              <button type="button" className="primary" disabled={!online || busy || seasonName.trim().length < 2 || !tpl}
+                onClick={() => void act(() => openOrchardSeason(cycle.id, seasonName, seasonStart, tpl)).then(() => setSeasonMsg('Đã mở mùa vụ. Xem trong danh sách Mùa vụ (nhóm Chuẩn bị).'))}>Mở mùa vụ</button>
+            </div>
+          </div>
+        </Collapsible>
+      )}
 
       {!open && periods !== null && canManage && !closed && (
         <Collapsible inline title="＋ Mở kỳ mới" defaultOpen>

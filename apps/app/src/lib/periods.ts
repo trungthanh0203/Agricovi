@@ -48,6 +48,16 @@ export async function openCyclePeriod(cycleId: string, label: string, start: str
   await refreshCycle(cycleId);
 }
 
+/** Mở vụ mùa mới của vườn cây (D176): một vụ thường liên kết với vườn; chi thu ghi vào vụ mùa, đầu tư vườn khấu hao vào vụ mùa */
+export async function openOrchardSeason(orchardId: string, name: string, start: string, templateId: string): Promise<string> {
+  requireOnline('mở mùa vụ mới');
+  const id = crypto.randomUUID();
+  const { error } = await client().rpc('open_orchard_season', { p_id: id, p_orchard: orchardId, p_name: name.trim(), p_start: start, p_template: templateId, p_status: 'preparing' });
+  if (error) throw new Error(error.message);
+  await refreshCycle(id);
+  return id;
+}
+
 export async function closeCyclePeriod(cycleId: string, periodId: string, end: string): Promise<void> {
   requireOnline('đóng kỳ');
   const { error } = await client().rpc('close_cycle_period', { p_period: periodId, p_end: end });

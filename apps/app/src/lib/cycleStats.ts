@@ -24,6 +24,7 @@ export function normalizeStats(d: Record<string, unknown>): CycleStats {
       area_m2: N(x.area_m2), plant_count: N(x.plant_count), variety: (x.variety as string | null) ?? null, density_per_1000m2: N(x.density_per_1000m2), yield_per_1000m2: N(x.yield_per_1000m2),
       kg_per_plant: N(x.kg_per_plant), cost_per_1000m2: N(x.cost_per_1000m2), revenue_per_1000m2: N(x.revenue_per_1000m2), profit_per_1000m2: N(x.profit_per_1000m2),
       open_incidents: N(x.open_incidents), overdue_actions: N(x.overdue_actions),
+      cycle_mode: (x.cycle_mode as string | null) ?? null, orchard_cycle_id: (x.orchard_cycle_id as string | null) ?? null, orchard_depreciation: N(x.orchard_depreciation), capital_total: N(x.capital_total), depreciated_to_date: N(x.depreciated_to_date), seasons: N(x.seasons),
       partial_out: B(x.partial_out), heads_out: N(x.heads_out), heads_left: N(x.heads_left),
       labor_unposted: N(x.labor_unposted), labor_unposted_missing_rate: N(x.labor_unposted_missing_rate), labor_manual: N(x.labor_manual),
       missing_cost: B(x.missing_cost), has_estimate: B(x.has_estimate), missing_harvest: B(x.missing_harvest), missing_revenue: B(x.missing_revenue),

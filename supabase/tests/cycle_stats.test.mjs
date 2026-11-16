@@ -51,7 +51,7 @@ test('số liệu tóm tắt của chủ: chi phí, thu hoạch, doanh thu, lãi
   const s = await stats(c, c.owner);
   assert.deepEqual([s.can_money, s.can_ops, s.cycles.length], [true, true, 2]);
   const v = of(s, CYC);
-  assert.deepEqual([Number(v.cost_total), Number(v.cost_other), Number(v.cost_labor), Number(v.cost_material)], [100000, 100000, 0, 0]);
+  assert.deepEqual([Number(v.cost_total), Number(v.cost_other), Number(v.cost_labor), Number(v.cost_material)], [100000, 0, 100000, 0]);   // công ghi tay (nhóm Nhân công) hiện ở dòng Tiền công (D174)
   assert.deepEqual([Number(v.harvest_gross), Number(v.harvest_loss), Number(v.harvest_net)], [100, 10, 90]);
   assert.deepEqual([Number(v.sold), Number(v.unsold), Number(v.revenue), Number(v.avg_price)], [50, 40, 500000, 10000]);
   assert.deepEqual([Number(v.profit), Number(v.profit_per_kg), Number(v.cost_per_kg)], [400000, 4444, 1111]);

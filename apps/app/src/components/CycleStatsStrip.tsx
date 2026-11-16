@@ -47,7 +47,7 @@ export function CycleStatsStrip({ s, countUnit = 'cây', areaLabel = 'Diện tí
         {s.cost_total !== null && <Tile label="Chi phí" value={shortMoney(s.cost_total)} tone="bad" title={money(s.cost_total)} />}
         {s.harvest_net !== null && <Tile label="Thu hoạch" value={kg(s.harvest_net)} tone="info" />}
         {s.revenue !== null && <Tile label="Doanh thu" value={shortMoney(s.revenue)} tone="ok" title={money(s.revenue)} />}
-        {s.profit !== null && profitPending(s) && <Tile label="Lãi / lỗ" value={s.partial_out ? 'Chưa xuất hết' : 'Chưa bán'} tone="info" title={profitPendingText(s)} />}
+        {s.profit !== null && profitPending(s) && <Tile label="Lãi / lỗ" value={(s.seasons ?? 0) > 0 ? 'Xem từng mùa' : s.partial_out ? 'Chưa xuất hết' : 'Chưa bán'} tone="info" title={profitPendingText(s)} />}
         {s.profit !== null && !profitPending(s) && <Tile label={s.profit >= 0 ? 'Lãi tạm tính' : 'Lỗ tạm tính'} value={shortMoney(Math.abs(s.profit))} tone={s.profit >= 0 ? 'ok' : 'bad'} title={money(s.profit)} />}
       </div>
       {s.partial_out && <p className="muted yield-line">{profitPendingText(s)}.</p>}
@@ -60,6 +60,15 @@ export function CycleStatsStrip({ s, countUnit = 'cây', areaLabel = 'Diện tí
             <ProportionBar format={money} ariaLabel="Cơ cấu chi phí của vụ"
               segments={[{ label: 'Vật tư đã dùng', value: s.cost_material, tone: 'info' }, { label: 'Tiền công', value: s.cost_labor, tone: 'warn' }, { label: 'Chi khác', value: s.cost_other, tone: 'other' }]} />
             <Row label="Tổng chi phí" value={money(s.cost_total)} />
+            {(s.orchard_depreciation ?? 0) > 0 && <Row label="Trong đó khấu hao đầu tư vườn cây" value={money(s.orchard_depreciation!)} />}
+          </>
+        )}
+        {(s.capital_total ?? 0) > 0 && s.cycle_mode === 'perennial' && (
+          <>
+            <h3 className="sub">Đầu tư vườn cây</h3>
+            <Row label="Tổng chi phí đầu tư" value={money(s.capital_total!)} />
+            {s.depreciated_to_date !== null && s.depreciated_to_date !== undefined && <Row label="Đã khấu hao đến nay" value={money(s.depreciated_to_date)} />}
+            {(s.seasons ?? 0) > 0 && <Row label="Số mùa vụ đã mở" value={String(s.seasons)} />}
           </>
         )}
         {(s.harvest_net !== null || s.sold !== null) && (

@@ -4,6 +4,8 @@ Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi t
 
 ## Đang làm
 
+- **16/11/2026 (D174–D176, migration 0211–0213, cần `db push`)**: thu chi theo vụ: vật tư tiền mặt vào vụ (mặc định "Vật tư đã dùng", nút chuyển khoản cũ), công ghi tay đúng dòng, cảnh báo bán vượt thu hoạch, giá thành tạm tính; chia chi phí chung ở cấp ô/phân khu/cả cơ sở; vườn cây mỗi mùa một vụ (Mở mùa vụ mới ở chi tiết vườn, khấu hao đầu tư vào vụ mùa). Chưa kiểm giao diện trên máy thật; chưa làm: seed mẫu vườn cây, ẩn hẳn phần kỳ.
+
 - **16/11/2026 (D169–D172, migration 0206–0209, cần `db push`)**: công chủ nhập hợp lệ ngay; chọn phân khu làm việc trình bày lại; vụ chưa bán không hiện lỗ, vật nuôi xuất dở chưa tính giá thành/kg; công chấm công chưa vào lương tính tạm vào chi phí vụ; thống kê vụ nhanh gấp ~10 lần (sửa view giá vốn). **16/11 (D173, migration 0210)**: app chỉ tải số liệu cho các vụ đang hiện. Dữ liệu mẫu heo: `supabase/maintenance/seed_sample_heo.sql`.
 
 - **Dữ liệu mẫu nuôi heo** (15/11/2026): `supabase/maintenance/seed_sample_heo.sql` (2 phân khu, 10 chuồng, 60 vụ, 12 nhân sự + chấm công). Người dùng tự chạy trong SQL Editor (đổi `v_mode` = 'XOA' để dọn). Đã thử trên PGlite: nạp, nạp lại (bỏ qua), xóa sạch đều đúng. Vấn đề phát hiện khi làm: xem phần cuối cuộc trò chuyện (công theo chấm công không vào giá thành nếu chưa chốt kỳ lương; giá thành/kg khi mới bán một phần; get_cycles_stats chậm khi nhiều vụ; hai vụ chạy song song một chuồng).
