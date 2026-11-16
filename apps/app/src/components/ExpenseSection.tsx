@@ -47,8 +47,13 @@ export function ExpenseSection() {
   // chỉ vụ do chính cơ sở này sở hữu mới ghi được chi phí (quyền ghi theo chủ vụ)
   const ownCycles = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id), [cycles, active]);
   const allAreas = useTable('areas');
-  // ô có ít nhất một vụ của cơ sở (để chia chi phí chung)
-  const sharedAreas = useMemo(() => allAreas.filter((a) => a.organization_id === active?.id && ownCycles.some((c) => c.area_id === a.id && c.status !== 'cancelled')), [allAreas, ownCycles, active]);
+  // khu để chia chi phí chung: ô có vụ của cơ sở và phân khu cha của các ô đó (D175)
+  const sharedAreas = useMemo(() => {
+    const mine = allAreas.filter((a) => a.organization_id === active?.id);
+    const withCycle = new Set(mine.filter((a) => ownCycles.some((c) => c.area_id === a.id && c.status !== 'cancelled')).map((a) => a.id));
+    const parents = new Set(mine.filter((a) => withCycle.has(a.id) && a.parent_id).map((a) => a.parent_id as string));
+    return mine.filter((a) => withCycle.has(a.id) || parents.has(a.id));
+  }, [allAreas, ownCycles, active]);
   const cycleLabel = (id: string | null) => {
     if (!id) return 'Chi phí chung của cơ sở';
     const c = cycles.find((x) => x.id === id);
@@ -116,7 +121,7 @@ export function ExpenseSection() {
         <>
           <button className="primary" onClick={() => setMode({ kind: 'new' })} disabled={!online}>Ghi chi phí</button>
           {online && sharedAreas.length > 0 && (
-            <Collapsible inline title="＋ Chia chi phí chung của ô cho các vụ" summary="điện, nước, công chung… theo diện tích">
+            <Collapsible inline title="＋ Chia chi phí chung cho các vụ" summary="điện, nước, thuê đất, khấu hao… theo diện tích">
               <AllocateAreaExpense orgId={active.id} areas={sharedAreas} onDone={setMsg} />
             </Collapsible>
           )}

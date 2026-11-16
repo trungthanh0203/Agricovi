@@ -12,11 +12,12 @@ interface Share { cycle_id: string; name: string; area_m2: number; days: number;
 interface Preview { shares: Share[]; skipped: { cycle_id: string; name: string; reason: string }[] }
 
 /**
- * Chia chi phí chung của một ô (điện, nước, công chung…) cho các vụ chạy trong ô theo diện tích × số ngày trong kỳ.
- * Mỗi vụ nhận một khoản chi phí loại "phân bổ" kèm cách chia ở ghi chú. Xem trước rồi mới ghi; bấm lặp không nhân đôi.
+ * Chia chi phí chung (điện, nước, thuê đất, khấu hao, quản lý…) cho các vụ theo diện tích × số ngày trong kỳ, ở một trong ba phạm vi (D175):
+ * cả cơ sở, một phân khu (gồm các ô con) hoặc một ô. Mỗi vụ nhận một khoản chi phí loại "phân bổ" kèm cách chia ở ghi chú.
+ * Xem trước rồi mới ghi; bấm lặp không nhân đôi.
  */
 export function AllocateAreaExpense({ orgId, areas, onDone }: { orgId: string; areas: AreaRow[]; onDone: (msg: string) => void }) {
-  const [areaId, setAreaId] = useState(areas[0]?.id ?? '');
+  const [areaId, setAreaId] = useState('');   // '' = cả cơ sở
   const [from, setFrom] = useState(addDays(todayLocal(), -29));
   const [to, setTo] = useState(todayLocal());
   const [category, setCategory] = useState('utility');
@@ -32,13 +33,12 @@ export function AllocateAreaExpense({ orgId, areas, onDone }: { orgId: string; a
 
   async function preview() {
     setError(null);
-    if (!areaId) return setError('Hãy chọn ô sản xuất.');
     if (amt <= 0) return setError('Hãy nhập số tiền lớn hơn 0.');
     if (to < from) return setError('Ngày kết thúc không thể trước ngày bắt đầu.');
     if (to > todayLocal()) return setError('Ngày kết thúc không được ở tương lai.');
     setBusy(true);
     try {
-      const { data, error: e } = await supabase!.rpc('preview_area_expense', { p_org: orgId, p_area: areaId, p_from: from, p_to: to, p_amount: amt });
+      const { data, error: e } = await supabase!.rpc('preview_shared_expense', { p_org: orgId, p_area: areaId || null, p_from: from, p_to: to, p_amount: amt });
       if (e) throw new Error(e.message);
       setPv(data as Preview);
     } catch (e) { setError(friendlyError(e)); setPv(null); } finally { setBusy(false); }
@@ -46,7 +46,7 @@ export function AllocateAreaExpense({ orgId, areas, onDone }: { orgId: string; a
   async function save() {
     setBusy(true); setError(null);
     try {
-      const { data, error: e } = await supabase!.rpc('allocate_area_expense', { p_org: orgId, p_area: areaId, p_from: from, p_to: to, p_amount: amt, p_category: category, p_note: note.trim() || null, p_op: op });
+      const { data, error: e } = await supabase!.rpc('allocate_shared_expense', { p_org: orgId, p_area: areaId || null, p_from: from, p_to: to, p_amount: amt, p_category: category, p_note: note.trim() || null, p_op: op });
       if (e) throw new Error(e.message);
       const r = data as { created: number; already: boolean };
       await syncFinanceDown().catch(() => undefined);
@@ -55,13 +55,14 @@ export function AllocateAreaExpense({ orgId, areas, onDone }: { orgId: string; a
     } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
 
-  if (areas.length === 0) return <p className="muted">Chưa có ô sản xuất nào có vụ để chia chi phí.</p>;
+  if (areas.length === 0) return <p className="muted">Chưa có vụ nào để chia chi phí.</p>;
   return (
     <div className="inline-form">
-      <p className="muted">Dùng cho chi phí chung của cả ô (điện, nước, công chung…): chia cho các vụ chạy trong ô theo diện tích × số ngày trong kỳ.</p>
-      <label>Ô sản xuất
+      <p className="muted">Dùng cho chi phí chung (điện, nước, thuê đất, khấu hao, quản lý…): chia cho các vụ chạy trong phạm vi đã chọn theo diện tích × số ngày trong kỳ.</p>
+      <label>Phạm vi chia
         <select value={areaId} onChange={(e) => { setAreaId(e.target.value); reset(); }}>
-          {areas.map((a) => <option key={a.id} value={a.id}>{areaPath(a.id, areas)}</option>)}
+          <option value="">Cả cơ sở (mọi vụ)</option>
+          {areas.map((a) => <option key={a.id} value={a.id}>{a.parent_id ? `Ô ${areaPath(a.id, areas)}` : `Phân khu ${a.name}${areas.some((x) => x.parent_id === a.id) ? ' (gồm các ô con)' : ''}`}</option>)}
         </select>
       </label>
       <div className="pair">
@@ -82,7 +83,7 @@ export function AllocateAreaExpense({ orgId, areas, onDone }: { orgId: string; a
       {pv && (
         <div className="card slim">
           {pv.shares.length === 0 ? (
-            <p className="msg warn">Trong kỳ {fmtDate(from)} – {fmtDate(to)}, ô không có vụ nào đã khai diện tích để chia.</p>
+            <p className="msg warn">Trong kỳ {fmtDate(from)} – {fmtDate(to)}, ô không có vụ nào có diện tích (của vụ hoặc của ô) để chia.</p>
           ) : (
             <>
               <table className="grid">
@@ -92,7 +93,7 @@ export function AllocateAreaExpense({ orgId, areas, onDone }: { orgId: string; a
               <p className="muted">Tổng {formatMoney(pv.shares.reduce((t, s) => t + Number(s.amount), 0))}. Mỗi vụ nhận một khoản chi phí loại "phân bổ" kèm cách chia ở ghi chú.</p>
             </>
           )}
-          {pv.skipped.length > 0 && <p className="msg warn">Chưa được chia vì chưa khai diện tích: {pv.skipped.map((s) => s.name).join(', ')}. Khai diện tích ở Sửa vụ rồi chia lại.</p>}
+          {pv.skipped.length > 0 && <p className="msg warn">Chưa được chia vì chưa có diện tích (của vụ hoặc của ô): {pv.skipped.map((s) => s.name).join(', ')}. Khai diện tích ở Sửa vụ hoặc ở ô rồi chia lại.</p>}
           {pv.shares.length > 0 && <div className="btnrow"><button type="button" className="primary" disabled={busy} onClick={() => void save()}>Ghi nhận chi phí cho các vụ</button></div>}
         </div>
       )}
