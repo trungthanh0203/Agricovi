@@ -33,6 +33,8 @@ export async function createDb() {
   const db = await template.clone();
   // Các test cũ tạo vụ trực tiếp không qua quy trình mẫu; test P2 (cycles_from_template) tắt cờ này.
   await db.exec("select set_config('agri.legacy_cycle_insert', 'on', false)");
+  // Dùng thử có phạm vi hẹp (D186) tắt mặc định trong test; trial_scope.test.mjs bật lại.
+  await db.exec("update platform_settings set value = 'false'::jsonb where key = 'trial_scope_enabled'");
   return db;
 }
 
