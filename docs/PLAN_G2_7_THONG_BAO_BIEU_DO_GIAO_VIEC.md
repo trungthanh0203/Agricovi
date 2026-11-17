@@ -1,3 +1,10 @@
+> **CẬP NHẬT 17/11/2026 (D181, chủ sản phẩm duyệt): phần THÔNG BÁO làm theo hướng GỌN (mục H2), thay cho mục 3 và các lát N1–N4 bên dưới.**
+> - **Không làm chuông 🔔 và hàng đợi `notification_outbox`**: Trang chủ đã là nơi hiện việc cần làm. Thông báo đẩy chỉ là lời nhắc mở app, không lặp lại danh sách.
+> - **Lát 1 (đường ống):** service worker tự viết (`injectManifest`, vẫn giữ lưu offline, chặn `/quan-tri/`, giữ `autoUpdate`), bảng `push_subscriptions` + `notification_prefs`, nút Bật thông báo ở Tài khoản (chỉ xin quyền khi bấm), Edge Function `send-push` (khóa VAPID chỉ ở máy chủ), nút "Gửi thử cho tôi". Thử Android và iPhone thật.
+> - **Lát 2 (bản tin sáng):** một hàm SQL đếm gọn theo người (mốc và mũi tiêm, bảo dưỡng tài sản, công nợ, giấy phép, công chờ duyệt); `pg_cron` + `pg_net` gọi `send-push` 7 giờ sáng giờ Việt Nam; MỘT thông báo gộp mỗi người, chỉ số đếm và biểu tượng loại, không ghi tiền hay tên khách; không có gì thì không gửi; quy tắc "đến hạn" phải khớp với giao diện (test đối chiếu); không dùng `get_cycles_stats`.
+> - **Lát 3 (tùy chọn, sau phản hồi dùng thử):** thông báo tức thời cho số đo/hao hụt vượt ngưỡng và công chờ duyệt (gom theo giờ), quét định kỳ, KHÔNG dùng trigger trên bảng ghi hằng ngày; giờ im lặng 21:00–06:00, tắt được từng loại.
+> - Việc cần chủ sản phẩm: tạo khóa VAPID, bật `pg_cron` và `pg_net`, deploy hàm, thử trên điện thoại. iPhone chỉ nhận khi đã thêm vào Màn hình chính (iOS 16.4+). Giao việc (T1–T2) và biểu đồ giữ nguyên như dưới.
+
 # Kế hoạch G2-7 — Giao việc, thông báo đẩy, biểu đồ (và báo cáo định kỳ) (bản đề xuất, chờ chủ sản phẩm duyệt)
 
 Căn cứ: D40 (giao việc, "việc được giao" ở Tài khoản), D58-7 (thông báo đẩy ưu tiên: công chờ xác nhận, nhắc việc theo ngày, công nợ đến hạn), D35 (nhắc việc theo ghi chú ngày), D41/D48 (số liệu Trang chủ, báo cáo theo nhu cầu), D76–D78 (công nợ, đơn website), `PLAN_GIAI_DOAN_2_APP.md`.

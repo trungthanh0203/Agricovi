@@ -19,6 +19,14 @@
   :root { --bg: #0f1511; --field: #151c17; --tint: #1c2b21; --fg: #ececec; --muted: #a8aeb3; --line: #2c372f; --card: #19211b; --label: #8fd0a8; --green: #5fbf83; --warn: #ffb74d; --err: #f2b8b5; --shadow: none; }
 }
 * { box-sizing: border-box; }
+/* Vạch màu theo loại sản phẩm ở Trang chủ (không dùng đỏ/cam: dành cho mức trễ) */
+:root { --kind-crop: #2e8b57; --kind-livestock: #8b5e3c; --kind-aquatic: #1e78b4; --kind-other: #7a8480; }
+@media (prefers-color-scheme: dark) { :root { --kind-crop: #5fbf83; --kind-livestock: #c9976b; --kind-aquatic: #62b0e8; --kind-other: #a8aeb3; } }
+.kind-row { border-left: 4px solid var(--kind-other); padding-left: 8px; margin: 6px 0; }
+.kind-row.kind-crop { border-left-color: var(--kind-crop); }
+.kind-row.kind-livestock { border-left-color: var(--kind-livestock); }
+.kind-row.kind-aquatic { border-left-color: var(--kind-aquatic); }
+.kind-tag { font-size: 13px; color: var(--muted); white-space: nowrap; }
 body { margin: 0; background: var(--bg); color: var(--fg); }
 h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
 h2 { font-size: 1.1rem; margin: 0 0 .5rem; }
