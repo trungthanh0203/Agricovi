@@ -117,7 +117,12 @@ export function PieceJobsSection({ orgId, range, people, online, onChanged, stan
             <label>Số tiền trọn gói (đồng)<input value={form.lump} inputMode="numeric" onChange={(e) => setForm({ ...form, lump: e.target.value })} placeholder="Ví dụ: 3000000" /></label>
           )}
           <fieldset className="inline-form">
-            <legend>Người nhận khoán</legend>
+            <legend>
+              Người nhận khoán
+              {form.picked.length > 1 && (
+                <label className="check" style={{ display: 'inline-flex', marginLeft: 12, fontWeight: 'normal' }}><input type="checkbox" checked={form.split === 'pct'} onChange={(e) => setForm({ ...form, split: e.target.checked ? 'pct' : 'equal', pcts: e.target.checked ? Object.fromEntries(form.picked.map((w, i) => [w, String(equalPcts(form.picked.length)[i])])) : form.pcts })} /> Theo tỉ lệ (mặc định chia đều)</label>
+              )}
+            </legend>
             {people.length === 0 && <p className="muted">Chưa có người nào trong danh sách nhân sự.</p>}
             {people.map((p) => (
               <label className="check" key={p.worker_id}>
@@ -127,9 +132,6 @@ export function PieceJobsSection({ orgId, range, people, online, onChanged, stan
                 )}
               </label>
             ))}
-            {form.picked.length > 1 && (
-              <label className="check"><input type="checkbox" checked={form.split === 'pct'} onChange={(e) => setForm({ ...form, split: e.target.checked ? 'pct' : 'equal', pcts: e.target.checked ? Object.fromEntries(form.picked.map((w, i) => [w, String(equalPcts(form.picked.length)[i])])) : form.pcts })} /> Chia theo phần trăm (mặc định chia đều)</label>
-            )}
           </fieldset>
           <label>Ghi chú (không bắt buộc)<input value={form.note} maxLength={300} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
           <div className="btnrow">
