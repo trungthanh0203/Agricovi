@@ -166,6 +166,17 @@ export const HELP: Record<HelpKey, HelpEntry> = {
     ],
     guide: { id: 'staff', step: 7 },
   },
+  assets: {
+    title: 'Tài sản',
+    what: 'Sổ tài sản (nhà màng, chuồng, máy bơm, quạt…), khấu hao hằng tháng chia vào các vụ và nhắc bảo dưỡng.',
+    how: [
+      'Bấm "＋ Thêm tài sản": tên, nơi đặt, ngày mua, giá mua, số năm dùng và giá trị còn lại khi bỏ.',
+      'Cuối tháng mở "Ghi khấu hao theo tháng", chọn tháng, xem cách ghi rồi bấm ghi: tiền khấu hao vào chi phí của các vụ ở nơi đặt tài sản (chia theo diện tích × số ngày).',
+      'Đặt chu kỳ bảo dưỡng (tháng) để Trang chủ nhắc khi đến hạn; làm xong bấm "Đã bảo dưỡng".',
+    ],
+    note: 'Mỗi tháng của một tài sản chỉ ghi một lần. Tài sản đã ghi khấu hao thì không sửa giá mua, ngày mua, số năm dùng; muốn bỏ hãy thanh lý. Cần có mạng.',
+    guide: { id: 'process', step: 7 },
+  },
   piecework: {
     title: 'Khoán công',
     what: 'Giao khoán một việc cho một hoặc nhiều người, trả theo sản lượng (kg, thùng…) hoặc trọn gói.',

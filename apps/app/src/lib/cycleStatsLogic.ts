@@ -66,3 +66,29 @@ export function statWarnings(s: CycleStat): string[] {
 export function hasAnyStat(s: CycleStat | undefined): boolean {
   return !!s && (s.cost_total !== null || s.harvest_net !== null || s.revenue !== null || s.labor_hours !== null);
 }
+
+/**
+ * Giá thành mỗi kg để so với giá bán lúc ghi bán (H7). Vụ đã có giá thành thì dùng số của máy chủ (tạm tính nếu vụ chưa kết thúc).
+ * Vật nuôi đang xuất dở (máy chủ chưa tính giá thành): ước theo cân trung bình mỗi con đã xuất × tổng số con (đã xuất + còn lại).
+ * Trả null khi không đủ số liệu hoặc người xem không có quyền xem chi phí.
+ */
+export function saleCostHint(s: CycleStat | undefined): { perKg: number; estimated: boolean; note: string } | null {
+  if (!s || s.cost_total === null) return null;
+  if (s.cost_per_kg !== null && s.cost_per_kg > 0) {
+    return { perKg: Math.round(s.cost_per_kg), estimated: s.status !== 'ended', note: s.status === 'ended' ? 'giá thành của vụ' : 'giá thành tạm tính, chi phí còn thay đổi đến khi kết thúc vụ' };
+  }
+  if (s.partial_out && s.harvest_net !== null && s.harvest_net > 0 && (s.heads_out ?? 0) > 0) {
+    const heads = (s.heads_out ?? 0) + (s.heads_left ?? 0);
+    const projectedKg = (s.harvest_net / (s.heads_out ?? 1)) * heads;
+    if (projectedKg > 0 && s.cost_total > 0) {
+      return { perKg: Math.round(s.cost_total / projectedKg), estimated: true, note: `ước theo cân trung bình đã xuất, còn ${s.heads_left ?? 0} con chưa xuất` };
+    }
+  }
+  return null;
+}
+
+/** So giá bán mỗi kg với giá thành: lãi/lỗ mỗi kg và cho cả lần bán */
+export function saleVsCost(pricePerKg: number, qtyKg: number, costPerKg: number): { diffPerKg: number; total: number } {
+  const diffPerKg = Math.round(pricePerKg - costPerKg);
+  return { diffPerKg, total: Math.round((pricePerKg - costPerKg) * qtyKg) };
+}

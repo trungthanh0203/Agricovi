@@ -4,6 +4,7 @@ import { CooperativeSection } from '../components/CooperativeSection';
 import { MembersSection } from '../components/MembersSection';
 import { PositionsSection } from '../components/PositionsSection';
 import { TeamsSection } from '../components/TeamsSection';
+import { AssetsSection } from '../components/AssetsSection';
 import { AreasSection } from '../components/AreasSection';
 import { CatalogSection } from '../components/CatalogSection';
 import { KioskAdmin } from '../components/KioskAdmin';
@@ -70,6 +71,8 @@ export function DeclareTab({ section, onSection }: { section?: string; onSection
         <WorkTypesSection />
       ) : current === 'templates' ? (
         <TemplatesSection />
+      ) : current === 'assets' ? (
+        <AssetsSection />
       ) : current === 'areas' ? (
         <AreasSection />
       ) : current === 'licenses' ? (

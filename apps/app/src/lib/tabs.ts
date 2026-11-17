@@ -29,7 +29,7 @@ export interface Section<Id extends string = string> {
 }
 
 export type ProductionSection = 'cycles' | 'log' | 'logs' | 'stock' | 'expense' | 'harvest' | 'sales' | 'attendance' | 'piecework' | 'procure' | 'contracts';
-export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'partners' | 'kiosks' | 'customers' | 'positions' | 'teams' | 'members' | 'coop' | 'licenses';
+export type DeclareSection = 'areas' | 'crops' | 'worktypes' | 'templates' | 'materials' | 'places' | 'assets' | 'partners' | 'kiosks' | 'customers' | 'positions' | 'teams' | 'members' | 'coop' | 'licenses';
 export type ReportSection = 'stats' | 'payables' | 'summary' | 'weekly' | 'paybook' | 'custom' | 'website' | 'commerce' | 'checklist' | 'logbook' | 'export' | 'statement';
 
 /**
@@ -77,6 +77,7 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
     canPerm(org.perms, 'declare') ? { id: 'areas' as const, label: 'Phân khu' } : null,
     canPerm(org.perms, 'declare') ? { id: 'crops' as const, label: 'Sản phẩm' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'places' as const, label: 'Kho' } : null,
+    canPerm(org.perms, 'expenses') ? { id: 'assets' as const, label: 'Tài sản' } : null,
     canPerm(org.perms, 'declare') ? { id: 'templates' as const, label: 'Quy trình mẫu' } : null,
     canPerm(org.perms, 'declare') ? { id: 'worktypes' as const, label: 'Việc' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư' } : null,
@@ -95,7 +96,7 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
 /** Khung gom các mục của tab Khai báo theo chức năng liên quan (menu Khai báo hiện 4 khung, trong khung là thanh chọn mục) */
 export interface DeclareGroup { id: string; label: string; icon: string; items: Section<DeclareSection>[] }
 const DECLARE_GROUPS: { id: string; label: string; icon: string; ids: DeclareSection[] }[] = [
-  { id: 'base', label: 'Cơ sở & vật tư', icon: '🏡', ids: ['areas', 'crops', 'places', 'materials', 'partners', 'customers'] },
+  { id: 'base', label: 'Cơ sở & vật tư', icon: '🏡', ids: ['areas', 'crops', 'places', 'assets', 'materials', 'partners', 'customers'] },
   { id: 'org', label: 'Nhân sự', icon: '👥', ids: ['positions', 'teams', 'members'] },
   { id: 'process', label: 'Quy trình', icon: '📋', ids: ['worktypes', 'templates'] },
   { id: 'legal', label: 'Giấy phép & đối tác', icon: '🤝', ids: ['licenses', 'coop', 'kiosks'] },

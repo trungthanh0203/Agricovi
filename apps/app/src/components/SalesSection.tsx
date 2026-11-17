@@ -23,6 +23,8 @@ import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
 import { areaPath, areaName } from '../lib/areas';
 import { cycleTitle, formCycles } from '../lib/cycles';
+import { CycleStatsLoader } from './CycleStatsLoader';
+import { saleCostHint, saleVsCost, type CycleStat } from '../lib/cycleStatsLogic';
 
 const LAST_CYCLE_KEY = 'agriconnect.lastCycle';
 
@@ -82,6 +84,9 @@ export function SalesSection() {
   const revenue = srv ? Number(srv.amount) : valid.reduce((s, r) => s + r.amount, 0);
   const totalN = srv ? srv.n : valid.length;
   const [csvBusy, setCsvBusy] = useState(false);
+  // giá thành của các vụ đang hiện trong danh sách, để so với giá từng lần bán (H7)
+  const [lstats, setLstats] = useState<Map<string, CycleStat>>(new Map());
+  const shownCycleIds = useMemo(() => [...new Set(listShown.filter((s) => !s.voided_at).map((s) => s.cycle_id))].slice(0, 60), [listShown]);
 
   async function confirmVoid(id: string) {
     if (reason.trim().length < 3) return setMsg('Hãy ghi lý do hủy (ít nhất 3 ký tự).');
@@ -148,6 +153,7 @@ export function SalesSection() {
       {msg && <p className="msg warn" role="status">{msg}</p>}
       {list.length === 0 && <p className="muted">Chưa ghi lần bán nào.</p>}
 
+      {active && shownCycleIds.length > 0 && <CycleStatsLoader orgId={active.id} ids={shownCycleIds} refreshKey={`${shownCycleIds.join(',')}|${sales.length}`} onData={(st) => setLstats(new Map(st.cycles.map((x) => [x.cycle_id, x])))} />}
       {listShown.map((s) => (
         <div className={s.voided_at ? 'card slim voided' : 'card slim'} key={s.id}>
           <div className="row">
@@ -156,6 +162,12 @@ export function SalesSection() {
           </div>
           <p>{formatQty(s.quantity)} kg{s.quantity > 0 ? ` · ${formatMoney(Math.round(s.amount / s.quantity))}/kg` : ''}</p>
           <p className="muted">{cycleLabel(s.cycle_id)}</p>
+          {(() => {
+            const h = !s.voided_at && s.quantity > 0 ? saleCostHint(lstats.get(s.cycle_id)) : null;
+            if (!h) return null;
+            const c = saleVsCost(s.amount / s.quantity, s.quantity, h.perKg);
+            return <p className="muted">{c.diffPerKg < 0 ? 'Thấp' : 'Cao'} hơn giá thành {h.estimated ? 'tạm tính ' : ''}{formatMoney(Math.abs(c.diffPerKg))}/kg ({c.total < 0 ? 'lỗ' : 'lãi'} khoảng {formatMoney(Math.abs(c.total))}).</p>;
+          })()}
           {(() => {
             const d = debts.get(s.id);
             if (!d) return s.buyer_note ? <p>{s.buyer_note}</p> : null;
@@ -250,6 +262,9 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const a = parseNumber(amount);
   const inWithdrawal = useWithdrawalBlocked(effCycle, date);
   const perKg = q && q > 0 && a !== null && !Number.isNaN(a) ? Math.round(a / q) : null;
+  const [fstats, setFstats] = useState<CycleStat | undefined>();
+  const hint = saleCostHint(fstats?.cycle_id === effCycle ? fstats : undefined);
+  const cmp = hint && perKg !== null && q ? saleVsCost(perKg, q, hint.perKg) : null;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -347,6 +362,13 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
           <input value={amount} inputMode="numeric" onChange={(e) => setAmount(e.target.value)} />
           {perKg !== null && <small>Tương đương {formatMoney(perKg)}/kg.</small>}
         </label>
+        {orgId && effCycle && !editing && <CycleStatsLoader orgId={orgId} ids={[effCycle]} refreshKey={effCycle} onData={(st) => setFstats(st.cycles.find((x) => x.cycle_id === effCycle))} />}
+        {hint && (
+          <p className={cmp && cmp.diffPerKg < 0 ? 'msg warn' : 'muted'} role="status">
+            Giá thành {hint.estimated ? 'tạm tính ' : ''}{formatMoney(hint.perKg)}/kg ({hint.note}).
+            {cmp && (cmp.diffPerKg < 0 ? ` Giá bán này thấp hơn giá thành ${formatMoney(-cmp.diffPerKg)}/kg, lỗ khoảng ${formatMoney(-cmp.total)} cho lần bán này.` : ` Giá bán này cao hơn giá thành ${formatMoney(cmp.diffPerKg)}/kg, lãi khoảng ${formatMoney(cmp.total)} cho lần bán này.`)}
+          </p>
+        )}
         {!editing && orgId && (
           <fieldset className="roles">
             <legend>Khách hàng và công nợ (không bắt buộc)</legend>
