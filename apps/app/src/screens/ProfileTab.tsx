@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Collapsible } from '../components/Collapsible';
 import { InvitationsPanel } from '../components/InvitationsPanel';
 import { MigrateImages } from '../components/MigrateImages';
+import { PushSettings } from '../components/PushSettings';
 import { PlanCard } from '../components/PlanCard';
 import { QrCard } from '../components/QrCard';
 import { useAuth } from '../lib/auth';
@@ -102,6 +103,10 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
           {work.mode && <p className="muted">Cách tính công: {WORK_MODE_LABEL[work.mode as WorkMode] ?? work.mode}</p>}
         </Collapsible>
       )}
+
+      <Collapsible title="Thông báo" summary="nhắc ra điện thoại">
+        <PushSettings />
+      </Collapsible>
 
       {active && isOwner(active.roles) && (
         <Collapsible title="Chế độ hiển thị" summary="đầy đủ (tạm khóa)">

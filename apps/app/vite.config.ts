@@ -46,15 +46,14 @@ export default defineConfig({
           { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      workbox: {
+      // Service worker tự viết (sw/sw.ts) để có thông báo đẩy; vẫn lưu sẵn tệp app để dùng offline, chặn /quan-tri/, lưu mô hình khuôn mặt (D182)
+      strategies: 'injectManifest',
+      srcDir: 'sw',
+      filename: 'sw.ts',
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webp}'],
         // Thư viện + mô hình nhận diện khuôn mặt (~8 MB) không nạp sẵn cho mọi người dùng: chỉ máy chấm công tải, rồi trình duyệt lưu lại dùng offline
         globIgnores: ['**/face-api-*.js'],
-        runtimeCaching: [
-          { urlPattern: /\/(assets\/face-api-[^/]+\.js|models\/.+)$/, handler: 'CacheFirst', options: { cacheName: 'face-models', expiration: { maxEntries: 12 } } },
-        ],
-        // trang quản trị (/quan-tri/) là bản dựng riêng, không để app chặn điều hướng vào đó
-        navigateFallbackDenylist: [/^\/quan-tri/],
       },
     }),
   ],
