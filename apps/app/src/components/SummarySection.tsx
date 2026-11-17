@@ -138,7 +138,7 @@ export function SummarySection() {
       </div>
       {tab === 'zone' && <AreaRollup />}
       {tab === 'detail' && <>
-      <CycleSelect label={<CycleWord cap />} cycles={ordered} value={cycleId} onChange={setPicked} labelOf={label} />
+      <CycleSelect label={<CycleWord cap />} cycles={ordered} value={cycleId} onChange={setPicked} labelOf={label} noAll defaultStatus="ended" />
 
       <div className="actions">
         <button className="secondary" disabled={loading || !navigator.onLine} onClick={() => void load()}>

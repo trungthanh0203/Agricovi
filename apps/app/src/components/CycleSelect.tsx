@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 
 const ORDER = ['active', 'preparing', 'paused', 'ended'] as const;
@@ -8,7 +8,7 @@ const CHIP_LABEL: Record<(typeof ORDER)[number], string> = { active: 'Đang sả
  * Bộ chọn vụ có lọc theo trạng thái: một hàng nút (Tất cả, Đang sản xuất, Chuẩn bị, Tạm dừng, Kết thúc, kèm số vụ; trạng thái không có vụ thì ẩn)
  * và dropdown chỉ liệt kê các vụ thuộc nhóm đang lọc, nên danh sách ngắn, dễ nhìn. Mặc định "Tất cả". Vụ đang chọn luôn có trong dropdown dù không thuộc nhóm lọc.
  */
-export function CycleSelect({ label, cycles, value, onChange, labelOf, emptyLabel, leading, showStatus = true }: {
+export function CycleSelect({ label, cycles, value, onChange, labelOf, emptyLabel, leading, showStatus = true, noAll, defaultStatus }: {
   label: ReactNode;
   cycles: { id: string; status: string }[];
   value: string;
@@ -20,11 +20,24 @@ export function CycleSelect({ label, cycles, value, onChange, labelOf, emptyLabe
   leading?: { value: string; label: string }[];
   /** Ghi trạng thái cuối tên vụ (khi đang xem "Tất cả") */
   showStatus?: boolean;
+  /** Bỏ nút "Tất cả": luôn lọc theo một trạng thái, mặc định `defaultStatus` (nếu không có vụ thì lấy nhóm đầu tiên có vụ) */
+  noAll?: boolean;
+  defaultStatus?: (typeof ORDER)[number];
 }) {
   const [filter, setFilter] = useState<'all' | (typeof ORDER)[number]>('all');
   const count = (st: string) => cycles.filter((c) => c.status === st).length;
   const chips = ORDER.filter((st) => count(st) > 0);
-  const f = filter === 'all' || count(filter) > 0 ? filter : 'all';
+  const f: 'all' | (typeof ORDER)[number] = noAll
+    ? (filter !== 'all' && count(filter) > 0 ? filter : (defaultStatus && count(defaultStatus) > 0 ? defaultStatus : chips[0] ?? 'all'))
+    : (filter === 'all' || count(filter) > 0 ? filter : 'all');
+  // noAll: vụ đang chọn không thuộc nhóm đang lọc (ví dụ vừa mở màn) thì chuyển sang vụ đầu của nhóm
+  useEffect(() => {
+    if (!noAll || f === 'all') return;
+    const cur = cycles.find((c) => c.id === value);
+    if (cur?.status === f) return;
+    const first = cycles.find((c) => c.status === f);
+    if (first) onChange(first.id);
+  }, [noAll, f, value, cycles]); // eslint-disable-line react-hooks/exhaustive-deps
   const shown = f === 'all' ? cycles : cycles.filter((c) => c.status === f);
   // đổi nhóm lọc: nếu vụ đang chọn không thuộc nhóm mới thì bỏ chọn (về "Tất cả"/lựa chọn rỗng nếu có, không thì vụ đầu của nhóm) để danh sách và lựa chọn khớp nhau
   function pick(next: 'all' | (typeof ORDER)[number]) {
@@ -40,7 +53,7 @@ export function CycleSelect({ label, cycles, value, onChange, labelOf, emptyLabe
     <>
       {chips.length > 1 && (
         <div className="chips" role="group" aria-label="Lọc vụ theo trạng thái">
-          <button type="button" className={f === 'all' ? 'chip active' : 'chip'} aria-pressed={f === 'all'} onClick={() => pick('all')}>Tất cả ({cycles.length})</button>
+          {!noAll && <button type="button" className={f === 'all' ? 'chip active' : 'chip'} aria-pressed={f === 'all'} onClick={() => pick('all')}>Tất cả ({cycles.length})</button>}
           {chips.map((st) => (
             <button type="button" key={st} className={f === st ? 'chip active' : 'chip'} aria-pressed={f === st} onClick={() => pick(st)}>{CHIP_LABEL[st]} ({count(st)})</button>
           ))}
