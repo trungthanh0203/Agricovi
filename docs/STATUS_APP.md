@@ -4,6 +4,8 @@ Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi t
 
 ## Đang làm
 
+- **17/11/2026 (D185, KHÔNG migration)**: **H6** Tổng kết vụ → Chi tiết: khối "So với các vụ trước ở cùng nơi" (năng suất, chi phí, lãi theo diện tích) và nhắc khai diện tích. Chưa kiểm giao diện trên máy thật.
+
 - **17/11/2026 (D183, H2 lát 2, migration 0218, cần `db push` + deploy lại `send-push` + `PUSH_CRON_SECRET` + chạy script lịch)**: **bản tin sáng** 7 giờ: một thông báo gộp mỗi người (việc theo loại, mũi tiêm, mốc, bảo dưỡng, công nợ, giấy phép), theo đúng quyền xem của người đó. Làm theo mục 6 của `docs/HUONG_DAN_BAT_THONG_BAO.md`. Test `morning_digest`, `digest_compose` qua; CHƯA thử gửi thật (cần lát 1 chạy được trên điện thoại). **D184 (migration 0219, cần `db push` và chạy lại script đặt lịch)**: Tài khoản → Thông báo có ô bật/tắt bản tin và chọn giờ nhận; lịch chạy mỗi giờ.
 
 - **17/11/2026 (D182, H2 lát 1, migration 0217, cần `db push` + deploy `send-push` + khóa VAPID)**: **thông báo đẩy, đường ống**: service worker tự viết, Tài khoản → Thông báo (Bật / Gửi thử / Tắt), Edge Function `send-push`. Làm theo `docs/HUONG_DAN_BAT_THONG_BAO.md`. Đã build thử, service worker sinh đúng; CHƯA thử gửi thật (cần khóa VAPID) và chưa thử trên điện thoại; cần kiểm app vẫn chạy offline và `/quan-tri/` như cũ. Lát 2 (bản tin sáng) chờ lát 1 chạy được.

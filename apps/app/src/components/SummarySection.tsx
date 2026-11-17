@@ -16,6 +16,7 @@ import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
 import { CycleSelect } from './CycleSelect';
 import { AreaRollup } from './AreaRollup';
+import { AreaYieldCompare } from './AreaYieldCompare';
 import { areaPath, areaName } from '../lib/areas';
 import { cycleTitle } from '../lib/cycles';
 
@@ -220,6 +221,7 @@ export function SummarySection() {
               {cycleRow?.plant_count ? <Row k={`Thu hoạch mỗi ${cnt}`} v={`${vnNumber(summary.harvested_net_qty / cycleRow.plant_count)} kg`} /> : null}
             </div>
           ) : null}
+          {!animal && <AreaYieldCompare cycleId={cycleId} />}
 
           <div className="card">
             <h2>Giá thành mỗi kg</h2>
