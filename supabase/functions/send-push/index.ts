@@ -23,7 +23,7 @@ const CORS = {
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 const fail = (message: string, status = 400) => json({ error: message }, status);
 
-Deno.serve(async (req) => {
+async function handle(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return fail('METHOD: Chỉ hỗ trợ POST', 405);
 
@@ -90,4 +90,16 @@ Deno.serve(async (req) => {
   }
 
   return fail('BAD_REQUEST: Hành động không hợp lệ.');
+}
+
+// Lỗi bất ngờ vẫn trả về có nội dung và có tiêu đề CORS; nếu không, trình duyệt chỉ thấy "Failed to send a request" mà không biết nguyên nhân
+Deno.serve(async (req) => {
+  try {
+    return await handle(req);
+  } catch (e) {
+    const m = e instanceof Error ? e.message : String(e);
+    console.error('send-push', m);
+    const hint = /vapid|key|subject/i.test(m) ? ' (kiểm tra VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT đã đặt đúng chưa)' : '';
+    return fail(`SERVER_ERROR: ${m}${hint}`, 500);
+  }
 });
