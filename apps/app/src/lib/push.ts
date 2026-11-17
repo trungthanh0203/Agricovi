@@ -56,6 +56,22 @@ export async function disablePush(): Promise<void> {
   if (supabase && navigator.onLine) await supabase.rpc('remove_push_subscription', { p_endpoint: endpoint });
 }
 
+export interface DigestPrefs { enabled: boolean; hour: number }
+/** Cài đặt bản tin buổi sáng của tôi (mặc định bật, 7 giờ) */
+export async function getDigestPrefs(): Promise<DigestPrefs> {
+  if (!supabase) return { enabled: true, hour: 7 };
+  const { data, error } = await supabase.from('notification_prefs').select('morning_digest, digest_hour').maybeSingle();
+  if (error) throw new Error(error.message);
+  return { enabled: data?.morning_digest ?? true, hour: data?.digest_hour ?? 7 };
+}
+/** Bật/tắt bản tin và chọn giờ nhận (giờ Việt Nam) */
+export async function saveDigestPrefs(p: DigestPrefs): Promise<void> {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  if (!navigator.onLine) throw new Error('OFFLINE: Cần có mạng để lưu.');
+  const { error } = await supabase.rpc('set_digest_prefs', { p_enabled: p.enabled, p_hour: p.hour });
+  if (error) throw new Error(error.message);
+}
+
 /** Gửi thử một thông báo cho chính mình (mọi máy đã bật của tài khoản) */
 export async function sendTestPush(): Promise<{ sent: number; removed: number }> {
   if (!navigator.onLine) throw new Error('OFFLINE: Cần có mạng để gửi thử.');

@@ -27,7 +27,7 @@ async function setup() {
   for (const [u, n] of [[owner, 1], [wk, 2], [idle, 3]]) await asUser(db, u, `select save_push_subscription($1,$2,$3,null)`, [EP(n), KEY, AUTH]);
   return { db, owner, wk, idle, org };
 }
-const claim = async (db, day = DAY) => (await db.query(`select user_id, counts from claim_morning_digests($1::date)`, [day])).rows;
+const claim = async (db, day = DAY, hour = 7) => (await db.query(`select user_id, counts from claim_morning_digests($1::date, $2::integer)`, [day, hour])).rows;
 
 test('đếm việc trễ, mũi tiêm, bảo dưỡng theo quyền từng người; người không có gì thì không nhận', async () => {
   const { db, owner, wk, idle, org } = await setup();
@@ -43,14 +43,25 @@ test('đếm việc trễ, mũi tiêm, bảo dưỡng theo quyền từng ngư�
   assert.equal(by[idle], undefined);                        // không thuộc cơ sở nào: không có gì để nhắc
 });
 
-test('mỗi người mỗi ngày một bản tin; ngày khác gửi lại; tắt bản tin sáng hoặc đang giờ im lặng thì không gửi', async () => {
+test('mỗi người mỗi ngày một bản tin; ngày khác gửi lại; tắt bản tin hoặc không đúng giờ đã chọn thì không gửi', async () => {
   const { db, owner, wk } = await setup();
   assert.ok((await claim(db)).length >= 2);
   assert.equal((await claim(db)).length, 0);                // chạy lại cùng ngày: không trùng
   assert.ok((await claim(db, '2026-11-13')).length >= 1);   // ngày khác: gửi lại
-  await asUser(db, owner, `select * from set_notification_prefs(false, '21:00', '06:00')`);
-  await asUser(db, wk, `select * from set_notification_prefs(true, '00:00', '23:59')`);   // im lặng gần cả ngày
-  assert.equal((await claim(db, '2026-11-14')).length, 0);
+  await asUser(db, owner, `select * from set_digest_prefs(false, 7)`);                     // tắt bản tin
+  await asUser(db, wk, `select * from set_digest_prefs(true, 9)`);                         // đổi sang 9 giờ
+  assert.equal((await claim(db, '2026-11-14', 7)).length, 0);                              // 7 giờ: owner tắt, wk chọn 9 giờ
+  const at9 = await claim(db, '2026-11-14', 9);
+  assert.deepEqual(at9.map((x) => x.user_id), [wk]);                                        // đúng giờ đã chọn thì gửi
+  assert.equal((await claim(db, '2026-11-14', 9)).length, 0);                               // đã gửi hôm nay
+});
+
+test('giờ nhận bản tin: chỉ 0–23, lưu theo người', async () => {
+  const { db, owner, wk } = await setup();
+  assert.equal((await asUser(db, owner, `select * from set_digest_prefs(true, 6)`)).rows[0].digest_hour, 6);
+  await assert.rejects(asUser(db, owner, `select * from set_digest_prefs(true, 24)`), /INVALID_ARGUMENT/);
+  assert.equal((await asUser(db, wk, `select * from notification_prefs`)).rows.length, 0);
+  assert.equal((await asUser(db, owner, `select digest_hour from notification_prefs`)).rows[0].digest_hour, 6);
 });
 
 test('việc xong, vụ kết thúc, trễ quá 15 ngày thì không đếm', async () => {
@@ -62,6 +73,6 @@ test('việc xong, vụ kết thúc, trễ quá 15 ngày thì không đếm', as
 
 test('hàm gửi chỉ dành cho máy chủ, người dùng thường không gọi được', async () => {
   const { db, owner } = await setup();
-  await assert.rejects(asUser(db, owner, `select * from claim_morning_digests('2026-11-12')`), /permission denied/i);
+  await assert.rejects(asUser(db, owner, `select * from claim_morning_digests('2026-11-12', 7)`), /permission denied/i);
   await assert.rejects(asUser(db, owner, `select morning_digest_counts($1,'2026-11-12')`, [owner]), /permission denied/i);
 });

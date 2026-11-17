@@ -1,4 +1,4 @@
--- Đặt lịch BẢN TIN SÁNG (H2 lát 2, D183): mỗi ngày 07:00 giờ Việt Nam (= 00:00 UTC) gọi hàm send-push.
+-- Đặt lịch BẢN TIN SÁNG (H2 lát 2, D183–D184): MỖI GIỜ gọi hàm send-push; mỗi lần hàm chỉ gửi cho những người có giờ nhận (họ tự chọn ở app, mặc định 7 giờ) đúng bằng giờ hiện tại theo giờ Việt Nam.
 -- Người dùng tự chạy MỘT LẦN trong Supabase → SQL Editor (Claude không chạy). Cần đã làm đủ các bước 1–4 của docs/HUONG_DAN_BAT_THONG_BAO.md,
 -- và đã bật hai tiện ích pg_cron, pg_net (Database → Extensions).
 --
@@ -10,7 +10,7 @@ select cron.unschedule('morning-digest') where exists (select 1 from cron.job wh
 
 select cron.schedule(
   'morning-digest',
-  '0 0 * * *',
+  '0 * * * *',   -- đầu mỗi giờ
   $$
   select net.http_post(
     url := 'https://<MÃ_DỰ_ÁN>.supabase.co/functions/v1/send-push',

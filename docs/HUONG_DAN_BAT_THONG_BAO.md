@@ -37,12 +37,12 @@ Migration mới: 0217 (lát 1), 0218 (lát 2), thứ tự …→ 0216 → 0217 �
 ## 6. Bản tin sáng (lát 2)
 1. Bật hai tiện ích **pg_cron** và **pg_net** (Supabase → Database → Extensions).
 2. Mở `supabase/maintenance/schedule_morning_digest.sql`, thay `<MÃ_DỰ_ÁN>`, `<ANON_KEY>`, `<PUSH_CRON_SECRET>` rồi chạy **một lần** trong SQL Editor.
-3. Mỗi sáng 7 giờ (giờ Việt Nam) mỗi người đã bật thông báo và có việc cần chú ý nhận **một** thông báo gộp, ví dụ "🌱 3 việc cây trồng · 💉 1 mũi tiêm · 💳 2 khoản công nợ". Không có gì thì không gửi; không ghi tiền hay tên khách.
+3. Lịch chạy **mỗi giờ**; mỗi người nhận **một** thông báo gộp vào giờ họ chọn (mặc định 7 giờ sáng, giờ Việt Nam), nếu đã bật thông báo và có việc cần chú ý, ví dụ "🌱 3 việc cây trồng · 💉 1 mũi tiêm · 💳 2 khoản công nợ". Không có gì thì không gửi; không ghi tiền hay tên khách.
 4. Người nhận chỉ được nhắc phần mình có quyền xem ở app (nhân viên không bị nhắc công nợ, bảo dưỡng tài sản).
 5. Muốn thử ngay: chạy riêng lệnh `net.http_post(...)` trong script một lần. Mỗi người chỉ nhận một bản tin mỗi ngày, nên thử xong hôm nay sẽ không gửi lại; muốn thử lại cùng ngày, xóa dòng của mình trong bảng `push_digest_log`.
 6. Tắt bản tin: `select cron.unschedule('morning-digest');`.
 
-Bản tin tính: việc theo kế hoạch hôm nay và trễ (tối đa 15 ngày), mũi tiêm và mốc an toàn đến hạn trong 3 ngày, bảo dưỡng tài sản, công nợ phải trả/phải thu đến hạn trong 3 ngày, giấy phép sắp hết hạn (còn 30, 14, 7, 3, 1, 0 ngày). Giờ im lặng mặc định 21:00–06:00. Hiện chưa có màn đổi giờ hay tắt bản tin trong app (lát sau).
+Bản tin tính: việc theo kế hoạch hôm nay và trễ (tối đa 15 ngày), mũi tiêm và mốc an toàn đến hạn trong 3 ngày, bảo dưỡng tài sản, công nợ phải trả/phải thu đến hạn trong 3 ngày, giấy phép sắp hết hạn (còn 30, 14, 7, 3, 1, 0 ngày). Mỗi người tự bật/tắt bản tin và chọn giờ nhận (5 đến 21 giờ) ở **Tài khoản → Thông báo → Bản tin buổi sáng**. Ai đã đặt lịch từ trước (chạy 7 giờ một lần) cần **chạy lại script đặt lịch** để đổi sang chạy mỗi giờ, và chạy `db push` migration 0219.
 
 ## Giới hạn
 Thông báo đẩy không bảo đảm tới nơi (tiết kiệm pin, mất mạng). Nội dung không ghi số tiền hay tên khách vì hiện trên màn hình khóa.
