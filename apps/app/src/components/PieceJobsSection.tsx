@@ -205,5 +205,5 @@ export function PieceJobsSection({ orgId, range, people, online, onChanged, stan
 
 /** Màn riêng (Sản xuất → Phiếu khoán) hiện thẳng nội dung; nhúng nơi khác thì gói trong khối thu gọn */
 function Wrap({ standalone, summary, warn, defaultOpen, children }: { standalone: boolean; summary: string; warn: boolean; defaultOpen: boolean; children: ReactNode }) {
-  return standalone ? <>{children}</> : <Collapsible title="Phiếu khoán" summary={summary} warn={warn} defaultOpen={defaultOpen}>{children}</Collapsible>;
+  return standalone ? <>{children}</> : <Collapsible title="Khoán công" summary={summary} warn={warn} defaultOpen={defaultOpen}>{children}</Collapsible>;
 }
