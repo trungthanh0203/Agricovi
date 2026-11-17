@@ -4,6 +4,8 @@ Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi t
 
 ## Đang làm
 
+- **17/11/2026 (D183, H2 lát 2, migration 0218, cần `db push` + deploy lại `send-push` + `PUSH_CRON_SECRET` + chạy script lịch)**: **bản tin sáng** 7 giờ: một thông báo gộp mỗi người (việc theo loại, mũi tiêm, mốc, bảo dưỡng, công nợ, giấy phép), theo đúng quyền xem của người đó. Làm theo mục 6 của `docs/HUONG_DAN_BAT_THONG_BAO.md`. Test `morning_digest`, `digest_compose` qua; CHƯA thử gửi thật (cần lát 1 chạy được trên điện thoại). Chưa làm: màn đổi giờ/tắt bản tin trong app.
+
 - **17/11/2026 (D182, H2 lát 1, migration 0217, cần `db push` + deploy `send-push` + khóa VAPID)**: **thông báo đẩy, đường ống**: service worker tự viết, Tài khoản → Thông báo (Bật / Gửi thử / Tắt), Edge Function `send-push`. Làm theo `docs/HUONG_DAN_BAT_THONG_BAO.md`. Đã build thử, service worker sinh đúng; CHƯA thử gửi thật (cần khóa VAPID) và chưa thử trên điện thoại; cần kiểm app vẫn chạy offline và `/quan-tri/` như cũ. Lát 2 (bản tin sáng) chờ lát 1 chạy được.
 
 - **17/11/2026 (D180, migration 0216, cần `db push`)**: **H7** giá thành tạm tính so giá bán ở form Ghi bán hàng và danh sách lần bán (không migration). **H9** Khai báo → **Tài sản**: sổ tài sản, khấu hao theo tháng chia vào vụ (Xem cách ghi → Ghi), thanh lý, nhắc bảo dưỡng ở Trang chủ. Test `assets`. Chưa kiểm giao diện trên máy thật; chưa làm: bảo dưỡng kèm chi phí. Push theo thứ tự …→ 0215 → 0216. Mục Phiếu khoán đổi tên **Khoán công**.
