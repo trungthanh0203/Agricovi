@@ -29,7 +29,9 @@ async function handle(req: Request): Promise<Response> {
 
   const pub = Deno.env.get('VAPID_PUBLIC_KEY');
   const priv = Deno.env.get('VAPID_PRIVATE_KEY');
-  const subject = Deno.env.get('VAPID_SUBJECT');
+  const rawSubject = (Deno.env.get('VAPID_SUBJECT') ?? '').trim();
+  // chấp nhận email trơn: tự thêm mailto: (dịch vụ đẩy chỉ nhận mailto: hoặc https://)
+  const subject = /^[^@\s]+@[^@\s]+$/.test(rawSubject) ? `mailto:${rawSubject}` : rawSubject;
   if (!pub || !priv || !subject) return fail('NOT_CONFIGURED: Thông báo đẩy chưa được cấu hình ở máy chủ. Hãy báo quản trị nền tảng.', 503);
 
   let body: Record<string, unknown>;
