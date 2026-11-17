@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Collapsible } from '../components/Collapsible';
 import { InvitationsPanel } from '../components/InvitationsPanel';
 import { MigrateImages } from '../components/MigrateImages';
+import { OrgDetailsSection } from '../components/OrgDetailsSection';
 import { PushSettings } from '../components/PushSettings';
 import { PlanCard } from '../components/PlanCard';
 import { QrCard } from '../components/QrCard';
@@ -14,7 +15,7 @@ import { useOrgs } from '../lib/orgs';
 import { PERM_LEVEL_LABEL, PERM_MODULE_LABEL, PERM_MODULES } from '../lib/permissions';
 import { changeMyPassword, fetchDisplayName, fetchMyWork, renameOrg, saveDisplayName, type MyWork } from '../lib/profile';
 import { buildAccountQr } from '../lib/qr';
-import { isOwner, roleSummary } from '../lib/roles';
+import { hasRole, isOwner, roleSummary } from '../lib/roles';
 import { fetchStaffStatus, WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
 import { HelpButton } from '../components/HelpButton';
 
@@ -65,6 +66,8 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
           <PasswordForm />
         </Collapsible>
       </Collapsible>
+
+      {active && hasRole(active.roles, 'manager') && <OrgDetailsSection />}
 
       {active && (
         <Collapsible title="Mã QR cơ sở" summary="thông tin tài khoản và cơ sở">

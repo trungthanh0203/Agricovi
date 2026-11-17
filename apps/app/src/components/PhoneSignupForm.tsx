@@ -50,6 +50,19 @@ export function PhoneSignupForm() {
     <form onSubmit={onSubmit} noValidate>
       <p className="muted auth-hint">Dành cho chủ Hộ / Hợp tác xã <strong>không có email</strong>. Chúng tôi sẽ liên hệ qua Zalo số điện thoại bạn nhập để xác nhận rồi mở cơ sở cho bạn (miễn phí).</p>
       <label>
+        Số điện thoại (có dùng Zalo)
+        <input type="tel" inputMode="tel" autoComplete="tel" placeholder="0912345678" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        <small>Số này dùng để đăng nhập và để chúng tôi xác nhận qua Zalo.</small>
+      </label>
+      <label>
+        Mật khẩu
+        <span className="pwfield">
+          <input type={showPw ? 'text' : 'password'} value={password} autoComplete="new-password" onChange={(e) => setPassword(e.target.value)} />
+          <button type="button" className="pwtoggle" onClick={() => setShowPw((v) => !v)} aria-label={showPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>{showPw ? '🙈' : '👁'}</button>
+        </span>
+        <small>Ít nhất 8 ký tự. Hãy nhớ mật khẩu này.</small>
+      </label>
+      <label>
         Họ tên người đại diện
         <input value={fullName} maxLength={80} autoComplete="name" onChange={(e) => setFullName(e.target.value)} />
       </label>
@@ -63,19 +76,6 @@ export function PhoneSignupForm() {
           <option value="household">Hộ nông dân / trang trại</option>
           <option value="cooperative">Hợp tác xã</option>
         </select>
-      </label>
-      <label>
-        Số điện thoại (có dùng Zalo)
-        <input type="tel" inputMode="tel" autoComplete="tel" placeholder="0912345678" value={phone} onChange={(e) => setPhone(e.target.value)} />
-        <small>Số này dùng để đăng nhập và để chúng tôi xác nhận qua Zalo.</small>
-      </label>
-      <label>
-        Mật khẩu
-        <span className="pwfield">
-          <input type={showPw ? 'text' : 'password'} value={password} autoComplete="new-password" onChange={(e) => setPassword(e.target.value)} />
-          <button type="button" className="pwtoggle" onClick={() => setShowPw((v) => !v)} aria-label={showPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>{showPw ? '🙈' : '👁'}</button>
-        </span>
-        <small>Ít nhất 8 ký tự. Hãy nhớ mật khẩu này.</small>
       </label>
       <label>
         Mã giới thiệu (nếu có)

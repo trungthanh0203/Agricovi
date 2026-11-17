@@ -165,7 +165,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
   return (
     <>
       <h2 className="sect">Hộ thành viên{households.length > 0 ? ` (${households.length} hộ${invites.length > 0 ? ` · ${invites.length} lời mời chờ` : ''})` : ''}</h2>
-      <p className="muted">Số hộ không bị giới hạn; hạn mức chỉ tính theo số vụ đang chạy của HTX.</p>
+      <p className="muted">Gói trả phí không giới hạn số hộ (hạn mức chỉ tính theo số vụ đang chạy của HTX); gói dùng thử chỉ thêm được 1 hộ.</p>
       {r.error && <p ref={r.msgRef} className="msg error" role="alert">{r.error}</p>}
       {r.info && <p ref={r.msgRef} className="msg ok" role="status">{r.info}</p>}
       {canManage && <button className="secondary" disabled={!navigator.onLine} onClick={() => openForm(null)}>+ Thêm hộ thành viên</button>}

@@ -48,7 +48,7 @@ export function AuthScreen() {
           : 'Chủ Hộ/HTX đăng ký bằng email. Hãy nhập email của bạn.',
       );
     }
-    if (effective === 'signup' && fullName.trim().length < 2) return setError('Hãy nhập họ tên (ít nhất 2 ký tự).');
+    if (effective === 'signup' && fullName.trim().length < 2) return setError('Hãy nhập họ tên người đại diện (ít nhất 2 ký tự).');
     if ((effective === 'signup' || effective === 'newpass') && password.length < 8) {
       return setError('Mật khẩu cần ít nhất 8 ký tự.');
     }
@@ -122,12 +122,6 @@ export function AuthScreen() {
         {effective === 'signup' && !byPhone && <p className="muted auth-hint">Dành cho chủ Hộ / Hợp tác xã. Nhân viên dùng tài khoản do chủ cơ sở cấp.</p>}
 
         <form onSubmit={onSubmit} noValidate style={effective === 'signup' && byPhone ? { display: 'none' } : undefined}>
-          {effective === 'signup' && (
-            <label>
-              Họ tên
-              <input autoComplete="name" maxLength={80} placeholder="Nguyễn Văn A" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-            </label>
-          )}
           {effective !== 'newpass' && (
             <label>
               {effective === 'signin' ? 'Email hoặc số điện thoại' : 'Email'}
@@ -147,6 +141,12 @@ export function AuthScreen() {
             <label>
               {effective === 'newpass' ? 'Mật khẩu mới' : effective === 'signup' ? 'Mật khẩu (ít nhất 8 ký tự)' : 'Mật khẩu'}
               {pwInput}
+            </label>
+          )}
+          {effective === 'signup' && (
+            <label>
+              Họ tên người đại diện
+              <input autoComplete="name" maxLength={80} placeholder="Nguyễn Văn A" value={fullName} onChange={(e) => setFullName(e.target.value)} />
             </label>
           )}
 
