@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { AttendanceList, type ListPreset } from './AttendanceList';
 import { AbsencesSection } from './AbsencesSection';
 import { AttendancePhotos } from './AttendancePhotos';
-import { KpiTile } from './HomeStats';
 import { absenceBadge, fetchAbsences, type Absence } from '../lib/absences';
 import { getAttendanceSummary, type AttSummary } from '../lib/attendanceAdmin';
 import { useAuth } from '../lib/auth';
@@ -20,12 +19,11 @@ import { useCycleTitle } from '../lib/useCycleTitle';
 
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
-type Tab = 'today' | 'list' | 'absences' | 'photos';
+type Tab = 'list' | 'absences' | 'photos';
 
 /**
  * Chấm công (D42, D115). Bốn mục, mỗi mục một việc:
- *  - Hôm nay: hai nút Chấm công hộ / Ghi nghỉ, danh sách Cần xử lý gộp một chỗ, ba ô số (trong ca, đã ra ca, nghỉ hôm nay).
- *  - Bảng công: dòng tóm tắt tháng, danh sách phân trang, lọc (nâng cao gấp lại), xác nhận (cả hàng loạt), đề nghị sửa công.
+ *  - Bảng công (mở đầu): hai nút Chấm công hộ / Ghi nghỉ, dòng "Hôm nay", khung Cần xử lý, bộ lọc (mặc định Chờ xác nhận, 30 ngày), bảng công, nút xác nhận các công hợp lệ dưới bảng, đề nghị sửa công.
  *  - Nghỉ phép: ghi nghỉ hộ, danh sách theo tháng, tổng hợp năm.
  *  - Ảnh cờ đỏ: ảnh cờ đỏ từ máy chấm công (chỉ chủ/quản lý).
  * (Máy chấm công và mã PIN nằm ở Khai báo → Máy chấm công.)
@@ -37,7 +35,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
   const { session } = useAuth();
   const online = useOnline();
   const uid = session?.user.id;
-  const [tab, setTab] = useState<Tab>('today');
+  const [tab, setTab] = useState<Tab>('list');
   const [workers, setWorkers] = useState<WorkerLite[]>([]);
   const [sum, setSum] = useState<AttSummary | null>(null);
   const [orphans, setOrphans] = useState<{ worker_id: string; full_name: string; team_name: string | null }[]>([]);
@@ -83,13 +81,30 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
 
   if (!active) return null;
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'today', label: 'Hôm nay' },
     { id: 'list', label: 'Bảng công' },
     ...(isAdmin || canRecordFor.length > 0 ? [{ id: 'absences' as Tab, label: 'Nghỉ phép' }] : []),
     ...(isAdmin ? [
       { id: 'photos' as Tab, label: `Ảnh cờ đỏ${sum && sum.flagged > 0 ? ` (${sum.flagged})` : ''}` },
     ] : []),
   ];
+
+  const todo: { key: string; tone: 'warn' | 'err'; tag: string; text: string; go?: () => void }[] = [];
+  if (sum) {
+    if (sum.pending > 0) todo.push({ key: 'pending', tone: 'warn', tag: 'Chờ xác nhận', text: `${sum.pending} công chờ xác nhận`, go: () => goList('pending', 'month') });
+    if (sum.stale > 0) todo.push({ key: 'stale', tone: 'err', tag: 'Quên ra ca', text: `${sum.stale} ca đã mở từ hôm trước chưa ra ca`, go: () => goList('open', 'month') });
+    if (isAdmin && sum.flagged > 0) todo.push({ key: 'flagged', tone: 'err', tag: 'Ảnh cờ đỏ', text: `${sum.flagged} ảnh cờ đỏ hôm nay`, go: () => setTab('photos') });
+    for (const o of orphans) todo.push({ key: o.worker_id, tone: 'warn', tag: 'Chưa có tổ trưởng', text: `${o.full_name}${o.team_name ? ` (${o.team_name})` : ' chưa thuộc tổ nào'}: chọn tổ trưởng ở Khai báo → Phòng / Tổ` });
+  }
+  const todoNode = !sum ? null : todo.length === 0 ? (
+    <p className="msg ok" role="status">Không có việc cần xử lý.</p>
+  ) : (
+    <div className="card alert-warn">
+      <h2>Cần xử lý ({todo.length})</h2>
+      {todo.map((t) => (
+        <p key={t.key}><span className={`pill ${t.tone}`}>{t.tag}</span> {t.text}{t.go && <> <button type="button" className="link" onClick={t.go}>Xem</button></>}</p>
+      ))}
+    </div>
+  );
 
   return (
     <>
@@ -104,7 +119,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
         </div>
       )}
 
-      {tab === 'today' && (
+      {tab === 'list' && (
         <>
           {canRecordFor.length > 0 ? (
             <div className="btnrow att-actions">
@@ -112,7 +127,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
               <button type="button" className="secondary" disabled={!online} onClick={() => { setAbsAdd(Date.now()); setTab('absences'); }}>＋ Ghi nghỉ</button>
             </div>
           ) : (
-            <p className="muted">Chấm công do máy chấm công ghi, hoặc do chủ, quản lý, tổ trưởng nhập cho người làm. Bạn xem công của mình ở mục “Bảng công”.</p>
+            <p className="muted">Chấm công do máy chấm công ghi, hoặc do chủ, quản lý, tổ trưởng nhập cho người làm. Bạn xem công của mình ở bảng dưới.</p>
           )}
 
           {panel === 'shift' && canRecordFor.length > 0 && (
@@ -123,44 +138,21 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
             </div>
           )}
 
-          {sum && (() => {
-            const todo: { key: string; tone: 'warn' | 'err'; tag: string; text: string; go?: () => void }[] = [];
-            if (sum.pending > 0) todo.push({ key: 'pending', tone: 'warn', tag: 'Chờ xác nhận', text: `${sum.pending} công chờ xác nhận`, go: () => goList('pending', 'month') });
-            if (sum.stale > 0) todo.push({ key: 'stale', tone: 'err', tag: 'Quên ra ca', text: `${sum.stale} ca đã mở từ hôm trước chưa ra ca`, go: () => goList('open', 'month') });
-            if (isAdmin && sum.flagged > 0) todo.push({ key: 'flagged', tone: 'err', tag: 'Ảnh cờ đỏ', text: `${sum.flagged} ảnh cờ đỏ hôm nay`, go: () => setTab('photos') });
-            for (const o of orphans) todo.push({ key: o.worker_id, tone: 'warn', tag: 'Chưa có tổ trưởng', text: `${o.full_name}${o.team_name ? ` (${o.team_name})` : ' chưa thuộc tổ nào'}: chọn tổ trưởng ở Khai báo → Phòng / Tổ` });
-            return todo.length === 0 ? (
-              <p className="msg ok" role="status">Không có việc cần xử lý.</p>
-            ) : (
-              <div className="card alert-warn">
-                <h2>Cần xử lý ({todo.length})</h2>
-                {todo.map((t) => (
-                  <p key={t.key}><span className={`pill ${t.tone}`}>{t.tag}</span> {t.text}{t.go && <> <button type="button" className="link" onClick={t.go}>Xem</button></>}</p>
-                ))}
-              </div>
-            );
-          })()}
-
           {sum && (
-            <div className="kpis">
-              <KpiTile label="Đang trong ca" value={String(sum.in_shift)} tone="info" note={`${sum.present}/${sum.workers} người có mặt`} />
-              <KpiTile label="Đã ra ca hôm nay" value={String(sum.done)} tone="ok" />
-              <KpiTile label="Nghỉ hôm nay" value={String(absToday.length)} tone={absToday.length > 0 ? 'warn' : 'neutral'} note={absToday.length > 0 ? (showAbs ? 'bấm để ẩn' : 'bấm để xem') : 'không có'}
-                onClick={absToday.length > 0 ? () => setShowAbs((v) => !v) : undefined} />
-            </div>
+            <p className="att-summary">
+              Hôm nay: <strong>{sum.in_shift}</strong> đang trong ca · <strong>{sum.done}</strong> đã ra ca ({sum.present}/{sum.workers} người có mặt)
+              {absToday.length > 0 && <> · <button type="button" className="link" onClick={() => setShowAbs((v) => !v)}>{absToday.length} nghỉ</button></>}
+            </p>
           )}
-
           {showAbs && absToday.length > 0 && (
             <div className="card slim">
               {absToday.slice(0, 12).map((x) => <p key={x.id} className="muted">{workers.find((w) => w.id === x.worker_id)?.full_name ?? 'Người làm'}: {absenceBadge(x)}{x.reason ? ` · ${x.reason}` : ''}</p>)}
               <button type="button" className="link" onClick={() => setTab('absences')}>Mở danh sách nghỉ phép</button>
             </div>
           )}
-        </>
-      )}
 
-      {tab === 'list' && (
-        <AttendanceList orgId={active.id} isAdmin={isAdmin} meId={me?.id ?? null} workers={workers} online={online} preset={preset} monthMinutes={sum?.month_minutes ?? null} pendingCount={sum?.pending ?? null} onChanged={() => void load()} />
+          <AttendanceList orgId={active.id} isAdmin={isAdmin} meId={me?.id ?? null} workers={workers} online={online} preset={preset} extra={todoNode} onChanged={() => void load()} />
+        </>
       )}
 
       {tab === 'absences' && <AbsencesSection orgId={active.id} workers={canRecordFor} canWrite={canRecordFor.length > 0} isOwner={isOwner(active.roles)} online={online} addSignal={absAdd} />}

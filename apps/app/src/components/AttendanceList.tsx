@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Collapsible } from './Collapsible';
 import { RowMenu } from './RowMenu';
 import { bulkConfirmAttendance, listAttendancePage, type AttPage, type AttPageRow, type AttStatusFilter } from '../lib/attendanceAdmin';
@@ -34,13 +34,14 @@ export interface ListPreset { status: AttStatusFilter; range: 'today' | 'week' |
  * Danh sách công (D115): lọc theo ngày, trạng thái, tên; phân trang 50 dòng do máy chủ cắt nên đủ cho cơ sở hàng trăm người.
  * Chủ/quản lý có nút xác nhận hàng loạt các công hợp lệ; tổ trưởng chỉ thấy người trong tổ (chính sách RLS).
  */
-export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, monthMinutes, pendingCount, onChanged }: {
+export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, extra, onChanged }: {
   orgId: string; isAdmin: boolean; meId: string | null; workers: WorkerLite[]; online: boolean; preset: ListPreset | null;
-  /** Giờ công đã xác nhận trong tháng và số công chờ xác nhận (null = chưa biết): hiện ở dòng tóm tắt đầu trang */
-  monthMinutes: number | null; pendingCount: number | null; onChanged: () => void;
+  /** Khối hiện ngay dưới các nút khoảng ngày (khung "Cần xử lý") */
+  extra?: ReactNode; onChanged: () => void;
 }) {
-  const [range, setRange] = useState<'today' | 'week' | 'month'>('today');
-  const [status, setStatus] = useState<AttStatusFilter>('');
+  // Mặc định: 30 ngày gần nhất, trạng thái Chờ xác nhận (việc chủ/quản lý cần làm nhất)
+  const [range, setRange] = useState<'today' | 'week' | 'month'>('month');
+  const [status, setStatus] = useState<AttStatusFilter>('pending');
   const [q, setQ] = useState('');
   const [appliedQ, setAppliedQ] = useState('');
   const [page, setPage] = useState(0);
@@ -107,34 +108,21 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
           <button key={r.id} role="tab" aria-selected={range === r.id} className={range === r.id ? 'chip active' : 'chip'} onClick={() => { setRange(r.id as typeof range); setPage(0); }}>{r.label}</button>
         ))}
       </div>
-      {(monthMinutes !== null || pendingCount !== null) && (
-        <p className="att-summary">
-          {monthMinutes !== null && <>Tháng này: <strong>{(monthMinutes / 60).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} giờ</strong> đã xác nhận</>}
-          {monthMinutes !== null && pendingCount !== null && ' · '}
-          {pendingCount !== null && (pendingCount > 0 ? <><strong>{pendingCount}</strong> công chờ xác nhận</> : 'không có công chờ xác nhận')}
-        </p>
-      )}
-      <Collapsible inline defaultOpen={status !== '' || appliedQ !== ''} title="Bộ lọc nâng cao"
-        summary={status !== '' || appliedQ !== '' ? [STATUS_OPTIONS.find((o) => o.id === status && status !== '')?.label, appliedQ ? `tên “${appliedQ}”` : ''].filter(Boolean).join(' · ') : 'trạng thái, tìm theo tên'}>
-        <div className="filters att-filters">
-          <label>Trạng thái
-            <select value={status} onChange={(e) => { setStatus(e.target.value as AttStatusFilter); setPage(0); }}>
-              {STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-            </select>
-          </label>
-          <form onSubmit={search} className="searchrow">
-            <label>Tìm theo tên<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Gõ tên rồi bấm Tìm" /></label>
-            <button type="submit" className="secondary">Tìm</button>
-          </form>
-        </div>
-      </Collapsible>
+      {extra}
+      <div className="filters att-filters">
+        <label>Trạng thái
+          <select value={status} onChange={(e) => { setStatus(e.target.value as AttStatusFilter); setPage(0); }}>
+            {STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+        </label>
+        <form onSubmit={search} className="searchrow">
+          <label>Tìm theo tên<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Gõ tên rồi bấm Tìm" /></label>
+          <button type="submit" className="secondary">Tìm</button>
+        </form>
+      </div>
 
       {error && <p className="msg error" role="alert">{error}</p>}
       {notice && <p className="msg ok" role="status">{notice}</p>}
-
-      {isAdmin && (status === '' || status === 'pending') && (pendingCount === null || pendingCount > 0) && (
-        <button className="primary" disabled={busy || !online} onClick={() => void bulk()}>✔ Xác nhận các công hợp lệ trong khoảng này</button>
-      )}
 
       {pendingAdjs.length > 0 && (
         <Collapsible inline defaultOpen title={`Đề nghị sửa công chờ duyệt (${pendingAdjs.length})`} warn summary={isAdmin ? 'bấm Duyệt hoặc Từ chối' : 'chờ quản lý duyệt'}>
@@ -157,6 +145,7 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
         </Collapsible>
       )}
 
+      <h2 className="sect">{status === 'pending' ? 'Các công chờ xác nhận' : status === '' ? 'Danh sách công' : STATUS_OPTIONS.find((o) => o.id === status)?.label}</h2>
       <p className="muted">{data ? (total === 0 ? 'Không có bản ghi nào.' : `Hiện ${page * PAGE + 1}–${Math.min(total, (page + 1) * PAGE)} trong ${total} bản ghi.`) : 'Đang tải…'}</p>
       <table className="grid">
         <thead><tr><th>Người · ngày</th><th>Giờ làm</th><th></th></tr></thead>
@@ -197,6 +186,10 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
           <span className="muted pager">Trang {page + 1}/{pages}</span>
           <button className="secondary" disabled={page + 1 >= pages || busy} onClick={() => setPage(page + 1)}>Sau ›</button>
         </div>
+      )}
+
+      {isAdmin && (status === '' || status === 'pending') && (status === 'pending' ? total > 0 : rows.some((r) => r.status === 'needs_confirmation')) && (
+        <button className="primary" disabled={busy || !online} onClick={() => void bulk()}>✔ Xác nhận các công hợp lệ trong khoảng này</button>
       )}
 
       {adjRec && (
