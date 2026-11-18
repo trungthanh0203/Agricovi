@@ -872,3 +872,7 @@ td.fold-col.has-fold { padding-right: 40px; }
 .area-sum { margin: 0; font-size: .85rem; }
 .table-scroll { overflow-x: auto; margin: 4px -4px; padding: 0 4px; }
 .table-scroll table { min-width: 100%; }
+
+/* Chấm công: hai nút việc chính ở đầu tab Hôm nay và dòng tóm tắt tháng ở Bảng công */
+.att-actions button { flex: 1 1 0; }
+.att-summary { margin: 4px 0 8px; font-size: 15px; }

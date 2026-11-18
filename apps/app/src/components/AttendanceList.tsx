@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Collapsible } from './Collapsible';
 import { RowMenu } from './RowMenu';
 import { bulkConfirmAttendance, listAttendancePage, type AttPage, type AttPageRow, type AttStatusFilter } from '../lib/attendanceAdmin';
 import { absenceBadge, absenceOn, fetchAbsences, type Absence } from '../lib/absences';
@@ -33,8 +34,10 @@ export interface ListPreset { status: AttStatusFilter; range: 'today' | 'week' |
  * Danh sách công (D115): lọc theo ngày, trạng thái, tên; phân trang 50 dòng do máy chủ cắt nên đủ cho cơ sở hàng trăm người.
  * Chủ/quản lý có nút xác nhận hàng loạt các công hợp lệ; tổ trưởng chỉ thấy người trong tổ (chính sách RLS).
  */
-export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, onChanged }: {
-  orgId: string; isAdmin: boolean; meId: string | null; workers: WorkerLite[]; online: boolean; preset: ListPreset | null; onChanged: () => void;
+export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, monthMinutes, pendingCount, onChanged }: {
+  orgId: string; isAdmin: boolean; meId: string | null; workers: WorkerLite[]; online: boolean; preset: ListPreset | null;
+  /** Giờ công đã xác nhận trong tháng và số công chờ xác nhận (null = chưa biết): hiện ở dòng tóm tắt đầu trang */
+  monthMinutes: number | null; pendingCount: number | null; onChanged: () => void;
 }) {
   const [range, setRange] = useState<'today' | 'week' | 'month'>('today');
   const [status, setStatus] = useState<AttStatusFilter>('');
@@ -104,23 +107,54 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
           <button key={r.id} role="tab" aria-selected={range === r.id} className={range === r.id ? 'chip active' : 'chip'} onClick={() => { setRange(r.id as typeof range); setPage(0); }}>{r.label}</button>
         ))}
       </div>
-      <div className="filters att-filters">
-        <label>Trạng thái
-          <select value={status} onChange={(e) => { setStatus(e.target.value as AttStatusFilter); setPage(0); }}>
-            {STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-          </select>
-        </label>
-        <form onSubmit={search} className="searchrow">
-          <label>Tìm theo tên<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Gõ tên rồi bấm Tìm" /></label>
-          <button type="submit" className="secondary">Tìm</button>
-        </form>
-      </div>
+      {(monthMinutes !== null || pendingCount !== null) && (
+        <p className="att-summary">
+          {monthMinutes !== null && <>Tháng này: <strong>{(monthMinutes / 60).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} giờ</strong> đã xác nhận</>}
+          {monthMinutes !== null && pendingCount !== null && ' · '}
+          {pendingCount !== null && (pendingCount > 0 ? <><strong>{pendingCount}</strong> công chờ xác nhận</> : 'không có công chờ xác nhận')}
+        </p>
+      )}
+      <Collapsible inline defaultOpen={status !== '' || appliedQ !== ''} title="Bộ lọc nâng cao"
+        summary={status !== '' || appliedQ !== '' ? [STATUS_OPTIONS.find((o) => o.id === status && status !== '')?.label, appliedQ ? `tên “${appliedQ}”` : ''].filter(Boolean).join(' · ') : 'trạng thái, tìm theo tên'}>
+        <div className="filters att-filters">
+          <label>Trạng thái
+            <select value={status} onChange={(e) => { setStatus(e.target.value as AttStatusFilter); setPage(0); }}>
+              {STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+            </select>
+          </label>
+          <form onSubmit={search} className="searchrow">
+            <label>Tìm theo tên<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Gõ tên rồi bấm Tìm" /></label>
+            <button type="submit" className="secondary">Tìm</button>
+          </form>
+        </div>
+      </Collapsible>
 
       {error && <p className="msg error" role="alert">{error}</p>}
       {notice && <p className="msg ok" role="status">{notice}</p>}
 
-      {isAdmin && (status === '' || status === 'pending') && (
+      {isAdmin && (status === '' || status === 'pending') && (pendingCount === null || pendingCount > 0) && (
         <button className="primary" disabled={busy || !online} onClick={() => void bulk()}>✔ Xác nhận các công hợp lệ trong khoảng này</button>
+      )}
+
+      {pendingAdjs.length > 0 && (
+        <Collapsible inline defaultOpen title={`Đề nghị sửa công chờ duyệt (${pendingAdjs.length})`} warn summary={isAdmin ? 'bấm Duyệt hoặc Từ chối' : 'chờ quản lý duyệt'}>
+          {pendingAdjs.map((x) => {
+            const rec = rows.find((r) => r.id === x.attendance_id);
+            return (
+            <div className="card slim" key={x.id}>
+              <strong>{rec ? rec.worker_name : 'Đề nghị sửa công'}</strong>{rec ? ` · ${fmtDate(rec.work_date)}` : ''}
+              <p className="muted">Đề nghị: {x.proposed.started_at ? `vào ${hhmm(x.proposed.started_at)} ` : ''}{x.proposed.ended_at ? `ra ${hhmm(x.proposed.ended_at)} ` : ''}{x.proposed.break_minutes != null ? `nghỉ ${x.proposed.break_minutes} phút` : ''}</p>
+              <p className="muted">Lý do: {x.reason}</p>
+              {isAdmin ? (
+                <div className="actions">
+                  <button className="primary" disabled={busy || !online} onClick={() => void run(async () => { await decideAdjustment(x.id, true); setAdjs(await listAdjustments(orgId)); })}>Duyệt</button>
+                  <button className="secondary" disabled={busy || !online} onClick={() => void run(async () => { await decideAdjustment(x.id, false); setAdjs(await listAdjustments(orgId)); })}>Từ chối</button>
+                </div>
+              ) : <span className="pill warn">Chờ quản lý duyệt</span>}
+            </div>
+            );
+          })}
+        </Collapsible>
       )}
 
       <p className="muted">{data ? (total === 0 ? 'Không có bản ghi nào.' : `Hiện ${page * PAGE + 1}–${Math.min(total, (page + 1) * PAGE)} trong ${total} bản ghi.`) : 'Đang tải…'}</p>
@@ -168,28 +202,6 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
       {adjRec && (
         <AdjustForm key={adjRec.id} rec={adjRec} busy={busy || !online} onClose={() => setAdjFor(null)}
           onSave={(p, r) => run(async () => { await requestAdjustment(adjRec.id, p, r); setAdjFor(null); setAdjs(await listAdjustments(orgId)); })} />
-      )}
-
-      {pendingAdjs.length > 0 && (
-        <>
-          <h2 className="sect">Yêu cầu sửa công chờ duyệt ({pendingAdjs.length})</h2>
-          {pendingAdjs.map((x) => {
-            const rec = rows.find((r) => r.id === x.attendance_id);
-            return (
-            <div className="card slim" key={x.id}>
-              <strong>{rec ? rec.worker_name : 'Đề nghị sửa công'}</strong>{rec ? ` · ${fmtDate(rec.work_date)}` : ''}
-              <p className="muted">Đề nghị: {x.proposed.started_at ? `vào ${hhmm(x.proposed.started_at)} ` : ''}{x.proposed.ended_at ? `ra ${hhmm(x.proposed.ended_at)} ` : ''}{x.proposed.break_minutes != null ? `nghỉ ${x.proposed.break_minutes} phút` : ''}</p>
-              <p className="muted">Lý do: {x.reason}</p>
-              {isAdmin ? (
-                <div className="actions">
-                  <button className="primary" disabled={busy || !online} onClick={() => void run(async () => { await decideAdjustment(x.id, true); setAdjs(await listAdjustments(orgId)); })}>Duyệt</button>
-                  <button className="secondary" disabled={busy || !online} onClick={() => void run(async () => { await decideAdjustment(x.id, false); setAdjs(await listAdjustments(orgId)); })}>Từ chối</button>
-                </div>
-              ) : <span className="pill warn">Chờ quản lý duyệt</span>}
-            </div>
-            );
-          })}
-        </>
       )}
 
       <p className="muted">Chỉ công đã xác nhận mới được tính tiền. Công từ máy chấm công nằm ở trạng thái Chờ xác nhận cho tới khi bạn xác nhận.</p>

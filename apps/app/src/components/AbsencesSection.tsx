@@ -25,7 +25,7 @@ const blank = (workerId: string): Form => ({
  * xin qua đâu, lý do, hưởng lương hay không. Chỉ ghi nhận, chưa nối vào phiếu lương. Cần mạng.
  * `workers` là những người mà người dùng được ghi nghỉ cho (máy chủ vẫn kiểm lại quyền).
  */
-export function AbsencesSection({ orgId, workers, canWrite, isOwner, online }: { orgId: string; workers: WorkerLite[]; canWrite: boolean; isOwner: boolean; online: boolean }) {
+export function AbsencesSection({ orgId, workers, canWrite, isOwner, online, addSignal = 0 }: { orgId: string; workers: WorkerLite[]; canWrite: boolean; isOwner: boolean; online: boolean; addSignal?: number }) {
   const [month, setMonth] = useState(todayLocal().slice(0, 7));
   const [who, setWho] = useState('');
   const [rows, setRows] = useState<Absence[] | null>(null);
@@ -43,6 +43,8 @@ export function AbsencesSection({ orgId, workers, canWrite, isOwner, online }: {
     try { setRows(await fetchAbsences(orgId, from, `${month}-${String(last).padStart(2, '0')}`, true)); setError(null); } catch (e) { setError(friendlyError(e)); }
   }, [orgId, month]);
   useEffect(() => { void load(); }, [load]);
+  // Mở sẵn biểu mẫu Ghi nghỉ khi vào từ nút "＋ Ghi nghỉ" ở tab Hôm nay
+  useEffect(() => { if (addSignal > 0 && canWrite && workers.length > 0) { setError(null); setMsg(null); setForm(blank(workers[0]!.id)); } }, [addSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function save() {
     if (!form) return;
@@ -75,7 +77,6 @@ export function AbsencesSection({ orgId, workers, canWrite, isOwner, online }: {
       {!online && <p className="msg warn" role="status">Đang offline: ghi nghỉ cần có mạng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
       {msg && <p className="msg ok" role="status">{msg}</p>}
-      <p className="muted">Ghi lại việc xin nghỉ của người làm (họ nói miệng, nhắn Zalo hay gọi điện). Chỉ để ghi nhận, chưa tính vào bảng lương.</p>
       {canWrite && !form && workers.length > 0 && <button className="primary" disabled={!online} onClick={() => { setError(null); setMsg(null); setForm(blank(workers[0]!.id)); }}>＋ Ghi nghỉ</button>}
 
       {form && (
@@ -122,8 +123,6 @@ export function AbsencesSection({ orgId, workers, canWrite, isOwner, online }: {
           </div>
         </div>
       )}
-
-      <AbsenceSummary orgId={orgId} workers={workers} isOwner={isOwner} online={online} refreshKey={tick} />
 
       <div className="filters">
         <label>Tháng<input type="month" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} /></label>
@@ -172,6 +171,9 @@ export function AbsencesSection({ orgId, workers, canWrite, isOwner, online }: {
             </tbody>
           </table>
         )}
+
+      <AbsenceSummary orgId={orgId} workers={workers} isOwner={isOwner} online={online} refreshKey={tick} />
+      <p className="muted">Ghi lại việc xin nghỉ của người làm (họ nói miệng, nhắn Zalo hay gọi điện). Chỉ để ghi nhận, chưa tính vào bảng lương.</p>
     </>
   );
 }
