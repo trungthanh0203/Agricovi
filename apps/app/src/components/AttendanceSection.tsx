@@ -144,7 +144,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
               <div className="card">
                 <h2>Ghi công</h2>
                 <p className="muted">{isAdmin ? 'Nhập ca đã làm của người làm, kể cả của bạn (dành cho nơi không dùng máy chấm công).' : 'Nhập ca đã làm của người trong tổ.'}</p>
-                <ShiftForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
+                <ShiftForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onCancel={() => setPanel(null)} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
               </div>
             ) : null}
             extra={todoNode} onChanged={() => void load()} />
@@ -168,7 +168,7 @@ const ShiftCycleSelect = ({ cycles, value, onChange }: { cycles: CycleOpt[]; val
   );
 };
 
-function ShiftForm({ workers, cycles, busy, onSave }: { workers: WorkerLite[]; cycles: CycleOpt[]; busy: boolean; onSave: (w: string, s: Date, e: Date, b: number, note: string, c: string | null) => Promise<unknown> }) {
+function ShiftForm({ workers, cycles, busy, onSave, onCancel }: { workers: WorkerLite[]; cycles: CycleOpt[]; busy: boolean; onCancel: () => void; onSave: (w: string, s: Date, e: Date, b: number, note: string, c: string | null) => Promise<unknown> }) {
   const [cyc, setCyc] = useState('');
   const [w, setW] = useState(workers[0]?.id ?? '');
   const [date, setDate] = useState(todayLocal());
@@ -208,7 +208,10 @@ function ShiftForm({ workers, cycles, busy, onSave }: { workers: WorkerLite[]; c
       <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
       {err && <p className="msg error" role="alert">{err}</p>}
       {ok && <p className="msg ok" role="status">{ok}</p>}
-      <button type="submit" className="secondary" disabled={busy}>Lưu công</button>
+      <div className="btnrow">
+        <button type="submit" className="primary" disabled={busy}>Lưu công</button>
+        <button type="button" className="secondary" onClick={onCancel}>Hủy</button>
+      </div>
     </form>
   );
 }

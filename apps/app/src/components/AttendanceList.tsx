@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Collapsible } from './Collapsible';
 import { RowMenu } from './RowMenu';
 import { bulkConfirmAttendance, listAttendancePage, type AttPage, type AttPageRow, type AttStatusFilter } from '../lib/attendanceAdmin';
 import { absenceBadge, absenceOn, fetchAbsences, type Absence } from '../lib/absences';
-import { fmtDate } from '../lib/dates';
+import { addDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal } from '../lib/hooks';
 import {
@@ -14,7 +14,8 @@ import {
 const PAGE = 50;
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
-const RANGES: { id: 'today' | 'month'; label: string }[] = [
+const RANGES: { id: 'prev' | 'today' | 'month'; label: string }[] = [
+  { id: 'prev', label: 'Tháng trước' },
   { id: 'today', label: 'Hôm nay' },
   { id: 'month', label: 'Tháng này' },
 ];
@@ -27,7 +28,7 @@ const STATUS_OPTIONS: { id: AttStatusFilter; label: string }[] = [
   { id: 'rejected', label: 'Đã từ chối' },
 ];
 
-export interface ListPreset { status: AttStatusFilter; range: 'today' | 'month'; stamp: number }
+export interface ListPreset { status: AttStatusFilter; range: 'prev' | 'today' | 'month'; stamp: number }
 
 /**
  * Danh sách công (D115): lọc theo ngày, trạng thái, tên; phân trang 50 dòng do máy chủ cắt nên đủ cho cơ sở hàng trăm người.
@@ -40,8 +41,8 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
   /** Nút đặt liền sau nút "Tháng này" (Ghi công) và khối hiện ngay dưới hàng nút đó (biểu mẫu Ghi công) */
   rangeAction?: ReactNode; panel?: ReactNode; onChanged: () => void;
 }) {
-  // Mặc định: tháng này, trạng thái Chờ xác nhận (việc chủ/quản lý cần làm nhất)
-  const [range, setRange] = useState<'today' | 'month'>('month');
+  // Mặc định: hôm nay, trạng thái Chờ xác nhận (việc chủ/quản lý cần làm nhất)
+  const [range, setRange] = useState<'prev' | 'today' | 'month'>('today');
   const [status, setStatus] = useState<AttStatusFilter>('pending');
   const [q, setQ] = useState('');
   const [appliedQ, setAppliedQ] = useState('');
@@ -53,15 +54,22 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
   const [adjFor, setAdjFor] = useState<string | null>(null);
   const [adjs, setAdjs] = useState<AdjustmentRequest[]>([]);
   const [abs, setAbs] = useState<Absence[]>([]);
+  const headRef = useRef<HTMLHeadingElement>(null);
 
   // Mở từ "Hôm nay" bằng một bộ lọc sẵn (ví dụ: công chờ xác nhận)
   useEffect(() => {
     if (!preset) return;
     setRange(preset.range); setStatus(preset.status); setQ(''); setAppliedQ(''); setPage(0);
+    // bấm "Xem" ở khung Cần xử lý: cuộn tới bảng để thấy danh sách đã lọc
+    window.setTimeout(() => headRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }, [preset?.stamp]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const to = todayLocal();
-  const from = range === 'today' ? to : `${to.slice(0, 8)}01`;   // Tháng này: từ ngày mùng 1 đến hôm nay
+  const today = todayLocal();
+  // Hôm nay: một ngày; Tháng này: từ mùng 1 đến hôm nay; Tháng trước: cả tháng trước
+  const monthStart = `${today.slice(0, 8)}01`;
+  const prevEnd = addDays(monthStart, -1);
+  const from = range === 'today' ? today : range === 'month' ? monthStart : `${prevEnd.slice(0, 8)}01`;
+  const to = range === 'prev' ? prevEnd : today;
 
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
@@ -147,7 +155,7 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
         </Collapsible>
       )}
 
-      <h2 className="sect">{status === 'pending' ? 'Các công chờ xác nhận' : status === '' ? 'Danh sách công' : STATUS_OPTIONS.find((o) => o.id === status)?.label}</h2>
+      <h2 className="sect" ref={headRef}>{status === 'pending' ? 'Các công chờ xác nhận' : status === 'open' ? 'Các ca chưa ra ca' : status === '' ? 'Danh sách công' : STATUS_OPTIONS.find((o) => o.id === status)?.label}</h2>
       <p className="muted">{data ? (total === 0 ? 'Không có bản ghi nào.' : `Hiện ${page * PAGE + 1}–${Math.min(total, (page + 1) * PAGE)} trong ${total} bản ghi.`) : 'Đang tải…'}</p>
       <table className="grid">
         <thead><tr><th>Người · ngày</th><th>Giờ làm</th><th></th></tr></thead>
