@@ -28,7 +28,7 @@ const STATUS_OPTIONS: { id: AttStatusFilter; label: string }[] = [
   { id: 'rejected', label: 'Đã từ chối' },
 ];
 
-export interface ListPreset { status: AttStatusFilter; range: 'prev' | 'today' | 'month'; stamp: number }
+export interface ListPreset { status: AttStatusFilter; range: 'prev' | 'today' | 'month' | 'all' | 'stale'; stamp: number }
 
 /**
  * Danh sách công (D115): lọc theo ngày, trạng thái, tên; phân trang 50 dòng do máy chủ cắt nên đủ cho cơ sở hàng trăm người.
@@ -42,7 +42,7 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
   rangeAction?: ReactNode; panel?: ReactNode; onChanged: () => void;
 }) {
   // Mặc định: hôm nay, trạng thái Chờ xác nhận (việc chủ/quản lý cần làm nhất)
-  const [range, setRange] = useState<'prev' | 'today' | 'month'>('today');
+  const [range, setRange] = useState<'prev' | 'today' | 'month' | 'all' | 'stale'>('today')   // 'all' và 'stale' chỉ đến từ nút Xem ở khung Cần xử lý;
   const [status, setStatus] = useState<AttStatusFilter>('pending');
   const [q, setQ] = useState('');
   const [appliedQ, setAppliedQ] = useState('');
@@ -68,8 +68,9 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
   // Hôm nay: một ngày; Tháng này: từ mùng 1 đến hôm nay; Tháng trước: cả tháng trước
   const monthStart = `${today.slice(0, 8)}01`;
   const prevEnd = addDays(monthStart, -1);
-  const from = range === 'today' ? today : range === 'month' ? monthStart : `${prevEnd.slice(0, 8)}01`;
-  const to = range === 'prev' ? prevEnd : today;
+  // 'all': mọi ngày (công chờ xác nhận ở Cần xử lý đếm cả những ngày cũ); 'stale': mọi ngày trước hôm nay (ca quên ra ca)
+  const from = range === 'today' ? today : range === 'month' ? monthStart : range === 'prev' ? `${prevEnd.slice(0, 8)}01` : '2000-01-01';
+  const to = range === 'prev' ? prevEnd : range === 'stale' ? addDays(today, -1) : today;
 
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
@@ -119,6 +120,7 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
       </div>
       {panel}
       {extra}
+      {(range === 'all' || range === 'stale') && <p className="muted">{range === 'all' ? 'Đang xem mọi ngày, để khớp với số trong khung Cần xử lý.' : 'Đang xem các ca chưa ra ca từ những ngày trước.'} Bấm một nút ngày ở trên để xem theo ngày.</p>}
       <div className="filters att-filters">
         <label>Trạng thái
           <select value={status} onChange={(e) => { setStatus(e.target.value as AttStatusFilter); setPage(0); }}>

@@ -89,8 +89,8 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
 
   const todo: { key: string; tone: 'warn' | 'err'; tag: string; text: string; go?: () => void }[] = [];
   if (sum) {
-    if (sum.pending > 0) todo.push({ key: 'pending', tone: 'warn', tag: 'Chờ xác nhận', text: `${sum.pending} công chờ xác nhận`, go: () => goList('pending', 'month') });
-    if (sum.stale > 0) todo.push({ key: 'stale', tone: 'err', tag: 'Quên ra ca', text: `${sum.stale} ca đã mở từ hôm trước chưa ra ca`, go: () => goList('open', 'month') });
+    if (sum.pending > 0) todo.push({ key: 'pending', tone: 'warn', tag: 'Chờ xác nhận', text: `${sum.pending} công chờ xác nhận`, go: () => goList('pending', 'all') });
+    if (sum.stale > 0) todo.push({ key: 'stale', tone: 'err', tag: 'Quên ra ca', text: `${sum.stale} ca đã mở từ hôm trước chưa ra ca`, go: () => goList('open', 'stale') });
     if (isAdmin && sum.flagged > 0) todo.push({ key: 'flagged', tone: 'err', tag: 'Ảnh cờ đỏ', text: `${sum.flagged} ảnh cờ đỏ hôm nay`, go: () => setTab('photos') });
     for (const o of orphans) todo.push({ key: o.worker_id, tone: 'warn', tag: 'Chưa có tổ trưởng', text: `${o.full_name}${o.team_name ? ` (${o.team_name})` : ' chưa thuộc tổ nào'}: chọn tổ trưởng ở Khai báo → Phòng / Tổ` });
   }
