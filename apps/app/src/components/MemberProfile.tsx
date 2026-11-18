@@ -9,7 +9,7 @@ import { updateStaffProfile, type StaffCredentials } from '../lib/staff';
 import { assignWorkerToTeam, type TeamRow, type WorkerRow } from '../lib/teams';
 import { Collapsible } from './Collapsible';
 import { AreaChoice } from './MemberAreas';
-import { HrRecordFold } from './HrRecord';
+import { ContractsFold, HrFields, LeaveSummaryLine, useWorkerHr } from './HrRecord';
 import { MemberPay } from './MemberPay';
 import { MemberPermissions } from './MemberPermissions';
 import { PositionPicker } from './PositionPicker';
@@ -17,7 +17,8 @@ import { ResetPasswordButton } from './StaffAccountsSection';
 
 /**
  * Hồ sơ một nhân sự (D85, chỉ chủ): bốn nút Đổi mật khẩu / Khóa đăng nhập / Gỡ khỏi cơ sở / Xóa khuôn mặt ở TRÊN CÙNG; dưới là MỘT biểu mẫu
- * (họ tên, điện thoại, chức vụ, phòng/tổ, phân khu, mô tả) với một nút Lưu; quyền cấp riêng và Trả công để thu gọn.
+ * (họ tên, điện thoại, chức vụ, phòng/tổ, ngày vào làm, loại hình, nghỉ việc, liên hệ khẩn cấp, mô tả; phân khu thu gọn) với một nút Lưu;
+ * dưới là Hợp đồng, Trả công, rồi PIN/khuôn mặt và quyền cấp riêng (đều thu gọn).
  */
 export function MemberProfile({ org, member, worker, team, teams, position, overrides, areas, pin, onBack, onChanged, onCreds }: {
   org: MyOrg;
@@ -45,6 +46,8 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
   const [areaSel, setAreaSel] = useState<string[] | null>(areas);
   const [desc, setDesc] = useState(member.description ?? '');
   const [pinCode, setPinCode] = useState<string | null>(null); // mã đặt PIN vừa cấp, chỉ hiện một lần
+  const canEditHr = canPerm(org.perms, 'payroll', 'edit');
+  const hrState = useWorkerHr(worker?.id ?? null);
   useEffect(() => { setPosId(position?.id ?? ''); }, [position?.id]);
   useEffect(() => { setTeamId(team?.id ?? ''); }, [team?.id]);
 
@@ -56,7 +59,7 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
   const norm = (a: string[] | null) => JSON.stringify(a === null ? null : [...a].sort());
   function reset() {
     setName(member.full_name ?? ''); setPhone(member.phone ?? ''); setPosId(position?.id ?? ''); setTeamId(team?.id ?? '');
-    setAreaSel(areas); setDesc(member.description ?? ''); setError(null);
+    setAreaSel(areas); setDesc(member.description ?? ''); setError(null); hrState.reset();
   }
   function save() {
     if (member.is_staff) {
@@ -71,6 +74,7 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
       if (worker && teamId && teamId !== (team?.id ?? '')) await assignWorkerToTeam(worker.id, teamId);
       if (norm(areaSel) !== norm(areas)) await setMemberAreas(org.id, member.user_id, areaSel);
       if (desc.trim() !== (member.description ?? '')) await setMemberDescription(org.id, member.user_id, desc);
+      if (canEditHr && worker) await hrState.save();
     }, 'Đã lưu.');
   }
 
@@ -122,10 +126,11 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
           {!worker && <small>Người này chưa có hồ sơ lao động (được tạo khi chấm công lần đầu) nên chưa xếp tổ được.</small>}
           {member.leads_teams && member.leads_teams.length > 0 && <small>Đang là tổ trưởng: {member.leads_teams.join(', ')} (đổi tổ trưởng ở mục Phòng / Tổ).</small>}
         </label>
-        <fieldset className="roles">
-          <legend>Phân khu làm việc</legend>
+        <HrFields hr={hrState.hr} setHr={hrState.setHr} disabled={!worker || !canEditHr || busy} />
+        <LeaveSummaryLine orgId={org.id} workerId={worker?.id ?? null} />
+        <Collapsible inline title="Phân khu làm việc" summary={areaSel === null ? 'tất cả phân khu' : `${areaSel.length} phân khu`}>
           <AreaChoice orgId={org.id} value={areaSel} onChange={setAreaSel} />
-        </fieldset>
+        </Collapsible>
         <label>Mô tả (không bắt buộc)
           <textarea rows={2} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Ví dụ: Lái máy, phụ trách tưới" />
         </label>
@@ -134,6 +139,11 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
           <button type="button" className="secondary" disabled={busy} onClick={reset}>Hủy</button>
         </div>
       </div>
+
+      <ContractsFold workerId={worker?.id ?? null} canEdit={canEditHr} />
+      <Collapsible title="Trả công" summary="theo giờ hoặc lương tháng">
+        <MemberPay orgId={org.id} workerId={worker?.id ?? null} />
+      </Collapsible>
 
       <Collapsible title="Mã PIN và khuôn mặt (máy chấm công)" summary={pin?.has_pin ? (pin.has_face ? 'đã có PIN và khuôn mặt' : 'đã có PIN, chưa có khuôn mặt') : 'chưa có PIN'}>
         {!worker ? <p className="muted">Người này chưa có hồ sơ lao động nên chưa dùng được máy chấm công.</p> : (
@@ -148,11 +158,6 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
       <Collapsible title="Quyền cấp riêng (ngoại lệ)" summary={Object.keys(overrides).length > 0 ? 'Đã cấp riêng' : 'Theo chức vụ'}>
         <MemberPermissions key={JSON.stringify(overrides)} orgId={org.id} userId={member.user_id} roles={member.roles} overrides={overrides} onSaved={onChanged} />
       </Collapsible>
-
-      <Collapsible title="Trả công" summary="theo giờ hoặc lương tháng">
-        <MemberPay orgId={org.id} workerId={worker?.id ?? null} />
-      </Collapsible>
-      <HrRecordFold orgId={org.id} workerId={worker?.id ?? null} canEdit={canPerm(org.perms, 'payroll', 'edit')} />
     </div>
   );
 }

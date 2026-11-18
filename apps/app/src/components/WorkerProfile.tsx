@@ -5,7 +5,7 @@ import { canPerm } from '../lib/permissions';
 import { WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
 import { deactivateWorker, updateWorkerInfo, type TeamRow, type WorkerRow } from '../lib/teams';
 import { Collapsible } from './Collapsible';
-import { HrRecordFold } from './HrRecord';
+import { ContractsFold, HrFields, LeaveSummaryLine, useWorkerHr } from './HrRecord';
 import { MemberPay } from './MemberPay';
 
 /**
@@ -18,6 +18,8 @@ export function WorkerProfile({ org, worker, team, onBack, onChanged }: { org: M
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const canEditHr = canPerm(org.perms, 'payroll', 'edit');
+  const hrState = useWorkerHr(worker.id);
 
   async function run(fn: () => Promise<unknown>, done?: string, after?: () => void) {
     setBusy(true); setError(null); setInfo(null);
@@ -41,18 +43,21 @@ export function WorkerProfile({ org, worker, team, onBack, onChanged }: { org: M
       <div className="inline-form">
         <label>Họ tên<input value={name} maxLength={80} onChange={(e) => setName(e.target.value)} /></label>
         <label>Số điện thoại (không bắt buộc)<input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></label>
+        <HrFields hr={hrState.hr} setHr={hrState.setHr} disabled={!canEditHr || busy} withPosition />
+        <LeaveSummaryLine orgId={org.id} workerId={worker.id} />
+        <label>Mô tả (không bắt buộc)<textarea rows={2} maxLength={500} value={hrState.hr.note} disabled={!canEditHr || busy} onChange={(e) => hrState.setHr((cur) => ({ ...cur, note: e.target.value }))} /></label>
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {
             if (name.trim().length < 2) return setError('Hãy nhập họ tên (ít nhất 2 ký tự).');
-            void run(() => updateWorkerInfo(worker.id, name, phone), 'Đã lưu.');
+            void run(async () => { await updateWorkerInfo(worker.id, name, phone); if (canEditHr) await hrState.save(); }, 'Đã lưu.');
           }}>Lưu</button>
-          <button type="button" className="secondary" disabled={busy} onClick={() => { setName(worker.full_name); setPhone(worker.phone ?? ''); setError(null); }}>Hủy</button>
+          <button type="button" className="secondary" disabled={busy} onClick={() => { setName(worker.full_name); setPhone(worker.phone ?? ''); setError(null); hrState.reset(); }}>Hủy</button>
         </div>
       </div>
+      <ContractsFold workerId={worker.id} canEdit={canEditHr} />
       <Collapsible title="Trả công" summary="theo giờ hoặc lương tháng">
         <MemberPay orgId={org.id} workerId={worker.id} />
       </Collapsible>
-      <HrRecordFold orgId={org.id} workerId={worker.id} canEdit={canPerm(org.perms, 'payroll', 'edit')} />
     </div>
   );
 }
