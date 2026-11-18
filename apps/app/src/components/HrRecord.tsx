@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { aggregateYear, fetchYearSummary, fmtDays } from '../lib/absences';
 import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { useOnline, todayLocal } from '../lib/hooks';
@@ -16,8 +17,21 @@ const blank = (): CForm => ({ id: crypto.randomUUID(), version: null, kind: 'fix
  * Hồ sơ nhân sự gọn và hợp đồng lao động của MỘT người (D188). Chỉ lưu và nhắc hạn; không lưu số CCCD/bảo hiểm.
  * Người có quyền sửa mục Tiền công mới sửa được; người chỉ xem thì chỉ đọc.
  */
-export function HrRecord({ workerId, canEdit }: { workerId: string | null; canEdit: boolean }) {
+export function HrRecord({ orgId, workerId, canEdit }: { orgId: string; workerId: string | null; canEdit: boolean }) {
   const online = useOnline();
+  const [leave, setLeave] = useState<string | null>(null);
+  // Tóm tắt nghỉ năm nay (D190): tổng ngày nghỉ và phép năm còn lại; không hiện nếu chưa tải được
+  useEffect(() => {
+    setLeave(null);
+    if (!workerId || !navigator.onLine) return;
+    let alive = true;
+    fetchYearSummary(orgId, new Date().getFullYear(), workerId).then((s) => {
+      if (!alive) return;
+      const w = aggregateYear(s)[0];
+      setLeave(w ? `Năm nay nghỉ ${fmtDays(w.total)}; phép năm đã dùng ${fmtDays(w.byKind.annual)} trên ${s.allowance} ngày${w.annualLeft < 0 ? ` (vượt ${fmtDays(-w.annualLeft)})` : `, còn ${fmtDays(w.annualLeft)}`}.` : `Năm nay chưa ghi nghỉ ngày nào (phép năm ${s.allowance} ngày).`);
+    }).catch(() => undefined);
+    return () => { alive = false; };
+  }, [orgId, workerId]);
   const [hr, setHr] = useState<WorkerHr>(EMPTY_HR);
   const [version, setVersion] = useState<number | null>(null);
   const [contracts, setContracts] = useState<WorkerContract[] | null>(null);
@@ -66,6 +80,7 @@ export function HrRecord({ workerId, canEdit }: { workerId: string | null; canEd
       {msg && <p className="msg ok" role="status">{msg}</p>}
       {!canEdit && <p className="muted">Bạn chỉ được xem. Cần quyền sửa mục Tiền công để thay đổi.</p>}
       <p className="muted">Chỉ lưu thông tin quản lý và bản scan hợp đồng. Không nhập số CCCD hay bảo hiểm vào đây.</p>
+      {leave && <p>{leave}</p>}
 
       <fieldset className="plain" disabled={!canEdit || busy}>
         <div className="pair">
@@ -145,6 +160,6 @@ export function HrRecord({ workerId, canEdit }: { workerId: string | null; canEd
 }
 
 /** Khối thu gọn dùng trong hồ sơ nhân sự */
-export function HrRecordFold({ workerId, canEdit }: { workerId: string | null; canEdit: boolean }) {
-  return <Collapsible title="Hồ sơ nhân sự và hợp đồng" summary="vào làm, chức danh, hợp đồng"><HrRecord workerId={workerId} canEdit={canEdit} /></Collapsible>;
+export function HrRecordFold({ orgId, workerId, canEdit }: { orgId: string; workerId: string | null; canEdit: boolean }) {
+  return <Collapsible title="Hồ sơ nhân sự và hợp đồng" summary="vào làm, chức danh, hợp đồng, nghỉ phép"><HrRecord orgId={orgId} workerId={workerId} canEdit={canEdit} /></Collapsible>;
 }

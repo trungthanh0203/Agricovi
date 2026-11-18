@@ -152,7 +152,7 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
       <Collapsible title="Trả công" summary="theo giờ hoặc lương tháng">
         <MemberPay orgId={org.id} workerId={worker?.id ?? null} />
       </Collapsible>
-      <HrRecordFold workerId={worker?.id ?? null} canEdit={canPerm(org.perms, 'payroll', 'edit')} />
+      <HrRecordFold orgId={org.id} workerId={worker?.id ?? null} canEdit={canPerm(org.perms, 'payroll', 'edit')} />
     </div>
   );
 }

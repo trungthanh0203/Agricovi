@@ -12,7 +12,7 @@ import { useAuth } from '../lib/auth';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
-import { hasRole } from '../lib/roles';
+import { hasRole, isOwner } from '../lib/roles';
 import {
   ensureMyWorker, listOrphans, listWorkers, recordShift,
   type WorkerLite,
@@ -159,7 +159,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
         <AttendanceList orgId={active.id} isAdmin={isAdmin} meId={me?.id ?? null} workers={workers} online={online} preset={preset} onChanged={() => void load()} />
       )}
 
-      {tab === 'absences' && <AbsencesSection orgId={active.id} workers={canRecordFor} canWrite={canRecordFor.length > 0} online={online} />}
+      {tab === 'absences' && <AbsencesSection orgId={active.id} workers={canRecordFor} canWrite={canRecordFor.length > 0} isOwner={isOwner(active.roles)} online={online} />}
 
       {tab === 'photos' && isAdmin && <AttendancePhotos orgId={active.id} />}
 

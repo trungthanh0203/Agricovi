@@ -52,7 +52,7 @@ export function WorkerProfile({ org, worker, team, onBack, onChanged }: { org: M
       <Collapsible title="Trả công" summary="theo giờ hoặc lương tháng">
         <MemberPay orgId={org.id} workerId={worker.id} />
       </Collapsible>
-      <HrRecordFold workerId={worker.id} canEdit={canPerm(org.perms, 'payroll', 'edit')} />
+      <HrRecordFold orgId={org.id} workerId={worker.id} canEdit={canPerm(org.perms, 'payroll', 'edit')} />
     </div>
   );
 }

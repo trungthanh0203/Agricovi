@@ -69,3 +69,29 @@ export function absenceDays(a: Pick<Absence, 'from_date' | 'to_date' | 'half_day
   if (a.half_day) return 0.5;
   return Math.round((Date.parse(`${a.to_date}T00:00:00Z`) - Date.parse(`${a.from_date}T00:00:00Z`)) / 86400000) + 1;
 }
+
+/** Tổng hợp ngày nghỉ theo năm (D190, migration 0224): ngày dương lịch, nửa ngày = 0,5; ghi nghỉ vắt qua năm chỉ tính phần trong năm */
+export interface SummaryRow { worker_id: string; month: number; kind: AbsenceKind; days: number }
+export interface YearSummary { allowance: number; rows: SummaryRow[] }
+export async function fetchYearSummary(orgId: string, year: number, workerId: string | null = null): Promise<YearSummary> {
+  const r = await rpc<{ allowance: number; rows: (Omit<SummaryRow, 'days'> & { days: number | string })[] }>('absence_year_summary', { p_org: orgId, p_year: year, p_worker: workerId });
+  return { allowance: Number(r.allowance), rows: r.rows.map((x) => ({ ...x, days: Number(x.days) })) };
+}
+export const setAnnualLeaveDays = (orgId: string, days: number) => rpc<number>('set_annual_leave_days', { p_org: orgId, p_days: days });
+
+export interface WorkerYear { workerId: string; byKind: Record<AbsenceKind, number>; months: number[]; total: number; annualLeft: number }
+const zeroKinds = (): Record<AbsenceKind, number> => ({ annual: 0, sick: 0, family: 0, unpaid: 0, no_notice: 0, other: 0 });
+/** Gộp theo người: ngày theo loại, theo tháng (12 số), tổng, phép năm còn lại (có thể âm) */
+export function aggregateYear(s: YearSummary): WorkerYear[] {
+  const by = new Map<string, WorkerYear>();
+  for (const r of s.rows) {
+    const w = by.get(r.worker_id) ?? { workerId: r.worker_id, byKind: zeroKinds(), months: Array.from({ length: 12 }, () => 0), total: 0, annualLeft: s.allowance };
+    w.byKind[r.kind] += r.days;
+    w.months[r.month - 1] = (w.months[r.month - 1] ?? 0) + r.days;
+    w.total += r.days;
+    by.set(r.worker_id, w);
+  }
+  for (const w of by.values()) w.annualLeft = s.allowance - w.byKind.annual;
+  return [...by.values()].sort((a, b) => b.total - a.total);
+}
+export const fmtDays = (n: number): string => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ngày`;

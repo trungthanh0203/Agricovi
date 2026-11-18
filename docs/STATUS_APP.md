@@ -4,6 +4,7 @@ Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi t
 
 ## Đang làm
 
+- **18/11/2026 (D190, migration 0224, cần `db push`)**: **ghi nghỉ, bước 2**: phép năm (mặc định 12 ngày, chủ đổi), tổng hợp nghỉ theo người/tháng/loại, dòng tóm tắt nghỉ trong hồ sơ nhân sự. Test `absence_summary.test.mjs` 2/2. Còn: nối phiếu lương, nhắc trong bản tin sáng.
 - **18/11/2026 (D189, migration 0223, cần `db push`)**: **ghi nghỉ việc theo chấm công, bước 1** (Chấm công → Nghỉ, khung Hôm nay nghỉ, cảnh báo nghỉ mà có công). Test `absences.test.mjs` 4/4. Còn: phép năm còn lại + báo cáo nghỉ (bước 2), nối phiếu lương.
 - **18/11/2026 (D188, migration 0222, cần `db push`)**: **hồ sơ nhân sự gọn + hợp đồng lao động** (mục 15, mảng 1-2) trong hồ sơ từng người, nhắc hợp đồng sắp hết hạn ở Trang chủ. Test `hr_records.test.mjs` 3/3. Còn: nhắc trong bản tin sáng, đơn nghỉ, hạn mức/khóa theo gói.
 - **18/11/2026 (D187, migration 0221, cần `db push`)**: **Thông tin cơ sở** ở Tài khoản (chủ sửa, quản lý xem); đổi thứ tự trường ở trang đăng ký (email/điện thoại + mật khẩu lên trước). Test `org_details.test.mjs` 3/3.

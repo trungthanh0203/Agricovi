@@ -7,6 +7,7 @@ import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal } from '../lib/hooks';
 import type { WorkerLite } from '../lib/work';
+import { AbsenceSummary } from './AbsenceSummary';
 import { Img, ImagePicker } from './ImagePicker';
 import { RowMenu } from './RowMenu';
 
@@ -24,7 +25,7 @@ const blank = (workerId: string): Form => ({
  * xin qua đâu, lý do, hưởng lương hay không. Chỉ ghi nhận, chưa nối vào phiếu lương. Cần mạng.
  * `workers` là những người mà người dùng được ghi nghỉ cho (máy chủ vẫn kiểm lại quyền).
  */
-export function AbsencesSection({ orgId, workers, canWrite, online }: { orgId: string; workers: WorkerLite[]; canWrite: boolean; online: boolean }) {
+export function AbsencesSection({ orgId, workers, canWrite, isOwner, online }: { orgId: string; workers: WorkerLite[]; canWrite: boolean; isOwner: boolean; online: boolean }) {
   const [month, setMonth] = useState(todayLocal().slice(0, 7));
   const [who, setWho] = useState('');
   const [rows, setRows] = useState<Absence[] | null>(null);
@@ -32,6 +33,7 @@ export function AbsencesSection({ orgId, workers, canWrite, online }: { orgId: s
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
   const names = useMemo(() => new Map(workers.map((w) => [w.id, w.full_name])), [workers]);
 
   const load = useCallback(async () => {
@@ -53,7 +55,7 @@ export function AbsencesSection({ orgId, workers, canWrite, online }: { orgId: s
     try {
       if (form.version === null) await createAbsence(form.workerId, input); else await updateAbsence(form.version, input);
       setMsg(form.version === null ? 'Đã ghi nghỉ.' : 'Đã lưu thay đổi.');
-      setForm(null); await load();
+      setForm(null); setTick((t) => t + 1); await load();
     } catch (e) {
       if (/CONFLICT/.test(String((e as Error).message))) { await load(); setError('Ghi nghỉ vừa được người khác sửa. Đã tải lại bản mới, hãy kiểm tra rồi lưu lại.'); setForm(null); }
       else setError(friendlyError(e));
@@ -62,7 +64,7 @@ export function AbsencesSection({ orgId, workers, canWrite, online }: { orgId: s
   async function cancel(a: Absence) {
     if (!window.confirm('Hủy ghi nghỉ này? Ghi nghỉ đã hủy vẫn được giữ trong sổ.')) return;
     setBusy(true); setError(null); setMsg(null);
-    try { await cancelAbsence(a.id, a.version); setMsg('Đã hủy ghi nghỉ.'); await load(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+    try { await cancelAbsence(a.id, a.version); setMsg('Đã hủy ghi nghỉ.'); setTick((t) => t + 1); await load(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
 
   const shown = (rows ?? []).filter((a) => !who || a.worker_id === who);
@@ -120,6 +122,8 @@ export function AbsencesSection({ orgId, workers, canWrite, online }: { orgId: s
           </div>
         </div>
       )}
+
+      <AbsenceSummary orgId={orgId} workers={workers} isOwner={isOwner} online={online} refreshKey={tick} />
 
       <div className="filters">
         <label>Tháng<input type="month" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} /></label>
