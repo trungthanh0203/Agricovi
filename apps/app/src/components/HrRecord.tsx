@@ -34,7 +34,7 @@ export function useWorkerHr(workerId: string | null) {
 }
 
 /** Ngày vào làm, loại hình, ngày nghỉ việc, liên hệ khẩn cấp (và chức danh khi `withPosition`) */
-export function HrFields({ hr, setHr, disabled, withPosition }: { hr: WorkerHr; setHr: (fn: (cur: WorkerHr) => WorkerHr) => void; disabled: boolean; withPosition?: boolean }) {
+export function HrFields({ hr, setHr, disabled, withPosition, hideEnd }: { hr: WorkerHr; setHr: (fn: (cur: WorkerHr) => WorkerHr) => void; disabled: boolean; withPosition?: boolean; hideEnd?: boolean }) {
   const set = (k: keyof WorkerHr) => (e: { target: { value: string } }) => setHr((cur) => ({ ...cur, [k]: e.target.value }));
   return (
     <>
@@ -48,7 +48,7 @@ export function HrFields({ hr, setHr, disabled, withPosition }: { hr: WorkerHr; 
           </select>
         </label>
       </div>
-      <label>Ngày nghỉ việc (nếu có)<input type="date" value={hr.end_date} disabled={disabled} onChange={set('end_date')} /></label>
+      {!hideEnd && <label>Ngày nghỉ việc (nếu có)<input type="date" value={hr.end_date} disabled={disabled} onChange={set('end_date')} /></label>}
       <div className="pair">
         <label>Liên hệ khẩn cấp (tên)<input value={hr.emergency_name} maxLength={120} disabled={disabled} onChange={set('emergency_name')} /></label>
         <label>Số điện thoại người đó<input type="tel" inputMode="tel" value={hr.emergency_phone} maxLength={30} disabled={disabled} onChange={set('emergency_phone')} /></label>

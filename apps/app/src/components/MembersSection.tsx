@@ -1,5 +1,5 @@
 import { useShowMore } from './ShowMore';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { friendlyError } from '../lib/errors';
 import { listPinStatus, type PinStatus } from '../lib/kiosk';
 import {
@@ -7,16 +7,16 @@ import {
 } from '../lib/members';
 import type { MyOrg } from '../lib/orgs';
 import type { PermOverrides } from '../lib/permissions';
-import { inviteMemberPosition, listMemberPositions, listPositions, type PositionRow } from '../lib/positions';
+import { listMemberPositions, listPositions, type PositionRow } from '../lib/positions';
 import { isOwner as ownerOf, roleSummary } from '../lib/roles';
 import type { StaffCredentials } from '../lib/staff';
-import { createWorkerWithoutAccount, loadTeams, type TeamMembershipRow, type TeamRow, type WorkerRow } from '../lib/teams';
+import { loadTeams, type TeamMembershipRow, type TeamRow, type WorkerRow } from '../lib/teams';
 import { useTable } from '../lib/tables';
 import { Collapsible } from './Collapsible';
 import { MemberProfile } from './MemberProfile';
 import { WorkerProfile } from './WorkerProfile';
-import { PositionPicker } from './PositionPicker';
-import { CredentialsCard, StaffCreateForm } from './StaffAccountsSection';
+import { CredentialsCard } from './StaffAccountsSection';
+import { StaffAddForm } from './StaffAddForm';
 import { areaPath } from '../lib/areas';
 
 /**
@@ -35,12 +35,8 @@ export function MembersSection({ org }: { org: MyOrg }) {
   const [catalog, setCatalog] = useState<PositionRow[]>([]);
   const [overrides, setOverrides] = useState<Record<string, PermOverrides>>({});
   const [areaMap, setAreaMap] = useState<Record<string, string[] | null>>({});
-  const [email, setEmail] = useState('');
-  const [invitePos, setInvitePos] = useState('');
   const [open, setOpen] = useState<string | null>(null); // người đang mở hồ sơ
   const [adding, setAdding] = useState(false); // đang ở biểu mẫu thêm nhân sự
-  const [wName, setWName] = useState('');
-  const [wPhone, setWPhone] = useState('');
   const [openWorker, setOpenWorker] = useState<string | null>(null); // người làm không tài khoản đang mở hồ sơ
   const areas = useTable('areas').filter((a) => a.organization_id === org.id);
   const [error, setError] = useState<string | null>(null);
@@ -71,14 +67,6 @@ export function MembersSection({ org }: { org: MyOrg }) {
   async function run(fn: () => Promise<unknown>, done?: string) {
     setBusy(true); setError(null); setInfo(null);
     try { await fn(); if (done) setInfo(done); await load(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
-  }
-
-  function onInvite(e: FormEvent) {
-    e.preventDefault();
-    if (!email.includes('@')) return setError('Hãy nhập email của người cần mời.');
-    if (!invitePos) return setError('Hãy chọn chức vụ cho người được mời.');
-    void run(async () => { await inviteMemberPosition(org.id, email, invitePos); setEmail(''); },
-      'Đã tạo lời mời. Hãy bảo người đó đăng ký hoặc đăng nhập bằng đúng email này, họ sẽ thấy lời mời.');
   }
 
   const positionOf = (uid: string) => catalog.find((p) => p.id === (held.get(uid) ?? [])[0]) ?? null;
@@ -128,38 +116,8 @@ export function MembersSection({ org }: { org: MyOrg }) {
           <strong className="menu-cur">Thêm nhân sự</strong>
         </div>
         {creds && <CredentialsCard creds={creds} onClose={() => setCreds(null)} />}
-        <Collapsible inline defaultOpen title="Tài khoản nhân viên (đăng nhập bằng số điện thoại)">
-          <StaffCreateForm org={org} teams={teams} workers={workers} onChanged={() => void load()} onCancel={() => setAdding(false)} />
-        </Collapsible>
-        <Collapsible inline title="Hoặc thêm người làm không có tài khoản (làm công tháng)">
-          <form className="inline-form" noValidate onSubmit={(e) => {
-            e.preventDefault();
-            if (wName.trim().length < 2) return setError('Hãy nhập họ tên người làm.');
-            void run(async () => { await createWorkerWithoutAccount(org.id, wName, wPhone, 'monthly_salary', null); setWName(''); setWPhone(''); setAdding(false); },
-              'Đã thêm người làm. Bấm ✎ ở dòng của người đó để đặt lương tháng.');
-          }}>
-            <p className="muted">Người này không đăng nhập và không chấm công; trả lương tháng cố định. Đặt số tiền lương ở hồ sơ người đó sau khi thêm.</p>
-            <label>Họ tên<input value={wName} maxLength={80} onChange={(e) => setWName(e.target.value)} /></label>
-            <label>Số điện thoại (không bắt buộc)<input type="tel" inputMode="tel" value={wPhone} onChange={(e) => setWPhone(e.target.value)} /></label>
-            <div className="btnrow">
-              <button type="submit" className="primary" disabled={busy}>Thêm người làm</button>
-              <button type="button" className="secondary" onClick={() => { setWName(''); setWPhone(''); setAdding(false); }}>Hủy</button>
-            </div>
-          </form>
-        </Collapsible>
-        <Collapsible inline title="Hoặc mời người đã có tài khoản email">
-          <form onSubmit={onInvite} className="inline-form" noValidate>
-            <label>
-              Email người được mời
-              <input type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </label>
-            <PositionPicker orgId={org.id} value={invitePos} onChange={(id) => setInvitePos(id)} />
-            <div className="btnrow">
-              <button type="submit" className="primary" disabled={busy}>Gửi lời mời</button>
-              <button type="button" className="secondary" onClick={() => { setEmail(''); setError(null); setAdding(false); }}>Hủy</button>
-            </div>
-          </form>
-        </Collapsible>
+        <StaffAddForm org={org} teams={teams} workers={workers} onCreds={setCreds}
+          onDone={(msg, back) => { setInfo(msg); setError(null); if (back) setAdding(false); void load(); }} onCancel={() => setAdding(false)} />
         {error && <p className="msg error" role="alert">{error}</p>}
         {info && <p className="msg ok" role="status">{info}</p>}
       </>

@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { friendlyError } from '../lib/errors';
-import { Collapsible } from './Collapsible';
 import type { MyOrg } from '../lib/orgs';
-import { WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
 import { useTable } from '../lib/tables';
 import {
-  archiveTeam, assignWorkerToTeam, createTeam, createWorkerWithoutAccount, loadTeams, updateTeam,
+  archiveTeam, assignWorkerToTeam, createTeam, loadTeams, updateTeam,
   type OrphanWorker, type TeamMembershipRow, type TeamRow, type WorkerRow,
 } from '../lib/teams';
 
@@ -24,10 +22,6 @@ export function TeamsSection({ org }: { org: MyOrg }) {
   const [leaderId, setLeaderId] = useState('');
   const [desc, setDesc] = useState('');
   const [areaId, setAreaId] = useState('');
-  const [wName, setWName] = useState('');
-  const [wPhone, setWPhone] = useState('');
-  const [wMode, setWMode] = useState<WorkMode>('leader_hourly');
-  const [wTeam, setWTeam] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -82,17 +76,6 @@ export function TeamsSection({ org }: { org: MyOrg }) {
         if (leaderId) await assignWorkerToTeam(leaderId, nid); // tổ trưởng cũng là thành viên của tổ
       }
       setEditing(null);
-    });
-  }
-
-  function onCreateWorker(e: FormEvent) {
-    e.preventDefault();
-    if (wName.trim().length < 2) return setError('Hãy nhập họ tên.');
-    if (wMode !== 'monthly_salary' && !wTeam) return setError('Hãy chọn tổ (tổ phải có tổ trưởng).');
-    void run(async () => {
-      await createWorkerWithoutAccount(org.id, wName, wPhone, wMode, wMode === 'monthly_salary' ? wTeam || null : wTeam);
-      setWName('');
-      setWPhone('');
     });
   }
 
@@ -169,36 +152,7 @@ export function TeamsSection({ org }: { org: MyOrg }) {
         </tbody>
       </table>
 
-      <Collapsible inline title="＋ Thêm người không có điện thoại">
-      <form onSubmit={onCreateWorker} className="inline-form" noValidate>
-        <p className="muted">Chỉ là hồ sơ để tổ trưởng chấm công và ghi sản lượng hộ; không có tài khoản đăng nhập.</p>
-        <label>
-          Họ tên
-          <input value={wName} onChange={(e) => setWName(e.target.value)} />
-        </label>
-        <label>
-          Số điện thoại (không bắt buộc)
-          <input type="tel" inputMode="tel" value={wPhone} onChange={(e) => setWPhone(e.target.value)} />
-        </label>
-        <label>
-          Kiểu phân hệ
-          <select value={wMode} onChange={(e) => setWMode(e.target.value as WorkMode)}>
-            <option value="leader_hourly">{WORK_MODE_LABEL.leader_hourly}</option>
-            <option value="leader_output">{WORK_MODE_LABEL.leader_output}</option>
-            <option value="monthly_salary">{WORK_MODE_LABEL.monthly_salary}</option>
-          </select>
-          {wMode === 'monthly_salary' && <small>Không cần tổ trưởng chấm. Đặt lương tháng ở Nhân sự → bấm vào người này → Trả công.</small>}
-        </label>
-        <label>
-          Phòng / Tổ{wMode === 'monthly_salary' ? ' (không bắt buộc)' : ''}
-          <select value={wTeam} onChange={(e) => setWTeam(e.target.value)}>
-            <option value="">— Chọn tổ —</option>
-            {teams.map((t) => <option key={t.id} value={t.id}>{t.name}{t.leader_worker_id ? '' : ' · chưa có tổ trưởng'}</option>)}
-          </select>
-        </label>
-        <button type="submit" className="secondary" disabled={busy}>Thêm người</button>
-      </form>
-      </Collapsible>
+      <p className="muted">Muốn thêm người mới (kể cả người không có điện thoại hay làm công tháng): vào Nhân sự → ＋ Thêm nhân sự, rồi chọn loại nhân sự.</p>
     </>
   );
 }
