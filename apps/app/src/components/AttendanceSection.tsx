@@ -42,7 +42,6 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
   const [preset, setPreset] = useState<ListPreset | null>(null);
   const [absToday, setAbsToday] = useState<Absence[]>([]);
   const [panel, setPanel] = useState<'shift' | null>(null);   // biểu mẫu chấm công hộ đang mở ở tab Hôm nay
-  const [absAdd, setAbsAdd] = useState(0);                      // dấu thời gian: mở biểu mẫu Ghi nghỉ khi vào tab Nghỉ phép
   const [showAbs, setShowAbs] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -121,21 +120,8 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
 
       {tab === 'list' && (
         <>
-          {canRecordFor.length > 0 ? (
-            <div className="btnrow att-actions">
-              <button type="button" className="primary" disabled={!online} aria-expanded={panel === 'shift'} onClick={() => setPanel(panel === 'shift' ? null : 'shift')}>＋ Chấm công hộ</button>
-              <button type="button" className="secondary" disabled={!online} onClick={() => { setAbsAdd(Date.now()); setTab('absences'); }}>＋ Ghi nghỉ</button>
-            </div>
-          ) : (
+          {canRecordFor.length === 0 && (
             <p className="muted">Chấm công do máy chấm công ghi, hoặc do chủ, quản lý, tổ trưởng nhập cho người làm. Bạn xem công của mình ở bảng dưới.</p>
-          )}
-
-          {panel === 'shift' && canRecordFor.length > 0 && (
-            <div className="card">
-              <h2>Chấm công hộ</h2>
-              <p className="muted">{isAdmin ? 'Nhập ca đã làm của người làm, kể cả của bạn (dành cho nơi không dùng máy chấm công).' : 'Nhập ca đã làm của người trong tổ.'}</p>
-              <ShiftForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
-            </div>
           )}
 
           {sum && (
@@ -151,11 +137,21 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
             </div>
           )}
 
-          <AttendanceList orgId={active.id} isAdmin={isAdmin} meId={me?.id ?? null} workers={workers} online={online} preset={preset} extra={todoNode} onChanged={() => void load()} />
+          <AttendanceList orgId={active.id} isAdmin={isAdmin} meId={me?.id ?? null} workers={workers} online={online} preset={preset} rangeAction={canRecordFor.length > 0 ? (
+              <button type="button" className="chip add" disabled={!online} aria-expanded={panel === 'shift'} onClick={() => setPanel(panel === 'shift' ? null : 'shift')}>＋ Ghi công</button>
+            ) : null}
+            panel={panel === 'shift' && canRecordFor.length > 0 ? (
+              <div className="card">
+                <h2>Ghi công</h2>
+                <p className="muted">{isAdmin ? 'Nhập ca đã làm của người làm, kể cả của bạn (dành cho nơi không dùng máy chấm công).' : 'Nhập ca đã làm của người trong tổ.'}</p>
+                <ShiftForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
+              </div>
+            ) : null}
+            extra={todoNode} onChanged={() => void load()} />
         </>
       )}
 
-      {tab === 'absences' && <AbsencesSection orgId={active.id} workers={canRecordFor} canWrite={canRecordFor.length > 0} isOwner={isOwner(active.roles)} online={online} addSignal={absAdd} />}
+      {tab === 'absences' && <AbsencesSection orgId={active.id} workers={canRecordFor} canWrite={canRecordFor.length > 0} isOwner={isOwner(active.roles)} online={online} />}
 
       {tab === 'photos' && isAdmin && <AttendancePhotos orgId={active.id} />}
 

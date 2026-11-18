@@ -3,7 +3,7 @@ import { Collapsible } from './Collapsible';
 import { RowMenu } from './RowMenu';
 import { bulkConfirmAttendance, listAttendancePage, type AttPage, type AttPageRow, type AttStatusFilter } from '../lib/attendanceAdmin';
 import { absenceBadge, absenceOn, fetchAbsences, type Absence } from '../lib/absences';
-import { addDays, fmtDate } from '../lib/dates';
+import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal } from '../lib/hooks';
 import {
@@ -14,10 +14,9 @@ import {
 const PAGE = 50;
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
-const RANGES: { id: string; label: string; days: number }[] = [
-  { id: 'today', label: 'Hôm nay', days: 0 },
-  { id: 'week', label: '7 ngày', days: 6 },
-  { id: 'month', label: '30 ngày', days: 29 },
+const RANGES: { id: 'today' | 'month'; label: string }[] = [
+  { id: 'today', label: 'Hôm nay' },
+  { id: 'month', label: 'Tháng này' },
 ];
 const STATUS_OPTIONS: { id: AttStatusFilter; label: string }[] = [
   { id: '', label: 'Tất cả' },
@@ -28,19 +27,21 @@ const STATUS_OPTIONS: { id: AttStatusFilter; label: string }[] = [
   { id: 'rejected', label: 'Đã từ chối' },
 ];
 
-export interface ListPreset { status: AttStatusFilter; range: 'today' | 'week' | 'month'; stamp: number }
+export interface ListPreset { status: AttStatusFilter; range: 'today' | 'month'; stamp: number }
 
 /**
  * Danh sách công (D115): lọc theo ngày, trạng thái, tên; phân trang 50 dòng do máy chủ cắt nên đủ cho cơ sở hàng trăm người.
  * Chủ/quản lý có nút xác nhận hàng loạt các công hợp lệ; tổ trưởng chỉ thấy người trong tổ (chính sách RLS).
  */
-export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, extra, onChanged }: {
+export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, rangeAction, panel, extra, onChanged }: {
   orgId: string; isAdmin: boolean; meId: string | null; workers: WorkerLite[]; online: boolean; preset: ListPreset | null;
   /** Khối hiện ngay dưới các nút khoảng ngày (khung "Cần xử lý") */
-  extra?: ReactNode; onChanged: () => void;
+  extra?: ReactNode;
+  /** Nút đặt liền sau nút "Tháng này" (Ghi công) và khối hiện ngay dưới hàng nút đó (biểu mẫu Ghi công) */
+  rangeAction?: ReactNode; panel?: ReactNode; onChanged: () => void;
 }) {
-  // Mặc định: 30 ngày gần nhất, trạng thái Chờ xác nhận (việc chủ/quản lý cần làm nhất)
-  const [range, setRange] = useState<'today' | 'week' | 'month'>('month');
+  // Mặc định: tháng này, trạng thái Chờ xác nhận (việc chủ/quản lý cần làm nhất)
+  const [range, setRange] = useState<'today' | 'month'>('month');
   const [status, setStatus] = useState<AttStatusFilter>('pending');
   const [q, setQ] = useState('');
   const [appliedQ, setAppliedQ] = useState('');
@@ -59,9 +60,8 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
     setRange(preset.range); setStatus(preset.status); setQ(''); setAppliedQ(''); setPage(0);
   }, [preset?.stamp]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const days = RANGES.find((r) => r.id === range)?.days ?? 0;
   const to = todayLocal();
-  const from = addDays(to, -days);
+  const from = range === 'today' ? to : `${to.slice(0, 8)}01`;   // Tháng này: từ ngày mùng 1 đến hôm nay
 
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
@@ -105,9 +105,11 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
     <>
       <div className="chips" role="tablist" aria-label="Khoảng ngày">
         {RANGES.map((r) => (
-          <button key={r.id} role="tab" aria-selected={range === r.id} className={range === r.id ? 'chip active' : 'chip'} onClick={() => { setRange(r.id as typeof range); setPage(0); }}>{r.label}</button>
+          <button key={r.id} role="tab" aria-selected={range === r.id} className={range === r.id ? 'chip active' : 'chip'} onClick={() => { setRange(r.id); setPage(0); }}>{r.label}</button>
         ))}
+        {rangeAction}
       </div>
+      {panel}
       {extra}
       <div className="filters att-filters">
         <label>Trạng thái
