@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { RowMenu } from './RowMenu';
 import { bulkConfirmAttendance, listAttendancePage, type AttPage, type AttPageRow, type AttStatusFilter } from '../lib/attendanceAdmin';
+import { absenceBadge, absenceOn, fetchAbsences, type Absence } from '../lib/absences';
 import { addDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal } from '../lib/hooks';
@@ -46,6 +47,7 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
   const [notice, setNotice] = useState<string | null>(null);
   const [adjFor, setAdjFor] = useState<string | null>(null);
   const [adjs, setAdjs] = useState<AdjustmentRequest[]>([]);
+  const [abs, setAbs] = useState<Absence[]>([]);
 
   // Mở từ "Hôm nay" bằng một bộ lọc sẵn (ví dụ: công chờ xác nhận)
   useEffect(() => {
@@ -65,6 +67,7 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
     } catch (e) { setError(friendlyError(e)); }
   }, [orgId, from, to, status, appliedQ, page]);
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void fetchAbsences(orgId, from, to).then(setAbs).catch(() => setAbs([])); }, [orgId, from, to]);
   useEffect(() => { if (navigator.onLine) void listAdjustments(orgId).then(setAdjs).catch(() => setAdjs([])); }, [orgId]);
 
   async function run(fn: () => Promise<unknown>) {
@@ -128,6 +131,7 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
             <tr key={a.id} className={a.status === 'rejected' ? 'off' : ''}>
               <td>
                 {a.worker_name}<span className="sub">{fmtDate(a.work_date)} · {hhmm(a.started_at)}{a.ended_at ? `–${hhmm(a.ended_at)}` : ' (đang trong ca)'}{a.source === 'kiosk' ? ' · máy chấm công' : ''}</span>
+                {(() => { const ab = absenceOn(abs, a.worker_id, a.work_date); return ab ? <span className="pill warn">Đã ghi nghỉ ngày này: {absenceBadge(ab)}, nhưng có chấm công</span> : null; })()}
                 {a.exception_reason && <span className="sub">{a.exception_reason}</span>}
                 {a.has_photo && <span className="pill warn">Có ảnh cờ đỏ</span>}
               </td>

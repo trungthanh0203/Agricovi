@@ -2,9 +2,11 @@ import { CycleSelect } from './CycleSelect';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Collapsible } from './Collapsible';
 import { AttendanceList, type ListPreset } from './AttendanceList';
+import { AbsencesSection } from './AbsencesSection';
 import { AttendancePhotos } from './AttendancePhotos';
 import { ChartCard, HBarList } from './charts';
 import { KpiTile } from './HomeStats';
+import { absenceBadge, fetchAbsences, type Absence } from '../lib/absences';
 import { getAttendanceSummary, type AttSummary } from '../lib/attendanceAdmin';
 import { useAuth } from '../lib/auth';
 import { friendlyError } from '../lib/errors';
@@ -20,7 +22,7 @@ import { useCycleTitle } from '../lib/useCycleTitle';
 
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
-type Tab = 'today' | 'list' | 'photos';
+type Tab = 'today' | 'list' | 'absences' | 'photos';
 
 /**
  * Chấm công (D42, D115). Bốn mục, mỗi mục một việc:
@@ -41,6 +43,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
   const [sum, setSum] = useState<AttSummary | null>(null);
   const [orphans, setOrphans] = useState<{ worker_id: string; full_name: string; team_name: string | null }[]>([]);
   const [preset, setPreset] = useState<ListPreset | null>(null);
+  const [absToday, setAbsToday] = useState<Absence[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const cycles = useTable('cycles').filter((c) => c.status === 'active' && c.owner_org_id === active?.id);
@@ -62,6 +65,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
       }
       setWorkers(w);
       setSum(await getAttendanceSummary(orgId, todayLocal()).catch(() => null));
+      void fetchAbsences(orgId, todayLocal(), todayLocal()).then(setAbsToday).catch(() => setAbsToday([]));
       if (isAdmin) void listOrphans(orgId).then(setOrphans).catch(() => setOrphans([]));
     } catch (e) { setError(friendlyError(e)); }
   }, [orgId, uid, active?.roles, isAdmin]);
@@ -79,6 +83,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'today', label: 'Hôm nay' },
     { id: 'list', label: 'Công' },
+    ...(isAdmin || canRecordFor.length > 0 ? [{ id: 'absences' as Tab, label: 'Nghỉ' }] : []),
     ...(isAdmin ? [
       { id: 'photos' as Tab, label: `Ảnh cần xem${sum && sum.flagged > 0 ? ` (${sum.flagged})` : ''}` },
     ] : []),
@@ -122,6 +127,14 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
             </div>
           )}
 
+          {absToday.length > 0 && (
+            <div className="card slim">
+              <p><strong>Hôm nay nghỉ ({absToday.length})</strong></p>
+              {absToday.slice(0, 8).map((x) => <p key={x.id} className="muted">{workers.find((w) => w.id === x.worker_id)?.full_name ?? 'Người làm'}: {absenceBadge(x)}{x.reason ? ` · ${x.reason}` : ''}</p>)}
+              <button type="button" className="link" onClick={() => setTab('absences')}>Mở danh sách nghỉ</button>
+            </div>
+          )}
+
           {canRecordFor.length === 0 && (
             <p className="muted">Chấm công do máy chấm công ghi, hoặc do chủ, quản lý, tổ trưởng nhập cho người làm. Bạn xem công của mình ở mục “Công”.</p>
           )}
@@ -145,6 +158,8 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
       {tab === 'list' && (
         <AttendanceList orgId={active.id} isAdmin={isAdmin} meId={me?.id ?? null} workers={workers} online={online} preset={preset} onChanged={() => void load()} />
       )}
+
+      {tab === 'absences' && <AbsencesSection orgId={active.id} workers={canRecordFor} canWrite={canRecordFor.length > 0} online={online} />}
 
       {tab === 'photos' && isAdmin && <AttendancePhotos orgId={active.id} />}
 
