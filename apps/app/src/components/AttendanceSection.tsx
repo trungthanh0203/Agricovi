@@ -137,7 +137,9 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
             </div>
           )}
 
-          <AttendanceList orgId={active.id} isAdmin={isAdmin} meId={me?.id ?? null} workers={workers} online={online} preset={preset} rangeAction={canRecordFor.length > 0 ? (
+          {todoNode}
+
+          <AttendanceList orgId={active.id} isAdmin={isAdmin} isOwner={isOwner(active.roles)} meId={me?.id ?? null} workers={workers} online={online} preset={preset} rangeAction={canRecordFor.length > 0 ? (
               <button type="button" className="chip add" disabled={!online} aria-expanded={panel === 'shift'} onClick={() => setPanel(panel === 'shift' ? null : 'shift')}>＋ Ghi công</button>
             ) : null}
             panel={panel === 'shift' && canRecordFor.length > 0 ? (
@@ -147,7 +149,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
                 <ShiftForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onCancel={() => setPanel(null)} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
               </div>
             ) : null}
-            extra={todoNode} onChanged={() => void load()} />
+            onChanged={() => void load()} />
         </>
       )}
 

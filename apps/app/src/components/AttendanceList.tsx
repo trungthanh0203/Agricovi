@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Collapsible } from './Collapsible';
 import { RowMenu } from './RowMenu';
-import { bulkConfirmAttendance, listAttendancePage, type AttPage, type AttPageRow, type AttStatusFilter } from '../lib/attendanceAdmin';
+import { bulkConfirmAttendance, closeOpenShift, closeStaleShifts, listAttendancePage, type AttPage, type AttPageRow, type AttStatusFilter } from '../lib/attendanceAdmin';
 import { absenceBadge, absenceOn, fetchAbsences, type Absence } from '../lib/absences';
 import { addDays, fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
@@ -34,10 +34,8 @@ export interface ListPreset { status: AttStatusFilter; range: 'prev' | 'today' |
  * Danh sách công (D115): lọc theo ngày, trạng thái, tên; phân trang 50 dòng do máy chủ cắt nên đủ cho cơ sở hàng trăm người.
  * Chủ/quản lý có nút xác nhận hàng loạt các công hợp lệ; tổ trưởng chỉ thấy người trong tổ (chính sách RLS).
  */
-export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, rangeAction, panel, extra, onChanged }: {
-  orgId: string; isAdmin: boolean; meId: string | null; workers: WorkerLite[]; online: boolean; preset: ListPreset | null;
-  /** Khối hiện ngay dưới các nút khoảng ngày (khung "Cần xử lý") */
-  extra?: ReactNode;
+export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online, preset, rangeAction, panel, onChanged }: {
+  orgId: string; isAdmin: boolean; isOwner: boolean; meId: string | null; workers: WorkerLite[]; online: boolean; preset: ListPreset | null;
   /** Nút đặt liền sau nút "Tháng này" (Ghi công) và khối hiện ngay dưới hàng nút đó (biểu mẫu Ghi công) */
   rangeAction?: ReactNode; panel?: ReactNode; onChanged: () => void;
 }) {
@@ -55,6 +53,8 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
   const [adjs, setAdjs] = useState<AdjustmentRequest[]>([]);
   const [abs, setAbs] = useState<Absence[]>([]);
   const headRef = useRef<HTMLHeadingElement>(null);
+  const [closeAt, setCloseAt] = useState('17:00');   // giờ ra dùng khi đóng nhanh các ca quên ra ca
+  const focused = range === 'all' || range === 'stale';   // đang xem từ nút Xem ở Cần xử lý: không chọn ngày/lọc
 
   // Mở từ "Hôm nay" bằng một bộ lọc sẵn (ví dụ: công chờ xác nhận)
   useEffect(() => {
@@ -101,6 +101,25 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
     } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
 
+  const canCloseAll = isAdmin || workers.length > 0;
+  async function closeAll() {
+    if (busy || !closeAt) return;
+    if (!window.confirm(`Đóng tất cả các ca quên ra ca lúc ${closeAt} của từng ngày? ${isOwner ? 'Công đóng xong sẽ được xác nhận luôn.' : 'Công đóng xong sẽ chờ xác nhận.'} Ca vào muộn hơn ${closeAt} sẽ được giữ lại.`)) return;
+    setBusy(true); setError(null); setNotice(null);
+    try {
+      const r = await closeStaleShifts(orgId, closeAt);
+      setNotice(`Đã đóng ${r.closed} ca${r.skipped ? `. Còn ${r.skipped} ca chưa đóng (vào muộn hơn ${closeAt}, kỳ lương đã khóa hoặc không đủ quyền): đóng riêng từng ca ở bảng dưới.` : '.'}`);
+      await load(); onChanged();
+    } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+  }
+  function closeOne(a: { id: string; work_date: string; worker_name: string }) {
+    const t = window.prompt(`Giờ ra của ${a.worker_name} ngày ${fmtDate(a.work_date)} (giờ:phút, ví dụ 17:00)?`, closeAt);
+    if (!t) return;
+    if (!/^\d{1,2}:\d{2}$/.test(t.trim())) return setError('Giờ ra nhập dạng giờ:phút, ví dụ 17:00.');
+    const [h, m] = t.trim().split(':');
+    void run(() => closeOpenShift(a.id, new Date(`${a.work_date}T${h!.padStart(2, '0')}:${m}:00`)));
+  }
+
   const canConfirm = (a: { worker_id: string }) => isAdmin || (a.worker_id !== meId && workers.some((w) => w.id === a.worker_id));
   const total = data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE));
@@ -112,26 +131,41 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
 
   return (
     <>
-      <div className="chips" role="tablist" aria-label="Khoảng ngày">
-        {RANGES.map((r) => (
-          <button key={r.id} role="tab" aria-selected={range === r.id} className={range === r.id ? 'chip active' : 'chip'} onClick={() => { setRange(r.id); setPage(0); }}>{r.label}</button>
-        ))}
-        {rangeAction}
-      </div>
-      {panel}
-      {extra}
-      {(range === 'all' || range === 'stale') && <p className="muted">{range === 'all' ? 'Đang xem mọi ngày, để khớp với số trong khung Cần xử lý.' : 'Đang xem các ca chưa ra ca từ những ngày trước.'} Bấm một nút ngày ở trên để xem theo ngày.</p>}
-      <div className="filters att-filters">
-        <label>Trạng thái
-          <select value={status} onChange={(e) => { setStatus(e.target.value as AttStatusFilter); setPage(0); }}>
-            {STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-          </select>
-        </label>
-        <form onSubmit={search} className="searchrow">
-          <label>Tìm theo tên<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Gõ tên rồi bấm Tìm" /></label>
-          <button type="submit" className="secondary">Tìm</button>
-        </form>
-      </div>
+      {focused ? (
+        <div className="card">
+          <button type="button" className="link" onClick={() => { setRange('today'); setStatus('pending'); setQ(''); setAppliedQ(''); setPage(0); }}>‹ Quay lại bảng công</button>
+          <h2 ref={headRef}>{range === 'all' ? 'Công chờ xác nhận' : 'Ca quên ra ca'}{data ? ` (${total})` : ''}</h2>
+          <p className="muted">{range === 'all' ? 'Mọi công đã ra ca nhưng chưa được xác nhận, của tất cả các ngày.' : 'Các ca đã mở từ những ngày trước mà chưa ra ca.'}</p>
+          {range === 'stale' && canCloseAll && total > 0 && (
+            <div className="inline-form">
+              <label>Đóng nhanh tất cả: giờ ra mỗi ngày<input type="time" value={closeAt} onChange={(e) => setCloseAt(e.target.value)} /></label>
+              <button type="button" className="primary" disabled={busy || !online || !closeAt} onClick={() => void closeAll()}>✔ Đóng tất cả {total} ca lúc {closeAt}</button>
+              <p className="muted">Mỗi ca được đóng lúc {closeAt || '…'} của chính ngày làm đó. Ca vào muộn hơn giờ này sẽ được giữ lại để bạn đóng riêng từng ca. {isOwner ? 'Công đóng xong được xác nhận luôn.' : 'Công đóng xong ở trạng thái chờ xác nhận.'}</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="chips" role="tablist" aria-label="Khoảng ngày">
+            {RANGES.map((r) => (
+              <button key={r.id} role="tab" aria-selected={range === r.id} className={range === r.id ? 'chip active' : 'chip'} onClick={() => { setRange(r.id); setPage(0); }}>{r.label}</button>
+            ))}
+            {rangeAction}
+          </div>
+          {panel}
+          <div className="filters att-filters">
+            <label>Trạng thái
+              <select value={status} onChange={(e) => { setStatus(e.target.value as AttStatusFilter); setPage(0); }}>
+                {STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+              </select>
+            </label>
+            <form onSubmit={search} className="searchrow">
+              <label>Tìm theo tên<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Gõ tên rồi bấm Tìm" /></label>
+              <button type="submit" className="secondary">Tìm</button>
+            </form>
+          </div>
+        </>
+      )}
 
       {error && <p className="msg error" role="alert">{error}</p>}
       {notice && <p className="msg ok" role="status">{notice}</p>}
@@ -157,7 +191,7 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
         </Collapsible>
       )}
 
-      <h2 className="sect" ref={headRef}>{status === 'pending' ? 'Các công chờ xác nhận' : status === 'open' ? 'Các ca chưa ra ca' : status === '' ? 'Danh sách công' : STATUS_OPTIONS.find((o) => o.id === status)?.label}</h2>
+      {!focused && <h2 className="sect" ref={headRef}>{status === 'pending' ? 'Các công chờ xác nhận' : status === 'open' ? 'Các ca chưa ra ca' : status === '' ? 'Danh sách công' : STATUS_OPTIONS.find((o) => o.id === status)?.label}</h2>}
       <p className="muted">{data ? (total === 0 ? 'Không có bản ghi nào.' : `Hiện ${page * PAGE + 1}–${Math.min(total, (page + 1) * PAGE)} trong ${total} bản ghi.`) : 'Đang tải…'}</p>
       <table className="grid">
         <thead><tr><th>Người · ngày</th><th>Giờ làm</th><th></th></tr></thead>
@@ -165,7 +199,7 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
           {rows.map((a) => (
             <tr key={a.id} className={a.status === 'rejected' ? 'off' : ''}>
               <td>
-                {a.worker_name}<span className="sub">{fmtDate(a.work_date)} · {hhmm(a.started_at)}{a.ended_at ? `–${hhmm(a.ended_at)}` : ' (đang trong ca)'}{a.source === 'kiosk' ? ' · máy chấm công' : ''}</span>
+                {a.worker_name}<span className="sub">{fmtDate(a.work_date)} · {hhmm(a.started_at)}{a.ended_at ? `–${hhmm(a.ended_at)}` : (a.work_date < today ? ' (quên ra ca)' : ' (đang trong ca)')}{a.source === 'kiosk' ? ' · máy chấm công' : ''}</span>
                 {(() => { const ab = absenceOn(abs, a.worker_id, a.work_date); return ab ? <span className="pill warn">Đã ghi nghỉ ngày này: {absenceBadge(ab)}, nhưng có chấm công</span> : null; })()}
                 {a.exception_reason && <span className="sub">{a.exception_reason}</span>}
                 {a.has_photo && <span className="pill warn">Có ảnh cờ đỏ</span>}
@@ -176,6 +210,8 @@ export function AttendanceList({ orgId, isAdmin, meId, workers, online, preset, 
               </td>
               <td className="act">
                 <RowMenu label={`Công ${a.worker_name} ${fmtDate(a.work_date)}`} items={[
+                  ...(!a.ended_at && a.status !== 'rejected' && a.work_date < today && canConfirm(a)
+                    ? [{ label: 'Đóng ca (nhập giờ ra)', icon: '⏹', disabled: busy || !online, onClick: () => closeOne(a) }] : []),
                   ...(a.ended_at && a.status !== 'rejected' && (a.worker_id === meId || canConfirm(a))
                     ? [{ label: 'Đề nghị sửa giờ', icon: '✎', disabled: busy || !online, onClick: () => setAdjFor(adjFor === a.id ? null : a.id) }] : []),
                   ...(a.ended_at && a.status === 'needs_confirmation' && canConfirm(a) ? [

@@ -42,3 +42,15 @@ export async function bulkConfirmAttendance(orgId: string, from: string, to: str
   if (error) throw new Error(error.message);
   return data as { count: number; skipped: number };
 }
+
+/** Đóng MỘT ca quên ra ca (D198, migration 0225): chủ đóng thì công được xác nhận luôn, quản lý/tổ trưởng đóng thì chờ xác nhận */
+export async function closeOpenShift(id: string, endedAt: Date, breakMinutes: number | null = null): Promise<void> {
+  const { error } = await client().rpc('close_open_shift', { p_id: id, p_ended_at: endedAt.toISOString(), p_break: breakMinutes });
+  if (error) throw new Error(error.message);
+}
+/** Đóng HÀNG LOẠT mọi ca còn mở từ những ngày trước, mỗi ca ra lúc `hhmm` (giờ Việt Nam) của ngày làm đó */
+export async function closeStaleShifts(orgId: string, hhmm: string): Promise<{ closed: number; skipped: number }> {
+  const { data, error } = await client().rpc('close_stale_shifts', { p_org: orgId, p_time: hhmm });
+  if (error) throw new Error(error.message);
+  return data as { closed: number; skipped: number };
+}
