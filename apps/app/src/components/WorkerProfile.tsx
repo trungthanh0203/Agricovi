@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { friendlyError } from '../lib/errors';
 import type { MyOrg } from '../lib/orgs';
+import { canPerm } from '../lib/permissions';
 import { WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
 import { deactivateWorker, updateWorkerInfo, type TeamRow, type WorkerRow } from '../lib/teams';
 import { Collapsible } from './Collapsible';
+import { HrRecordFold } from './HrRecord';
 import { MemberPay } from './MemberPay';
 
 /**
@@ -50,6 +52,7 @@ export function WorkerProfile({ org, worker, team, onBack, onChanged }: { org: M
       <Collapsible title="Trả công" summary="theo giờ hoặc lương tháng">
         <MemberPay orgId={org.id} workerId={worker.id} />
       </Collapsible>
+      <HrRecordFold workerId={worker.id} canEdit={canPerm(org.perms, 'payroll', 'edit')} />
     </div>
   );
 }

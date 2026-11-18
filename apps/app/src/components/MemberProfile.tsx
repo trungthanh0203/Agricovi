@@ -3,12 +3,13 @@ import { friendlyError } from '../lib/errors';
 import { deleteWorkerFace, issuePinCode, type PinStatus } from '../lib/kiosk';
 import { removeMember, setMemberAreas, setMemberDescription, setMemberSuspended, type Member } from '../lib/members';
 import type { MyOrg } from '../lib/orgs';
-import type { PermOverrides } from '../lib/permissions';
+import { canPerm, type PermOverrides } from '../lib/permissions';
 import { setMemberPosition, type PositionRow } from '../lib/positions';
 import { updateStaffProfile, type StaffCredentials } from '../lib/staff';
 import { assignWorkerToTeam, type TeamRow, type WorkerRow } from '../lib/teams';
 import { Collapsible } from './Collapsible';
 import { AreaChoice } from './MemberAreas';
+import { HrRecordFold } from './HrRecord';
 import { MemberPay } from './MemberPay';
 import { MemberPermissions } from './MemberPermissions';
 import { PositionPicker } from './PositionPicker';
@@ -151,6 +152,7 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
       <Collapsible title="Trả công" summary="theo giờ hoặc lương tháng">
         <MemberPay orgId={org.id} workerId={worker?.id ?? null} />
       </Collapsible>
+      <HrRecordFold workerId={worker?.id ?? null} canEdit={canPerm(org.perms, 'payroll', 'edit')} />
     </div>
   );
 }

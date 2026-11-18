@@ -5,6 +5,7 @@ import { setNoteDone } from '../lib/production';
 import { useCatalog } from '../lib/catalog';
 import { ExpiringLots } from '../components/ExpiringLots';
 import { AssetReminders } from '../components/AssetReminders';
+import { HrReminders } from '../components/HrReminders';
 import { LossAlerts } from '../components/LossAlerts';
 import { HomeReminders } from '../components/MilestonePanels';
 import { HomeStats } from '../components/HomeStats';
@@ -185,6 +186,7 @@ export function HomeTab({ onGo, onOpenCycle }: { onGo: (tab: TabId, section?: st
       <HomeReminders />
       <ExpiringLots />
       <AssetReminders onGo={onGo} />
+      <HrReminders onGo={onGo} />
       <LossAlerts cycleIds={mineIds} onOpenCycle={onOpenCycle} />
       <CycleProgressList cycleIds={mineIds} onOpenCycle={onOpenCycle} />
       <HomeStats cycleIds={mineIds} onGo={onGo} />

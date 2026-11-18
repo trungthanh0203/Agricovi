@@ -4,6 +4,7 @@ Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi t
 
 ## Đang làm
 
+- **18/11/2026 (D188, migration 0222, cần `db push`)**: **hồ sơ nhân sự gọn + hợp đồng lao động** (mục 15, mảng 1-2) trong hồ sơ từng người, nhắc hợp đồng sắp hết hạn ở Trang chủ. Test `hr_records.test.mjs` 3/3. Còn: nhắc trong bản tin sáng, đơn nghỉ, hạn mức/khóa theo gói.
 - **18/11/2026 (D187, migration 0221, cần `db push`)**: **Thông tin cơ sở** ở Tài khoản (chủ sửa, quản lý xem); đổi thứ tự trường ở trang đăng ký (email/điện thoại + mật khẩu lên trước). Test `org_details.test.mjs` 3/3.
 - **18/11/2026 (D186, migration 0220, cần `db push`)**: **gói dùng thử có phạm vi, bước 1a**: hộ dùng thử mới 1 vụ, HTX 1 hộ + 1 vụ, không công khai website. Test `trial_scope.test.mjs` 4/4. Còn: vụ mẫu xem 24 giờ (1b), khóa tính năng (2), hiện giao diện giới hạn/nâng gói.
 - **18/11/2026**: Tổng kết vụ → Chi tiết bỏ nút "Tất cả", mặc định "Kết thúc" (giao diện).
