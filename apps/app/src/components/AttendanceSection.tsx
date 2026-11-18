@@ -4,7 +4,6 @@ import { Collapsible } from './Collapsible';
 import { AttendanceList, type ListPreset } from './AttendanceList';
 import { AbsencesSection } from './AbsencesSection';
 import { AttendancePhotos } from './AttendancePhotos';
-import { ChartCard, HBarList } from './charts';
 import { KpiTile } from './HomeStats';
 import { absenceBadge, fetchAbsences, type Absence } from '../lib/absences';
 import { getAttendanceSummary, type AttSummary } from '../lib/attendanceAdmin';
@@ -143,14 +142,6 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
             <Collapsible inline title="＋ Chấm công cho người làm" summary={isAdmin ? 'nhập ca đã làm, kể cả của bạn (dành cho hộ không dùng máy chấm công)' : 'nhập ca đã làm của người trong tổ'}>
               <ShiftForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
             </Collapsible>
-          )}
-
-          {sum && sum.top.length > 0 && (
-            <ChartCard title="Giờ công tháng này theo người" subtitle="Chỉ tính công đã xác nhận · 8 người nhiều nhất" footer="Xem theo phòng/tổ: Báo cáo → Theo nhu cầu → Giờ công và tiền công → Theo phòng / tổ."
-              table={{ columns: ['Người', 'Giờ công'], rows: sum.top.map((p) => [p.name, `${(Math.round(p.minutes / 6) / 10).toLocaleString('vi-VN')} giờ`]) }}>
-              <HBarList items={sum.top.map((p) => ({ label: p.name, value: Math.round(p.minutes / 6) / 10 }))} tone="info"
-                format={(n) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} giờ`} ariaLabel="Giờ công theo người" />
-            </ChartCard>
           )}
         </>
       )}
