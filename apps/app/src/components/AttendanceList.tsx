@@ -34,10 +34,12 @@ export interface ListPreset { status: AttStatusFilter; range: 'prev' | 'today' |
  * Danh sách công (D115): lọc theo ngày, trạng thái, tên; phân trang 50 dòng do máy chủ cắt nên đủ cho cơ sở hàng trăm người.
  * Chủ/quản lý có nút xác nhận hàng loạt các công hợp lệ; tổ trưởng chỉ thấy người trong tổ (chính sách RLS).
  */
-export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online, preset, rangeAction, panel, onChanged }: {
+export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online, preset, rangeAction, panel, onFocusChange, onChanged }: {
   orgId: string; isAdmin: boolean; isOwner: boolean; meId: string | null; workers: WorkerLite[]; online: boolean; preset: ListPreset | null;
   /** Nút đặt liền sau nút "Tháng này" (Ghi công) và khối hiện ngay dưới hàng nút đó (biểu mẫu Ghi công) */
-  rangeAction?: ReactNode; panel?: ReactNode; onChanged: () => void;
+  rangeAction?: ReactNode; panel?: ReactNode;
+  /** Báo cho khung ngoài biết đang ở chế độ tập trung (bấm Xem ở Cần xử lý) để ẩn khung Cần xử lý */
+  onFocusChange?: (focused: boolean) => void; onChanged: () => void;
 }) {
   // Mặc định: hôm nay, trạng thái Chờ xác nhận (việc chủ/quản lý cần làm nhất)
   const [range, setRange] = useState<'prev' | 'today' | 'month' | 'all' | 'stale'>('today')   // 'all' và 'stale' chỉ đến từ nút Xem ở khung Cần xử lý;
@@ -55,6 +57,7 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
   const headRef = useRef<HTMLHeadingElement>(null);
   const [closeAt, setCloseAt] = useState('17:00');   // giờ ra dùng khi đóng nhanh các ca quên ra ca
   const focused = range === 'all' || range === 'stale';   // đang xem từ nút Xem ở Cần xử lý: không chọn ngày/lọc
+  useEffect(() => { onFocusChange?.(focused); }, [focused]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Mở từ "Hôm nay" bằng một bộ lọc sẵn (ví dụ: công chờ xác nhận)
   useEffect(() => {

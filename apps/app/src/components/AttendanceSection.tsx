@@ -45,6 +45,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
   const [absToday, setAbsToday] = useState<Absence[]>([]);
   const [panel, setPanel] = useState<'shift' | null>(null);   // biểu mẫu chấm công hộ đang mở ở tab Hôm nay
   const [showAbs, setShowAbs] = useState(false);
+  const [focus, setFocus] = useState(false);                   // đang xem danh sách tập trung (bấm Xem ở Cần xử lý): ẩn khung Cần xử lý
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const cycles = useTable('cycles').filter((c) => c.status === 'active' && c.owner_org_id === active?.id);
@@ -139,7 +140,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
             </div>
           )}
 
-          {todoNode}
+          {!focus && todoNode}
 
           <AttendanceList orgId={active.id} isAdmin={isAdmin} isOwner={isOwner(active.roles)} meId={me?.id ?? null} workers={workers} online={online} preset={preset} rangeAction={canRecordFor.length > 0 ? (
               <button type="button" className="chip add" disabled={!online} aria-expanded={panel === 'shift'} onClick={() => setPanel(panel === 'shift' ? null : 'shift')}>＋ Ghi công</button>
@@ -151,7 +152,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
                 <ShiftForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onCancel={() => setPanel(null)} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
               </div>
             ) : null}
-            onChanged={() => void load()} />
+            onFocusChange={setFocus} onChanged={() => void load()} />
         </>
       )}
 

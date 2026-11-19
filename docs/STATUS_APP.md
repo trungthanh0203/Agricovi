@@ -4,6 +4,7 @@ Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi t
 
 ## Đang làm
 
+- **19/11/2026 (D202, migration 0229, cần `db push`)**: sửa nút Xem ở Cần xử lý (lỗi 92 ngày): liệt kê và xác nhận hàng loạt được mọi ngày với công chờ xác nhận / ca đang mở.
 - **19/11/2026 (D201, migration 0228 + deploy lại `scan-invoice`)**: **bảng chấm công giấy, lớp B: đọc ảnh bằng AI** trong màn Nhập số liệu. Test `timesheet_scan.test.mjs` 3/3, `timesheet_scan_map.test.mjs` 7/7. Chưa thử với ảnh bảng thật (cần deploy, bí mật Cloudflare đã có từ G2-3).
 - **19/11/2026 (D200, migration 0227, cần `db push`)**: **bảng chấm công giấy, lớp A: nhập số liệu theo bảng đã in** (nút Nhập số liệu ở tab Bảng giấy). Test `timesheet_entry.test.mjs` 7/7, `timesheet_cells.test.mjs` 6/6. Chưa thử trên giao diện thật. Còn: lớp B (đọc ảnh bằng AI).
 - **19/11/2026 (D199, migration 0226, cần `db push`)**: **bảng chấm công giấy, lớp C** (Chấm công → Bảng giấy: tạo bảng từ ngày đến ngày, xem trước, in A4 ngang, danh sách bảng đã in). Test `timesheet_sheets.test.mjs` 5/5. Chưa xem thử bản in trên máy thật. Còn: lớp A (nhập số liệu theo bảng), lớp B (đọc ảnh).
