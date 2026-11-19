@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
-import { KpiTile, shortMoney } from './HomeStats';
+import { shortMoney } from './HomeStats';
 import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
@@ -24,6 +24,12 @@ const MODES: { id: RangeMode; label: string }[] = [
 ];
 const time = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '…');
 const stamp = (iso: string) => (iso ? new Date(iso).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '');
+type MiniTone = 'neutral' | 'ok' | 'warn' | 'bad' | 'info';
+/** Số liệu tổng hợp thu nhỏ: nhãn nhỏ, số vừa, nhiều ô trên một hàng (không tốn diện tích như ô số lớn) */
+function MiniStat({ label, value, tone = 'neutral', title }: { label: string; value: string; tone?: MiniTone; title?: string }) {
+  return <div className={`mini-kpi ${tone}`} title={title}><span>{label}</span><strong>{value}</strong></div>;
+}
+
 const pillOf = (s: PayItem['status']) => (s === 'locked' ? 'pill ok' : s === 'estimate' || s === 'calculated' || s === 'pending' || s === 'open' ? 'pill warn' : 'pill err');
 
 /**
@@ -71,8 +77,8 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
   }, [orgId, canSeeAll, mode, range.from, online, tick]);
   useEffect(() => {
     if (!ov || view !== null) return;
-    if (ov.can_see_all) setView('all');
-    else { setView('person'); setPick(ov.workers[0]?.worker_id ?? null); }
+    // mặc định xem MỘT người (người đầu danh sách); chủ muốn xem tất cả thì bấm "Tất cả" (đứng cuối)
+    setView('person'); setPick(ov.workers[0]?.worker_id ?? null);
   }, [ov, view]);
   useEffect(() => { if (view === 'person' && !pick && ov?.workers.length === 1) setPick(ov.workers[0]!.worker_id); }, [view, pick, ov]);
 
@@ -89,6 +95,7 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
   if (!active) return null;
   const rows = ov?.workers ?? [];
   const person = rows.find((r) => r.worker_id === pick) ?? null;
+  const pickIndex = rows.findIndex((r) => r.worker_id === pick);
   const open = (id: string) => { setPick(id); setView('person'); };
 
   const header = (
@@ -103,18 +110,20 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
       </div>
       {canSeeAll && (
         <div className="chips" role="tablist" aria-label="Xem theo">
-          {([['all', 'Tất cả'], ['team', 'Phòng / Tổ'], ['person', 'Một người']] as const).map(([id, label]) => (
+          {([['person', 'Một người'], ['team', 'Phòng / Tổ'], ['all', 'Tất cả']] as const).map(([id, label]) => (
             <button key={id} role="tab" aria-selected={view === id} className={view === id ? 'chip active' : 'chip'} onClick={() => setView(id)}>{label}</button>
           ))}
         </div>
       )}
       {view === 'person' && canSeeAll && (
-        <label className="inline-form">Chọn người
-          <select value={pick ?? ''} onChange={(e) => setPick(e.target.value || null)}>
+        <div className="person-pick">
+          <button type="button" className="range-btn" disabled={pickIndex <= 0} onClick={() => setPick(rows[pickIndex - 1]!.worker_id)} aria-label="Người trước">‹</button>
+          <select value={pick ?? ''} onChange={(e) => setPick(e.target.value || null)} aria-label="Chọn người">
             <option value="">— Chọn người —</option>
             {rows.map((r) => <option key={r.worker_id} value={r.worker_id}>{r.name}{r.team_name ? ` · ${r.team_name}` : ''}</option>)}
           </select>
-        </label>
+          <button type="button" className="range-btn" disabled={pickIndex < 0 || pickIndex >= rows.length - 1} onClick={() => setPick(rows[pickIndex + 1]!.worker_id)} aria-label="Người sau">›</button>
+        </div>
       )}
       {!online && <p className="muted">Đang offline: hiện bản đã xem lần trước (nếu có).</p>}
       {fromCache && online && <p className="muted">Chưa tải được bản mới, đang hiện bản đã lưu.</p>}
@@ -128,10 +137,10 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
       <>
         {header}
         {settle && <PaySettleBar orgId={orgId} state={settle} onChanged={refreshAll} onGo={onGo} />}
-        {canSeeAll && pick && <button className="link" onClick={() => setView('all')}>← Danh sách tất cả</button>}
+        {canSeeAll && pick && <button className="link" onClick={() => setView('all')}>Xem tất cả mọi người →</button>}
         {!pick && <p className="muted">{rows.length === 0 ? 'Chưa có hồ sơ chấm công nên chưa có bảng lương. Hồ sơ được tạo khi bạn chấm công lần đầu.' : 'Hãy chọn một người để xem.'}</p>}
         {person && <PersonView row={person} detail={detail} range={range} orgName={active.name} label={range.label} adjust={settle && settle.can_edit && settle.status !== 'locked' && !settle.overlap_legacy ? { orgId, month: range.from, onChanged: refreshAll } : null} />}
-        {person && <Suspense fallback={null}><PayCharts orgId={orgId} worker={canSeeAll ? person.worker_id : null} items={detail?.items ?? null} from={range.from} to={range.to} /></Suspense>}
+        {person && <Suspense fallback={null}><PayCharts items={detail?.items ?? null} from={range.from} to={range.to} /></Suspense>}
       </>
     );
   }
@@ -160,14 +169,16 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
       {settle && <PaySettleBar orgId={orgId} state={settle} onChanged={refreshAll} onGo={onGo} />}
       {rows.length === 0 && <p className="muted">{busy ? 'Đang tải…' : 'Chưa có người nào.'}</p>}
       {rows.length > 0 && (
-        <div className="kpis">
-          <KpiTile label="Tổng thực nhận" value={shortMoney(total.net)} tone="info" title={fmtVnd(total.net)} note={`đã chốt ${shortMoney(total.net_locked)}`} />
-          <KpiTile label="Giờ công" value={hoursText(total.hours)} note={`${rows.length} người`} />
-          <KpiTile label="Lương và công" value={shortMoney(total.hourly + total.salary + total.piece)} title={fmtVnd(total.hourly + total.salary + total.piece)} note={total.piece > 0 ? 'giờ + lương cố định + khoán' : 'giờ + lương cố định'} />
-          <KpiTile label="Thưởng − phạt − tạm ứng" value={shortMoney(total.bonus - total.deduction - total.advance)} tone={total.bonus - total.deduction - total.advance < 0 ? 'warn' : 'ok'} />
-        </div>
+        <>
+          <div className="mini-kpis">
+            <MiniStat label="Thực nhận" value={shortMoney(total.net)} tone="info" title={fmtVnd(total.net)} />
+            <MiniStat label="Giờ công" value={hoursText(total.hours)} title={`${rows.length} người`} />
+            <MiniStat label="Lương và công" value={shortMoney(total.hourly + total.salary + total.piece)} title={fmtVnd(total.hourly + total.salary + total.piece)} />
+            <MiniStat label="Thưởng−phạt−ứng" value={shortMoney(total.bonus - total.deduction - total.advance)} tone={total.bonus - total.deduction - total.advance < 0 ? 'warn' : 'ok'} title="Thưởng trừ phạt trừ tạm ứng" />
+          </div>
+          <p className="muted mini-note">{rows.length} người · đã chốt {shortMoney(total.net_locked)} · dự tính {shortMoney(total.net - total.net_locked)}</p>
+        </>
       )}
-      {rows.length > 0 && <Suspense fallback={null}><PayCharts orgId={orgId} worker={null} items={null} from={range.from} to={range.to} /></Suspense>}
       {rows.length > 0 && (
         <div className="chips" role="tablist" aria-label="Lọc danh sách">
           <button role="tab" aria-selected={!onlyTodo} className={!onlyTodo ? 'chip active' : 'chip'} onClick={() => setOnlyTodo(false)}>Tất cả ({rows.length})</button>
@@ -233,17 +244,18 @@ function PersonView({ row, detail, range, adjust, orgName, label }: {
   return (
     <>
       <h2 className="sect">{row.name}{row.team_name ? ` · ${row.team_name}` : ''}</h2>
-      <div className="kpis">
-        <KpiTile label="Thực nhận" value={shortMoney(row.net)} tone="info" title={fmtVnd(row.net)} note={`đã chốt ${shortMoney(row.net_locked)} · dự tính ${shortMoney(open)}`} />
-        <KpiTile label="Giờ công" value={hoursText(row.hours)} note={`${row.days} ngày`} />
-        <KpiTile label="Tiền công theo giờ" value={shortMoney(row.hourly)} title={fmtVnd(row.hourly)} />
-        <KpiTile label="Lương cố định" value={shortMoney(row.salary)} title={fmtVnd(row.salary)} />
-        {row.piece > 0 && <KpiTile label="Tiền khoán" value={shortMoney(row.piece)} title={fmtVnd(row.piece)} tone="ok" />}
-        <KpiTile label="Thưởng" value={shortMoney(row.bonus)} tone={row.bonus > 0 ? 'ok' : 'neutral'} />
-        <KpiTile label="Phạt / khấu trừ" value={shortMoney(row.deduction)} tone={row.deduction > 0 ? 'bad' : 'neutral'} />
-        <KpiTile label="Tạm ứng" value={shortMoney(row.advance)} tone={row.advance > 0 ? 'warn' : 'neutral'} />
-        {row.pending_hours > 0 && <KpiTile label="Chờ xác nhận" value={hoursText(row.pending_hours)} tone="warn" note="chưa tính tiền" />}
+      <div className="mini-kpis p3">
+        <MiniStat label="Thực nhận" value={shortMoney(row.net)} tone="info" title={fmtVnd(row.net)} />
+        <MiniStat label="Giờ công" value={hoursText(row.hours)} title={`${row.days} ngày`} />
+        <MiniStat label="Công giờ" value={shortMoney(row.hourly)} title={fmtVnd(row.hourly)} />
+        <MiniStat label="Lương cố định" value={shortMoney(row.salary)} title={fmtVnd(row.salary)} />
+        {row.piece > 0 && <MiniStat label="Khoán" value={shortMoney(row.piece)} tone="ok" title={fmtVnd(row.piece)} />}
+        <MiniStat label="Thưởng" value={shortMoney(row.bonus)} tone={row.bonus > 0 ? 'ok' : 'neutral'} />
+        <MiniStat label="Phạt" value={shortMoney(row.deduction)} tone={row.deduction > 0 ? 'bad' : 'neutral'} title="Phạt / khấu trừ" />
+        <MiniStat label="Tạm ứng" value={shortMoney(row.advance)} tone={row.advance > 0 ? 'warn' : 'neutral'} />
+        {row.pending_hours > 0 && <MiniStat label="Chờ xác nhận" value={hoursText(row.pending_hours)} tone="warn" title="Giờ công chưa xác nhận nên chưa tính tiền" />}
       </div>
+      <p className="muted mini-note">{row.days} ngày · đã chốt {shortMoney(row.net_locked)} · dự tính {shortMoney(open)}{row.pending_hours > 0 ? ` · ${hoursText(row.pending_hours)} chờ xác nhận chưa tính tiền` : ''}</p>
       {row.no_rate_days > 0 && <p className="msg warn" role="status">Có {row.no_rate_days} ngày công chưa có cách trả công nên chưa tính được tiền. Nhờ chủ cơ sở đặt ở hồ sơ nhân sự → Trả công.</p>}
 
       <Collapsible title="Công từng ngày" summary={`${days.length} dòng`} defaultOpen>
