@@ -952,3 +952,55 @@ td.fold-col.has-fold { padding-right: 40px; }
 .person-pick select { flex: 1 1 auto; min-width: 0; }
 @media (max-width: 360px) { .mini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .mini-kpis.p3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* Bảng lương, giao diện mới (D207): phiếu lương một người và bảng tổng hợp */
+.payslip-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.payslip-label { margin-top: 8px; font-size: .85rem; color: var(--muted); }
+.payslip-net { font-size: 2rem; line-height: 1.15; font-weight: 600; }
+.payslip-sub { font-size: .9rem; }
+.payslip-sub .up { color: var(--green-d); }
+.payslip-sub .down { color: var(--err); }
+.payslip-warn { margin: 10px 0 4px; padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); font-size: .88rem; }
+.payslip-warn p { margin: 2px 0; }
+.pay-statement { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: .95rem; }
+.pay-statement td { padding: 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.pay-statement td.r { text-align: right; white-space: nowrap; padding-left: 12px; }
+.pay-statement td small { display: block; font-size: .8rem; color: var(--muted); }
+.pay-statement tr.head td { padding-top: 12px; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.pay-statement tr.sum td { font-weight: 600; border-top: 1px solid var(--line); }
+.pay-statement tr.net td { font-size: 1.1rem; font-weight: 700; border-top: 2px solid var(--fg); border-bottom: 0; padding-top: 10px; }
+.pay-statement .neg { color: var(--err); }
+.pay-cal-wrap { margin-top: 14px; }
+.pay-cal-title { font-size: .85rem; color: var(--muted); margin-bottom: 4px; }
+.pay-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.pay-cal-h { text-align: center; font-size: .7rem; color: var(--muted); }
+.pay-cal-d { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: .78rem; background: var(--tint); color: var(--muted); }
+.pay-cal-d.full { background: #97c459; color: #173404; }
+.pay-cal-d.part { background: #c0dd97; color: #27500a; }
+.pay-cal-d.pending { background: #ef9f27; color: #412402; }
+.pay-cal-d.off { background: #85b7eb; color: #042c53; }
+.pay-cal-legend { font-size: .78rem; margin: 6px 0 0; }
+.pay-cal-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin: 0 4px 0 8px; vertical-align: -1px; }
+.pay-cal-legend i.full { background: #97c459; } .pay-cal-legend i.part { background: #c0dd97; } .pay-cal-legend i.pending { background: #ef9f27; } .pay-cal-legend i.off { background: #85b7eb; }
+.pay-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+.pay-tools label { flex: 1 1 140px; }
+.pay-scroll { max-height: 62vh; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.pay-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.pay-table.wide { min-width: 640px; }
+.pay-table th, .pay-table td { padding: 8px 8px; border-top: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.pay-table thead th { position: sticky; top: 0; z-index: 2; background: var(--tint); font-weight: 500; font-size: .78rem; color: var(--muted); border-top: 0; }
+.pay-table .r { text-align: right; white-space: nowrap; }
+.pay-table .c { text-align: center; width: 32px; }
+.pay-table .sticky { position: sticky; left: 0; z-index: 1; background: var(--card); min-width: 130px; }
+.pay-table thead th.sticky { z-index: 3; background: var(--tint); }
+.pay-table tbody tr { cursor: pointer; }
+.pay-table tbody tr:hover td, .pay-table tbody tr:focus-visible td { background: var(--tint); }
+.pay-table .sub { display: block; font-size: .78rem; color: var(--muted); font-weight: 400; }
+.pay-table .sub.warn { color: var(--warn); }
+.pay-table tfoot td { position: sticky; bottom: 0; z-index: 2; background: var(--tint); font-weight: 600; border-top: 2px solid var(--line); }
+.pay-table tfoot td.sticky { z-index: 3; }
+.pay-dot { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border-radius: 50%; vertical-align: -1px; }
+.pay-dot.locked { background: var(--green); }
+.pay-dot.open { background: #ef9f27; }
+.pay-dot.none { background: var(--line); }
+.pay-dot.attention { width: 18px; height: 18px; background: var(--err); color: #fff; font-size: .72rem; font-weight: 700; }
