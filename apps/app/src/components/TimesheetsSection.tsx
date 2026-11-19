@@ -9,8 +9,9 @@ import {
 } from '../lib/timesheets';
 import type { WorkerLite } from '../lib/work';
 import { PrintSheet } from './PrintSheet';
+import { TimesheetEntry } from './TimesheetEntry';
 
-type View = { kind: 'list' } | { kind: 'form' } | { kind: 'preview'; id: string; data: SheetData } | { kind: 'saved'; sheet: Sheet };
+type View = { kind: 'list' } | { kind: 'form' } | { kind: 'entry'; sheet: Sheet } | { kind: 'preview'; id: string; data: SheetData } | { kind: 'saved'; sheet: Sheet };
 
 /**
  * Chấm công → Bảng giấy (D199, lớp C): in bảng chấm công có sẵn tên người và các ngày từ-đến kèm ghi chú cách ghi; mỗi bảng in ra được LƯU
@@ -64,6 +65,10 @@ export function TimesheetsSection({ orgId, orgName, workers, online }: { orgId: 
     );
   }
 
+  if (view.kind === 'entry') {
+    return <TimesheetEntry sheet={view.sheet} orgName={orgName} onBack={() => { setView({ kind: 'list' }); void load(); }} onChanged={() => void load()} />;
+  }
+
   if (view.kind === 'form') {
     return <SheetForm orgId={orgId} workers={workers} prefs={prefs} onPrefs={updatePrefs} onCancel={() => setView({ kind: 'list' })}
       onPreview={(data) => setView({ kind: 'preview', id: crypto.randomUUID(), data })} />;
@@ -73,7 +78,7 @@ export function TimesheetsSection({ orgId, orgName, workers, online }: { orgId: 
     <>
       {!online && <p className="msg warn" role="status">Đang offline: tạo bảng cần có mạng.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
-      <p className="muted">In bảng chấm công có sẵn tên người và các ngày để ghi tay trên giấy; cuối kỳ nhập số liệu vào hệ thống theo đúng bảng đó.</p>
+      <p className="muted">In bảng chấm công có sẵn tên người và các ngày để ghi tay trên giấy; cuối kỳ bấm Nhập số liệu để gõ lại đúng bảng đó vào hệ thống.</p>
       <button type="button" className="primary" disabled={!online || workers.length === 0} onClick={() => { setError(null); setView({ kind: 'form' }); }}>＋ Tạo bảng mới</button>
       {workers.length === 0 && <p className="muted">Chưa có người làm nào để lập bảng.</p>}
 
@@ -86,8 +91,9 @@ export function TimesheetsSection({ orgId, orgName, workers, online }: { orgId: 
             <p>{fmtDate(s.from_date)} – {fmtDate(s.to_date)} · {dayCount(s.from_date, s.to_date)} ngày · {s.workers.length} người</p>
             <p className="muted">{MODE_LABEL[s.mode]} · ca {hhmm(s.shift_start)}–{hhmm(s.shift_end)}, nghỉ {s.break_minutes} phút</p>
             <div className="btnrow">
+              <button type="button" className={s.status === 'entered' ? 'secondary' : 'primary'} disabled={busy || !online} onClick={() => setView({ kind: 'entry', sheet: s })}>Nhập số liệu</button>
               <button type="button" className="secondary" disabled={busy} onClick={() => setView({ kind: 'saved', sheet: s })}>In lại</button>
-              <button type="button" className="secondary" disabled={busy || !online} onClick={() => void toggleEntered(s)}>{s.status === 'entered' ? 'Đánh dấu chưa nhập' : 'Đánh dấu đã nhập xong'}</button>
+              <button type="button" className="secondary" disabled={busy || !online} onClick={() => void toggleEntered(s)}>{s.status === 'entered' ? 'Bỏ đánh dấu nhập xong' : 'Đánh dấu đã nhập xong'}</button>
             </div>
           </div>
         ))}

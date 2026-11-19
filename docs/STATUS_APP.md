@@ -4,6 +4,7 @@ Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi t
 
 ## Đang làm
 
+- **19/11/2026 (D200, migration 0227, cần `db push`)**: **bảng chấm công giấy, lớp A: nhập số liệu theo bảng đã in** (nút Nhập số liệu ở tab Bảng giấy). Test `timesheet_entry.test.mjs` 7/7, `timesheet_cells.test.mjs` 6/6. Chưa thử trên giao diện thật. Còn: lớp B (đọc ảnh bằng AI).
 - **19/11/2026 (D199, migration 0226, cần `db push`)**: **bảng chấm công giấy, lớp C** (Chấm công → Bảng giấy: tạo bảng từ ngày đến ngày, xem trước, in A4 ngang, danh sách bảng đã in). Test `timesheet_sheets.test.mjs` 5/5. Chưa xem thử bản in trên máy thật. Còn: lớp A (nhập số liệu theo bảng), lớp B (đọc ảnh).
 - **18/11/2026 (D198, migration 0225, cần `db push`)**: **đóng nhanh ca quên ra ca** (từng ca và hàng loạt) + chế độ tập trung khi bấm Xem ở Cần xử lý. Test `close_open_shifts.test.mjs` 4/4.
 - **18/11/2026 (D190, migration 0224, cần `db push`)**: **ghi nghỉ, bước 2**: phép năm (mặc định 12 ngày, chủ đổi), tổng hợp nghỉ theo người/tháng/loại, dòng tóm tắt nghỉ trong hồ sơ nhân sự. Test `absence_summary.test.mjs` 2/2. Còn: nối phiếu lương, nhắc trong bản tin sáng.

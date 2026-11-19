@@ -920,3 +920,22 @@ td.fold-col.has-fold { padding-right: 40px; }
   #print-root.ts-print-root { position: absolute; inset: auto; left: 0; top: 0; overflow: visible; z-index: auto; font-size: 11px; }
   .ts-page { padding: 0; min-width: 0; }
 }
+
+/* Nhập số liệu theo bảng giấy (D200, lớp A): lưới ô gõ chữ, cột tên dính bên trái khi cuộn ngang */
+.ts-scroll { max-height: 70vh; }
+.ts-entry-table { min-width: 0; border-collapse: collapse; }
+.ts-entry-table th, .ts-entry-table td { padding: 2px; text-align: center; border: 1px solid var(--line); vertical-align: middle; }
+.ts-entry-table th b { display: block; }
+.ts-entry-table th small { display: block; font-weight: 400; opacity: .7; }
+.ts-entry-table .sticky { position: sticky; left: 0; z-index: 1; background: var(--card, #fff); text-align: left; min-width: 118px; padding: 4px 6px; }
+.ts-entry-table thead th { position: sticky; top: 0; z-index: 2; background: var(--card, #fff); }
+.ts-entry-table thead th.sticky { z-index: 3; }
+.ts-entry-table .sun { background: color-mix(in srgb, var(--line) 55%, transparent); }
+.ts-entry-table td.lock { background: color-mix(in srgb, var(--line) 80%, transparent); color: var(--muted, #555); font-size: 13px; min-width: 34px; }
+.ts-entry-table input.cell { width: 34px; min-width: 34px; padding: 6px 2px; text-align: center; font-size: 15px; border: 1px solid transparent; border-radius: 4px; background: transparent; }
+.ts-entry-table input.cell:focus { border-color: var(--green); background: var(--card, #fff); outline: none; }
+.ts-entry-table input.cell.bad { border-color: #c62828; background: #fdecea; color: #7f1d1d; }
+.ts-entry-table .ts-total { white-space: nowrap; font-size: 13px; padding: 2px 6px; }
+.ts-rowact { display: flex; gap: 10px; margin-top: 2px; font-size: 12px; }
+.ts-legend { margin: 4px 0; padding-left: 18px; }
+.ts-legend li { margin: 4px 0; }

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import type { CellKind } from './timesheetCells';
 
 /**
  * Bảng chấm công giấy (D199, migration 0226, lớp C): in bảng có sẵn tên người và các ngày từ-đến, kèm ghi chú cách ghi.
@@ -77,3 +78,22 @@ export function groupByTeam<T extends { team: string | null; name: string }>(lis
     .sort(([a], [b]) => (a === null ? 1 : b === null ? -1 : cmp(a, b)))
     .map(([team, items]) => ({ team, items: [...items].sort((x, y) => cmp(x.name, y.name)) }));
 }
+
+// ---- Nhập số liệu theo bảng đã in (lớp A, D200, migration 0227) ----
+export interface CellOut { w: string; d: string; k: CellKind; h?: number }
+export interface SkippedCell { w: string; d: string; reason: string }
+export interface SaveResult { saved: number; unchanged: number; skipped: SkippedCell[] }
+export interface ExistingWork { w: string; d: string; minutes: number; status: string; mine: boolean }
+export interface ExistingAbsence { w: string; d: string; kind: string; mine: boolean }
+export interface Existing { work: ExistingWork[]; absences: ExistingAbsence[] }
+
+/** Lưu các ô đã điền; máy chủ tự suy ra giờ từ ca của bảng. Gửi theo lô 500 ô; ô không ghi được trả về kèm lý do */
+export async function recordTimesheet(sheetId: string, cells: CellOut[]): Promise<SaveResult> {
+  const total: SaveResult = { saved: 0, unchanged: 0, skipped: [] };
+  for (let i = 0; i < cells.length; i += 500) {
+    const r = await rpc<SaveResult>('record_timesheet', { p_sheet: sheetId, p_cells: cells.slice(i, i + 500) });
+    total.saved += r.saved; total.unchanged += r.unchanged; total.skipped.push(...r.skipped);
+  }
+  return total;
+}
+export const fetchExisting = (sheetId: string) => rpc<Existing>('timesheet_existing', { p_sheet: sheetId });
