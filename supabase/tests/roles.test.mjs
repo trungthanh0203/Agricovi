@@ -146,8 +146,8 @@ test('tổ trưởng chấm công hộ người trong tổ nhưng KHÔNG tự x�
   await mkAtt('c0000000-0000-4000-8000-0000000000a1', wA, 'team_leader', u.leader);
   // chấm hộ cho CHÍNH MÌNH với tư cách "tổ trưởng": không
   assert.match(await expectError(mkAtt('c0000000-0000-4000-8000-0000000000a2', wLeader, 'team_leader', u.leader)), /row-level security/);
-  // tự chấm công của mình: được; nhưng tổ trưởng không tự xác nhận
-  await mkAtt('c0000000-0000-4000-8000-0000000000a3', wLeader, 'self', u.leader);
+  // công của chính tổ trưởng do quản lý ghi hộ (từ D117 không còn tự chấm bằng tài khoản); tổ trưởng không tự xác nhận
+  await mkAtt('c0000000-0000-4000-8000-0000000000a3', wLeader, 'admin', u.mgr);
   const own = await asUser(db, u.leader, `update attendance_records set status='confirmed', approved_minutes=480 where id='c0000000-0000-4000-8000-0000000000a3' returning id`);
   assert.equal(own.rows.length, 0);
   // tổ trưởng xác nhận công của người trong tổ: được
