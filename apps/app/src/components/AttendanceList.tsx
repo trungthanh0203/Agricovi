@@ -11,7 +11,6 @@ import {
   type AdjustmentRequest, type AttendanceRow, type WorkerLite,
 } from '../lib/work';
 
-const PAGE = 50;
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
 const RANGES: { id: 'prev' | 'today' | 'month'; label: string }[] = [
@@ -47,6 +46,7 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
   const [q, setQ] = useState('');
   const [appliedQ, setAppliedQ] = useState('');
   const [page, setPage] = useState(0);
+  const [size, setSize] = useState(50);                // số dòng mỗi trang (máy chủ cắt trang, tối đa 100)
   const [data, setData] = useState<AttPage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -78,10 +78,10 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
     try {
-      setData(await listAttendancePage(orgId, { from, to, status, q: appliedQ, limit: PAGE, offset: page * PAGE }));
+      setData(await listAttendancePage(orgId, { from, to, status, q: appliedQ, limit: size, offset: page * size }));
       setError(null);
     } catch (e) { setError(friendlyError(e)); }
-  }, [orgId, from, to, status, appliedQ, page]);
+  }, [orgId, from, to, status, appliedQ, page, size]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => { void fetchAbsences(orgId, from, to).then(setAbs).catch(() => setAbs([])); }, [orgId, from, to]);
   useEffect(() => { if (navigator.onLine) void listAdjustments(orgId).then(setAdjs).catch(() => setAdjs([])); }, [orgId]);
@@ -125,7 +125,7 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
 
   const canConfirm = (a: { worker_id: string }) => isAdmin || (a.worker_id !== meId && workers.some((w) => w.id === a.worker_id));
   const total = data?.total ?? 0;
-  const pages = Math.max(1, Math.ceil(total / PAGE));
+  const pages = Math.max(1, Math.ceil(total / size));
   const rows = data?.rows ?? [];
   const adjRec = adjFor ? rows.find((r) => r.id === adjFor) : undefined;
   const pendingAdjs = adjs.filter((x) => x.status === 'pending');
@@ -195,7 +195,7 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
       )}
 
       {!focused && <h2 className="sect" ref={headRef}>{status === 'pending' ? 'Các công chờ xác nhận' : status === 'open' ? 'Các ca chưa ra ca' : status === '' ? 'Danh sách công' : STATUS_OPTIONS.find((o) => o.id === status)?.label}</h2>}
-      <p className="muted">{data ? (total === 0 ? 'Không có bản ghi nào.' : `Hiện ${page * PAGE + 1}–${Math.min(total, (page + 1) * PAGE)} trong ${total} bản ghi.`) : 'Đang tải…'}</p>
+      <p className="muted">{data ? (total === 0 ? 'Không có bản ghi nào.' : `Hiện ${page * size + 1}–${Math.min(total, (page + 1) * size)} trong ${total} bản ghi.`) : 'Đang tải…'}</p>
       <table className="grid">
         <thead><tr><th>Người · ngày</th><th>Giờ làm</th><th></th></tr></thead>
         <tbody>
@@ -230,6 +230,17 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
           ))}
         </tbody>
       </table>
+
+      {(pages > 1 || size !== 50) && (
+        <div className="btnrow">
+          <label className="inline-label">Số dòng mỗi trang
+            <select value={size} onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </label>
+        </div>
+      )}
 
       {pages > 1 && (
         <div className="btnrow">

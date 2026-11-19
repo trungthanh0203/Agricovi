@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { useOnline } from '../lib/hooks';
 import {
   DOW, fetchExisting, hhmm, listDays, markSheetEntered, recordTimesheet,
-  type CellOut, type Existing, type SaveResult, type Sheet,
+  type CellOut, type Existing, type ExistingAbsence, type ExistingWork, type SaveResult, type Sheet, type SheetDay, type SheetWorker,
 } from '../lib/timesheets';
 import { OFF_LABEL, cellLabel, parseCell, personTotals, totalText, type Parsed } from '../lib/timesheetCells';
 import { MAX_PHOTOS, SCAN_MAX_ROWS, getScanUsage, prepareImage, scanTimesheet, type ScanUsage } from '../lib/timesheetScan';
@@ -156,6 +156,24 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
   const nameOf = new Map(sheet.workers.map((w) => [w.worker_id, w.name]));
   const hours = sheet.mode === 'hours';
 
+  // Bảng 200 người × 31 ngày có hơn 6000 ô: mỗi hàng là một thành phần ghi nhớ (memo), chỉ hàng nào đổi mới vẽ lại khi gõ một ô.
+  // Hàm xử lý giữ cố định (đọc bản mới nhất qua `act`) để so sánh hàng không bị coi là đổi.
+  const act = useRef({ setCell, normalize, fillRow, clearRow, move });
+  act.current = { setCell, normalize, fillRow, clearRow, move };
+  const onCell = useCallback((w: string, d: string, v: string) => act.current.setCell(w, d, v), []);
+  const onBlurCell = useCallback((w: string, d: string) => act.current.normalize(w, d), []);
+  const onFill = useCallback((w: string) => act.current.fillRow(w), []);
+  const onClear = useCallback((w: string) => act.current.clearRow(w), []);
+  const onMove = useCallback((w: string, d: string, step: 1 | -1) => act.current.move(w, d, step), []);
+  const register = useCallback((k: string, el: HTMLInputElement | null) => { if (el) refs.current.set(k, el); else refs.current.delete(k); }, []);
+  const lockBy = useMemo(() => {
+    const m = new Map<string, Map<string, LockCell>>();
+    const cell = (w: string, d: string) => { let r = m.get(w); if (!r) { r = new Map(); m.set(w, r); } let c = r.get(d); if (!c) { c = {}; r.set(d, c); } return c; };
+    for (const x of existing?.work ?? []) cell(x.w, x.d).wk = x;
+    for (const x of existing?.absences ?? []) cell(x.w, x.d).ab = x;
+    return m;
+  }, [existing]);
+
   return (
     <div className="ts-entry">
       <div className="menubar">
@@ -210,42 +228,13 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
               </tr>
             </thead>
             <tbody>
-              {sheet.workers.map((w) => {
-                const cells = days.filter((d) => !locked(w.worker_id, d.date)).map((d) => parsed(w.worker_id, d.date));
-                const exMin = days.reduce((s, d) => s + (work.get(key(w.worker_id, d.date))?.minutes ?? 0), 0);
-                const exOff = days.reduce((s, d) => s + (absent.has(key(w.worker_id, d.date)) ? 1 : 0), 0);
-                const tot = personTotals(cells, fullNet, exMin, exOff);
-                return (
-                  <tr key={w.worker_id}>
-                    <td className="sticky">
-                      <strong>{w.name}</strong>{w.team ? <small> · {w.team}</small> : null}
-                      <span className="ts-rowact">
-                        <button type="button" className="link" onClick={() => fillRow(w.worker_id)}>✓ trừ CN</button>
-                        <button type="button" className="link" onClick={() => clearRow(w.worker_id)}>Xóa</button>
-                      </span>
-                    </td>
-                    {days.map((d) => {
-                      const k = key(w.worker_id, d.date);
-                      const wk = work.get(k), ab = absent.get(k);
-                      if (wk || ab) {
-                        const title = wk ? `Đã có công ${hoursText(wk.minutes)} giờ (${STATUS_TEXT[wk.status] ?? wk.status})${wk.mine ? ' từ bảng này' : ''}` : `Đã có ghi nghỉ${ab?.mine ? ' từ bảng này' : ''}`;
-                        return <td key={d.date} className={`lock${d.dow === 0 ? ' sun' : ''}`} title={title}>{wk ? hoursText(wk.minutes) : KIND_LETTER[ab!.kind] ?? 'N'}</td>;
-                      }
-                      const p = parsed(w.worker_id, d.date);
-                      const bad = p.kind === 'error' ? p.message : problems[k];
-                      return (
-                        <td key={d.date} className={d.dow === 0 ? 'sun' : undefined}>
-                          <input ref={(el) => { if (el) refs.current.set(k, el); else refs.current.delete(k); }}
-                            className={bad ? 'cell bad' : warn.has(k) ? 'cell warn' : 'cell'} value={text[k] ?? ''} maxLength={6} autoComplete="off" spellCheck={false} aria-label={`${w.name} ngày ${d.day}`} title={bad ?? (warn.has(k) ? 'AI không chắc ô này: hãy đối chiếu với tờ giấy.' : undefined)}
-                            onChange={(e) => setCell(w.worker_id, d.date, e.target.value)} onBlur={() => normalize(w.worker_id, d.date)}
-                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); move(w.worker_id, d.date, 1); } else if (e.key === 'ArrowUp') { e.preventDefault(); move(w.worker_id, d.date, -1); } }} />
-                        </td>
-                      );
-                    })}
-                    <td className="ts-total">{tot.invalid > 0 ? <span className="pill err">{tot.invalid} sai</span> : totalText(tot, sheet.mode, fullNet)}</td>
-                  </tr>
-                );
-              })}
+              {sheet.workers.map((w) => (
+                <EntryRow key={w.worker_id} w={w} days={days} mode={sheet.mode} fullNet={fullNet} lock={lockBy.get(w.worker_id)}
+                  texts={days.map((d) => text[key(w.worker_id, d.date)] ?? '')}
+                  warns={days.map((d) => warn.has(key(w.worker_id, d.date)))}
+                  probs={days.map((d) => problems[key(w.worker_id, d.date)])}
+                  onCell={onCell} onBlurCell={onBlurCell} onFill={onFill} onClear={onClear} onMove={onMove} register={register} />
+              ))}
             </tbody>
           </table>
         </div>
@@ -268,3 +257,54 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
     </div>
   );
 }
+
+interface LockCell { wk?: ExistingWork; ab?: ExistingAbsence }
+const sameArr = <T,>(a: readonly T[], b: readonly T[]) => a.length === b.length && a.every((x, i) => x === b[i]);
+
+interface RowProps {
+  w: SheetWorker; days: SheetDay[]; mode: 'shift' | 'hours'; fullNet: number; lock: Map<string, LockCell> | undefined;
+  texts: string[]; warns: boolean[]; probs: (string | undefined)[];
+  onCell: (w: string, d: string, v: string) => void; onBlurCell: (w: string, d: string) => void; onFill: (w: string) => void; onClear: (w: string) => void;
+  onMove: (w: string, d: string, step: 1 | -1) => void; register: (k: string, el: HTMLInputElement | null) => void;
+}
+/** Một hàng của lưới (một người): chỉ vẽ lại khi chữ, màu hoặc ô khóa của CHÍNH người này đổi */
+const EntryRow = memo(function EntryRow({ w, days, mode, fullNet, lock, texts, warns, probs, onCell, onBlurCell, onFill, onClear, onMove, register }: RowProps) {
+  const wid = w.worker_id;
+  const parsedCells = days.map((d, i) => (lock?.get(d.date) ? null : parseCell(texts[i] ?? '', mode)));
+  let exMin = 0, exOff = 0;
+  for (const d of days) { const c = lock?.get(d.date); if (c?.wk) exMin += c.wk.minutes; else if (c?.ab) exOff += 1; }
+  const tot = personTotals(parsedCells.filter((p): p is Parsed => p !== null), fullNet, exMin, exOff);
+  return (
+    <tr>
+      <td className="sticky">
+        <strong>{w.name}</strong>{w.team ? <small> · {w.team}</small> : null}
+        <span className="ts-rowact">
+          <button type="button" className="link" onClick={() => onFill(wid)}>✓ trừ CN</button>
+          <button type="button" className="link" onClick={() => onClear(wid)}>Xóa</button>
+        </span>
+      </td>
+      {days.map((d, i) => {
+        const c = lock?.get(d.date);
+        if (c?.wk || c?.ab) {
+          const wk = c.wk, ab = c.ab;
+          const title = wk ? `Đã có công ${hoursText(wk.minutes)} giờ (${STATUS_TEXT[wk.status] ?? wk.status})${wk.mine ? ' từ bảng này' : ''}` : `Đã có ghi nghỉ${ab?.mine ? ' từ bảng này' : ''}`;
+          return <td key={d.date} className={`lock${d.dow === 0 ? ' sun' : ''}`} title={title}>{wk ? hoursText(wk.minutes) : KIND_LETTER[ab!.kind] ?? 'N'}</td>;
+        }
+        const p = parsedCells[i]!;
+        const bad = p.kind === 'error' ? p.message : probs[i];
+        const k = key(wid, d.date);
+        return (
+          <td key={d.date} className={d.dow === 0 ? 'sun' : undefined}>
+            <input ref={(el) => register(k, el)} className={bad ? 'cell bad' : warns[i] ? 'cell warn' : 'cell'} value={texts[i] ?? ''} maxLength={6} autoComplete="off" spellCheck={false}
+              aria-label={`${w.name} ngày ${d.day}`} title={bad ?? (warns[i] ? 'AI không chắc ô này: hãy đối chiếu với tờ giấy.' : undefined)}
+              onChange={(e) => onCell(wid, d.date, e.target.value)} onBlur={() => onBlurCell(wid, d.date)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); onMove(wid, d.date, 1); } else if (e.key === 'ArrowUp') { e.preventDefault(); onMove(wid, d.date, -1); } }} />
+          </td>
+        );
+      })}
+      <td className="ts-total">{tot.invalid > 0 ? <span className="pill err">{tot.invalid} sai</span> : totalText(tot, mode, fullNet)}</td>
+    </tr>
+  );
+}, (a, b) => a.w === b.w && a.days === b.days && a.mode === b.mode && a.fullNet === b.fullNet && a.lock === b.lock
+  && sameArr(a.texts, b.texts) && sameArr(a.warns, b.warns) && sameArr(a.probs, b.probs)
+  && a.onCell === b.onCell && a.onBlurCell === b.onBlurCell && a.onFill === b.onFill && a.onClear === b.onClear && a.onMove === b.onMove && a.register === b.register);

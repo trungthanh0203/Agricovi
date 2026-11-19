@@ -51,3 +51,22 @@ test('xác nhận hàng loạt chạy được trên mọi ngày: đếm trướ
   assert.equal(real.count, 2);
   assert.equal((await db.query(`select status from attendance_records where id=$1`, [old])).rows[0].status, 'confirmed');
 });
+
+test('số người có ảnh cờ đỏ hôm nay (flagged_people) đếm người, không đếm ảnh; kết quả danh sách giữ nguyên thứ tự và trường', async () => {
+  const { db, owner, org, w, rec } = await setup();
+  const a = await w('A'), b = await w('B');
+  const ra = await rec(a, 0, 'needs_confirmation', true);
+  const rb = await rec(b, 0, 'needs_confirmation', true);
+  const kiosk = await addUser(db, 9);
+  const kid = (await db.query(`select kiosk_finalize($1,$2,null,$3,'M') id`, [owner, org, kiosk])).rows[0].id;
+  for (const [att, worker] of [[ra, a], [ra, a], [rb, b]]) {
+    await db.query(`insert into attendance_photos (id, organization_id, attendance_id, worker_id, kiosk_id, kind, photo, face_ok) values (gen_random_uuid(), $1, $2, $3, $4, 'out', repeat('A', 300), false)`, [org, att, worker, kid]);
+  }
+  const today = (await db.query(`select vn_today()::text d`)).rows[0].d;
+  const s = (await asUser(db, owner, `select attendance_summary($1,$2) r`, [org, today])).rows[0].r;
+  assert.equal(s.flagged, 3);
+  assert.equal(s.flagged_people, 2);
+  const p = (await list(db, owner, org, today, today, ''));
+  assert.deepEqual(Object.keys(p.rows[0]).sort(), ['approved_minutes', 'break_minutes', 'cycle_id', 'declared_minutes', 'ended_at', 'exception_reason', 'has_photo', 'id', 'source', 'started_at', 'status', 'work_date', 'worker_id', 'worker_name']);
+  assert.equal(p.rows.filter((r) => r.has_photo).length, 2);
+});

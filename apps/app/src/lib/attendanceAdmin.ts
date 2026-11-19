@@ -13,7 +13,7 @@ function client() {
 
 export interface AttSummary {
   workers: number; present: number; in_shift: number; stale: number; done: number; pending: number;
-  flagged: number; flagged_week: number; month_minutes: number; top: { name: string; minutes: number }[];
+  flagged: number; flagged_people?: number; flagged_week: number; month_minutes: number; top: { name: string; minutes: number }[];
 }
 
 export async function getAttendanceSummary(orgId: string, day: string): Promise<AttSummary> {
