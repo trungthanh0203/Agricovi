@@ -7,6 +7,8 @@ import {
   type CellOut, type Existing, type SaveResult, type Sheet,
 } from '../lib/timesheets';
 import { OFF_LABEL, cellLabel, parseCell, personTotals, totalText, type Parsed } from '../lib/timesheetCells';
+import { MAX_PHOTOS, SCAN_MAX_ROWS, getScanUsage, prepareImage, scanTimesheet, type ScanUsage } from '../lib/timesheetScan';
+import { mapScan, type MapOut } from '../lib/timesheetScanMap';
 import { Collapsible } from './Collapsible';
 
 const STATUS_TEXT: Record<string, string> = { confirmed: 'đã xác nhận', needs_confirmation: 'chờ xác nhận', open: 'đang trong ca' };
@@ -35,12 +37,18 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
   const [result, setResult] = useState<SaveResult | null>(null);
   const refs = useRef(new Map<string, HTMLInputElement>());
   const [cur, setCur] = useState(sheet);
+  const [warn, setWarn] = useState<Set<string>>(new Set());            // ô AI không chắc (tô vàng) cho tới khi người dùng sửa
+  const [scanBusy, setScanBusy] = useState(false);
+  const [scanOut, setScanOut] = useState<{ map: MapOut; filled: number; kept: number; notes: string[] } | null>(null);
+  const [usage, setUsage] = useState<ScanUsage | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
     try { setExisting(await fetchExisting(sheet.id)); setError(null); } catch (e) { setError(friendlyError(e)); }
   }, [sheet.id]);
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void getScanUsage(sheet.organization_id).then(setUsage).catch(() => undefined); }, [sheet.organization_id]);
 
   const work = useMemo(() => new Map((existing?.work ?? []).map((x) => [key(x.w, x.d), x])), [existing]);
   const absent = useMemo(() => new Map((existing?.absences ?? []).map((x) => [key(x.w, x.d), x])), [existing]);
@@ -54,6 +62,7 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
 
   function setCell(w: string, d: string, v: string) {
     setText((t) => ({ ...t, [key(w, d)]: v }));
+    if (warn.has(key(w, d))) setWarn((s) => { const n = new Set(s); n.delete(key(w, d)); return n; });
     if (problems[key(w, d)]) setProblems((p) => { const n = { ...p }; delete n[key(w, d)]; return n; });
     setMsg(null);
   }
@@ -80,6 +89,35 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
     }
   }
 
+  /** Đọc ảnh bảng giấy: điền vào các ô còn TRỐNG và chưa khóa; không đụng ô đã gõ hay đã có; ô AI không chắc tô vàng. Không bao giờ tự lưu. */
+  async function onPhotos(files: FileList | null) {
+    const list = files ? Array.from(files).slice(0, MAX_PHOTOS) : [];
+    if (fileRef.current) fileRef.current.value = '';
+    if (list.length === 0) return;
+    setError(null); setMsg(null); setScanOut(null); setScanBusy(true);
+    try {
+      const images = await Promise.all(list.map((f) => prepareImage(f)));
+      const { result, usage: u } = await scanTimesheet(sheet, images);
+      setUsage(u);
+      const map = mapScan(result, sheet.workers, days.map((d) => d.date), sheet.code);
+      if (map.codeMismatch && !window.confirm(`Ảnh có mã bảng ${map.codeMismatch}, khác bảng đang nhập (${sheet.code}). Vẫn điền số liệu từ ảnh này?`)) return;
+      let filledN = 0, keptN = 0;
+      const nextWarn = new Set(warn);
+      const next = { ...text };
+      for (const [k, raw] of Object.entries(map.fill)) {
+        const [w, d] = k.split('|') as [string, string];
+        if (locked(w, d) || (next[k] ?? '').trim() !== '') { keptN += 1; continue; }
+        const p = parseCell(raw, sheet.mode);
+        next[k] = p.kind === 'error' ? raw : cellLabel(p);
+        filledN += 1;
+        if (map.uncertain.includes(k)) nextWarn.add(k);
+      }
+      setText(next); setWarn(nextWarn);
+      setScanOut({ map, filled: filledN, kept: keptN, notes: result.canh_bao });
+      setMsg(`Đã điền ${filledN} ô từ ảnh. Hãy xem lại toàn bộ rồi bấm Lưu: ảnh chưa được lưu gì.`);
+    } catch (e) { setError(friendlyError(e)); } finally { setScanBusy(false); }
+  }
+
   async function save() {
     setError(null); setMsg(null); setResult(null);
     if (invalid > 0) return setError(`Còn ${invalid} ô sai ký hiệu (tô đỏ). Hãy sửa rồi lưu.`);
@@ -99,6 +137,7 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
       setProblems(bad);
       // ô đã lưu hoặc đã có từ trước thì bỏ chữ đã gõ (sẽ hiện thành ô khóa); ô bị bỏ qua giữ lại để sửa
       setText((t) => { const n = { ...t }; for (const c of cells) { const k = key(c.w, c.d); if (!bad[k]) delete n[k]; } return n; });
+      setWarn((s) => { const n = new Set(s); for (const c of cells) n.delete(key(c.w, c.d)); return n; });
       setMsg(`Đã lưu ${r.saved} ô${r.unchanged ? `, ${r.unchanged} ô đã có từ trước` : ''}${r.skipped.length ? `. ${r.skipped.length} ô chưa lưu được (xem bên dưới)` : ''}.`);
       await load();
     } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
@@ -141,6 +180,25 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
         </ul>
       </Collapsible>
 
+      <div className="card slim ts-scan">
+        <p><strong>📷 Đọc từ ảnh bảng giấy</strong> <span className="muted">(không bắt buộc)</span></p>
+        <p className="muted">Chụp bảng đã ghi (1–{MAX_PHOTOS} ảnh, chụp thẳng, đủ sáng, thấy cả tên và các cột ngày). Ứng dụng điền sẵn vào các ô còn trống; ô AI không chắc tô vàng. Ảnh không được lưu; bạn phải xem lại rồi bấm Lưu.</p>
+        <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => void onPhotos(e.target.files)} />
+        <div className="btnrow">
+          <button type="button" className="secondary" disabled={scanBusy || busy || !online || existing === null || sheet.workers.length > SCAN_MAX_ROWS || (usage !== null && usage.remaining <= 0)} onClick={() => fileRef.current?.click()}>{scanBusy ? 'Đang đọc ảnh…' : '📷 Chụp / chọn ảnh bảng'}</button>
+        </div>
+        {sheet.workers.length > SCAN_MAX_ROWS && <p className="muted">Bảng có hơn {SCAN_MAX_ROWS} người nên chưa đọc ảnh được; hãy lập bảng riêng cho từng tổ.</p>}
+        {usage && <p className="muted">{usage.remaining > 0 ? `Còn ${usage.remaining}/${usage.limit} lượt đọc ảnh tháng này (mỗi lần đọc tính một lượt, dùng chung với đọc hóa đơn).` : 'Tháng này đã hết lượt đọc ảnh theo gói. Bạn vẫn nhập tay được.'}</p>}
+        {scanOut && (
+          <div>
+            <p>Đọc được <strong>{scanOut.map.rowsMatched}</strong> hàng, điền <strong>{scanOut.filled}</strong> ô{scanOut.kept ? `, giữ nguyên ${scanOut.kept} ô đã gõ hoặc đã có` : ''}; <strong>{warn.size}</strong> ô tô vàng cần xem kỹ.</p>
+            {scanOut.map.nameMismatch.map((m) => <p key={m.stt} className="msg warn">Hàng {m.stt}: tên đọc được “{m.read}” khác “{m.expected}”. Cả hàng tô vàng, hãy đối chiếu.</p>)}
+            {scanOut.map.unmatched.map((m) => <p key={m.stt} className="msg warn">Có một hàng không ghép được vào bảng (STT {m.stt}{m.read ? `, tên “${m.read}”` : ''}); không điền.</p>)}
+            {scanOut.notes.map((n, i) => <p key={i} className="msg warn">{n}</p>)}
+          </div>
+        )}
+      </div>
+
       {existing === null ? <p className="muted">{online ? 'Đang tải dữ liệu đã có…' : 'Cần mạng để tải dữ liệu đã có.'}</p> : (
         <div className="table-scroll ts-scroll">
           <table className="grid ts-entry-table">
@@ -178,7 +236,7 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
                       return (
                         <td key={d.date} className={d.dow === 0 ? 'sun' : undefined}>
                           <input ref={(el) => { if (el) refs.current.set(k, el); else refs.current.delete(k); }}
-                            className={bad ? 'cell bad' : 'cell'} value={text[k] ?? ''} maxLength={6} autoComplete="off" spellCheck={false} aria-label={`${w.name} ngày ${d.day}`} title={bad}
+                            className={bad ? 'cell bad' : warn.has(k) ? 'cell warn' : 'cell'} value={text[k] ?? ''} maxLength={6} autoComplete="off" spellCheck={false} aria-label={`${w.name} ngày ${d.day}`} title={bad ?? (warn.has(k) ? 'AI không chắc ô này: hãy đối chiếu với tờ giấy.' : undefined)}
                             onChange={(e) => setCell(w.worker_id, d.date, e.target.value)} onBlur={() => normalize(w.worker_id, d.date)}
                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); move(w.worker_id, d.date, 1); } else if (e.key === 'ArrowUp') { e.preventDefault(); move(w.worker_id, d.date, -1); } }} />
                         </td>

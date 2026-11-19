@@ -939,3 +939,6 @@ td.fold-col.has-fold { padding-right: 40px; }
 .ts-rowact { display: flex; gap: 10px; margin-top: 2px; font-size: 12px; }
 .ts-legend { margin: 4px 0; padding-left: 18px; }
 .ts-legend li { margin: 4px 0; }
+
+.ts-entry-table input.cell.warn { border-color: #e08600; background: #fff3d6; color: #5c3a00; }
+@media (prefers-color-scheme: dark) { .ts-entry-table input.cell.warn { background: #4a3a10; color: #ffe2a3; } .ts-entry-table input.cell.bad { background: #4a1f1c; color: #ffc9c4; } }
