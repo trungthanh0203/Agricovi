@@ -876,3 +876,47 @@ td.fold-col.has-fold { padding-right: 40px; }
 /* Chấm công: hai nút việc chính ở đầu tab Hôm nay và dòng tóm tắt tháng ở Bảng công */
 .att-actions button { flex: 1 1 0; }
 .att-summary { margin: 4px 0 8px; font-size: 15px; }
+
+
+/* Bảng chấm công giấy (D199): xem trước toàn màn hình, in A4 ngang (dùng chung quy tắc ẩn/hiện #print-root ở trên) */
+.ts-print-root { position: fixed; inset: 0; z-index: 1000; overflow: auto; background: #fff; color: #000; font-size: 13px; }
+.ts-toolbar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 8px 12px; background: #f1f1f1; border-bottom: 1px solid #bbb; }
+.ts-opts, .ts-actions { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.ts-page { padding: 12px 14px 24px; min-width: 760px; }
+.ts-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 8px; }
+.ts-head h1 { margin: 2px 0; font-size: 1.5rem; letter-spacing: .06em; }
+.ts-head p { margin: 2px 0; }
+.ts-org { font-weight: 700; text-transform: uppercase; }
+.ts-code { text-align: right; }
+.ts-qr { width: 74px; height: 74px; margin-left: auto; }
+.ts-qr svg { width: 100%; height: 100%; }
+.ts-team { margin: 8px 0 2px; font-weight: 700; }
+.ts-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.ts-table th, .ts-table td { border: 1px solid #000; padding: 1px 2px; text-align: center; vertical-align: middle; background: #fff; color: #000; }
+.ts-table td { height: 9mm; }
+.ts-table th.c-stt, .ts-table td.c-stt { width: 8mm; }
+.ts-table th.c-name, .ts-table td.c-name { width: 42mm; text-align: left; padding-left: 3px; }
+.ts-table th.c-total { width: 17mm; }
+.ts-table th.c-note { width: 28mm; }
+.ts-table th.c-day b { display: block; font-size: 1.05em; }
+.ts-table th.c-day small { display: block; font-size: .8em; font-weight: 400; }
+.ts-table .sun { background: #dcdcdc; }
+.ts-table .ts-grp td { background: #efefef; font-weight: 700; text-align: left; height: 7mm; }
+.ts-table small { font-weight: 400; }
+.ts-dense .ts-table td { height: 8.5mm; }
+.ts-dense .ts-table { font-size: 11px; }
+.ts-section.brk { break-after: page; }
+.ts-table tr, .ts-guide, .ts-sign { break-inside: avoid; }
+.ts-table thead { display: table-header-group; }
+.ts-guide { margin-top: 10px; border: 1px solid #000; padding: 6px 10px; }
+.ts-guide h2 { margin: 0 0 4px; font-size: 1rem; }
+.ts-guide p { margin: 2px 0; }
+.ts-guide ul { margin: 2px 0 0; padding-left: 18px; }
+.ts-guide li { margin: 2px 0; }
+.ts-sign { display: flex; justify-content: space-between; gap: 12px; margin-top: 14px; text-align: center; }
+.ts-sign > div { flex: 1; min-height: 22mm; }
+.ts-sign p { margin: 0; font-weight: 700; }
+@media print {
+  #print-root.ts-print-root { position: absolute; inset: auto; left: 0; top: 0; overflow: visible; z-index: auto; font-size: 11px; }
+  .ts-page { padding: 0; min-width: 0; }
+}

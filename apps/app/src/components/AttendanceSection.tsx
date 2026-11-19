@@ -2,6 +2,7 @@ import { CycleSelect } from './CycleSelect';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { AttendanceList, type ListPreset } from './AttendanceList';
 import { AbsencesSection } from './AbsencesSection';
+import { TimesheetsSection } from './TimesheetsSection';
 import { AttendancePhotos } from './AttendancePhotos';
 import { absenceBadge, fetchAbsences, type Absence } from '../lib/absences';
 import { getAttendanceSummary, type AttSummary } from '../lib/attendanceAdmin';
@@ -19,11 +20,12 @@ import { useCycleTitle } from '../lib/useCycleTitle';
 
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
-type Tab = 'list' | 'absences' | 'photos';
+type Tab = 'list' | 'sheets' | 'absences' | 'photos';
 
 /**
  * Chấm công (D42, D115). Bốn mục, mỗi mục một việc:
  *  - Bảng công (mở đầu): hai nút Chấm công hộ / Ghi nghỉ, dòng "Hôm nay", khung Cần xử lý, bộ lọc (mặc định Chờ xác nhận, 30 ngày), bảng công, nút xác nhận các công hợp lệ dưới bảng, đề nghị sửa công.
+ *  - Bảng giấy: in bảng chấm công từ ngày đến ngày (có sẵn tên người, ghi chú cách ghi), danh sách bảng đã in.
  *  - Nghỉ phép: ghi nghỉ hộ, danh sách theo tháng, tổng hợp năm.
  *  - Ảnh cờ đỏ: ảnh cờ đỏ từ máy chấm công (chỉ chủ/quản lý).
  * (Máy chấm công và mã PIN nằm ở Khai báo → Máy chấm công.)
@@ -81,7 +83,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
   if (!active) return null;
   const tabs: { id: Tab; label: string }[] = [
     { id: 'list', label: 'Bảng công' },
-    ...(isAdmin || canRecordFor.length > 0 ? [{ id: 'absences' as Tab, label: 'Nghỉ phép' }] : []),
+    ...(isAdmin || canRecordFor.length > 0 ? [{ id: 'sheets' as Tab, label: 'Bảng giấy' }, { id: 'absences' as Tab, label: 'Nghỉ phép' }] : []),
     ...(isAdmin ? [
       { id: 'photos' as Tab, label: `Ảnh cờ đỏ${sum && sum.flagged > 0 ? ` (${sum.flagged})` : ''}` },
     ] : []),
@@ -152,6 +154,8 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
             onChanged={() => void load()} />
         </>
       )}
+
+      {tab === 'sheets' && <TimesheetsSection orgId={active.id} orgName={active.name} workers={canRecordFor} online={online} />}
 
       {tab === 'absences' && <AbsencesSection orgId={active.id} workers={canRecordFor} canWrite={canRecordFor.length > 0} isOwner={isOwner(active.roles)} online={online} />}
 
