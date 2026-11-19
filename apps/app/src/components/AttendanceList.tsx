@@ -27,7 +27,7 @@ const STATUS_OPTIONS: { id: AttStatusFilter; label: string }[] = [
   { id: 'rejected', label: 'Đã từ chối' },
 ];
 
-export interface ListPreset { status: AttStatusFilter; range: 'prev' | 'today' | 'month' | 'all' | 'stale'; stamp: number }
+export interface ListPreset { status: AttStatusFilter; range: 'prev' | 'today' | 'month' | 'all' | 'stale'; stamp: number; expected?: number }
 
 /**
  * Danh sách công (D115): lọc theo ngày, trạng thái, tên; phân trang 50 dòng do máy chủ cắt nên đủ cho cơ sở hàng trăm người.
@@ -46,6 +46,7 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
   const [q, setQ] = useState('');
   const [appliedQ, setAppliedQ] = useState('');
   const [page, setPage] = useState(0);
+  const [expected, setExpected] = useState<number | undefined>(undefined);   // số lượng dự kiến khi xem mọi ngày (để dừng sớm nếu CSDL cũ)
   const [size, setSize] = useState(50);                // số dòng mỗi trang (máy chủ cắt trang, tối đa 100)
   const [data, setData] = useState<AttPage | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +63,7 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
   // Mở từ "Hôm nay" bằng một bộ lọc sẵn (ví dụ: công chờ xác nhận)
   useEffect(() => {
     if (!preset) return;
-    setRange(preset.range); setStatus(preset.status); setQ(''); setAppliedQ(''); setPage(0);
+    setRange(preset.range); setStatus(preset.status); setQ(''); setAppliedQ(''); setPage(0); setExpected(preset.expected);
     // bấm "Xem" ở khung Cần xử lý: cuộn tới bảng để thấy danh sách đã lọc
     window.setTimeout(() => headRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }, [preset?.stamp]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -78,10 +79,10 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
     try {
-      setData(await listAttendancePage(orgId, { from, to, status, q: appliedQ, limit: size, offset: page * size }));
+      setData(await listAttendancePage(orgId, { from, to, status, q: appliedQ, limit: size, offset: page * size, expected: focused ? expected : undefined }));
       setError(null);
     } catch (e) { setError(friendlyError(e)); }
-  }, [orgId, from, to, status, appliedQ, page, size]);
+  }, [orgId, from, to, status, appliedQ, page, size, focused, expected]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => { void fetchAbsences(orgId, from, to).then(setAbs).catch(() => setAbs([])); }, [orgId, from, to]);
   useEffect(() => { if (navigator.onLine) void listAdjustments(orgId).then(setAdjs).catch(() => setAdjs([])); }, [orgId]);
@@ -101,7 +102,12 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
       const r = await bulkConfirmAttendance(orgId, from, to, appliedQ, false);
       setNotice(`Đã xác nhận ${r.count} công${r.skipped ? `, bỏ qua ${r.skipped} công (kỳ lương đã khóa hoặc không đủ quyền)` : ''}.`);
       await load(); onChanged();
-    } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+    } catch (e) {
+      // CSDL cũ (chưa chạy migration 0229) chỉ cho xác nhận hàng loạt trong 31 ngày
+      setError(/31 ngày/.test(String((e as Error).message)) && focused
+        ? 'Xác nhận hàng loạt cho mọi ngày cần cập nhật cơ sở dữ liệu lên bản mới (nhờ người cài đặt chạy "npx supabase db push"). Bạn vẫn xác nhận từng công được, hoặc quay lại bảng công, chọn Tháng này để xác nhận hàng loạt.'
+        : friendlyError(e));
+    } finally { setBusy(false); }
   }
 
   const canCloseAll = isAdmin || workers.length > 0;

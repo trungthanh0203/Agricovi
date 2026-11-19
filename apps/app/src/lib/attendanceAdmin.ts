@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { listWindowed } from './attendanceWindows';
 import type { AttendanceRow } from './work';
 
 /**
@@ -27,13 +28,26 @@ export type AttStatusFilter = '' | 'pending' | 'open' | 'confirmed' | 'rejected'
 export interface AttPageRow extends AttendanceRow { worker_name: string; has_photo: boolean }
 export interface AttPage { total: number; rows: AttPageRow[] }
 
-export async function listAttendancePage(orgId: string, o: { from: string; to: string; status: AttStatusFilter; q: string; limit: number; offset: number }): Promise<AttPage> {
+async function listPageRaw(orgId: string, o: { from: string; to: string; status: AttStatusFilter; q: string; limit: number; offset: number }): Promise<AttPage> {
   const { data, error } = await client().rpc('attendance_list', {
     p_org: orgId, p_from: o.from, p_to: o.to, p_status: o.status || null, p_q: o.q.trim() || null, p_limit: o.limit, p_offset: o.offset,
   });
   if (error) throw new Error(error.message);
   const page = data as { total: number; rows: Omit<AttPageRow, 'note' | 'start_lat'>[] };
   return { total: page.total, rows: page.rows.map((r) => ({ ...r, note: null, start_lat: null })) };
+}
+
+/**
+ * Danh sách công phân trang. `expected` là số lượng dự kiến khi xem "mọi ngày" từ khung Cần xử lý. Cơ sở dữ liệu đã cập nhật (migration 0229/0230) nhận khoảng
+ * ngày bất kỳ cho công chờ xác nhận / ca đang mở; bản CŨ báo "không quá 92 ngày" nên app tự chia khoảng thành các đoạn ≤ 90 ngày và ghép lại.
+ */
+export async function listAttendancePage(orgId: string, o: { from: string; to: string; status: AttStatusFilter; q: string; limit: number; offset: number; expected?: number }): Promise<AttPage> {
+  try {
+    return await listPageRaw(orgId, o);
+  } catch (e) {
+    if (!/92 ngày/.test(String((e as Error).message)) || (o.status !== 'pending' && o.status !== 'open')) throw e;
+    return listWindowed((r) => listPageRaw(orgId, { ...o, ...r }), { from: o.from, to: o.to, limit: o.limit, offset: o.offset }, o.expected);
+  }
 }
 
 /** Xác nhận các công hợp lệ trong khoảng ngày (dry = chỉ đếm). Bỏ qua công có ngoại lệ, ảnh cờ đỏ hoặc giờ quá dài. */

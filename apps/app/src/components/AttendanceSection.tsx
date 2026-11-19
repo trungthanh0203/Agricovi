@@ -79,7 +79,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
     try { await fn(); await load(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
 
-  const goList = (status: ListPreset['status'], range: ListPreset['range']) => { setPreset({ status, range, stamp: Date.now() }); setTab('list'); };
+  const goList = (status: ListPreset['status'], range: ListPreset['range'], expected?: number) => { setPreset({ status, range, stamp: Date.now(), expected }); setTab('list'); };
 
   if (!active) return null;
   const tabs: { id: Tab; label: string }[] = [
@@ -93,8 +93,8 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
   // Cần xử lý: mỗi việc một dòng "Tên: số lượng  Xem"
   const todo: { key: string; label: string; value: string; hint?: string; go?: () => void }[] = [];
   if (sum) {
-    if (sum.pending > 0) todo.push({ key: 'pending', label: 'Chờ xác nhận', value: `${sum.pending} công`, go: () => goList('pending', 'all') });
-    if (sum.stale > 0) todo.push({ key: 'stale', label: 'Quên ra ca', value: `${sum.stale} ca`, go: () => goList('open', 'stale') });
+    if (sum.pending > 0) todo.push({ key: 'pending', label: 'Chờ xác nhận', value: `${sum.pending} công`, go: () => goList('pending', 'all', sum.pending) });
+    if (sum.stale > 0) todo.push({ key: 'stale', label: 'Quên ra ca', value: `${sum.stale} ca`, go: () => goList('open', 'stale', sum.stale) });
     if (isAdmin && sum.flagged > 0) todo.push({ key: 'flagged', label: 'Ảnh nghi vấn', value: `${sum.flagged_people ?? sum.flagged} người`, go: () => setTab('photos') });
     if (orphans.length > 0) todo.push({ key: 'orphans', label: 'Chưa có tổ trưởng', value: `${orphans.length} người`, hint: 'chọn tổ trưởng ở Khai báo → Phòng / Tổ' });
   }
