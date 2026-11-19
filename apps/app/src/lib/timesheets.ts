@@ -54,22 +54,8 @@ export function listDays(from: string, to: string): SheetDay[] {
 }
 export const dayCount = (from: string, to: string): number => Math.round((utc(to).getTime() - utc(from).getTime()) / 86400000) + 1;
 
-/** Các nút chọn nhanh khoảng ngày (chỉ điền sẵn hai ô ngày) */
-export type Preset = 'last7' | 'week' | 'half' | 'month' | 'prevMonth';
-export const PRESET_LABEL: Record<Preset, string> = { last7: '7 ngày gần nhất', week: 'Tuần này', half: 'Nửa tháng này', month: 'Cả tháng này', prevMonth: 'Cả tháng trước' };
-export function presetRange(p: Preset, today: string): { from: string; to: string } {
-  const t = utc(today);
-  const y = t.getUTCFullYear(), m = t.getUTCMonth();
-  const lastOf = (yy: number, mm: number) => iso(new Date(Date.UTC(yy, mm + 1, 0)));
-  const first = (yy: number, mm: number) => iso(new Date(Date.UTC(yy, mm, 1)));
-  switch (p) {
-    case 'last7': return { from: iso(new Date(t.getTime() - 6 * 86400000)), to: today };
-    case 'week': { const back = (t.getUTCDay() + 6) % 7; const mon = new Date(t.getTime() - back * 86400000); return { from: iso(mon), to: iso(new Date(mon.getTime() + 6 * 86400000)) }; }
-    case 'half': return t.getUTCDate() <= 15 ? { from: first(y, m), to: iso(new Date(Date.UTC(y, m, 15))) } : { from: iso(new Date(Date.UTC(y, m, 16))), to: lastOf(y, m) };
-    case 'month': return { from: first(y, m), to: lastOf(y, m) };
-    case 'prevMonth': return { from: first(y, m - 1), to: lastOf(y, m - 1) };
-  }
-}
+/** Ngày bắt đầu gợi ý khi mở màn tạo bảng: 7 ngày gần nhất (người dùng tự chọn lại từ-đến) */
+export const defaultFrom = (today: string): string => iso(new Date(utc(today).getTime() - 6 * 86400000));
 
 /** Ca mặc định và tùy chọn in: nhớ theo cơ sở trên máy này (không cần lưu máy chủ) */
 export interface SheetPrefs { start: string; end: string; brk: number; mode: SheetMode; perTeamPage: boolean; shadeSunday: boolean; noteColumn: boolean }

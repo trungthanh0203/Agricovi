@@ -4,8 +4,8 @@ import { friendlyError } from '../lib/errors';
 import { todayLocal } from '../lib/hooks';
 import { loadTeams } from '../lib/teams';
 import {
-  MODE_LABEL, PRESET_LABEL, createSheet, dayCount, fetchSheets, groupByTeam, hhmm, loadPrefs, markSheetEntered, presetRange, savePrefs,
-  type Preset, type Sheet, type SheetData, type SheetMode, type SheetPrefs, type SheetWorker,
+  MODE_LABEL, createSheet, dayCount, fetchSheets, groupByTeam, hhmm, loadPrefs, markSheetEntered, savePrefs, defaultFrom,
+  type Sheet, type SheetData, type SheetMode, type SheetPrefs, type SheetWorker,
 } from '../lib/timesheets';
 import type { WorkerLite } from '../lib/work';
 import { PrintSheet } from './PrintSheet';
@@ -100,7 +100,7 @@ function SheetForm({ orgId, workers, prefs, onPrefs, onCancel, onPreview }: {
   orgId: string; workers: WorkerLite[]; prefs: SheetPrefs; onPrefs: (p: SheetPrefs) => void; onCancel: () => void; onPreview: (d: SheetData) => void;
 }) {
   const today = todayLocal();
-  const [from, setFrom] = useState(presetRange('last7', today).from);
+  const [from, setFrom] = useState(defaultFrom(today));
   const [to, setTo] = useState(today);
   const [mode, setMode] = useState<SheetMode>(prefs.mode);
   const [start, setStart] = useState(prefs.start);
@@ -128,7 +128,6 @@ function SheetForm({ orgId, workers, prefs, onPrefs, onCancel, onPreview }: {
 
   const toggle = (id: string) => setPicked((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const toggleGroup = (ids: string[], on: boolean) => setPicked((s) => { const n = new Set(s); for (const id of ids) { if (on) n.add(id); else n.delete(id); } return n; });
-  const setPreset = (p: Preset) => { const r = presetRange(p, today); setFrom(r.from); setTo(r.to); };
 
   function next() {
     if (!from || !to) return setError('Hãy chọn ngày bắt đầu và ngày kết thúc.');
@@ -148,9 +147,6 @@ function SheetForm({ orgId, workers, prefs, onPrefs, onCancel, onPreview }: {
   return (
     <div className="card inline-form">
       <p><strong>Tạo bảng chấm công</strong></p>
-      <div className="chips" aria-label="Chọn nhanh khoảng ngày">
-        {(Object.keys(PRESET_LABEL) as Preset[]).map((p) => <button key={p} type="button" className="chip" onClick={() => setPreset(p)}>{PRESET_LABEL[p]}</button>)}
-      </div>
       <div className="pair">
         <label>Từ ngày<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
         <label>Đến ngày<input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} /></label>
