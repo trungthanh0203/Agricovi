@@ -41,7 +41,7 @@ export function StaffAddForm({ org, teams, workers, onDone, onCreds, onCancel }:
   const [roles, setRoles] = useState<MemberRole[]>(['worker']);
   const [mode, setMode] = useState<WorkMode | ''>('');      // kiểu phân hệ không bắt buộc: bỏ trống thì dùng mặc định của loại
   const [teamId, setTeamId] = useState('');
-  const [areaSel, setAreaSel] = useState<string[] | null>(null);   // null = tất cả phân khu
+  const [areaSel, setAreaSel] = useState<string[] | null | undefined>(undefined);   // undefined = chưa chọn (bắt buộc chọn); null = tất cả phân khu
   const [hr, setHr] = useState<WorkerHr>(EMPTY_HR);
   const [desc, setDesc] = useState('');
   const [busy, setBusy] = useState(false);
@@ -58,7 +58,7 @@ export function StaffAddForm({ org, teams, workers, onDone, onCreds, onCancel }:
     setKind(k); setError(null);
     setMode('');
   }
-  const reset = () => { setName(''); setPhone(''); setPosId(''); setTeamId(''); setAreaSel(null); setHr(EMPTY_HR); setDesc(''); };
+  const reset = () => { setName(''); setPhone(''); setPosId(''); setTeamId(''); setAreaSel(undefined); setHr(EMPTY_HR); setDesc(''); };
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -67,6 +67,7 @@ export function StaffAddForm({ org, teams, workers, onDone, onCreds, onCancel }:
     if (name.trim().length < 2) return setError('Hãy nhập họ tên (ít nhất 2 ký tự).');
     if (isAccount && !phone.trim()) return setError('Hãy nhập số điện thoại của nhân viên.');
     if (isAccount && !posId) return setError('Hãy chọn chức vụ cho nhân viên.');
+    if (isAccount && areaSel === undefined) return setError('Hãy chọn phân khu làm việc: "Tất cả phân khu" hoặc chọn từng phân khu.');
     if (isAccount && areaSel && areaSel.length === 0) return setError('Hãy chọn ít nhất một phân khu, hoặc chọn "Tất cả phân khu".');
     if (needTeam && !teamId) return setError(activeTeams.length === 0 ? 'Kiểu này cần chọn một tổ. Hãy tạo tổ ở mục Phòng / Tổ trước.' : 'Hãy chọn một tổ lao động.');
     setBusy(true);
@@ -120,7 +121,7 @@ export function StaffAddForm({ org, teams, workers, onDone, onCreds, onCancel }:
       {isAccount && <PositionPicker orgId={org.id} value={posId} onChange={(id, role) => { setPosId(id); setRoles([role]); }} />}
       <HrFields hr={hr} setHr={setHr} disabled={busy} withPosition={!isAccount} hideEnd orgId={org.id} />
       {isAccount && (
-        <Collapsible inline title="Phân khu làm việc" summary={areaSel === null ? 'tất cả phân khu' : `${areaSel.length} phân khu`}>
+        <Collapsible inline title="Phân khu làm việc" summary={areaSel === undefined ? 'chưa chọn (bắt buộc)' : areaSel === null ? 'tất cả phân khu' : `${areaSel.length} phân khu`}>
           <AreaChoice orgId={org.id} value={areaSel} onChange={setAreaSel} />
         </Collapsible>
       )}

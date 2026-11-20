@@ -1,4 +1,5 @@
 import { CycleSelect } from './CycleSelect';
+import { AreaPickField, useAreaPick } from './AreaPick';
 import { exportFinanceCsv, useFinanceTotals, type ExpenseTotals, type SaleTotals } from '../lib/financeTotals';
 import { LoadOlder, useShowMore } from './ShowMore';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
@@ -227,7 +228,9 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const allCycles = useTable('cycles');
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
   const [showAllCycles, setShowAllCycles] = useState(false);
-  const ordered = [...formCycles(cycles, showAllCycles, editing?.cycle_id)].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active'));
+  const { active: activeOrg } = useOrgs();
+  const pick = useAreaPick(activeOrg?.id, !editing);
+  const ordered = pick.apply([...formCycles(cycles, showAllCycles, editing?.cycle_id)].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active')));
 
   const [cycleId, setCycleId] = useState('');
   const [date, setDate] = useState(editing?.sold_date ?? todayLocal());
@@ -268,6 +271,7 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (pick.pending) return setError('Hãy chọn phân khu trước, rồi chọn vụ.');
     const bad = validateSale(q, a);
     if (bad) return setError(bad);
     const cycle = allCycles.find((c) => c.id === effCycle);
@@ -342,8 +346,9 @@ function SaleForm({ cycles, cycleLabel, editing, userId, onClose }: {
           <p className="muted">{cycleLabel(editing.cycle_id)} — không đổi được vụ; muốn đổi hãy hủy khoản bán và ghi lại. Mọi thay đổi được lưu lịch sử.</p>
         ) : (
           <>
-          <CycleSelect label={<CycleWord cap />} cycles={ordered} value={effCycle} onChange={setCycleId} labelOf={cycleLabel} />
-          {(cycles.length > ordered.length || showAllCycles) && (
+          <AreaPickField pick={pick} onPick={() => setCycleId('')} empty={ordered.length === 0} />
+          {!pick.pending && <CycleSelect label={<CycleWord cap />} cycles={ordered} value={effCycle} onChange={setCycleId} labelOf={cycleLabel} />}
+          {!pick.pending && (cycles.length > ordered.length || showAllCycles) && (
             <label className="check"><input type="checkbox" checked={showAllCycles} onChange={(e) => setShowAllCycles(e.target.checked)} /> Hiện cả vụ không còn sản xuất</label>
           )}
           </>

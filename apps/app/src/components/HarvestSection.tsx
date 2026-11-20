@@ -1,4 +1,5 @@
 import { CycleSelect } from './CycleSelect';
+import { AreaPickField, useAreaPick } from './AreaPick';
 import { NamePicker } from './CatalogPick';
 import { useConfig } from '../lib/config';
 import { useMemo, useState, type FormEvent } from 'react';
@@ -203,7 +204,8 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
   // vụ đang chạy lên đầu danh sách
   const [showAllCycles, setShowAllCycles] = useState(false);
-  const ordered = [...formCycles(cycles, showAllCycles, editing?.cycle_id)].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active'));
+  const pick = useAreaPick(activeOrg?.id, !editing);
+  const ordered = pick.apply([...formCycles(cycles, showAllCycles, editing?.cycle_id)].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active')));
 
   const [cycleId, setCycleId] = useState(editing?.cycle_id ?? '');
   const [when, setWhen] = useState(toLocalInput(editing ? new Date(editing.harvested_at) : new Date()));
@@ -226,6 +228,7 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (pick.pending) return setError('Hãy chọn phân khu trước, rồi chọn vụ.');
     const q = parseNumber(qty);
     const l = parseNumber(loss);
     const bad = validateHarvest(q, l);
@@ -288,8 +291,9 @@ function HarvestForm({ cycles, cycleLabel, editing, userId, onClose }: {
           <p className="muted">{cycleLabel(editing.cycle_id)} — không đổi được vụ; muốn đổi hãy hủy phiếu và ghi lại. Mọi thay đổi được lưu lịch sử.</p>
         ) : (
           <>
-          <CycleSelect label={<CycleWord cap />} cycles={ordered} value={effCycleId} onChange={setCycleId} labelOf={cycleLabel} />
-          {(cycles.length > ordered.length || showAllCycles) && (
+          <AreaPickField pick={pick} onPick={() => setCycleId('')} empty={ordered.length === 0} />
+          {!pick.pending && <CycleSelect label={<CycleWord cap />} cycles={ordered} value={effCycleId} onChange={setCycleId} labelOf={cycleLabel} />}
+          {!pick.pending && (cycles.length > ordered.length || showAllCycles) && (
             <label className="check"><input type="checkbox" checked={showAllCycles} onChange={(e) => setShowAllCycles(e.target.checked)} /> Hiện cả vụ không còn sản xuất</label>
           )}
           </>

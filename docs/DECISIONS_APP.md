@@ -512,3 +512,9 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 
 ### D212 — Bộ lọc phân khu của danh sách vụ: chọn mới hiện
 `AreaFilter` (Sản xuất → danh sách vụ, Tiến độ các vụ đang chạy, Tổng hợp theo phân khu) mặc định "Chọn phân khu": chưa hiện danh sách (Tổng hợp còn chưa tải số liệu). "Tất cả phân khu" là một mục trong danh sách. Bộ lọc vẫn chỉ hiện khi có từ 2 phân khu có vụ; chỉ có 1 phân khu thì hiện luôn như cũ.
+
+### D213 — Phân khu giao cho người / kho: thêm mới phải chọn
+Khi thêm nhân viên có tài khoản và thêm kho, ô "Phân khu" mặc định chưa chọn (cả "Tất cả phân khu" lẫn "Chỉ những phân khu được chọn" đều chưa tick) và bắt buộc chọn một trong hai mới lưu được. Sửa bản ghi đã có giữ nguyên giá trị đang lưu. Báo cáo kho (chỉ có cột Phân khu hiển thị, không có bộ lọc) không đổi.
+
+### D214 — Ghi chi phí, Ghi thu hoạch, Ghi bán hàng: chọn phân khu trước, rồi mới chọn vụ
+Ba biểu mẫu thêm mới có ô Phân khu (mặc định "Chọn phân khu"; "Tất cả phân khu" là một mục) đứng trước ô Vụ. Chưa chọn phân khu thì chưa hiện ô Vụ và không lưu được; chọn rồi thì ô Vụ chỉ liệt kê vụ của phân khu đó (gồm các ô sản xuất bên trong). Cơ sở chưa có phân khu nào, hoặc đang sửa bản ghi, thì bỏ bước này. Phần dùng chung: `components/AreaPick.tsx`. Bán theo đơn hàng (`OrderSaleForm`) chưa đổi.

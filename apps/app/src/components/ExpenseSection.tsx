@@ -1,4 +1,5 @@
 import { CycleSelect } from './CycleSelect';
+import { AreaPickField, useAreaPick } from './AreaPick';
 import { exportFinanceCsv, useFinanceTotals, type ExpenseTotals, type SaleTotals } from '../lib/financeTotals';
 import { LoadOlder, useShowMore } from './ShowMore';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
@@ -230,13 +231,15 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
   const [busy, setBusy] = useState(false);
 
   const [showAllCycles, setShowAllCycles] = useState(false);
-  const ordered = formCycles(cycles, showAllCycles, editing?.cycle_id ?? cycleId);
-  const effCycle = cycleId || (ordered.find((c) => c.id === remembered)?.id ?? 'none');
+  const pick = useAreaPick(orgId, !editing);
+  const ordered = pick.apply(formCycles(cycles, showAllCycles, editing?.cycle_id ?? cycleId));
+  const effCycle = pick.pending ? '' : cycleId || (ordered.find((c) => c.id === remembered)?.id ?? 'none');
 
   const selCycle = effCycle === 'none' ? null : allCycles.find((c) => c.id === (editing ? editing.cycle_id : effCycle)) ?? null;
   const orchardSel = selCycle?.cycle_mode === 'perennial';
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (pick.pending) return setError('Hãy chọn phân khu trước, rồi chọn vụ (hoặc Chi phí chung).');
     const a = parseNumber(amount);
     const bad = validateExpense(a, kind, note);
     if (bad) return setError(bad);
@@ -287,10 +290,11 @@ function ExpenseForm({ orgId, cycles, cycleLabel, editing, userId, onClose }: {
           <p className="muted">{cycleLabel(editing.cycle_id)} — không đổi được vụ; muốn đổi hãy hủy khoản chi và ghi lại. Mọi thay đổi được lưu lịch sử.</p>
         ) : (
           <>
-          <CycleSelect label="Thuộc vụ" cycles={ordered} value={effCycle} onChange={setCycleId} labelOf={cycleLabel}
-            leading={[{ value: 'none', label: 'Chi phí chung (không gắn vụ)' }]} />
-          <small>Chi phí gắn vụ mới vào được tổng kết vụ.</small>
-          {(cycles.length > ordered.length || showAllCycles) && (
+          <AreaPickField pick={pick} onPick={() => setCycleId('')} />
+          {!pick.pending && <CycleSelect label="Thuộc vụ" cycles={ordered} value={effCycle} onChange={setCycleId} labelOf={cycleLabel}
+            leading={[{ value: 'none', label: 'Chi phí chung (không gắn vụ)' }]} />}
+          {!pick.pending && <small>Chi phí gắn vụ mới vào được tổng kết vụ.</small>}
+          {!pick.pending && (cycles.length > ordered.length || showAllCycles) && (
             <label className="check"><input type="checkbox" checked={showAllCycles} onChange={(e) => setShowAllCycles(e.target.checked)} /> Hiện cả vụ không còn sản xuất</label>
           )}
           </>

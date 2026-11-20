@@ -9,9 +9,10 @@ import { orderedAreas } from '../lib/areas';
  * Mỗi phân khu là một khung riêng: tick phân khu = gồm TẤT CẢ ô sản xuất bên trong (máy chủ tự hiểu, D136), các ô hiện dưới dạng chữ mờ;
  * không tick phân khu thì mới hiện từng ô để chọn riêng. `nested` = true khi nơi dùng hiểu phân khu cha gồm ô con (nhân sự).
  */
-export function AreaChoice({ orgId, value, onChange, nested = true }: { orgId: string; value: string[] | null; onChange: (v: string[] | null) => void; nested?: boolean }) {
+export function AreaChoice({ orgId, value, onChange, nested = true }: { orgId: string; value: string[] | null | undefined; onChange: (v: string[] | null) => void; nested?: boolean }) {
   const areas = orderedAreas(useTable('areas').filter((a) => a.organization_id === orgId));
   const all = value === null;
+  const unset = value === undefined;   // thêm mới: chưa chọn gì (bắt buộc chọn Tất cả hoặc từng phân khu)
   const picked = value ?? [];
   const ids = new Set(areas.map((a) => a.id));
   const kids = (id: string) => areas.filter((a) => a.parent_id === id);
@@ -28,8 +29,8 @@ export function AreaChoice({ orgId, value, onChange, nested = true }: { orgId: s
   return (
     <>
       <label className="check"><input type="radio" checked={all} onChange={() => onChange(null)} /> Tất cả phân khu</label>
-      <label className="check"><input type="radio" checked={!all} onChange={() => onChange(picked)} /> Chỉ những phân khu được chọn</label>
-      {!all && (
+      <label className="check"><input type="radio" checked={!all && !unset} onChange={() => onChange(picked)} /> Chỉ những phân khu được chọn</label>
+      {!all && !unset && (
         <div className="area-pick">
           {tops.map((a) => {
             const ch = nested ? kids(a.id) : [];

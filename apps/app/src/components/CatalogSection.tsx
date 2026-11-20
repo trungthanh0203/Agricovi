@@ -138,7 +138,7 @@ function LocationForm({ l, orgId, busy, onSave, onClose }: {
 }) {
   const [name, setName] = useState(l?.name ?? '');
   const [desc, setDesc] = useState(l?.description ?? '');
-  const [areaSel, setAreaSel] = useState<string[] | null>(l?.area_ids && l.area_ids.length > 0 ? l.area_ids : null); // null = tất cả
+  const [areaSel, setAreaSel] = useState<string[] | null | undefined>(!l ? undefined : l.area_ids && l.area_ids.length > 0 ? l.area_ids : null); // undefined = thêm mới, chưa chọn (bắt buộc); null = tất cả
   const [err, setErr] = useState<string | null>(null);
   return (
     <div className="card">
@@ -154,6 +154,7 @@ function LocationForm({ l, orgId, busy, onSave, onClose }: {
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {
             if (name.trim().length < 2) return setErr('Hãy nhập tên kho (ít nhất 2 ký tự).');
+            if (areaSel === undefined) return setErr('Hãy chọn phân khu dùng kho: "Tất cả phân khu" hoặc chọn từng phân khu.');
             if (areaSel && areaSel.length === 0) return setErr('Hãy chọn ít nhất một phân khu, hoặc chọn "Tất cả phân khu".');
             setErr(null);
             void onSave({ name, description: desc, areaIds: areaSel }).catch(() => undefined);
