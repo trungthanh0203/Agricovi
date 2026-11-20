@@ -7,7 +7,7 @@ import { callFunction } from '../lib/staff';
 import { supabase } from '../lib/supabase';
 
 const STATUS_LABEL: Record<PlanUsage['status'], string> = {
-  trial: 'Dùng thử', active: 'Đang hoạt động', expired: 'Hết hạn', suspended: 'Tạm khóa',
+  trial: 'Khởi đầu (miễn phí)', active: 'Đang hoạt động', expired: 'Hết hạn', suspended: 'Tạm khóa',
 };
 const vnd = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + 'đ';
 const date = (iso: string) => new Date(iso).toLocaleDateString('vi-VN');
@@ -80,7 +80,7 @@ export function PlanCard() {
           <>
             <p><strong>{usage.plan_name}</strong> · {isCurrent ? `hạn đến ${date(usage.period_end)}` : `đã hết hạn ngày ${date(usage.period_end)}`} <span className={isCurrent ? 'pill ok' : 'pill warn'}>{isCurrent ? STATUS_LABEL[usage.status] : 'Hết hạn'}</span></p>
             <p>Số vụ được dùng: <strong>{usage.used_cycles}/{usage.max_cycles}</strong></p>
-            <p>Đã mua: {purchase?.purchased ? <strong>{purchase.quarters} quý · {vnd(purchase.amount ?? 0)}</strong> : <span className="muted">chưa mua (đang dùng thử)</span>}</p>
+            <p>Đã mua: {purchase?.purchased ? <strong>{purchase.quarters} quý · {vnd(purchase.amount ?? 0)}</strong> : <span className="muted">chưa mua (đang dùng gói Khởi đầu miễn phí)</span>}</p>
             {!isCurrent && <p className="msg warn">Gói đã hết hạn: bạn vẫn xem và ghi dữ liệu cũ được, nhưng chưa tạo được vụ mới. Hãy gia hạn hoặc chọn gói bên dưới.</p>}
             {plans.some((p) => !p.is_trial) && <div className="btnrow"><button type="button" className="primary" onClick={renew}>Gia hạn thêm</button></div>}
           </>
@@ -100,7 +100,7 @@ export function PlanCard() {
                     <td>{p.is_trial ? 'Miễn phí' : vnd(p.price_per_quarter)}</td>
                     <td className="act">
                       {p.is_trial
-                        ? <span className="pill">Dùng thử</span>
+                        ? <span className="pill">Khởi đầu</span>
                         : <button type="button" className="secondary" onClick={() => setBuying(buying === p.id ? null : p.id)}>{buying === p.id ? 'Đóng' : 'Đăng ký'}</button>}
                     </td>
                   </tr>
