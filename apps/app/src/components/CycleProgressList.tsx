@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
-import { AreaFilter, topAreaIdOf } from './AreaFilter';
+import { AreaFilter, areaFilterId, areaFilterOptions, areaFilterPending, topAreaIdOf } from './AreaFilter';
 import { cycleProgress, sortByDue } from '../lib/cycles';
 import { cachedCycleStats, type CycleStats } from '../lib/cycleStats';
 import { CycleStatsLoader } from './CycleStatsLoader';
@@ -46,14 +46,17 @@ export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<str
   const areaById = new Map(areas.map((a) => [a.id, a]));
   const running = cycles.filter((c) => c.status === 'active' && cycleIds.has(c.id));
   // vụ trễ ngày hoặc sắp đến hạn lên trước (D154)
-  const progress = sortByDue(running.filter((c) => !areaFilter || topAreaIdOf(c.area_id, areaById) === areaFilter), (id) => stages.filter((s) => s.cycle_id === id))
+  const areaPending = areaFilterPending(areaFilterOptions(areas, running.map((c) => c.area_id)).length, areaFilter);   // chưa chọn phân khu: chưa hiện danh sách
+  const areaSel = areaFilterId(areaFilter);
+  const progress = sortByDue(running.filter((c) => !areaPending && (!areaSel || topAreaIdOf(c.area_id, areaById) === areaSel)), (id) => stages.filter((s) => s.cycle_id === id))
     .map((c) => ({ c, p: cycleProgress(stages.filter((s) => s.cycle_id === c.id), today) }));
   if (running.length === 0) return null;
   return (
     <Collapsible title="Tiến độ các vụ đang chạy" summary={`${running.length} vụ${progress.some(({ p }) => p.delay > 0) ? ` · ${progress.filter(({ p }) => p.delay > 0).length} vụ trễ` : ''}`} warn={progress.some(({ p }) => p.delay > 0)}>
       {active && <CycleStatsLoader orgId={active.id} ids={progress.map(({ c }) => c.id)} refreshKey={progress.map(({ c }) => `${c.id}:${c.version}`).join(',')} onData={setStats} />}
       <AreaFilter areas={areas} usedAreaIds={running.map((c) => c.area_id)} value={areaFilter} onChange={setAreaFilter} />
-      {progress.length === 0 && <p className="muted">Không có vụ đang chạy ở phân khu này.</p>}
+      {areaPending && <p className="muted">Chọn phân khu (hoặc Tất cả phân khu) để xem tiến độ.</p>}
+      {!areaPending && progress.length === 0 && <p className="muted">Không có vụ đang chạy ở phân khu này.</p>}
       {progress.map(({ c, p }) => (
         <div className="card slim" key={c.id}>
           <div className="row">

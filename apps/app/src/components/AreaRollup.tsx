@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AreaFilter } from './AreaFilter';
+import { AreaFilter, areaFilterId, areaFilterOptions, areaFilterPending } from './AreaFilter';
 import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
 import { AREA_CYCLES_PAGE, cachedAreaRollup, fetchAreaCycles, fetchAreaRollup, type AreaCycleItem, type AreaRollupData } from '../lib/areaRollup';
 import { rollupFromServer } from '../lib/areas';
@@ -37,6 +37,8 @@ export function AreaRollup() {
   const orgCycles = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id && c.status !== 'cancelled'), [cycles, active?.id]);
   const status: Status = pickedStatus ?? (orgCycles.some((c) => c.status === 'active') ? 'active' : 'all');
   const statusCycles = useMemo(() => orgCycles.filter((c) => status === 'all' || c.status === status), [orgCycles, status]);
+  const areaPending = areaFilterPending(areaFilterOptions(mine, statusCycles.map((c) => c.area_id)).length, areaFilter);   // chưa chọn phân khu: chưa tải, chưa hiện bảng
+  const areaSel = areaFilterId(areaFilter);
 
   // khoảng thời gian áp cho vụ đã kết thúc: 12 tháng gần đây (mặc định), một năm, hoặc tất cả
   const today = todayLocal();
@@ -56,7 +58,7 @@ export function AreaRollup() {
   const key = `${status}|${from ?? ''}|${to ?? ''}`;
   const [refreshTick, setRefreshTick] = useState(0);   // bấm "Tính lại số liệu" thì tăng
   useEffect(() => {
-    if (!active) return;
+    if (!active || areaPending) return;
     setData(cachedAreaRollup(active.id, key));
     setLists({}); setOpenList({});   // đổi bộ lọc thì bỏ các danh sách vụ đã mở
     if (!navigator.onLine) return;
@@ -67,7 +69,7 @@ export function AreaRollup() {
       .catch((e) => { if (alive) setError(friendlyError(e)); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [active?.id, key, orgCycles.length, refreshTick]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active?.id, key, orgCycles.length, refreshTick, areaPending]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadList(areaId: string, more: boolean) {
     if (!active) return;
@@ -87,14 +89,14 @@ export function AreaRollup() {
   }
 
   const allRows = useMemo(() => (data ? rollupFromServer(mine, data.rows) : []), [mine, data]);
-  const rows = useMemo(() => (areaFilter && allRows.some((r) => r.area.id === areaFilter) ? allRows.filter((r) => r.area.id === areaFilter) : allRows), [allRows, areaFilter]);
+  const rows = useMemo(() => (areaSel && allRows.some((r) => r.area.id === areaSel) ? allRows.filter((r) => r.area.id === areaSel) : allRows), [allRows, areaSel]);
   if (!active) return null;
   if (!mine.some((a) => a.parent_id) || orgCycles.length === 0) return <p className="muted">Chưa có phân khu nào có vụ để tổng hợp. Phân khu chia ô sản xuất và có vụ sẽ hiện ở đây.</p>;
   const money = Boolean(data?.can_money);
   const kg = (v: number | null) => (v == null ? '—' : `${v.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} kg`);
   const vnd = (v: number | null) => (v == null ? '—' : formatMoney(v));
   const cycleText = (r: (typeof rows)[number]) => `${r.cycles} vụ${r.running > 0 ? ` (${r.running} đang chạy)` : ''}`;
-  const isOpen = (id: string) => openMap[id] ?? (areaFilter === id);
+  const isOpen = (id: string) => openMap[id] ?? (areaSel === id);
   // các dòng vụ của một khu đang mở (D178): tải khi mở, từng trang 50 vụ
   const colSpan = 2 + (money ? 3 : 0);
   const cycleRows = (areaId: string) => {
@@ -148,12 +150,13 @@ export function AreaRollup() {
         </label>
       )}
       <AreaFilter areas={mine} usedAreaIds={statusCycles.map((c) => c.area_id)} value={areaFilter} onChange={setAreaFilter} />
-      {loading && !data && <p className="muted" role="status">Đang tải số liệu…</p>}
+      {areaPending && <p className="muted">Chọn phân khu (hoặc Tất cả phân khu) để xem bảng số liệu.</p>}
+      {!areaPending && loading && !data && <p className="muted" role="status">Đang tải số liệu…</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
-      {!data && !loading && !error && !navigator.onLine && <p className="muted">Cần có mạng để xem số liệu lần đầu.</p>}
-      {data && rows.length === 0 && !loading && <p className="muted">Không có vụ nào ở bộ lọc này.</p>}
-      {data && !loading && navigator.onLine && <p className="muted">Số vụ đã kết thúc được lưu sẵn để mở nhanh. <button type="button" className="link inline" onClick={() => setRefreshTick((n) => n + 1)}>Tính lại số liệu</button></p>}
-      <div className="card">
+      {!areaPending && !data && !loading && !error && !navigator.onLine && <p className="muted">Cần có mạng để xem số liệu lần đầu.</p>}
+      {!areaPending && data && rows.length === 0 && !loading && <p className="muted">Không có vụ nào ở bộ lọc này.</p>}
+      {!areaPending && data && !loading && navigator.onLine && <p className="muted">Số vụ đã kết thúc được lưu sẵn để mở nhanh. <button type="button" className="link inline" onClick={() => setRefreshTick((n) => n + 1)}>Tính lại số liệu</button></p>}
+      <div className="card" hidden={areaPending}>
         <h2>Bảng số liệu</h2>
       <div className="tablewrap">
         <table className="grid">

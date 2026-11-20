@@ -8,21 +8,33 @@ export const topAreaIdOf = (areaId: string, areaById: Map<string, AreaRow>): str
   return a ? (a.parent_id ?? a.id) : undefined;
 };
 
-/** Bộ lọc theo phân khu cho danh sách vụ (D154). Chỉ hiện khi có từ 2 phân khu trở lên có vụ. */
+/** Các phân khu (cấp 1) có vụ, kèm số vụ (gồm các ô bên trong) */
+export function areaFilterOptions(areas: AreaRow[], usedAreaIds: string[]) {
+  const byId = new Map(areas.map((a) => [a.id, a]));
+  const counts = new Map<string, number>();
+  for (const id of usedAreaIds) { const t = topAreaIdOf(id, byId); if (t) counts.set(t, (counts.get(t) ?? 0) + 1); }
+  return topAreas(areas).filter((a) => counts.has(a.id)).map((a) => ({ id: a.id, name: a.name, count: counts.get(a.id) ?? 0 }));
+}
+
+/** Bộ lọc hiện (từ 2 phân khu có vụ) mà người dùng chưa chọn gì ('' = "Chọn phân khu"): chưa tải/hiện danh sách */
+export const areaFilterPending = (optionCount: number, value: string) => optionCount >= 2 && value === '';
+/** Mã phân khu cần lọc; '' hoặc 'all' = không lọc */
+export const areaFilterId = (value: string) => (value === 'all' ? '' : value);
+
+/**
+ * Bộ lọc theo phân khu cho danh sách vụ (D154, D212). Mặc định "Chọn phân khu" (chưa hiện gì); "Tất cả phân khu" là một mục trong danh sách.
+ * Chỉ hiện khi có từ 2 phân khu có vụ trở lên.
+ */
 export function AreaFilter({ areas, usedAreaIds, value, onChange }: { areas: AreaRow[]; usedAreaIds: string[]; value: string; onChange: (id: string) => void }) {
-  const options = useMemo(() => {
-    const byId = new Map(areas.map((a) => [a.id, a]));
-    const counts = new Map<string, number>(); // số vụ của từng phân khu (gồm các ô bên trong)
-    for (const id of usedAreaIds) { const t = topAreaIdOf(id, byId); if (t) counts.set(t, (counts.get(t) ?? 0) + 1); }
-    return topAreas(areas).filter((a) => counts.has(a.id)).map((a) => ({ id: a.id, name: a.name, count: counts.get(a.id) ?? 0 }));
-  }, [areas, usedAreaIds]);
+  const options = useMemo(() => areaFilterOptions(areas, usedAreaIds), [areas, usedAreaIds]);
   if (options.length < 2) return null;
   return (
     <div className="filters">
       <label>
         Phân khu
         <select value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">Tất cả phân khu</option>
+          <option value="" disabled>Chọn phân khu</option>
+          <option value="all">Tất cả phân khu</option>
           {options.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.count} vụ)</option>)}
         </select>
       </label>

@@ -509,3 +509,6 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 
 ### D211 — "Tất cả phân khu" là một mục trong danh sách
 Ô Phân khu ở Bảng lương và Ghi công mặc định "Chọn phân khu" (chưa tải gì); "Tất cả phân khu" là một mục trong danh sách, chọn mới tải tất cả. Bảng lương chốt tháng đầy đủ khi chọn Tất cả phân khu và Tất cả nhân viên (đúng D208).
+
+### D212 — Bộ lọc phân khu của danh sách vụ: chọn mới hiện
+`AreaFilter` (Sản xuất → danh sách vụ, Tiến độ các vụ đang chạy, Tổng hợp theo phân khu) mặc định "Chọn phân khu": chưa hiện danh sách (Tổng hợp còn chưa tải số liệu). "Tất cả phân khu" là một mục trong danh sách. Bộ lọc vẫn chỉ hiện khi có từ 2 phân khu có vụ; chỉ có 1 phân khu thì hiện luôn như cũ.

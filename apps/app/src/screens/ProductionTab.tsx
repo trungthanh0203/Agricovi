@@ -14,7 +14,7 @@ import { HelpButton } from '../components/HelpButton';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { cycleProgress, cycleTitle, sortByDue } from '../lib/cycles';
-import { AreaFilter, topAreaIdOf } from '../components/AreaFilter';
+import { AreaFilter, areaFilterId, areaFilterOptions, areaFilterPending, topAreaIdOf } from '../components/AreaFilter';
 import { cancelTransferRequest, listTransferRequests, requestCycleToOwn, TRANSFER_STATUS_LABEL, type TransferRequest } from '../lib/cycleTransfer';
 import { cycleCode } from '../lib/qr';
 import { CycleQr } from '../components/CycleQr';
@@ -191,7 +191,10 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const myCyclesAll = cycles
     .filter((c) => c.owner_org_id === active.id || areaById.get(c.area_id)?.organization_id === active.id)
     .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
-  const byArea = areaFilter ? myCyclesAll.filter((c) => topAreaIdOf(c.area_id, areaById) === areaFilter) : myCyclesAll;
+  const orgAreas = areas.filter((a) => a.organization_id === active.id);
+  const areaPending = areaFilterPending(areaFilterOptions(orgAreas, myCyclesAll.map((c) => c.area_id)).length, areaFilter);   // chưa chọn phân khu: chưa hiện danh sách vụ
+  const areaSel = areaFilterId(areaFilter);
+  const byArea = areaPending ? [] : areaSel ? myCyclesAll.filter((c) => topAreaIdOf(c.area_id, areaById) === areaSel) : myCyclesAll;
   const cancelledCount = byArea.filter((c) => c.status === 'cancelled').length;
   const myCycles = showCancelled ? byArea : byArea.filter((c) => c.status !== 'cancelled');   // vụ đã hủy ẩn mặc định
   const hasAreas = areas.some((a) => a.organization_id === active.id);
@@ -248,7 +251,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
 
   return (
     <>
-      {myCycles.length === 0 && <p className="muted">Tạo vụ trước để bắt đầu ghi nhật ký.</p>}
+      {!areaPending && myCycles.length === 0 && <p className="muted">Tạo vụ trước để bắt đầu ghi nhật ký.</p>}
       {myCycles.length > 0 && !myCycles.some((c) => c.status === 'active') && (
         <p className="muted">Chỉ vụ đang sản xuất mới ghi việc được. Hãy bấm "Bắt đầu sản xuất" hoặc "Tiếp tục" ở vụ bên dưới.</p>
       )}
@@ -256,11 +259,12 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
       {!online && canManage && <p className="msg warn" role="status">Đang offline: tạo vụ và đổi trạng thái cần có mạng.</p>}
       {actionError && <p className="msg error" role="alert">{actionError}</p>}
       <div className="sect-row">
-        <h2 className="sect"><CycleWord cap /> ({myCycles.length})</h2>
+        <h2 className="sect"><CycleWord cap />{areaPending ? '' : ` (${myCycles.length})`}</h2>
         {canManage && hasAreas && <button className="chip add" onClick={onCreateCycle} disabled={!online}>+ Tạo vụ mới</button>}
       </div>
-      {myCycles.length === 0 && <p className="muted">Chưa có vụ nào.</p>}
-      {(myCycles.length > 0 || (canManage && hasAreas)) && (
+      {!areaPending && myCycles.length === 0 && <p className="muted">Chưa có vụ nào.</p>}
+      {areaPending && <p className="muted">Chọn phân khu (hoặc Tất cả phân khu) để xem danh sách vụ.</p>}
+      {!areaPending && (myCycles.length > 0 || (canManage && hasAreas)) && (
         <div className="chips" role="tablist" aria-label="Nhóm vụ theo trạng thái">
           {GROUPS.map((g) => (
             <button key={g.id} role="tab" aria-selected={curGroup === g.id} className={curGroup === g.id ? 'chip active' : 'chip'} onClick={() => { setGroup(g.id); setVn(50); setEditId(null); }}>
@@ -269,7 +273,7 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
           ))}
         </div>
       )}
-      <AreaFilter areas={areas.filter((a) => a.organization_id === active.id)} usedAreaIds={myCyclesAll.map((c) => c.area_id)} value={areaFilter} onChange={(v) => { setAreaFilter(v); setVn(50); }} />
+      <AreaFilter areas={orgAreas} usedAreaIds={myCyclesAll.map((c) => c.area_id)} value={areaFilter} onChange={(v) => { setAreaFilter(v); setVn(50); }} />
       <CycleStatsLoader orgId={active.id} ids={shown.filter((c) => c.owner_org_id === active.id).map((c) => c.id)} refreshKey={`${shown.map((c) => `${c.id}:${c.version}:${c.status}`).join(',')}|${online}`} onData={setStats} />
       {myCycles.length > 0 && shown.length === 0 && <p className="muted">Không có vụ nào ở nhóm này.</p>}
       {curGroup === 'ended' && cancelledCount > 0 && (
