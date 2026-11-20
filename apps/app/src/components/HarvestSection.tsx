@@ -1,5 +1,5 @@
 import { CycleSelect } from './CycleSelect';
-import { AreaPickField, useAreaPick } from './AreaPick';
+import { AreaFilterField, AreaPickField, useAreaFilter, useAreaPick } from './AreaPick';
 import { NamePicker } from './CatalogPick';
 import { useConfig } from '../lib/config';
 import { useMemo, useState, type FormEvent } from 'react';
@@ -61,6 +61,7 @@ export function HarvestSection() {
     () => cycles.filter((c) => c.owner_org_id === active?.id || areas.find((a) => a.id === c.area_id)?.organization_id === active?.id),
     [cycles, areas, active],
   );
+  const af = useAreaFilter(myCycles);   // chọn phân khu trước (D217)
   const myCycleIds = useMemo(() => new Set(myCycles.map((c) => c.id)), [myCycles]);
   const cycleLabel = (id: string | null) => {
     const c = cycles.find((x) => x.id === id);
@@ -70,11 +71,11 @@ export function HarvestSection() {
 
   const list = useMemo(
     () => harvests
-      .filter((h) => myCycleIds.has(h.cycle_id))
+      .filter((h) => myCycleIds.has(h.cycle_id) && !af.pending && af.hasCycle(h.cycle_id))
       .filter((h) => !cycleFilter || h.cycle_id === cycleFilter)
       .filter((h) => (showVoided ? true : !h.voided_at))
       .sort((a, b) => b.harvested_at.localeCompare(a.harvested_at)),
-    [harvests, myCycleIds, cycleFilter, showVoided],
+    [harvests, myCycleIds, cycleFilter, showVoided, af.pending, af.sel, af.gate],
   );
   const valid = list.filter((h) => !h.voided_at);
   const gross = valid.reduce((s, h) => s + h.quantity, 0);
@@ -123,9 +124,10 @@ export function HarvestSection() {
       )}
       {myCycles.length === 0 && <p className="msg warn">Chưa có vụ nào. Hãy tạo vụ ở màn hình Sản xuất trước.</p>}
 
-      <Collapsible inline title="Bộ lọc" summary={`${cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả vụ'}${showVoided ? ' · cả phiếu đã hủy' : ''}`}>
+      <Collapsible inline defaultOpen={af.pending} title="Bộ lọc" summary={`${af.pending ? 'Chưa chọn phân khu · ' : ''}${cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả vụ'}${showVoided ? ' · cả phiếu đã hủy' : ''}`}>
       <div className="filters">
-          <CycleSelect label={<CycleWord cap />} cycles={myCycles} value={cycleFilter} onChange={setCycleFilter} labelOf={cycleLabel} emptyLabel="Tất cả vụ" />
+          <AreaFilterField f={af} onPick={() => setCycleFilter('')} />
+          {!af.pending && <CycleSelect label={<CycleWord cap />} cycles={af.cyclesIn(myCycles)} value={cycleFilter} onChange={setCycleFilter} labelOf={cycleLabel} emptyLabel="Tất cả vụ" />}
           <label className="check">
             <input type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
             Hiện cả phiếu đã hủy
@@ -142,7 +144,8 @@ export function HarvestSection() {
 
       {!online && <p className="muted">Đang offline: vẫn ghi được phiếu mới (tự gửi khi có mạng); sửa và hủy cần có mạng.</p>}
       {msg && <p className="msg warn" role="status">{msg}</p>}
-      {list.length === 0 && <p className="muted">Chưa có phiếu thu hoạch nào.</p>}
+      {af.pending && <p className="muted">Chọn phân khu (hoặc Tất cả phân khu) ở Bộ lọc để xem danh sách thu hoạch.</p>}
+      {!af.pending && list.length === 0 && <p className="muted">Chưa có phiếu thu hoạch nào.</p>}
 
       {list.map((h) => (
         <div className={h.voided_at ? 'card slim voided' : 'card slim'} key={h.id}>

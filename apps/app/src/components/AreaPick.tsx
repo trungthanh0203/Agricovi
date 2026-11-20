@@ -38,3 +38,42 @@ export function AreaPickField({ pick, onPick, empty }: { pick: ReturnType<typeof
     </label>
   );
 }
+
+/**
+ * Bộ lọc phân khu cho các DANH SÁCH (Nhật ký, Chi phí, Thu hoạch, Bán hàng; D217): mặc định "Chọn phân khu" thì chưa hiện danh sách,
+ * "Tất cả phân khu" là một mục; chọn xong mới chọn tiếp vụ. Chỉ bật khi có từ 2 phân khu có vụ (như AreaFilter); ít hơn thì không đổi gì.
+ */
+export function useAreaFilter(cycleList: { id: string }[]) {
+  const areas = useTable('areas');
+  const cycleRows = useTable('cycles');
+  const topOf = (areaId: string | null | undefined) => (areaId ? areas.find((a) => a.id === areaId)?.parent_id ?? areaId : '');
+  const areaOfCycle = (id: string | null | undefined) => (id ? cycleRows.find((x) => x.id === id)?.area_id ?? null : null);
+  const tops = [...new Map(cycleList.map((c) => { const t = topOf(areaOfCycle(c.id)); return [t, areas.find((a) => a.id === t)?.name ?? '—'] as const; }).filter(([t]) => t !== '')).entries()]
+    .sort((x, y) => x[1].localeCompare(y[1], 'vi'));
+  const gate = tops.length >= 2;
+  const [sel, setSel] = useState('');
+  const pending = gate && sel === '';
+  /** Một vụ có nằm trong phân khu đang chọn không */
+  const hasCycle = (cycleId: string | null | undefined) => {
+    if (!gate || sel === 'all') return true;
+    if (sel === '') return false;
+    return cycleId ? topOf(areaOfCycle(cycleId)) === sel : false;
+  };
+  /** Một khu (ô) có nằm trong phân khu đang chọn không (nhật ký ghi cho khu vực không gắn vụ) */
+  const hasArea = (areaId: string | null | undefined) => (!gate || sel === 'all' ? true : sel === '' ? false : !!areaId && topOf(areaId) === sel);
+  const cyclesIn = <T extends { id: string }>(list: T[]) => list.filter((c) => hasCycle(c.id));
+  return { gate, sel, setSel, tops, pending, hasCycle, hasArea, cyclesIn, all: sel === 'all' || !gate };
+}
+
+export function AreaFilterField({ f, onPick }: { f: ReturnType<typeof useAreaFilter>; onPick?: () => void }) {
+  if (!f.gate) return null;
+  return (
+    <label>Phân khu
+      <select value={f.sel} onChange={(e) => { f.setSel(e.target.value); onPick?.(); }}>
+        <option value="" disabled>Chọn phân khu</option>
+        <option value="all">Tất cả phân khu</option>
+        {f.tops.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+      </select>
+    </label>
+  );
+}

@@ -1,5 +1,5 @@
 import { CycleSelect } from './CycleSelect';
-import { AreaPickField, useAreaPick } from './AreaPick';
+import { AreaFilterField, AreaPickField, useAreaFilter, useAreaPick } from './AreaPick';
 import { exportFinanceCsv, useFinanceTotals, type ExpenseTotals, type SaleTotals } from '../lib/financeTotals';
 import { LoadOlder, useShowMore } from './ShowMore';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
@@ -48,6 +48,7 @@ export function ExpenseSection() {
   // chỉ vụ do chính cơ sở này sở hữu mới ghi được chi phí (quyền ghi theo chủ vụ)
   const ownCycles = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id), [cycles, active]);
   const allAreas = useTable('areas');
+  const af = useAreaFilter(ownCycles);   // chọn phân khu trước (D217)
   // khu để chia chi phí chung: ô có vụ của cơ sở và phân khu cha của các ô đó (D175)
   const sharedAreas = useMemo(() => {
     const mine = allAreas.filter((a) => a.organization_id === active?.id);
@@ -65,17 +66,19 @@ export function ExpenseSection() {
   const list = useMemo(
     () => expenses
       .filter((e) => e.organization_id === active?.id)
+      .filter((e) => (af.pending ? false : e.cycle_id ? af.hasCycle(e.cycle_id) : af.all))   // khoản chung (không gắn vụ) chỉ hiện khi chọn Tất cả phân khu
       .filter((e) => !cycleFilter || (cycleFilter === 'none' ? e.cycle_id === null : e.cycle_id === cycleFilter))
       .filter((e) => (showVoided ? true : !e.voided_at))
       .sort((a, b) => b.expense_date.localeCompare(a.expense_date) || (b.received_at ?? '').localeCompare(a.received_at ?? '')),
-    [expenses, active, cycleFilter, showVoided],
+    [expenses, active, cycleFilter, showVoided, af.pending, af.sel, af.gate],
   );
   const { visible: listShown, more: listMore } = useShowMore(list, `${cycleFilter}|${showVoided}`);
   const valid = list.filter((e) => !e.voided_at);
   // Không cộng gộp các loại khác nhau: báo cáo phải phân biệt tiền thực chi, vật tư ghi tay và ước tính/phân bổ (v1.1 mục 4.5)
   const localSum = (kinds: string[]) => valid.filter((e) => kinds.includes(e.kind)).reduce((s, e) => s + e.amount, 0);
   // tổng tính ở máy chủ trên TOÀN BỘ khoản (D142); chưa có thì tạm dùng số trên máy
-  const srv = useFinanceTotals<ExpenseTotals>('expenses', active?.id, cycleFilter, `${expenses.length}|${expenses.filter((e) => e.voided_at).length}`);
+  const srvAll = useFinanceTotals<ExpenseTotals>('expenses', af.pending ? undefined : active?.id, cycleFilter, `${expenses.length}|${expenses.filter((e) => e.voided_at).length}`);
+  const srv = af.all || cycleFilter ? srvAll : null;   // chọn một phân khu mà chưa chọn vụ: tính trên danh sách đang hiện
   const sumKind = (kinds: string[]) => (srv ? (kinds[0] === 'cash_paid' ? srv.cash_paid : kinds[0] === 'material_used' ? srv.material_used : srv.allocated_estimated) : localSum(kinds));
   const totalN = srv ? srv.n : valid.length;
   const [csvBusy, setCsvBusy] = useState(false);
@@ -131,10 +134,11 @@ export function ExpenseSection() {
         <p className="muted">Bạn chỉ được xem chi phí. Chủ cơ sở cấp quyền nhập liệu cho từng người.</p>
       )}
 
-      <Collapsible inline title="Bộ lọc" summary={`${cycleFilter === 'none' ? 'Chi phí chung' : cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả'}${showVoided ? ' · cả khoản đã hủy' : ''}`}>
+      <Collapsible inline defaultOpen={af.pending} title="Bộ lọc" summary={`${af.pending ? 'Chưa chọn phân khu · ' : ''}${cycleFilter === 'none' ? 'Chi phí chung' : cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả'}${showVoided ? ' · cả khoản đã hủy' : ''}`}>
       <div className="filters">
-          <CycleSelect label={<CycleWord cap />} cycles={ownCycles} value={cycleFilter} onChange={setCycleFilter} labelOf={cycleLabel}
-            leading={[{ value: '', label: 'Tất cả' }, { value: 'none', label: 'Chi phí chung (không gắn vụ)' }]} />
+          <AreaFilterField f={af} onPick={() => setCycleFilter('')} />
+          {!af.pending && <CycleSelect label={<CycleWord cap />} cycles={af.cyclesIn(ownCycles)} value={cycleFilter} onChange={setCycleFilter} labelOf={cycleLabel}
+            leading={[{ value: '', label: 'Tất cả' }, ...(af.all ? [{ value: 'none', label: 'Chi phí chung (không gắn vụ)' }] : [])]} />}
           <label className="check">
             <input type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
             Hiện cả khoản đã hủy
@@ -151,7 +155,8 @@ export function ExpenseSection() {
 
       {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Ghi, sửa và hủy cần có mạng.</p>}
       {msg && <p className="msg warn" role="status">{msg}</p>}
-      {list.length === 0 && <p className="muted">Chưa có khoản chi nào.</p>}
+      {af.pending && <p className="muted">Chọn phân khu (hoặc Tất cả phân khu) ở Bộ lọc để xem danh sách chi phí.</p>}
+      {!af.pending && list.length === 0 && <p className="muted">Chưa có khoản chi nào.</p>}
 
       {listShown.map((e) => (
         <div className={e.voided_at ? 'card slim voided' : 'card slim'} key={e.id}>

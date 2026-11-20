@@ -525,3 +525,6 @@ Màn Tạo vụ không chọn sẵn ô đầu tiên nữa: ô Phân khu mặc đ
 ### D216 — Bán theo đơn hàng và Ghi việc: chọn phân khu trước vụ
 - Bán theo đơn (`OrderSaleForm`): mỗi dòng hàng có ô Phân khu (tự điền theo vụ suy ra từ sản phẩm niêm yết; chưa suy ra được thì "Chọn phân khu"; có mục Tất cả phân khu); ô Vụ chỉ hiện sau khi có phân khu và chỉ liệt kê vụ của phân khu đó.
 - Ghi việc, bước chọn đối tượng (`LogTargetPicker`): từ 2 phân khu có vụ trở lên thì có ô Phân khu ("Chọn phân khu", "Tất cả phân khu") và chưa liệt kê vụ cho tới khi chọn. Nút "Tiếp tục: <vụ ghi lần trước>" vẫn luôn hiện để ghi nhanh hằng ngày. Trong biểu mẫu ghi việc, ô Vụ chỉ liệt kê vụ cùng phân khu với vụ đang chọn; đổi ô Phân khu thì nhảy sang vụ đầu tiên của phân khu đó.
+
+### D217 — Danh sách Nhật ký, Chi phí, Thu hoạch, Bán hàng: chọn phân khu trước
+Bộ lọc của bốn danh sách có thêm ô Phân khu ("Chọn phân khu" mặc định, "Tất cả phân khu" là một mục) đứng trước ô Vụ. Chưa chọn thì chưa hiện danh sách (Bộ lọc tự mở, Chi phí/Bán hàng chưa tải tổng ở máy chủ); chọn rồi ô Vụ chỉ liệt kê vụ của phân khu đó. Chỉ bật khi có từ 2 phân khu có vụ (như D212). Chi phí chung (không gắn vụ) chỉ hiện khi chọn Tất cả phân khu. Chọn một phân khu mà chưa chọn vụ thì tổng tính trên danh sách đang hiện (không dùng tổng toàn cơ sở).

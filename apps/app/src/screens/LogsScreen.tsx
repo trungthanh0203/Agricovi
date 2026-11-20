@@ -1,4 +1,5 @@
 import { CycleSelect } from '../components/CycleSelect';
+import { AreaFilterField, useAreaFilter } from '../components/AreaPick';
 import { useMemo, useState } from 'react';
 import { fieldsForKind, productKindOfArea, useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
@@ -57,6 +58,7 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
     () => cycles.filter((c) => c.owner_org_id === active?.id || areas.find((a) => a.id === c.area_id)?.organization_id === active?.id),
     [cycles, areas, active],
   );
+  const af = useAreaFilter(myCycles);
   const myCycleIds = useMemo(() => new Set(myCycles.map((c) => c.id)), [myCycles]);
   const myAreaIds = useMemo(() => new Set(areas.filter((a) => a.organization_id === active?.id).map((a) => a.id)), [areas, active]);
 
@@ -71,6 +73,7 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
     const toT = to ? new Date(`${to}T23:59:59`).getTime() : null;
     return logs
       .filter((l) => (l.cycle_id ? myCycleIds.has(l.cycle_id) : !!l.area_id && myAreaIds.has(l.area_id))) // gồm cả việc ghi cho khu vực không gắn vụ
+      .filter((l) => !af.pending && (l.cycle_id ? af.hasCycle(l.cycle_id) : af.hasArea(l.area_id)))   // chọn phân khu trước (D217)
       .filter((l) => !cycleId || l.cycle_id === cycleId)
       .filter((l) => !typeId || l.work_type_id === typeId)
       .filter((l) => (showVoided ? true : !l.voided_at))
@@ -79,7 +82,7 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
         return (fromT === null || t >= fromT) && (toT === null || t <= toT);
       })
       .sort((a, b) => b.performed_at.localeCompare(a.performed_at));
-  }, [logs, myCycleIds, myAreaIds, cycleId, typeId, from, to, showVoided]);
+  }, [logs, myCycleIds, myAreaIds, cycleId, typeId, from, to, showVoided, af.pending, af.sel, af.gate]);
 
   const visible = filtered.slice(0, limit);
 
@@ -136,7 +139,8 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
         </div>
       )}
 
-      <CycleSelect label={<CycleWord cap />} cycles={myCycles} value={cycleId} onChange={(v) => { setCycleId(v); setLimit(PAGE); }} labelOf={cycleLabel} emptyLabel="Tất cả vụ" />
+      <AreaFilterField f={af} onPick={() => { setCycleId(''); setLimit(PAGE); }} />
+      {!af.pending && <CycleSelect label={<CycleWord cap />} cycles={af.cyclesIn(myCycles)} value={cycleId} onChange={(v) => { setCycleId(v); setLimit(PAGE); }} labelOf={cycleLabel} emptyLabel="Tất cả vụ" />}
       <div className="filters">
         <label>
           Loại việc
@@ -157,8 +161,9 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
 
       {!online && <p className="muted">Đang offline: vẫn ghi được việc mới (tự gửi khi có mạng); sửa và hủy cần có mạng.</p>}
       {msg && <p className="msg warn" role="status">{msg}</p>}
-      <p className="muted">{filtered.length} bản ghi</p>
-      {filtered.length === 0 && <p className="muted">Không có nhật ký nào khớp bộ lọc.</p>}
+      {!af.pending && <p className="muted">{filtered.length} bản ghi</p>}
+      {af.pending && <p className="muted">Chọn phân khu (hoặc Tất cả phân khu) để xem nhật ký.</p>}
+      {!af.pending && filtered.length === 0 && <p className="muted">Không có nhật ký nào khớp bộ lọc.</p>}
 
       {visible.map((l) => {
         const wt = workTypes.find((w) => w.id === l.work_type_id);

@@ -1,5 +1,5 @@
 import { CycleSelect } from './CycleSelect';
-import { AreaPickField, useAreaPick } from './AreaPick';
+import { AreaFilterField, AreaPickField, useAreaFilter, useAreaPick } from './AreaPick';
 import { exportFinanceCsv, useFinanceTotals, type ExpenseTotals, type SaleTotals } from '../lib/financeTotals';
 import { LoadOlder, useShowMore } from './ShowMore';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
@@ -62,6 +62,7 @@ export function SalesSection() {
     return [...m.entries()].sort((a, b) => a[1].localeCompare(b[1], 'vi'));
   }, [debts]);
   const ownCycles = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id), [cycles, active]);
+  const af = useAreaFilter(ownCycles);   // chọn phân khu trước (D217)
   const cycleLabel = (id: string | null) => {
     const c = cycles.find((x) => x.id === id);
     if (!c) return '';
@@ -71,16 +72,18 @@ export function SalesSection() {
   const list = useMemo(
     () => sales
       .filter((s) => s.organization_id === active?.id)
+      .filter((s) => !af.pending && af.hasCycle(s.cycle_id))
       .filter((s) => !cycleFilter || s.cycle_id === cycleFilter)
       .filter((s) => !custFilter || debts.get(s.id)?.partner_id === custFilter)
       .filter((s) => (showVoided ? true : !s.voided_at))
       .sort((a, b) => b.sold_date.localeCompare(a.sold_date) || (b.received_at ?? '').localeCompare(a.received_at ?? '')),
-    [sales, active, cycleFilter, showVoided, custFilter, debts],
+    [sales, active, cycleFilter, showVoided, custFilter, debts, af.pending, af.sel, af.gate],
   );
   const { visible: listShown, more: listMore } = useShowMore(list, `${cycleFilter}|${showVoided}|${custFilter}`);
   const valid = list.filter((s) => !s.voided_at);
   // tổng tính ở máy chủ trên TOÀN BỘ lần bán (D142); chưa có thì tạm dùng số trên máy
-  const srv = useFinanceTotals<SaleTotals>('sales', active?.id, cycleFilter, `${sales.length}|${sales.filter((s) => s.voided_at).length}`);
+  const srvAll = useFinanceTotals<SaleTotals>('sales', af.pending ? undefined : active?.id, cycleFilter, `${sales.length}|${sales.filter((s) => s.voided_at).length}`);
+  const srv = af.all || cycleFilter ? srvAll : null;   // chọn một phân khu mà chưa chọn vụ: tính trên danh sách đang hiện
   const qty = srv ? Number(srv.quantity) : valid.reduce((s, r) => s + r.quantity, 0);
   const revenue = srv ? Number(srv.amount) : valid.reduce((s, r) => s + r.amount, 0);
   const totalN = srv ? srv.n : valid.length;
@@ -124,9 +127,10 @@ export function SalesSection() {
       )}
       {canWrite && ownCycles.length === 0 && <p className="msg warn">Chưa có vụ nào. Hãy tạo vụ ở màn hình Sản xuất trước.</p>}
 
-      <Collapsible inline title="Bộ lọc" summary={`${cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả vụ'}${custFilter ? ` · khách ${customersInSales.find((c) => c[0] === custFilter)?.[1] ?? ''}` : ''}${showVoided ? ' · cả khoản đã hủy' : ''}`}>
+      <Collapsible inline defaultOpen={af.pending} title="Bộ lọc" summary={`${af.pending ? 'Chưa chọn phân khu · ' : ''}${cycleFilter ? cycleLabel(cycleFilter) : 'Tất cả vụ'}${custFilter ? ` · khách ${customersInSales.find((c) => c[0] === custFilter)?.[1] ?? ''}` : ''}${showVoided ? ' · cả khoản đã hủy' : ''}`}>
       <div className="filters">
-          <CycleSelect label={<CycleWord cap />} cycles={ownCycles} value={cycleFilter} onChange={setCycleFilter} labelOf={cycleLabel} emptyLabel="Tất cả vụ" />
+          <AreaFilterField f={af} onPick={() => setCycleFilter('')} />
+          {!af.pending && <CycleSelect label={<CycleWord cap />} cycles={af.cyclesIn(ownCycles)} value={cycleFilter} onChange={setCycleFilter} labelOf={cycleLabel} emptyLabel="Tất cả vụ" />}
           {customersInSales.length > 0 && (
             <label>
               Khách mua
@@ -152,7 +156,8 @@ export function SalesSection() {
 
       {!online && <p className="msg warn" role="status">Đang offline: chỉ xem được. Ghi, sửa và hủy cần có mạng.</p>}
       {msg && <p className="msg warn" role="status">{msg}</p>}
-      {list.length === 0 && <p className="muted">Chưa ghi lần bán nào.</p>}
+      {af.pending && <p className="muted">Chọn phân khu (hoặc Tất cả phân khu) ở Bộ lọc để xem danh sách bán hàng.</p>}
+      {!af.pending && list.length === 0 && <p className="muted">Chưa ghi lần bán nào.</p>}
 
       {active && shownCycleIds.length > 0 && <CycleStatsLoader orgId={active.id} ids={shownCycleIds} refreshKey={`${shownCycleIds.join(',')}|${sales.length}`} onData={(st) => setLstats(new Map(st.cycles.map((x) => [x.cycle_id, x])))} />}
       {listShown.map((s) => (
