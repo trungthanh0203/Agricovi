@@ -189,6 +189,9 @@ const ShiftCycleSelect = ({ cycles, value, onChange }: { cycles: CycleOpt[]; val
 function ShiftForm({ workers, cycles, areas, busy, onSave, onCancel }: { workers: WorkerLite[]; cycles: CycleOpt[]; areas: AreaRow[]; busy: boolean; onCancel: () => void; onSave: (w: string, s: Date, e: Date, b: number, note: string, c: string | null) => Promise<unknown> }) {
   const [cyc, setCyc] = useState('');
   const [areaId, setAreaId] = useState('');
+  const topAreas = areas.filter((x) => !x.parent_id);
+  const needArea = topAreas.length > 0;               // chưa có phân khu nào thì không cần chọn
+  const showRest = !needArea || areaId !== '';        // người lao động và vụ chỉ hiện khi đã chọn phân khu
   const areaFam = areaId ? areaFamily(areaId, areas) : null;
   const cycOpts = areaFam ? cycles.filter((c) => c.area_id && areaFam.has(c.area_id)) : cycles;
   const [w, setW] = useState(workers[0]?.id ?? '');
@@ -204,6 +207,7 @@ function ShiftForm({ workers, cycles, areas, busy, onSave, onCancel }: { workers
     const s = new Date(`${date}T${from}:00`);
     const t = new Date(`${date}T${to}:00`);
     const wid = w || workers[0]?.id;
+    if (!showRest) return setErr('Hãy chọn phân khu.');
     if (!wid) return setErr('Hãy chọn người.');
     if (!from || !to) return setErr('Hãy nhập giờ bắt đầu và giờ kết thúc.');
     if (!(t > s)) return setErr('Giờ kết thúc phải sau giờ bắt đầu.');
@@ -216,26 +220,30 @@ function ShiftForm({ workers, cycles, areas, busy, onSave, onCancel }: { workers
   }
   return (
     <form className="inline-form" onSubmit={submit} noValidate>
-      <label>Người lao động
-        <select value={w || workers[0]?.id} onChange={(e) => setW(e.target.value)}>{workers.map((x) => <option key={x.id} value={x.id}>{x.full_name}</option>)}</select>
-      </label>
-      <label>Ngày<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
-      <div className="pair">
-        <label>Từ giờ<input type="time" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
-        <label>Đến giờ<input type="time" value={to} onChange={(e) => setTo(e.target.value)} /></label>
-      </div>
-      <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
-      {areas.length > 0 && (
-        <label>Phân khu (không bắt buộc)
+      {needArea && (
+        <label>Phân khu
           <select value={areaId} onChange={(e) => { setAreaId(e.target.value); setCyc(''); }}>
-            <option value="">— Tất cả phân khu —</option>
-            {[...areas].sort((x, y) => areaPath(x.id, areas).localeCompare(areaPath(y.id, areas), 'vi')).map((x) => <option key={x.id} value={x.id}>{areaPath(x.id, areas)}</option>)}
+            <option value="" disabled>Chọn phân khu</option>
+            {topAreas.sort((x, y) => x.name.localeCompare(y.name, 'vi')).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
           </select>
           {areaId && cycOpts.length === 0 && <small>Phân khu này chưa có vụ đang chạy.</small>}
         </label>
       )}
-      <ShiftCycleSelect cycles={cycOpts} value={cyc} onChange={setCyc} />
-      <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
+      {showRest ? (
+        <>
+          <label>Người lao động
+            <select value={w || workers[0]?.id} onChange={(e) => setW(e.target.value)}>{workers.map((x) => <option key={x.id} value={x.id}>{x.full_name}</option>)}</select>
+          </label>
+          <label>Ngày<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
+          <div className="pair">
+            <label>Từ giờ<input type="time" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+            <label>Đến giờ<input type="time" value={to} onChange={(e) => setTo(e.target.value)} /></label>
+          </div>
+          <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
+          <ShiftCycleSelect cycles={cycOpts} value={cyc} onChange={setCyc} />
+          <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
+        </>
+      ) : <p className="muted">Chọn phân khu để nhập công.</p>}
       {err && <p className="msg error" role="alert">{err}</p>}
       {ok && <p className="msg ok" role="status">{ok}</p>}
       <div className="btnrow">

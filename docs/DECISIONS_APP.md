@@ -501,3 +501,8 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - Bảng lương: chữ trong ô chọn Phân khu/Nhân viên không đậm; bắt buộc chọn (hoặc chọn Tất cả), không còn mặc định Tất cả khi để trống.
 - Nhân sự: "Chức danh" của người không tài khoản chọn từ danh sách Chức vụ (giữ giá trị cũ). Form thêm và form sửa cùng thứ tự: … Phân khu → Kiểu phân hệ → Phòng/Tổ → Mô tả. Người không tài khoản sửa được Phòng/Tổ (phân khu theo tổ). Kiểu phân hệ chỉ hiển thị khi sửa (chưa có hàm đổi).
 - Chấm công: bỏ nút Tháng trước/Hôm nay/Tháng này và ô Tìm theo tên, thay bằng Từ ngày – Đến ngày (mặc định hôm nay). Nút Ghi công nằm cuối khung Cần xử lý; biểu mẫu Ghi công có thêm Phân khu (không bắt buộc) để lọc vụ theo phân khu (gồm khu cha/con).
+
+### D210 — Tinh chỉnh D209
+- Thêm nhân sự: "Kiểu phân hệ" đổi tên "Kiểu chấm công" và nằm dưới Phòng/Tổ (hồ sơ sửa cũng vậy).
+- Chấm công: Trạng thái ở dòng riêng, nút Tìm liền sau; chỉ khi bấm Tìm mới lọc theo ngày và trạng thái.
+- Bảng lương và Ghi công: ô Phân khu chỉ liệt kê phân khu (không liệt kê ô sản xuất), không có "Tất cả", mặc định "Chọn phân khu"; nhân viên/người lao động/vụ chỉ hiện sau khi chọn phân khu (cơ sở chưa có phân khu nào thì bỏ bước này). Bảng lương: chọn Nhân viên = Tất cả (trong một phân khu) vẫn tính và lưu bảng lương tháng đầy đủ khi kỳ là cả tháng; chỉ phần hiển thị lọc theo phân khu.

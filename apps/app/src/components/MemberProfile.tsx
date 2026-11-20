@@ -123,7 +123,6 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
         <Collapsible inline title="Phân khu làm việc" summary={areaSel === null ? 'tất cả phân khu' : `${areaSel.length} phân khu`}>
           <AreaChoice orgId={org.id} value={areaSel} onChange={setAreaSel} />
         </Collapsible>
-        {worker?.work_mode && <p className="muted">Kiểu phân hệ: {WORK_MODE_LABEL[worker.work_mode as WorkMode] ?? worker.work_mode} (đặt khi tạo, không đổi được).</p>}
         <label>Phòng / Tổ
           <select value={teamId} disabled={!worker} onChange={(e) => setTeamId(e.target.value)}>
             <option value="">— Chưa vào tổ —</option>
@@ -132,6 +131,7 @@ export function MemberProfile({ org, member, worker, team, teams, position, over
           {!worker && <small>Người này chưa có hồ sơ lao động (được tạo khi chấm công lần đầu) nên chưa xếp tổ được.</small>}
           {member.leads_teams && member.leads_teams.length > 0 && <small>Đang là tổ trưởng: {member.leads_teams.join(', ')} (đổi tổ trưởng ở mục Phòng / Tổ).</small>}
         </label>
+        {worker?.work_mode && <p className="muted">Kiểu chấm công: {WORK_MODE_LABEL[worker.work_mode as WorkMode] ?? worker.work_mode} (đặt khi tạo, không đổi được).</p>}
         <label>Mô tả (không bắt buộc)
           <textarea rows={2} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Ví dụ: Lái máy, phụ trách tưới" />
         </label>

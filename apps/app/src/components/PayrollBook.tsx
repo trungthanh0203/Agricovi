@@ -98,7 +98,8 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
     return () => { alive = false; };
   }, [orgId, wantsAll, online]);
 
-  const areaOptions = useMemo(() => [...areasAll].sort((x, y) => areaPath(x.id, areasAll).localeCompare(areaPath(y.id, areasAll), 'vi')), [areasAll]);
+  const areaOptions = useMemo(() => areasAll.filter((x) => !x.parent_id).sort((x, y) => areaPath(x.id, areasAll).localeCompare(areaPath(y.id, areasAll), 'vi')), [areasAll]);
+  const needArea = wantsAll && areaOptions.length > 0;   // cơ sở chưa có phân khu nào thì không lọc theo phân khu
   const workerOptions = useMemo(() => workersForArea(people, areaSel === '' ? 'all' : areaSel, areasAll, memberAreas, teamArea), [people, areaSel, areasAll, memberAreas, teamArea]);
 
   function chooseArea(v: string) {
@@ -139,11 +140,11 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
   function calculate() {
     const bad = checkRange(from, to, today);
     if (bad) { setError(bad); return; }
-    if (wantsAll && areaSel === '') { setError('Hãy chọn phân khu (hoặc chọn Tất cả).'); return; }
+    if (needArea && areaSel === '') { setError('Hãy chọn phân khu.'); return; }
     if (wantsAll && workerSel === '') { setError('Hãy chọn nhân viên (hoặc chọn Tất cả).'); return; }
     const area = areaSel === '' ? 'all' : areaSel;
     const worker = workerSel === '' ? 'all' : workerSel;
-    void compute({ area, worker, from, to, month: isFullMonth(from, to), whole: area === 'all' && worker === 'all' }, true);
+    void compute({ area, worker, from, to, month: isFullMonth(from, to), whole: worker === 'all' }, true);
   }
   const refreshAll = () => { if (applied) void compute(applied, false); };
 
@@ -179,20 +180,21 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
     <div className="card pay-filter">
       {wantsAll && (
         <>
-          <label>Phân khu
-            <select value={areaSel} onChange={(e) => chooseArea(e.target.value)}>
-              <option value="" disabled>Chọn phân khu</option>
-              <option value="all">Tất cả</option>
-              {areaOptions.map((x) => <option key={x.id} value={x.id}>{areaPath(x.id, areasAll)}</option>)}
-            </select>
-          </label>
-          <label>Nhân viên
+          {needArea && (
+            <label>Phân khu
+              <select value={areaSel} onChange={(e) => chooseArea(e.target.value)}>
+                <option value="" disabled>Chọn phân khu</option>
+                {areaOptions.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+              </select>
+            </label>
+          )}
+          {(!needArea || areaSel !== '') && <label>Nhân viên
             <select value={workerSel} onChange={(e) => setWorkerSel(e.target.value)}>
               <option value="" disabled>Chọn nhân viên</option>
               <option value="all">Tất cả</option>
               {workerOptions.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
             </select>
-          </label>
+          </label>}
         </>
       )}
       <div className="pair">

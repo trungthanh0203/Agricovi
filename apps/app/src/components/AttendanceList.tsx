@@ -38,6 +38,10 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
   const [status, setStatus] = useState<AttStatusFilter>('pending');
   const [dFrom, setDFrom] = useState(todayLocal());
   const [dTo, setDTo] = useState(todayLocal());
+  // giá trị đang chọn trong bộ lọc; chỉ áp dụng khi bấm Tìm
+  const [fromIn, setFromIn] = useState(todayLocal());
+  const [toIn, setToIn] = useState(todayLocal());
+  const [statusIn, setStatusIn] = useState<AttStatusFilter>('pending');
   const appliedQ = '';
   const [page, setPage] = useState(0);
   const [expected, setExpected] = useState<number | undefined>(undefined);   // số lượng dự kiến khi xem mọi ngày (để dừng sớm nếu CSDL cũ)
@@ -63,9 +67,10 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
     if (preset.range === 'all' || preset.range === 'stale') setRange(preset.range);
     else {
       setRange('custom');
-      if (preset.range === 'today') { setDFrom(t); setDTo(t); } else if (preset.range === 'month') { setDFrom(ms); setDTo(t); } else { setDFrom(`${pe.slice(0, 8)}01`); setDTo(pe); }
+      const [f, e] = preset.range === 'today' ? [t, t] : preset.range === 'month' ? [ms, t] : [`${pe.slice(0, 8)}01`, pe];
+      setDFrom(f); setDTo(e); setFromIn(f); setToIn(e);
     }
-    setStatus(preset.status); setPage(0); setExpected(preset.expected);
+    setStatus(preset.status); setStatusIn(preset.status); setPage(0); setExpected(preset.expected);
     // bấm "Xem" ở khung Cần xử lý: cuộn tới bảng để thấy danh sách đã lọc
     window.setTimeout(() => headRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }, [preset?.stamp]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -139,7 +144,7 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
     <>
       {focused ? (
         <div className="card">
-          <button type="button" className="link" onClick={() => { setRange('custom'); setDFrom(todayLocal()); setDTo(todayLocal()); setStatus('pending'); setPage(0); }}>‹ Quay lại bảng công</button>
+          <button type="button" className="link" onClick={() => { setRange('custom'); setDFrom(todayLocal()); setDTo(todayLocal()); setFromIn(todayLocal()); setToIn(todayLocal()); setStatus('pending'); setStatusIn('pending'); setPage(0); }}>‹ Quay lại bảng công</button>
           <h2 ref={headRef}>{range === 'all' ? 'Công chờ xác nhận' : 'Ca quên ra ca'}{data ? ` (${total})` : ''}</h2>
           <p className="muted">{range === 'all' ? 'Mọi công đã ra ca nhưng chưa được xác nhận, của tất cả các ngày.' : 'Các ca đã mở từ những ngày trước mà chưa ra ca.'}</p>
           {range === 'stale' && canCloseAll && total > 0 && (
@@ -154,14 +159,21 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
         <>
           <div className="filters att-filters">
             <div className="pair">
-              <label>Từ ngày<input type="date" value={dFrom} max={dTo || today} onChange={(e) => { setDFrom(e.target.value); setPage(0); }} /></label>
-              <label>Đến ngày<input type="date" value={dTo} min={dFrom} max={today} onChange={(e) => { setDTo(e.target.value); setPage(0); }} /></label>
+              <label>Từ ngày<input type="date" value={fromIn} max={toIn || today} onChange={(e) => setFromIn(e.target.value)} /></label>
+              <label>Đến ngày<input type="date" value={toIn} min={fromIn} max={today} onChange={(e) => setToIn(e.target.value)} /></label>
             </div>
-            <label>Trạng thái
-              <select value={status} onChange={(e) => { setStatus(e.target.value as AttStatusFilter); setPage(0); }}>
-                {STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-              </select>
-            </label>
+            <div className="searchrow">
+              <label>Trạng thái
+                <select value={statusIn} onChange={(e) => setStatusIn(e.target.value as AttStatusFilter)}>
+                  {STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                </select>
+              </label>
+              <button type="button" className="secondary" onClick={() => {
+                if (!fromIn || !toIn) { setError('Hãy chọn từ ngày và đến ngày.'); return; }
+                if (toIn < fromIn) { setError('Đến ngày không được trước từ ngày.'); return; }
+                setError(null); setDFrom(fromIn); setDTo(toIn); setStatus(statusIn); setPage(0);
+              }}>Tìm</button>
+            </div>
           </div>
         </>
       )}

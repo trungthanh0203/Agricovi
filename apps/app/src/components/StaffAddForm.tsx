@@ -124,14 +124,6 @@ export function StaffAddForm({ org, teams, workers, onDone, onCreds, onCancel }:
           <AreaChoice orgId={org.id} value={areaSel} onChange={setAreaSel} />
         </Collapsible>
       )}
-      {kind !== 'monthly' && (
-        <label>{isAccount ? 'Kiểu phân hệ' : 'Cách tính công'} (không bắt buộc)
-          <select value={mode} onChange={(e) => setMode(e.target.value as WorkMode | '')}>
-          <option value="">— Không chọn (mặc định: {WORK_MODE_LABEL[effMode].toLowerCase()}) —</option>
-          {modeOptions.map((m) => <option key={m} value={m}>{WORK_MODE_LABEL[m]}</option>)}
-          </select>
-        </label>
-      )}
       <label>Phòng / Tổ{needTeam ? ' (bắt buộc)' : ' (không bắt buộc)'}
         <select value={teamId} onChange={(e) => setTeamId(e.target.value)}>
           <option value="">— {needTeam ? 'Chọn tổ' : 'Chưa vào tổ'} —</option>
@@ -139,6 +131,14 @@ export function StaffAddForm({ org, teams, workers, onDone, onCreds, onCancel }:
         </select>
         {activeTeams.length === 0 && <small>Chưa có tổ nào. Hãy tạo ở mục Phòng / Tổ.</small>}
       </label>
+      {kind !== 'monthly' && (
+        <label>Kiểu chấm công (không bắt buộc)
+          <select value={mode} onChange={(e) => setMode(e.target.value as WorkMode | '')}>
+          <option value="">— Không chọn (mặc định: {WORK_MODE_LABEL[effMode].toLowerCase()}) —</option>
+          {modeOptions.map((m) => <option key={m} value={m}>{WORK_MODE_LABEL[m]}</option>)}
+          </select>
+        </label>
+      )}
       <label>Mô tả (không bắt buộc)
         <textarea rows={2} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Ví dụ: Lái máy, phụ trách tưới" />
       </label>
