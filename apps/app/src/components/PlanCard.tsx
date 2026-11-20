@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '../lib/auth';
 import { friendlyError } from '../lib/errors';
+import { useFreePlan } from '../lib/freePlan';
 import { useOrgs, type PlanUsage } from '../lib/orgs';
 import { useMyName } from '../lib/profile';
 import { callFunction } from '../lib/staff';
@@ -32,6 +33,8 @@ export function PlanCard() {
   const [purchase, setPurchase] = useState<Purchase | null>(null);
   const [buying, setBuying] = useState<string | null>(null);   // gói đang mở biểu mẫu mua
   const orgId = active?.id;
+  const { state: free, reload: reloadFree } = useFreePlan();
+  const [trialBusy, setTrialBusy] = useState(false);
 
   // Chỉ tải lại khi ĐỔI cơ sở (không phụ thuộc đối tượng `active`, vốn đổi chỗ nhớ mỗi khi danh sách cơ sở được làm mới) và không xóa số cũ khi tải lại
   const activeId = active?.id;
@@ -67,6 +70,17 @@ export function PlanCard() {
     setBuying(same?.id ?? null);
     window.setTimeout(() => document.getElementById('plan-sale')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
+  async function startFullTrial() {
+    if (!orgId || !supabase || trialBusy) return;
+    if (!window.confirm('Nâng cấp thử đầy đủ 30 ngày? Mỗi cơ sở chỉ được bấm một lần. Hết 30 ngày cơ sở quay lại gói Khởi đầu, dữ liệu vẫn được giữ.')) return;
+    setTrialBusy(true); setError(null);
+    try {
+      const { error: e } = await supabase.rpc('start_full_trial', { p_org: orgId });
+      if (e) throw new Error(e.message);
+      await reloadFree();
+      setUsage(await fetchUsage(orgId));
+    } catch (e) { setError(friendlyError(e)); } finally { setTrialBusy(false); }
+  }
   const buyPlan = plans.find((p) => p.id === buying) ?? null;
 
   return (
@@ -81,7 +95,11 @@ export function PlanCard() {
             <p><strong>{usage.plan_name}</strong> · {isCurrent ? `hạn đến ${date(usage.period_end)}` : `đã hết hạn ngày ${date(usage.period_end)}`} <span className={isCurrent ? 'pill ok' : 'pill warn'}>{isCurrent ? STATUS_LABEL[usage.status] : 'Hết hạn'}</span></p>
             <p>Số vụ được dùng: <strong>{usage.used_cycles}/{usage.max_cycles}</strong></p>
             <p>Đã mua: {purchase?.purchased ? <strong>{purchase.quarters} quý · {vnd(purchase.amount ?? 0)}</strong> : <span className="muted">chưa mua (đang dùng gói Khởi đầu miễn phí)</span>}</p>
-            {!isCurrent && <p className="msg warn">Gói đã hết hạn: bạn vẫn xem và ghi dữ liệu cũ được, nhưng chưa tạo được vụ mới. Hãy gia hạn hoặc chọn gói bên dưới.</p>}
+            {!isCurrent && <p className="msg warn">{free?.free ? 'Gói Khởi đầu đã hết hạn: bạn vẫn xem được toàn bộ dữ liệu nhưng chưa ghi thêm được. Hãy chọn gói bên dưới để tiếp tục.' : 'Gói đã hết hạn: bạn vẫn xem và ghi dữ liệu cũ được, nhưng chưa tạo được vụ mới. Hãy gia hạn hoặc chọn gói bên dưới.'}</p>}
+            {free?.free && !free.expired && free.full_trial_until && <p className="msg ok">Đang nâng cấp thử đầy đủ đến ngày {date(free.full_trial_until)}.</p>}
+            {free?.free && free.scoped && !free.full_trial_used && (
+              <div className="btnrow"><button type="button" className="secondary" disabled={trialBusy} onClick={() => void startFullTrial()}>Nâng cấp thử đầy đủ 30 ngày (một lần)</button></div>
+            )}
             {plans.some((p) => !p.is_trial) && <div className="btnrow"><button type="button" className="primary" onClick={renew}>Gia hạn thêm</button></div>}
           </>
         )}

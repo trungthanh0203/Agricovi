@@ -1,4 +1,5 @@
 import { db } from './db';
+import { EXPORT_LOCKED_MSG, isExportLocked } from './exportLock';
 import { supabase } from './supabase';
 import type { CycleSummary } from './summaryReport';
 
@@ -24,6 +25,7 @@ export const getCachedSummary = (cycleId: string) => db.summaries.get(cycleId);
 
 /** Lưu file CSV về máy (người dùng bấm nút "Xuất CSV") */
 export function downloadCsv(filename: string, text: string): void {
+  if (isExportLocked()) { window.alert(EXPORT_LOCKED_MSG); return; }   // gói Khởi đầu khóa xuất tệp (D219)
   const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
   const a = document.createElement('a');
   a.href = url;

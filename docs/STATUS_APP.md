@@ -3,6 +3,7 @@
 Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi tiết từng mốc cũ (bước C, Giai đoạn 2, lương, Đợt 1…): `STATUS_APP_LICHSU.md` (chỉ tra cứu khi cần, không đọc hết).
 
 ## Đang làm
+- **20/11/2026 (D219, migration 0233, cần `db push`)**: **gói Khởi đầu, đợt B**: nâng cấp thử 30 ngày một lần, hết hạn chỉ xem, khóa chấm công/hóa đơn AI/xuất CSV, trang quản trị Khách tiềm năng + cấu hình mới. Test `free_plan_b.test.mjs` 4/4. Chưa thử trên giao diện thật. Test `anon_surface` còn 3 hàm trigger cũ (`measure_readings_guard`, `trade_contract_number`, `procurement_auto_invoice`) chưa thu hồi quyền: không thuộc đợt này.
 - **20/11/2026 (D218, migration 0232, cần `db push`)**: **gói Khởi đầu miễn phí 12 tháng, đợt A** (1 phân khu, 1 ô, 1 vụ, chủ + 1 nhân viên; đăng ký tự duyệt). Test `free_plan.test.mjs` 4/4, `trial_scope.test.mjs` 4/4. Còn đợt B (hết hạn chỉ-đọc, khóa tính năng, quản trị) và đóng gói cửa hàng.
 
 - **19/11/2026 (D204, migration 0231, cần `db push`)**: rà soát RLS chậm: 34 chính sách đọc đổi sang tập tính một lần (nhanh hơn ~100 lần với 20000 dòng), quyền không đổi (test `rls_org_sets.test.mjs`). Nên chạy `db push` rồi thử nhanh các màn Chi phí, Kho, Bán hàng, Chấm công, Tiền công.

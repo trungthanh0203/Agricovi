@@ -28,6 +28,7 @@ import { fetchStaffStatus, readCachedStaffStatus, type StaffStatus } from './lib
 import { fetchKioskInfo, readCachedKiosk, type KioskInfo } from './lib/kiosk';
 import { fetchOwnerSignup, type OwnerSignup } from './lib/phoneSignup';
 import { OwnerPendingScreen } from './screens/OwnerPendingScreen';
+import { FreePlanBanner } from './components/FreePlanBanner';
 import { KioskScreen } from './screens/KioskScreen';
 import { GUIDE_JUMP_EVENT, type GuideJump } from './lib/helpEvents';
 
@@ -233,6 +234,8 @@ function Shell() {
           {attention > 0 && <div>{SYNC_STATE_LABEL_VI.needs_attention}: {attention} bản ghi</div>}
         </div>
       )}
+
+      <FreePlanBanner />
 
       <main className="content">
         <ErrorBoundary resetKey={`${tab}|${overlay ?? ''}|${subs[tab as keyof typeof subs] ?? ''}`}>

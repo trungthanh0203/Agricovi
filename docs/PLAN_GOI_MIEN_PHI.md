@@ -1,6 +1,6 @@
 # Kế hoạch: Gói miễn phí 12 tháng + lên cửa hàng ứng dụng (ĐỀ XUẤT, chờ duyệt)
 
-Ngày soạn: 20/11/2026. Mảng: APP (có phần dùng chung). Chưa làm gì trong mã; chỉ làm sau khi chủ sản phẩm duyệt.
+Ngày soạn: 20/11/2026. Mảng: APP (có phần dùng chung). Đã duyệt; đợt A (D218) và đợt B (D219) đã làm, còn đợt C–D (cửa hàng ứng dụng).
 
 ## 1. Mục tiêu và nguyên tắc
 
