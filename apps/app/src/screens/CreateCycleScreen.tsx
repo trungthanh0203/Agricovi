@@ -114,32 +114,18 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
   const otherAreas = myAreas.filter((a) => !fits(a));
   const pickedArea = myAreas.find((a) => a.id === areaId) ?? null;
   const areaMismatch = pickedArea && !fits(pickedArea);
-  // danh sách chọn: ô sản xuất gom theo phân khu cha; phân khu chưa chia nhỏ đứng riêng
-  const areaOptions = (list: AreaRow[]) => {
-    const groups = new Map<string, AreaRow[]>();
-    const solo: AreaRow[] = [];
-    for (const a of list) {
-      if (a.parent_id) groups.set(a.parent_id, [...(groups.get(a.parent_id) ?? []), a]);
-      else solo.push(a);
-    }
-    const nameOf = (id: string) => areas.find((x) => x.id === id)?.name ?? '';
-    return (
-      <>
-        {solo.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-        {[...groups.entries()].sort((x, y) => nameOf(x[0]).localeCompare(nameOf(y[0]), 'vi')).map(([pid, cells]) => (
-          <optgroup key={pid} label={nameOf(pid)}>
-            {cells.sort((x, y) => x.name.localeCompare(y.name, 'vi', { numeric: true })).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </optgroup>
-        ))}
-      </>
-    );
-  };
-
-  useEffect(() => {
-    // chọn sẵn phân khu đầu tiên hợp loại; đổi sản phẩm sang loại khác thì chọn lại nếu phân khu đang chọn không hợp
-    const cur = myAreas.find((a) => a.id === areaId);
-    if (!cur || !fits(cur)) { const next = fitAreas[0] ?? myAreas[0]; if (next && next.id !== areaId) setAreaId(next.id); }
-  }, [myAreas, areaId, productId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Chọn PHÂN KHU trước, rồi mới chọn Ô SẢN XUẤT của phân khu đó (D215). Phân khu chưa chia ô thì chính nó là nơi chạy vụ, không cần chọn ô.
+  const [parentSel, setParentSel] = useState(() => { const a = areas.find((x) => x.id === (draft.current?.areaId ?? '')); return a ? (a.parent_id ?? a.id) : ''; });
+  const topOpts = [...new Set(myAreas.map((a) => a.parent_id ?? a.id))]
+    .map((id) => areas.find((x) => x.id === id)).filter((a): a is AreaRow => !!a)
+    .sort((x, y) => x.name.localeCompare(y.name, 'vi'));
+  const cellsOfSel = myAreas.filter((a) => (a.parent_id ?? a.id) === parentSel).sort((x, y) => x.name.localeCompare(y.name, 'vi', { numeric: true }));
+  const soloSel = cellsOfSel.length === 1 && cellsOfSel[0]!.id === parentSel;
+  function chooseTop(id: string) {
+    setParentSel(id);
+    const cells = myAreas.filter((a) => (a.parent_id ?? a.id) === id);
+    setAreaId(cells.length === 1 && cells[0]!.id === id ? id : '');
+  }
 
   // Hộ: chọn ghi theo hộ riêng hoặc theo HTX đang tham gia (v1.2 mục 4.1). HTX: luôn ghi theo HTX.
   useEffect(() => {
@@ -463,16 +449,27 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
                   {picked?.note && <p className="muted">{picked.note}</p>}
 
                   <label>
-                    Ô sản xuất
-                    <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
-                      {areaOptions(fitAreas)}
-                      {otherAreas.length > 0 && (
-                        <optgroup label="Phân khu khác loại (nên tránh)">
-                          {otherAreas.map((a) => <option key={a.id} value={a.id}>{areaPath(a.id, areas)} · {cfg.groupLabel(a.kind, a.kind_item)}</option>)}
-                        </optgroup>
-                      )}
+                    Phân khu
+                    <select value={parentSel} onChange={(e) => chooseTop(e.target.value)}>
+                      <option value="" disabled>Chọn phân khu</option>
+                      {topOpts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </select>
                   </label>
+                  {parentSel && !soloSel && (
+                    <label>
+                      Ô sản xuất
+                      <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
+                        <option value="" disabled>Chọn ô sản xuất</option>
+                        {cellsOfSel.filter(fits).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                        {cellsOfSel.some((a) => !fits(a)) && (
+                          <optgroup label="Khác loại (nên tránh)">
+                            {cellsOfSel.filter((a) => !fits(a)).map((a) => <option key={a.id} value={a.id}>{a.name} · {cfg.groupLabel(a.kind, a.kind_item)}</option>)}
+                          </optgroup>
+                        )}
+                      </select>
+                    </label>
+                  )}
+                  {soloSel && <p className="muted">Phân khu này chưa chia ô sản xuất nên vụ chạy trực tiếp trên phân khu.</p>}
                   {areaMismatch && <p className="msg warn" role="status">Phân khu này thuộc loại "{cfg.groupLabel(pickedArea?.kind, pickedArea?.kind_item)}", còn sản phẩm thuộc loại "{cfg.groupLabel(prodKind, null)}". Vẫn tạo được, nhưng nên chọn phân khu đúng loại để báo cáo và nhãn hiển thị đúng.</p>}
 
                   {areaId && free && (

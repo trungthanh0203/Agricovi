@@ -518,3 +518,6 @@ Khi thêm nhân viên có tài khoản và thêm kho, ô "Phân khu" mặc đị
 
 ### D214 — Ghi chi phí, Ghi thu hoạch, Ghi bán hàng: chọn phân khu trước, rồi mới chọn vụ
 Ba biểu mẫu thêm mới có ô Phân khu (mặc định "Chọn phân khu"; "Tất cả phân khu" là một mục) đứng trước ô Vụ. Chưa chọn phân khu thì chưa hiện ô Vụ và không lưu được; chọn rồi thì ô Vụ chỉ liệt kê vụ của phân khu đó (gồm các ô sản xuất bên trong). Cơ sở chưa có phân khu nào, hoặc đang sửa bản ghi, thì bỏ bước này. Phần dùng chung: `components/AreaPick.tsx`. Bán theo đơn hàng (`OrderSaleForm`) chưa đổi.
+
+### D215 — Tạo vụ: chọn phân khu rồi mới chọn ô sản xuất
+Màn Tạo vụ không chọn sẵn ô đầu tiên nữa: ô Phân khu mặc định "Chọn phân khu"; chọn xong mới hiện ô "Ô sản xuất" của phân khu đó (ô khác loại sản phẩm xếp riêng, nên tránh). Phân khu chưa chia ô thì chính nó là nơi chạy vụ, không hiện ô chọn thứ hai. Nguyên tắc chung (D211–D215): cần chọn vụ, ô sản xuất hay nhân viên thì chọn phân khu trước, rồi mới tải danh sách tương ứng.
