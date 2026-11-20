@@ -3,7 +3,7 @@ import { friendlyError } from '../lib/errors';
 import type { MyOrg } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { WORK_MODE_LABEL, type WorkMode } from '../lib/staff';
-import { deactivateWorker, updateWorkerInfo, type TeamRow, type WorkerRow } from '../lib/teams';
+import { assignWorkerToTeam, deactivateWorker, updateWorkerInfo, type TeamRow, type WorkerRow } from '../lib/teams';
 import { Collapsible } from './Collapsible';
 import { ContractsFold, HrFields, LeaveSummaryLine, useWorkerHr } from './HrRecord';
 import { MemberPay } from './MemberPay';
@@ -12,7 +12,8 @@ import { MemberPay } from './MemberPay';
  * Hồ sơ một người làm KHÔNG có tài khoản (ví dụ người làm công tháng): sửa họ tên, điện thoại, đặt trả công (lương tháng hoặc theo giờ),
  * hoặc cho ngừng làm việc. Chỉ chủ cơ sở mở được.
  */
-export function WorkerProfile({ org, worker, team, onBack, onChanged }: { org: MyOrg; worker: WorkerRow; team: TeamRow | null; onBack: () => void; onChanged: () => void }) {
+export function WorkerProfile({ org, worker, team, teams, onBack, onChanged }: { org: MyOrg; worker: WorkerRow; team: TeamRow | null; teams: TeamRow[]; onBack: () => void; onChanged: () => void }) {
+  const [teamId, setTeamId] = useState(team?.id ?? '');
   const [name, setName] = useState(worker.full_name);
   const [phone, setPhone] = useState(worker.phone ?? '');
   const [busy, setBusy] = useState(false);
@@ -43,15 +44,22 @@ export function WorkerProfile({ org, worker, team, onBack, onChanged }: { org: M
       <div className="inline-form">
         <label>Họ tên<input value={name} maxLength={80} onChange={(e) => setName(e.target.value)} /></label>
         <label>Số điện thoại (không bắt buộc)<input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></label>
-        <HrFields hr={hrState.hr} setHr={hrState.setHr} disabled={!canEditHr || busy} withPosition />
+        <HrFields hr={hrState.hr} setHr={hrState.setHr} disabled={!canEditHr || busy} withPosition orgId={org.id} />
         <LeaveSummaryLine orgId={org.id} workerId={worker.id} />
+        <label>Phòng / Tổ
+          <select value={teamId} disabled={busy} onChange={(e) => setTeamId(e.target.value)}>
+            <option value="">— Chưa vào tổ —</option>
+            {teams.filter((t) => t.is_active !== false).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+          <small>Người không có tài khoản thuộc phân khu của tổ mình (đặt phân khu cho tổ ở mục Phòng / Tổ).</small>
+        </label>
         <label>Mô tả (không bắt buộc)<textarea rows={2} maxLength={500} value={hrState.hr.note} disabled={!canEditHr || busy} onChange={(e) => hrState.setHr((cur) => ({ ...cur, note: e.target.value }))} /></label>
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {
             if (name.trim().length < 2) return setError('Hãy nhập họ tên (ít nhất 2 ký tự).');
-            void run(async () => { await updateWorkerInfo(worker.id, name, phone); if (canEditHr) await hrState.save(); }, 'Đã lưu.');
+            void run(async () => { await updateWorkerInfo(worker.id, name, phone); if (teamId && teamId !== (team?.id ?? '')) await assignWorkerToTeam(worker.id, teamId); if (canEditHr) await hrState.save(); }, 'Đã lưu.');
           }}>Lưu</button>
-          <button type="button" className="secondary" disabled={busy} onClick={() => { setName(worker.full_name); setPhone(worker.phone ?? ''); setError(null); hrState.reset(); }}>Hủy</button>
+          <button type="button" className="secondary" disabled={busy} onClick={() => { setName(worker.full_name); setPhone(worker.phone ?? ''); setTeamId(team?.id ?? ''); setError(null); hrState.reset(); }}>Hủy</button>
         </div>
       </div>
       <ContractsFold workerId={worker.id} canEdit={canEditHr} />

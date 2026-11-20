@@ -118,6 +118,12 @@ export function StaffAddForm({ org, teams, workers, onDone, onCreds, onCancel }:
         <input type="tel" inputMode="tel" autoComplete="off" value={phone} placeholder="0912345678" onChange={(e) => setPhone(e.target.value)} />
       </label>
       {isAccount && <PositionPicker orgId={org.id} value={posId} onChange={(id, role) => { setPosId(id); setRoles([role]); }} />}
+      <HrFields hr={hr} setHr={setHr} disabled={busy} withPosition={!isAccount} hideEnd orgId={org.id} />
+      {isAccount && (
+        <Collapsible inline title="Phân khu làm việc" summary={areaSel === null ? 'tất cả phân khu' : `${areaSel.length} phân khu`}>
+          <AreaChoice orgId={org.id} value={areaSel} onChange={setAreaSel} />
+        </Collapsible>
+      )}
       {kind !== 'monthly' && (
         <label>{isAccount ? 'Kiểu phân hệ' : 'Cách tính công'} (không bắt buộc)
           <select value={mode} onChange={(e) => setMode(e.target.value as WorkMode | '')}>
@@ -133,12 +139,6 @@ export function StaffAddForm({ org, teams, workers, onDone, onCreds, onCancel }:
         </select>
         {activeTeams.length === 0 && <small>Chưa có tổ nào. Hãy tạo ở mục Phòng / Tổ.</small>}
       </label>
-      <HrFields hr={hr} setHr={setHr} disabled={busy} withPosition={!isAccount} hideEnd />
-      {isAccount && (
-        <Collapsible inline title="Phân khu làm việc" summary={areaSel === null ? 'tất cả phân khu' : `${areaSel.length} phân khu`}>
-          <AreaChoice orgId={org.id} value={areaSel} onChange={setAreaSel} />
-        </Collapsible>
-      )}
       <label>Mô tả (không bắt buộc)
         <textarea rows={2} maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Ví dụ: Lái máy, phụ trách tưới" />
       </label>

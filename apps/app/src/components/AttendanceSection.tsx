@@ -16,6 +16,9 @@ import {
   type WorkerLite,
 } from '../lib/work';
 import { useTable } from '../lib/tables';
+import { areaPath } from '../lib/areas';
+import { areaFamily } from '../lib/payFilter';
+import type { AreaRow } from '../lib/db';
 import { useCycleTitle } from '../lib/useCycleTitle';
 
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
@@ -49,6 +52,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const cycles = useTable('cycles').filter((c) => c.status === 'active' && c.owner_org_id === active?.id);
+  const areas = useTable('areas').filter((x) => x.organization_id === active?.id);
 
   const orgId = active?.id;
   const isAdmin = hasRole(active?.roles, 'manager');
@@ -98,16 +102,30 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
     if (isAdmin && sum.flagged > 0) todo.push({ key: 'flagged', label: 'Ảnh nghi vấn', value: `${sum.flagged_people ?? sum.flagged} người`, go: () => setTab('photos') });
     if (orphans.length > 0) todo.push({ key: 'orphans', label: 'Chưa có tổ trưởng', value: `${orphans.length} người`, hint: 'chọn tổ trưởng ở Khai báo → Phòng / Tổ' });
   }
+  const recordBtn = canRecordFor.length > 0
+    ? <button type="button" className="chip add" disabled={!online} aria-expanded={panel === 'shift'} onClick={() => setPanel(panel === 'shift' ? null : 'shift')}>＋ Ghi công</button>
+    : null;
   const todoNode = !sum ? null : todo.length === 0 ? (
-    <p className="msg ok" role="status">Không có việc cần xử lý.</p>
+    <>
+      <p className="msg ok" role="status">Không có việc cần xử lý.</p>
+      {recordBtn && <div className="chips">{recordBtn}</div>}
+    </>
   ) : (
     <div className="card alert-warn">
       <h2>Cần xử lý</h2>
       {todo.map((t) => (
         <p key={t.key} className="todo-line"><strong>{t.label}:</strong> {t.value}{t.go && <> <button type="button" className="link" onClick={t.go}>Xem</button></>}{t.hint && <span className="muted"> ({t.hint})</span>}</p>
       ))}
+      {recordBtn && <div className="chips">{recordBtn}</div>}
     </div>
   );
+  const shiftPanel = panel === 'shift' && canRecordFor.length > 0 ? (
+    <div className="card">
+      <h2>Ghi công</h2>
+      <p className="muted">{isAdmin ? 'Nhập ca đã làm của người làm, kể cả của bạn (dành cho nơi không dùng máy chấm công).' : 'Nhập ca đã làm của người trong tổ.'}</p>
+      <ShiftForm workers={canRecordFor} cycles={cycles} areas={areas} busy={busy || !online} onCancel={() => setPanel(null)} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
+    </div>
+  ) : null;
 
   return (
     <>
@@ -142,17 +160,9 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
           )}
 
           {!focus && todoNode}
+          {!focus && shiftPanel}
 
-          <AttendanceList orgId={active.id} isAdmin={isAdmin} isOwner={isOwner(active.roles)} meId={me?.id ?? null} workers={workers} online={online} preset={preset} rangeAction={canRecordFor.length > 0 ? (
-              <button type="button" className="chip add" disabled={!online} aria-expanded={panel === 'shift'} onClick={() => setPanel(panel === 'shift' ? null : 'shift')}>＋ Ghi công</button>
-            ) : null}
-            panel={panel === 'shift' && canRecordFor.length > 0 ? (
-              <div className="card">
-                <h2>Ghi công</h2>
-                <p className="muted">{isAdmin ? 'Nhập ca đã làm của người làm, kể cả của bạn (dành cho nơi không dùng máy chấm công).' : 'Nhập ca đã làm của người trong tổ.'}</p>
-                <ShiftForm workers={canRecordFor} cycles={cycles} busy={busy || !online} onCancel={() => setPanel(null)} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
-              </div>
-            ) : null}
+          <AttendanceList orgId={active.id} isAdmin={isAdmin} isOwner={isOwner(active.roles)} meId={me?.id ?? null} workers={workers} online={online} preset={preset}
             onFocusChange={setFocus} onChanged={() => void load()} />
         </>
       )}
@@ -167,7 +177,7 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
   );
 }
 
-type CycleOpt = { id: string; status?: string; name?: string | null; crop_type_id?: string | null; start_date?: string | null };
+type CycleOpt = { id: string; status?: string; name?: string | null; crop_type_id?: string | null; start_date?: string | null; area_id?: string | null };
 const ShiftCycleSelect = ({ cycles, value, onChange }: { cycles: CycleOpt[]; value: string; onChange: (v: string) => void }) => {
   const titleOf = useCycleTitle();
   return cycles.length === 0 ? null : (
@@ -176,8 +186,11 @@ const ShiftCycleSelect = ({ cycles, value, onChange }: { cycles: CycleOpt[]; val
   );
 };
 
-function ShiftForm({ workers, cycles, busy, onSave, onCancel }: { workers: WorkerLite[]; cycles: CycleOpt[]; busy: boolean; onCancel: () => void; onSave: (w: string, s: Date, e: Date, b: number, note: string, c: string | null) => Promise<unknown> }) {
+function ShiftForm({ workers, cycles, areas, busy, onSave, onCancel }: { workers: WorkerLite[]; cycles: CycleOpt[]; areas: AreaRow[]; busy: boolean; onCancel: () => void; onSave: (w: string, s: Date, e: Date, b: number, note: string, c: string | null) => Promise<unknown> }) {
   const [cyc, setCyc] = useState('');
+  const [areaId, setAreaId] = useState('');
+  const areaFam = areaId ? areaFamily(areaId, areas) : null;
+  const cycOpts = areaFam ? cycles.filter((c) => c.area_id && areaFam.has(c.area_id)) : cycles;
   const [w, setW] = useState(workers[0]?.id ?? '');
   const [date, setDate] = useState(todayLocal());
   const [from, setFrom] = useState('');
@@ -212,7 +225,16 @@ function ShiftForm({ workers, cycles, busy, onSave, onCancel }: { workers: Worke
         <label>Đến giờ<input type="time" value={to} onChange={(e) => setTo(e.target.value)} /></label>
       </div>
       <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
-      <ShiftCycleSelect cycles={cycles} value={cyc} onChange={setCyc} />
+      {areas.length > 0 && (
+        <label>Phân khu (không bắt buộc)
+          <select value={areaId} onChange={(e) => { setAreaId(e.target.value); setCyc(''); }}>
+            <option value="">— Tất cả phân khu —</option>
+            {[...areas].sort((x, y) => areaPath(x.id, areas).localeCompare(areaPath(y.id, areas), 'vi')).map((x) => <option key={x.id} value={x.id}>{areaPath(x.id, areas)}</option>)}
+          </select>
+          {areaId && cycOpts.length === 0 && <small>Phân khu này chưa có vụ đang chạy.</small>}
+        </label>
+      )}
+      <ShiftCycleSelect cycles={cycOpts} value={cyc} onChange={setCyc} />
       <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
       {err && <p className="msg error" role="alert">{err}</p>}
       {ok && <p className="msg ok" role="status">{ok}</p>}

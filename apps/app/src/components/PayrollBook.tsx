@@ -139,6 +139,8 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
   function calculate() {
     const bad = checkRange(from, to, today);
     if (bad) { setError(bad); return; }
+    if (wantsAll && areaSel === '') { setError('Hãy chọn phân khu (hoặc chọn Tất cả).'); return; }
+    if (wantsAll && workerSel === '') { setError('Hãy chọn nhân viên (hoặc chọn Tất cả).'); return; }
     const area = areaSel === '' ? 'all' : areaSel;
     const worker = workerSel === '' ? 'all' : workerSel;
     void compute({ area, worker, from, to, month: isFullMonth(from, to), whole: area === 'all' && worker === 'all' }, true);
@@ -198,7 +200,7 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
         <label>Đến ngày<input type="date" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} /></label>
       </div>
       <button type="button" className="primary" disabled={busy || !online} onClick={calculate}>{busy ? 'Đang tính…' : 'Tính lương'}</button>
-      {wantsAll && <p className="muted mini-note">Để trống Phân khu hoặc Nhân viên là Tất cả. Phân khu lọc theo nơi nhân viên được phân công (Nhân sự → phân khu làm việc, hoặc phân khu của tổ).</p>}
+      {wantsAll && <p className="muted mini-note">Phân khu lọc theo nơi nhân viên được phân công (Nhân sự → phân khu làm việc, hoặc phân khu của tổ).</p>}
       {!online && <p className="muted">Đang offline: hiện bản đã tính lần trước (nếu có).</p>}
       {fromCache && online && <p className="muted">Chưa tải được bản mới, đang hiện bản đã lưu.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}

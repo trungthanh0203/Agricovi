@@ -89,7 +89,7 @@ export function MembersSection({ org }: { org: MyOrg }) {
   const selWorker = offlineWorkers.find((w) => w.id === openWorker) ?? null;
   if (isOwner && selWorker) {
     const link = teamLinks.find((l) => l.worker_id === selWorker.id);
-    return <WorkerProfile org={org} worker={selWorker} team={link ? teams.find((t) => t.id === link.team_id) ?? null : null} onBack={() => setOpenWorker(null)} onChanged={() => void load()} />;
+    return <WorkerProfile org={org} worker={selWorker} team={link ? teams.find((t) => t.id === link.team_id) ?? null : null} teams={teams} onBack={() => setOpenWorker(null)} onChanged={() => void load()} />;
   }
   const sel = members.find((m) => m.user_id === open) ?? null;
   if (isOwner && sel && !sel.roles.includes('owner')) {

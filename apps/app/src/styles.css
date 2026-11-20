@@ -950,6 +950,7 @@ td.fold-col.has-fold { padding-right: 40px; }
 .mini-note { margin: 2px 0 8px; font-size: .82rem; }
 .person-pick { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
 .person-pick select { flex: 1 1 auto; min-width: 0; }
+.pay-filter select, .pay-filter select option { font-weight: 400; }
 @media (max-width: 360px) { .mini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .mini-kpis.p3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 

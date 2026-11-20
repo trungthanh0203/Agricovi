@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { RowMenu } from './RowMenu';
 import { bulkConfirmAttendance, closeOpenShift, closeStaleShifts, listAttendancePage, type AttPage, type AttPageRow, type AttStatusFilter } from '../lib/attendanceAdmin';
@@ -13,11 +13,6 @@ import {
 
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
-const RANGES: { id: 'prev' | 'today' | 'month'; label: string }[] = [
-  { id: 'prev', label: 'Tháng trước' },
-  { id: 'today', label: 'Hôm nay' },
-  { id: 'month', label: 'Tháng này' },
-];
 const STATUS_OPTIONS: { id: AttStatusFilter; label: string }[] = [
   { id: '', label: 'Tất cả' },
   { id: 'pending', label: 'Chờ xác nhận' },
@@ -33,18 +28,17 @@ export interface ListPreset { status: AttStatusFilter; range: 'prev' | 'today' |
  * Danh sách công (D115): lọc theo ngày, trạng thái, tên; phân trang 50 dòng do máy chủ cắt nên đủ cho cơ sở hàng trăm người.
  * Chủ/quản lý có nút xác nhận hàng loạt các công hợp lệ; tổ trưởng chỉ thấy người trong tổ (chính sách RLS).
  */
-export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online, preset, rangeAction, panel, onFocusChange, onChanged }: {
+export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online, preset, onFocusChange, onChanged }: {
   orgId: string; isAdmin: boolean; isOwner: boolean; meId: string | null; workers: WorkerLite[]; online: boolean; preset: ListPreset | null;
-  /** Nút đặt liền sau nút "Tháng này" (Ghi công) và khối hiện ngay dưới hàng nút đó (biểu mẫu Ghi công) */
-  rangeAction?: ReactNode; panel?: ReactNode;
   /** Báo cho khung ngoài biết đang ở chế độ tập trung (bấm Xem ở Cần xử lý) để ẩn khung Cần xử lý */
   onFocusChange?: (focused: boolean) => void; onChanged: () => void;
 }) {
   // Mặc định: hôm nay, trạng thái Chờ xác nhận (việc chủ/quản lý cần làm nhất)
-  const [range, setRange] = useState<'prev' | 'today' | 'month' | 'all' | 'stale'>('today')   // 'all' và 'stale' chỉ đến từ nút Xem ở khung Cần xử lý;
+  const [range, setRange] = useState<'custom' | 'all' | 'stale'>('custom')   // 'all' và 'stale' chỉ đến từ nút Xem ở khung Cần xử lý; 'custom' = Từ ngày – Đến ngày
   const [status, setStatus] = useState<AttStatusFilter>('pending');
-  const [q, setQ] = useState('');
-  const [appliedQ, setAppliedQ] = useState('');
+  const [dFrom, setDFrom] = useState(todayLocal());
+  const [dTo, setDTo] = useState(todayLocal());
+  const appliedQ = '';
   const [page, setPage] = useState(0);
   const [expected, setExpected] = useState<number | undefined>(undefined);   // số lượng dự kiến khi xem mọi ngày (để dừng sớm nếu CSDL cũ)
   const [size, setSize] = useState(50);                // số dòng mỗi trang (máy chủ cắt trang, tối đa 100)
@@ -63,18 +57,23 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
   // Mở từ "Hôm nay" bằng một bộ lọc sẵn (ví dụ: công chờ xác nhận)
   useEffect(() => {
     if (!preset) return;
-    setRange(preset.range); setStatus(preset.status); setQ(''); setAppliedQ(''); setPage(0); setExpected(preset.expected);
+    const t = todayLocal();
+    const ms = `${t.slice(0, 8)}01`;
+    const pe = addDays(ms, -1);
+    if (preset.range === 'all' || preset.range === 'stale') setRange(preset.range);
+    else {
+      setRange('custom');
+      if (preset.range === 'today') { setDFrom(t); setDTo(t); } else if (preset.range === 'month') { setDFrom(ms); setDTo(t); } else { setDFrom(`${pe.slice(0, 8)}01`); setDTo(pe); }
+    }
+    setStatus(preset.status); setPage(0); setExpected(preset.expected);
     // bấm "Xem" ở khung Cần xử lý: cuộn tới bảng để thấy danh sách đã lọc
     window.setTimeout(() => headRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }, [preset?.stamp]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const today = todayLocal();
-  // Hôm nay: một ngày; Tháng này: từ mùng 1 đến hôm nay; Tháng trước: cả tháng trước
-  const monthStart = `${today.slice(0, 8)}01`;
-  const prevEnd = addDays(monthStart, -1);
-  // 'all': mọi ngày (công chờ xác nhận ở Cần xử lý đếm cả những ngày cũ); 'stale': mọi ngày trước hôm nay (ca quên ra ca)
-  const from = range === 'today' ? today : range === 'month' ? monthStart : range === 'prev' ? `${prevEnd.slice(0, 8)}01` : '2000-01-01';
-  const to = range === 'prev' ? prevEnd : range === 'stale' ? addDays(today, -1) : today;
+  // 'all': mọi ngày (công chờ xác nhận ở Cần xử lý đếm cả những ngày cũ); 'stale': mọi ngày trước hôm nay (ca quên ra ca); 'custom': Từ ngày – Đến ngày người dùng chọn
+  const from = range === 'custom' ? (dFrom || today) : '2000-01-01';
+  const to = range === 'stale' ? addDays(today, -1) : range === 'custom' ? (dTo || today) : today;
 
   const load = useCallback(async () => {
     if (!navigator.onLine) return;
@@ -136,13 +135,11 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
   const adjRec = adjFor ? rows.find((r) => r.id === adjFor) : undefined;
   const pendingAdjs = adjs.filter((x) => x.status === 'pending');
 
-  function search(e: FormEvent) { e.preventDefault(); setPage(0); setAppliedQ(q); }
-
   return (
     <>
       {focused ? (
         <div className="card">
-          <button type="button" className="link" onClick={() => { setRange('today'); setStatus('pending'); setQ(''); setAppliedQ(''); setPage(0); }}>‹ Quay lại bảng công</button>
+          <button type="button" className="link" onClick={() => { setRange('custom'); setDFrom(todayLocal()); setDTo(todayLocal()); setStatus('pending'); setPage(0); }}>‹ Quay lại bảng công</button>
           <h2 ref={headRef}>{range === 'all' ? 'Công chờ xác nhận' : 'Ca quên ra ca'}{data ? ` (${total})` : ''}</h2>
           <p className="muted">{range === 'all' ? 'Mọi công đã ra ca nhưng chưa được xác nhận, của tất cả các ngày.' : 'Các ca đã mở từ những ngày trước mà chưa ra ca.'}</p>
           {range === 'stale' && canCloseAll && total > 0 && (
@@ -155,23 +152,16 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
         </div>
       ) : (
         <>
-          <div className="chips" role="tablist" aria-label="Khoảng ngày">
-            {RANGES.map((r) => (
-              <button key={r.id} role="tab" aria-selected={range === r.id} className={range === r.id ? 'chip active' : 'chip'} onClick={() => { setRange(r.id); setPage(0); }}>{r.label}</button>
-            ))}
-            {rangeAction}
-          </div>
-          {panel}
           <div className="filters att-filters">
+            <div className="pair">
+              <label>Từ ngày<input type="date" value={dFrom} max={dTo || today} onChange={(e) => { setDFrom(e.target.value); setPage(0); }} /></label>
+              <label>Đến ngày<input type="date" value={dTo} min={dFrom} max={today} onChange={(e) => { setDTo(e.target.value); setPage(0); }} /></label>
+            </div>
             <label>Trạng thái
               <select value={status} onChange={(e) => { setStatus(e.target.value as AttStatusFilter); setPage(0); }}>
                 {STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
               </select>
             </label>
-            <form onSubmit={search} className="searchrow">
-              <label>Tìm theo tên<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Gõ tên rồi bấm Tìm" /></label>
-              <button type="submit" className="secondary">Tìm</button>
-            </form>
           </div>
         </>
       )}

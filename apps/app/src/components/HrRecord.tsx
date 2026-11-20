@@ -7,6 +7,7 @@ import {
   CONTRACT_KIND_LABEL, EMPLOYMENT_LABEL, EMPTY_HR, cancelContract, contractState, createContract, fetchContracts, fetchWorkerHr, saveWorkerHr, updateContract,
   type ContractKind, type WorkerContract, type WorkerHr,
 } from '../lib/hr';
+import { listPositions } from '../lib/positions';
 import { Collapsible } from './Collapsible';
 import { Img, ImagePicker } from './ImagePicker';
 
@@ -34,11 +35,33 @@ export function useWorkerHr(workerId: string | null) {
 }
 
 /** Ngày vào làm, loại hình, ngày nghỉ việc, liên hệ khẩn cấp (và chức danh khi `withPosition`) */
-export function HrFields({ hr, setHr, disabled, withPosition, hideEnd }: { hr: WorkerHr; setHr: (fn: (cur: WorkerHr) => WorkerHr) => void; disabled: boolean; withPosition?: boolean; hideEnd?: boolean }) {
+/** Chức danh của người không tài khoản: chọn từ danh sách Chức vụ của cơ sở (giữ giá trị cũ nếu không còn trong danh sách) */
+function TitlePick({ orgId, value, disabled, onChange }: { orgId?: string; value: string; disabled: boolean; onChange: (v: string) => void }) {
+  const [names, setNames] = useState<string[] | null>(null);
+  useEffect(() => {
+    if (!orgId || !navigator.onLine) { setNames([]); return; }
+    let alive = true;
+    void listPositions(orgId).then((r) => { if (alive) setNames(r.filter((p) => p.is_active).map((p) => p.name)); }).catch(() => { if (alive) setNames([]); });
+    return () => { alive = false; };
+  }, [orgId]);
+  const opts = names ?? [];
+  const all = value && !opts.includes(value) ? [value, ...opts] : opts;
+  return (
+    <label>Chức danh (chọn từ Chức vụ)
+      <select value={value} disabled={disabled || names === null} onChange={(e) => onChange(e.target.value)}>
+        <option value="">— Chưa chọn —</option>
+        {all.map((n) => <option key={n} value={n}>{n}</option>)}
+      </select>
+      {names !== null && names.length === 0 && <small>Chưa có chức vụ nào (hoặc đang offline). Tạo ở Khai báo → Chức vụ.</small>}
+    </label>
+  );
+}
+
+export function HrFields({ hr, setHr, disabled, withPosition, hideEnd, orgId }: { hr: WorkerHr; setHr: (fn: (cur: WorkerHr) => WorkerHr) => void; disabled: boolean; withPosition?: boolean; hideEnd?: boolean; orgId?: string }) {
   const set = (k: keyof WorkerHr) => (e: { target: { value: string } }) => setHr((cur) => ({ ...cur, [k]: e.target.value }));
   return (
     <>
-      {withPosition && <label>Chức danh<input value={hr.position} maxLength={80} placeholder="Công nhân, tổ trưởng…" disabled={disabled} onChange={set('position')} /></label>}
+      {withPosition && <TitlePick orgId={orgId} value={hr.position} disabled={disabled} onChange={(v) => setHr((cur) => ({ ...cur, position: v }))} />}
       <div className="pair">
         <label>Ngày vào làm<input type="date" value={hr.start_date} disabled={disabled} onChange={set('start_date')} /></label>
         <label>Loại hình
