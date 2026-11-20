@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KIND_GROUP } from '../lib/logGroups';
 
-export interface LogTarget { id: string; title: string; place: string; kind: string; status: string; lastAt: string | null }
+export interface LogTarget { id: string; title: string; place: string; kind: string; status: string; lastAt: string | null; topId: string; topName: string }
 
 /**
  * Bước 1 của Ghi việc: "Ghi cho đối tượng nào?" — thẻ chọn nhóm theo loại (trồng trọt, vật nuôi, thủy sản) và một thẻ cho khu vực / cơ sở vật chất.
@@ -11,19 +11,35 @@ export function LogTargetPicker({ targets, rememberedId, hasAreas, onPickCycle, 
   targets: LogTarget[]; rememberedId: string | null; hasAreas: boolean;
   onPickCycle: (id: string) => void; onPickArea: () => void; onCancel: () => void;
 }) {
-  const many = targets.length >= 8;
+  // Chọn phân khu trước (D216): từ 2 phân khu trở lên thì chưa liệt kê vụ cho tới khi chọn; "Tất cả phân khu" là một mục
+  const [areaSel, setAreaSel] = useState('');
+  const tops = [...new Map(targets.map((t) => [t.topId, t.topName])).entries()].sort((x, y) => x[1].localeCompare(y[1], 'vi'));
+  const gate = tops.length >= 2;
+  const pending = gate && areaSel === '';
+  const inArea = pending ? [] : areaSel && areaSel !== 'all' ? targets.filter((t) => t.topId === areaSel) : targets;
+  const many = inArea.length >= 8;
   const [q, setQ] = useState('');
   const [all, setAll] = useState(false);
   const norm = (s: string) => s.toLowerCase();
-  const byRecent = [...targets].sort((a, b) => (b.id === rememberedId ? 1 : 0) - (a.id === rememberedId ? 1 : 0) || (b.lastAt ?? '').localeCompare(a.lastAt ?? ''));
+  const byRecent = [...inArea].sort((a, b) => (b.id === rememberedId ? 1 : 0) - (a.id === rememberedId ? 1 : 0) || (b.lastAt ?? '').localeCompare(a.lastAt ?? ''));
   const shown = !many || all || q.trim()
     ? byRecent.filter((t) => !q.trim() || norm(`${t.title} ${t.place}`).includes(norm(q.trim())))
     : byRecent.slice(0, 6);
-  const remembered = shown.find((t) => t.id === rememberedId);
+  const remembered = shown.find((t) => t.id === rememberedId) ?? (pending ? targets.find((t) => t.id === rememberedId) : undefined);   // nút "Tiếp tục" luôn hiện để ghi nhanh
 
   return (
     <>
       <p className="muted">Bạn ghi việc cho đối tượng nào?</p>
+      {gate && (
+        <label>Phân khu
+          <select value={areaSel} onChange={(e) => { setAreaSel(e.target.value); setAll(false); setQ(''); }}>
+            <option value="" disabled>Chọn phân khu</option>
+            <option value="all">Tất cả phân khu</option>
+            {tops.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+          </select>
+        </label>
+      )}
+      {pending && <p className="muted">Chọn phân khu để xem các vụ.</p>}
       {many && <input type="search" placeholder="Tìm vụ theo tên hoặc nơi…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Tìm vụ" />}
       {remembered && !q.trim() && (
         <button type="button" className="bigchoice" onClick={() => onPickCycle(remembered.id)}>

@@ -66,6 +66,9 @@ export function LogActivityScreen({ onClose, preset, onOpenCycle }: { onClose: (
   const remembered = (() => {
     try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; }
   })();
+  // phân khu (cấp 1) của một ô, để chọn phân khu trước rồi mới chọn vụ (D216)
+  const topOfCycle = (areaId?: string | null) => (areaId ? areas.find((a) => a.id === areaId)?.parent_id ?? areaId : '');
+  const formTops = [...new Map(options.map((c) => [topOfCycle(c.area_id), areaName(topOfCycle(c.area_id))])).entries()].sort((x, y) => x[1].localeCompare(y[1], 'vi'));
   const [cycleId, setCycleId] = useState<string>(preset?.cycleId ?? '');
   const effectiveCycleId = cycleId || (options.find((c) => c.id === remembered)?.id ?? options[0]?.id ?? '');
   const cycle = options.find((c) => c.id === effectiveCycleId) ?? null;
@@ -337,7 +340,7 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
         </>
       ) : !workType && !targetDone && nTargets > 1 ? (
         <LogTargetPicker
-          targets={options.map((c) => ({ id: c.id, title: cycleTitle(c, cropName(c.crop_type_id)), place: areaName(c.area_id), kind: kindOfCycle(c), status: CYCLE_STATUS_LABEL_VI[c.status], lastAt: lastAtByCycle.get(c.id) ?? null }))}
+          targets={options.map((c) => ({ id: c.id, title: cycleTitle(c, cropName(c.crop_type_id)), place: areaName(c.area_id), kind: kindOfCycle(c), status: CYCLE_STATUS_LABEL_VI[c.status], lastAt: lastAtByCycle.get(c.id) ?? null, topId: areas.find((a) => a.id === c.area_id)?.parent_id ?? c.area_id, topName: areaName(areas.find((a) => a.id === c.area_id)?.parent_id ?? c.area_id) }))}
           rememberedId={options.find((c) => c.id === remembered)?.id ?? null}
           hasAreas={siteAreas.length > 0}
           onPickCycle={(id) => { setCycleId(id); setForArea(false); setStageSel(undefined); setTargetDone(true); }}
@@ -375,6 +378,19 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
               </select>
             </label>
           ) : (
+          <>
+          {formTops.length >= 2 && (
+            <label>Phân khu
+              <select value={topOfCycle(cycle?.area_id)} onChange={(e) => {
+                const first = options.find((c) => topOfCycle(c.area_id) === e.target.value);
+                if (!first) return;
+                if (cycle && kindOfCycle(first) !== kindOfCycle(cycle)) setWorkTypeId(null);
+                setCycleId(first.id); setStageSel(undefined);
+              }}>
+                {formTops.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+              </select>
+            </label>
+          )}
           <label>
             <CycleWord cap />
             <select value={effectiveCycleId} onChange={(e) => {
@@ -383,13 +399,14 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
               if (next && cycle && kindOfCycle(next) !== kindOfCycle(cycle)) setWorkTypeId(null);
               setCycleId(e.target.value); setStageSel(undefined);
             }}>
-              {options.map((c) => (
+              {(formTops.length >= 2 ? options.filter((c) => topOfCycle(c.area_id) === topOfCycle(cycle?.area_id)) : options).map((c) => (
                 <option key={c.id} value={c.id}>
                   {cycleTitle(c, cropName(c.crop_type_id))} · {areaName(c.area_id)} ({CYCLE_STATUS_LABEL_VI[c.status]})
                 </option>
               ))}
             </select>
           </label>
+          </>
           )}
 
           {!areaMode && coCandidates.length > 0 && (

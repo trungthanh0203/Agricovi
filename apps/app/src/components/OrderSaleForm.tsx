@@ -20,6 +20,8 @@ export function OrderSaleForm({ orderId, onClose, onDone }: { orderId: string; o
   const titleOf = useCycleTitle();
   const online = useOnline();
   const cyclesAll = useTable('cycles');
+  const areasAll = useTable('areas');
+  const [lineArea, setLineArea] = useState<Record<string, string>>({});   // phân khu đã chọn cho từng dòng ('' = chưa chọn)
   const [ctx, setCtx] = useState<OrderContext | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
@@ -62,6 +64,11 @@ export function OrderSaleForm({ orderId, onClose, onDone }: { orderId: string; o
   }, [orderId]);
 
   const cycles = useMemo(() => cyclesAll.filter((c) => c.owner_org_id === ctx?.organization_id), [cyclesAll, ctx]);
+  const topOf = (areaId: string) => areasAll.find((a) => a.id === areaId)?.parent_id ?? areaId;
+  const tops = areasAll.filter((a) => a.organization_id === ctx?.organization_id && !a.parent_id).sort((x, y) => x.name.localeCompare(y.name, 'vi'));
+  /** Phân khu của dòng: đã chọn, hoặc suy ra từ vụ đã điền sẵn theo sản phẩm niêm yết */
+  const areaOfLine = (l: Line) => lineArea[l.itemId] ?? (l.cycleId ? topOf(cyclesAll.find((c) => c.id === l.cycleId)?.area_id ?? '') : '');
+  const cyclesOfLine = (l: Line) => { const a = areaOfLine(l); return a === '' ? [] : a === 'all' ? cycles : cycles.filter((c) => topOf(c.area_id) === a); };
   const cycleName = (id: string) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : '—'; };
 
   if (!ctx) {
@@ -152,9 +159,20 @@ export function OrderSaleForm({ orderId, onClose, onDone }: { orderId: string; o
         {lines.map((l) => (
           <div className="member" key={l.itemId}>
             <strong>{l.name}</strong>{l.unit && <span className="muted"> (đơn đặt tính theo {l.unit})</span>}
-            <CycleSelect label="Vụ" cycles={cycles} value={l.cycleId} emptyLabel="— Chọn vụ —"
-              onChange={(v) => setLines((s) => s.map((x) => (x.itemId === l.itemId ? { ...x, cycleId: v } : x)))}
-              labelOf={(id) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : ''; }} />
+            {tops.length > 0 && (
+              <label>Phân khu
+                <select value={areaOfLine(l)} onChange={(e) => { setLineArea((m) => ({ ...m, [l.itemId]: e.target.value })); setLines((s) => s.map((x) => (x.itemId === l.itemId ? { ...x, cycleId: '' } : x))); }}>
+                  <option value="" disabled>Chọn phân khu</option>
+                  <option value="all">Tất cả phân khu</option>
+                  {tops.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                </select>
+              </label>
+            )}
+            {(tops.length === 0 || areaOfLine(l) !== '') && (
+              <CycleSelect label="Vụ" cycles={tops.length === 0 ? cycles : cyclesOfLine(l)} value={l.cycleId} emptyLabel="— Chọn vụ —"
+                onChange={(v) => setLines((s) => s.map((x) => (x.itemId === l.itemId ? { ...x, cycleId: v } : x)))}
+                labelOf={(id) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : ''; }} />
+            )}
             <div className="pair">
               <label>Số kg<input value={l.qty} inputMode="decimal" onChange={(e) => setLines((s) => s.map((x) => (x.itemId === l.itemId ? { ...x, qty: e.target.value } : x)))} /></label>
               <label>Số tiền (đ)<input value={l.amount} inputMode="numeric" onChange={(e) => setLines((s) => s.map((x) => (x.itemId === l.itemId ? { ...x, amount: e.target.value } : x)))} /></label>

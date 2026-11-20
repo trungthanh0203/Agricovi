@@ -521,3 +521,7 @@ Ba biểu mẫu thêm mới có ô Phân khu (mặc định "Chọn phân khu"; 
 
 ### D215 — Tạo vụ: chọn phân khu rồi mới chọn ô sản xuất
 Màn Tạo vụ không chọn sẵn ô đầu tiên nữa: ô Phân khu mặc định "Chọn phân khu"; chọn xong mới hiện ô "Ô sản xuất" của phân khu đó (ô khác loại sản phẩm xếp riêng, nên tránh). Phân khu chưa chia ô thì chính nó là nơi chạy vụ, không hiện ô chọn thứ hai. Nguyên tắc chung (D211–D215): cần chọn vụ, ô sản xuất hay nhân viên thì chọn phân khu trước, rồi mới tải danh sách tương ứng.
+
+### D216 — Bán theo đơn hàng và Ghi việc: chọn phân khu trước vụ
+- Bán theo đơn (`OrderSaleForm`): mỗi dòng hàng có ô Phân khu (tự điền theo vụ suy ra từ sản phẩm niêm yết; chưa suy ra được thì "Chọn phân khu"; có mục Tất cả phân khu); ô Vụ chỉ hiện sau khi có phân khu và chỉ liệt kê vụ của phân khu đó.
+- Ghi việc, bước chọn đối tượng (`LogTargetPicker`): từ 2 phân khu có vụ trở lên thì có ô Phân khu ("Chọn phân khu", "Tất cả phân khu") và chưa liệt kê vụ cho tới khi chọn. Nút "Tiếp tục: <vụ ghi lần trước>" vẫn luôn hiện để ghi nhanh hằng ngày. Trong biểu mẫu ghi việc, ô Vụ chỉ liệt kê vụ cùng phân khu với vụ đang chọn; đổi ô Phân khu thì nhảy sang vụ đầu tiên của phân khu đó.
