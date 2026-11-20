@@ -506,3 +506,6 @@ Gồm D10, D14–D56. Quyết định chung: `DECISIONS_CHUNG.md`. Website: `DEC
 - Thêm nhân sự: "Kiểu phân hệ" đổi tên "Kiểu chấm công" và nằm dưới Phòng/Tổ (hồ sơ sửa cũng vậy).
 - Chấm công: Trạng thái ở dòng riêng, nút Tìm liền sau; chỉ khi bấm Tìm mới lọc theo ngày và trạng thái.
 - Bảng lương và Ghi công: ô Phân khu chỉ liệt kê phân khu (không liệt kê ô sản xuất), không có "Tất cả", mặc định "Chọn phân khu"; nhân viên/người lao động/vụ chỉ hiện sau khi chọn phân khu (cơ sở chưa có phân khu nào thì bỏ bước này). Bảng lương: chọn Nhân viên = Tất cả (trong một phân khu) vẫn tính và lưu bảng lương tháng đầy đủ khi kỳ là cả tháng; chỉ phần hiển thị lọc theo phân khu.
+
+### D211 — "Tất cả phân khu" là một mục trong danh sách
+Ô Phân khu ở Bảng lương và Ghi công mặc định "Chọn phân khu" (chưa tải gì); "Tất cả phân khu" là một mục trong danh sách, chọn mới tải tất cả. Bảng lương chốt tháng đầy đủ khi chọn Tất cả phân khu và Tất cả nhân viên (đúng D208).

@@ -144,7 +144,7 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
     if (wantsAll && workerSel === '') { setError('Hãy chọn nhân viên (hoặc chọn Tất cả).'); return; }
     const area = areaSel === '' ? 'all' : areaSel;
     const worker = workerSel === '' ? 'all' : workerSel;
-    void compute({ area, worker, from, to, month: isFullMonth(from, to), whole: worker === 'all' }, true);
+    void compute({ area, worker, from, to, month: isFullMonth(from, to), whole: area === 'all' && worker === 'all' }, true);
   }
   const refreshAll = () => { if (applied) void compute(applied, false); };
 
@@ -184,6 +184,7 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
             <label>Phân khu
               <select value={areaSel} onChange={(e) => chooseArea(e.target.value)}>
                 <option value="" disabled>Chọn phân khu</option>
+                <option value="all">Tất cả phân khu</option>
                 {areaOptions.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
               </select>
             </label>

@@ -192,7 +192,7 @@ function ShiftForm({ workers, cycles, areas, busy, onSave, onCancel }: { workers
   const topAreas = areas.filter((x) => !x.parent_id);
   const needArea = topAreas.length > 0;               // chưa có phân khu nào thì không cần chọn
   const showRest = !needArea || areaId !== '';        // người lao động và vụ chỉ hiện khi đã chọn phân khu
-  const areaFam = areaId ? areaFamily(areaId, areas) : null;
+  const areaFam = areaId && areaId !== 'all' ? areaFamily(areaId, areas) : null;
   const cycOpts = areaFam ? cycles.filter((c) => c.area_id && areaFam.has(c.area_id)) : cycles;
   const [w, setW] = useState(workers[0]?.id ?? '');
   const [date, setDate] = useState(todayLocal());
@@ -224,9 +224,10 @@ function ShiftForm({ workers, cycles, areas, busy, onSave, onCancel }: { workers
         <label>Phân khu
           <select value={areaId} onChange={(e) => { setAreaId(e.target.value); setCyc(''); }}>
             <option value="" disabled>Chọn phân khu</option>
+            <option value="all">Tất cả phân khu</option>
             {topAreas.sort((x, y) => x.name.localeCompare(y.name, 'vi')).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
           </select>
-          {areaId && cycOpts.length === 0 && <small>Phân khu này chưa có vụ đang chạy.</small>}
+          {areaId && areaId !== 'all' && cycOpts.length === 0 && <small>Phân khu này chưa có vụ đang chạy.</small>}
         </label>
       )}
       {showRest ? (
