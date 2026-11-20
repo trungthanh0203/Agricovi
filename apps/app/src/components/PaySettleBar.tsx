@@ -16,10 +16,12 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 
 /**
  * Chốt lương ngay trong Bảng lương (D89), chỉ hiện khi xem một THÁNG và có quyền Tiền công: trạng thái của tháng, việc cần xong trước khi chốt
- * (kèm lối đi tới nơi xử lý), nút Tính lương / Tính lại, Khóa kỳ (chủ; bị chặn khi còn việc dang dở), Mở khóa (chủ, có lý do).
+ * (kèm lối đi tới nơi xử lý), nút Tính lương / Tính lại (khi không ẩn), Khóa kỳ (chủ; bị chặn khi còn việc dang dở), Mở khóa (chủ, có lý do).
  */
-export function PaySettleBar({ orgId, state, onChanged, onGo }: {
+export function PaySettleBar({ orgId, state, onChanged, onGo, hideCalc }: {
   orgId: string; state: SettleState; onChanged: () => void; onGo?: (tab: TabId, section?: string) => void;
+  /** Ẩn nút Tính lương / Tính lại (đã gộp vào nút Tính lương của bộ lọc Bảng lương, D208) */
+  hideCalc?: boolean;
 }) {
   const online = useOnline();
   const [busy, setBusy] = useState(false);
@@ -63,10 +65,10 @@ export function PaySettleBar({ orgId, state, onChanged, onGo }: {
       {error && <p className="msg error" role="alert">{error}</p>}
       {info && <p className="msg ok" role="status">{info}</p>}
 
-      {state.can_edit && !locked && !state.overlap_legacy && (
+      {!hideCalc && state.can_edit && !locked && !state.overlap_legacy && (
         <button className="primary" disabled={busy || !online}
           onClick={() => void run(async () => { const r = await settleMonth(orgId, state.from); setInfo(`Đã tính ${r.lines} dòng cho ${r.workers} người, tổng ${fmtVnd(r.total)}.`); })}>
-          {state.status === 'none' ? 'Tính lương tháng này' : 'Tính lại'}
+          {state.status === 'none' ? 'Tính lương' : 'Tính lại'}
         </button>
       )}
       {state.is_owner && !locked && state.period_id && (

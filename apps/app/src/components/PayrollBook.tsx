@@ -2,19 +2,25 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react
 import { Collapsible } from './Collapsible';
 import { shortMoney } from './HomeStats';
 import { fetchAbsences } from '../lib/absences';
+import { areaPath } from '../lib/areas';
 import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
+import { fetchMemberAreas } from '../lib/members';
 import { useOrgs } from '../lib/orgs';
+import { canPerm } from '../lib/permissions';
 import {
-  addPayAdjustment, cachedDetail, cachedOverview, deletePayAdjustment, fetchPayDetail, fetchPayOverview, fetchSettleState, updatePayAdjustment, type SettleState,
+  addPayAdjustment, cachedDetail, cachedOverview, deletePayAdjustment, fetchPayDetail, fetchPayOverview, fetchSettleState, settleMonth, updatePayAdjustment, type SettleState,
 } from '../lib/payBook';
+import { useTable } from '../lib/tables';
 import type { TabId } from '../lib/tabs';
+import { loadTeams } from '../lib/teams';
 import { PaySettleBar } from './PaySettleBar';
 import {
-  buildPayBookCsv, buildPayslipText, groupByTeam, hoursText, PAY_STATUS_LABEL, personState, rangeOf, shiftAnchor, sumRows,
-  type PayDetail, type PayItem, type PayOverview, type PayRow, type RangeMode,
+  buildPayBookCsv, buildPayslipText, groupByTeam, hoursText, PAY_STATUS_LABEL, personState, rangeOf, sumRows,
+  type PayDetail, type PayItem, type PayOverview, type PayRow,
 } from '../lib/payBookLogic';
+import { checkRange, isFullMonth, prevRangeOf, workerInArea, workersForArea, type WorkerInfo } from '../lib/payFilter';
 import {
   calendarCells, compareWithPrev, filterCounts, filterRows, rowStatus, singleRate, sortRows, SORT_LABEL, statement,
   type DayState, type RowFilter, type SortKey,
@@ -24,9 +30,6 @@ import { ADJ_KIND_LABEL, fmtVnd } from '../lib/work';
 
 const PayCharts = lazy(() => import('./PayCharts')); // biểu đồ tải lười
 
-const MODES: { id: RangeMode; label: string }[] = [
-  { id: 'month', label: 'Tháng' }, { id: 'quarter', label: 'Quý' }, { id: 'year', label: 'Năm' },
-];
 const FILTERS: { id: RowFilter; label: string }[] = [
   { id: 'all', label: 'Tất cả' }, { id: 'todo', label: 'Cần xử lý' }, { id: 'open', label: 'Chưa chốt' }, { id: 'locked', label: 'Đã chốt' },
 ];
@@ -41,134 +44,197 @@ function MiniStat({ label, value, tone = 'neutral', title }: { label: string; va
   return <div className={`mini-kpi ${tone}`} title={title}><span>{label}</span><strong>{value}</strong></div>;
 }
 
+interface Applied { area: string; worker: string; from: string; to: string; month: boolean; whole: boolean }
+
 /**
- * Bảng lương (D87, giao diện mới D207): mỗi người xem lương và công của CHÍNH MÌNH dưới dạng PHIẾU LƯƠNG (thực nhận lớn, Thu nhập − Khấu trừ, lịch công).
- * Chủ và người có quyền Tiền công xem một người (mặc định), theo phòng/tổ, hoặc tất cả dưới dạng BẢNG có bộ lọc, sắp xếp, cột thêm và dòng tổng.
- * Số "ước tính" tính theo đơn giá hiện hành, có thể đổi tới khi chủ tính và khóa kỳ.
+ * Bảng lương (D87; phiếu lương và bảng tổng hợp D207; bộ lọc D208). Chọn Phân khu, Nhân viên, Từ ngày, Đến ngày rồi bấm "Tính lương": kết quả CHỈ hiện sau khi bấm.
+ * Khi kỳ là đúng một tháng, lọc Tất cả và người dùng có quyền sửa Tiền công, bấm Tính lương cũng tính và lưu bảng lương tháng (như nút cũ "Tính lương tháng này").
+ * Chọn một nhân viên thì ra phiếu lương của người đó; Tất cả thì ra bảng tổng hợp, bấm một dòng để mở phiếu. Số "ước tính" theo đơn giá hiện hành, đổi được tới khi chủ khóa kỳ.
  */
 export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) => void }) {
   const { active } = useOrgs();
   const online = useOnline();
   const orgId = active?.id ?? '';
-  const [mode, setMode] = useState<RangeMode>('month');
-  const [anchor, setAnchor] = useState(todayLocal());
-  const range = useMemo(() => rangeOf(mode, anchor), [mode, anchor]);
-  const [view, setView] = useState<'person' | 'all' | 'team' | null>(null); // null = chưa biết quyền
+  const today = todayLocal();
+  const areasAll = useTable('areas').filter((x) => x.organization_id === orgId);
+  const wantsAll = Boolean(active && canPerm(active.perms, 'payroll', 'view'));   // có quyền xem mọi người thì hiện bộ lọc Phân khu, Nhân viên
+  // bộ lọc đang chọn ('' = chưa chọn, coi như Tất cả)
+  const [areaSel, setAreaSel] = useState('');
+  const [workerSel, setWorkerSel] = useState('');
+  const [from, setFrom] = useState(`${today.slice(0, 8)}01`);
+  const [to, setTo] = useState(today);
+  const [people, setPeople] = useState<WorkerInfo[]>([]);
+  const [teamArea, setTeamArea] = useState<Map<string, string | null>>(new Map());
+  const [memberAreas, setMemberAreas] = useState<Record<string, string[] | null>>({});
+  // kết quả đã tính
+  const [applied, setApplied] = useState<Applied | null>(null);
   const [ov, setOv] = useState<PayOverview | null>(null);
-  const [pick, setPick] = useState<string | null>(null);
+  const [prev, setPrev] = useState<Map<string, number> | null>(null);
+  const [settle, setSettle] = useState<SettleState | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
   const [detail, setDetail] = useState<PayDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [fromCache, setFromCache] = useState(false);
-  const [pq, setPq] = useState(''); // ô tìm tên và hiện từng 50 người (D142)
+  const [listMode, setListMode] = useState<'list' | 'team'>('list');
+  const [pq, setPq] = useState('');
   const [pn, setPn] = useState(50);
   const [filter, setFilter] = useState<RowFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [showCols, setShowCols] = useState(false);
-  const [tick, setTick] = useState(0); // tăng lên để tải lại sau khi chốt lương / nhập thưởng phạt
-  const [settle, setSettle] = useState<SettleState | null>(null);
-  const [prev, setPrev] = useState<Map<string, number> | null>(null);   // thực nhận kỳ trước theo người, để so sánh
 
-  const loadOverview = useCallback(async () => {
+  // người, tổ, phân khu được giao: để lọc theo phân khu và liệt kê nhân viên theo phân khu đã chọn
+  useEffect(() => {
+    if (!orgId || !wantsAll || !navigator.onLine) return;
+    let alive = true;
+    void loadTeams(orgId).then((t) => {
+      if (!alive) return;
+      const teamOf = new Map(t.members.map((m) => [m.worker_id, m.team_id]));
+      setPeople(t.workers.map((w) => ({ id: w.id, name: w.full_name, userId: w.user_id, teamId: teamOf.get(w.id) ?? null, status: w.status })));
+      setTeamArea(new Map(t.teams.map((x) => [x.id, x.area_id ?? null])));
+    }).catch(() => undefined);
+    void fetchMemberAreas(orgId).then((m) => { if (alive) setMemberAreas(m); }).catch(() => undefined);
+    return () => { alive = false; };
+  }, [orgId, wantsAll, online]);
+
+  const areaOptions = useMemo(() => [...areasAll].sort((x, y) => areaPath(x.id, areasAll).localeCompare(areaPath(y.id, areasAll), 'vi')), [areasAll]);
+  const workerOptions = useMemo(() => workersForArea(people, areaSel === '' ? 'all' : areaSel, areasAll, memberAreas, teamArea), [people, areaSel, areasAll, memberAreas, teamArea]);
+
+  function chooseArea(v: string) {
+    setAreaSel(v);
+    if (workerSel && workerSel !== 'all' && !workersForArea(people, v === '' ? 'all' : v, areasAll, memberAreas, teamArea).some((w) => w.id === workerSel)) setWorkerSel('');
+  }
+
+  /** Lấy kết quả theo bộ lọc `a`. persist = true: nếu là đúng một tháng, lọc Tất cả và có quyền sửa thì tính và lưu bảng lương tháng trước khi hiện */
+  const compute = useCallback(async (a: Applied, persist: boolean) => {
     if (!orgId) return;
-    const cached = cachedOverview(orgId, range.from, range.to, null);
-    if (!navigator.onLine) { if (cached) { setOv(cached); setFromCache(true); } return; }
-    setBusy(true); setError(null);
-    try { setOv(await fetchPayOverview(orgId, range.from, range.to, null)); setFromCache(false); } catch (e) { setError(friendlyError(e)); if (cached) { setOv(cached); setFromCache(true); } }
-    setBusy(false);
-  }, [orgId, range.from, range.to]);
-  useEffect(() => { void loadOverview(); }, [loadOverview, online]);
+    setBusy(true); setError(null); setInfo(null);
+    const cached = cachedOverview(orgId, a.from, a.to, null);
+    try {
+      if (!navigator.onLine) {
+        if (!cached) throw new Error('OFFLINE: Tính lương cần có mạng. Hãy kết nối mạng rồi thử lại.');
+        setOv(cached); setFromCache(true); setSettle(null); setPrev(null); setApplied(a); setOpenId(null);
+        return;
+      }
+      let st: SettleState | null = null;
+      if (a.month && wantsAll) {
+        st = await fetchSettleState(orgId, a.from).catch(() => null);
+        if (persist && a.whole && st && st.can_edit && st.status !== 'locked' && !st.overlap_legacy) {
+          const r = await settleMonth(orgId, a.from);
+          setInfo(`Đã tính ${r.lines} dòng cho ${r.workers} người, tổng ${fmtVnd(r.total)}.`);
+          st = await fetchSettleState(orgId, a.from).catch(() => st);
+        }
+      }
+      const pr = prevRangeOf(a.from, a.to);
+      const [o, po] = await Promise.all([fetchPayOverview(orgId, a.from, a.to, null), fetchPayOverview(orgId, pr.from, pr.to, null).catch(() => null)]);
+      setOv(o); setFromCache(false); setSettle(st); setPrev(po ? new Map(po.workers.map((w) => [w.worker_id, w.net])) : null);
+      setApplied(a); setOpenId(null); setPn(50);
+    } catch (e) {
+      setError(friendlyError(e));
+      if (cached) { setOv(cached); setFromCache(true); setApplied(a); }
+    } finally { setBusy(false); }
+  }, [orgId, wantsAll]);
 
+  function calculate() {
+    const bad = checkRange(from, to, today);
+    if (bad) { setError(bad); return; }
+    const area = areaSel === '' ? 'all' : areaSel;
+    const worker = workerSel === '' ? 'all' : workerSel;
+    void compute({ area, worker, from, to, month: isFullMonth(from, to), whole: area === 'all' && worker === 'all' }, true);
+  }
+  const refreshAll = () => { if (applied) void compute(applied, false); };
+
+  // phiếu lương của một người: chi tiết từng ngày
   const canSeeAll = ov?.can_see_all ?? false;
-  const refreshAll = () => { setTick((t) => t + 1); void loadOverview(); };
-  useEffect(() => {
-    setSettle(null);
-    if (!orgId || !canSeeAll || mode !== 'month' || !online) return;
-    let alive = true;
-    fetchSettleState(orgId, range.from).then((s) => { if (alive) setSettle(s); }).catch(() => undefined);
-    return () => { alive = false; };
-  }, [orgId, canSeeAll, mode, range.from, online, tick]);
-  useEffect(() => {
-    if (!ov || view !== null) return;
-    // mặc định xem MỘT người (người đầu danh sách); chủ muốn xem tất cả thì bấm "Tất cả" (đứng cuối)
-    setView('person'); setPick(ov.workers[0]?.worker_id ?? null);
-  }, [ov, view]);
-  useEffect(() => { if (view === 'person' && !pick && ov?.workers.length === 1) setPick(ov.workers[0]!.worker_id); }, [view, pick, ov]);
-
-  // thực nhận của kỳ trước (để hiện "tăng/giảm so với kỳ trước"); lỗi hoặc offline thì bỏ qua
-  const prevRange = useMemo(() => rangeOf(mode, shiftAnchor(mode, anchor, -1)), [mode, anchor]);
-  useEffect(() => {
-    setPrev(null);
-    if (!orgId || !online) return;
-    let alive = true;
-    fetchPayOverview(orgId, prevRange.from, prevRange.to, null).then((o) => { if (alive) setPrev(new Map(o.workers.map((w) => [w.worker_id, w.net]))); }).catch(() => undefined);
-    return () => { alive = false; };
-  }, [orgId, prevRange.from, prevRange.to, online, tick]);
-
+  const allRows = ov?.workers ?? [];
+  const inFilter = (r: PayRow) => {
+    if (!applied) return false;
+    if (applied.worker !== 'all' && r.worker_id !== applied.worker) return false;
+    if (applied.area === 'all') return true;
+    const info = people.find((x) => x.id === r.worker_id);
+    return info ? workerInArea(info, applied.area, areasAll, memberAreas, teamArea) : false;
+  };
+  const rows = !applied ? [] : canSeeAll ? allRows.filter(inFilter) : allRows;
+  const targetId = !applied ? null : !canSeeAll ? (allRows[0]?.worker_id ?? null) : applied.worker !== 'all' ? applied.worker : openId;
+  const person = rows.find((r) => r.worker_id === targetId) ?? null;
   useEffect(() => {
     setDetail(null);
-    if (!orgId || view !== 'person' || !pick) return;
-    const cached = cachedDetail(orgId, pick, range.from, range.to);
+    if (!orgId || !applied || !targetId) return;
+    const cached = cachedDetail(orgId, targetId, applied.from, applied.to);
     if (!navigator.onLine) { if (cached) setDetail(cached); return; }
     let alive = true;
-    fetchPayDetail(orgId, pick, range.from, range.to).then((d) => { if (alive) setDetail(d); }).catch((e) => { if (alive) { setError(friendlyError(e)); if (cached) setDetail(cached); } });
+    fetchPayDetail(orgId, targetId, applied.from, applied.to).then((d) => { if (alive) setDetail(d); }).catch((e) => { if (alive) { setError(friendlyError(e)); if (cached) setDetail(cached); } });
     return () => { alive = false; };
-  }, [orgId, view, pick, range.from, range.to, online, tick]);
+  }, [orgId, applied, targetId, ov]);
 
   if (!active) return null;
-  const rows = ov?.workers ?? [];
-  const person = rows.find((r) => r.worker_id === pick) ?? null;
-  const pickIndex = rows.findIndex((r) => r.worker_id === pick);
-  const open = (id: string) => { setPick(id); setView('person'); };
+  const stale = applied !== null && (applied.from !== from || applied.to !== to || applied.area !== (areaSel === '' ? 'all' : areaSel) || applied.worker !== (workerSel === '' ? 'all' : workerSel));
+  const periodLabel = applied ? (applied.month ? rangeOf('month', applied.from).label : `${fmtDate(applied.from)} – ${fmtDate(applied.to)}`) : '';
+  const range = applied ? { from: applied.from, to: applied.to } : { from, to };
 
-  const header = (
-    <div className="card">
-      <div className="chips" role="tablist" aria-label="Kỳ xem">
-        {MODES.map((m) => <button key={m.id} role="tab" aria-selected={mode === m.id} className={mode === m.id ? 'chip active' : 'chip'} onClick={() => setMode(m.id)}>{m.label}</button>)}
-      </div>
-      <div className="range-nav">
-        <button type="button" className="range-btn" onClick={() => setAnchor(shiftAnchor(mode, anchor, -1))} aria-label="Kỳ trước">‹</button>
-        <div className="range-mid"><h2>{range.label}</h2><p className="muted">{fmtDate(range.from)} – {fmtDate(range.to)}</p></div>
-        <button type="button" className="range-btn" onClick={() => setAnchor(shiftAnchor(mode, anchor, 1))} disabled={range.to >= todayLocal()} aria-label="Kỳ sau">›</button>
-      </div>
-      {canSeeAll && (
-        <div className="chips" role="tablist" aria-label="Xem theo">
-          {([['person', 'Một người'], ['team', 'Phòng / Tổ'], ['all', 'Tất cả']] as const).map(([id, label]) => (
-            <button key={id} role="tab" aria-selected={view === id} className={view === id ? 'chip active' : 'chip'} onClick={() => setView(id)}>{label}</button>
-          ))}
-        </div>
+  const filterCard = (
+    <div className="card pay-filter">
+      {wantsAll && (
+        <>
+          <label>Phân khu
+            <select value={areaSel} onChange={(e) => chooseArea(e.target.value)}>
+              <option value="" disabled>Chọn phân khu</option>
+              <option value="all">Tất cả</option>
+              {areaOptions.map((x) => <option key={x.id} value={x.id}>{areaPath(x.id, areasAll)}</option>)}
+            </select>
+          </label>
+          <label>Nhân viên
+            <select value={workerSel} onChange={(e) => setWorkerSel(e.target.value)}>
+              <option value="" disabled>Chọn nhân viên</option>
+              <option value="all">Tất cả</option>
+              {workerOptions.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+            </select>
+          </label>
+        </>
       )}
-      {view === 'person' && canSeeAll && (
-        <div className="person-pick">
-          <button type="button" className="range-btn" disabled={pickIndex <= 0} onClick={() => setPick(rows[pickIndex - 1]!.worker_id)} aria-label="Người trước">‹</button>
-          <select value={pick ?? ''} onChange={(e) => setPick(e.target.value || null)} aria-label="Chọn người">
-            <option value="">— Chọn người —</option>
-            {rows.map((r) => <option key={r.worker_id} value={r.worker_id}>{r.name}{r.team_name ? ` · ${r.team_name}` : ''}</option>)}
-          </select>
-          <button type="button" className="range-btn" disabled={pickIndex < 0 || pickIndex >= rows.length - 1} onClick={() => setPick(rows[pickIndex + 1]!.worker_id)} aria-label="Người sau">›</button>
-        </div>
-      )}
-      {!online && <p className="muted">Đang offline: hiện bản đã xem lần trước (nếu có).</p>}
+      <div className="pair">
+        <label>Từ ngày<input type="date" value={from} max={to || today} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label>Đến ngày<input type="date" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} /></label>
+      </div>
+      <button type="button" className="primary" disabled={busy || !online} onClick={calculate}>{busy ? 'Đang tính…' : 'Tính lương'}</button>
+      {wantsAll && <p className="muted mini-note">Để trống Phân khu hoặc Nhân viên là Tất cả. Phân khu lọc theo nơi nhân viên được phân công (Nhân sự → phân khu làm việc, hoặc phân khu của tổ).</p>}
+      {!online && <p className="muted">Đang offline: hiện bản đã tính lần trước (nếu có).</p>}
       {fromCache && online && <p className="muted">Chưa tải được bản mới, đang hiện bản đã lưu.</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
+      {info && <p className="msg ok" role="status">{info}</p>}
     </div>
   );
 
-  // ---------------------------------------------------------------- một người: phiếu lương
-  if (view === 'person') {
+  if (!applied) {
     return (
       <>
-        {header}
-        {settle && <PaySettleBar orgId={orgId} state={settle} onChanged={refreshAll} onGo={onGo} />}
-        {!pick && <p className="muted">{rows.length === 0 ? 'Chưa có hồ sơ chấm công nên chưa có bảng lương. Hồ sơ được tạo khi bạn chấm công lần đầu.' : 'Hãy chọn một người để xem.'}</p>}
-        {person && <PersonView orgId={orgId} row={person} prevNet={prev?.get(person.worker_id) ?? null} detail={detail} range={range} orgName={active.name} label={range.label} adjust={settle && settle.can_edit && settle.status !== 'locked' && !settle.overlap_legacy ? { orgId, month: range.from, onChanged: refreshAll } : null} />}
+        {filterCard}
+        <p className="muted">Chọn bộ lọc rồi bấm Tính lương để xem bảng lương.</p>
+      </>
+    );
+  }
+  const stalePart = stale && <p className="msg warn" role="status">Bộ lọc đã đổi. Bấm Tính lương để cập nhật kết quả.</p>;
+  const settleBar = settle && applied.month && applied.whole && canSeeAll
+    ? <PaySettleBar orgId={orgId} state={settle} onChanged={refreshAll} onGo={onGo} hideCalc /> : null;
+  const adjust = settle && applied.month && settle.can_edit && settle.status !== 'locked' && !settle.overlap_legacy ? { orgId, month: applied.from, onChanged: refreshAll } : null;
+
+  // ---------------------------------------------------------------- một người: phiếu lương
+  if (targetId) {
+    return (
+      <>
+        {filterCard}
+        {stalePart}
+        {settleBar}
+        {canSeeAll && openId && applied.worker === 'all' && <button className="link" onClick={() => setOpenId(null)}>‹ Quay lại danh sách</button>}
+        {!person && <p className="muted">{busy ? 'Đang tính…' : 'Không có số liệu của người này trong khoảng ngày đã chọn.'}</p>}
+        {person && <PersonView orgId={orgId} row={person} prevNet={prev?.get(person.worker_id) ?? null} detail={detail} range={range} orgName={active.name} label={periodLabel} adjust={adjust} />}
         {person && <Suspense fallback={null}><PayCharts items={detail?.items ?? null} from={range.from} to={range.to} /></Suspense>}
-        {canSeeAll && pick && <button className="link" onClick={() => setView('all')}>Xem tất cả mọi người →</button>}
       </>
     );
   }
 
-  // ---------------------------------------------------------------- tất cả / theo tổ: bảng tổng hợp
+  // ---------------------------------------------------------------- nhiều người: bảng tổng hợp
   const csv = () => downloadCsv(`bang-luong-${range.from}_${range.to}.csv`, buildPayBookCsv(rows, range));
   const counts = filterCounts(rows);
   const pneedle = pq.trim().toLowerCase();
@@ -178,18 +244,25 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
   const pageRows = sorted.slice(0, pn);
   const all = sumRows(rows);
   const shownTotal = sumRows(sorted);
+  const openRow = (id: string) => { setOpenId(id); };
   return (
     <>
-      {header}
-      {settle && <PaySettleBar orgId={orgId} state={settle} onChanged={refreshAll} onGo={onGo} />}
-      {rows.length === 0 && <p className="muted">{busy ? 'Đang tải…' : 'Chưa có người nào.'}</p>}
+      {filterCard}
+      {stalePart}
+      {settleBar}
+      {rows.length === 0 && <p className="muted">{busy ? 'Đang tính…' : 'Không có người nào trong bộ lọc này.'}</p>}
       {rows.length > 0 && (
         <>
+          <p className="muted mini-note">{periodLabel} · {rows.length} người</p>
           <div className="mini-kpis">
             <MiniStat label="Thực nhận" value={shortMoney(all.net)} tone="info" title={fmtVnd(all.net)} />
             <MiniStat label="Giờ công" value={hoursText(all.hours)} title={`${rows.length} người`} />
             <MiniStat label="Lương và công" value={shortMoney(all.hourly + all.salary + all.piece)} title={fmtVnd(all.hourly + all.salary + all.piece)} />
             <MiniStat label="Thưởng−phạt−ứng" value={shortMoney(all.bonus - all.deduction - all.advance)} tone={all.bonus - all.deduction - all.advance < 0 ? 'warn' : 'ok'} title="Thưởng trừ phạt trừ tạm ứng" />
+          </div>
+          <div className="chips" role="tablist" aria-label="Cách xem">
+            <button role="tab" aria-selected={listMode === 'list'} className={listMode === 'list' ? 'chip active' : 'chip'} onClick={() => setListMode('list')}>Danh sách</button>
+            <button role="tab" aria-selected={listMode === 'team'} className={listMode === 'team' ? 'chip active' : 'chip'} onClick={() => setListMode('team')}>Theo phòng / tổ</button>
           </div>
           <div className="chips" role="tablist" aria-label="Lọc danh sách">
             {FILTERS.map((f) => (
@@ -208,13 +281,13 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
       )}
       {filter === 'todo' && sorted.length === 0 && rows.length > 0 && <p className="msg ok" role="status">Không có ai cần xử lý.</p>}
       {pneedle && sorted.length === 0 && <p className="muted">Không tìm thấy ai.</p>}
-      {rows.length > 0 && sorted.length > 0 && (view === 'team' ? groupByTeam(sorted).map((g) => (
+      {rows.length > 0 && sorted.length > 0 && (listMode === 'team' ? groupByTeam(sorted).map((g) => (
         <Collapsible key={g.team} title={g.team} summary={`${g.rows.length} người · ${hoursText(g.total.hours)} · ${fmtVnd(g.total.net)}`} defaultOpen>
-          <PayTable rows={g.rows} showCols={showCols} onOpen={open} total={sumRows(g.rows, `Tổng ${g.team}`)} />
+          <PayTable rows={g.rows} showCols={showCols} onOpen={openRow} total={sumRows(g.rows, `Tổng ${g.team}`)} />
         </Collapsible>
       )) : (
         <>
-          <PayTable rows={pageRows} showCols={showCols} onOpen={open} total={shownTotal} totalCount={sorted.length} />
+          <PayTable rows={pageRows} showCols={showCols} onOpen={openRow} total={shownTotal} totalCount={sorted.length} />
           {sorted.length > pn && <div className="btnrow"><button type="button" className="secondary" onClick={() => setPn((x) => x + 50)}>Xem thêm ({sorted.length - pn} người nữa)</button></div>}
         </>
       ))}
@@ -227,7 +300,7 @@ export function PayrollBook({ onGo }: { onGo?: (tab: TabId, section?: string) =>
           </div>
         </>
       )}
-      {ov && <p className="muted">Tính lúc {stamp(ov.generated_at)}. Số "ước tính" theo đơn giá hiện hành; chốt khi chủ khóa kỳ lương. Chủ chốt lương ngay ở đầu trang khi xem một tháng.</p>}
+      {ov && <p className="muted">Tính lúc {stamp(ov.generated_at)}. Số "ước tính" theo đơn giá hiện hành; chốt khi chủ khóa kỳ lương. {applied.month && applied.whole ? '' : 'Muốn tính và chốt lương tháng: chọn đúng một tháng (từ mùng 1 đến ngày cuối tháng), Phân khu và Nhân viên là Tất cả.'}</p>}
     </>
   );
 }
