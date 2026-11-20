@@ -539,3 +539,9 @@ Chủ sản phẩm duyệt theo đề xuất (20/11/2026). Dùng lại gói dùn
 - **Quản trị**: trang Khách tiềm năng (`admin_free_plan_leads`: đã dùng hết số vụ / sắp hết hạn / hết hạn, xuất CSV) và các cấu hình mới sửa được ở trang Cấu hình (tự duyệt, hạn mức, ngày thử, danh sách khóa).
 - **Giao diện app**: nhắc ở đầu màn khi còn ≤ 30 ngày hoặc đã hết hạn; nút nâng cấp thử ở Gói dịch vụ.
 - Chưa làm: đóng gói cửa hàng ứng dụng (đợt C–D), chặn nút in/PDF, ghi nhận lần chạm trần để chấm điểm khách.
+
+### D220 — Đợt C: chính sách bảo mật, xóa tài khoản trong app (migration 0234; `docs/HUONG_DAN_NOP_CUA_HANG.md`)
+- **Trang công khai `/chinh-sach`** (màn `PolicyScreen`, không cần đăng nhập; mục `#xoa-tai-khoan` là địa chỉ hướng dẫn xóa cho Google). Hộp đồng ý khi đăng ký có liên kết tới trang. Nội dung do người vận hành soạn, **cần luật sư rà soát** trước khi quảng bá rộng.
+- **Xóa tài khoản = yêu cầu có thời gian chờ** (`account_deletion_grace_days`, mặc định 14 ngày; người dùng hủy được): `request_account_deletion`, `cancel_account_deletion`, `my_account_deletion`. Quản trị thực hiện ở trang "Yêu cầu xóa tài khoản" (`admin_execute_account_deletion`; xóa sớm cần lý do; có nhật ký kiểm toán). Việc xóa dùng đúng logic `supabase/maintenance/delete_account.sql` (đã thành hàm `purge_account_data`): xóa cơ sở mà người này là chủ duy nhất cùng dữ liệu, hộ do HTX tạo, tài khoản nhân viên/máy chấm công; cơ sở khác chỉ gỡ liên kết. Quản trị nền tảng không xóa theo đường này. **Chưa tự chạy theo lịch**: quản trị bấm tay khi đến hạn.
+- Tài khoản thử cho người duyệt cửa hàng: quy trình tay trong `HUONG_DAN_NOP_CUA_HANG.md` (không thêm mã).
+- Chưa làm: ẩn giá/nút mua gói ở bản cửa hàng và đóng gói Android/iOS (đợt D).

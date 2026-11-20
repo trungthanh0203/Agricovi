@@ -82,7 +82,7 @@ export function PhoneSignupForm() {
         <input value={ref} maxLength={20} autoCapitalize="characters" placeholder="Ví dụ: DL-HUNG" onChange={(e) => setRef(e.target.value.toUpperCase())} />
         <small>Nếu người quen hoặc đại lý vật tư đưa mã cho bạn thì nhập vào đây, không có thì để trống.</small>
       </label>
-      <label className="check"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> <span>Đồng ý với điều khoản dịch vụ và chính sách bảo mật của hệ thống</span></label>
+      <label className="check"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> <span>Đồng ý với <a href="/chinh-sach" target="_blank" rel="noopener noreferrer">điều khoản dịch vụ và chính sách bảo mật</a> của hệ thống</span></label>
       <Turnstile onToken={onToken} />
       {error && <p className="msg error" role="alert">{error}</p>}
       <button type="submit" className="primary" disabled={busy}>{busy ? 'Đang gửi…' : 'Gửi đăng ký'}</button>

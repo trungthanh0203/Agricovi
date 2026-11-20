@@ -6,6 +6,7 @@ import { AuditPage, OrgDetailPage, OrgSummaryPage, OrgsPage, OverviewPage, Payme
 import { PartnersPage } from './partners';
 import { ActivityPage } from './activity';
 import { FreePlanLeadsPage } from './freeplan';
+import { DeletionRequestsPage } from './deletions';
 import '@agriconnect/admin-kit/src/styles.css';
 
 /**
@@ -23,6 +24,7 @@ const PAGES: { id: string; label: string; icon: string }[] = [
   { id: 'signups', label: 'Đăng ký chờ duyệt', icon: '📝' },
   { id: 'orders', label: 'Đơn mua gói', icon: '🛒' },
   { id: 'leads', label: 'Khách tiềm năng', icon: '🎯' },
+  { id: 'deletions', label: 'Yêu cầu xóa tài khoản', icon: '🗑️' },
   { id: 'plans', label: 'Gói và giá', icon: '🏷️' },
   { id: 'payments', label: 'Thanh toán', icon: '💵' },
   { id: 'partners', label: 'Đối tác', icon: '🤝' },
@@ -88,6 +90,7 @@ function Admin({ session }: { session: Session }) {
         {page === 'summary' && <OrgSummaryPage initialOrg={null} />}
         {page === 'signups' && <SignupsPage />}
         {page === 'orders' && <PlanOrdersPage />}
+        {page === 'deletions' && <DeletionRequestsPage />}
         {page === 'leads' && <FreePlanLeadsPage onOpenOrg={(id) => { setPage('orgs'); setOrgId(id); }} />}
         {page === 'plans' && <PlansPage />}
         {page === 'payments' && <PaymentsPage />}

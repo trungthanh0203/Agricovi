@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Collapsible } from '../components/Collapsible';
+import { DeleteAccountSection } from '../components/DeleteAccountSection';
 import { InvitationsPanel } from '../components/InvitationsPanel';
 import { MigrateImages } from '../components/MigrateImages';
 import { OrgDetailsSection } from '../components/OrgDetailsSection';
@@ -123,9 +124,11 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
         </Collapsible>
       )}
 
+      {!isPlatformAdmin && <DeleteAccountSection />}
+
       <div className="card">
         <div className="verline">
-          <p className="muted">Phiên bản app: {__APP_VERSION__}</p>
+          <p className="muted">Phiên bản app: {__APP_VERSION__} · <a href="/chinh-sach" target="_blank" rel="noopener noreferrer">Chính sách bảo mật</a></p>
           {isPlatformAdmin && <a className="adminlock" href={ADMIN_URL} aria-label="Quản trị nền tảng" title="Quản trị nền tảng">🔒</a>}
         </div>
         {!ownsOrg && !isStaff && <div className="actions"><button className="secondary" onClick={onAddOrg}>Tạo cơ sở của riêng tôi</button></div>}

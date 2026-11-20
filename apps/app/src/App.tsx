@@ -29,6 +29,7 @@ import { fetchKioskInfo, readCachedKiosk, type KioskInfo } from './lib/kiosk';
 import { fetchOwnerSignup, type OwnerSignup } from './lib/phoneSignup';
 import { OwnerPendingScreen } from './screens/OwnerPendingScreen';
 import { FreePlanBanner } from './components/FreePlanBanner';
+import { PolicyScreen } from './screens/PolicyScreen';
 import { KioskScreen } from './screens/KioskScreen';
 import { GUIDE_JUMP_EVENT, type GuideJump } from './lib/helpEvents';
 
@@ -49,6 +50,7 @@ const TAB_ICON: Record<TabId, string> = { home: '🏠', production: '🌱', repo
 
 export function App() {
   useAutoScrollToForm(); // bấm Sửa/Thêm mới thì cuộn tới form
+  if (/^\/chinh-sach\/?$/.test(window.location.pathname)) return <PolicyScreen />;   // trang công khai, không cần đăng nhập (D220)
   if (!supabase) return <SetupNotice />;
   return (
     <AuthProvider>

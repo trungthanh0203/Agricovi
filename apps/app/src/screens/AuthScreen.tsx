@@ -158,7 +158,7 @@ export function AuthScreen() {
             </label>
           )}
           {effective === 'signup' && (
-            <label className="check"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> <span>Đồng ý với điều khoản dịch vụ và chính sách bảo mật của hệ thống</span></label>
+            <label className="check"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> <span>Đồng ý với <a href="/chinh-sach" target="_blank" rel="noopener noreferrer">điều khoản dịch vụ và chính sách bảo mật</a> của hệ thống</span></label>
           )}
 
           {error && <p className="msg error" role="alert">{error}</p>}
