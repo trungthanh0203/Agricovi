@@ -379,7 +379,10 @@ export function CycleDetailScreen({ cycleId, onClose, onLog, onGo, openQr, openC
       )}
 
       {logOk && canLogHere && (
-        <button className="secondary" onClick={() => onLog({ cycleId, stageId: prog.current?.status === 'in_progress' ? prog.current.id : null })}>Ghi việc cho vụ này</button>
+        <button className="secondary" onClick={() => onLog({ cycleId, stageId: prog.current?.status === 'in_progress' ? prog.current.id : null })}>Ghi việc vụ này</button>
+      )}
+      {canManage && (cycle.status === 'active' || cycle.status === 'paused') && (
+        <button className="secondary" disabled={busy || !online} onClick={() => void run(() => setCycleStatus(cycleId, cycle.status === 'active' ? 'paused' : 'active')).catch(() => undefined)}>{cycle.status === 'active' ? 'Tạm dừng vụ' : 'Tiếp tục vụ'}</button>
       )}
     </div>
   );

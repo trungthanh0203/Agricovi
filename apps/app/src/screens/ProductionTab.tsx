@@ -319,12 +319,19 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
             {hasAnyStat(statById.get(c.id)) && <CycleStatsStrip s={statById.get(c.id)!} countUnit={cycleCountUnit(c, cropTypes)} areaLabel={infoLabels(cropTypes.find((t) => t.id === c.crop_type_id)?.kind).area} />}
             <div className="actions">
               <button className="secondary" onClick={() => onOpenCycle(c.id)}>Quản lý vụ</button>
-              {statById.get(c.id)?.profit != null && (
-                <button className="secondary soft-toggle" aria-expanded={reportId === c.id} onClick={() => setReportId(reportId === c.id ? null : c.id)}><span>Báo cáo lãi lỗ (in/PDF)</span><i aria-hidden="true" /></button>
+              {canManage && c.status === 'preparing' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'active')}>Bắt đầu sản xuất</button>}
+              {canManage && (c.status === 'active' || c.status === 'paused') && (
+                <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'ended', 'Kết thúc vụ này? Nhật ký và số liệu vẫn được giữ lại.')}>Kết thúc vụ</button>
               )}
-              <button className="secondary soft-toggle" aria-expanded={qrId === c.id} onClick={() => setQrId(qrId === c.id ? null : c.id)}><span>Mã QR của vụ</span><i aria-hidden="true" /></button>
+              {canManage && <button className="secondary" disabled={!online} onClick={() => setEditId(editId === c.id ? null : c.id)}>Sửa vụ</button>}
+              {canManage && c.status === 'preparing' && <button className="secondary" disabled={!online} onClick={() => { setMoveId(moveId === c.id ? null : c.id); setMoveTo(''); }}>Đổi ô sản xuất</button>}
+              {canManage && <button className="secondary" disabled={!online} onClick={() => void (c.status === 'preparing' ? discard(c) : remove(c))}>Xóa vụ</button>}
+              <button className="secondary soft-toggle" aria-expanded={qrId === c.id} onClick={() => setQrId(qrId === c.id ? null : c.id)}><span>Mã QR vụ</span><i aria-hidden="true" /></button>
               {isOwner(active.roles) && c.owner_org_id === active.id && !active.simple && (
                 <button className="secondary soft-toggle" aria-expanded={pubId === c.id} onClick={() => setPubId(pubId === c.id ? null : c.id)}><span>🌐 Mở công khai website</span><i aria-hidden="true" /></button>
+              )}
+              {statById.get(c.id)?.profit != null && (
+                <button className="secondary soft-toggle" aria-expanded={reportId === c.id} onClick={() => setReportId(reportId === c.id ? null : c.id)}><span>Báo cáo lãi lỗ</span><i aria-hidden="true" /></button>
               )}
             </div>
             {pubId === c.id && <PublishCycle cycleId={c.id} />}
@@ -380,21 +387,6 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
                 </div>
               );
             })()}
-            {canManage && (
-              <div className="actions">
-                {c.status === 'preparing' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'active')}>Bắt đầu sản xuất</button>}
-                {c.status === 'active' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'paused')}>Tạm dừng</button>}
-                {c.status === 'paused' && <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'active')}>Tiếp tục</button>}
-                <button className="secondary" disabled={!online} onClick={() => setEditId(editId === c.id ? null : c.id)}>Sửa vụ</button>
-                {c.status === 'preparing' && <button className="secondary" disabled={!online} onClick={() => { setMoveId(moveId === c.id ? null : c.id); setMoveTo(''); }}>Đổi ô sản xuất</button>}
-                <button className="secondary" disabled={!online} onClick={() => void (c.status === 'preparing' ? discard(c) : remove(c))}>Xóa vụ</button>
-                {(c.status === 'active' || c.status === 'paused') && (
-                  <button className="secondary" disabled={!online} onClick={() => void change(c.id, 'ended', 'Kết thúc vụ này? Nhật ký và số liệu vẫn được giữ lại.')}>
-                    Kết thúc vụ
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         );
       })}

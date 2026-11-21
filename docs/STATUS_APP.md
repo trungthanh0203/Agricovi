@@ -3,6 +3,7 @@
 Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi tiết từng mốc cũ (bước C, Giai đoạn 2, lương, Đợt 1…): `STATUS_APP_LICHSU.md` (chỉ tra cứu khi cần, không đọc hết).
 
 ## Đang làm
+- **21/11/2026 (D224, giao diện, không migration)**: danh sách Vụ nuôi trồng sắp lại nút (Quản lý vụ, Kết thúc, Sửa, Xóa, Mã QR vụ, Mở công khai, Báo cáo lãi lỗ); Tạm dừng/Tiếp tục vào Quản lý vụ sau nút "Ghi việc vụ này". Typecheck sạch; chưa thử trên giao diện thật.
 - **21/11/2026 (D223, giao diện, không migration)**: đổi thứ tự mục (Khai báo: Việc + Quy trình mẫu sau Khách hàng; Sản xuất: Thu hoạch + Doanh thu trước Chấm công); chọn phân khu trước vụ thêm ở Báo cáo tổng hợp, Tổng kết vụ, Sổ nhật ký, Hồ sơ xuất khẩu, Xuất kho, Trả vật tư, Phiếu khoán, Hồ sơ thương mại. Typecheck sạch; chưa thử trên giao diện thật.
 - **21/11/2026 (D222, giao diện, không migration)**: **giao diện máy tính A1**: menu dọc trái từ 1024 px, nội dung căn giữa, lưới nhiều cột; cài đặt có hai lựa chọn điện thoại/máy tính. Typecheck sạch; xem thử khung giả 1366/375 px, chưa xem từng màn thật. Còn A2/A3 và ghi nhận độ rộng màn hình.
 - **21/11/2026 (D221, migration 0235, cần `db push`)**: chỉnh gói Khởi đầu: hộ của HTX có gói riêng (1 khu/1 ô/1 vụ), công khai vụ + tin giao thương, đọc ảnh AI 2 lần/tháng, bỏ nâng cấp thử 30 ngày. Test `free_plan_b`, `trial_scope`, `htx_household`, `invoice_scan` qua.
