@@ -1,0 +1,92 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><style>
+:root{--g:#168043;--gd:#0e5e2e;--gdd:#0b3f20;--o:#f08a24;--cream:#f5f2e6;--ink:#17241b;--mut:#5b6a60;--line:#dcd8c6}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1350px;overflow:hidden}
+body{font-family:'Segoe UI','Segoe UI Emoji',Arial,sans-serif;color:var(--ink);background:var(--cream);position:relative}
+body:before{content:'';position:absolute;inset:0;background:radial-gradient(900px 500px at 100% 0,#dff0e2 0,transparent 70%),radial-gradient(700px 500px at 0 100%,#fbe7cf 0,transparent 70%)}
+.wrap{position:relative;height:100%;padding:44px 64px 0;display:flex;flex-direction:column}
+.top{display:flex;justify-content:space-between;align-items:center}
+.top img{height:62px}
+.pg{font-weight:700;color:var(--gd);background:#fff;border:2px solid var(--line);border-radius:30px;padding:6px 20px;font-size:26px;letter-spacing:1px}
+.kick{margin-top:34px;display:inline-block;align-self:flex-start;background:var(--g);color:#fff;font-weight:700;font-size:26px;letter-spacing:2px;text-transform:uppercase;padding:8px 22px;border-radius:30px}
+h1{font-size:74px;line-height:1.08;font-weight:800;margin-top:18px;color:var(--gdd);letter-spacing:-1px}
+h1 em{font-style:normal;color:var(--o)}
+.sub{font-size:32px;color:var(--mut);margin-top:14px;line-height:1.35}
+ul.ck{list-style:none;margin-top:26px;display:flex;flex-direction:column;gap:14px}
+ul.ck li{font-size:34px;line-height:1.28;padding-left:58px;position:relative;font-weight:600}
+ul.ck li:before{content:'✓';position:absolute;left:0;top:3px;width:40px;height:40px;border-radius:50%;background:var(--g);color:#fff;font-size:26px;font-weight:800;text-align:center;line-height:40px}
+ul.ck li small{display:block;font-weight:400;font-size:26px;color:var(--mut)}
+.vis{flex:1;position:relative;margin-top:18px;min-height:0}
+.foot{margin:0 -64px;background:var(--gd);color:#fff;height:92px;padding:0 64px;display:flex;align-items:center;justify-content:space-between;font-size:27px;font-weight:600;flex:none}
+.foot b{color:#ffd9a8;font-size:32px}
+.foot span{opacity:.95}
+.tag{display:inline-block;background:#fff3e0;color:#b25e00;border:2px solid #f6c98f;border-radius:24px;padding:4px 16px;font-size:24px;font-weight:700}
+.card{background:#fff;border:2px solid var(--line);border-radius:26px;box-shadow:0 10px 30px rgba(14,94,46,.10)}
+/* khung điện thoại */
+.phone{position:absolute;width:330px;height:650px;background:#17241b;border-radius:48px;padding:12px;box-shadow:0 24px 50px rgba(0,0,0,.28)}
+.phone .scr{width:100%;height:100%;background:#f7faf7;border-radius:38px;overflow:hidden;position:relative;font-size:17px}
+.phone .scr:before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#17241b;border-radius:12px;z-index:3}
+.ah{background:var(--g);color:#fff;padding:44px 16px 14px;font-weight:700;font-size:21px}
+.ab{padding:12px}
+.ac{background:#fff;border:1px solid #dfe6df;border-radius:14px;padding:10px 12px;margin-bottom:9px}
+.ac b{display:block;font-size:17px}
+.ac small{color:#6b7a70;font-size:14px}
+.chip{display:inline-block;background:#e6f4ea;color:var(--gd);border-radius:20px;padding:6px 12px;margin:0 6px 7px 0;font-weight:600;font-size:16px}
+.chip.on{background:var(--g);color:#fff}
+.btn{background:var(--g);color:#fff;text-align:center;border-radius:12px;padding:12px;font-weight:700;font-size:19px;margin-top:10px}
+.tabs{position:absolute;bottom:0;left:0;right:0;height:58px;background:#fff;border-top:1px solid #dfe6df;display:flex;justify-content:space-around;align-items:center;font-size:13px;color:#6b7a70}
+.tabs i{font-style:normal;display:block;text-align:center}
+.tabs i.on{color:var(--g);font-weight:700}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:15px;padding:5px 0;border-bottom:1px dashed #e1e7e1}
+.row:last-child{border:none}
+.ok{color:var(--g);font-weight:700}
+/* khung máy tính */
+.desk{position:absolute;background:#fff;border-radius:18px;border:2px solid #cfd6cf;box-shadow:0 24px 50px rgba(0,0,0,.22);overflow:hidden}
+.desk .bar{height:36px;background:#e8ece8;display:flex;align-items:center;gap:7px;padding:0 14px;font-size:13px;color:#6b7a70}
+.desk .bar i{width:11px;height:11px;border-radius:50%;background:#c3cac3;display:block}
+.desk .bar u{margin-left:12px;text-decoration:none;background:#fff;border-radius:12px;padding:3px 14px;flex:1;max-width:340px}
+.dbody{display:flex;height:calc(100% - 36px)}
+.side{width:178px;background:var(--gd);color:#d7efdf;padding:14px 10px;font-size:14px;flex:none}
+.side b{display:block;color:#fff;font-size:17px;margin-bottom:12px}
+.side div{padding:8px 10px;border-radius:8px;margin-bottom:3px}
+.side div.on{background:rgba(255,255,255,.18);color:#fff;font-weight:700}
+.main{flex:1;padding:14px 16px;background:#f7faf7;font-size:14px;overflow:hidden}
+.main h4{font-size:18px;margin-bottom:10px;color:var(--gdd)}
+.kpis{display:flex;gap:10px;margin-bottom:12px}
+.kpi{flex:1;background:#fff;border:1px solid #dfe6df;border-radius:12px;padding:9px 11px}
+.kpi small{color:#6b7a70;font-size:12px;display:block}
+.kpi b{font-size:21px}
+.kpi b.g{color:var(--g)}
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:10px;overflow:hidden}
+th{background:#e6f4ea;text-align:left;padding:7px 9px;color:var(--gd)}
+td{padding:7px 9px;border-bottom:1px solid #eef1ee}
+.bars{display:flex;align-items:flex-end;gap:8px;height:90px;background:#fff;border:1px solid #dfe6df;border-radius:12px;padding:10px}
+.bars i{flex:1;background:var(--g);border-radius:5px 5px 0 0;display:block}
+.bars i.o{background:var(--o)}
+.grid{display:grid;gap:16px}
+
+.hero{margin:0 -64px;background:linear-gradient(135deg,#0e5e2e,#168043 60%,#2a9d5c);color:#fff;padding:26px 64px 30px;position:relative;overflow:hidden}
+.hero:after{content:'';position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero .set{font-size:23px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ffd9a8}
+.hero h1{color:#fff;margin-top:8px;font-size:68px}
+.hero h1 em{color:#ffc46b}
+.hero .sub{color:#e3f4e9;margin-top:10px;font-size:29px}
+.topb{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px}
+.topb .pg{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.35)}
+.tip{background:#fff7e6;border:2px solid #f6c98f;border-left:10px solid var(--o);border-radius:18px;padding:14px 20px;font-size:24px;line-height:1.35;color:#5a3a00}
+.tip b{color:#b25e00}
+.num{display:inline-flex;width:46px;height:46px;border-radius:50%;background:var(--o);color:#fff;font-weight:800;font-size:28px;align-items:center;justify-content:center;flex:none}
+.nextbar{margin-top:auto;display:flex;justify-content:flex-end;font-size:22px;color:var(--mut);font-weight:700;padding:0 0 10px}
+</style></head><body><div class="wrap" style="padding-top:0">
+<div class="hero"><div class="topb"><img src="../../assets/acovin-horizontal-white.png" style="height:56px"><div class="pg">05 / 07</div></div>
+<div class="set">Bộ B1 · Sản xuất và nhật ký</div><h1>Mở vụ ra là biết<br><em>hôm nay làm gì</em></h1><div class="sub">Một màn hình: tiến độ, việc đến hạn, chi phí và lãi lỗ tạm tính.</div></div>
+<div class="vis" style="margin-top:22px"><div class="phone" style="left:0;top:0;transform:scale(1.04);transform-origin:top left"><div class="scr"><div class="ah">Quản lý vụ</div><div class="ab">
+<div class="ac"><small>Dưa lưới Hè · Nhà màng 1</small><b>Đang chăm sóc · ngày 32/75</b>
+<div style="height:10px;background:#e6f4ea;border-radius:6px;margin-top:8px"><div style="width:43%;height:10px;background:var(--g);border-radius:6px"></div></div></div>
+<div class="ac" style="background:#fff7e6;border-color:#f6c98f"><b style="color:#b25e00">⏰ Việc đến hạn hôm nay</b>
+<div class="row"><span>Bón phân đợt 2</span><span class="chip on" style="margin:0">Ghi việc</span></div>
+<div class="row"><span>Tưới nhỏ giọt</span><span class="ok">✓ Đã ghi</span></div></div>
+<div class="ac"><small>Số liệu tạm tính</small><div class="row"><span>Chi phí</span><b>47,8 tr</b></div><div class="row"><span>Thu hoạch</span><b>0 kg</b></div></div>
+<div class="ac"><div class="row"><span>🌱 Gieo trồng</span><span class="ok">Xong</span></div><div class="row"><span>🌿 Chăm sóc</span><b style="color:var(--o)">Đang làm</b></div><div class="row"><span>🧺 Thu hoạch</span><span>Sắp tới</span></div></div></div><div class="tabs"><i class="">🏠<br>Tổng quan</i><i class="on">🌱<br>Sản xuất</i><i class="">✍️<br>Ghi việc</i><i class="">📦<br>Kho</i><i class="">☰<br>Thêm</i></div></div></div>
+<div style="position:absolute;left:380px;right:0;top:0;display:flex;flex-direction:column;gap:12px"><div class="card" style="padding:14px 16px;"><div style="display:flex;gap:12px;align-items:center"><div style="font-size:42px">⏰</div><div><div style="font-size:25px;font-weight:800;color:var(--gd)">Việc đến hạn hôm nay</div><div style="font-size:20px;color:var(--mut);line-height:1.3">Nhắc việc phải làm mà chưa ghi, bấm Ghi việc ngay trên dòng đó</div></div></div></div><div class="card" style="padding:14px 16px;"><div style="display:flex;gap:12px;align-items:center"><div style="font-size:42px">▶️</div><div><div style="font-size:25px;font-weight:800;color:var(--gd)">Bắt đầu và Xong</div><div style="font-size:20px;color:var(--mut);line-height:1.3">Người quản lý bấm khi việc thật sự bắt đầu, hoàn thành</div></div></div></div><div class="card" style="padding:14px 16px;"><div style="display:flex;gap:12px;align-items:center"><div style="font-size:42px">🔄</div><div><div style="font-size:25px;font-weight:800;color:var(--gd)">Lịch tự dời theo thực tế</div><div style="font-size:20px;color:var(--mut);line-height:1.3">Làm sớm hay trễ, các việc phía sau tự dời</div></div></div></div><div class="card" style="padding:14px 16px;"><div style="display:flex;gap:12px;align-items:center"><div style="font-size:42px">✅</div><div><div style="font-size:25px;font-weight:800;color:var(--gd)">Xong là đủ nhật ký</div><div style="font-size:20px;color:var(--mut);line-height:1.3">Chỉ bấm Xong khi ghi đủ số lần cần thiết</div></div></div></div><div class="card" style="padding:14px 16px;"><div style="display:flex;gap:12px;align-items:center"><div style="font-size:42px">✎</div><div><div style="font-size:25px;font-weight:800;color:var(--gd)">Sửa riêng cho vụ này</div><div style="font-size:20px;color:var(--mut);line-height:1.3">Sửa, xóa việc chưa làm, mở lại việc đã xong</div></div></div></div><div class="card" style="padding:14px 16px;"><div style="display:flex;gap:12px;align-items:center"><div style="font-size:42px">📈</div><div><div style="font-size:25px;font-weight:800;color:var(--gd)">Chi phí, thu hoạch, lãi lỗ</div><div style="font-size:20px;color:var(--mut);line-height:1.3">Tạm tính ngay trên thẻ vụ</div></div></div></div></div></div>
+<div class="nextbar">Ảnh tiếp: Ghi việc hằng ngày ➜</div><div class="foot"><b>acovin.com</b><span>Zalo 0989 099 454 · ĐT 0981 771 333</span></div></div></body></html>
