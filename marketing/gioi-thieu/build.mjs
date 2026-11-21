@@ -88,7 +88,7 @@ td{padding:7px 9px;border-bottom:1px solid #eef1ee}
 `;
 
 const brandTop = (n) => `<div class="top"><img src="../assets/acovin-horizontal.png"><div class="pg">${String(n).padStart(2, '0')} / ${TOTAL}</div></div>`;
-const foot = () => `<div class="foot"><b>${C.web}</b><span>Zalo ${C.zalo} · ${C.facebook}</span></div>`;
+const foot = () => `<div class="foot"><b>${C.web}</b><span>Zalo ${C.zalo} · ĐT ${C.phone}</span></div>`;
 function slide(n, kicker, title, items, vis, sub) {
   const ck = items && items.length ? `<ul class="ck">${items.map((t) => `<li>${t}</li>`).join('')}</ul>` : '';
   return `<!doctype html><html lang="vi"><head><meta charset="utf-8"><style>${CSS}</style></head><body><div class="wrap">${brandTop(n)}<div class="kick">${kicker}</div><h1>${title}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}${ck}<div class="vis">${vis}</div>${foot()}</div></body></html>`;
@@ -139,61 +139,83 @@ slides.push(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><style>$
 <div class="badge"><span>MIỄN PHÍ</span><b>12</b><i>THÁNG</i></div>
 <div class="kick">Cho hộ và HTX Việt Nam</div>
 <h1 style="font-size:78px">Quản lý <em>trồng trọt</em><br>& <em>chăn nuôi</em><br>trên một ứng dụng</h1>
-<div class="sub" style="max-width:760px">Ghi nhật ký, kho, chi phí, thu hoạch, nhân công, xem lãi lỗ từng vụ. Có sẵn website để khách tìm thấy bạn.</div>
+<div class="sub" style="max-width:760px">Đủ chức năng: nhật ký, kho, chi phí, thu hoạch, nhân công, HTX, lãi lỗ từng vụ và website kết nối. Tặng gói Khởi đầu miễn phí 12 tháng.</div>
 <div class="chips"><div>📱 Dùng trên điện thoại</div><div>💻 Dùng trên máy tính</div><div>🌐 Có website kết nối mua bán</div></div>
 <div class="vis">${deskDash('left:0;top:50px;width:640px;height:380px')}${phoneLog('right:0;top:0;transform:scale(.7);transform-origin:top right')}</div>
 ${foot()}</div></body></html>`);
 
+const li = (arr, fs = 22) => `<div style="font-size:${fs}px;line-height:1.38;color:var(--mut);text-align:left;margin-top:8px">${arr.map((t) => `<div style="padding-left:24px;position:relative;margin-bottom:4px"><span style="position:absolute;left:0;color:var(--g);font-weight:800">✓</span>${t}</div>`).join('')}</div>`;
+const mini = (i, t, d, st = '') => `<div class="card" style="padding:14px 16px;${st}"><div style="display:flex;gap:12px;align-items:center"><div style="font-size:42px">${i}</div><div><div style="font-size:25px;font-weight:800;color:var(--gd)">${t}</div><div style="font-size:20px;color:var(--mut);line-height:1.3">${d}</div></div></div></div>`;
+const banner = (h, st = '') => `<div class="card" style="padding:16px 24px;font-size:26px;font-weight:600;background:#e6f4ea;border-color:#b7dcc3;${st}">${h}</div>`;
+const star = '<span class="tag" style="font-size:20px;padding:2px 12px;margin-left:8px;vertical-align:middle">★ Gói đầy đủ</span>';
+
 /* 02 Toàn cảnh */
-slides.push(slide(2, 'Toàn cảnh', 'Ghi một lần,<br><em>dùng nhiều nơi</em>', ['Ghi chép ở app: điện thoại hoặc máy tính', 'Website giúp khách hàng và đối tác tìm thấy bạn', 'Quản trị an toàn, mỗi người chỉ thấy phần được cấp'],
-  `<div style="display:flex;gap:18px;align-items:stretch;margin-top:10px">
-${[['📱', 'APP', 'Nhật ký, kho, chi phí, thu hoạch, nhân công, lãi lỗ', 'var(--g)'], ['🌐', 'WEBSITE', 'Hồ sơ cơ sở, gian hàng, giao thương, báo giá', 'var(--o)'], ['🔒', 'QUẢN TRỊ', 'Phân quyền, duyệt nội dung, dữ liệu riêng tư', 'var(--gd)']].map(([i, t, d, c], k) => `${k ? '<div style="align-self:center;font-size:54px;color:var(--o);font-weight:800">➜</div>' : ''}<div class="card" style="flex:1;padding:22px 16px;text-align:center;border-top:10px solid ${c}"><div style="font-size:72px">${i}</div><div style="font-size:34px;font-weight:800;color:${c};margin:6px 0">${t}</div><div style="font-size:23px;color:var(--mut);line-height:1.3">${d}</div></div>`).join('')}</div>
-<div class="card" style="margin-top:26px;padding:20px 26px;font-size:28px;font-weight:600;background:#e6f4ea;border-color:#b7dcc3">Dữ liệu vận hành của bạn <b style="color:var(--g)">luôn riêng tư</b>. Website chỉ hiện những gì bạn đã chọn và được duyệt.</div>`));
+slides.push(slide(2, 'Toàn cảnh hệ thống', 'Ghi một lần,<br><em>dùng nhiều nơi</em>', ['Ghi chép ở app: tự cộng vào kho, chi phí, báo cáo', 'Website giúp khách hàng và đối tác tìm thấy bạn', 'Quản trị an toàn, mỗi người chỉ thấy phần được cấp'],
+  `<div style="display:flex;gap:14px;align-items:stretch;margin-top:6px">
+${[['📱', 'APP', 'var(--g)', ['Điện thoại và máy tính', 'Ghi việc cả khi mất sóng', 'Kho, chi phí, lãi lỗ, báo cáo']], ['🌐', 'WEBSITE', 'var(--o)', ['Hồ sơ và gian hàng', 'Giao thương, báo giá', 'Tin tức, giá nông sản']], ['🔒', 'QUẢN TRỊ', 'var(--gd)', ['Phân quyền từng người', 'Duyệt nội dung công khai', 'Dữ liệu riêng tư mặc định']]].map(([i, t, c, l], k) => `${k ? '<div style="align-self:center;font-size:44px;color:var(--o);font-weight:800">➜</div>' : ''}<div class="card" style="flex:1;padding:20px 14px;text-align:center;border-top:10px solid ${c}"><div style="font-size:68px">${i}</div><div style="font-size:32px;font-weight:800;color:${c};margin:4px 0">${t}</div>${li(l, 21)}</div>`).join('')}</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px">${mini('⚡', 'Nhập một lần', 'Việc ghi trong ngày tự đi vào kho, chi phí, báo cáo')}${mini('🌾', 'Trồng trọt và chăn nuôi', 'Cây ăn trái, rau màu, heo, gà, thủy sản')}</div>
+${banner('Dữ liệu vận hành của bạn <b style="color:var(--g)">luôn riêng tư</b>. Website chỉ hiện những gì bạn đã chọn và được duyệt.', 'margin-top:16px')}`));
 
 /* 03 Ai dùng */
 slides.push(slide(3, 'Ai dùng, thấy gì', 'Mỗi người<br><em>một cách nhìn</em>', ['Chủ cơ sở thấy toàn bộ và cấp quyền cho từng người', 'Nhân viên chỉ thấy việc của mình, ghi việc rất nhanh'],
-  `<div class="grid" style="grid-template-columns:1fr 1fr;margin-top:8px">${[['🧑‍🌾', 'Hộ nuôi trồng', 'Ghi việc, theo dõi chi phí, thu hoạch, lãi lỗ từng vụ'], ['🏢', 'HTX', 'Quản lý nhiều hộ thành viên, thu mua, hợp đồng bao tiêu'], ['👷', 'Nhân viên', 'Mở app là ghi việc, chấm công; chỉ thấy phần được giao'], ['🛒', 'Người mua', 'Tìm trên website, xem hồ sơ, báo giá, quét QR truy xuất']].map(([i, t, d]) => `<div class="card" style="padding:22px 22px 24px"><div style="font-size:64px">${i}</div><div style="font-size:34px;font-weight:800;color:var(--gd);margin:6px 0">${t}</div><div style="font-size:24px;color:var(--mut);line-height:1.32">${d}</div></div>`).join('')}</div>`));
+  `<div class="grid" style="grid-template-columns:1fr 1fr;gap:14px;margin-top:4px">${[['🧑‍🌾', 'Hộ nuôi trồng', ['Ghi việc, nhật ký hằng ngày', 'Chi phí, thu hoạch, doanh thu', 'Lãi lỗ từng vụ, từng khu']], ['🏢', 'HTX', ['Quản lý nhiều hộ thành viên', 'Thu mua, hợp đồng bao tiêu', 'Truy xuất về từng hộ']], ['👷', 'Nhân viên', ['Mở app là ghi việc, chấm công', 'Chỉ thấy phần được giao', 'Dùng được khi mất sóng']], ['🛒', 'Người mua', ['Tìm cơ sở, gian hàng trên web', 'Xem hồ sơ, xin báo giá', 'Quét QR xem nguồn gốc']]].map(([i, t, l]) => `<div class="card" style="padding:18px 20px"><div style="display:flex;align-items:center;gap:12px"><div style="font-size:56px">${i}</div><div style="font-size:33px;font-weight:800;color:var(--gd)">${t}</div></div>${li(l, 22)}</div>`).join('')}</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px">${mini('🔑', 'Nhiều vai trò', 'Một người có thể giữ nhiều vai trò')}${mini('🎚️', 'Cấp quyền từng mục', 'Kho, thu hoạch, chi phí, doanh thu')}</div>`));
 
 /* 04 Bản đồ tính năng */
-const feats = [['🌱', 'Vụ & phân khu'], ['📒', 'Nhật ký'], ['📅', 'Quy trình mẫu'], ['🔔', 'Nhắc việc'], ['📦', 'Kho vật tư'], ['💸', 'Chi phí'], ['🧺', 'Thu hoạch'], ['💰', 'Doanh thu'], ['👷', 'Nhân công'], ['🤝', 'HTX & hộ'], ['📊', 'Báo cáo'], ['🧾', 'Đọc hóa đơn AI'], ['🔳', 'QR truy xuất'], ['🌐', 'Website'], ['📣', 'Giao thương'], ['🔒', 'Phân quyền']];
+const feats = [['🌱', 'Vụ & phân khu'], ['📒', 'Nhật ký'], ['📅', 'Quy trình mẫu'], ['🔔', 'Nhắc việc'], ['📦', 'Kho vật tư', 1], ['💸', 'Chi phí'], ['🧺', 'Thu hoạch'], ['💰', 'Doanh thu'], ['👷', 'Nhân công', 1], ['🤝', 'HTX & hộ', 1], ['📊', 'Báo cáo, xuất Excel', 1], ['🧾', 'Đọc hóa đơn AI'], ['🔳', 'QR truy xuất'], ['🌐', 'Website'], ['📣', 'Giao thương'], ['🔒', 'Phân quyền', 1]];
 slides.push(slide(4, 'Bản đồ tính năng', 'Có <em>đủ</em> những gì<br>bạn cần mỗi ngày', null,
-  `<div class="grid" style="grid-template-columns:repeat(4,1fr);gap:14px;margin-top:10px">${feats.map(([i, t]) => `<div class="card" style="padding:18px 6px 14px;text-align:center"><div style="font-size:54px">${i}</div><div style="font-size:23px;font-weight:700;margin-top:4px;color:var(--gdd)">${t}</div></div>`).join('')}</div>
-<div class="card" style="margin-top:22px;padding:16px 24px;font-size:27px;font-weight:600;text-align:center;background:#e6f4ea;border-color:#b7dcc3">Từ cây ăn trái, rau màu đến heo, gà, thủy sản: cùng một cách dùng</div>`,
+  `<div class="grid" style="grid-template-columns:repeat(4,1fr);gap:14px;margin-top:10px">${feats.map(([i, t, s]) => `<div class="card" style="padding:18px 6px 14px;text-align:center;position:relative">${s ? '<div style="position:absolute;top:8px;right:12px;color:var(--o);font-size:26px;font-weight:800">★</div>' : ''}<div style="font-size:54px">${i}</div><div style="font-size:22px;font-weight:700;margin-top:4px;color:var(--gdd)">${t}</div></div>`).join('')}</div>
+${banner('<b style="color:var(--o)">★</b> = dùng đầy đủ ở gói Hộ / HTX. Gói Khởi đầu miễn phí có bản gọn hoặc giới hạn số lượng. Dùng cho cả trồng trọt lẫn chăn nuôi.', 'margin-top:20px;font-size:24px')}`,
   'Nhật ký, kho, chi phí, nhân công, HTX, báo cáo và website, tất cả trong một hệ thống.'));
 
 /* 05 Ghi việc */
 slides.push(slide(5, 'Ghi việc mỗi ngày', 'Chạm vài lần<br>là <em>xong việc</em>', ['<b>Dùng được cả khi mất sóng</b>, có mạng tự gửi lại', 'Quy trình mẫu theo từng cây, vật nuôi: nhắc đúng lúc', 'Tưới, bón, phun thuốc, cho ăn, tiêm phòng: chọn là ghi'],
-  `${phoneLog('left:40px;top:0;transform:scale(.98);transform-origin:top left')}
-<div class="card" style="position:absolute;right:0;top:60px;width:470px;padding:22px"><div style="font-size:28px;font-weight:800;color:var(--gd);margin-bottom:12px">📅 Việc cần làm tuần này</div>
-${[['Thứ 2', 'Tưới nhỏ giọt · Dưa lưới'], ['Thứ 3', 'Tiêm vắc-xin · Chuồng heo 2'], ['Thứ 5', 'Bón phân đợt 2 · Dưa lưới'], ['Thứ 6', 'Cân heo, ghi trọng lượng']].map(([d, t]) => `<div class="row" style="font-size:23px;padding:10px 0"><b style="color:var(--o);width:90px">${d}</b><span style="flex:1">${t}</span></div>`).join('')}</div>`));
+  `${phoneLog('left:0;top:0;transform:scale(.98);transform-origin:top left')}
+<div style="position:absolute;left:350px;right:0;top:0;display:flex;flex-direction:column;gap:14px">
+<div class="card" style="padding:18px 20px"><div style="font-size:26px;font-weight:800;color:var(--gd);margin-bottom:6px">📅 Việc cần làm tuần này</div>
+${[['T2', 'Tưới nhỏ giọt · Dưa lưới'], ['T3', 'Tiêm vắc-xin · Chuồng heo 2'], ['T5', 'Bón phân đợt 2 · Dưa lưới'], ['T6', 'Cân heo, ghi trọng lượng']].map(([d, t]) => `<div class="row" style="font-size:21px;padding:7px 0"><b style="color:var(--o);width:52px">${d}</b><span style="flex:1">${t}</span></div>`).join('')}</div>
+<div class="card" style="padding:18px 20px"><div style="font-size:26px;font-weight:800;color:var(--gd);margin-bottom:8px">📋 Quy trình mẫu</div>
+<div style="font-size:20px;color:var(--mut);margin-bottom:4px">🍈 Dưa lưới</div><div><span class="chip">Làm đất</span><span class="chip">Xuống giống</span><span class="chip on">Chăm sóc</span><span class="chip">Thu hoạch</span></div>
+<div style="font-size:20px;color:var(--mut);margin:4px 0">🐖 Heo thịt</div><div><span class="chip">Úm</span><span class="chip on">Nuôi</span><span class="chip">Xuất chuồng</span></div></div>
+${mini('📷', 'Kèm ảnh, ghi chú', 'Lưu hình ảnh làm bằng chứng cho từng việc')}
+${mini('📒', 'Sổ nhật ký theo mẫu VietGAP', 'Xem lại, in khi cần')}</div>`));
 
 /* 06 Lãi lỗ */
 slides.push(slide(6, 'Từ ghi chép đến lãi lỗ', 'Biết ngay<br>vụ này <em>lời hay lỗ</em>', ['Chi phí, vật tư xuất kho, nhân công tự cộng vào vụ', 'Thu hoạch và doanh thu ghi một lần', 'Xem lãi lỗ từng vụ, từng khu bất cứ lúc nào'],
-  `<div style="display:flex;gap:10px;align-items:center;margin-top:6px;font-size:23px;font-weight:700;color:var(--gd)">${['Chi phí', 'Kho', 'Thu hoạch', 'Doanh thu', 'Lãi / lỗ'].map((t, i) => `${i ? '<span style="color:var(--o);font-size:30px">➜</span>' : ''}<div class="card" style="padding:12px 14px;${i === 4 ? 'background:var(--g);color:#fff;border-color:var(--g)' : ''}">${t}</div>`).join('')}</div>
-${phoneProfit('right:30px;top:80px;transform:scale(.8);transform-origin:top right')}
-<div class="card" style="position:absolute;left:0;top:96px;width:450px;padding:22px;font-size:27px;line-height:1.45;font-weight:600">Ví dụ một vụ dưa lưới:<br><span style="color:var(--mut)">Doanh thu</span> 186 triệu<br><span style="color:var(--mut)">Chi phí</span> 121,4 triệu<br><b style="color:var(--g);font-size:38px">Lãi 64,6 triệu</b><div style="font-size:19px;color:var(--mut);margin-top:8px;font-weight:400">Số liệu mẫu minh họa</div></div>`));
+  `<div style="display:flex;gap:8px;align-items:center;font-size:21px;font-weight:700;color:var(--gd)">${['Chi phí', 'Kho', 'Thu hoạch', 'Doanh thu', 'Lãi / lỗ'].map((t, i) => `${i ? '<span style="color:var(--o);font-size:26px">➜</span>' : ''}<div class="card" style="padding:9px 12px;${i === 4 ? 'background:var(--g);color:#fff;border-color:var(--g)' : ''}">${t}</div>`).join('')}</div>
+${phoneProfit('right:0;top:70px;transform:scale(.93);transform-origin:top right')}
+<div style="position:absolute;left:0;top:70px;width:575px;display:flex;flex-direction:column;gap:14px">
+<div class="card" style="padding:18px 22px;font-size:26px;line-height:1.5;font-weight:600">Ví dụ một vụ dưa lưới<br><span style="color:var(--mut)">Doanh thu</span> 186 triệu · <span style="color:var(--mut)">Chi phí</span> 121,4 triệu<br><b style="color:var(--g);font-size:40px">Lãi 64,6 triệu (34,7%)</b><div style="font-size:18px;color:var(--mut);font-weight:400">Số liệu mẫu minh họa</div></div>
+<div class="card" style="padding:16px 22px"><div style="font-size:23px;font-weight:800;color:var(--gd);margin-bottom:8px">Chi phí chia theo nhóm</div>
+${[['Giống, vật tư', 48, '58,2 tr'], ['Nhân công', 34, '41,0 tr'], ['Điện, nước, khác', 18, '22,2 tr']].map(([n, w, v]) => `<div style="font-size:20px;display:flex;align-items:center;gap:10px;margin-bottom:6px"><span style="width:160px">${n}</span><div style="flex:1;background:#e6f4ea;border-radius:8px;height:20px"><div style="width:${w * 2}%;height:20px;border-radius:8px;background:var(--g)"></div></div><b>${v}</b></div>`).join('')}</div>
+${mini('🧮', 'Chi phí chung chia cho vụ', 'Điện, nước, thuê... tự chia theo từng vụ')}
+${mini('🧾', 'Chụp hóa đơn, AI đọc giúp', 'Nhập chi phí nhanh, đỡ gõ tay')}</div>`));
 
 /* 07 Nhân công */
-slides.push(slide(7, 'Nhân công <span style="opacity:.8;font-size:.8em">· gói trả phí</span>', 'Chấm công, khoán,<br><em>bảng lương rõ ràng</em>', ['Chấm công bằng điện thoại hoặc máy chấm công', 'Tính công theo ngày, theo giờ hoặc khoán', 'Bảng lương tự động, in và lưu lại khi cần'],
-  `${deskPayroll('left:0;width:732px;top:10px;height:440px;zoom:1.3')}`));
+slides.push(slide(7, 'Nhân công' + star, 'Chấm công, khoán,<br><em>bảng lương rõ ràng</em>', ['Chấm công bằng điện thoại hoặc máy chấm công', 'Tính công theo ngày, theo giờ hoặc khoán', 'Bảng lương tự động, in và lưu lại khi cần'],
+  `${deskPayroll('left:0;width:732px;top:0;height:360px;zoom:1.3')}
+<div style="position:absolute;left:0;right:0;top:490px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">${mini('📱', 'Chấm công', 'Bằng điện thoại, có định vị')}${mini('⏱️', 'Máy chấm công', 'Dùng máy tại cổng trại')}${mini('📝', 'Nghỉ phép, khoán', 'Duyệt đơn, tính khoán công')}</div>`));
 
 /* 08 HTX */
-slides.push(slide(8, 'HTX và hộ thành viên', 'HTX quản lý<br><em>nhiều hộ</em> dễ dàng', ['Theo dõi từng hộ: vụ, sản lượng, công nợ', 'Thu mua, hợp đồng bao tiêu, bảng kê rõ ràng', 'Truy xuất nguồn gốc về tận hộ trồng, hộ nuôi'],
-  `${deskHtx('left:0;width:732px;top:10px;height:440px;zoom:1.3')}`));
+slides.push(slide(8, 'HTX và hộ thành viên' + star, 'HTX quản lý<br><em>nhiều hộ</em> dễ dàng', ['Theo dõi từng hộ: vụ, sản lượng, công nợ', 'Thu mua, hợp đồng bao tiêu, bảng kê rõ ràng', 'Truy xuất nguồn gốc về tận hộ trồng, hộ nuôi'],
+  `${deskHtx('left:0;width:732px;top:0;height:360px;zoom:1.3')}
+<div style="position:absolute;left:0;right:0;top:490px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">${mini('🛒', 'Thu mua', 'Bảng kê thu mua từ hộ')}${mini('📃', 'Bao tiêu', 'Hợp đồng và theo dõi giao hàng')}${mini('🔳', 'Truy xuất', 'Mã QR về tận hộ sản xuất')}</div>`));
 
 /* 09 Website */
 slides.push(slide(9, 'Website kết nối', 'Để khách hàng<br><em>tìm thấy bạn</em>', ['Hồ sơ cơ sở, gian hàng, giao thương, báo giá', 'Có tin nông nghiệp và giá nông sản mỗi ngày', '<b>Dữ liệu riêng tư</b>, chỉ công khai thứ bạn đã duyệt'],
-  `${deskWeb('left:0;top:20px;width:720px;height:400px')}${phoneSite('right:10px;top:0;transform:scale(.8);transform-origin:top right')}`));
+  `${deskWeb('left:0;top:0;width:690px;height:380px')}${phoneSite('right:0;top:0;transform:scale(.55);transform-origin:top right')}
+<div style="position:absolute;left:0;right:0;top:400px;display:grid;grid-template-columns:1fr 1fr;gap:12px">${mini('🏡', 'Hồ sơ cơ sở', 'Giới thiệu trại, vườn, HTX của bạn')}${mini('🛍️', 'Gian hàng', 'Đăng sản phẩm, vật tư để bán')}${mini('📣', 'Giao thương', 'Đăng nhu cầu mua bán, nhận báo giá')}${mini('📈', 'Giá nông sản và tin tức', 'Cập nhật mỗi ngày')}</div>
+${banner('Vụ nào công khai là do <b style="color:var(--g)">bạn chọn</b>; mọi hồ sơ đều qua kiểm duyệt trước khi hiện.', 'position:absolute;left:0;right:0;top:630px;font-size:23px')}`));
 
 /* 10 Bắt đầu */
-slides.push(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><style>${CSS}.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}.two .card{padding:18px 20px;font-size:23px;line-height:1.35}.two h3{font-size:29px;color:var(--gd);margin-bottom:6px}</style></head><body><div class="wrap">${brandTop(10)}
-<div class="kick">Bắt đầu miễn phí</div><h1>Dùng thử <em>12 tháng</em><br>không mất phí</h1>
-<div class="two"><div class="card" style="border-color:#b7dcc3;background:#f1faf3"><h3>Gói Khởi đầu · 0 đồng</h3>1 vụ, 1 phân khu, 1 ô, chủ cơ sở + 1 nhân viên. Có nhật ký, kho, chi phí, thu hoạch, doanh thu, lãi lỗ và lên website. Chưa gồm chấm công và xuất báo cáo.</div>
-<div class="card"><h3>Cần nhiều hơn?</h3>Nhiều vụ, nhiều khu, nhiều người, chấm công, xuất báo cáo, HTX nhiều hộ: nâng cấp trong vài phút, dữ liệu giữ nguyên.</div>
-<div class="card"><h3>📱 Trên điện thoại</h3>Mở ${C.appUrl.replace('https://', '')} bằng trình duyệt, chọn "Thêm vào màn hình chính". Không cần cửa hàng ứng dụng.</div>
-<div class="card"><h3>💻 Trên máy tính</h3>Mở cùng địa chỉ, bấm biểu tượng cài đặt trên thanh địa chỉ để dùng như một phần mềm.</div></div>
-<div class="vis" style="display:flex;gap:30px;align-items:center;justify-content:center"><div class="card" style="padding:14px;line-height:0">${qrSvg(C.webUrl, 250)}</div>
-<div style="font-size:30px;font-weight:700;line-height:1.7;color:var(--gdd)"><div style="font-size:38px;color:var(--g);font-weight:800">Quét mã để bắt đầu</div>🌐 ${C.web}<br>💬 Zalo: ${C.zalo}<br>📞 ${C.phone}<br>✉️ ${C.email}<br>👍 ${C.facebook}</div></div>
+slides.push(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><style>${CSS}.pl{padding:16px 20px;font-size:21px}.pl h3{font-size:28px;margin-bottom:2px}</style></head><body><div class="wrap">${brandTop(10)}
+<div class="kick">Bắt đầu ngay</div><h1 style="font-size:66px">Dùng thử <em>miễn phí 12 tháng</em><br>rồi nâng cấp khi cần</h1>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px">
+<div class="card pl" style="border:3px solid var(--g);background:#f1faf3"><h3 style="color:var(--g)">🎁 Gói Khởi đầu · 0 đồng</h3><b>12 tháng, không cần thẻ</b>${li(['1 vụ, 1 phân khu, 1 ô; chủ + 1 nhân viên', 'Nhật ký, kho gọn, chi phí, thu hoạch, doanh thu, lãi lỗ', 'Đăng hồ sơ, giao thương lên website', 'Đọc hóa đơn bằng AI 2 lần/tháng'], 20)}</div>
+<div class="card pl" style="border:3px solid var(--o)"><h3 style="color:#b25e00">🚀 Gói Hộ / HTX đầy đủ</h3><b>Khi cần làm lớn</b>${li(['Nhiều vụ, nhiều phân khu, nhiều người', 'Chấm công, lương, phân quyền chi tiết', 'Kho có lô và hạn dùng, xuất báo cáo Excel', 'HTX quản lý nhiều hộ thành viên'], 20)}</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">${mini('📱', 'Cài trên điện thoại', 'Mở ' + C.appUrl.replace('https://', '') + ', chọn "Thêm vào màn hình chính"')}${mini('💻', 'Cài trên máy tính', 'Mở cùng địa chỉ, bấm biểu tượng cài đặt ở thanh địa chỉ')}</div>
+<div class="vis" style="display:flex;gap:28px;align-items:center;justify-content:center"><div class="card" style="padding:12px;line-height:0">${qrSvg(C.webUrl, 220)}</div>
+<div style="font-size:29px;font-weight:700;line-height:1.55;color:var(--gdd)"><div style="font-size:36px;color:var(--g);font-weight:800">Quét mã để bắt đầu</div>🌐 ${C.web}<br>💬 Zalo: ${C.zalo}<br>📞 ĐT: ${C.phone}<br>✉️ ${C.email}<br>👍 ${C.facebook}</div></div>
 ${foot()}</div></body></html>`);
 
 const nFinal = slides.length;
