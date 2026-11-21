@@ -38,7 +38,8 @@ slides.push(S(1, {
   title: 'Từ mảnh đất đến<br><em>từng việc mỗi ngày</em>',
   sub: 'Sáu bước làm một lần, dùng mãi cho cả trồng trọt và chăn nuôi.',
   vis: `<div style="position:absolute;left:0;top:0;width:590px">${roadmap([['🏞️', 'Phân khu và ô', 'Khai báo nơi sản xuất'], ['📋', 'Quy trình mẫu', 'Công thức làm một loại cây, con'], ['🌱', 'Tạo vụ', 'Chọn quy trình, phân khu, ngày'], ['📈', 'Quản lý vụ', 'Lịch, việc hôm nay, Bắt đầu, Xong'], ['✍️', 'Ghi việc', 'Chạm vài lần, mất sóng vẫn ghi'], ['📒', 'Nhật ký', 'Xem lại, sửa, truy xuất khi cần']])}</div>
-${phoneCycle('right:0;top:0;transform:scale(.95);transform-origin:top right')}`,
+${phoneCycle('right:0;top:0;transform:scale(.95);transform-origin:top right')}
+${tip('<b>Trồng trọt hay chăn nuôi</b> đều đi đúng sáu bước này: chỉ khác tên gọi (vụ hay đợt nuôi, ô hay chuồng, ao).', 'position:absolute;left:0;right:0;top:690px')}`,
   nextHint: 'Ảnh tiếp: Phân khu và ô',
 }));
 
