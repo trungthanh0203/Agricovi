@@ -1,0 +1,87 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><style>
+:root{--g:#168043;--gd:#0e5e2e;--gdd:#0b3f20;--o:#f08a24;--cream:#f5f2e6;--ink:#17241b;--mut:#5b6a60;--line:#dcd8c6}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1350px;overflow:hidden}
+body{font-family:'Segoe UI','Segoe UI Emoji',Arial,sans-serif;color:var(--ink);background:var(--cream);position:relative}
+body:before{content:'';position:absolute;inset:0;background:radial-gradient(900px 500px at 100% 0,#dff0e2 0,transparent 70%),radial-gradient(700px 500px at 0 100%,#fbe7cf 0,transparent 70%)}
+.wrap{position:relative;height:100%;padding:44px 64px 0;display:flex;flex-direction:column}
+.top{display:flex;justify-content:space-between;align-items:center}
+.top img{height:62px}
+.pg{font-weight:700;color:var(--gd);background:#fff;border:2px solid var(--line);border-radius:30px;padding:6px 20px;font-size:26px;letter-spacing:1px}
+.kick{margin-top:34px;display:inline-block;align-self:flex-start;background:var(--g);color:#fff;font-weight:700;font-size:26px;letter-spacing:2px;text-transform:uppercase;padding:8px 22px;border-radius:30px}
+h1{font-size:74px;line-height:1.08;font-weight:800;margin-top:18px;color:var(--gdd);letter-spacing:-1px}
+h1 em{font-style:normal;color:var(--o)}
+.sub{font-size:32px;color:var(--mut);margin-top:14px;line-height:1.35}
+ul.ck{list-style:none;margin-top:26px;display:flex;flex-direction:column;gap:14px}
+ul.ck li{font-size:34px;line-height:1.28;padding-left:58px;position:relative;font-weight:600}
+ul.ck li:before{content:'✓';position:absolute;left:0;top:3px;width:40px;height:40px;border-radius:50%;background:var(--g);color:#fff;font-size:26px;font-weight:800;text-align:center;line-height:40px}
+ul.ck li small{display:block;font-weight:400;font-size:26px;color:var(--mut)}
+.vis{flex:1;position:relative;margin-top:18px;min-height:0}
+.foot{margin:0 -64px;background:var(--gd);color:#fff;height:92px;padding:0 64px;display:flex;align-items:center;justify-content:space-between;font-size:27px;font-weight:600;flex:none}
+.foot b{color:#ffd9a8;font-size:32px}
+.foot span{opacity:.95}
+.tag{display:inline-block;background:#fff3e0;color:#b25e00;border:2px solid #f6c98f;border-radius:24px;padding:4px 16px;font-size:24px;font-weight:700}
+.card{background:#fff;border:2px solid var(--line);border-radius:26px;box-shadow:0 10px 30px rgba(14,94,46,.10)}
+/* khung điện thoại */
+.phone{position:absolute;width:330px;height:650px;background:#17241b;border-radius:48px;padding:12px;box-shadow:0 24px 50px rgba(0,0,0,.28)}
+.phone .scr{width:100%;height:100%;background:#f7faf7;border-radius:38px;overflow:hidden;position:relative;font-size:17px}
+.phone .scr:before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#17241b;border-radius:12px;z-index:3}
+.ah{background:var(--g);color:#fff;padding:44px 16px 14px;font-weight:700;font-size:21px}
+.ab{padding:12px}
+.ac{background:#fff;border:1px solid #dfe6df;border-radius:14px;padding:10px 12px;margin-bottom:9px}
+.ac b{display:block;font-size:17px}
+.ac small{color:#6b7a70;font-size:14px}
+.chip{display:inline-block;background:#e6f4ea;color:var(--gd);border-radius:20px;padding:6px 12px;margin:0 6px 7px 0;font-weight:600;font-size:16px}
+.chip.on{background:var(--g);color:#fff}
+.btn{background:var(--g);color:#fff;text-align:center;border-radius:12px;padding:12px;font-weight:700;font-size:19px;margin-top:10px}
+.tabs{position:absolute;bottom:0;left:0;right:0;height:58px;background:#fff;border-top:1px solid #dfe6df;display:flex;justify-content:space-around;align-items:center;font-size:13px;color:#6b7a70}
+.tabs i{font-style:normal;display:block;text-align:center}
+.tabs i.on{color:var(--g);font-weight:700}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:15px;padding:5px 0;border-bottom:1px dashed #e1e7e1}
+.row:last-child{border:none}
+.ok{color:var(--g);font-weight:700}
+/* khung máy tính */
+.desk{position:absolute;background:#fff;border-radius:18px;border:2px solid #cfd6cf;box-shadow:0 24px 50px rgba(0,0,0,.22);overflow:hidden}
+.desk .bar{height:36px;background:#e8ece8;display:flex;align-items:center;gap:7px;padding:0 14px;font-size:13px;color:#6b7a70}
+.desk .bar i{width:11px;height:11px;border-radius:50%;background:#c3cac3;display:block}
+.desk .bar u{margin-left:12px;text-decoration:none;background:#fff;border-radius:12px;padding:3px 14px;flex:1;max-width:340px}
+.dbody{display:flex;height:calc(100% - 36px)}
+.side{width:178px;background:var(--gd);color:#d7efdf;padding:14px 10px;font-size:14px;flex:none}
+.side b{display:block;color:#fff;font-size:17px;margin-bottom:12px}
+.side div{padding:8px 10px;border-radius:8px;margin-bottom:3px}
+.side div.on{background:rgba(255,255,255,.18);color:#fff;font-weight:700}
+.main{flex:1;padding:14px 16px;background:#f7faf7;font-size:14px;overflow:hidden}
+.main h4{font-size:18px;margin-bottom:10px;color:var(--gdd)}
+.kpis{display:flex;gap:10px;margin-bottom:12px}
+.kpi{flex:1;background:#fff;border:1px solid #dfe6df;border-radius:12px;padding:9px 11px}
+.kpi small{color:#6b7a70;font-size:12px;display:block}
+.kpi b{font-size:21px}
+.kpi b.g{color:var(--g)}
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:10px;overflow:hidden}
+th{background:#e6f4ea;text-align:left;padding:7px 9px;color:var(--gd)}
+td{padding:7px 9px;border-bottom:1px solid #eef1ee}
+.bars{display:flex;align-items:flex-end;gap:8px;height:90px;background:#fff;border:1px solid #dfe6df;border-radius:12px;padding:10px}
+.bars i{flex:1;background:var(--g);border-radius:5px 5px 0 0;display:block}
+.bars i.o{background:var(--o)}
+.grid{display:grid;gap:16px}
+
+.hero{margin:0 -64px;background:linear-gradient(135deg,#0e5e2e,#168043 60%,#2a9d5c);color:#fff;padding:26px 64px 30px;position:relative;overflow:hidden}
+.hero:after{content:'';position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero .set{font-size:23px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ffd9a8}
+.hero h1{color:#fff;margin-top:8px;font-size:68px}
+.hero h1 em{color:#ffc46b}
+.hero .sub{color:#e3f4e9;margin-top:10px;font-size:29px}
+.topb{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px}
+.topb .pg{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.35)}
+.tip{background:#fff7e6;border:2px solid #f6c98f;border-left:10px solid var(--o);border-radius:18px;padding:14px 20px;font-size:24px;line-height:1.35;color:#5a3a00}
+.tip b{color:#b25e00}
+.num{display:inline-flex;width:46px;height:46px;border-radius:50%;background:var(--o);color:#fff;font-weight:800;font-size:28px;align-items:center;justify-content:center;flex:none}
+.nextbar{margin-top:auto;display:flex;justify-content:flex-end;font-size:22px;color:var(--mut);font-weight:700;padding:0 0 10px}
+</style></head><body><div class="wrap" style="padding-top:0">
+<div class="hero"><div class="topb"><img src="../../assets/acovin-horizontal-white.png" style="height:56px"><div class="pg">07 / 07</div></div>
+<div class="set">Bộ B4 · HTX và hộ thành viên</div><h1>Bảng kê thu mua<br><em>và truy xuất nguồn gốc</em></h1><div class="sub">Dựng sẵn từ các phiếu thu mua, không phải nhập lại từng dòng.</div></div>
+<div class="vis" style="margin-top:22px"><div class="card" style="padding:16px 20px;"><div style="font-size:26px;font-weight:800;color:var(--gd);margin-bottom:8px">📑 Bảng kê thu mua nông sản (xem trước)</div><table style="font-size:19px;"><tr><th>Người bán</th><th>Sản phẩm</th><th>Khối lượng</th><th>Thành tiền</th></tr><tr><td>Nguyễn Văn Sáu</td><td>Dưa lưới</td><td>3.000 kg</td><td>45.000.000</td></tr><tr><td>Trần Thị Năm</td><td>Xoài</td><td>1.800 kg</td><td>50.400.000</td></tr></table><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><span class="chip on">In A4 ngang</span><span class="chip">Lưu PDF</span><span class="chip">Tải Excel</span></div><div style="font-size:16px;color:var(--mut);margin-top:4px">Số liệu mẫu minh họa</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px"><div class="card" style="padding:14px 16px;"><div style="display:flex;gap:12px;align-items:center"><div style="font-size:42px">🪪</div><div><div style="font-size:25px;font-weight:800;color:var(--gd)">Thông tin người bán một lần</div><div style="font-size:20px;color:var(--mut);line-height:1.3">Họ tên, CCCD, địa chỉ, điện thoại, kèm xác nhận đồng ý</div></div></div></div><div class="card" style="padding:14px 16px;"><div style="display:flex;gap:12px;align-items:center"><div style="font-size:42px">📅</div><div><div style="font-size:25px;font-weight:800;color:var(--gd)">Chọn kỳ nhanh</div><div style="font-size:20px;color:var(--mut);line-height:1.3">Tháng này, tháng trước, quý, năm</div></div></div></div><div class="card" style="padding:14px 16px;"><div style="display:flex;gap:12px;align-items:center"><div style="font-size:42px">🔳</div><div><div style="font-size:25px;font-weight:800;color:var(--gd)">Truy xuất về tận hộ</div><div style="font-size:20px;color:var(--mut);line-height:1.3">Phiếu thu mua gắn vụ của hộ, quét QR xem nguồn gốc</div></div></div></div><div class="card" style="padding:14px 16px;"><div style="display:flex;gap:12px;align-items:center"><div style="font-size:42px">🌐</div><div><div style="font-size:25px;font-weight:800;color:var(--gd)">Lên website HTX</div><div style="font-size:20px;color:var(--mut);line-height:1.3">Công khai sản phẩm bạn chọn, qua kiểm duyệt</div></div></div></div></div>
+<div class="tip" style="margin-top:14px"><b>Lưu ý thật:</b> bảng kê là mẫu tham khảo, nên nhờ kế toán đối chiếu với mẫu đang áp dụng.</div>
+<div class="card" style="padding:14px 22px;display:flex;gap:22px;align-items:center;background:var(--gd);border-color:var(--gd);color:#fff;margin-top:14px"><div style="line-height:0;background:#fff;border-radius:10px;padding:6px"><svg xmlns="http://www.w3.org/2000/svg" width="118" height="118" viewBox="0 0 33 33" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="M4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM7 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM13 4h1v1h-1zM14 4h1v1h-1zM15 4h1v1h-1zM16 4h1v1h-1zM18 4h1v1h-1zM22 4h1v1h-1zM23 4h1v1h-1zM24 4h1v1h-1zM25 4h1v1h-1zM26 4h1v1h-1zM27 4h1v1h-1zM28 4h1v1h-1zM4 5h1v1h-1zM10 5h1v1h-1zM12 5h1v1h-1zM13 5h1v1h-1zM14 5h1v1h-1zM15 5h1v1h-1zM16 5h1v1h-1zM18 5h1v1h-1zM20 5h1v1h-1zM22 5h1v1h-1zM28 5h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h1v1h-1zM24 6h1v1h-1zM25 6h1v1h-1zM26 6h1v1h-1zM28 6h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM12 7h1v1h-1zM13 7h1v1h-1zM18 7h1v1h-1zM19 7h1v1h-1zM20 7h1v1h-1zM22 7h1v1h-1zM24 7h1v1h-1zM25 7h1v1h-1zM26 7h1v1h-1zM28 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM13 8h1v1h-1zM15 8h1v1h-1zM16 8h1v1h-1zM17 8h1v1h-1zM20 8h1v1h-1zM22 8h1v1h-1zM24 8h1v1h-1zM25 8h1v1h-1zM26 8h1v1h-1zM28 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM17 9h1v1h-1zM18 9h1v1h-1zM20 9h1v1h-1zM22 9h1v1h-1zM28 9h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM23 10h1v1h-1zM24 10h1v1h-1zM25 10h1v1h-1zM26 10h1v1h-1zM27 10h1v1h-1zM28 10h1v1h-1zM12 11h1v1h-1zM13 11h1v1h-1zM15 11h1v1h-1zM17 11h1v1h-1zM19 11h1v1h-1zM4 12h1v1h-1zM10 12h1v1h-1zM12 12h1v1h-1zM16 12h1v1h-1zM18 12h1v1h-1zM19 12h1v1h-1zM21 12h1v1h-1zM22 12h1v1h-1zM25 12h1v1h-1zM26 12h1v1h-1zM27 12h1v1h-1zM4 13h1v1h-1zM6 13h1v1h-1zM9 13h1v1h-1zM13 13h1v1h-1zM14 13h1v1h-1zM18 13h1v1h-1zM19 13h1v1h-1zM23 13h1v1h-1zM24 13h1v1h-1zM25 13h1v1h-1zM26 13h1v1h-1zM27 13h1v1h-1zM4 14h1v1h-1zM6 14h1v1h-1zM8 14h1v1h-1zM9 14h1v1h-1zM10 14h1v1h-1zM12 14h1v1h-1zM13 14h1v1h-1zM14 14h1v1h-1zM15 14h1v1h-1zM16 14h1v1h-1zM19 14h1v1h-1zM22 14h1v1h-1zM23 14h1v1h-1zM25 14h1v1h-1zM27 14h1v1h-1zM28 14h1v1h-1zM6 15h1v1h-1zM8 15h1v1h-1zM11 15h1v1h-1zM12 15h1v1h-1zM14 15h1v1h-1zM16 15h1v1h-1zM18 15h1v1h-1zM19 15h1v1h-1zM20 15h1v1h-1zM21 15h1v1h-1zM25 15h1v1h-1zM28 15h1v1h-1zM5 16h1v1h-1zM6 16h1v1h-1zM8 16h1v1h-1zM10 16h1v1h-1zM11 16h1v1h-1zM14 16h1v1h-1zM15 16h1v1h-1zM17 16h1v1h-1zM18 16h1v1h-1zM20 16h1v1h-1zM22 16h1v1h-1zM23 16h1v1h-1zM28 16h1v1h-1zM4 17h1v1h-1zM5 17h1v1h-1zM8 17h1v1h-1zM11 17h1v1h-1zM13 17h1v1h-1zM14 17h1v1h-1zM16 17h1v1h-1zM17 17h1v1h-1zM18 17h1v1h-1zM19 17h1v1h-1zM23 17h1v1h-1zM27 17h1v1h-1zM4 18h1v1h-1zM6 18h1v1h-1zM7 18h1v1h-1zM8 18h1v1h-1zM9 18h1v1h-1zM10 18h1v1h-1zM12 18h1v1h-1zM13 18h1v1h-1zM14 18h1v1h-1zM17 18h1v1h-1zM18 18h1v1h-1zM19 18h1v1h-1zM21 18h1v1h-1zM23 18h1v1h-1zM24 18h1v1h-1zM25 18h1v1h-1zM27 18h1v1h-1zM28 18h1v1h-1zM4 19h1v1h-1zM8 19h1v1h-1zM12 19h1v1h-1zM13 19h1v1h-1zM14 19h1v1h-1zM16 19h1v1h-1zM17 19h1v1h-1zM18 19h1v1h-1zM19 19h1v1h-1zM21 19h1v1h-1zM23 19h1v1h-1zM25 19h1v1h-1zM26 19h1v1h-1zM28 19h1v1h-1zM4 20h1v1h-1zM7 20h1v1h-1zM8 20h1v1h-1zM9 20h1v1h-1zM10 20h1v1h-1zM11 20h1v1h-1zM12 20h1v1h-1zM14 20h1v1h-1zM16 20h1v1h-1zM18 20h1v1h-1zM20 20h1v1h-1zM21 20h1v1h-1zM22 20h1v1h-1zM23 20h1v1h-1zM24 20h1v1h-1zM26 20h1v1h-1zM12 21h1v1h-1zM13 21h1v1h-1zM20 21h1v1h-1zM24 21h1v1h-1zM4 22h1v1h-1zM5 22h1v1h-1zM6 22h1v1h-1zM7 22h1v1h-1zM8 22h1v1h-1zM9 22h1v1h-1zM10 22h1v1h-1zM13 22h1v1h-1zM16 22h1v1h-1zM17 22h1v1h-1zM18 22h1v1h-1zM20 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM28 22h1v1h-1zM4 23h1v1h-1zM10 23h1v1h-1zM15 23h1v1h-1zM18 23h1v1h-1zM19 23h1v1h-1zM20 23h1v1h-1zM24 23h1v1h-1zM4 24h1v1h-1zM6 24h1v1h-1zM7 24h1v1h-1zM8 24h1v1h-1zM10 24h1v1h-1zM13 24h1v1h-1zM15 24h1v1h-1zM19 24h1v1h-1zM20 24h1v1h-1zM21 24h1v1h-1zM22 24h1v1h-1zM23 24h1v1h-1zM24 24h1v1h-1zM26 24h1v1h-1zM28 24h1v1h-1zM4 25h1v1h-1zM6 25h1v1h-1zM7 25h1v1h-1zM8 25h1v1h-1zM10 25h1v1h-1zM14 25h1v1h-1zM16 25h1v1h-1zM17 25h1v1h-1zM19 25h1v1h-1zM20 25h1v1h-1zM21 25h1v1h-1zM22 25h1v1h-1zM27 25h1v1h-1zM28 25h1v1h-1zM4 26h1v1h-1zM6 26h1v1h-1zM7 26h1v1h-1zM8 26h1v1h-1zM10 26h1v1h-1zM14 26h1v1h-1zM17 26h1v1h-1zM18 26h1v1h-1zM19 26h1v1h-1zM20 26h1v1h-1zM21 26h1v1h-1zM25 26h1v1h-1zM26 26h1v1h-1zM28 26h1v1h-1zM4 27h1v1h-1zM10 27h1v1h-1zM13 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM20 27h1v1h-1zM21 27h1v1h-1zM22 27h1v1h-1zM23 27h1v1h-1zM24 27h1v1h-1zM28 27h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM7 28h1v1h-1zM8 28h1v1h-1zM9 28h1v1h-1zM10 28h1v1h-1zM12 28h1v1h-1zM13 28h1v1h-1zM14 28h1v1h-1zM15 28h1v1h-1zM16 28h1v1h-1zM17 28h1v1h-1zM20 28h1v1h-1zM21 28h1v1h-1zM25 28h1v1h-1zM28 28h1v1h-1z" fill="#0e3d20"/></svg></div><div style="font-size:26px;font-weight:700;line-height:1.4">Dùng thử miễn phí 12 tháng<br><span style="font-size:22px;font-weight:600;color:#ffd9a8">Zalo 0989 099 454 · 0981 771 333 · acovin.com</span></div></div></div>
+<div class="nextbar">Bộ tiếp theo: B5 Website và truy xuất ➜</div><div class="foot"><b>acovin.com</b><span>Zalo 0989 099 454 · ĐT 0981 771 333</span></div></div></body></html>
