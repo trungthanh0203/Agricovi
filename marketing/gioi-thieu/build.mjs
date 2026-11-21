@@ -192,9 +192,9 @@ ${mini('🧮', 'Chi phí chung chia cho vụ', 'Điện, nước, thuê... tự 
 ${mini('🧾', 'Chụp hóa đơn, AI đọc giúp', 'Nhập chi phí nhanh, đỡ gõ tay')}</div>`));
 
 /* 07 Nhân công */
-slides.push(slide(7, 'Nhân công' + star, 'Chấm công, khoán,<br><em>bảng lương rõ ràng</em>', ['Chấm công bằng điện thoại hoặc máy chấm công', 'Tính công theo ngày, theo giờ hoặc khoán', 'Bảng lương tự động, in và lưu lại khi cần'],
+slides.push(slide(7, 'Nhân công' + star, 'Chấm công, khoán,<br><em>bảng lương rõ ràng</em>', ['Chấm công bằng PIN và khuôn mặt, hoặc chủ nhập hộ', 'Công tính theo giờ × đơn giá, hoặc khoán theo sản lượng', 'Bảng lương tự động, chốt lương mỗi tháng'],
   `${deskPayroll('left:0;width:732px;top:0;height:360px;zoom:1.3')}
-<div style="position:absolute;left:0;right:0;top:490px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">${mini('📱', 'Chấm công', 'Bằng điện thoại, có định vị')}${mini('⏱️', 'Máy chấm công', 'Dùng máy tại cổng trại')}${mini('📝', 'Nghỉ phép, khoán', 'Duyệt đơn, tính khoán công')}</div>`));
+<div style="position:absolute;left:0;right:0;top:490px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">${mini('🔐', 'Chấm công', 'Bằng PIN, đối chiếu khuôn mặt')}${mini('📱', 'Máy chấm công', 'Một điện thoại cố định ở khu làm việc')}${mini('📝', 'Nghỉ phép, phiếu khoán', 'Ghi nghỉ, giao khoán theo sản lượng')}</div>`));
 
 /* 08 HTX */
 slides.push(slide(8, 'HTX và hộ thành viên' + star, 'HTX quản lý<br><em>nhiều hộ</em> dễ dàng', ['Theo dõi từng hộ: vụ, sản lượng, công nợ', 'Thu mua, hợp đồng bao tiêu, bảng kê rõ ràng', 'Truy xuất nguồn gốc về tận hộ trồng, hộ nuôi'],
