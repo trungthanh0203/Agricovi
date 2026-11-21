@@ -29,9 +29,9 @@ Ngày soạn: 20/11/2026. Mảng: APP (có phần dùng chung). Đã duyệt; đ
 | Tổng kết vụ | Xem trên màn hình | Xem trên màn hình |
 | Xuất báo cáo (Excel/PDF) | Không (hoặc PDF có dòng "Tạo bằng AgriConnect") | Như hộ |
 | Chấm công, lương, phân quyền chi tiết, giao việc nhiều tổ | Không | Không |
-| Quản lý hộ thành viên, bao tiêu, chuyển vụ | — | Không (khai báo số hộ thôi) |
-| Chụp/đọc hóa đơn bằng AI | 0 lần | 0 lần |
-| Hiện trên website xúc tiến | **Có** (hồ sơ cơ bản, sau khi duyệt hồ sơ) | Có |
+| Quản lý hộ thành viên | — | **Thêm được 1 hộ**; hộ đó có gói Khởi đầu riêng: 1 phân khu, 1 ô, 1 vụ riêng (D221) |
+| Đọc ảnh bằng AI (hóa đơn, phiếu nhập kho...) | **2 lần/tháng** (D221) | 2 lần/tháng |
+| Hiện trên website xúc tiến, công khai vụ, tin giao thương | **Có** (hồ sơ vẫn qua kiểm duyệt; D221) | Có |
 | Dung lượng ảnh | Trần thấp (đề xuất 200 MB/cơ sở) | Như hộ |
 
 Lý do chọn:
@@ -101,6 +101,9 @@ Hiện app là PWA. Cách đóng gói:
 1. 1 vụ + **1 khu + 1 ô** + chủ và **1 nhân viên**: đồng ý hay muốn chỉ có chủ (chặt hơn)?
 2. Báo cáo xuất: khóa hẳn, hay cho PDF có dòng "Tạo bằng AgriConnect" (kéo người mới)?
 3. Hết 12 tháng: chỉ xem/xuất (đề xuất) hay cho gia hạn miễn phí thêm theo điều kiện?
-4. Cho "nâng cấp thử đầy đủ 30 ngày" một lần: có/không?
+4. ~~Nâng cấp thử đầy đủ 30 ngày~~ (đã bỏ, D221): có/không?
 5. Đăng ký **tự duyệt**, chỉ hồ sơ lên website duyệt tay: đồng ý?
 6. Tài khoản nhà phát triển App Store: tên cá nhân hay công ty (cần D-U-N-S)?
+
+## Cập nhật 21/11/2026 (D221)
+Chủ sản phẩm chỉnh: (1) HTX thêm được 1 hộ, hộ có 1 phân khu/1 ô/1 vụ riêng; (2) gói Khởi đầu được công khai vụ và tin giao thương; (3) đọc ảnh bằng AI cho dùng 2 lần mỗi tháng; (4) bỏ nâng cấp thử 30 ngày vì app chưa triển khai rộng.

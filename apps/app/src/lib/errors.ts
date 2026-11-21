@@ -19,7 +19,6 @@ export function friendlyError(err: unknown): string {
   if (/QUOTA_EXCEEDED/.test(msg)) return 'Đã dùng hết số vụ của gói (vụ đang sản xuất và vụ đang tạm dừng đều được tính). Hãy kết thúc hoặc hủy một vụ, nâng gói, hoặc lưu vụ mới ở trạng thái "Chưa bắt đầu".';
   if (/TRIAL_CYCLE_LIMIT/.test(msg)) return 'Gói Khởi đầu (miễn phí) chỉ có 1 vụ (kể cả vụ đã kết thúc). Muốn làm thêm vụ: vào Cơ sở của tôi → Gói dịch vụ để nâng cấp, hoặc liên hệ hỗ trợ.';
   if (/TRIAL_HOUSEHOLD_LIMIT/.test(msg)) return 'Gói Khởi đầu (miễn phí) chỉ thêm được 1 hộ. Muốn thêm hộ: vào Cơ sở của tôi → Gói dịch vụ để nâng cấp, hoặc liên hệ hỗ trợ.';
-  if (/TRIAL_NO_PUBLISH/.test(msg)) return 'Gói Khởi đầu (miễn phí) chưa công khai vụ và tin giao thương (hồ sơ cơ sở thì gửi duyệt được). Vào Cơ sở của tôi → Gói dịch vụ để nâng cấp.';
   if (/QUOTA_NO_SUBSCRIPTION/.test(msg)) return 'Gói dịch vụ đã hết hạn. Hãy gia hạn để tạo vụ mới. Dữ liệu của bạn vẫn được giữ nguyên.';
   // Các hàm máy chủ trả lỗi dạng "MÃ_LỖI: nội dung tiếng Việt" -> hiển thị phần nội dung
   const coded = /^([A-Z][A-Z_]{3,}): (.+)$/s.exec(msg);

@@ -545,3 +545,9 @@ Chủ sản phẩm duyệt theo đề xuất (20/11/2026). Dùng lại gói dùn
 - **Xóa tài khoản = yêu cầu có thời gian chờ** (`account_deletion_grace_days`, mặc định 14 ngày; người dùng hủy được): `request_account_deletion`, `cancel_account_deletion`, `my_account_deletion`. Quản trị thực hiện ở trang "Yêu cầu xóa tài khoản" (`admin_execute_account_deletion`; xóa sớm cần lý do; có nhật ký kiểm toán). Việc xóa dùng đúng logic `supabase/maintenance/delete_account.sql` (đã thành hàm `purge_account_data`): xóa cơ sở mà người này là chủ duy nhất cùng dữ liệu, hộ do HTX tạo, tài khoản nhân viên/máy chấm công; cơ sở khác chỉ gỡ liên kết. Quản trị nền tảng không xóa theo đường này. **Chưa tự chạy theo lịch**: quản trị bấm tay khi đến hạn.
 - Tài khoản thử cho người duyệt cửa hàng: quy trình tay trong `HUONG_DAN_NOP_CUA_HANG.md` (không thêm mã).
 - Chưa làm: ẩn giá/nút mua gói ở bản cửa hàng và đóng gói Android/iOS (đợt D).
+
+### D221 — Chỉnh gói Khởi đầu (migration 0235; chủ sản phẩm 21/11/2026)
+1. **HTX Khởi đầu thêm được 1 hộ thành viên** (đã có sẵn từ D186); hộ đó có gói Khởi đầu **riêng**: 1 phân khu, 1 ô, **1 vụ riêng** (không tính vào vụ của HTX). Để làm được, `org_has_paid_plan` coi hộ thuộc HTX đang ở gói Khởi đầu là "được tạo vụ riêng" (luật D148 "chỉ vụ theo HTX" vẫn áp dụng khi HTX không ở gói Khởi đầu).
+2. **Gói Khởi đầu được công khai** vụ, hồ sơ cơ sở và tin giao thương: bỏ trigger chặn của D186 (hồ sơ vẫn qua kiểm duyệt viên như mọi cơ sở).
+3. **Đọc ảnh bằng AI cho dùng 2 lần mỗi tháng** (`invoice_scan_trial_limit`, dùng chung hóa đơn/phiếu nhập kho...). `invoice_scan` bỏ khỏi `free_locked_features` mặc định (còn "attendance" và "export_reports"). Lưu ý: đọc bảng chấm công giấy đi kèm Chấm công, vẫn khóa theo chấm công.
+4. **Bỏ nâng cấp thử đầy đủ 30 ngày** (xóa `start_full_trial`, nút trong app, cấu hình `full_trial_days`). Cột `subscriptions.full_trial_*` và hàm `sub_scoped/sub_max_cycles` còn trong CSDL nhưng không dùng nữa.

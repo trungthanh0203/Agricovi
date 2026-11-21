@@ -46,11 +46,9 @@ test('cơ sở đang dùng thử từ trước (không có cờ) giữ nguyên c
   await assert.rejects(mk(C(3)), /QUOTA_EXCEEDED/);
 });
 
-test('dùng thử có phạm vi không công khai vụ; nâng gói thì công khai được', async () => {
-  const { db, owner, org, mk } = await household();
+test('gói Khởi đầu được công khai vụ (D221 bỏ chặn công khai)', async () => {
+  const { db, owner, mk } = await household();
   await mk(C(1));
-  await assert.rejects(asUser(db, owner, `select publish_cycle($1)`, [C(1)]), /TRIAL_NO_PUBLISH/);
-  await db.query(`update subscriptions set is_scoped_trial=false, status='active' where organization_id=$1`, [org]);
   assert.match((await asUser(db, owner, `select publish_cycle($1) r`, [C(1)])).rows[0].r.code, /^VU-/);
 });
 

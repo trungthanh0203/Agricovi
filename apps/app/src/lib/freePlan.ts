@@ -6,12 +6,10 @@ import { supabase } from './supabase';
 /** Tình trạng gói Khởi đầu (miễn phí 12 tháng) của cơ sở đang chọn, lấy từ hàm my_free_plan_state (D219). */
 export interface FreePlanState {
   free: boolean;
-  scoped?: boolean;          // đang bị giới hạn (không trong lượt nâng cấp thử)
+  scoped?: boolean;          // đang trong hạn gói Khởi đầu (bị giới hạn)
   expired?: boolean;
   period_end?: string;
   days_left?: number;
-  full_trial_used?: boolean;
-  full_trial_until?: string | null;
   locked_features?: string[];
 }
 

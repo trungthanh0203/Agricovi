@@ -7,7 +7,7 @@ import { downloadCsv, Err, fmtDate, rpc, useLoad } from '@agriconnect/admin-kit'
  */
 interface Lead {
   id: string; name: string; type: string; phone: string | null; period_end: string; days_left: number; expired: boolean;
-  full_trial_used: boolean; cycles_used: number; max_cycles: number; last_activity: string | null; pending_orders: number;
+  cycles_used: number; max_cycles: number; last_activity: string | null; pending_orders: number;
 }
 const FILTERS: { id: string; label: string }[] = [
   { id: 'used', label: 'Đã dùng hết số vụ' },
@@ -38,7 +38,7 @@ export function FreePlanLeadsPage({ onOpenOrg }: { onOpenOrg: (id: string) => vo
             <thead><tr><th>Cơ sở</th><th>Điện thoại</th><th>Hạn</th><th>Số vụ</th><th>Hoạt động gần nhất</th><th></th></tr></thead>
             <tbody>{rows.map((r) => (
               <tr key={r.id}>
-                <td><strong>{r.name}</strong><small>{r.type === 'cooperative' ? 'HTX' : 'Hộ'}{r.full_trial_used ? ' · đã nâng cấp thử' : ''}{r.pending_orders > 0 ? ` · ${r.pending_orders} đơn mua đang chờ` : ''}</small></td>
+                <td><strong>{r.name}</strong><small>{r.type === 'cooperative' ? 'HTX' : 'Hộ'}{r.pending_orders > 0 ? ` · ${r.pending_orders} đơn mua đang chờ` : ''}</small></td>
                 <td>{r.phone ?? '—'}</td>
                 <td>{fmtDate(r.period_end)}<small>{r.expired ? 'đã hết hạn' : `còn ${r.days_left} ngày`}</small></td>
                 <td>{r.cycles_used}/{r.max_cycles}</td>
