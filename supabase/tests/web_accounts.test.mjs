@@ -12,7 +12,7 @@ async function setup() {
   const org = (await asUser(db, owner, `select create_organization('household','Vườn Thành Công') id`)).rows[0].id;
   const org2 = (await asUser(db, owner2, `select create_organization('household','Vườn Khác') id`)).rows[0].id;
   await db.query(`insert into organization_memberships (organization_id,user_id,roles) values ($1,$2,array['profile_editor']::member_role[]),($1,$3,array['worker']::member_role[])`, [org, editor, worker]);
-  await db.query(`insert into staff_accounts (user_id, organization_id, phone, auth_email, full_name) values ($1,$2,'0900000008','0900000008@sdt.agricovi.com','Công')`, [staff, org]);
+  await db.query(`insert into staff_accounts (user_id, organization_id, phone, auth_email, full_name) values ($1,$2,'0900000008','0900000008@sdt.acovin.com','Công')`, [staff, org]);
   const prof = (await asUser(db, owner, `insert into business_profiles (organization_id, display_name, description, province, location_precision)
     values ($1,'Vườn Thành Công','Chuyên trồng dưa lưới trong nhà màng, theo quy trình VietGAP','Long An','district') returning id`, [org])).rows[0].id;
   await asUser(db, owner, `insert into publication_consents (organization_id,business_profile_id,scope,text_version) values ($1,$2,array['profile']::text[],'v1')`, [org, prof]);
@@ -142,10 +142,10 @@ test('đăng ký bằng số điện thoại: chỉ service_role kiểm tra; tr�
   const { db, buyer } = await setup();
   assert.match(await expectError(asUser(db, buyer, `select web_phone_precheck('0912345678')`)), /permission|denied/i);
   assert.match(await expectError(asAnon(db, `select web_phone_precheck('0912345678')`)), /permission|denied/i);
-  assert.equal((await db.query(`select web_phone_precheck('0912 345 678') e`)).rows[0].e, '0912345678@sdt.agricovi.com');
+  assert.equal((await db.query(`select web_phone_precheck('0912 345 678') e`)).rows[0].e, '0912345678@sdt.acovin.com');
   assert.match(await expectError(db.query(`select web_phone_precheck('123')`)), /INVALID/);
   assert.match(await expectError(db.query(`select web_phone_precheck('0900000008')`)), /EXISTS/);              // trùng số nhân viên
-  await db.query(`insert into auth.users (id, email) values ('00000000-0000-4000-8000-0000000000aa','0912345678@sdt.agricovi.com')`);
+  await db.query(`insert into auth.users (id, email) values ('00000000-0000-4000-8000-0000000000aa','0912345678@sdt.acovin.com')`);
   assert.match(await expectError(db.query(`select web_phone_precheck('0912345678')`)), /EXISTS/);              // đã có tài khoản số này
-  assert.equal((await asAnon(db, `select login_email_for_phone('0912 345 678') e`)).rows[0].e, '0912345678@sdt.agricovi.com');
+  assert.equal((await asAnon(db, `select login_email_for_phone('0912 345 678') e`)).rows[0].e, '0912345678@sdt.acovin.com');
 });

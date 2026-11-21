@@ -30,11 +30,11 @@ registerRoute(
 sw.addEventListener('push', (event: { data?: { json(): unknown; text(): string }; waitUntil(p: Promise<unknown>): void }) => {
   let data: { title?: string; body?: string; url?: string; tag?: string } = {};
   try { data = (event.data?.json() ?? {}) as typeof data; } catch { data = { body: event.data?.text() }; }
-  event.waitUntil(sw.registration.showNotification(data.title || 'Agricovi', {
+  event.waitUntil(sw.registration.showNotification(data.title || 'Acovin', {
     body: data.body || '',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    tag: data.tag || 'agricovi',      // cùng tag thì thay thông báo cũ, không chồng nhiều cái
+    tag: data.tag || 'acovin',      // cùng tag thì thay thông báo cũ, không chồng nhiều cái
     data: { url: data.url || '/' },
   }));
 });

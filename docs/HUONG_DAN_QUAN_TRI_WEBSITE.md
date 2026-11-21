@@ -67,7 +67,7 @@ Cách viết nội dung bài và trang: dòng trống = đoạn mới; `## Tiêu
 
 ## 6. Cấp vai trò cho nhân sự
 
-Quản trị website → **Người biên tập**, nhập email người đó và chọn vai trò. Người đó phải có tài khoản AgriConnect (đăng ký bằng email) trước, rồi đăng nhập trang Quản trị website bằng email của mình; họ không vào được Quản trị nền tảng.
+Quản trị website → **Người biên tập**, nhập email người đó và chọn vai trò. Người đó phải có tài khoản Acovin (đăng ký bằng email) trước, rồi đăng nhập trang Quản trị website bằng email của mình; họ không vào được Quản trị nền tảng.
 
 ## 6b. Nguồn tin tự động
 

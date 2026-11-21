@@ -116,7 +116,7 @@ export function ExportDossierSection() {
       {dossier && (
         <div id="print-root" className="dossier">
           <h2>{dossier.title}</h2>
-          <p className="muted">Lập ngày {new Date().toLocaleDateString('vi-VN')} từ phần mềm AgriConnect. Số liệu lấy từ nhật ký đã ghi trong hệ thống.</p>
+          <p className="muted">Lập ngày {new Date().toLocaleDateString('vi-VN')} từ phần mềm Acovin. Số liệu lấy từ nhật ký đã ghi trong hệ thống.</p>
           {dossier.facts.map((f) => (
             <div key={f.title}>
               <h3>{f.title}</h3>

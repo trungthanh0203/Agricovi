@@ -52,3 +52,4 @@ export interface OutboxItem {
 export * from './site';
 
 export * from './provinces';
+export * from './brand';

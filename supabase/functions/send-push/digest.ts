@@ -23,5 +23,5 @@ export function composeDigest(raw: Partial<DigestCounts> | null | undefined): { 
   if (debts > 0) parts.push(`💳 ${debts} khoản công nợ`);
   if (n(raw?.licenses) > 0) parts.push(`📜 ${n(raw?.licenses)} giấy phép sắp hết hạn`);
   if (parts.length === 0) return null;
-  return { title: 'Agricovi · việc hôm nay', body: `${parts.join(' · ')}. Mở app để xem chi tiết.`, tag: 'agricovi-digest', url: '/' };
+  return { title: 'Acovin · việc hôm nay', body: `${parts.join(' · ')}. Mở app để xem chi tiết.`, tag: 'agricovi-digest', url: '/' };
 }

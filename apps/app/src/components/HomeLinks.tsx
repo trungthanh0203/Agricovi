@@ -7,7 +7,7 @@ import type { MyOrg } from '../lib/orgs';
 interface Step { key: string; label: string; icon: string; tab?: TabId; section?: string; href?: string }
 
 /** Trang website công khai (mở ở thẻ mới) */
-const SITE_URL = ((import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined) || 'https://agricovi.com').replace(/\/$/, '');
+const SITE_URL = ((import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined) || 'https://acovin.com').replace(/\/$/, '');
 
 /** Vị trí các bước trên lưới 5 cột (cột chẵn là mũi tên): hàng 1 đi sang phải, xuống một dòng, hàng 3 quay lại bên trái */
 const POS: { r: number; c: number }[] = [{ r: 1, c: 1 }, { r: 1, c: 3 }, { r: 1, c: 5 }, { r: 3, c: 5 }, { r: 3, c: 3 }, { r: 3, c: 1 }];

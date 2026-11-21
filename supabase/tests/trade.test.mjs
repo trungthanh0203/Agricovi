@@ -11,7 +11,7 @@ async function setup() {
   await db.query(`insert into platform_admins (user_id) values ($1)`, [admin]);
   await asUser(db, admin, `select admin_set_site_role('u2@test.local','moderator',true)`);
   const org = (await asUser(db, seller, `select create_organization('household','Vườn Thành Công') id`)).rows[0].id;
-  await db.query(`insert into staff_accounts (user_id, organization_id, phone, auth_email, full_name) values ($1,$2,'0900000007','0900000007@sdt.agricovi.com','Công')`, [staff, org]);
+  await db.query(`insert into staff_accounts (user_id, organization_id, phone, auth_email, full_name) values ($1,$2,'0900000007','0900000007@sdt.acovin.com','Công')`, [staff, org]);
   for (const [u, name] of [[buyer, 'Nguyễn Văn An'], [buyer2, 'Trần Thị Bình'], [seller, 'Chủ Vườn'], [phoneUser, 'Người Điện Thoại'], [plain, 'Không Xác Nhận']]) {
     await asUser(db, u, `select ensure_buyer_profile($1,'individual',null)`, [name]);
   }

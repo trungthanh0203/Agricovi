@@ -28,7 +28,7 @@ export function ResetPasswordButton({ org, userId, onDone, label = 'Đặt lại
 
 export function CredentialsCard({ creds, onClose }: { creds: StaffCredentials; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
-  const text = `Đăng nhập Agricovi\nSố điện thoại: ${creds.phone}\nMật khẩu tạm: ${creds.temp_password}${creds.pin_code ? `\nMã đặt PIN chấm công: ${creds.pin_code} (dùng ở máy chấm công, hạn 24 giờ)` : ''}`;
+  const text = `Đăng nhập Acovin\nSố điện thoại: ${creds.phone}\nMật khẩu tạm: ${creds.temp_password}${creds.pin_code ? `\nMã đặt PIN chấm công: ${creds.pin_code} (dùng ở máy chấm công, hạn 24 giờ)` : ''}`;
   async function copy() {
     try {
       await navigator.clipboard.writeText(text);

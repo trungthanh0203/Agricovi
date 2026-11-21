@@ -187,7 +187,7 @@ export const MORE_GUIDES: Guide[] = [
           'Ghi nhận thanh toán: chưa trả, một phần hoặc đã trả (thanh toán diễn ra ngoài hệ thống).',
           'Ghi chú không được chứa số điện thoại hay đường dẫn (quy định của website để chống lừa đảo).',
         ],
-        tip: 'Phần đặt hàng và hoa hồng giao thương chỉ mở cho người dùng thật sau khi hoàn tất tư vấn pháp lý. Nếu chưa thấy đơn, hãy hỏi Agricovi.',
+        tip: 'Phần đặt hàng và hoa hồng giao thương chỉ mở cho người dùng thật sau khi hoàn tất tư vấn pháp lý. Nếu chưa thấy đơn, hãy hỏi Acovin.',
         go: { tab: 'reports', section: 'website', label: 'Mở Đơn khách từ website' },
       },
       {

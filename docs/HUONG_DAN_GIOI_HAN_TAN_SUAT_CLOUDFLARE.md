@@ -6,12 +6,12 @@ Mục đích: chặn một địa chỉ IP gửi quá nhiều yêu cầu vào c�
 
 ## 0. Chuẩn bị
 
-- Tên miền `agricovi.com` phải đang **dùng DNS của Cloudflare** (như đã gắn ở `TRIEN_KHAI_TEN_MIEN.md`), và bản ghi trỏ vào website phải **bật đám mây cam (Proxied)**. Nếu đám mây xám thì Cloudflare không chặn được gì.
+- Tên miền `acovin.com` phải đang **dùng DNS của Cloudflare** (như đã gắn ở `TRIEN_KHAI_TEN_MIEN.md`), và bản ghi trỏ vào website phải **bật đám mây cam (Proxied)**. Nếu đám mây xám thì Cloudflare không chặn được gì.
 - Biết gói Cloudflare đang dùng (Free, Pro…). Số quy tắc được tạo phụ thuộc gói: **gói Free thường chỉ được 1 quy tắc giới hạn tần suất**, với khoảng đếm 10 giây và chặn 10 giây. Gói trả phí được nhiều quy tắc hơn và chọn được khoảng đếm dài hơn. Xem số quy tắc còn lại ngay trong trang tạo quy tắc.
 
 ## 1. Quy tắc cho các trang nhạy cảm (làm trước, gói Free cũng làm được)
 
-1. Vào [dash.cloudflare.com](https://dash.cloudflare.com), chọn tên miền **agricovi.com**.
+1. Vào [dash.cloudflare.com](https://dash.cloudflare.com), chọn tên miền **acovin.com**.
 2. Menu trái: **Security → WAF → Rate limiting rules** (có thể hiện là **Security → Security rules**). Bấm **Create rule**.
 3. **Rule name:** `Gioi han trang nhay cam`.
 4. **If incoming requests match…** chọn **Edit expression** và dán (đã gồm cả bản tiếng Anh `/en/…`):
@@ -47,7 +47,7 @@ Gói Free chỉ có 1 quy tắc: **đừng thêm ảnh vào quy tắc ở mục 
 
 ## 4. Kiểm tra quy tắc có hoạt động không
 
-1. Mở trang `https://agricovi.com/tim-kiem/?q=gao` rồi tải lại liên tục nhanh (giữ phím F5 khoảng 10 giây).
+1. Mở trang `https://acovin.com/tim-kiem/?q=gao` rồi tải lại liên tục nhanh (giữ phím F5 khoảng 10 giây).
 2. Khi vượt ngưỡng, trang hiện thông báo chặn của Cloudflare (trang trắng có chữ "blocked" hoặc "Sorry, you have been blocked"). Đợi hết thời gian chặn thì vào lại bình thường.
 3. Xem lịch sử: **Security → Events**, lọc theo tên quy tắc. Nếu thấy chặn nhầm người thật thì **tăng ngưỡng** (ví dụ 20 yêu cầu/10 giây) rồi lưu lại.
 

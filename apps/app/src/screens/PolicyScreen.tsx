@@ -10,10 +10,10 @@ export function PolicyScreen() {
     <main className="content" style={{ maxWidth: 760, margin: '0 auto', padding: 16, lineHeight: 1.6 }}>
       <p><a href="/">← Về ứng dụng</a></p>
       <h1>Chính sách bảo mật và điều khoản sử dụng</h1>
-      <p className="muted">AgriConnect (Agricovi) · cập nhật 21/11/2026</p>
+      <p className="muted">Acovin · cập nhật 21/11/2026</p>
 
       <h2>1. Chúng tôi là ai</h2>
-      <p>AgriConnect là ứng dụng giúp hộ nông dân và hợp tác xã ghi chép sản xuất, quản lý kho, chi phí, thu hoạch, bán hàng và nhân công. Thông tin đơn vị vận hành và cách liên hệ ở cuối trang.</p>
+      <p>Acovin là ứng dụng giúp hộ nông dân và hợp tác xã ghi chép sản xuất, quản lý kho, chi phí, thu hoạch, bán hàng và nhân công. Thông tin đơn vị vận hành và cách liên hệ ở cuối trang.</p>
 
       <h2>2. Chúng tôi thu thập gì</h2>
       <ul>

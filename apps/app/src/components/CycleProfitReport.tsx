@@ -86,7 +86,7 @@ export function CycleProfitReport({ info, s }: { info: ProfitReportInfo; s: Cycl
 
         <div className="pr-foot">
           <div>
-            <p className="muted">Số liệu lấy từ phần mềm AgriConnect, tính tại thời điểm {new Date().toLocaleString('vi-VN')}. Lãi/lỗ là số tạm tính từ các khoản đã ghi trong hệ thống.</p>
+            <p className="muted">Số liệu lấy từ phần mềm Acovin, tính tại thời điểm {new Date().toLocaleString('vi-VN')}. Lãi/lỗ là số tạm tính từ các khoản đã ghi trong hệ thống.</p>
             <div className="logbook-sign"><span>Người lập</span><span>Chủ cơ sở xác nhận</span></div>
           </div>
           {qr && (

@@ -1,3 +1,4 @@
+import { BRAND } from './brand';
 // Nội dung và cấu trúc mặc định của website (W1, D60–D61). Website và trang quản trị dùng chung để:
 // - website luôn hiển thị được khi CSDL chưa có nội dung hoặc chưa kết nối;
 // - quản trị viên có điểm xuất phát để sửa (menu, trang tĩnh).
@@ -14,9 +15,9 @@ export interface SiteSettings {
 
 export const DEFAULT_SETTINGS: SiteSettings = {
   brand: {
-    name: 'Agricovi',
-    tagline: 'Kết nối nông nghiệp Việt',
-    description: 'Nền tảng kết nối nhà vườn, hợp tác xã và người mua nông sản, vật tư; truy xuất nguồn gốc từ dữ liệu sản xuất thật.',
+    name: 'Acovin',
+    tagline: BRAND.tagline,
+    description: 'Acovin — Kết nối nông nghiệp số Việt Nam. Nền tảng kết nối nhà vườn, hợp tác xã và người mua nông sản, vật tư; truy xuất nguồn gốc từ dữ liệu sản xuất thật.',
     hero_title: 'Tìm nơi trồng, sản phẩm và nguồn gốc nông sản',
     hero_text: 'Danh bạ nhà cung cấp đã được kiểm duyệt, tình trạng cung ứng cập nhật thường xuyên và truy xuất nguồn gốc từng mùa vụ.',
     hero_trade: 'Đăng tin cần mua, cần bán và trao đổi trực tiếp với người mua, nhà cung cấp đã đăng ký. Liên hệ chỉ mở khi hai bên cùng đồng ý.',
@@ -74,7 +75,7 @@ export function newsSections(channel: keyof typeof NEWS_CHANNEL_HREF): { slug: s
     .map((c) => ({ slug: c.href.slice(base.length).replace(/\/+$/, ''), label: c.label }));
 }
 
-/** Menu "Tìm hiểu về Agricovi" trên thanh xanh */
+/** Menu "Tìm hiểu về Acovin" trên thanh xanh */
 export const DEFAULT_ABOUT_MENU: SiteLink[] = [
   { label: 'Về chúng tôi', href: '/gioi-thieu' },
   { label: 'Hướng dẫn sử dụng', href: '/huong-dan-su-dung' },
@@ -121,9 +122,9 @@ const SOON = 'Nội dung trang này đang được hoàn thiện và sẽ sớm 
 export const DEFAULT_PAGES: Record<string, DefaultPage> = {
   'gioi-thieu': {
     title: 'Giới thiệu',
-    description: 'Agricovi kết nối nhà vườn, hợp tác xã và người mua nông sản.',
+    description: 'Acovin kết nối nhà vườn, hợp tác xã và người mua nông sản.',
     body: [
-      'Agricovi giúp nhà vườn, trang trại và hợp tác xã ghi chép quá trình nuôi trồng, quản lý vật tư, chấm công và chi phí; đồng thời giới thiệu sản phẩm đến người mua.',
+      'Acovin giúp nhà vườn, trang trại và hợp tác xã ghi chép quá trình nuôi trồng, quản lý vật tư, chấm công và chi phí; đồng thời giới thiệu sản phẩm đến người mua.',
       '## Điều làm nên khác biệt',
       '- Thông tin nguồn gốc đi thẳng từ nhật ký sản xuất thật: mùa vụ, vật tư đã dùng, thời gian cách ly.',
       '- Người trồng tự quyết định thông tin nào được công khai; mọi hồ sơ đều được kiểm duyệt trước khi hiển thị.',
@@ -142,7 +143,7 @@ export const DEFAULT_PAGES: Record<string, DefaultPage> = {
       '- Hồ sơ giới thiệu trên website, mã QR truy xuất nguồn gốc cho từng vụ.',
       '- Dùng thử miễn phí trước khi chọn gói.',
       '## Bắt đầu',
-      'Đăng ký tài khoản trên ứng dụng Agricovi, tạo cơ sở của bạn và làm theo hướng dẫn từng bước.',
+      'Đăng ký tài khoản trên ứng dụng Acovin, tạo cơ sở của bạn và làm theo hướng dẫn từng bước.',
     ].join('\n\n'),
   },
   'danh-cho-nguoi-mua': {
@@ -159,10 +160,10 @@ export const DEFAULT_PAGES: Record<string, DefaultPage> = {
   },
   'tro-giup': {
     title: 'Trung tâm trợ giúp',
-    description: 'Giải đáp thắc mắc khi dùng Agricovi.',
+    description: 'Giải đáp thắc mắc khi dùng Acovin.',
     body: [
       '## Tài liệu hướng dẫn',
-      '[[Giới thiệu hệ thống Agricovi|/huong-dan/he-thong/]]',
+      '[[Giới thiệu hệ thống Acovin|/huong-dan/he-thong/]]',
       '[[Hướng dẫn trồng trọt|/huong-dan/trong-cay/]]',
       '[[Hướng dẫn vật nuôi|/huong-dan/vat-nuoi/]]',
       '## Câu hỏi thường gặp',
@@ -174,12 +175,12 @@ export const DEFAULT_PAGES: Record<string, DefaultPage> = {
   },
   'huong-dan-su-dung': {
     title: 'Hướng dẫn sử dụng',
-    description: 'Giới thiệu tổng thể Agricovi, cách dữ liệu từ ứng dụng lên website và hướng dẫn từng chức năng.',
+    description: 'Giới thiệu tổng thể Acovin, cách dữ liệu từ ứng dụng lên website và hướng dẫn từng chức năng.',
     body: [
-      'Trang này giúp bạn hiểu Agricovi hoạt động thế nào và cách dùng từng phần của website. Đọc từ trên xuống nếu mới làm quen, hoặc chọn nhanh phần bạn cần.',
-      '## 1. Agricovi là gì?',
-      'Agricovi gồm hai phần làm việc cùng nhau:',
-      '- Ứng dụng (app.agricovi.com): dành cho nhà vườn, trang trại, hợp tác xã ghi chép sản xuất hằng ngày: nhật ký, vật tư, thu hoạch, chi phí, chấm công.',
+      'Trang này giúp bạn hiểu Acovin hoạt động thế nào và cách dùng từng phần của website. Đọc từ trên xuống nếu mới làm quen, hoặc chọn nhanh phần bạn cần.',
+      '## 1. Acovin là gì?',
+      'Acovin gồm hai phần làm việc cùng nhau:',
+      '- Ứng dụng (app.acovin.com): dành cho nhà vườn, trang trại, hợp tác xã ghi chép sản xuất hằng ngày: nhật ký, vật tư, thu hoạch, chi phí, chấm công.',
       '- Website (trang bạn đang xem): nơi người mua tìm nhà cung cấp, xem nguồn gốc nông sản, tìm vật tư và giao thương với nhau.',
       '## 2. Dữ liệu từ ứng dụng lên website như thế nào?',
       'Website không tự lấy dữ liệu sản xuất của ai. Mọi thông tin chỉ lên website khi chủ cơ sở chủ động công khai, theo các bước sau:',
@@ -270,7 +271,7 @@ export const DEFAULT_PAGES: Record<string, DefaultPage> = {
   },
   'lien-he': {
     title: 'Liên hệ',
-    description: 'Liên hệ với Agricovi.',
+    description: 'Liên hệ với Acovin.',
     body: [
       'Nếu cần báo cáo hồ sơ có thông tin sai hoặc vi phạm, vui lòng liên hệ qua thông tin hoặc biểu mẫu dưới đây, kèm đường dẫn trang liên quan.',
     ].join('\n\n'),

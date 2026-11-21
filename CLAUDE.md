@@ -1,5 +1,7 @@
 # AgriConnect — hướng dẫn cho phiên làm việc mới
 
+> **Thương hiệu hiển thị: Acovin** (D226, 21/11/2026; tên miền dự kiến `acovin.com`, app `app.acovin.com`, khẩu hiệu "Kết nối nông nghiệp số Việt Nam"). "AgriConnect"/"Agricovi" chỉ còn là tên mã nội bộ (gói `@agriconnect/*`, khóa lưu `agriconnect.*`, IndexedDB `agriconnect`): **không đổi các tên kỹ thuật đó**. Mọi chữ người dùng thấy dùng `BRAND` ở `packages/shared/src/brand.ts`. Logo nguồn ở `assets/brand/`, tạo lại bộ ảnh bằng `scripts/brand/*.py`.
+
 Nền tảng quản lý nuôi trồng (app PWA) + website xúc tiến thương mại. Người dùng cuối nói **tiếng Việt**: mọi chữ trên giao diện, thông báo lỗi, tài liệu và commit đều viết **tiếng Việt**, dễ hiểu cho người ít quen công nghệ. Trả lời ngắn gọn; hướng dẫn thử dài đưa vào `docs/`, không dán cả vào chat.
 
 

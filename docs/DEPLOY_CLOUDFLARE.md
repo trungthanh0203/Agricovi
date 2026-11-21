@@ -11,11 +11,11 @@ Làm **một lần**, rồi sau đó chỉ cần đẩy code.
 
 ## 1. Tạo dự án Pages cho app
 
-Cloudflare → **Workers & Pages → Create → Pages → Connect to Git** → chọn kho AgriConnect.
+Cloudflare → **Workers & Pages → Create → Pages → Connect to Git** → chọn kho Acovin.
 
 | Ô | Giá trị |
 |---|---|
-| Project name | `agriconnect-app` (tên bất kỳ) |
+| Project name | `acovin-app` (tên bất kỳ) |
 | Production branch | `main` |
 | Root directory | để **trống** (gốc kho, vì dự án dùng workspaces) |
 | Build command | `npm ci && npm run build -w @agriconnect/app` |
@@ -31,7 +31,7 @@ Cloudflare → **Workers & Pages → Create → Pages → Connect to Git** → c
 
 > Chỉ dùng khóa **anon**. Không bao giờ đặt `service_role` ở đây.
 
-Bấm **Save and Deploy**. Lần đầu mất vài phút; xong sẽ có địa chỉ dạng `https://agriconnect-app.pages.dev`.
+Bấm **Save and Deploy**. Lần đầu mất vài phút; xong sẽ có địa chỉ dạng `https://acovin-app.pages.dev`.
 
 ### Cách B: nếu bạn tạo "Workers" (Workers Builds) thay vì "Pages", hoặc gặp lỗi "application detection logic ... root of a workspace"
 
@@ -45,8 +45,8 @@ Lỗi này do lệnh `npx wrangler deploy` chạy ở gốc kho mà không có t
 
 Lưu ý với Workers Builds:
 - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` và `NODE_VERSION=22` phải khai ở **Build variables and secrets** (biến dùng lúc build), không phải biến lúc chạy. Khai nhầm chỗ thì app build ra sẽ báo "chưa cấu hình Supabase".
-- Tên dự án Workers phải trùng `name` trong `wrangler.jsonc` (`agriconnect-app`); nếu bạn đặt tên khác, sửa `name` cho khớp.
-- Địa chỉ có dạng `https://agriconnect-app.<tài-khoản>.workers.dev`. Mục 2 và 6 bên dưới áp dụng y hệt, chỉ thay địa chỉ.
+- Tên dự án Workers phải trùng `name` trong `wrangler.jsonc` (`acovin-app`); nếu bạn đặt tên khác, sửa `name` cho khớp.
+- Địa chỉ có dạng `https://acovin-app.<tài-khoản>.workers.dev`. Mục 2 và 6 bên dưới áp dụng y hệt, chỉ thay địa chỉ.
 
 ### Nếu app vẫn báo "chưa được nối với máy chủ Supabase" sau khi build
 
@@ -63,7 +63,7 @@ Biến khai ở bảng điều khiển (Build variables) vẫn **ưu tiên hơn*
 Supabase → **Authentication → URL Configuration**:
 
 - **Site URL**: địa chỉ Pages của app.
-- **Redirect URLs**: thêm địa chỉ Pages, và thêm `https://*.agriconnect-app.pages.dev` (cho bản xem thử theo nhánh).
+- **Redirect URLs**: thêm địa chỉ Pages, và thêm `https://*.acovin-app.pages.dev` (cho bản xem thử theo nhánh).
 - Vẫn giữ `http://localhost:5180` nếu còn chạy cục bộ.
 
 Nếu quên bước này, thư xác nhận email và thư đặt lại mật khẩu sẽ dẫn về địa chỉ sai.
@@ -82,7 +82,7 @@ Nếu quên bước này, thư xác nhận email và thư đặt lại mật kh�
 2. Đơn mua gói luôn hiện ở trang quản trị nền tảng → **Đơn mua gói**, kể cả khi chưa cấu hình email.
 3. Muốn có email thông báo (Resend có gói miễn phí, xem trang giá hiện hành): tạo tài khoản ở resend.com, lấy API key, rồi
    - `npx supabase secrets set RESEND_API_KEY=<khóa>`
-   - Chưa có tên miền đã xác minh ở Resend: bỏ qua `RESEND_FROM` (dùng onboarding@resend.dev), khi đó **chỉ gửi được tới email của chính chủ tài khoản Resend**. Có tên miền: xác minh ở Resend rồi `npx supabase secrets set RESEND_FROM="Agricovi <no-reply@tên-miền-của-bạn>"`.
+   - Chưa có tên miền đã xác minh ở Resend: bỏ qua `RESEND_FROM` (dùng onboarding@resend.dev), khi đó **chỉ gửi được tới email của chính chủ tài khoản Resend**. Có tên miền: xác minh ở Resend rồi `npx supabase secrets set RESEND_FROM="Acovin <no-reply@tên-miền-của-bạn>"`.
    - Email nhận: mặc định là email ở trang quản trị → Cấu hình → Thông tin liên hệ; muốn khác thì `npx supabase secrets set ORDER_NOTIFY_EMAIL=<email>`.
 4. Duyệt đơn: liên hệ theo số điện thoại trong đơn, thu tiền, bấm Duyệt (kiểm số quý, số tiền) để kích hoạt gói.
 
@@ -131,7 +131,7 @@ App là PWA nên trình duyệt giữ một bản app trong máy (service worker
 ### 6.1 Làm ngay bây giờ (giai đoạn thử)
 
 1. Làm mục 1 và 2 ở trên. Địa chỉ thử là `https://<tên-dự-án>.pages.dev` (miễn phí, có HTTPS, mở được trên điện thoại).
-2. **Trước khi tạo tài khoản nhân viên thử**, đổi tên miền email ẩn sang một tên miền *không ai mua được và không có hộp thư*, vì mặc định `agricovi.com` có thể thuộc người khác (cảnh báo trong `docs/DECISIONS.md`). Chạy ở Supabase → SQL Editor:
+2. **Trước khi tạo tài khoản nhân viên thử**, đổi tên miền email ẩn sang một tên miền *không ai mua được và không có hộp thư*, vì mặc định `acovin.com` có thể thuộc người khác (cảnh báo trong `docs/DECISIONS.md`). Chạy ở Supabase → SQL Editor:
    ```sql
    update platform_settings set value = '"agriconnect-thu.example.com"' where key = 'login_email_domain';
    ```
@@ -141,12 +141,12 @@ App là PWA nên trình duyệt giữ một bản app trong máy (service worker
 
 ### 6.2 Khi đã mua tên miền (đưa cho người dùng thật)
 
-> **Tên miền `agricovi.com` đã mua: làm theo `docs/TRIEN_KHAI_TEN_MIEN.md` (từng bước cho website, app, thư, bảo vệ quản trị).** Mục này giữ làm tham khảo chung.
+> **Tên miền `acovin.com` đã mua: làm theo `docs/TRIEN_KHAI_TEN_MIEN.md` (từng bước cho website, app, thư, bảo vệ quản trị).** Mục này giữ làm tham khảo chung.
 
 Làm theo thứ tự; mỗi bước đều làm được mà không ngắt bản thử.
 
 1. **Mua tên miền** (ở Cloudflare Registrar thì tiện nhất; mua nơi khác thì thêm tên miền vào Cloudflare và trỏ nameserver về Cloudflare).
-2. **Gắn vào Pages:** dự án `agriconnect-app` → **Custom domains → Set up a custom domain** → nhập `app.<tên-miền>`. Cloudflare tự tạo bản ghi DNS và chứng chỉ HTTPS (vài phút).
+2. **Gắn vào Pages:** dự án `acovin-app` → **Custom domains → Set up a custom domain** → nhập `app.<tên-miền>`. Cloudflare tự tạo bản ghi DNS và chứng chỉ HTTPS (vài phút).
 3. **Tách môi trường thật khỏi môi trường thử** (khuyến nghị mạnh trước khi có người dùng thật):
    - Tạo **dự án Supabase mới** làm bản thật; `supabase link` sang dự án đó rồi `npx supabase db push` và `npx supabase functions deploy staff-accounts` (xem `docs/SETUP_SUPABASE.md`). Dự án cũ giữ làm bản thử.
    - Trong Pages → Settings → Variables: đặt `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` của **dự án mới** cho **Production** (nhánh `main`), giữ của dự án cũ cho **Preview**. Bấm **Retry deployment** để build lại.
@@ -172,7 +172,7 @@ Làm theo thứ tự; mỗi bước đều làm được mà không ngắt bản
 
 ## Website công khai (apps/web) trên Cloudflare Workers
 
-Tạo một Worker riêng tên `agriconnect` (khác Worker của app), nối cùng kho GitHub. Ở **Settings → Build**:
+Tạo một Worker riêng tên `acovin-web` (khác Worker của app), nối cùng kho GitHub. Ở **Settings → Build**:
 
 | Ô | Giá trị |
 |---|---|
@@ -180,28 +180,40 @@ Tạo một Worker riêng tên `agriconnect` (khác Worker của app), nối cù
 | Build command | `npm ci && npm run build -w @agriconnect/web` |
 | Deploy command | `npx wrangler deploy` |
 
-Biến lúc build (Build variables): `NODE_VERSION` = `22`. Khóa công khai đã nằm trong `apps/web/.env.production` nên không bắt buộc khai thêm. Tên Worker phải trùng `name` trong `apps/web/wrangler.jsonc` (`agriconnect`).
+Biến lúc build (Build variables): `NODE_VERSION` = `22`. Khóa công khai đã nằm trong `apps/web/.env.production` nên không bắt buộc khai thêm. Tên Worker phải trùng `name` trong `apps/web/wrangler.jsonc` (`acovin-web`).
 
 **Từ W0 (D60) website dựng phía máy chủ** (Astro 7 + `@astrojs/cloudflare` 14, chạy trên Workers): `npm run build -w @agriconnect/web` tạo `apps/web/dist/client` (tệp tĩnh) và `apps/web/dist/server` (Worker) kèm cấu hình `wrangler.json` sinh sẵn; lệnh deploy chỉ là `npx wrangler deploy`: Cloudflare chạy nó **trong thư mục `apps/web`** (không phải gốc kho; vì vậy `cd apps/web` và `--config apps/web/...` đều lỗi) và wrangler tự tìm cấu hình sinh sẵn qua `apps/web/.wrangler/deploy/config.json`. Nếu báo không tìm thấy cấu hình, thử `npx wrangler deploy --config dist/server/wrangler.json`. Tệp `_redirects` không còn. Trang công khai gửi `Cache-Control: s-maxage=60`, nên nội dung CMS xuất hiện trên website sau tối đa khoảng 1 phút, không cần deploy lại.
 
 Biến tùy chọn lúc build: `PUBLIC_APP_URL` (địa chỉ app, để chân trang có nút "Mở ứng dụng").
 
-**Hai địa chỉ (D64):** ứng dụng và quản trị nền tảng ở Worker `agricovi` (`https://agricovi.onstudy.workers.dev` và `/quan-tri/`); website công khai **và quản trị website** ở Worker `agriconnect` (`https://agriconnect.onstudy.workers.dev` và `/admin/`). Biến `VITE_PUBLIC_SITE_URL` (đã khai trong `apps/app/.env.production`) làm mã QR của vụ và các nút "Xem" trỏ đúng website.
+**Hai địa chỉ (D64):** ứng dụng và quản trị nền tảng ở Worker `acovin-app` (`https://acovin-app.onstudy.workers.dev` và `/quan-tri/`); website công khai **và quản trị website** ở Worker `acovin-web` (`https://acovin-web.onstudy.workers.dev` và `/admin/`). Biến `VITE_PUBLIC_SITE_URL` (đã khai trong `apps/app/.env.production`) làm mã QR của vụ và các nút "Xem" trỏ đúng website.
 
 ## Quản trị website (apps/webadmin) — cùng Worker với website, ở /admin/ (D64)
 
-Quản trị nội dung và kiểm duyệt website là một ứng dụng riêng trong kho (`apps/webadmin`, tách khỏi quản trị nền tảng của app) nhưng **được đặt vào chính Worker của website**: lệnh build của website (`npm run build -w @agriconnect/web`) tự build quản trị website (`scripts/include-webadmin.mjs`) và chép vào `apps/web/public/admin`. **Không tạo thêm Worker, không đổi lệnh build/deploy của website**. Địa chỉ: `https://agriconnect.onstudy.workers.dev/admin/` (gõ `/admin` cũng tự chuyển sang `/admin/`). Quản trị website đọc chung tệp `apps/app/.env.production` (khóa công khai Supabase, `VITE_APP_URL`, `VITE_PUBLIC_SITE_URL`); `VITE_WEBADMIN_URL` trong tệp đó làm quản trị nền tảng có liên kết sang quản trị website.
+Quản trị nội dung và kiểm duyệt website là một ứng dụng riêng trong kho (`apps/webadmin`, tách khỏi quản trị nền tảng của app) nhưng **được đặt vào chính Worker của website**: lệnh build của website (`npm run build -w @agriconnect/web`) tự build quản trị website (`scripts/include-webadmin.mjs`) và chép vào `apps/web/public/admin`. **Không tạo thêm Worker, không đổi lệnh build/deploy của website**. Địa chỉ: `https://acovin-web.onstudy.workers.dev/admin/` (gõ `/admin` cũng tự chuyển sang `/admin/`). Quản trị website đọc chung tệp `apps/app/.env.production` (khóa công khai Supabase, `VITE_APP_URL`, `VITE_PUBLIC_SITE_URL`); `VITE_WEBADMIN_URL` trong tệp đó làm quản trị nền tảng có liên kết sang quản trị website.
 
 Lưu ý an toàn: vì cùng địa chỉ với website công khai, quản trị website dùng khóa lưu phiên đăng nhập riêng (`agriconnect-webadmin-auth`) để không lẫn với phiên của người dùng website sau này; nên bật **Cloudflare Access** cho đường dẫn `/admin/*` (chỉ email của bạn và nhân sự biên tập vào được), lớp bảo vệ thứ hai ngoài quyền kiểm ở CSDL.
 
-Quyền: quản trị viên nền tảng (bảng `platform_admins`) luôn đủ quyền; cấp vai trò biên tập cho người khác ở **Người biên tập** (tổng biên tập, biên tập viên, kiểm duyệt viên; người đó phải có tài khoản AgriConnect đăng ký bằng email). Chưa có nội dung trong CSDL thì website dùng nội dung mặc định (`packages/shared/src/site.ts`); các trang pháp lý chỉ là khung chờ văn bản chính thức.
+Quyền: quản trị viên nền tảng (bảng `platform_admins`) luôn đủ quyền; cấp vai trò biên tập cho người khác ở **Người biên tập** (tổng biên tập, biên tập viên, kiểm duyệt viên; người đó phải có tài khoản Acovin đăng ký bằng email). Chưa có nội dung trong CSDL thì website dùng nội dung mặc định (`packages/shared/src/site.ts`); các trang pháp lý chỉ là khung chờ văn bản chính thức.
 
 ## Tài khoản người dùng website (W3, D65)
 
 1. `npx supabase db push` (migration 0045) và triển khai hàm đăng ký bằng số điện thoại: `npx supabase functions deploy web-accounts`.
-2. Supabase → **Authentication → URL Configuration**: đặt *Site URL* = địa chỉ website (ví dụ `https://agriconnect.onstudy.workers.dev`) và thêm `https://agriconnect.onstudy.workers.dev/**` vào *Redirect URLs* (cần cho thư xác nhận email và đặt lại mật khẩu).
+2. Supabase → **Authentication → URL Configuration**: đặt *Site URL* = địa chỉ website (ví dụ `https://acovin-web.onstudy.workers.dev`) và thêm `https://acovin-web.onstudy.workers.dev/**` vào *Redirect URLs* (cần cho thư xác nhận email và đặt lại mật khẩu).
 3. Supabase → **Authentication → Providers → Email**: đăng ký bằng email thường bật *Confirm email*. Dịch vụ thư có sẵn của Supabase bị giới hạn số thư mỗi giờ (rất thấp), nên khi mở thật cần cấu hình SMTP riêng (**Authentication → SMTP Settings**). Khi thử nội bộ có thể tạm tắt *Confirm email* để đăng ký xong vào luôn.
 4. Tài khoản nhân viên (số điện thoại do chủ cơ sở tạo) không đăng nhập được website (CSDL chặn); chủ cơ sở đăng nhập website bằng email tài khoản app.
 5. Đăng ký bằng số điện thoại chưa xác minh OTP và chưa tự đặt lại mật khẩu được; chống lạm dụng hiện là giới hạn 200 đăng ký/giờ ở CSDL, sẽ thêm Turnstile khi có khóa.
 
 **Lệnh deploy của app (D68):** dùng `npm run deploy:app` (script ở gốc kho gọi thẳng `node node_modules/wrangler/bin/wrangler.js deploy --config apps/app/wrangler.jsonc`, không phụ thuộc việc `npx` có tìm thấy `wrangler` hay không; `wrangler` nằm trong devDependencies ở gốc kho). Lệnh cũ `npx wrangler deploy --config apps/app/wrangler.jsonc` từng báo `wrangler: not found` trên Cloudflare sau khi dự án thêm nhiều gói.
+
+## Đổi thương hiệu sang Acovin (D226): việc phải làm trên Cloudflare và Supabase
+
+Mã đã đổi tên dịch vụ trong `wrangler.jsonc`: app là **`acovin-app`**, website là **`acovin-web`** (trước đây `agricovi` và `agriconnect`). Đổi `name` nghĩa là Cloudflare coi là **Worker mới** (địa chỉ `workers.dev` mới, Worker cũ vẫn còn cho tới khi bạn xóa). Làm theo thứ tự:
+
+1. **Tạo hai Worker mới** nối cùng kho GitHub, tên đúng `acovin-app` và `acovin-web`, cùng lệnh build và biến môi trường như hai Worker cũ (mục 2 và 6 phía dưới). Tên Worker phải trùng `name` trong `wrangler.jsonc`.
+2. **Mua tên miền `acovin.com`** rồi gắn: website tại `acovin.com` (kèm `/admin/` cho quản trị website), app tại `app.acovin.com` (kèm `/quan-tri/`). Giữ Worker cũ chạy song song cho tới khi tên miền mới hoạt động.
+3. **Supabase → Authentication → URL Configuration:** đặt *Site URL* = `https://acovin.com`, thêm `https://app.acovin.com` và địa chỉ `workers.dev` mới vào *Redirect URLs*.
+4. **Chạy `npx supabase db push`** để áp dụng migration 0236: đổi tên miền email ẩn đăng nhập số điện thoại sang `acovin.com` và đổi chữ thương hiệu trong cấu hình/nội dung website. (Tài khoản thử vẫn đăng nhập được; máy chấm công đã ghép đôi nếu báo lỗi thì dùng "Ghép lại".)
+5. **Khóa cấu hình email:** `npx supabase secrets set RESEND_FROM="Acovin <no-reply@acovin.com>"` (sau khi xác minh tên miền gửi thư), rồi `npx supabase functions deploy plan-order send-push news-fetch`.
+6. **Quản trị → Cấu hình → Thông tin liên hệ:** kiểm tra tên công ty, email, website theo thương hiệu mới.
+7. Xóa hai Worker cũ khi mọi thứ ổn. Người đã cài app cũ sẽ thấy tên/biểu tượng cũ cho tới khi gỡ cài lại.

@@ -41,7 +41,7 @@ if (channel === 'hoi_cho') {
 const heading = current ? `${title}: ${current.label}` : title;
 ---
 {!section || current ? (
-  <Base title={`${heading} — Agricovi`} description={`${heading} trên Agricovi.`}>
+  <Base title={`${heading} — Acovin`} description={`${heading} trên Acovin.`}>
     <p class="crumbs"><a href="/">Trang chủ</a> › {current ? <><a href={base}>{title}</a> › {current.label}</> : title}</p>
     <h1>{heading}</h1>
     {sections.length > 0 && (
@@ -60,7 +60,7 @@ const heading = current ? `${title}: ${current.label}` : title;
     {pg && <Pager page={pg.page} pages={pg.pages} />}
   </Base>
 ) : (
-  <Base title="Không tìm thấy mục — Agricovi" noindex cache={false}>
+  <Base title="Không tìm thấy mục — Acovin" noindex cache={false}>
     <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
       <h1>Không tìm thấy mục này</h1>
       <p><a class="btn solid" href={base}>Về {title}</a></p>

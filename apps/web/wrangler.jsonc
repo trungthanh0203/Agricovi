@@ -1,7 +1,7 @@
 {
   // Cấu hình triển khai WEBSITE công khai lên Cloudflare Workers (dựng phía máy chủ). Xem docs/DEPLOY_CLOUDFLARE.md, mục "Website".
   // Tên phải trùng tên Worker bạn tạo trên Cloudflare.
-  "name": "agriconnect",
+  "name": "acovin-web",
   "main": "@astrojs/cloudflare/entrypoints/server",
   "compatibility_date": "2025-09-01",
   "compatibility_flags": ["nodejs_compat"]

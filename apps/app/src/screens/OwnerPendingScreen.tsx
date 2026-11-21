@@ -4,7 +4,7 @@ import { ContactCard } from '../components/ContactCard';
 import type { OwnerSignup } from '../lib/phoneSignup';
 
 /**
- * Chủ đăng ký bằng số điện thoại đang chờ Agricovi duyệt (hoặc bị từ chối). Tự kiểm tra lại mỗi 20 giây; được duyệt thì vào app ngay.
+ * Chủ đăng ký bằng số điện thoại đang chờ Acovin duyệt (hoặc bị từ chối). Tự kiểm tra lại mỗi 20 giây; được duyệt thì vào app ngay.
  */
 export function OwnerPendingScreen({ signup, onCheck }: { signup: OwnerSignup; onCheck: () => void }) {
   const { signOut } = useAuth();
@@ -18,7 +18,7 @@ export function OwnerPendingScreen({ signup, onCheck }: { signup: OwnerSignup; o
     return (
       <main className="auth">
         <h1>Đăng ký chưa được duyệt</h1>
-        <p className="msg error" role="alert">{signup.note ?? 'Agricovi chưa thể xác nhận đăng ký này.'}</p>
+        <p className="msg error" role="alert">{signup.note ?? 'Acovin chưa thể xác nhận đăng ký này.'}</p>
         <ContactCard />
         <button className="link" onClick={() => void signOut()}>Đăng xuất</button>
       </main>

@@ -22,7 +22,7 @@ Người duyệt cần vào được app với dữ liệu có sẵn, không b�
 Khớp với trang chính sách: tên, số điện thoại/email, thông tin tài chính do người dùng tự nhập (chi phí, doanh thu: là dữ liệu nghiệp vụ, không phải thẻ/ngân hàng), ảnh, (tùy chọn) dữ liệu khuôn mặt cho chấm công, vị trí khi dùng chức năng bản đồ/chấm công, nhật ký sử dụng. Mục đích: vận hành ứng dụng. **Không bán, không dùng cho quảng cáo, không theo dõi chéo ứng dụng.** Dữ liệu mã hóa khi truyền; người dùng yêu cầu xóa được.
 
 ## 5. Thanh toán trong bản trên cửa hàng
-Gói trả phí hiện bán bên ngoài app (liên hệ, chuyển khoản). Cửa hàng có quy định riêng về bán nội dung số trong app: để an toàn, bản đưa lên cửa hàng **không nên hiện giá và nút đặt mua gói**, chỉ có thông tin liên hệ. Đây là việc **chưa làm trong mã** (đợt D, khi đóng gói bản cửa hàng sẽ ẩn mục "Các gói đăng ký của Agricovi" ở bản cửa hàng); cần đối chiếu quy định lúc nộp.
+Gói trả phí hiện bán bên ngoài app (liên hệ, chuyển khoản). Cửa hàng có quy định riêng về bán nội dung số trong app: để an toàn, bản đưa lên cửa hàng **không nên hiện giá và nút đặt mua gói**, chỉ có thông tin liên hệ. Đây là việc **chưa làm trong mã** (đợt D, khi đóng gói bản cửa hàng sẽ ẩn mục "Các gói đăng ký của Acovin" ở bản cửa hàng); cần đối chiếu quy định lúc nộp.
 
 ## 6. Đóng gói (đợt D)
 - **Google Play (làm trước):** gói PWA thành ứng dụng Android (Trusted Web Activity / Bubblewrap). Cần tài khoản nhà phát triển (phí một lần ~25 USD), khóa ký, tệp `assetlinks.json` đặt ở tên miền của app. Cần ảnh chụp màn hình, biểu tượng, mô tả tiếng Việt.

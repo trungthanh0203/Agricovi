@@ -1,8 +1,8 @@
 import type { Guide } from './guideContent';
 
 /**
- * Ba hướng dẫn chính (D122), lấy nội dung từ ba artifact: "Agricovi – Giới thiệu hệ thống" (bộ slide), "Hướng dẫn trồng trọt Agricovi",
- * "Hướng dẫn vật nuôi Agricovi". Sơ đồ SVG của artifact được thể hiện bằng sơ đồ chặng (flow) ở đầu mỗi hướng dẫn và các bước "Sơ đồ: …".
+ * Ba hướng dẫn chính (D122), lấy nội dung từ ba artifact: "Acovin – Giới thiệu hệ thống" (bộ slide), "Hướng dẫn trồng trọt Acovin",
+ * "Hướng dẫn vật nuôi Acovin". Sơ đồ SVG của artifact được thể hiện bằng sơ đồ chặng (flow) ở đầu mỗi hướng dẫn và các bước "Sơ đồ: …".
  * Chỉ là chữ trong app, không đụng CSDL. Sửa chữ ở đây.
  */
 export const MAIN_GUIDES: Guide[] = [
@@ -16,7 +16,7 @@ export const MAIN_GUIDES: Guide[] = [
       { title: "Phía website", tone: "warn", nodes: [{ icon: "🔗", label: "Cầu nối app và web", step: 9 }, { icon: "🌐", label: "Bố cục website", step: 10 }, { icon: "🛒", label: "Ba nhóm người dùng", step: 11 }] },
       { title: "Vận hành và giá trị", tone: "neutral", nodes: [{ icon: "🛠️", label: "Hai trang quản trị", step: 12 }, { icon: "🛡️", label: "An toàn, riêng tư", step: 13 }, { icon: "⭐", label: "Giá trị cho từng người", step: 14 }, { icon: "📲", label: "Bắt đầu", step: 15 }] },
     ],
-    intro: "Agricovi gồm hai sản phẩm trên một cơ sở dữ liệu: APP quản lý cơ sở nuôi trồng và WEBSITE xúc tiến thương mại. Sơ đồ ở trên đi từ tổng quát (bức tranh chung) đến chi tiết (từng phần của app, rồi website, rồi vận hành). Bấm vào ô để nhảy tới bước; đọc 16 bước này một lần là hiểu cả hệ thống.",
+    intro: "Acovin gồm hai sản phẩm trên một cơ sở dữ liệu: APP quản lý cơ sở nuôi trồng và WEBSITE xúc tiến thương mại. Sơ đồ ở trên đi từ tổng quát (bức tranh chung) đến chi tiết (từng phần của app, rồi website, rồi vận hành). Bấm vào ô để nhảy tới bước; đọc 16 bước này một lần là hiểu cả hệ thống.",
     steps: [
       {
         title: "Bức tranh tổng thể",
@@ -24,7 +24,7 @@ export const MAIN_GUIDES: Guide[] = [
           "Người nuôi trồng (chủ cơ sở, quản lý, nhân viên) dùng APP để quản lý cơ sở: Khai báo, Sản xuất, Chấm công và lương, Báo cáo.",
           "Khi muốn quảng bá, họ gửi hồ sơ đã duyệt lên WEBSITE xúc tiến thương mại: tin, giá, lịch mùa vụ, danh mục, truy xuất QR, giao thương, đơn hàng, gian hàng vật tư.",
           "Người mua, nhà cung cấp, doanh nghiệp tìm đến website. Dưới cả hai là cơ sở dữ liệu chung (phân quyền, hạn mức gói, nhật ký chỉ thêm) và hai trang quản trị (nền tảng, website).",
-          "Agricovi giúp bạn ghi nhật ký việc, theo dõi kho, chi phí, doanh thu, thu hoạch, công nợ, chấm công và lương, biết mỗi vụ lời hay lỗ, và đưa sản phẩm lên website.",
+          "Acovin giúp bạn ghi nhật ký việc, theo dõi kho, chi phí, doanh thu, thu hoạch, công nợ, chấm công và lương, biết mỗi vụ lời hay lỗ, và đưa sản phẩm lên website.",
         ],
         tip: "Mọi con số trong báo cáo đều đi ra từ những gì bạn ghi hằng ngày. Ghi đủ và đúng thì báo cáo đúng.",
       },
@@ -148,7 +148,7 @@ export const MAIN_GUIDES: Guide[] = [
         tip: "Đơn hàng và hoa hồng giao thương chỉ mở cho người dùng thật sau khi có tư vấn pháp lý.",
       },
       {
-        title: "Hai trang quản trị (phía vận hành Agricovi)",
+        title: "Hai trang quản trị (phía vận hành Acovin)",
         details: [
           "Quản trị nền tảng (/quan-tri/ của app): cơ sở và chủ cơ sở, đăng ký chờ duyệt, gói dịch vụ và hạn mức, thanh toán, cấu hình hệ thống, nhật ký kiểm toán.",
           "Quản trị website (/admin/ của website): trang, banner, menu, bản dịch; tin, sản phẩm, vật tư, hội chợ; duyệt tin giao thương; báo cáo vi phạm; người biên tập và người dùng website.",
@@ -177,7 +177,7 @@ export const MAIN_GUIDES: Guide[] = [
       {
         title: "Bắt đầu: đăng ký, dùng thử, làm theo hướng dẫn",
         details: [
-          "Đăng ký chủ cơ sở bằng email, hoặc bằng số điện thoại có Zalo (miễn phí, chờ Agricovi duyệt). Mỗi gói dịch vụ có dùng thử 1 tháng.",
+          "Đăng ký chủ cơ sở bằng email, hoặc bằng số điện thoại có Zalo (miễn phí, chờ Acovin duyệt). Mỗi gói dịch vụ có dùng thử 1 tháng.",
           "Cài app lên điện thoại: ở trang đăng nhập có hướng dẫn cho máy tính, Android (Chrome: Thêm vào Màn hình chính) và iPhone (Safari: Chia sẻ → Thêm vào MH chính). App tự cập nhật âm thầm sau 1–2 lần mở lại; phiên bản ghi ở cuối menu ☰.",
           "Làm theo Hướng dẫn cho trồng cây hoặc cho vật nuôi, từ bước 1 đến bước 15.",
           "Cuối cùng gửi hồ sơ lên website để người mua tìm thấy.",
@@ -202,9 +202,9 @@ export const MAIN_GUIDES: Guide[] = [
       {
         title: "Đăng ký tài khoản và tạo cơ sở",
         details: [
-          "Mở app Agricovi (app.agricovi.com). Ở trang đăng nhập có hướng dẫn cài app về máy tính, Android hoặc iPhone.",
+          "Mở app Acovin (app.acovin.com). Ở trang đăng nhập có hướng dẫn cài app về máy tính, Android hoặc iPhone.",
           "Chủ Hộ đăng ký bằng email. Không có email thì chọn tab “Không có email”: nhập họ tên, tên cơ sở, số điện thoại có Zalo và mật khẩu, rồi gửi.",
-          "Agricovi liên hệ qua Zalo để xác nhận (miễn phí). Duyệt xong, cơ sở được mở và màn hình tự vào app.",
+          "Acovin liên hệ qua Zalo để xác nhận (miễn phí). Duyệt xong, cơ sở được mở và màn hình tự vào app.",
           "Chọn loại cơ sở “Hộ” và đặt tên, ví dụ “Vườn nhà màng Thành Công”.",
           "Vì sao: Mỗi cơ sở có dữ liệu riêng, không lẫn với cơ sở khác. Nhân viên không tự đăng ký: chủ cơ sở tạo tài khoản cho họ.",
         ],
@@ -440,9 +440,9 @@ export const MAIN_GUIDES: Guide[] = [
       {
         title: "Đăng ký tài khoản và tạo cơ sở",
         details: [
-          "Mở app Agricovi (app.agricovi.com). Ở trang đăng nhập có hướng dẫn cài app về máy tính, Android hoặc iPhone.",
+          "Mở app Acovin (app.acovin.com). Ở trang đăng nhập có hướng dẫn cài app về máy tính, Android hoặc iPhone.",
           "Chủ Hộ đăng ký bằng email. Không có email thì chọn tab “Không có email”: nhập họ tên, tên cơ sở, số điện thoại có Zalo và mật khẩu, rồi gửi.",
-          "Agricovi liên hệ qua Zalo để xác nhận (miễn phí). Duyệt xong, cơ sở được mở và màn hình tự vào app.",
+          "Acovin liên hệ qua Zalo để xác nhận (miễn phí). Duyệt xong, cơ sở được mở và màn hình tự vào app.",
           "Chọn loại cơ sở “Hộ” và đặt tên, ví dụ “Trại heo Bình An”.",
           "Vì sao: Mỗi cơ sở có dữ liệu riêng. Nhân viên không tự đăng ký: chủ cơ sở tạo tài khoản cho họ.",
         ],

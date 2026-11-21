@@ -41,7 +41,7 @@ try {
   else if (kind === 'profile') target = ((await sb?.from('public_profiles_lite').select('snapshot->>display_name').eq('slug', ref).maybeSingle())?.data as { display_name?: string } | null)?.display_name ?? '';
 } catch { /* bỏ qua: chỉ để hiển thị tên */ }
 ---
-<Base title="Yêu cầu báo giá — Agricovi" noindex cache={false}>
+<Base title="Yêu cầu báo giá — Acovin" noindex cache={false}>
   <div class="prose">
     <h1>Yêu cầu báo giá</h1>
     {done ? (

@@ -56,7 +56,7 @@ function parseFeed(xml: string): Item[] {
   return out;
 }
 
-const BOT_UA = 'AgricoviNewsBot/1.0 (+https://agricovi.com)';
+const BOT_UA = 'AcovinNewsBot/1.0 (+https://acovin.com)';
 const ACCEPTS = ['application/rss+xml, application/xml, text/xml, */*', '*/*']; // một số máy chủ trả 406 với danh sách kiểu nội dung dài: thử lại với */*
 const HTTP_HINT: Record<number, string> = {
   403: 'Nguồn từ chối máy chủ của chúng ta (403): có thể báo đang chặn robot hoặc dải IP máy chủ. Hãy thử nguồn khác hoặc liên hệ tòa soạn xin cho phép.',
@@ -67,7 +67,7 @@ const HTTP_HINT: Record<number, string> = {
 async function readFeed(url: string): Promise<string> {
   let status = 0;
   for (const accept of ACCEPTS) {
-    // luôn xưng đúng tên bot của Agricovi; không giả làm trình duyệt
+    // luôn xưng đúng tên bot của Acovin; không giả làm trình duyệt
     const r = await fetch(url, { headers: { 'User-Agent': BOT_UA, Accept: accept }, signal: AbortSignal.timeout(15000), redirect: 'follow' });
     status = r.status;
     if (r.ok) {

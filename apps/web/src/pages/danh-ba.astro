@@ -20,7 +20,7 @@ const shopsAll = !conHang ? (await loadShops()).filter((s) => (!tinh || s.provin
 const shops = shopsAll.slice(0, SHOP_MAX);
 const provinces = dir?.provinces ?? [];
 ---
-<Base title="Danh bạ cơ sở — Agricovi" description="Danh bạ cơ sở sản xuất nông nghiệp đã được kiểm duyệt.">
+<Base title="Danh bạ cơ sở — Acovin" description="Danh bạ cơ sở sản xuất nông nghiệp đã được kiểm duyệt.">
   <h1>Danh bạ cơ sở</h1>
   <form class="filters" method="get">
     <input name="q" value={q} placeholder="Tìm theo tên cơ sở hoặc sản phẩm" aria-label="Tìm kiếm" />

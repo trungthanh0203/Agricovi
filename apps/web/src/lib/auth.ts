@@ -1,4 +1,5 @@
 import { createClient, type Session } from '@supabase/supabase-js';
+import { brandText } from '@agriconnect/shared';
 
 /**
  * Đăng nhập và tài khoản người dùng website (W3). CHỈ chạy ở trình duyệt (phiên đăng nhập lưu ở máy người dùng); trang công khai dựng phía máy chủ
@@ -28,7 +29,7 @@ export function friendly(e: unknown): string {
   if (/password should be at least|weak/i.test(m)) return 'Mật khẩu cần ít nhất 8 ký tự.';
   if (/rate limit|too many/i.test(m)) return 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.';
   if (/failed to fetch|network/i.test(m)) return 'Không kết nối được. Hãy kiểm tra mạng rồi thử lại.';
-  return m.replace(/^[A-Z][A-Z_]{3,}: /, '');
+  return brandText(m.replace(/^[A-Z][A-Z_]{3,}: /, ''));
 }
 
 export async function call<T = unknown>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
@@ -52,7 +53,7 @@ export async function loadAccount(): Promise<WebAccount> {
   let acc = await call<WebAccount>('get_my_web_account');
   if (acc.staff) {
     await auth!.auth.signOut();
-    throw new Error('Tài khoản nhân viên không dùng website. Hãy dùng ứng dụng Agricovi.');
+    throw new Error('Tài khoản nhân viên không dùng website. Hãy dùng ứng dụng Acovin.');
   }
   if (!acc.profile) acc = await call<WebAccount>('ensure_buyer_profile');
   rememberShops(acc);

@@ -7,8 +7,8 @@ const HOURS = Array.from({ length: 17 }, (_, i) => i + 5);   // 5 giờ đến 2
 
 const STATUS_TEXT: Record<PushStatus, string> = {
   unsupported: 'Máy hoặc trình duyệt này chưa hỗ trợ thông báo.',
-  'ios-install': 'Trên iPhone, hãy thêm Agricovi vào Màn hình chính (nút Chia sẻ → Thêm vào MH chính), mở app từ biểu tượng đó rồi quay lại đây để bật thông báo.',
-  denied: 'Thông báo đang bị chặn cho Agricovi. Muốn bật, hãy cho phép thông báo trong cài đặt của máy hoặc trình duyệt, rồi quay lại đây.',
+  'ios-install': 'Trên iPhone, hãy thêm Acovin vào Màn hình chính (nút Chia sẻ → Thêm vào MH chính), mở app từ biểu tượng đó rồi quay lại đây để bật thông báo.',
+  denied: 'Thông báo đang bị chặn cho Acovin. Muốn bật, hãy cho phép thông báo trong cài đặt của máy hoặc trình duyệt, rồi quay lại đây.',
   off: 'Thông báo đang tắt trên máy này.',
   on: 'Thông báo đang bật trên máy này.',
 };

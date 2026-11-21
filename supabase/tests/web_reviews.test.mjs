@@ -10,7 +10,7 @@ async function setup() {
   await db.query(`insert into platform_admins (user_id) values ($1)`, [admin]);
   await asUser(db, admin, `select admin_set_site_role('u2@test.local','moderator',true)`);
   const org = (await asUser(db, owner, `select create_organization('household','Vườn Thành Công') id`)).rows[0].id;
-  await db.query(`insert into staff_accounts (user_id, organization_id, phone, auth_email, full_name) values ($1,$2,'0900000008','0900000008@sdt.agricovi.com','Công')`, [staff, org]);
+  await db.query(`insert into staff_accounts (user_id, organization_id, phone, auth_email, full_name) values ($1,$2,'0900000008','0900000008@sdt.acovin.com','Công')`, [staff, org]);
   const prof = (await asUser(db, owner, `insert into business_profiles (organization_id, display_name, description, province, location_precision)
     values ($1,'Vườn Thành Công','Chuyên trồng dưa lưới trong nhà màng, theo quy trình VietGAP','Long An','district') returning id`, [org])).rows[0].id;
   await asUser(db, owner, `insert into publication_consents (organization_id,business_profile_id,scope,text_version) values ($1,$2,array['profile']::text[],'v1')`, [org, prof]);

@@ -21,8 +21,8 @@ const ORDER_LABEL = { pending: 'Chờ xử lý', approved: 'Đã kích hoạt', 
 /**
  * Gói dịch vụ (D131, D132), hai khung:
  *  - trên "Gói đang dùng": tên gói, hạn sử dụng, số vụ được dùng, đã mua, nút Gia hạn thêm;
- *  - dưới "Các gói đăng ký của Agricovi": bảng các gói (tên gói và số vụ tối đa, giá/quý, nút Đăng ký). Bấm Đăng ký mở biểu mẫu mua của gói đó:
- *    họ tên, điện thoại, địa chỉ, số quý. Yêu cầu hiện ở trang quản trị nền tảng (có email thông báo); Agricovi liên hệ, thu tiền rồi duyệt thì gói được kích hoạt.
+ *  - dưới "Các gói đăng ký của Acovin": bảng các gói (tên gói và số vụ tối đa, giá/quý, nút Đăng ký). Bấm Đăng ký mở biểu mẫu mua của gói đó:
+ *    họ tên, điện thoại, địa chỉ, số quý. Yêu cầu hiện ở trang quản trị nền tảng (có email thông báo); Acovin liên hệ, thu tiền rồi duyệt thì gói được kích hoạt.
  */
 export function PlanCard() {
   const { active, stale, fetchUsage } = useOrgs();
@@ -91,7 +91,7 @@ export function PlanCard() {
 
       {plans.length > 0 && (
         <div className="card plan-frame" id="plan-sale">
-          <h3 className="sub">Các gói đăng ký của Agricovi</h3>
+          <h3 className="sub">Các gói đăng ký của Acovin</h3>
           <div className="tablewrap">
             <table className="grid">
               <thead><tr><th>Gói</th><th>Giá/quý</th><th></th></tr></thead>
@@ -167,7 +167,7 @@ function BuyForm({ orgId, plan, onSent, onClose }: { orgId: string; plan: SalePl
   if (done) {
     return (
       <>
-        <p className="msg ok" role="status">Đã gửi yêu cầu mua gói <strong>{plan.name}</strong>. Agricovi sẽ liên hệ số {phone} sớm nhất; bạn xem trạng thái ở mục "Yêu cầu mua của bạn".</p>
+        <p className="msg ok" role="status">Đã gửi yêu cầu mua gói <strong>{plan.name}</strong>. Acovin sẽ liên hệ số {phone} sớm nhất; bạn xem trạng thái ở mục "Yêu cầu mua của bạn".</p>
         <button type="button" className="secondary" onClick={onClose}>Đóng</button>
       </>
     );

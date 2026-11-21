@@ -29,7 +29,7 @@ test('chuẩn hóa số điện thoại và ghép email ẩn theo cấu hình t�
   assert.equal(await norm('0212345678'), null); // đầu số cố định không hợp lệ cho nhân viên
   assert.equal(await norm('12345'), null);
 
-  assert.equal((await asAnon(db, `select login_email_for_phone('0912345678') e`)).rows[0].e, '0912345678@sdt.agricovi.com');
+  assert.equal((await asAnon(db, `select login_email_for_phone('0912345678') e`)).rows[0].e, '0912345678@sdt.acovin.com');
   await db.query(`update platform_settings set value = '"nongtrai.vn"' where key = 'login_email_domain'`);
   assert.equal((await asAnon(db, `select login_email_for_phone('0912345678') e`)).rows[0].e, '0912345678@sdt.nongtrai.vn');
 });
@@ -39,7 +39,7 @@ test('đổi tên miền không làm hỏng đăng nhập của tài khoản đ�
   const s = await createStaff(db, owner, org, '0912345678');
   await db.query(`update platform_settings set value = '"nongtrai.vn"' where key = 'login_email_domain'`);
   assert.equal((await asAnon(db, `select login_email_for_phone('0912345678') e`)).rows[0].e, s.auth_email);
-  assert.match(s.auth_email, /@sdt\.agricovi\.com$/);
+  assert.match(s.auth_email, /@sdt\.acovin\.com$/);
 });
 
 test('chỉ chủ cơ sở tạo được; số điện thoại trùng bị từ chối; người dùng thường không gọi được hàm tạo', async () => {

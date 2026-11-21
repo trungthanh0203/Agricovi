@@ -18,14 +18,14 @@ if (!page && !soon) Astro.response.status = 404;
 const blocks: Block[] = page ? parseBody(page.body) : [];
 // Ảnh minh họa cho một số trang giới thiệu
 const PAGE_IMG: Record<string, { src: string; alt: string }> = {
-  'danh-cho-nguoi-ban': { src: '/brand/photo-seller.webp', alt: 'Nhà vườn dùng Agricovi để ghi chép trong nhà màng' },
-  'huong-dan-ban-hang': { src: '/brand/photo-guide.webp', alt: 'Người trồng xem ứng dụng Agricovi ngay tại vườn' },
-  'gioi-thieu': { src: '/brand/photo-about.webp', alt: 'Agricovi — nông nghiệp thông minh, kết nối thương mại' },
+  'danh-cho-nguoi-ban': { src: '/brand/photo-seller.webp', alt: 'Nhà vườn dùng Acovin để ghi chép trong nhà màng' },
+  'huong-dan-ban-hang': { src: '/brand/photo-guide.webp', alt: 'Người trồng xem ứng dụng Acovin ngay tại vườn' },
+  'gioi-thieu': { src: '/brand/photo-about.webp', alt: 'Acovin — nông nghiệp thông minh, kết nối thương mại' },
 };
 const pageImg = parts.length === 1 && !blocks.some((b) => b.t === 'img') ? PAGE_IMG[first] : undefined; // trang đã tự chèn ảnh thì không thêm ảnh mặc định
 ---
 {page && (
-  <Base title={`${page.title} — Agricovi`} description={page.description || undefined}>
+  <Base title={`${page.title} — Acovin`} description={page.description || undefined}>
     <article class="prose">
       <h1>{page.title}</h1>
       {pageImg && <img class="pageimg" src={pageImg.src} alt={pageImg.alt} width="1200" height="626" decoding="async" />}
@@ -40,7 +40,7 @@ const pageImg = parts.length === 1 && !blocks.some((b) => b.t === 'img') ? PAGE_
   </Base>
 )}
 {!page && soon && (
-  <Base title={`${soon} — Agricovi`} noindex cache={false}>
+  <Base title={`${soon} — Acovin`} noindex cache={false}>
     <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
       <h1>{soon}</h1>
       <p class="muted">Mục này đang được chuẩn bị và sẽ sớm ra mắt.</p>
@@ -49,7 +49,7 @@ const pageImg = parts.length === 1 && !blocks.some((b) => b.t === 'img') ? PAGE_
   </Base>
 )}
 {!page && !soon && (
-  <Base title="Không tìm thấy trang — Agricovi" noindex cache={false}>
+  <Base title="Không tìm thấy trang — Acovin" noindex cache={false}>
     <div class="panel" style="max-width:640px;margin:32px auto;text-align:center">
       <h1>Không tìm thấy trang</h1>
       <p class="muted">Địa chỉ này không tồn tại hoặc đã được chuyển.</p>

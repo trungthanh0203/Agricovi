@@ -87,7 +87,7 @@ async function handle(req: Request): Promise<Response> {
     webpush.setVapidDetails(subject, pub, priv);
     const { data: subs, error } = await admin.from('push_subscriptions').select('id, endpoint, p256dh, auth').eq('user_id', who.user.id);
     if (error) return fail(`DB_ERROR: ${error.message}`, 500);
-    const payload = JSON.stringify({ title: 'Agricovi', body: 'Thông báo thử: máy này đã nhận được thông báo.', tag: 'agricovi-test', url: '/' });
+    const payload = JSON.stringify({ title: 'Acovin', body: 'Thông báo thử: máy này đã nhận được thông báo.', tag: 'agricovi-test', url: '/' });
     return json(await sendTo(subs ?? [], payload));
   }
 

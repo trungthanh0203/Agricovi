@@ -38,7 +38,7 @@ export async function enablePush(): Promise<void> {
   if (!canPush()) throw new Error('UNSUPPORTED: Máy này chưa hỗ trợ thông báo.');
   const { public_key } = await callFunction<{ public_key: string }>({ action: 'public_key' }, 'send-push');
   const perm = await Notification.requestPermission();
-  if (perm !== 'granted') throw new Error('DENIED: Bạn chưa cho phép thông báo. Muốn bật lại, hãy cho phép thông báo cho Agricovi trong cài đặt của máy hoặc trình duyệt.');
+  if (perm !== 'granted') throw new Error('DENIED: Bạn chưa cho phép thông báo. Muốn bật lại, hãy cho phép thông báo cho Acovin trong cài đặt của máy hoặc trình duyệt.');
   const reg = await navigator.serviceWorker.ready;
   const sub = (await reg.pushManager.getSubscription()) ?? await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(public_key) });
   const j = sub.toJSON();

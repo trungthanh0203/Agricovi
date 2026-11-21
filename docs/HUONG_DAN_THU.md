@@ -1,4 +1,4 @@
-# Hướng dẫn dùng thử AgriConnect (bản thử cho người dùng thật)
+# Hướng dẫn dùng thử Acovin (bản thử cho người dùng thật)
 
 Tài liệu này dành cho **chủ cơ sở, quản lý, người phụ trách kho & chi phí và nhân viên** dùng thử app. Bạn không cần biết về công nghệ. Nếu gặp chỗ khó hiểu, đó là lỗi của app, không phải lỗi của bạn: hãy ghi lại và báo cho chúng tôi (xem cuối trang).
 

@@ -490,7 +490,7 @@ export const GUIDES: Guide[] = GUIDE_ORDER.map((id) => ALL_GUIDES.find((g) => g.
 /** Lời giới thiệu gửi cho người khác (nút "Chia sẻ hệ thống") */
 export function buildShareText(url: string, contact?: string): string {
   return [
-    'AGRICOVI — App quản lý nuôi trồng trên điện thoại',
+    'ACOVIN — App quản lý nuôi trồng trên điện thoại',
     '',
     'Dành cho hộ nuôi trồng, hợp tác xã và công ty nông nghiệp:',
     '• Ghi nhật ký việc hằng ngày, kể cả khi mất mạng',

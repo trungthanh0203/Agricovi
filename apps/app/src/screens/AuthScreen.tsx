@@ -44,7 +44,7 @@ export function AuthScreen() {
     if ((effective === 'signup' || effective === 'forgot') && !id.includes('@')) {
       return setError(
         effective === 'forgot' && id
-          ? 'Số điện thoại: nhân viên hãy nhờ chủ cơ sở đặt lại mật khẩu; chủ hộ đăng ký bằng số điện thoại hãy liên hệ Agricovi qua Zalo để được đặt lại.'
+          ? 'Số điện thoại: nhân viên hãy nhờ chủ cơ sở đặt lại mật khẩu; chủ hộ đăng ký bằng số điện thoại hãy liên hệ Acovin qua Zalo để được đặt lại.'
           : 'Chủ Hộ/HTX đăng ký bằng email. Hãy nhập email của bạn.',
       );
     }
@@ -99,8 +99,8 @@ export function AuthScreen() {
     <div className="authpage">
       <header className="auth-hero">
         <span className="auth-logo" aria-hidden><img src="/logo-mark.png" alt="" width="56" height="56" /></span>
-        <h1>Agricovi</h1>
-        <p>Quản lý nuôi trồng đơn giản, kết nối nông sản</p>
+        <h1>Acovin</h1>
+        <p>Kết nối nông nghiệp số Việt Nam</p>
       </header>
 
       <main className="auth auth-card">

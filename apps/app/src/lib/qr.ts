@@ -60,7 +60,7 @@ export interface AccountQrInput {
 
 export function buildAccountQr(a: AccountQrInput): string {
   const lines = [
-    'AGRICONNECT - THÔNG TIN TÀI KHOẢN',
+    'ACOVIN - THÔNG TIN TÀI KHOẢN',
     `Họ tên: ${a.name}`,
     `Cơ sở: ${a.orgName} (${a.orgType === 'cooperative' ? 'Hợp tác xã' : 'Hộ / trang trại'})`,
     `Vai trò: ${a.roles}`,
@@ -106,7 +106,7 @@ export async function fetchCycleTrace(cycleId: string): Promise<CycleTrace> {
 export function buildCycleQr(t: CycleTrace): string {
   const size = t.area_size != null ? ` · ${Number(t.area_size).toLocaleString('vi-VN')} ${t.area_unit === 'ha' ? 'ha' : 'm2'}` : '';
   const lines = [
-    'AGRICONNECT - TRUY XUẤT MÙA VỤ',
+    'ACOVIN - TRUY XUẤT MÙA VỤ',
     `Mùa vụ: ${t.name}`,
     `Sản phẩm: ${t.crop ?? '—'}`,
     `Nơi trồng: ${t.farm ?? '—'}${t.location ? `, ${t.location}` : ''}${size}`,

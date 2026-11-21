@@ -4,7 +4,7 @@
 // Biến môi trường SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY do Supabase tự cấp.
 // Gửi email (tùy chọn, dịch vụ Resend có gói miễn phí):
 //   npx supabase secrets set RESEND_API_KEY=...            (khóa API của Resend)
-//   npx supabase secrets set RESEND_FROM="Agricovi <no-reply@tên-miền-đã-xác-minh>"   (chưa có tên miền: bỏ trống để dùng onboarding@resend.dev, chỉ gửi được tới email chủ tài khoản Resend)
+//   npx supabase secrets set RESEND_FROM="Acovin <no-reply@tên-miền-đã-xác-minh>"   (chưa có tên miền: bỏ trống để dùng onboarding@resend.dev, chỉ gửi được tới email chủ tài khoản Resend)
 //   npx supabase secrets set ORDER_NOTIFY_EMAIL=...        (email nhận; bỏ trống thì dùng email ở Cấu hình → Thông tin liên hệ)
 // Chưa cấu hình gửi email thì đơn vẫn được lưu và hiện ở trang quản trị (đánh dấu "chưa gửi email").
 //
@@ -36,7 +36,7 @@ async function sendMail(d: MailData): Promise<string> {
   const key = Deno.env.get('RESEND_API_KEY');
   const to = Deno.env.get('ORDER_NOTIFY_EMAIL') || d.to_email;
   if (!key || !to) return 'skipped';
-  const from = Deno.env.get('RESEND_FROM') || 'Agricovi <onboarding@resend.dev>';
+  const from = Deno.env.get('RESEND_FROM') || 'Acovin <onboarding@resend.dev>';
   const rows: [string, string][] = [
     ['Cơ sở', `${d.org_name} (${d.org_type === 'cooperative' ? 'Hợp tác xã' : 'Hộ'})`],
     ['Gói muốn mua', `${d.plan_name}, ${d.quarters} quý`],

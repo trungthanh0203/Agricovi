@@ -21,7 +21,7 @@ export async function rpc<T = unknown>(fn: string, args: Record<string, unknown>
 
 export function clean(msg: string): string {
   const m = /^([A-Z][A-Z_]{3,}): (.+)$/s.exec(msg);
-  return m ? m[2]! : msg;
+  return (m ? m[2]! : msg).replace(/AgriCoVi|Agricovi|AgriConnect/g, 'Acovin');   // tên cũ trong thông báo của hàm CSDL (D226)
 }
 
 export const fmtDate = (v: string | null | undefined) => (v ? new Date(v).toLocaleDateString('vi-VN') : '—');

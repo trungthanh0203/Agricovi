@@ -7,7 +7,7 @@ import { clearStoredRef, storedRef } from '../lib/referral';
 
 /**
  * Đăng ký chủ cơ sở bằng số điện thoại (cho hộ không có email). Sau khi gửi, tài khoản đăng nhập được ngay nhưng ở trạng thái
- * CHỜ DUYỆT: quản trị Agricovi liên hệ qua Zalo số này để xác nhận rồi duyệt thì cơ sở mới được tạo.
+ * CHỜ DUYỆT: quản trị Acovin liên hệ qua Zalo số này để xác nhận rồi duyệt thì cơ sở mới được tạo.
  */
 export function PhoneSignupForm() {
   const { signIn } = useAuth();

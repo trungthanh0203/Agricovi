@@ -1,3 +1,5 @@
+import { brandText } from '@agriconnect/shared';
+
 /** Chuyển lỗi kỹ thuật thành câu tiếng Việt kèm việc người dùng có thể làm tiếp (NFR-UX-006). */
 export function friendlyError(err: unknown): string {
   const msg = err instanceof Error ? err.message : typeof err === 'string' ? err : (err as { message?: string })?.message ?? '';
@@ -22,7 +24,7 @@ export function friendlyError(err: unknown): string {
   if (/QUOTA_NO_SUBSCRIPTION/.test(msg)) return 'Gói dịch vụ đã hết hạn. Hãy gia hạn để tạo vụ mới. Dữ liệu của bạn vẫn được giữ nguyên.';
   // Các hàm máy chủ trả lỗi dạng "MÃ_LỖI: nội dung tiếng Việt" -> hiển thị phần nội dung
   const coded = /^([A-Z][A-Z_]{3,}): (.+)$/s.exec(msg);
-  if (coded && coded[1] !== 'FORBIDDEN') return coded[2]!;
+  if (coded && coded[1] !== 'FORBIDDEN') return brandText(coded[2]!);
   if (/row-level security|permission denied|FORBIDDEN/i.test(msg)) return 'Bạn chưa có quyền thực hiện thao tác này.';
   if (/NOT_FOUND/.test(msg)) return 'Không tìm thấy dữ liệu. Hãy tải lại rồi thử lại.';
   // Cơ sở dữ liệu chưa chạy migration mới (thiếu cột/hàm/bảng): nói rõ để người cài đặt biết việc cần làm

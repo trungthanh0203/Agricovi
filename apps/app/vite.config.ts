@@ -32,9 +32,9 @@ export default defineConfig({
       registerType: 'autoUpdate', // bản mới tự thay âm thầm, có hiệu lực ở lần mở app kế tiếp (không hiện thông báo, không tự tải lại giữa lúc nhập)
       includeAssets: ['favicon.ico', 'favicon-32.png', 'favicon-16.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'logo-mark.png', 'welcome.webp'],
       manifest: {
-        name: 'Agricovi',
-        short_name: 'Agricovi',
-        description: 'Quản lý sản xuất nông nghiệp',
+        name: 'Acovin',
+        short_name: 'Acovin',
+        description: 'Acovin — Kết nối nông nghiệp số Việt Nam. Quản lý sản xuất nông nghiệp',
         lang: 'vi',
         theme_color: '#0e5e2e',
         background_color: '#ffffff',

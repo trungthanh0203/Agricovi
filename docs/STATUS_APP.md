@@ -3,6 +3,7 @@
 Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi tiết từng mốc cũ (bước C, Giai đoạn 2, lương, Đợt 1…): `STATUS_APP_LICHSU.md` (chỉ tra cứu khi cần, không đọc hết).
 
 ## Đang làm
+- **21/11/2026 (D226, migration 0236, cần `db push`)**: **đổi thương hiệu sang Acovin** (logo, favicon, icon cài app, ảnh chia sẻ, mọi chữ hiển thị, tên miền email ẩn, tên Worker `acovin-app`/`acovin-web`). Test `rename_acovin.test.mjs` 2/2, `staff`, `web_accounts` qua; typecheck sạch; đã xem màn đăng nhập. Việc bạn làm tiếp: `docs/DEPLOY_CLOUDFLARE.md` mục cuối (tạo Worker mới, mua `acovin.com`, đặt lại `RESEND_FROM`, deploy lại 3 hàm).
 - **21/11/2026 (D225, giao diện, không migration)**: bấm Quay lại từ Quản lý vụ/Ghi việc giữ nguyên danh sách và bộ lọc đang xem (Vụ nuôi trồng, Tiến độ vụ, Nhắc việc hôm nay, Tổng hợp theo phân khu, Nhật ký việc) và vị trí cuộn. Typecheck sạch; chưa thử trên giao diện thật.
 - **21/11/2026 (D224, giao diện, không migration)**: danh sách Vụ nuôi trồng sắp lại nút (Quản lý vụ, Kết thúc, Sửa, Xóa, Mã QR vụ, Mở công khai, Báo cáo lãi lỗ); Tạm dừng/Tiếp tục vào Quản lý vụ sau nút "Ghi việc vụ này". Typecheck sạch; chưa thử trên giao diện thật.
 - **21/11/2026 (D223, giao diện, không migration)**: đổi thứ tự mục (Khai báo: Việc + Quy trình mẫu sau Khách hàng; Sản xuất: Thu hoạch + Doanh thu trước Chấm công); chọn phân khu trước vụ thêm ở Báo cáo tổng hợp, Tổng kết vụ, Sổ nhật ký, Hồ sơ xuất khẩu, Xuất kho, Trả vật tư, Phiếu khoán, Hồ sơ thương mại. Typecheck sạch; chưa thử trên giao diện thật.
