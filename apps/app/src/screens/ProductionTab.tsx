@@ -1,6 +1,7 @@
 import { PieceworkSection } from '../components/PieceworkSection';
 import { MODE_LABEL } from '../lib/herd';
 import { useEffect, useMemo, useState } from 'react';
+import { useKeptState } from '../lib/keptState';
 import { useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
 import { StockPanel } from './StockPanel';
@@ -150,13 +151,14 @@ function CyclesPanel({ onCreateCycle, onOpenCycle, onLog, onHistory, onGo }: Pic
   const today = todayLocal();
   const { cropTypes } = useCatalog();
   const [contexts, setContexts] = useState<QuotaContext[]>([]);
-  const [group, setGroup] = useState<CycleGroup | null>(null);
-  const [vn, setVn] = useState(50);
-  const [areaFilter, setAreaFilter] = useState('');   // lọc theo phân khu (D154)
+  // bộ lọc giữ lại khi vào Quản lý vụ rồi Quay lại (D225)
+  const [group, setGroup] = useKeptState<CycleGroup | null>(`${active?.id}|prod.group`, null);
+  const [vn, setVn] = useKeptState(`${active?.id}|prod.vn`, 50);
+  const [areaFilter, setAreaFilter] = useKeptState(`${active?.id}|prod.area`, '');   // lọc theo phân khu (D154)
   const [transfers, setTransfers] = useState<TransferRequest[]>([]);   // yêu cầu chuyển vụ theo HTX sang vụ riêng của hộ (D156)
   const [moveId, setMoveId] = useState<string | null>(null);   // vụ chưa bắt đầu đang đổi ô sản xuất (D155)
   const [moveTo, setMoveTo] = useState('');
-  const [showCancelled, setShowCancelled] = useState(false);   // hiện cả vụ đã hủy (xóa vụ làm sai)
+  const [showCancelled, setShowCancelled] = useKeptState(`${active?.id}|prod.cancelled`, false);   // hiện cả vụ đã hủy (xóa vụ làm sai)
   const [editId, setEditId] = useState<string | null>(null);
   const [qrId, setQrId] = useState<string | null>(null);
   const [reportId, setReportId] = useState<string | null>(null);

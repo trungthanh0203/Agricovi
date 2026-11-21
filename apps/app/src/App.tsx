@@ -1,7 +1,7 @@
 import { screenKey, useUsageTracker } from './lib/usageTracker';
 import { db } from './lib/db';
 import { useAutoScrollToForm } from './lib/autoScrollToForm';
-import { Fragment, Suspense, useCallback, useEffect, useState } from 'react';
+import { Fragment, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { lazyRetry } from './lib/lazyRetry';
 import { SYNC_STATE_LABEL_VI, type SyncState } from '@agriconnect/shared';
@@ -201,7 +201,27 @@ function Shell() {
     ) : overlay === 'cycle' ? (
       <CreateCycleScreen onDone={(id) => { setDetailId(id); setQrFirst(true); setOverlay('detail'); setTab('production'); }} onCancel={() => setOverlay(null)} onGo={(t, sec) => { closeOverlay(); goTo(t, sec); }} />
     ) : null;
-  const closeOverlay = () => { setOverlay(null); setLogPreset(null); setQrFirst(false); setDetailOpts({}); };
+  // Vào màn con (Quản lý vụ, Ghi việc...) rồi bấm Quay lại: về đúng vị trí đã cuộn trong danh sách (D225). Chuyển tab (closeOverlay) thì không khôi phục.
+  const lastY = useRef(0);
+  const saved = useRef<{ tab: TabId; y: number } | null>(null);
+  const prevOverlay = useRef<typeof overlay>(null);
+  useEffect(() => {
+    const on = () => { if (!prevOverlay.current) lastY.current = window.scrollY; };
+    window.addEventListener('scroll', on, { passive: true });
+    return () => window.removeEventListener('scroll', on);
+  }, []);
+  useEffect(() => {
+    const was = prevOverlay.current;
+    prevOverlay.current = overlay;
+    if (overlay && !was) { saved.current = { tab, y: lastY.current }; return; }
+    if (!overlay && was && saved.current && saved.current.tab === tab) {
+      const y = saved.current.y;
+      saved.current = null;
+      // nội dung tải lười và dữ liệu về dần: thử vài lần ngắn
+      [0, 120, 400].forEach((ms) => window.setTimeout(() => window.scrollTo(0, y), ms));
+    } else if (!overlay) saved.current = null;
+  }, [overlay]); // eslint-disable-line react-hooks/exhaustive-deps
+  const closeOverlay = () => { saved.current = null; setOverlay(null); setLogPreset(null); setQrFirst(false); setDetailOpts({}); };
 
   if (adding) {
     return <CreateOrgScreen onDone={() => { setAdding(false); setTab('home'); }} onCancel={() => setAdding(false)} />;

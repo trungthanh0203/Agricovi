@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useKeptState } from '../lib/keptState';
 import { Collapsible } from './Collapsible';
 import { AreaFilter, areaFilterId, areaFilterOptions, areaFilterPending, topAreaIdOf } from './AreaFilter';
 import { cycleProgress, sortByDue } from '../lib/cycles';
@@ -35,7 +36,7 @@ export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<str
   const stages = useTable('stages');
   const areas = useTable('areas');
   const { active } = useOrgs();
-  const [areaFilter, setAreaFilter] = useState('');
+  const [areaFilter, setAreaFilter] = useKeptState(`${active?.id}|progress.area`, '');
   const [stats, setStats] = useState<CycleStats | null>(null);
   useEffect(() => {
     if (!active) return;

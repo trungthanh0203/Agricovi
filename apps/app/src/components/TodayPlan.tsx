@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useKeptState } from '../lib/keptState';
 import { useCatalog } from '../lib/catalog';
 import { cycleKind, KIND_ORDER, KIND_STYLE, type KindKey } from '../lib/kindStyle';
 import { diffDays, fmtDate } from '../lib/dates';
@@ -16,8 +16,8 @@ const PAGE = 15; // số dòng mỗi trang
  */
 export function TodayPlan({ cycleIds, onOpenCycle }: { cycleIds: Set<string>; onOpenCycle: (id: string) => void }) {
   const titleOf = useCycleTitle();
-  const [page, setPage] = useState(0);
-  const [picked, setPicked] = useState<KindKey | null>(null);
+  const [page, setPage] = useKeptState('home|today.page', 0);   // giữ lại khi mở một vụ rồi Quay lại (D225)
+  const [picked, setPicked] = useKeptState<KindKey | null>('home|today.kind', null);
   const { cropTypes } = useCatalog();
   const cycles = useTable('cycles');
   const stages = useTable('stages');

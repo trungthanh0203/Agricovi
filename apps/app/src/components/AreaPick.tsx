@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useKeptState } from '../lib/keptState';
 import { areaFamily } from '../lib/payFilter';
 import { useTable } from '../lib/tables';
 
@@ -43,7 +44,7 @@ export function AreaPickField({ pick, onPick, empty }: { pick: ReturnType<typeof
  * Bộ lọc phân khu cho các DANH SÁCH (Nhật ký, Chi phí, Thu hoạch, Bán hàng; D217): mặc định "Chọn phân khu" thì chưa hiện danh sách,
  * "Tất cả phân khu" là một mục; chọn xong mới chọn tiếp vụ. Chỉ bật khi có từ 2 phân khu có vụ (như AreaFilter); ít hơn thì không đổi gì.
  */
-export function useAreaFilter(cycleList: { id: string }[]) {
+export function useAreaFilter(cycleList: { id: string }[], keepKey?: string) {
   const areas = useTable('areas');
   const cycleRows = useTable('cycles');
   const topOf = (areaId: string | null | undefined) => (areaId ? areas.find((a) => a.id === areaId)?.parent_id ?? areaId : '');
@@ -51,7 +52,10 @@ export function useAreaFilter(cycleList: { id: string }[]) {
   const tops = [...new Map(cycleList.map((c) => { const t = topOf(areaOfCycle(c.id)); return [t, areas.find((a) => a.id === t)?.name ?? '—'] as const; }).filter(([t]) => t !== '')).entries()]
     .sort((x, y) => x[1].localeCompare(y[1], 'vi'));
   const gate = tops.length >= 2;
-  const [sel, setSel] = useState('');
+  // có keepKey thì giữ lựa chọn phân khu khi bấm vào xem rồi Quay lại (D225)
+  const local = useState('');
+  const kept = useKeptState(`af|${keepKey ?? ''}`, '');
+  const [sel, setSel] = keepKey ? kept : local;
   const pending = gate && sel === '';
   /** Một vụ có nằm trong phân khu đang chọn không */
   const hasCycle = (cycleId: string | null | undefined) => {

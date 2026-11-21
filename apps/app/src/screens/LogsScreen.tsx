@@ -1,6 +1,7 @@
 import { CycleSelect } from '../components/CycleSelect';
 import { AreaFilterField, useAreaFilter } from '../components/AreaPick';
 import { useMemo, useState } from 'react';
+import { useKeptState } from '../lib/keptState';
 import { fieldsForKind, productKindOfArea, useCatalog } from '../lib/catalog';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
 import { SyncBadge } from '../components/SyncBadge';
@@ -39,12 +40,13 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
   const typeRows = useTable('workTypes');
   const kindOfLog = (l: LogRow) => (l.cycle_id ? cropTypes.find((c) => c.id === cycles.find((x) => x.id === l.cycle_id)?.crop_type_id)?.kind : productKindOfArea(areas.find((a) => a.id === l.area_id)?.kind));
 
-  const [cycleId, setCycleId] = useState('');
-  const [typeId, setTypeId] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [showVoided, setShowVoided] = useState(false);
-  const [limit, setLimit] = useState(PAGE);
+  // bộ lọc giữ lại khi bấm sao chép việc / mở màn khác rồi Quay lại (D225)
+  const [cycleId, setCycleId] = useKeptState(`${active?.id}|logs.cycle`, '');
+  const [typeId, setTypeId] = useKeptState(`${active?.id}|logs.type`, '');
+  const [from, setFrom] = useKeptState(`${active?.id}|logs.from`, '');
+  const [to, setTo] = useKeptState(`${active?.id}|logs.to`, '');
+  const [showVoided, setShowVoided] = useKeptState(`${active?.id}|logs.voided`, false);
+  const [limit, setLimit] = useKeptState(`${active?.id}|logs.limit`, PAGE);
   const [editing, setEditing] = useState<string | null>(null);
   const [voiding, setVoiding] = useState<string | null>(null);
   const [reason, setReason] = useState('');
@@ -58,7 +60,7 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
     () => cycles.filter((c) => c.owner_org_id === active?.id || areas.find((a) => a.id === c.area_id)?.organization_id === active?.id),
     [cycles, areas, active],
   );
-  const af = useAreaFilter(myCycles);
+  const af = useAreaFilter(myCycles, `${active?.id}|logs`);
   const myCycleIds = useMemo(() => new Set(myCycles.map((c) => c.id)), [myCycles]);
   const myAreaIds = useMemo(() => new Set(areas.filter((a) => a.organization_id === active?.id).map((a) => a.id)), [areas, active]);
 

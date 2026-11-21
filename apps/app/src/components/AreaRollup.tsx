@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useKeptState } from '../lib/keptState';
 import { AreaFilter, areaFilterId, areaFilterOptions, areaFilterPending } from './AreaFilter';
 import { CYCLE_STATUS_LABEL_VI, type CycleStatus } from '@agriconnect/shared';
 import { AREA_CYCLES_PAGE, cachedAreaRollup, fetchAreaCycles, fetchAreaRollup, type AreaCycleItem, type AreaRollupData } from '../lib/areaRollup';
@@ -22,10 +23,10 @@ export function AreaRollup() {
   const { active } = useOrgs();
   const areas = useTable('areas');
   const cycles = useTable('cycles');
-  const [pickedStatus, setStatus] = useState<Status | null>(null);   // null = tự chọn: Đang sản xuất nếu có, không thì Tất cả
-  const [win, setWin] = useState<Win>('12m');   // khoảng thời gian cho vụ đã kết thúc
-  const [areaFilter, setAreaFilter] = useState('');   // lọc theo một phân khu ('' = tất cả)
-  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});   // phân khu đang mở danh sách ô sản xuất (mặc định đóng, trừ khi đang lọc đúng phân khu đó)
+  const [pickedStatus, setStatus] = useKeptState<Status | null>(`${active?.id}|rollup.status`, null);   // null = tự chọn: Đang sản xuất nếu có, không thì Tất cả
+  const [win, setWin] = useKeptState<Win>(`${active?.id}|rollup.win`, '12m');   // khoảng thời gian cho vụ đã kết thúc
+  const [areaFilter, setAreaFilter] = useKeptState(`${active?.id}|rollup.area`, '');   // lọc theo một phân khu ('' = tất cả)
+  const [openMap, setOpenMap] = useKeptState<Record<string, boolean>>(`${active?.id}|rollup.open`, {});   // phân khu đang mở danh sách ô sản xuất (mặc định đóng, trừ khi đang lọc đúng phân khu đó)
   const [data, setData] = useState<AreaRollupData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
