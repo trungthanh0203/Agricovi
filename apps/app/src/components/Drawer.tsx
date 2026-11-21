@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { ADMIN_URL } from '../lib/platformAdmin';
+import { useIsDesktop } from '../lib/useMediaQuery';
 import { TAB_LABEL, type TabId } from '../lib/tabs';
 import type { MyOrg } from '../lib/orgs';
 
 const ORG_TYPE_LABEL: Record<'household' | 'cooperative', string> = { household: 'Hộ nuôi trồng', cooperative: 'Hợp tác xã' };
-const TAB_ICON: Partial<Record<TabId, string>> = { declare: '🧰', config: '⚙️', guide: '📖', support: '🤝', profile: '👤', reports: '📊' };
+const TAB_ICON: Partial<Record<TabId, string>> = { home: '🏠', production: '🌱', declare: '🧰', config: '⚙️', guide: '📖', support: '🤝', profile: '👤', reports: '📊' };
 const TAB_HINT: Partial<Record<TabId, string>> = {
   declare: 'Phân khu, sản phẩm, vật tư, nhân sự, tổ',
   config: 'Nhóm loại sản phẩm và các cấu hình mặc định',
@@ -23,6 +24,10 @@ interface Props {
   onSwitchOrg: (id: string) => void;
   /** Các tab đặt trong menu (Cấu hình, Hướng dẫn, Tài khoản) */
   tabs: TabId[];
+  /** Bố cục máy tính: các tab chính (ở điện thoại nằm ở thanh dưới) và nút Ghi việc hiện ở đầu menu dọc */
+  mainTabs: TabId[];
+  onLog: () => void;
+  canLog: boolean;
   current: TabId;
   onGo: (t: TabId) => void;
   isPlatformAdmin: boolean;
@@ -32,7 +37,8 @@ interface Props {
 }
 
 /** Menu bên trái (mở bằng nút ☰ ở thanh trên): thông tin người dùng, chuyển cơ sở, các chức năng ít dùng hằng ngày, đăng xuất. */
-export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, tabs, current, onGo, isPlatformAdmin, waiting, onSignOut }: Props) {
+export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, tabs, mainTabs, onLog, canLog, current, onGo, isPlatformAdmin, waiting, onSignOut }: Props) {
+  const desktop = useIsDesktop();   // máy tính: menu luôn hiện bên trái, không là hộp thoại
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -48,9 +54,9 @@ export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, 
   };
 
   return (
-    <div className={open ? 'drawer open' : 'drawer'} aria-hidden={!open}>
+    <div className={open ? 'drawer open' : 'drawer'} aria-hidden={!open && !desktop}>
       <div className="drawer-scrim" onClick={onClose} />
-      <aside className="drawer-panel" role="dialog" aria-modal="true" aria-label="Menu">
+      <aside className="drawer-panel" role={desktop ? undefined : 'dialog'} aria-modal={desktop ? undefined : true} aria-label="Menu">
         <div className="drawer-head">
           <span className="avatar" aria-hidden>{initial}</span>
           <strong className="drawer-name">{name || 'Tài khoản'}</strong>
@@ -68,6 +74,16 @@ export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, 
               <strong>{active?.name}</strong>
             )}
           </div>
+
+          <nav className="drawer-main" aria-label="Chức năng chính">
+            {mainTabs.map((t) => (
+              <button key={t} className={t === current ? 'drawer-item on' : 'drawer-item'} aria-current={t === current ? 'page' : undefined} onClick={() => onGo(t)}>
+                <span className="drawer-ico" aria-hidden>{TAB_ICON[t] ?? '•'}</span>
+                <span className="grow"><strong>{TAB_LABEL[t]}</strong></span>
+              </button>
+            ))}
+            <button className="drawer-log primary" onClick={onLog} disabled={!canLog} title={canLog ? 'Ghi việc vừa làm' : 'Chưa có vụ đang sản xuất để ghi việc'}>＋ Ghi việc vừa làm</button>
+          </nav>
 
           <nav aria-label="Chức năng khác">
             {tabs.map((t) => (

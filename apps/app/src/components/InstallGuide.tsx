@@ -48,12 +48,18 @@ function installed(): boolean {
 
 interface InstallEvent extends Event { prompt(): Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> }
 
+type Kind = 'phone' | 'desktop';
+const kindOf = (p: Platform): Kind => (p === 'desktop' ? 'desktop' : 'phone');
+const KIND_LABEL: Record<Kind, string> = { phone: '📱 Cài cho điện thoại', desktop: '💻 Cài cho máy tính' };
+
 /**
- * Hướng dẫn cài app về máy (trang đăng nhập/đăng ký). Mở sẵn mục đúng với thiết bị đang dùng; nếu trình duyệt cho phép cài ngay
- * (Chrome, Edge) thì có thêm nút "Cài app ngay". Không hiện khi app đã được cài.
+ * Hướng dẫn cài app về máy (trang đăng nhập/đăng ký). Có HAI lựa chọn: cài cho điện thoại hoặc cho máy tính (D222); mở sẵn lựa chọn đúng với
+ * thiết bị đang dùng, đổi được. Hai cách cài dùng cùng một app và cùng dữ liệu. Nếu trình duyệt cho phép cài ngay (Chrome, Edge) thì có thêm nút
+ * "Cài app ngay" (chỉ hiện khi lựa chọn trùng với thiết bị đang dùng). Không hiện khi app đã được cài.
  */
 export function InstallGuide() {
   const [platform] = useState<Platform>(detectPlatform);
+  const [kind, setKind] = useState<Kind>(() => kindOf(detectPlatform()));
   const [evt, setEvt] = useState<InstallEvent | null>(null);
   const [done, setDone] = useState(installed());
 
@@ -66,16 +72,24 @@ export function InstallGuide() {
   }, []);
 
   if (done) return null;
+  const here = kind === kindOf(platform);
   return (
     <section className="install" aria-labelledby="install-title">
       <h2 id="install-title">📲 Cài app về máy để dùng tiện hơn</h2>
-      {evt && (
+      <div className="seg" role="group" aria-label="Chọn nơi cài">
+        {(['phone', 'desktop'] as Kind[]).map((k) => (
+          <button key={k} type="button" className={k === kind ? 'primary' : 'secondary'} aria-pressed={k === kind} onClick={() => setKind(k)}>{KIND_LABEL[k]}</button>
+        ))}
+      </div>
+      <p className="muted">Hai cách cài dùng cùng một tài khoản và cùng dữ liệu: đăng nhập ở đâu cũng thấy như nhau.</p>
+      {here && evt && (
         <button className="primary" onClick={() => { void evt.prompt().then(() => evt.userChoice).then((c) => { if (c.outcome === 'accepted') setEvt(null); }); }}>
           Cài app ngay
         </button>
       )}
-      {PLATFORMS.map((p) => (
-        <details key={p.id} className="install-card" open={p.id === platform}>
+      {!here && <p className="msg warn">Muốn cài {kind === 'desktop' ? 'cho máy tính' : 'cho điện thoại'}, hãy mở trang này bằng {kind === 'desktop' ? 'máy tính' : 'điện thoại'} rồi làm theo các bước dưới đây.</p>}
+      {PLATFORMS.filter((p) => kindOf(p.id) === kind).map((p) => (
+        <details key={p.id} className="install-card" open>
           <summary><span className="install-ico" aria-hidden>{p.icon}</span><span className="install-name">{p.title}</span></summary>
           <ol>{p.steps.map((s) => <li key={s}>{s}</li>)}</ol>
           <p className="install-result">→ {p.result}</p>

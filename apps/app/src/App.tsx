@@ -306,6 +306,9 @@ function Shell() {
         active={active}
         onSwitchOrg={setActive}
         tabs={menuTabs}
+        mainTabs={mainTabs}
+        onLog={() => { setLogPreset(null); setOverlay('log'); }}
+        canLog={canLog}
         current={tab}
         onGo={(t) => { closeOverlay(); setTab(t); setSubs((cur) => ({ ...cur, [t]: '' })); }}
         isPlatformAdmin={isPlatformAdmin}

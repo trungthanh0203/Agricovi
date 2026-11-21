@@ -3,6 +3,7 @@
 Website: `STATUS_WEB.md`. Quyết định: `DECISIONS_APP.md`. Lịch sử chi tiết từng mốc cũ (bước C, Giai đoạn 2, lương, Đợt 1…): `STATUS_APP_LICHSU.md` (chỉ tra cứu khi cần, không đọc hết).
 
 ## Đang làm
+- **21/11/2026 (D222, giao diện, không migration)**: **giao diện máy tính A1**: menu dọc trái từ 1024 px, nội dung căn giữa, lưới nhiều cột; cài đặt có hai lựa chọn điện thoại/máy tính. Typecheck sạch; xem thử khung giả 1366/375 px, chưa xem từng màn thật. Còn A2/A3 và ghi nhận độ rộng màn hình.
 - **21/11/2026 (D221, migration 0235, cần `db push`)**: chỉnh gói Khởi đầu: hộ của HTX có gói riêng (1 khu/1 ô/1 vụ), công khai vụ + tin giao thương, đọc ảnh AI 2 lần/tháng, bỏ nâng cấp thử 30 ngày. Test `free_plan_b`, `trial_scope`, `htx_household`, `invoice_scan` qua.
 - **21/11/2026 (D220, migration 0234, cần `db push`)**: **đợt C: chính sách `/chinh-sach`, xóa tài khoản trong app + trang quản trị Yêu cầu xóa tài khoản.** Test `account_deletion.test.mjs` 3/3. Chưa thử trên giao diện thật. Hướng dẫn nộp: `docs/HUONG_DAN_NOP_CUA_HANG.md`. Còn đợt D (ẩn giá ở bản cửa hàng, đóng gói Android rồi iOS).
 - **20/11/2026 (D219, migration 0233, cần `db push`)**: **gói Khởi đầu, đợt B**: nâng cấp thử 30 ngày một lần, hết hạn chỉ xem, khóa chấm công/hóa đơn AI/xuất CSV, trang quản trị Khách tiềm năng + cấu hình mới. Test `free_plan_b.test.mjs` 4/4. Chưa thử trên giao diện thật. Test `anon_surface` còn 3 hàm trigger cũ (`measure_readings_guard`, `trade_contract_number`, `procurement_auto_invoice`) chưa thu hồi quyền: không thuộc đợt này.
