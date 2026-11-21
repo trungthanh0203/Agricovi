@@ -1,3 +1,4 @@
+import { AreaFilterField, useAreaFilter } from './AreaPick';
 import { CycleSelect } from './CycleSelect';
 import { NamePicker } from './CatalogPick';
 import { useCallback, useEffect, useState } from 'react';
@@ -316,6 +317,7 @@ function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: str
   const unitNames = [...new Set([...unitTable.map((u) => u.name), 'thùng', 'túi', 'bó', 'con', 'quả'].map((n) => n.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
   const titleOf = useCycleTitle();
   const cycles = useTable('cycles').filter((c) => c.owner_org_id === orgId);
+  const af = useAreaFilter(cycles);   // chọn phân khu trước rồi mới chọn vụ (D223)
   const [f, setF] = useState({
     name: initial?.name ?? '', description: initial?.description ?? '', specification: initial?.specification ?? '', unit: initial?.unit ?? '', season: initial?.season ?? '',
     price_note: initial?.price_note ?? '', min_order: initial?.min_order ?? '', cycle_id: initial?.cycle_id ?? '', crop_type_id: initial?.crop_type_id ?? '', include: initial?.include_in_publication ?? true,
@@ -351,9 +353,13 @@ function ListingFormView({ orgId, initial, busy, onSave, onClose }: { orgId: str
           <label>Giá ghi chữ<input value={f.price_note} maxLength={120} onChange={set('price_note')} placeholder="Liên hệ / 35.000đ/kg" /></label>
           <label>Đặt tối thiểu<input value={f.min_order} maxLength={120} onChange={set('min_order')} placeholder="50 kg" /></label>
         </div>
-        <CycleSelect label="Vụ để người mua xem truy xuất (không bắt buộc)" cycles={cycles} value={f.cycle_id} emptyLabel="— Không liên kết —"
-          onChange={(v) => setF((x) => ({ ...x, cycle_id: v }))}
-          labelOf={(id) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : ''; }} />
+        <AreaFilterField f={af} onPick={() => setF((x) => ({ ...x, cycle_id: '' }))} />
+        {(!af.pending || f.cycle_id) && (
+          <CycleSelect label="Vụ để người mua xem truy xuất (không bắt buộc)" cycles={af.pending ? cycles.filter((c) => c.id === f.cycle_id) : af.cyclesIn(cycles)} value={f.cycle_id} emptyLabel="— Không liên kết —"
+            onChange={(v) => setF((x) => ({ ...x, cycle_id: v }))}
+            labelOf={(id) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : ''; }} />
+        )}
+        {af.pending && !f.cycle_id && <small>Chọn phân khu nếu muốn liên kết một vụ để người mua xem truy xuất.</small>}
         <small>Chỉ hiện truy xuất nếu vụ đó đã được bạn bấm "Mở công khai website".</small>
         <label className="check"><input type="checkbox" checked={f.include} onChange={(e) => setF({ ...f, include: e.target.checked })} /> Đưa sản phẩm này lên website</label>
         {err && <p className="msg error" role="alert">⚠ {err}</p>}

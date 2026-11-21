@@ -59,10 +59,10 @@ export function productionSections(org: MyOrg | null): Section<ProductionSection
     { id: 'cycles' as const, label: 'Vụ nuôi trồng' },
     canPerm(org.perms, 'inventory') ? { id: 'stock' as const, label: 'Quản lý kho' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'expense' as const, label: 'Chi phí' } : null,
-    hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,   // trước Thu hoạch
+    canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,   // Thu hoạch và Doanh thu đứng trước Chấm công (D223)
+    canPerm(org.perms, 'sales') ? { id: 'sales' as const, label: 'Doanh thu' } : null,       // sau Thu hoạch (trước đây ở tab Báo cáo)
+    hasRole(org.roles, 'manager', 'worker') ? { id: 'attendance' as const, label: 'Chấm công' } : null,
     canPerm(org.perms, 'payroll') ? { id: 'piecework' as const, label: 'Khoán công' } : null,   // sau Chấm công (mục 11)
-    canPerm(org.perms, 'harvest') ? { id: 'harvest' as const, label: 'Thu hoạch' } : null,
-    canPerm(org.perms, 'sales') ? { id: 'sales' as const, label: 'Doanh thu' } : null,                       // sau Thu hoạch (trước đây ở tab Báo cáo)
     org.type === 'cooperative' && canPerm(org.perms, 'coop') ? { id: 'procure' as const, label: 'Thu mua từ hộ' } : null, // HTX lập phiếu thu mua khi hộ giao hàng (D162); theo dõi tiền ở Báo cáo → Công nợ
     (org.type === 'cooperative' && canPerm(org.perms, 'coop', 'edit')) || (canPerm(org.perms, 'sales', 'edit') && featureOn(org.id, 'contract')) ? { id: 'contracts' as const, label: 'Hợp đồng' } : null, // HTX: bao tiêu với hộ; cơ sở khác bật "Tính năng nâng cao" mới thấy (mục 13)
     (org.features?.logs ?? 'on') !== 'off' ? { id: 'log' as const, label: 'Ghi việc' } : null, // mở thẳng màn Ghi việc (cùng nút ＋ ở giữa thanh dưới)
@@ -78,11 +78,11 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
     canPerm(org.perms, 'declare') ? { id: 'crops' as const, label: 'Sản phẩm' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'places' as const, label: 'Kho' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'assets' as const, label: 'Tài sản' } : null,
-    canPerm(org.perms, 'declare') ? { id: 'templates' as const, label: 'Quy trình mẫu' } : null,
-    canPerm(org.perms, 'declare') ? { id: 'worktypes' as const, label: 'Việc' } : null,
     canPerm(org.perms, 'inventory') ? { id: 'materials' as const, label: 'Vật tư' } : null,
     canPerm(org.perms, 'expenses') ? { id: 'partners' as const, label: 'Nhà cung ứng' } : null,
     canPerm(org.perms, 'sales') ? { id: 'customers' as const, label: 'Khách hàng' } : null, // ngay sau Nhà cung ứng
+    canPerm(org.perms, 'declare') ? { id: 'worktypes' as const, label: 'Việc' } : null,           // sau Khách hàng (D223)
+    canPerm(org.perms, 'declare') ? { id: 'templates' as const, label: 'Quy trình mẫu' } : null,
     manager ? { id: 'licenses' as const, label: 'Giấy phép' } : null, // giấy phép, chứng chỉ của cơ sở (trước đây ở tab Tài khoản)
     // Nhân sự và tổ chức (trước đây ở tab Tổ chức)
     hasRole(org.roles, 'owner') ? { id: 'positions' as const, label: 'Chức vụ' } : null,
@@ -96,9 +96,8 @@ export function declareSections(org: MyOrg | null): Section<DeclareSection>[] {
 /** Khung gom các mục của tab Khai báo theo chức năng liên quan (menu Khai báo hiện 4 khung, trong khung là thanh chọn mục) */
 export interface DeclareGroup { id: string; label: string; icon: string; items: Section<DeclareSection>[] }
 const DECLARE_GROUPS: { id: string; label: string; icon: string; ids: DeclareSection[] }[] = [
-  { id: 'base', label: 'Cơ sở & vật tư', icon: '🏡', ids: ['areas', 'crops', 'places', 'assets', 'materials', 'partners', 'customers'] },
+  { id: 'base', label: 'Cơ sở & vật tư', icon: '🏡', ids: ['areas', 'crops', 'places', 'assets', 'materials', 'partners', 'customers', 'worktypes', 'templates'] }, // Việc và Quy trình mẫu đứng sau Khách hàng (D223)
   { id: 'org', label: 'Nhân sự', icon: '👥', ids: ['positions', 'teams', 'members'] },
-  { id: 'process', label: 'Quy trình', icon: '📋', ids: ['worktypes', 'templates'] },
   { id: 'legal', label: 'Giấy phép & đối tác', icon: '🤝', ids: ['licenses', 'coop', 'kiosks'] },
 ];
 /** Các khung của tab Khai báo mà người dùng có ít nhất một mục (đã lọc theo quyền và chế độ hiển thị); mục nào chưa xếp khung thì vào khung "Khác" */

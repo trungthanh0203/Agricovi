@@ -14,6 +14,7 @@ import { perHeadSummary } from '../lib/summaryByKind';
 import { buildSummaryCsv, canCompare, summaryNotes, vnNumber, type CycleSummary } from '../lib/summaryReport';
 import { useTable } from '../lib/tables';
 import { CycleWord } from './CycleWord';
+import { AreaFilterField, useAreaFilter } from './AreaPick';
 import { CycleSelect } from './CycleSelect';
 import { AreaRollup } from './AreaRollup';
 import { AreaYieldCompare } from './AreaYieldCompare';
@@ -38,6 +39,8 @@ export function SummarySection() {
   // chỉ vụ do cơ sở này sở hữu (quyền xem tổng kết theo chủ vụ)
   const own = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id), [cycles, active]);
   const ordered = useMemo(() => [...own].sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active')), [own]);
+  const af = useAreaFilter(own);   // chọn phân khu trước rồi mới chọn vụ (D223)
+  const shownCycles = af.cyclesIn(ordered);
   const label = useCallback((id: string) => {
     const c = cycles.find((x) => x.id === id);
     if (!c) return '';
@@ -47,7 +50,7 @@ export function SummarySection() {
   const remembered = (() => { try { return localStorage.getItem(LAST_CYCLE_KEY); } catch { return null; } })();
   const [picked, setPicked] = useState('');
   const [tab, setTab] = useState<'zone' | 'detail'>('zone');
-  const cycleId = picked || (ordered.find((c) => c.id === remembered)?.id ?? ordered[0]?.id ?? '');
+  const cycleId = af.pending ? '' : (shownCycles.some((c) => c.id === picked) ? picked : (shownCycles.find((c) => c.id === remembered)?.id ?? shownCycles[0]?.id ?? ''));
   // diện tích và năng suất (D94): theo đơn vị người dùng chọn (m² thì tính trên 1.000 m²)
   const cycleRow = cycles.find((c) => c.id === cycleId) ?? null;
   const areaM2 = cycleRow?.planted_area_m2 ?? null;
@@ -65,7 +68,7 @@ export function SummarySection() {
   const [pending, setPending] = useState(0);
 
   const load = useCallback(async () => {
-    if (!cycleId) return;
+    if (!cycleId) { setSummary(null); return; }
     setError(null);
     setLoading(true);
     try {
@@ -138,7 +141,10 @@ export function SummarySection() {
       </div>
       {tab === 'zone' && <AreaRollup />}
       {tab === 'detail' && <>
-      <CycleSelect label={<CycleWord cap />} cycles={ordered} value={cycleId} onChange={setPicked} labelOf={label} noAll defaultStatus="ended" />
+      <AreaFilterField f={af} onPick={() => setPicked('')} />
+      {af.pending
+        ? <p className="muted">Chọn phân khu (hoặc Tất cả phân khu) để chọn vụ cần xem tổng kết.</p>
+        : <CycleSelect label={<CycleWord cap />} cycles={shownCycles} value={cycleId} onChange={setPicked} labelOf={label} noAll defaultStatus="ended" />}
 
       <div className="actions">
         <button className="secondary" disabled={loading || !navigator.onLine} onClick={() => void load()}>
@@ -151,7 +157,7 @@ export function SummarySection() {
       </div>
 
       {error && <p className="msg error" role="alert">{error}</p>}
-      {!summary && !error && !loading && (
+      {!summary && !error && !loading && !af.pending && (
         <p className="msg warn">{navigator.onLine ? 'Chưa có số liệu.' : 'Đang offline và chưa có bản tổng kết nào được tải về. Hãy kết nối mạng một lần để xem.'}</p>
       )}
 

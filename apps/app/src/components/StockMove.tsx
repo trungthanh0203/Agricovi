@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { AreaPickField, useAreaPick } from './AreaPick';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import { friendlyError } from '../lib/errors';
@@ -49,7 +50,9 @@ export function StockIssue({ orgId, onClose }: { orgId: string; onClose: () => v
   const cycleLabel = (c: (typeof cycles)[number]) => `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')} · ${areaName(c.area_id, areas) || '—'}`;
   const [kind, setKind] = useState('cycle');
   const [cycleId, setCycleId] = useState('');
-  const cyc = cycleId || openCycles[0]?.id || '';
+  const pick = useAreaPick(orgId, true);   // chọn phân khu trước rồi mới chọn vụ (D223)
+  const shownCycles = pick.apply(openCycles);
+  const cyc = pick.pending ? '' : (shownCycles.find((c) => c.id === cycleId)?.id ?? shownCycles[0]?.id ?? '');
   const [shareIds, setShareIds] = useState<string[]>([]); // Dùng chung: chia cho các vụ đã chọn (để trống = không gắn vụ)
   const areaM2 = (c: (typeof cycles)[number]) => {
     const own = c.planted_area_m2 ?? null;
@@ -57,7 +60,7 @@ export function StockIssue({ orgId, onClose }: { orgId: string; onClose: () => v
     const a = areas.find((x) => x.id === c.area_id);
     return a?.area_size ? a.area_size * (a.area_unit === 'ha' ? 10000 : 1) : null;
   };
-  const picked = openCycles.filter((c) => shareIds.includes(c.id));
+  const picked = shownCycles.filter((c) => shareIds.includes(c.id));
   const splitFor = (total: number) => splitShares(total, picked.map(areaM2));
   const [qty, setQty] = useState('');
   const [date, setDate] = useState(todayLocal());
@@ -122,18 +125,19 @@ export function StockIssue({ orgId, onClose }: { orgId: string; onClose: () => v
             {Object.entries(ISSUE_KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </label>
-        {kind === 'cycle' && (
+        {(kind === 'cycle' || kind === 'shared') && <AreaPickField pick={pick} onPick={() => { setCycleId(''); setShareIds([]); }} />}
+        {kind === 'cycle' && !pick.pending && (
           <label>Vụ
             <select value={cyc} onChange={(e) => setCycleId(e.target.value)}>
-              {openCycles.length === 0 && <option value="">Chưa có vụ nào</option>}
-              {openCycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c)}</option>)}
+              {shownCycles.length === 0 && <option value="">Chưa có vụ nào</option>}
+              {shownCycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c)}</option>)}
             </select>
           </label>
         )}
-        {kind === 'shared' && openCycles.length > 0 && (
+        {kind === 'shared' && shownCycles.length > 0 && (
           <fieldset className="roles">
             <legend>Chia cho các vụ (không chọn vụ nào thì không tính vào vụ)</legend>
-            {openCycles.map((c) => (
+            {shownCycles.map((c) => (
               <label className="check" key={c.id}>
                 <input type="checkbox" checked={shareIds.includes(c.id)} onChange={(e) => setShareIds((cur) => (e.target.checked ? [...cur, c.id] : cur.filter((x) => x !== c.id)))} />
                 <span>{cycleLabel(c)}{areaM2(c) ? ` · ${formatQty(areaM2(c)!)} m²` : ' · chưa có diện tích'}</span>
@@ -248,7 +252,9 @@ export function StockReturn({ orgId, onClose }: { orgId: string; onClose: () => 
   const open = cycles.filter((c) => c.owner_org_id === orgId && c.status !== 'ended' && c.status !== 'cancelled');
   const label = (c: (typeof cycles)[number]) => `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')} · ${areaName(c.area_id, areas) || '—'}`;
   const [cycleId, setCycleId] = useState('');
-  const cyc = cycleId || open[0]?.id || '';
+  const pick = useAreaPick(orgId, true);   // chọn phân khu trước rồi mới chọn vụ (D223)
+  const shownOpen = pick.apply(open);
+  const cyc = pick.pending ? '' : (shownOpen.find((c) => c.id === cycleId)?.id ?? shownOpen[0]?.id ?? '');
   const [net, setNet] = useState<Map<string, number>>(new Map());
   const [materialId, setMaterialId] = useState('');
   const [locationId, setLocationId] = useState('');
@@ -287,12 +293,15 @@ export function StockReturn({ orgId, onClose }: { orgId: string; onClose: () => 
       <h1>Trả vật tư về kho</h1>
       <p className="muted">Dùng khi vật tư đã xuất cho một vụ nhưng dùng không hết. Vật tư quay lại kho và được trừ khỏi giá vốn của vụ đó.</p>
       <form className="inline-form" onSubmit={onSubmit} noValidate>
-        <label>Từ vụ
-          <select value={cyc} onChange={(e) => setCycleId(e.target.value)}>
-            {open.length === 0 && <option value="">Chưa có vụ nào</option>}
-            {open.map((c) => <option key={c.id} value={c.id}>{label(c)}</option>)}
-          </select>
-        </label>
+        <AreaPickField pick={pick} onPick={() => setCycleId('')} />
+        {!pick.pending && (
+          <label>Từ vụ
+            <select value={cyc} onChange={(e) => setCycleId(e.target.value)}>
+              {shownOpen.length === 0 && <option value="">Chưa có vụ nào</option>}
+              {shownOpen.map((c) => <option key={c.id} value={c.id}>{label(c)}</option>)}
+            </select>
+          </label>
+        )}
         <label>Vật tư
           <select value={mat} onChange={(e) => setMaterialId(e.target.value)}>
             {usable.length === 0 && <option value="">Vụ này chưa có vật tư đã xuất</option>}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AreaFilterField, useAreaFilter } from './AreaPick';
 import { Collapsible } from './Collapsible';
 import { CycleSelect } from './CycleSelect';
 import { KpiTile } from './HomeStats';
@@ -27,6 +28,7 @@ export function ReportBuilder() {
   const online = useOnline();
   const uid = session?.user.id;
   const cycles = useTable('cycles').filter((c) => c.owner_org_id === active?.id);
+  const af = useAreaFilter(cycles);   // chọn phân khu trước rồi mới chọn vụ (D223)
   const types = useMemo(() => REPORT_TYPES.filter((t) => t.allowed(active?.perms, active?.roles)), [active]);
   const today = todayLocal();
 
@@ -119,8 +121,13 @@ export function ReportBuilder() {
             <label>Đến ngày<input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
           </div>
           {info.id !== 'purchases' && info.id !== 'customers' && (
-            <CycleSelect label="Vụ (không bắt buộc)" cycles={cycles} value={cycleId} onChange={pickCycle} emptyLabel="— Tất cả các vụ —"
-              labelOf={(id) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : ''; }} />
+            <>
+              <AreaFilterField f={af} onPick={() => pickCycle('')} />
+              {af.pending
+                ? <p className="muted">Chọn phân khu để chọn một vụ cụ thể. Không chọn vụ thì báo cáo tính cho tất cả các vụ.</p>
+                : <CycleSelect label="Vụ (không bắt buộc)" cycles={af.cyclesIn(cycles)} value={cycleId} onChange={pickCycle} emptyLabel="— Tất cả các vụ —"
+                    labelOf={(id) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : ''; }} />}
+            </>
           )}
           <button className="primary" disabled={busy || !online} onClick={() => void run(info.id, params())}>{busy ? 'Đang tính…' : 'Xem báo cáo'}</button>
         </div>

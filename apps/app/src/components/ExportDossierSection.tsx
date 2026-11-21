@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AreaFilterField, useAreaFilter } from './AreaPick';
 import { CycleSelect } from './CycleSelect';
 import { Collapsible } from './Collapsible';
 import { fetchAreaGeos, type AreaGeo } from '../lib/areaGeo';
@@ -36,7 +37,9 @@ export function ExportDossierSection() {
   const { cropTypes, workTypes } = useCatalog();
   const mine = useMemo(() => cycles.filter((c) => c.owner_org_id === active?.id && c.status !== 'cancelled').sort((a, b) => (b.start_date ?? '').localeCompare(a.start_date ?? '')), [cycles, active]);
   const [cycleId, setCycleId] = useState('');
-  const cycle = mine.find((c) => c.id === cycleId) ?? mine[0] ?? null;
+  const af = useAreaFilter(mine);   // chọn phân khu trước rồi mới chọn vụ (D223)
+  const shown = af.cyclesIn(mine);
+  const cycle = af.pending ? null : (shown.find((c) => c.id === cycleId) ?? shown[0] ?? null);
   const crop = cropTypes.find((t) => t.id === cycle?.crop_type_id);
   const today = todayLocal();
   const [from, setFrom] = useState('');
@@ -85,8 +88,11 @@ export function ExportDossierSection() {
       {error && <p className="msg error" role="alert">{error}</p>}
       <div className="no-print">
         <p className="muted">Gom dữ liệu đã ghi của một vụ thành bộ hồ sơ nguồn gốc để gửi bên mua. Không phải nhập lại. Nếu bên mua có mẫu riêng, hãy dùng bảng Excel tải về để điền theo mẫu đó.</p>
-        <CycleSelect label="Vụ" cycles={mine} value={cycle?.id ?? ''} onChange={(v) => { setCycleId(v); setData(null); }} showStatus={false}
+        <AreaFilterField f={af} onPick={() => { setCycleId(''); setData(null); }} />
+        {af.pending ? <p className="muted">Chọn phân khu (hoặc Tất cả phân khu) để chọn vụ cần dựng hồ sơ.</p> : (
+        <CycleSelect label="Vụ" cycles={shown} value={cycle?.id ?? ''} onChange={(v) => { setCycleId(v); setData(null); }} showStatus={false}
           labelOf={(id) => { const c = mine.find((x) => x.id === id); return c ? `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')}${c.code ? ` (${c.code})` : ''} · ${areaName(c.area_id, areas)}` : ''; }} />
+        )}
         <div className="pair">
           <label>Từ ngày<input type="date" value={effFrom} onChange={(e) => setFrom(e.target.value)} /></label>
           <label>Đến ngày<input type="date" value={to} max={today} onChange={(e) => setTo(e.target.value)} /></label>

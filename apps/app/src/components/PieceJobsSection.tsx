@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { AreaFilterField, useAreaFilter } from './AreaPick';
 import { Collapsible } from './Collapsible';
 import { useCatalog } from '../lib/catalog';
 import { cycleTitle } from '../lib/cycles';
@@ -37,6 +38,7 @@ export function PieceJobsSection({ orgId, range, people, online, onChanged, stan
   const [cancelling, setCancelling] = useState<{ id: string; reason: string } | null>(null);
 
   const mine = useMemo(() => cycles.filter((c) => c.owner_org_id === orgId && c.status !== 'cancelled' && c.status !== 'ended'), [cycles, orgId]);
+  const af = useAreaFilter(mine);   // chọn phân khu trước rồi mới chọn vụ (D223)
   const cycleName = (id: string | null) => { const c = cycles.find((x) => x.id === id); return c ? cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '') : ''; };
 
   const load = useCallback(async () => {
@@ -94,12 +96,18 @@ export function PieceJobsSection({ orgId, range, people, online, onChanged, stan
           <p><strong>{form.id ? 'Sửa phiếu khoán' : 'Phiếu khoán mới'}</strong></p>
           <label>Việc khoán<input value={form.title} maxLength={120} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ví dụ: Hái dưa lô A" /></label>
           <div className="pair">
-            <label>Vụ (không bắt buộc)
-              <select value={form.cycleId} onChange={(e) => setForm({ ...form, cycleId: e.target.value })}>
-                <option value="">Không gắn vụ</option>
-                {mine.map((c) => <option key={c.id} value={c.id}>{cycleName(c.id)}</option>)}
-              </select>
-            </label>
+            <>
+              <AreaFilterField f={af} onPick={() => setForm((x) => (x ? { ...x, cycleId: '' } : x))} />
+              {(!af.pending || form.cycleId) && (
+                <label>Vụ (không bắt buộc)
+                  <select value={form.cycleId} onChange={(e) => setForm({ ...form, cycleId: e.target.value })}>
+                    <option value="">Không gắn vụ</option>
+                    {(af.pending ? mine.filter((c) => c.id === form.cycleId) : af.cyclesIn(mine)).map((c) => <option key={c.id} value={c.id}>{cycleName(c.id)}</option>)}
+                  </select>
+                </label>
+              )}
+              {af.pending && !form.cycleId && <small>Chọn phân khu nếu muốn gắn phiếu với một vụ.</small>}
+            </>
             <label>Ngày làm<input type="date" value={form.date} max={todayLocal()} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>
           </div>
           <div className="chips" role="tablist" aria-label="Cách khoán">
