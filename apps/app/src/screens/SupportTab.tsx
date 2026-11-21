@@ -32,7 +32,7 @@ export function SupportTab() {
       </div>
       <h2 className="sect">Tài liệu hướng dẫn</h2>
       <div className="card">
-        <p className="muted">Mở trên website acovin.com (cần có mạng), xem được cả trên máy tính.</p>
+        <p className="muted">Mở trên website agricovi.com (cần có mạng), xem được cả trên máy tính.</p>
         {GUIDE_LINKS.map((g) => (
           <p key={g.id}>
             <a href={g.url} target="_blank" rel="noopener noreferrer"><strong>{g.title}</strong></a>

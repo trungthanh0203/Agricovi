@@ -1,5 +1,5 @@
 /** Tài liệu hướng dẫn đặt trên website (D153): bấm mở trang web ở tab mới. Địa chỉ gốc cùng cấu hình với liên kết website ở Trang chủ. */
-const SITE_URL = ((import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined) || 'https://acovin.com').replace(/\/$/, '');
+const SITE_URL = ((import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined) || 'https://agricovi.com').replace(/\/$/, '');
 
 export interface GuideLink { id: string; title: string; hint: string; url: string }
 

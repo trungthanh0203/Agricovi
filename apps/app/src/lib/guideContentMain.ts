@@ -202,7 +202,7 @@ export const MAIN_GUIDES: Guide[] = [
       {
         title: "Đăng ký tài khoản và tạo cơ sở",
         details: [
-          "Mở app Acovin (app.acovin.com). Ở trang đăng nhập có hướng dẫn cài app về máy tính, Android hoặc iPhone.",
+          "Mở app Acovin (app.agricovi.com). Ở trang đăng nhập có hướng dẫn cài app về máy tính, Android hoặc iPhone.",
           "Chủ Hộ đăng ký bằng email. Không có email thì chọn tab “Không có email”: nhập họ tên, tên cơ sở, số điện thoại có Zalo và mật khẩu, rồi gửi.",
           "Acovin liên hệ qua Zalo để xác nhận (miễn phí). Duyệt xong, cơ sở được mở và màn hình tự vào app.",
           "Chọn loại cơ sở “Hộ” và đặt tên, ví dụ “Vườn nhà màng Thành Công”.",
@@ -440,7 +440,7 @@ export const MAIN_GUIDES: Guide[] = [
       {
         title: "Đăng ký tài khoản và tạo cơ sở",
         details: [
-          "Mở app Acovin (app.acovin.com). Ở trang đăng nhập có hướng dẫn cài app về máy tính, Android hoặc iPhone.",
+          "Mở app Acovin (app.agricovi.com). Ở trang đăng nhập có hướng dẫn cài app về máy tính, Android hoặc iPhone.",
           "Chủ Hộ đăng ký bằng email. Không có email thì chọn tab “Không có email”: nhập họ tên, tên cơ sở, số điện thoại có Zalo và mật khẩu, rồi gửi.",
           "Acovin liên hệ qua Zalo để xác nhận (miễn phí). Duyệt xong, cơ sở được mở và màn hình tự vào app.",
           "Chọn loại cơ sở “Hộ” và đặt tên, ví dụ “Trại heo Bình An”.",

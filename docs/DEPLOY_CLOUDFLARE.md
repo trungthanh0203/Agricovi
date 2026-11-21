@@ -206,14 +206,16 @@ Quyền: quản trị viên nền tảng (bảng `platform_admins`) luôn đủ 
 
 **Lệnh deploy của app (D68):** dùng `npm run deploy:app` (script ở gốc kho gọi thẳng `node node_modules/wrangler/bin/wrangler.js deploy --config apps/app/wrangler.jsonc`, không phụ thuộc việc `npx` có tìm thấy `wrangler` hay không; `wrangler` nằm trong devDependencies ở gốc kho). Lệnh cũ `npx wrangler deploy --config apps/app/wrangler.jsonc` từng báo `wrangler: not found` trên Cloudflare sau khi dự án thêm nhiều gói.
 
-## Đổi thương hiệu sang Acovin (D226): việc phải làm trên Cloudflare và Supabase
+## Đổi thương hiệu sang Acovin (D226): chạy trên tên cũ, đổi tên miền sau
 
-Mã đã đổi tên dịch vụ trong `wrangler.jsonc`: app là **`acovin-app`**, website là **`acovin-web`** (trước đây `agricovi` và `agriconnect`). Đổi `name` nghĩa là Cloudflare coi là **Worker mới** (địa chỉ `workers.dev` mới, Worker cũ vẫn còn cho tới khi bạn xóa). Làm theo thứ tự:
+**Hiện tại (chưa mua `acovin.com`):** tên hiển thị đã là **Acovin** nhưng **tên Worker và địa chỉ giữ như cũ** (`agricovi` cho app, `agriconnect` cho website; địa chỉ liên kết trong `.env.production` vẫn là `agricovi.com`), nên hệ thống triển khai và chạy bình thường như trước. Chỉ cần `npx supabase db push` (migration 0236 đổi tên miền email ẩn đăng nhập số điện thoại; việc này không phụ thuộc tên miền thật) và triển khai lại như mọi lần.
 
-1. **Tạo hai Worker mới** nối cùng kho GitHub, tên đúng `acovin-app` và `acovin-web`, cùng lệnh build và biến môi trường như hai Worker cũ (mục 2 và 6 phía dưới). Tên Worker phải trùng `name` trong `wrangler.jsonc`.
-2. **Mua tên miền `acovin.com`** rồi gắn: website tại `acovin.com` (kèm `/admin/` cho quản trị website), app tại `app.acovin.com` (kèm `/quan-tri/`). Giữ Worker cũ chạy song song cho tới khi tên miền mới hoạt động.
-3. **Supabase → Authentication → URL Configuration:** đặt *Site URL* = `https://acovin.com`, thêm `https://app.acovin.com` và địa chỉ `workers.dev` mới vào *Redirect URLs*.
-4. **Chạy `npx supabase db push`** để áp dụng migration 0236: đổi tên miền email ẩn đăng nhập số điện thoại sang `acovin.com` và đổi chữ thương hiệu trong cấu hình/nội dung website. (Tài khoản thử vẫn đăng nhập được; máy chấm công đã ghép đôi nếu báo lỗi thì dùng "Ghép lại".)
-5. **Khóa cấu hình email:** `npx supabase secrets set RESEND_FROM="Acovin <no-reply@acovin.com>"` (sau khi xác minh tên miền gửi thư), rồi `npx supabase functions deploy plan-order send-push news-fetch`.
-6. **Quản trị → Cấu hình → Thông tin liên hệ:** kiểm tra tên công ty, email, website theo thương hiệu mới.
-7. Xóa hai Worker cũ khi mọi thứ ổn. Người đã cài app cũ sẽ thấy tên/biểu tượng cũ cho tới khi gỡ cài lại.
+**Khi bạn mua `acovin.com`**, làm theo thứ tự:
+
+1. Chạy `python scripts/brand/switch_domain.py agricovi.com acovin.com` (đổi địa chỉ trong mã và `.env.production`), commit.
+2. **Đổi tên Worker:** sửa `name` trong `apps/app/wrangler.jsonc` thành `acovin-app` và `apps/web/wrangler.jsonc` thành `acovin-web`, rồi **tạo hai Worker mới** cùng tên, nối cùng kho GitHub, cùng lệnh build và biến môi trường như hai Worker cũ (đổi `name` nghĩa là Worker mới, địa chỉ `workers.dev` mới; Worker cũ còn chạy tới khi bạn xóa). Nếu chưa muốn đổi tên Worker thì bỏ qua bước này, chỉ gắn tên miền.
+3. Gắn tên miền: website tại `acovin.com` (kèm `/admin/`), app tại `app.acovin.com` (kèm `/quan-tri/`). Giữ Worker cũ chạy song song tới khi tên miền mới hoạt động.
+4. **Supabase → Authentication → URL Configuration:** Site URL = `https://acovin.com`, thêm `https://app.acovin.com` và địa chỉ `workers.dev` mới vào *Redirect URLs*.
+5. Đặt `npx supabase secrets set RESEND_FROM="Acovin <no-reply@acovin.com>"` (sau khi xác minh tên miền gửi thư), rồi `npx supabase functions deploy plan-order send-push news-fetch`.
+6. Quản trị → Cấu hình → Thông tin liên hệ: kiểm tra tên công ty, email, website.
+7. Người đã cài app cũ sẽ thấy tên/biểu tượng cũ tới khi gỡ cài lại.

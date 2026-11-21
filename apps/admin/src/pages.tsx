@@ -464,8 +464,8 @@ const CONTACT_FIELDS: { key: string; label: string; hint: string; area?: boolean
   { key: 'address', label: 'Địa chỉ', hint: 'Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành', area: true },
   { key: 'phone', label: 'Điện thoại', hint: 'Số gọi hỗ trợ, ví dụ 0989.099.454' },
   { key: 'zalo', label: 'Zalo', hint: 'Số Zalo (để trống nếu trùng với điện thoại)' },
-  { key: 'website', label: 'Website', hint: 'Bắt đầu bằng https://, ví dụ https://acovin.com' },
-  { key: 'email', label: 'Email', hint: 'Ví dụ lienhe@acovin.com' },
+  { key: 'website', label: 'Website', hint: 'Bắt đầu bằng https://, ví dụ https://agricovi.com' },
+  { key: 'email', label: 'Email', hint: 'Ví dụ lienhe@agricovi.com' },
   { key: 'facebook', label: 'Facebook', hint: 'Đường dẫn trang, bắt đầu bằng https://' },
   { key: 'youtube', label: 'YouTube', hint: 'Đường dẫn kênh, bắt đầu bằng https://' },
 ];

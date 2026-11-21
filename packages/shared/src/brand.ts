@@ -2,9 +2,9 @@
 export const BRAND = {
   name: 'Acovin',
   tagline: 'Kết nối nông nghiệp số Việt Nam',
-  domain: 'acovin.com',
-  siteUrl: 'https://acovin.com',
-  appUrl: 'https://app.acovin.com',
+  domain: 'agricovi.com',
+  siteUrl: 'https://agricovi.com',
+  appUrl: 'https://app.agricovi.com',
 } as const;
 
 /**

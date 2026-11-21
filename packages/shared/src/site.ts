@@ -180,7 +180,7 @@ export const DEFAULT_PAGES: Record<string, DefaultPage> = {
       'Trang này giúp bạn hiểu Acovin hoạt động thế nào và cách dùng từng phần của website. Đọc từ trên xuống nếu mới làm quen, hoặc chọn nhanh phần bạn cần.',
       '## 1. Acovin là gì?',
       'Acovin gồm hai phần làm việc cùng nhau:',
-      '- Ứng dụng (app.acovin.com): dành cho nhà vườn, trang trại, hợp tác xã ghi chép sản xuất hằng ngày: nhật ký, vật tư, thu hoạch, chi phí, chấm công.',
+      '- Ứng dụng (app.agricovi.com): dành cho nhà vườn, trang trại, hợp tác xã ghi chép sản xuất hằng ngày: nhật ký, vật tư, thu hoạch, chi phí, chấm công.',
       '- Website (trang bạn đang xem): nơi người mua tìm nhà cung cấp, xem nguồn gốc nông sản, tìm vật tư và giao thương với nhau.',
       '## 2. Dữ liệu từ ứng dụng lên website như thế nào?',
       'Website không tự lấy dữ liệu sản xuất của ai. Mọi thông tin chỉ lên website khi chủ cơ sở chủ động công khai, theo các bước sau:',
