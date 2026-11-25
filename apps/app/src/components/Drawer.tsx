@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
+import { BRAND } from '@agriconnect/shared';
 import { ADMIN_URL } from '../lib/platformAdmin';
 import { useIsDesktop } from '../lib/useMediaQuery';
 import { TAB_LABEL, type TabId } from '../lib/tabs';
@@ -53,6 +54,15 @@ export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, 
     onSignOut();
   };
 
+  // Mở website công khai bằng trình duyệt (app đã cài mở ra ngoài trình duyệt vì khác tên miền)
+  const websiteLink = (
+    <a className="drawer-item" href={BRAND.siteUrl} target="_blank" rel="noopener noreferrer" onClick={onClose}>
+      <span className="drawer-ico" aria-hidden>🌐</span>
+      <span className="grow"><strong>Mở website</strong><small className="muted">{BRAND.domain}: nông sản, giao thương, tin và giá</small></span>
+      <span className="menu-go" aria-hidden>↗</span>
+    </a>
+  );
+
   return (
     <div className={open ? 'drawer open' : 'drawer'} aria-hidden={!open && !desktop}>
       <div className="drawer-scrim" onClick={onClose} />
@@ -87,12 +97,16 @@ export function Drawer({ open, onClose, name, email, orgs, active, onSwitchOrg, 
 
           <nav aria-label="Chức năng khác">
             {tabs.map((t) => (
-              <button key={t} className={t === current ? 'drawer-item on' : 'drawer-item'} onClick={() => { onGo(t); onClose(); }}>
-                <span className="drawer-ico" aria-hidden>{TAB_ICON[t] ?? '•'}</span>
-                <span className="grow"><strong>{TAB_LABEL[t]}</strong>{TAB_HINT[t] && <small className="muted">{TAB_HINT[t]}</small>}</span>
-                <span className="menu-go" aria-hidden>›</span>
-              </button>
+              <Fragment key={t}>
+                <button className={t === current ? 'drawer-item on' : 'drawer-item'} onClick={() => { onGo(t); onClose(); }}>
+                  <span className="drawer-ico" aria-hidden>{TAB_ICON[t] ?? '•'}</span>
+                  <span className="grow"><strong>{TAB_LABEL[t]}</strong>{TAB_HINT[t] && <small className="muted">{TAB_HINT[t]}</small>}</span>
+                  <span className="menu-go" aria-hidden>›</span>
+                </button>
+                {t === 'support' && websiteLink}
+              </Fragment>
             ))}
+            {!tabs.includes('support') && websiteLink}
             {isPlatformAdmin && (
               <a className="drawer-item" href={ADMIN_URL}>
                 <span className="drawer-ico" aria-hidden>🔒</span>
