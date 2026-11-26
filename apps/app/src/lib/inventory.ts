@@ -3,6 +3,7 @@ import type { OutboxItem } from '@agriconnect/shared';
 import { db, type BalanceRow, type LocationRow, type MaterialRow, type UnitRow } from './db';
 import { insertRow, requireOnline } from './serverWrite';
 import { supabase } from './supabase';
+import { t as tx } from '@lingui/core/macro';
 
 /**
  * Vật tư & kho (FR-INV-001…004, v1.1 mục 4.4).
@@ -12,18 +13,18 @@ import { supabase } from './supabase';
  */
 
 export const TXN_TYPE_LABEL: Record<string, string> = {
-  receipt: 'Nhập kho',
-  issue: 'Xuất dùng',
-  adjustment: 'Điều chỉnh',
+  get receipt() { return tx`Nhập kho`; },
+  get issue() { return tx`Xuất dùng`; },
+  get adjustment() { return tx`Điều chỉnh`; },
 };
 
 function client() {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   return supabase;
 }
 
 function needOnline() {
-  if (!navigator.onLine) throw new Error('OFFLINE: Cần có mạng để thay đổi danh mục vật tư và kho.');
+  if (!navigator.onLine) throw new Error(tx`OFFLINE: Cần có mạng để thay đổi danh mục vật tư và kho.`);
 }
 
 const MATERIAL_COLUMNS = 'id, organization_id, name, description, image, category, brand, usage_guide, usage_method, safety_warning, quality_specs, limit_elements, withdrawal_days, base_unit_id, reorder_threshold, is_active';
@@ -90,7 +91,7 @@ export interface NewTxn {
 
 /** Ghi giao dịch kho (nhập, điều chỉnh): cần mạng, ghi thẳng lên máy chủ và báo kết quả ngay. */
 export async function recordTransaction(t: NewTxn): Promise<string> {
-  requireOnline('ghi giao dịch kho');
+  requireOnline(tx`ghi giao dịch kho`);
   const id = t.id ?? crypto.randomUUID();
   const sign = t.type === 'adjustment' && t.direction === 'decrease' ? -1 : 1;
   await insertRow('inventory_transactions', {
@@ -112,11 +113,11 @@ export async function recordTransaction(t: NewTxn): Promise<string> {
 }
 
 /** Lý do xuất kho tay */
-export const ISSUE_KIND_LABEL: Record<string, string> = { cycle: 'Dùng cho vụ', loss: 'Hao hụt / hỏng', sale: 'Xuất bán', shared: 'Dùng chung', other: 'Khác' };
+export const ISSUE_KIND_LABEL: Record<string, string> = { get cycle() { return tx`Dùng cho vụ`; }, get loss() { return tx`Hao hụt / hỏng`; }, get sale() { return tx`Xuất bán`; }, get shared() { return tx`Dùng chung`; }, other: 'Khác' };
 
 /** Xuất kho tay: cần mạng, bắt buộc lý do; lô tự gắn theo hạn gần nhất (máy chủ). Chỉ người có quyền sửa Kho. */
 export async function recordIssue(t: { id?: string; organizationId: string; locationId: string; materialId: string; quantity: number; kind: string; date: string; reason: string; cycleId?: string }): Promise<string> {
-  requireOnline('xuất kho');
+  requireOnline(tx`xuất kho`);
   const id = t.id ?? crypto.randomUUID();
   await insertRow('inventory_transactions', {
     id, organization_id: t.organizationId, location_id: t.locationId, material_id: t.materialId, txn_type: 'issue',
@@ -147,7 +148,7 @@ export function splitShares(total: number, areasM2: (number | null | undefined)[
 
 /** Xuất dùng chung chia cho các vụ đã chọn (cần mạng; máy chủ chia theo diện tích hoặc đều và tạo mỗi vụ một giao dịch) */
 export async function issueSharedToCycles(t: { organizationId: string; locationId: string; materialId: string; quantity: number; date: string; cycleIds: string[]; note: string }): Promise<number> {
-  requireOnline('xuất kho');
+  requireOnline(tx`xuất kho`);
   const { data, error } = await client().rpc('issue_shared_to_cycles', {
     p_org: t.organizationId, p_material: t.materialId, p_location: t.locationId, p_qty: t.quantity, p_date: t.date, p_cycles: t.cycleIds, p_note: t.note.trim() || null,
   });
@@ -168,7 +169,7 @@ export async function fetchCycleMaterialNet(cycleId: string): Promise<Map<string
 
 /** Trả vật tư về kho từ một vụ (cần mạng; máy chủ tự tính đơn giá và chặn trả quá lượng đã xuất cho vụ) */
 export async function returnToStock(t: { id?: string; organizationId: string; locationId: string; materialId: string; cycleId: string; quantity: number; date: string; reason: string }): Promise<string> {
-  requireOnline('trả vật tư về kho');
+  requireOnline(tx`trả vật tư về kho`);
   const id = t.id ?? crypto.randomUUID();
   await insertRow('inventory_transactions', {
     id, organization_id: t.organizationId, location_id: t.locationId, material_id: t.materialId, txn_type: 'adjustment',
@@ -180,7 +181,7 @@ export async function returnToStock(t: { id?: string; organizationId: string; lo
 
 /** Chuyển kho giữa hai kho (theo lô, hạn gần nhất trước): cần mạng; máy chủ tạo hai giao dịch liên kết */
 export async function transferStock(t: { organizationId: string; materialId: string; fromId: string; toId: string; quantity: number; date: string; note: string }): Promise<void> {
-  requireOnline('chuyển kho');
+  requireOnline(tx`chuyển kho`);
   const { error } = await client().rpc('transfer_stock', {
     p_org: t.organizationId, p_material: t.materialId, p_from: t.fromId, p_to: t.toId, p_qty: t.quantity, p_date: t.date, p_note: t.note.trim() || null,
   });

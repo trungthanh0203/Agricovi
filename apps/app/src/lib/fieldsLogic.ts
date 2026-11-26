@@ -1,5 +1,6 @@
 import type { FieldDef } from './db';
 import { normalizeDecimal } from './format';
+import { t } from '@lingui/core/macro';
 
 /**
  * Form động (D96): các trường của một loại việc (field_schema) là dữ liệu, không phải mã. Phần thuần: nhãn kiểu trường,
@@ -8,7 +9,7 @@ import { normalizeDecimal } from './format';
  */
 
 export const FIELD_TYPE_LABEL: Record<FieldDef['type'], string> = {
-  number: 'Số', text: 'Chữ', select: 'Chọn một trong danh sách', multiselect: 'Chọn nhiều trong danh sách', date: 'Ngày', bool: 'Có / Không',
+  get number() { return t`Số`; }, get text() { return t`Chữ`; }, get select() { return t`Chọn một trong danh sách`; }, get multiselect() { return t`Chọn nhiều trong danh sách`; }, get date() { return t`Ngày`; }, get bool() { return t`Có / Không`; },
 };
 
 export const FIELD_TYPES = Object.keys(FIELD_TYPE_LABEL) as FieldDef['type'][];
@@ -35,14 +36,14 @@ const num = (s: string) => Number(normalizeDecimal(s));
 export function validateFields(schema: FieldDef[], values: Record<string, string>): string | null {
   for (const f of schema) {
     const v = (values[f.key] ?? '').trim();
-    if (!v) { if (f.required) return `Hãy nhập "${f.label}".`; continue; }
+    if (!v) { if (f.required) return t`Hãy nhập "${f.label}".`; continue; }
     if (f.type === 'number') {
       const n = num(v);
-      if (Number.isNaN(n)) return `"${f.label}" phải là số.`;
-      if (f.min !== undefined && n < f.min) return `"${f.label}" không được nhỏ hơn ${f.min}.`;
-      if (f.max !== undefined && n > f.max) return `"${f.label}" không được lớn hơn ${f.max}.`;
+      if (Number.isNaN(n)) return t`"${f.label}" phải là số.`;
+      if (f.min !== undefined && n < f.min) return t`"${f.label}" không được nhỏ hơn ${f.min}.`;
+      if (f.max !== undefined && n > f.max) return t`"${f.label}" không được lớn hơn ${f.max}.`;
     }
-    if (f.type === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) return `"${f.label}" cần chọn ngày.`;
+    if (f.type === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) return t`"${f.label}" cần chọn ngày.`;
   }
   return null;
 }
@@ -61,7 +62,7 @@ export function fieldsToData(schema: FieldDef[], values: Record<string, string>,
 /** Một giá trị của nhật ký thành chữ để hiện */
 export function displayValue(f: FieldDef, v: unknown): string {
   if (Array.isArray(v)) return v.join(', ');
-  if (typeof v === 'boolean') return v ? 'Có' : 'Không';
+  if (typeof v === 'boolean') return v ? t`Có` : t`Không`;
   const s = String(v);
   return f.unit && f.type === 'number' ? `${s} ${f.unit}` : f.type === 'date' ? s.split('-').reverse().join('/') : s;
 }
@@ -77,8 +78,8 @@ export function summarizeFields(schema: FieldDef[], data: Record<string, unknown
 /** Lỗi khi chủ cơ sở thiết kế trường (null nếu ổn) */
 export function checkSchemaDraft(fields: FieldDef[]): string | null {
   for (const f of fields) {
-    if ((f.type === 'select' || f.type === 'multiselect') && (f.options ?? []).length === 0) return `Trường "${f.label}" cần có ít nhất một lựa chọn.`;
-    if (f.min !== undefined && f.max !== undefined && f.min > f.max) return `Trường "${f.label}": giá trị nhỏ nhất lớn hơn giá trị lớn nhất.`;
+    if ((f.type === 'select' || f.type === 'multiselect') && (f.options ?? []).length === 0) return t`Trường "${f.label}" cần có ít nhất một lựa chọn.`;
+    if (f.min !== undefined && f.max !== undefined && f.min > f.max) return t`Trường "${f.label}": giá trị nhỏ nhất lớn hơn giá trị lớn nhất.`;
   }
   return null;
 }

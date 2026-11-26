@@ -10,6 +10,8 @@ import {
 import type { WorkerLite } from '../lib/work';
 import { PrintSheet } from './PrintSheet';
 import { TimesheetEntry } from './TimesheetEntry';
+import { t as tx } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
 type View = { kind: 'list' } | { kind: 'form' } | { kind: 'entry'; sheet: Sheet } | { kind: 'preview'; id: string; data: SheetData } | { kind: 'saved'; sheet: Sheet };
 
@@ -44,7 +46,7 @@ export function TimesheetsSection({ orgId, orgName, workers, online }: { orgId: 
   async function toggleEntered(s: Sheet) {
     setBusy(true); setError(null);
     try { await markSheetEntered(s.id, s.version, s.status !== 'entered'); await load(); } catch (e) {
-      if (/CONFLICT/.test(String((e as Error).message))) { await load(); setError('Bảng vừa được người khác sửa. Đã tải lại bản mới.'); } else setError(friendlyError(e));
+      if (/CONFLICT/.test(String((e as Error).message))) { await load(); setError(tx`Bảng vừa được người khác sửa. Đã tải lại bản mới.`); } else setError(friendlyError(e));
     } finally { setBusy(false); }
   }
 
@@ -56,8 +58,8 @@ export function TimesheetsSection({ orgId, orgName, workers, online }: { orgId: 
         toolbar={(
           <>
             {error && <span className="msg error" role="alert">{error}</span>}
-            {!saved && <button type="button" className="secondary" disabled={busy} onClick={() => { setError(null); setView({ kind: 'form' }); }}>‹ Sửa lại</button>}
-            {!saved && <button type="button" className="primary" disabled={busy || !online} onClick={() => void saveAndPrint(view.id, view.data)}>{busy ? 'Đang lưu…' : '🖨 Lưu và in bảng'}</button>}
+            {!saved && <button type="button" className="secondary" disabled={busy} onClick={() => { setError(null); setView({ kind: 'form' }); }}>{tx`‹ Sửa lại`}</button>}
+            {!saved && <button type="button" className="primary" disabled={busy || !online} onClick={() => void saveAndPrint(view.id, view.data)}>{busy ? tx`Đang lưu…` : tx`🖨 Lưu và in bảng`}</button>}
             {saved && <button type="button" className="primary" onClick={() => window.print()}>🖨 In</button>}
             {saved && <button type="button" className="secondary" onClick={() => setView({ kind: 'list' })}>Xong</button>}
           </>
@@ -76,24 +78,24 @@ export function TimesheetsSection({ orgId, orgName, workers, online }: { orgId: 
 
   return (
     <>
-      {!online && <p className="msg warn" role="status">Đang offline: tạo bảng cần có mạng.</p>}
+      {!online && <p className="msg warn" role="status">{tx`Đang offline: tạo bảng cần có mạng.`}</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
-      <p className="muted">In bảng chấm công có sẵn tên người và các ngày để ghi tay trên giấy; cuối kỳ bấm Nhập số liệu để gõ lại đúng bảng đó vào hệ thống.</p>
-      <button type="button" className="primary" disabled={!online || workers.length === 0} onClick={() => { setError(null); setView({ kind: 'form' }); }}>＋ Tạo bảng mới</button>
-      {workers.length === 0 && <p className="muted">Chưa có người làm nào để lập bảng.</p>}
+      <p className="muted">{tx`In bảng chấm công có sẵn tên người và các ngày để ghi tay trên giấy; cuối kỳ bấm Nhập số liệu để gõ lại đúng bảng đó vào hệ thống.`}</p>
+      <button type="button" className="primary" disabled={!online || workers.length === 0} onClick={() => { setError(null); setView({ kind: 'form' }); }}>{tx`＋ Tạo bảng mới`}</button>
+      {workers.length === 0 && <p className="muted">{tx`Chưa có người làm nào để lập bảng.`}</p>}
 
-      <h2 className="sect">Bảng đã in{sheets && sheets.length > 0 ? ` (${sheets.length})` : ''}</h2>
-      {sheets === null ? <p className="muted">{online ? 'Đang tải…' : 'Cần mạng để xem.'}</p>
-        : sheets.length === 0 ? <p className="muted">Chưa có bảng nào.</p>
+      <h2 className="sect">{tx`Bảng đã in`}{sheets && sheets.length > 0 ? ` (${sheets.length})` : ''}</h2>
+      {sheets === null ? <p className="muted">{online ? tx`Đang tải…` : tx`Cần mạng để xem.`}</p>
+        : sheets.length === 0 ? <p className="muted">{tx`Chưa có bảng nào.`}</p>
         : sheets.map((s) => (
           <div key={s.id} className="card slim">
-            <p><strong>{s.code}</strong> <span className={s.status === 'entered' ? 'pill ok' : 'pill warn'}>{s.status === 'entered' ? 'Đã nhập xong' : 'Chưa nhập'}</span></p>
-            <p>{fmtDate(s.from_date)} – {fmtDate(s.to_date)} · {dayCount(s.from_date, s.to_date)} ngày · {s.workers.length} người</p>
-            <p className="muted">{MODE_LABEL[s.mode]} · ca {hhmm(s.shift_start)}–{hhmm(s.shift_end)}, nghỉ {s.break_minutes} phút</p>
+            <p><strong>{s.code}</strong> <span className={s.status === 'entered' ? 'pill ok' : 'pill warn'}>{s.status === 'entered' ? tx`Đã nhập xong` : tx`Chưa nhập`}</span></p>
+            <p>{fmtDate(s.from_date)} – {fmtDate(s.to_date)} · {dayCount(s.from_date, s.to_date)}{' '}{tx`ngày ·`}{' '}{s.workers.length}{' '}{tx`người`}</p>
+            <p className="muted">{MODE_LABEL[s.mode]} · ca {hhmm(s.shift_start)}–{hhmm(s.shift_end)}{tx`, nghỉ`}{' '}{s.break_minutes}{' '}{tx`phút`}</p>
             <div className="btnrow">
-              <button type="button" className={s.status === 'entered' ? 'secondary' : 'primary'} disabled={busy || !online} onClick={() => setView({ kind: 'entry', sheet: s })}>Nhập số liệu</button>
-              <button type="button" className="secondary" disabled={busy} onClick={() => setView({ kind: 'saved', sheet: s })}>In lại</button>
-              <button type="button" className="secondary" disabled={busy || !online} onClick={() => void toggleEntered(s)}>{s.status === 'entered' ? 'Bỏ đánh dấu nhập xong' : 'Đánh dấu đã nhập xong'}</button>
+              <button type="button" className={s.status === 'entered' ? 'secondary' : 'primary'} disabled={busy || !online} onClick={() => setView({ kind: 'entry', sheet: s })}>{tx`Nhập số liệu`}</button>
+              <button type="button" className="secondary" disabled={busy} onClick={() => setView({ kind: 'saved', sheet: s })}>{tx`In lại`}</button>
+              <button type="button" className="secondary" disabled={busy || !online} onClick={() => void toggleEntered(s)}>{s.status === 'entered' ? tx`Bỏ đánh dấu nhập xong` : tx`Đánh dấu đã nhập xong`}</button>
             </div>
           </div>
         ))}
@@ -136,15 +138,15 @@ function SheetForm({ orgId, workers, prefs, onPrefs, onCancel, onPreview }: {
   const toggleGroup = (ids: string[], on: boolean) => setPicked((s) => { const n = new Set(s); for (const id of ids) { if (on) n.add(id); else n.delete(id); } return n; });
 
   function next() {
-    if (!from || !to) return setError('Hãy chọn ngày bắt đầu và ngày kết thúc.');
-    if (to < from) return setError('Ngày kết thúc không được trước ngày bắt đầu.');
-    if (days > 31) return setError('Một bảng tối đa 31 ngày. Hãy chia thành nhiều bảng.');
+    if (!from || !to) return setError(tx`Hãy chọn ngày bắt đầu và ngày kết thúc.`);
+    if (to < from) return setError(tx`Ngày kết thúc không được trước ngày bắt đầu.`);
+    if (days > 31) return setError(tx`Một bảng tối đa 31 ngày. Hãy chia thành nhiều bảng.`);
     const chosen = groups.flatMap((g) => g.items).filter((w) => picked.has(w.worker_id));
-    if (chosen.length === 0) return setError('Hãy chọn ít nhất một người.');
-    if (chosen.length > 200) return setError('Một bảng tối đa 200 người. Hãy chia theo tổ.');
-    if (!start || !end || end <= start) return setError('Giờ ra của ca mặc định phải sau giờ vào.');
+    if (chosen.length === 0) return setError(tx`Hãy chọn ít nhất một người.`);
+    if (chosen.length > 200) return setError(tx`Một bảng tối đa 200 người. Hãy chia theo tổ.`);
+    if (!start || !end || end <= start) return setError(tx`Giờ ra của ca mặc định phải sau giờ vào.`);
     const b = Number(brk);
-    if (!Number.isInteger(b) || b < 0 || b > 480) return setError('Nghỉ giữa ca từ 0 đến 480 phút.');
+    if (!Number.isInteger(b) || b < 0 || b > 480) return setError(tx`Nghỉ giữa ca từ 0 đến 480 phút.`);
     setError(null);
     onPrefs({ ...prefs, start, end, brk: b, mode });
     onPreview({ from_date: from, to_date: to, mode, shift_start: start, shift_end: end, break_minutes: b, workers: chosen, note: note.trim() || null });
@@ -152,21 +154,21 @@ function SheetForm({ orgId, workers, prefs, onPrefs, onCancel, onPreview }: {
 
   return (
     <div className="card inline-form">
-      <p><strong>Tạo bảng chấm công</strong></p>
+      <p><strong>{tx`Tạo bảng chấm công`}</strong></p>
       <div className="pair">
-        <label>Từ ngày<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
-        <label>Đến ngày<input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} /></label>
+        <label>{tx`Từ ngày`}<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label>{tx`Đến ngày`}<input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} /></label>
       </div>
-      <p className="muted">{days > 0 ? `${days} ngày${days > 31 ? ' (quá 31 ngày, hãy chia nhỏ)' : ''}` : 'Chọn ngày bắt đầu và kết thúc.'}</p>
+      <p className="muted">{days > 0 ? tx`${days} ngày${days > 31 ? tx` (quá 31 ngày, hãy chia nhỏ)` : ''}` : tx`Chọn ngày bắt đầu và kết thúc.`}</p>
 
       <fieldset className="roles">
-        <legend>Người trong bảng ({picked.size}/{workers.length})</legend>
+        <legend><Trans>Người trong bảng ({picked.size}/{workers.length})</Trans></legend>
         {groups.map((g) => {
           const ids = g.items.map((w) => w.worker_id);
           const all = ids.every((id) => picked.has(id));
           return (
             <div key={g.team ?? 'none'}>
-              <label className="check"><input type="checkbox" checked={all} onChange={(e) => toggleGroup(ids, e.target.checked)} /> <strong>{g.team ? `Tổ ${g.team}` : 'Chưa vào tổ'}</strong> ({ids.length})</label>
+              <label className="check"><input type="checkbox" checked={all} onChange={(e) => toggleGroup(ids, e.target.checked)} /> <strong>{g.team ? tx`Tổ ${g.team}` : tx`Chưa vào tổ`}</strong> ({ids.length})</label>
               {g.items.map((w) => (
                 <label key={w.worker_id} className="check sub"><input type="checkbox" checked={picked.has(w.worker_id)} onChange={() => toggle(w.worker_id)} /> {w.name}</label>
               ))}
@@ -176,23 +178,23 @@ function SheetForm({ orgId, workers, prefs, onPrefs, onCancel, onPreview }: {
       </fieldset>
 
       <fieldset className="roles">
-        <legend>Kiểu ghi trên giấy</legend>
+        <legend>{tx`Kiểu ghi trên giấy`}</legend>
         {(Object.keys(MODE_LABEL) as SheetMode[]).map((m) => (
           <label key={m} className="check"><input type="radio" name="sheet-mode" checked={mode === m} onChange={() => setMode(m)} /> {MODE_LABEL[m]}</label>
         ))}
       </fieldset>
 
       <div className="pair">
-        <label>Ca mặc định: giờ vào<input type="time" value={start} onChange={(e) => setStart(e.target.value)} /></label>
-        <label>Giờ ra<input type="time" value={end} onChange={(e) => setEnd(e.target.value)} /></label>
+        <label>{tx`Ca mặc định: giờ vào`}<input type="time" value={start} onChange={(e) => setStart(e.target.value)} /></label>
+        <label>{tx`Giờ ra`}<input type="time" value={end} onChange={(e) => setEnd(e.target.value)} /></label>
       </div>
-      <label>Nghỉ giữa ca (phút)<input inputMode="numeric" value={brk} onChange={(e) => setBrk(e.target.value)} /></label>
-      <label>Ghi chú in trên đầu bảng (không bắt buộc)<input value={note} maxLength={300} placeholder="Ví dụ: Đợt thu hoạch tuần 2" onChange={(e) => setNote(e.target.value)} /></label>
+      <label>{tx`Nghỉ giữa ca (phút)`}<input inputMode="numeric" value={brk} onChange={(e) => setBrk(e.target.value)} /></label>
+      <label>{tx`Ghi chú in trên đầu bảng (không bắt buộc)`}<input value={note} maxLength={300} placeholder={tx`Ví dụ: Đợt thu hoạch tuần 2`} onChange={(e) => setNote(e.target.value)} /></label>
 
       {error && <p className="msg error" role="alert">{error}</p>}
       <div className="btnrow">
-        <button type="button" className="primary" onClick={next}>Xem trước bảng</button>
-        <button type="button" className="secondary" onClick={onCancel}>Hủy</button>
+        <button type="button" className="primary" onClick={next}>{tx`Xem trước bảng`}</button>
+        <button type="button" className="secondary" onClick={onCancel}>{tx`Hủy`}</button>
       </div>
     </div>
   );

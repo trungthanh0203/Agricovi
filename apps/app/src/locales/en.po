@@ -13,6 +13,24 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/PurchaseEntry.tsx
+msgid " — cần quyền sửa Chi phí"
+msgstr "— needs permission to edit Expenses"
+
+#. placeholder {0}: s.material_count
+#: src/components/FindWebSuppliers.tsx
+msgid " … ({0} vật tư)"
+msgstr "… ({0} supplies)"
+
+#. placeholder {0}: progress.filter(({ p }) => p.delay > 0).length
+#: src/components/CycleProgressList.tsx
+msgid " · {0} vụ trễ"
+msgstr "· {0} seasons behind"
+
+#: src/components/MilestonePanels.tsx
+msgid " · {late} quá hạn"
+msgstr "· {late} overdue"
+
 #. placeholder {0}: fmtDate(a.noticed_on)
 #: src/components/AbsencesSection.tsx
 msgid " · báo {0}"
@@ -21,6 +39,47 @@ msgstr " · reported {0}"
 #: src/components/HarvestSection.tsx
 msgid " · cả phiếu đã hủy"
 msgstr " · including cancelled records"
+
+#. placeholder {0}: hoursText(row.pending_hours)
+#: src/components/HomePay.tsx
+msgid " · chờ xác nhận {0}"
+msgstr "· awaiting confirmation {0}"
+
+#: src/components/StockMove.tsx
+msgid " · chưa có diện tích"
+msgstr "· no area yet"
+
+#: src/components/CycleProgressList.tsx
+msgid " · Đã hoàn tất"
+msgstr "· Completed"
+
+#: src/components/StockTake.tsx
+#: src/components/StockTake.tsx
+msgid " · đếm mù"
+msgstr "· blind count"
+
+#. placeholder {0}: l.expiry_date.split('-').reverse().join('/')
+#: src/components/LotPicker.tsx
+msgid " · hạn {0}"
+msgstr "· due {0}"
+
+#. placeholder {0}: p.current.name
+#. placeholder {1}: fmtDate(p.current.planned_end)
+#: src/components/CycleProgressList.tsx
+msgid " · Hiện tại: {0} (đến {1})"
+msgstr "· Current: {0} (until {1})"
+
+#. placeholder {0}: saved.invoice
+#: src/components/PurchaseEntry.tsx
+msgid " · hóa đơn {0}"
+msgstr "· invoice {0}"
+
+#. placeholder {0}: i.lot_no
+#. placeholder {0}: l.lot_no
+#: src/components/MilestonePanels.tsx
+#: src/components/StockTake.tsx
+msgid " · lô {0}"
+msgstr "· lot {0}"
 
 #. placeholder {0}: h.lot_code
 #: src/components/HarvestSection.tsx
@@ -31,22 +90,94 @@ msgstr " · lot code {0}"
 msgid " · máy chấm công"
 msgstr " · attendance kiosk"
 
+#. placeholder {0}: d.dir === 'up' ? tx`tăng` : tx`giảm`
+#. placeholder {1}: d.pct!
+#: src/lib/weekly.ts
+msgid " ({0} {1}% so với tuần trước)"
+msgstr "({0} {1}% vs last week)"
+
+#: src/lib/weekly.ts
+msgid " (bằng tuần trước)"
+msgstr "(same as last week)"
+
+#: src/components/StockTake.tsx
+msgid " (bắt buộc)"
+msgstr "(required)"
+
+#: src/components/InvoiceScanner.tsx
+msgid " (đã nhớ từ lần trước)"
+msgstr "(remembered from last time)"
+
 #: src/components/AttendanceList.tsx
 msgid " (đang trong ca)"
 msgstr " (on shift)"
+
+#: src/components/InvoiceScanner.tsx
+msgid " (gợi ý theo tên, hãy kiểm tra)"
+msgstr "(suggested by name, please check)"
+
+#. placeholder {0}: fmtDate(r.due_date)
+#. placeholder {0}: new Date(h.material_lots.expiry_date).toLocaleDateString(dateLocale())
+#: src/components/CustomerOrders.tsx
+#: src/screens/StockPanel.tsx
+msgid " (hạn {0})"
+msgstr "(due {0})"
+
+#. placeholder {0}: h.purchase_bills.invoice_no
+#: src/screens/StockPanel.tsx
+msgid " (HĐ {0})"
+msgstr "(contract {0})"
+
+#: src/components/LotPicker.tsx
+msgid " (HẾT HẠN)"
+msgstr "(EXPIRED)"
+
+#: src/components/PurchaseEntry.tsx
+msgid " (không bắt buộc)"
+msgstr "(optional)"
+
+#: src/components/TimesheetsSection.tsx
+msgid " (quá 31 ngày, hãy chia nhỏ)"
+msgstr "(more than 31 days, please split)"
 
 #: src/components/AttendanceList.tsx
 msgid " (quên ra ca)"
 msgstr " (forgot to clock out)"
 
+#: src/lib/weekly.ts
+msgid " (tuần trước chưa có)"
+msgstr "(none last week)"
+
+#. placeholder {0}: head.created_by_name
+#: src/components/StockTake.tsx
+msgid " bởi {0}"
+msgstr "by {0}"
+
 #: src/components/HarvestSection.tsx
 msgid " của vụ đã chọn"
 msgstr " of the selected season"
+
+#: src/components/TimesheetEntry.tsx
+msgid " ô"
+msgstr "cells"
+
+#: src/components/TimesheetEntry.tsx
+#: src/components/TimesheetEntry.tsx
+msgid " từ bảng này"
+msgstr "from this sheet"
 
 #: src/components/DynamicField.tsx
 #: src/components/DynamicField.tsx
 msgid "— Chọn —"
 msgstr "— Select —"
+
+#: src/components/PurchaseEntry.tsx
+msgid "— Chọn nhà cung ứng —"
+msgstr "— Select supplier —"
+
+#: src/components/AddressFields.tsx
+msgid "— Chọn tỉnh/thành phố —"
+msgstr "— Select province/city —"
 
 #: src/components/CatalogPick.tsx
 msgid "— Chọn từ danh bạ —"
@@ -60,9 +191,26 @@ msgstr "— Select from catalog —"
 msgid "— Chọn từ nhân sự —"
 msgstr "— Select from staff —"
 
+#: src/components/PurchaseEntry.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "— Chọn vật tư —"
 msgstr "— Select a supply —"
+
+#: src/components/InvoiceScanner.tsx
+msgid "— Chưa chọn —"
+msgstr "— Not selected —"
+
+#: src/components/InvoiceScanner.tsx
+msgid "— Chưa chọn vật tư —"
+msgstr "— No supply selected —"
+
+#: src/components/CustomersSection.tsx
+msgid "— Chưa phân loại —"
+msgstr "— Uncategorized —"
+
+#: src/components/InvoiceScanner.tsx
+msgid "— Chưa phân nhóm —"
+msgstr "— No group —"
 
 #: src/components/HarvestSection.tsx
 msgid "— không đổi được vụ; muốn đổi hãy hủy phiếu và ghi lại. Mọi thay đổi được lưu lịch sử."
@@ -84,14 +232,46 @@ msgstr "— Unknown —"
 msgid "— mọi thay đổi được lưu lịch sử."
 msgstr "— all changes are kept in history."
 
+#. placeholder {0}: r.unchanged
+#: src/components/TimesheetEntry.tsx
+msgid ", {0} ô đã có từ trước"
+msgstr ", {0} cells already filled"
+
+#. placeholder {0}: a.overdue_actions
+#: src/lib/weekly.ts
+msgid ", {0} việc khắc phục quá hạn"
+msgstr ", {0} corrective actions overdue"
+
+#: src/components/TimesheetEntry.tsx
+msgid ", {invalid} ô sai"
+msgstr ", {invalid} invalid cells"
+
 #. placeholder {0}: r.skipped
 #: src/components/AttendanceList.tsx
 msgid ", bỏ qua {0} công (kỳ lương đã khóa hoặc không đủ quyền)"
 msgstr ", skipped {0} entries (pay period locked or no permission)"
 
+#. placeholder {0}: scanOut.kept
+#: src/components/TimesheetEntry.tsx
+msgid ", giữ nguyên {0} ô đã gõ hoặc đã có"
+msgstr ", kept {0} cells already typed or filled"
+
+#. placeholder {0}: fmtDate(saved.due)
+#: src/components/PurchaseEntry.tsx
+msgid ", hạn thanh toán {0}"
+msgstr ", payment due {0}"
+
 #: src/components/HarvestSection.tsx
 msgid ", không bắt buộc)"
 msgstr ", optional)"
+
+#: src/components/TimesheetsSection.tsx
+msgid ", nghỉ"
+msgstr ", off"
+
+#: src/components/TimesheetEntry.tsx
+msgid ", nghỉ giữa ca"
+msgstr ", break"
 
 #: src/components/AttendanceList.tsx
 msgid ", nhưng có chấm công"
@@ -105,6 +285,20 @@ msgstr ", half day"
 msgid ", rồi đánh dấu \"đã làm\" ở khối Mốc nhắc việc của vụ."
 msgstr ", then mark it \"done\" in the season's Reminder milestones block."
 
+#. placeholder {0}: m.read
+#: src/components/TimesheetEntry.tsx
+msgid ", tên “{0}”"
+msgstr ", name “{0}”"
+
+#: src/components/PurchaseEntry.tsx
+msgid "; sẽ tự gửi lên máy chủ khi có mạng"
+msgstr "; will be sent to the server when online"
+
+#. placeholder {0}: r.skipped.length
+#: src/components/TimesheetEntry.tsx
+msgid ". {0} ô chưa lưu được (xem bên dưới)"
+msgstr ". {0} cells not saved (see below)"
+
 #: src/components/HarvestSection.tsx
 msgid ". Chỉ tính phiếu chưa hủy."
 msgstr ". Only records that are not cancelled are counted."
@@ -114,6 +308,23 @@ msgstr ". Only records that are not cancelled are counted."
 msgid ". Còn {0} ca chưa đóng (vào muộn hơn {closeAt}, kỳ lương đã khóa hoặc không đủ quyền): đóng riêng từng ca ở bảng dưới."
 msgstr ". {0} shifts are still open (clocked in later than {closeAt}, pay period locked or no permission): close each one in the table below."
 
+#: src/components/TimesheetEntry.tsx
+msgid ". Công do chủ nhập được xác nhận luôn; công do quản lý hoặc tổ trưởng nhập chờ xác nhận."
+msgstr ". Entries by the owner are confirmed immediately; entries by a manager or team leader await confirmation."
+
+#: src/components/StockReports.tsx
+msgid ". Số lượng là lượng đã xuất cho vụ trừ lượng đã trả về kho; giá vốn theo bình quân gia quyền."
+msgstr ". Quantity is what was issued to the season minus what was returned; cost uses the weighted average."
+
+#: src/components/StockReports.tsx
+msgid ". Tồn cuối kỳ = tồn đầu kỳ + nhập − xuất + điều chỉnh (gồm chuyển kho, trả về kho, kiểm kê)."
+msgstr ". Closing stock = opening stock + received − issued + adjustments (including transfers, returns and stocktakes)."
+
+#: src/components/HomeStats.tsx
+#: src/components/TimesheetEntry.tsx
+msgid "… và"
+msgstr "… and"
+
 #: src/components/AttendancePhotos.tsx
 msgid "· cách mẫu"
 msgstr "· distance from sample"
@@ -122,18 +333,42 @@ msgstr "· distance from sample"
 msgid "· còn"
 msgstr "·"
 
+#: src/components/PurchaseEntry.tsx
+msgid "· Đã trả:"
+msgstr "· Paid:"
+
 #: src/components/ExpiringLots.tsx
 msgid "· lô"
 msgstr "· lot"
+
+#: src/components/StockTake.tsx
+msgid "· mở"
+msgstr "· open"
+
+#: src/components/TimesheetEntry.tsx
+msgid "‹ Bảng giấy"
+msgstr "‹ Paper sheets"
 
 #: src/components/AttendanceList.tsx
 msgid "‹ Quay lại bảng công"
 msgstr "‹ Back to timesheet"
 
+#: src/components/TimesheetsSection.tsx
+msgid "‹ Sửa lại"
+msgstr "‹ Go back and edit"
+
+#: src/screens/StockPanel.tsx
+msgid "‹ Tồn kho"
+msgstr "‹ Stock"
+
 #: src/components/AttendanceList.tsx
 #: src/components/TodayPlan.tsx
 msgid "‹ Trước"
 msgstr "‹ Previous"
+
+#: src/components/InvoiceScanner.tsx
+msgid "\" vào danh bạ"
+msgstr "\" to contacts"
 
 #. placeholder {0}: m.title
 #. placeholder {1}: m.offset_days
@@ -141,9 +376,63 @@ msgstr "‹ Previous"
 msgid "\"{0}\" ({1} ngày trước thu)"
 msgstr "\"{0}\" ({1} days before harvest)"
 
+#. placeholder {0}: f.label
+#: src/lib/fieldsLogic.ts
+msgid "\"{0}\" cần chọn ngày."
+msgstr "\"{0}\" needs a date."
+
+#. placeholder {0}: f.label
+#. placeholder {1}: f.max
+#: src/lib/fieldsLogic.ts
+msgid "\"{0}\" không được lớn hơn {1}."
+msgstr "\"{0}\" cannot be greater than {1}."
+
+#. placeholder {0}: f.label
+#. placeholder {1}: f.min
+#: src/lib/fieldsLogic.ts
+msgid "\"{0}\" không được nhỏ hơn {1}."
+msgstr "\"{0}\" cannot be less than {1}."
+
+#. placeholder {0}: f.label
+#: src/lib/fieldsLogic.ts
+msgid "\"{0}\" phải là số."
+msgstr "\"{0}\" must be a number."
+
+#: src/screens/StockPanel.tsx
+msgid "(Bấm tên vật tư để xem chi tiết)"
+msgstr "(Tap a supply name for details)"
+
+#: src/lib/weekly.ts
+msgid "(Chi phí không gồm tiền mua vật tư vì đã tính khi dùng.)"
+msgstr "(Expenses exclude supply purchases because they are counted when used.)"
+
+#: src/components/StockMove.tsx
+msgid "(đã dùng"
+msgstr "(used"
+
 #: src/screens/HomeTab.tsx
 msgid "(đã hết hạn)"
 msgstr "(expired)"
+
+#: src/components/StockEntry.tsx
+msgid "(đồng, không bắt buộc)"
+msgstr "(VND, optional)"
+
+#: src/components/TimesheetEntry.tsx
+msgid "(không bắt buộc)"
+msgstr "(optional)"
+
+#: src/components/InvoiceScanner.tsx
+msgid ") khác đơn vị kho ("
+msgstr ") differs from the stock unit ("
+
+#: src/components/TimesheetEntry.tsx
+msgid "); không điền."
+msgstr "); not filled in."
+
+#: src/components/PurchaseEntry.tsx
+msgid "). Chỉ sửa khi hóa đơn có thêm phí vận chuyển, chiết khấu…"
+msgstr "). Edit only if the invoice has extra shipping fees or discounts…"
 
 #. placeholder {0}: group.length
 #: src/screens/LogActivityScreen.tsx
@@ -160,6 +449,24 @@ msgstr "{0, plural, one {# day overdue} other {# days overdue}}"
 msgid "{0, plural, one {Xem tất cả # vụ} other {Xem tất cả # vụ}}"
 msgstr "{0, plural, one {View # season} other {View all # seasons}}"
 
+#. placeholder {0}: a.name
+#. placeholder {1}: a.count
+#: src/components/AreaFilter.tsx
+msgid "{0} ({1} vụ)"
+msgstr "{0} ({1} seasons)"
+
+#. placeholder {0}: x.material
+#. placeholder {1}: vn(x.used_on).slice(0, 5)
+#. placeholder {2}: x.days
+#: src/lib/withdrawalLogic.ts
+msgid "{0} (dùng {1}, cách ly {2} ngày)"
+msgstr "{0} (used on {1}, withdrawal {2} days)"
+
+#. placeholder {0}: ROLE_LABEL.owner!
+#: src/lib/roles.ts
+msgid "{0} (gồm mọi vai trò)"
+msgstr "{0} (includes all roles)"
+
 #. placeholder {0}: fmtDate(a.from_date)
 #: src/components/AbsencesSection.tsx
 msgid "{0} (nửa ngày)"
@@ -171,20 +478,84 @@ msgstr "{0} (half day)"
 msgid "{0} (từ {1})"
 msgstr "{0} (from {1})"
 
+#. placeholder {0}: d.dir === 'up' ? '▲' : '▼'
+#. placeholder {1}: d.pct!
+#: src/lib/weekly.ts
+msgid "{0} {1}% so với tuần trước ({prevText})"
+msgstr "{0} {1}% vs last week ({prevText})"
+
 #. placeholder {0}: filtered.length
 #: src/screens/LogsScreen.tsx
 msgid "{0} bản ghi"
 msgstr "{0, plural, one {# record} other {# records}}"
 
+#. placeholder {0}: a.pending_attendance
+#: src/lib/weekly.ts
+msgid "{0} ca công chờ xác nhận"
+msgstr "{0} attendance entries awaiting confirmation"
+
+#. placeholder {0}: s.labor_unposted_missing_rate!
+#: src/lib/cycleStatsLogic.ts
+msgid "{0} ca công chưa có đơn giá giờ nên chưa tính vào chi phí."
+msgstr "{0} shifts have no hourly rate yet, so they are not included in costs."
+
+#. placeholder {0}: fmt(fullNet > 0 ? t.minutes / fullNet : 0)
 #. placeholder {0}: sum.pending
 #: src/components/AttendanceSection.tsx
+#: src/lib/timesheetCells.ts
 msgid "{0} công"
 msgstr "{0} work entries"
+
+#. placeholder {0}: Math.round(n).toLocaleString(dateLocale())
+#. placeholder {0}: Math.round(row.net).toLocaleString(dateLocale())
+#. placeholder {0}: n.toLocaleString(dateLocale())
+#: src/components/HomePay.tsx
+#: src/components/HomeStats.tsx
+#: src/lib/weekly.ts
+msgid "{0} đ"
+msgstr "{0} VND"
+
+#. placeholder {0}: rows.length
+#. placeholder {1}: formatQty(total.qty)
+#: src/components/CustomerOrders.tsx
+msgid "{0} đơn · {1} kg"
+msgstr "{0} orders · {1} kg"
 
 #. placeholder {0}: inbox.orders_new
 #: src/components/WebInboxCard.tsx
 msgid "{0} đơn mới chờ báo giá"
 msgstr "{0, plural, one {# new order awaiting a quote} other {# new orders awaiting a quote}}"
+
+#. placeholder {0}: a.web_orders_waiting
+#: src/lib/weekly.ts
+msgid "{0} đơn website chờ báo giá"
+msgstr "{0} website orders awaiting a quote"
+
+#. placeholder {0}: shortMoney(debt.overdueAmount)
+#. placeholder {0}: shortMoney(recv.overdueAmount)
+#: src/components/HomeStats.tsx
+#: src/components/HomeStats.tsx
+msgid "{0} đồng"
+msgstr "{0} VND"
+
+#. placeholder {0}: shortMoney(debt.soonAmount)
+#. placeholder {0}: shortMoney(recv.soonAmount)
+#: src/components/HomeStats.tsx
+#: src/components/HomeStats.tsx
+msgid "{0} đồng · trong 7 ngày"
+msgstr "{0} VND · within 7 days"
+
+#. placeholder {0}: res.total
+#: src/components/FindWebSuppliers.tsx
+msgid "{0} gian hàng"
+msgstr "{0} shops"
+
+#. placeholder {0}: fmt(t.minutes / 60)
+#. placeholder {0}: vn(n)
+#: src/lib/timesheetCells.ts
+#: src/lib/weekly.ts
+msgid "{0} giờ"
+msgstr "{0} h"
 
 #. placeholder {0}: Math.floor(m / 60)
 #. placeholder {1}: String(m % 60).padStart(2, '0')
@@ -192,15 +563,60 @@ msgstr "{0, plural, one {# new order awaiting a quote} other {# new orders await
 msgid "{0} giờ {1} phút"
 msgstr "{0} h {1} min"
 
+#. placeholder {0}: a.overdue_payables.count
+#. placeholder {1}: money(a.overdue_payables.amount)
+#: src/lib/weekly.ts
+msgid "{0} hóa đơn mua quá hạn ({1})"
+msgstr "{0} purchase invoices overdue ({1})"
+
+#. placeholder {0}: a.overdue_receivables.count
+#. placeholder {1}: money(a.overdue_receivables.amount)
+#: src/lib/weekly.ts
+msgid "{0} khoản phải thu quá hạn ({1})"
+msgstr "{0} receivables overdue ({1})"
+
+#. placeholder {0}: items.length
+#: src/components/MilestonePanels.tsx
+msgid "{0} mốc"
+msgstr "{0} milestones"
+
+#. placeholder {0}: rows.length
+#. placeholder {1}: late > 0 ? tx` · ${late} quá hạn` : ''
+#: src/components/MilestonePanels.tsx
+msgid "{0} mốc{1}"
+msgstr "{0} milestones{1}"
+
 #. placeholder {0}: n.toLocaleString(dateLocale(), { maximumFractionDigits: 1 })
 #: src/lib/absences.ts
 msgid "{0} ngày"
 msgstr "{0, plural, one {# day} other {# days}}"
 
+#. placeholder {0}: w.name
+#. placeholder {1}: d.day
+#: src/components/TimesheetEntry.tsx
+msgid "{0} ngày {1}"
+msgstr "{0} on {1}"
+
+#. placeholder {0}: m.offset_days
+#: src/lib/milestoneLogic.ts
+msgid "{0} ngày trước ngày thu / xuất dự kiến"
+msgstr "{0} days before the expected harvest / sale date"
+
+#. placeholder {0}: row.days
+#. placeholder {1}: row.pending_hours > 0 ? t` · chờ xác nhận ${hoursText(row.pending_hours)}` : ''
+#: src/components/HomePay.tsx
+msgid "{0} ngày{1}"
+msgstr "{0} days{1}"
+
 #. placeholder {0}: absToday.length
 #: src/components/AttendanceSection.tsx
 msgid "{0} nghỉ"
 msgstr "{0} off"
+
+#. placeholder {0}: f(n / 1e3)
+#: src/components/HomeStats.tsx
+msgid "{0} nghìn"
+msgstr "{0} thousand"
 
 #. placeholder {0}: orphans.length
 #. placeholder {0}: sum.flagged_people ?? sum.flagged
@@ -214,6 +630,43 @@ msgstr "{0, plural, one {# person} other {# people}}"
 #: src/components/AbsenceSummary.tsx
 msgid "{0} người, {1}"
 msgstr "{0} people, {1}"
+
+#. placeholder {0}: result.skipped.length
+#: src/components/TimesheetEntry.tsx
+msgid "{0} ô chưa lưu được"
+msgstr "{0} cells not saved"
+
+#. placeholder {0}: a.open_incidents
+#. placeholder {1}: a.overdue_actions > 0 ? tx`, ${a.overdue_actions} việc khắc phục quá hạn` : ''
+#: src/lib/weekly.ts
+msgid "{0} sự cố đang mở{1}"
+msgstr "{0} open incidents{1}"
+
+#. placeholder {0}: f(n / 1e6)
+#: src/components/HomeStats.tsx
+msgid "{0} triệu"
+msgstr "{0} million"
+
+#. placeholder {0}: f(n / 1e9)
+#: src/components/HomeStats.tsx
+msgid "{0} tỷ"
+msgstr "{0} billion"
+
+#. placeholder {0}: a.low_stock
+#: src/lib/weekly.ts
+msgid "{0} vật tư sắp hết"
+msgstr "{0} supplies running low"
+
+#. placeholder {0}: a.late_cycles
+#: src/lib/weekly.ts
+msgid "{0} vụ trễ tiến độ"
+msgstr "{0} seasons behind schedule"
+
+#. placeholder {0}: running.length
+#. placeholder {1}: progress.some(({ p }) => p.delay > 0) ? t` · ${progress.filter(({ p }) => p.delay > 0).length} vụ trễ` : ''
+#: src/components/CycleProgressList.tsx
+msgid "{0} vụ{1}"
+msgstr "{0} seasons{1}"
 
 #. placeholder {0}: rows.length
 #: src/components/LossAlerts.tsx
@@ -232,6 +685,11 @@ msgstr "{count, plural, one {This date already has # \"{workName}\" record for {
 msgid "{d, plural, one {Còn # ngày} other {Còn # ngày}}"
 msgstr "{d, plural, one {# day left} other {# days left}}"
 
+#. placeholder {0}: days > 31 ? tx` (quá 31 ngày, hãy chia nhỏ)` : ''
+#: src/components/TimesheetsSection.tsx
+msgid "{days} ngày{0}"
+msgstr "{days} days{0}"
+
 #: src/components/ExpiringLots.tsx
 msgid "{expired} lô đã hết hạn, "
 msgstr "{expired, plural, one {# lot has expired, } other {# lots have expired, }}"
@@ -240,9 +698,53 @@ msgstr "{expired, plural, one {# lot has expired, } other {# lots have expired, 
 msgid "{failed, plural, one {Có # bản ghi cần xử lý (chưa gửi được lên máy chủ).} other {Có # bản ghi cần xử lý (chưa gửi được lên máy chủ).}}"
 msgstr "{failed, plural, one {# record needs attention (not yet sent to the server).} other {# records need attention (not yet sent to the server).}}"
 
+#: src/components/InvoiceScanner.tsx
+msgid "{label}: đơn giá phải là số tiền (đồng)."
+msgstr "{label}: the unit price must be an amount in VND."
+
+#. placeholder {0}: l.unit
+#. placeholder {1}: l.unit
+#: src/components/InvoiceScanner.tsx
+msgid "{label}: đơn vị trên phiếu ({0}) khác đơn vị kho ({stock}). Hãy nhập 1 {1} bằng bao nhiêu {stock}."
+msgstr "{label}: the unit on the invoice ({0}) differs from the stock unit ({stock}). Enter how many {stock} 1 {1} equals."
+
+#: src/components/InvoiceScanner.tsx
+msgid "{label}: hãy chọn vật tư, thêm vật tư mới, hoặc bỏ tích \"Nhập dòng này\"."
+msgstr "{label}: select a supply, add a new one, or untick \"Import this line\"."
+
+#: src/components/InvoiceScanner.tsx
+msgid "{label}: hãy nhập số lượng lớn hơn 0."
+msgstr "{label}: enter a quantity greater than 0."
+
+#. placeholder {0}: t.off
+#: src/lib/timesheetCells.ts
+msgid "{main} · {0} nghỉ"
+msgstr "{main} · {0} off"
+
+#: src/screens/StockPanel.tsx
+msgid "{missingCost} lần nhập chưa ghi giá"
+msgstr "{missingCost} receipts have no price recorded"
+
 #: src/components/CatalogPick.tsx
 msgid "{name} (đang ghi)"
 msgstr "{name} (being entered)"
+
+#: src/components/PurchaseEntry.tsx
+msgid "{name}: đã nhập hạn dùng thì cần nhập cả số lô."
+msgstr "{name}: if you enter an expiry date you must also enter a lot number."
+
+#: src/components/PurchaseEntry.tsx
+msgid "{name}: đơn giá phải là số tiền (đồng), không có phần lẻ."
+msgstr "{name}: the unit price must be a whole amount in VND."
+
+#: src/components/PurchaseEntry.tsx
+msgid "{name}: số lượng phải là số lớn hơn 0."
+msgstr "{name}: the quantity must be a number greater than 0."
+
+#. placeholder {0}: items.length
+#: src/components/MilestonePanels.tsx
+msgid "{open} chưa làm / {0}"
+msgstr "{open} not done / {0}"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "{savedCount, plural, one {Đã ghi cho # vụ} other {Đã ghi cho # vụ}}"
@@ -257,6 +759,21 @@ msgstr "{value} (being entered)"
 msgid "{waiting, plural, one {# bản ghi} other {# bản ghi}}"
 msgstr "{waiting, plural, one {# record} other {# records}}"
 
+#. placeholder {0}: t.unknown
+#: src/components/StockReports.tsx
+msgid "* Có {0} lần xuất chưa có giá nhập nên chưa tính giá vốn. Hãy ghi giá khi nhập kho để báo cáo đủ."
+msgstr "* {0} issues have no purchase price, so their cost is not calculated. Record prices when receiving stock for a complete report."
+
+#. placeholder {0}: s.title
+#. placeholder {1}: s.offset
+#: src/components/MilestonePanels.tsx
+msgid "+ {0} ({1} ngày trước thu)"
+msgstr "+ {0} ({1} days before harvest)"
+
+#: src/components/StockTake.tsx
+msgid "＋ Ghi chú"
+msgstr "＋ Note"
+
 #: src/components/AttendanceSection.tsx
 msgid "＋ Ghi công"
 msgstr "＋ Add attendance"
@@ -265,21 +782,59 @@ msgstr "＋ Add attendance"
 msgid "＋ Ghi nghỉ"
 msgstr "＋ Record absence"
 
+#: src/components/TimesheetsSection.tsx
+msgid "＋ Tạo bảng mới"
+msgstr "＋ Create new sheet"
+
+#: src/components/InvoiceScanner.tsx
+msgid "+ Thêm \""
+msgstr "+ Add \""
+
+#. placeholder {0}: l.ten
+#: src/components/InvoiceScanner.tsx
+msgid "+ Thêm \"{0}\" thành vật tư mới"
+msgstr "+ Add \"{0}\" as a new supply"
+
 #: src/screens/LogActivityScreen.tsx
 msgid "+ Thêm dòng"
 msgstr "+ Add row"
+
+#: src/components/PurchaseEntry.tsx
+msgid "+ Thêm dòng vật tư"
+msgstr "+ Add supply line"
 
 #: src/components/CatalogPick.tsx
 msgid "＋ Thêm khác"
 msgstr "＋ Add other"
 
+#: src/components/CustomersSection.tsx
+msgid "+ Thêm khách hàng"
+msgstr "+ Add customer"
+
 #: src/components/CatalogPick.tsx
 msgid "＋ Thêm khách hàng mới"
 msgstr "＋ Add new customer"
 
+#: src/components/MilestonePanels.tsx
+msgid "+ Thêm mốc / mũi tiêm"
+msgstr "+ Add milestone / vaccination"
+
+#: src/components/MilestonePanels.tsx
+#: src/components/MilestonePanels.tsx
+msgid "+ Thêm mốc an toàn"
+msgstr "+ Add safety milestone"
+
 #: src/components/CatalogPick.tsx
 msgid "＋ Thêm nhà cung cấp mới"
 msgstr "＋ Add new supplier"
+
+#: src/components/PartnersSection.tsx
+msgid "+ Thêm nhà cung ứng"
+msgstr "+ Add supplier"
+
+#: src/components/PurchaseEntry.tsx
+msgid "+ Thêm nhà cung ứng mới"
+msgstr "+ Add new supplier"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "+ Thêm vật tư đã dùng"
@@ -288,6 +843,19 @@ msgstr "+ Add supplies used"
 #: src/components/HarvestSection.tsx
 msgid "＋ Thông tin thêm theo mẫu của cơ sở"
 msgstr "＋ Extra fields from your farm's template"
+
+#. placeholder {0}: dupe.existing.name
+#: src/components/CustomersSection.tsx
+msgid "<0>\"{0}\"</0> đã có trong danh bạ (đang là nhà cung ứng). Đánh dấu thêm là khách hàng để dùng chung một hồ sơ?"
+msgstr "<0>\"{0}\"</0> is already in your contacts (as a supplier). Mark it as a customer too, to share one profile?"
+
+#: src/components/InvoiceScanner.tsx
+msgid "= bao nhiêu"
+msgstr "= how much"
+
+#: src/components/TimesheetEntry.tsx
+msgid "= Ô"
+msgstr "= Ô"
 
 #: src/components/LogWorkPicker.tsx
 msgid "⏰ Đến hạn hôm nay"
@@ -300,6 +868,14 @@ msgstr "⏹ Stop"
 #: src/components/AttendancePhotos.tsx
 msgid "◀ Ngày trước"
 msgstr "◀ Previous day"
+
+#: src/components/TimesheetEntry.tsx
+msgid "✓ trừ CN"
+msgstr "✓ excluding Sundays"
+
+#: src/components/FindWebSuppliers.tsx
+msgid "✔ Đã kiểm tra giấy phép"
+msgstr "✔ Licence checked"
 
 #: src/components/AttendanceList.tsx
 msgid "✔ Đóng tất cả {total} ca lúc {closeAt}"
@@ -355,19 +931,97 @@ msgstr "📱 Install on a phone"
 msgid "📲 Cài app về máy để dùng tiện hơn"
 msgstr "📲 Install the app for easier use"
 
+#: src/components/TimesheetEntry.tsx
+msgid "📷 Chụp / chọn ảnh bảng"
+msgstr "📷 Take / choose sheet photos"
+
+#: src/components/InvoiceScanner.tsx
+msgid "📷 Chụp ảnh"
+msgstr "📷 Take photo"
+
+#: src/components/PurchaseEntry.tsx
+msgid "📷 Chụp phiếu / hóa đơn để điền sẵn"
+msgstr "📷 Photograph a receipt / invoice to prefill"
+
+#: src/components/InvoiceScanner.tsx
+msgid "📷 Chụp phiếu nhập hàng"
+msgstr "📷 Photograph a goods receipt"
+
+#: src/components/TimesheetEntry.tsx
+msgid "📷 Đọc từ ảnh bảng giấy"
+msgstr "📷 Read from a paper sheet photo"
+
+#: src/components/PartnersSection.tsx
+msgid "🔎 Tìm trên website"
+msgstr "🔎 Search the website"
+
+#: src/components/TimesheetsSection.tsx
+msgid "🖨 Lưu và in bảng"
+msgstr "🖨 Save and print sheet"
+
+#: src/components/InvoiceScanner.tsx
+msgid "🖼 Chọn ảnh có sẵn"
+msgstr "🖼 Choose existing photo"
+
 #: src/components/VoiceNote.tsx
 msgid "🗑 Xóa & đọc lại"
 msgstr "🗑 Clear & dictate again"
+
+#. placeholder {0}: f(st.weekPct)
+#. placeholder {1}: st.weekLoss.toLocaleString(dateLocale())
+#. placeholder {2}: f(th.weekPct)
+#: src/lib/countLogic.ts
+msgid "7 ngày gần đây hao {0}% ({1} {unit}), vượt ngưỡng {2}%."
+msgstr "Loss over the last 7 days: {0}% ({1} {unit}), above the {2}% threshold."
+
+#: src/components/TimesheetEntry.tsx
+msgid "AI không chắc ô này: hãy đối chiếu với tờ giấy."
+msgstr "The AI is unsure about this cell: compare it with the paper."
+
+#: src/components/CustomerOrders.tsx
+msgid "Ẩn các lần thu tiền"
+msgstr "Hide payments received"
+
+#. placeholder {0}: p.name
+#: src/components/CustomersSection.tsx
+msgid ""
+"Ẩn danh \"{0}\"?\n"
+"\n"
+"Tên, điện thoại, địa chỉ, ghi chú sẽ bị xóa và KHÔNG khôi phục được. Số tiền và công nợ vẫn được giữ."
+msgstr "Anonymize \"{0}\"?\n\nName, phone, address and notes will be erased and CANNOT be restored. Amounts and debts are kept."
+
+#: src/components/CustomersSection.tsx
+msgid "Ẩn danh (theo yêu cầu xóa dữ liệu)"
+msgstr "Anonymize (data deletion request)"
+
+#: src/lib/partners.ts
+msgid "ẩn danh khách hàng"
+msgstr "anonymize a customer"
 
 #: src/components/PhoneSignupForm.tsx
 #: src/screens/AuthScreen.tsx
 msgid "Ẩn mật khẩu"
 msgstr "Hide password"
 
+#. placeholder {0}: i + 1
+#: src/components/InvoiceScanner.tsx
+msgid "Ảnh {0}"
+msgstr "Photo {0}"
+
+#: src/components/HomeStats.tsx
+msgid "Ảnh chấm công cần xem"
+msgstr "Attendance photos to review"
+
 #. placeholder {0}: sum && sum.flagged > 0 ? ` (${sum.flagged})` : ''
 #: src/components/AttendanceSection.tsx
 msgid "Ảnh cờ đỏ{0}"
 msgstr "Red-flag photos{0}"
+
+#. placeholder {0}: map.codeMismatch
+#. placeholder {1}: sheet.code
+#: src/components/TimesheetEntry.tsx
+msgid "Ảnh có mã bảng {0}, khác bảng đang nhập ({1}). Vẫn điền số liệu từ ảnh này?"
+msgstr "The photo shows sheet code {0}, different from the sheet being entered ({1}). Fill in from this photo anyway?"
 
 #: src/components/AbsencesSection.tsx
 msgid "Ảnh đính kèm"
@@ -394,9 +1048,26 @@ msgstr "Suspicious photos"
 msgid "Ảnh nhỏ góc dưới là ảnh mẫu khi đăng ký. “Cách mẫu” càng nhỏ càng giống (dưới 0,50 là khớp, từ 0,60 có thể khác người). Ảnh được giữ 60 ngày. Thấy ảnh không đúng người: vào mục “Công”, tìm công đó và từ chối kèm lý do."
 msgstr "The small photo in the lower corner is the sample taken at registration. The smaller the \"distance from sample\", the closer the match (below 0.50 matches; from 0.60 it may be a different person). Photos are kept for 60 days. If a photo shows the wrong person, go to \"Attendance\", find that entry and reject it with a reason."
 
+#: src/lib/image.ts
+#: src/lib/image.ts
+msgid "Ảnh quá lớn, hãy chọn ảnh khác."
+msgstr "The photo is too large, choose another one."
+
 #: src/components/InstallGuide.tsx
 msgid "App sẽ có biểu tượng riêng trên màn hình/Dock, mở lên không cần trình duyệt."
 msgstr "The app gets its own icon on the desktop/Dock and opens without a browser."
+
+#: src/lib/invoiceScan.ts
+msgid "BAD_IMAGE: Ảnh quá lớn, hãy chụp lại gần hơn hoặc chọn ảnh nhỏ hơn."
+msgstr "BAD_IMAGE: The photo is too large. Retake it closer or choose a smaller one."
+
+#: src/lib/invoiceScan.ts
+msgid "BAD_IMAGE: Không mở được ảnh này. Hãy chọn ảnh JPG hoặc PNG."
+msgstr "BAD_IMAGE: This photo cannot be opened. Choose a JPG or PNG."
+
+#: src/lib/timesheetScan.ts
+msgid "BAD_REQUEST: Bảng có quá nhiều người để đọc một lần (tối đa {SCAN_MAX_ROWS}). Hãy lập bảng riêng cho từng tổ."
+msgstr "BAD_REQUEST: The sheet has too many people to read at once (maximum {SCAN_MAX_ROWS}). Make a separate sheet for each team."
 
 #: src/components/InstallGuide.tsx
 msgid "Bấm \"Cài đặt\" hoặc \"Thêm\"."
@@ -406,6 +1077,18 @@ msgstr "Tap \"Install\" or \"Add\"."
 msgid "Bấm \"Cài đặt\" trong hộp thoại hiện ra."
 msgstr "Click \"Install\" in the dialog that appears."
 
+#: src/components/HomeStats.tsx
+msgid "bấm để xem"
+msgstr "tap to view"
+
+#: src/components/HomeWeekly.tsx
+msgid "bấm để xem báo cáo tuần"
+msgstr "tap to view the weekly report"
+
+#: src/components/HomeStats.tsx
+msgid "bấm để xem và xác nhận"
+msgstr "tap to view and confirm"
+
 #: src/components/AttendanceList.tsx
 msgid "bấm Duyệt hoặc Từ chối"
 msgstr "press Approve or Reject"
@@ -413,6 +1096,10 @@ msgstr "press Approve or Reject"
 #: src/components/InstallGuide.tsx
 msgid "Bấm nút Chia sẻ (hình vuông có mũi tên đi lên) ở thanh dưới cùng."
 msgstr "Tap the Share button (a square with an upward arrow) on the bottom bar."
+
+#: src/screens/StockPanel.tsx
+msgid "Bấm tên vật tư để xem sổ kho (nhập, xuất, điều chỉnh và tồn sau mỗi lần)."
+msgstr "Tap a supply name to see its stock ledger (receipts, issues, adjustments and balance after each)."
 
 #: src/components/WebInboxCard.tsx
 msgid "Bấm vào đơn hoặc yêu cầu để xử lý ngay trong ứng dụng."
@@ -426,6 +1113,10 @@ msgstr "You"
 #: src/components/HarvestSection.tsx
 msgid "Bạn chỉ được xem thu hoạch (chủ cơ sở cấp quyền nhập liệu)."
 msgstr "You can only view harvests (the farm owner grants data entry permission)."
+
+#: src/components/StockTake.tsx
+msgid "Bạn chỉ xem được. Cần quyền sửa Kho để đếm và chốt."
+msgstr "View only. You need permission to edit Stock to count and close."
 
 #: src/lib/errors.ts
 msgid "Bạn chưa có quyền thực hiện thao tác này."
@@ -455,9 +1146,21 @@ msgstr "Do you still want to sign out?"
 msgid "Bạn vừa làm việc gì?"
 msgstr "What did you just do?"
 
+#: src/components/FindWebSuppliers.tsx
+msgid "Bán:"
+msgstr "Sales:"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Bảng có hơn {SCAN_MAX_ROWS} người nên chưa đọc ảnh được; hãy lập bảng riêng cho từng tổ."
+msgstr "The sheet has more than {SCAN_MAX_ROWS} people, so it cannot be read from a photo; make a separate sheet for each team."
+
 #: src/components/AttendanceSection.tsx
 msgid "Bảng công"
 msgstr "Timesheet"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Bảng đã in"
+msgstr "Printed sheets"
 
 #: src/components/AttendanceSection.tsx
 msgid "Bảng giấy"
@@ -467,10 +1170,36 @@ msgstr "Paper sheet"
 msgid "Bảng lương"
 msgstr "Payroll"
 
+#: src/lib/weekly.ts
+msgid "Bằng tuần trước"
+msgstr "Same as last week"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Bảng vừa được người khác sửa. Đã tải lại bản mới."
+msgstr "Someone else just edited this sheet. The latest version has been loaded."
+
+#: src/components/TimesheetEntry.tsx
+msgid "Bảng vừa được người khác sửa. Hãy mở lại bảng."
+msgstr "Someone else just edited this sheet. Open it again."
+
+#: src/components/StockTake.tsx
+msgid "Báo cần ghi chú khi lệch quá (%)"
+msgstr "Require a note when the difference exceeds (%)"
+
 #: src/components/HomeLinks.tsx
 #: src/lib/labels.ts
+#: src/screens/StockPanel.tsx
 msgid "Báo cáo"
 msgstr "Reports"
+
+#. placeholder {0}: weekLabel(r.week_start, r.week_end)
+#: src/lib/weekly.ts
+msgid "BÁO CÁO TUẦN {0} · {orgName}"
+msgstr "WEEKLY REPORT {0} · {orgName}"
+
+#: src/screens/StockPanel.tsx
+msgid "Báo sắp hết khi tồn ≤"
+msgstr "Low-stock alert when stock ≤"
 
 #: src/lib/absences.ts
 msgid "Báo sau"
@@ -480,6 +1209,14 @@ msgstr "Reported afterwards"
 msgid "bật chấm công"
 msgstr "turn on attendance"
 
+#: src/components/StockTake.tsx
+msgid "Bắt đầu đếm"
+msgstr "Start counting"
+
+#: src/lib/roles.ts
+msgid "Biên tập hồ sơ"
+msgstr "Edit profile"
+
 #: src/components/InstallGuide.tsx
 msgid "Biểu tượng app xuất hiện ngay ở màn hình chính điện thoại."
 msgstr "The app icon appears on your phone's home screen."
@@ -488,9 +1225,30 @@ msgstr "The app icon appears on your phone's home screen."
 msgid "Biểu tượng app xuất hiện ở màn hình chính, mở lên như một app bình thường."
 msgstr "The app icon appears on the home screen and opens like a normal app."
 
+#: src/components/InvoiceScanner.tsx
+msgid "Bỏ ảnh"
+msgstr "Remove photo"
+
+#: src/components/MilestonePanels.tsx
+msgid "Bỏ đánh dấu"
+msgstr "Unmark"
+
+#: src/components/TimesheetEntry.tsx
+#: src/components/TimesheetsSection.tsx
+msgid "Bỏ đánh dấu nhập xong"
+msgstr "Unmark as fully entered"
+
 #: src/components/HarvestSection.tsx
 msgid "Bộ lọc"
 msgstr "Filters"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Ca mặc định:"
+msgstr "Default shift:"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Ca mặc định: giờ vào"
+msgstr "Default shift: start time"
 
 #: src/components/AttendanceList.tsx
 msgid "Ca quên ra ca"
@@ -508,6 +1266,14 @@ msgstr "Shifts opened on earlier days that were never clocked out."
 msgid "Các công chờ xác nhận"
 msgstr "Entries awaiting confirmation"
 
+#: src/components/PurchaseEntry.tsx
+msgid "Các dòng vật tư đã được nhập vào kho."
+msgstr "The supply lines have been added to stock."
+
+#: src/components/TimesheetEntry.tsx
+msgid "Các ô này vẫn giữ chữ bạn gõ (tô đỏ) để sửa hoặc xóa."
+msgstr "These cells keep what you typed (highlighted red) so you can fix or delete it."
+
 #: src/screens/LogActivityScreen.tsx
 msgid "các vụ đã chọn"
 msgstr "the selected seasons"
@@ -519,6 +1285,10 @@ msgstr "How to split"
 #: src/screens/AuthScreen.tsx
 msgid "Cách đăng ký"
 msgstr "Sign-up method"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Cách ghi"
+msgstr "How to record"
 
 #: src/lib/absences.ts
 msgid "Cách khác"
@@ -533,23 +1303,73 @@ msgstr "Install app now"
 msgid "Cán bộ kỹ thuật / thú y phụ trách"
 msgstr "Technician / veterinarian in charge"
 
+#: src/components/HomeWeekly.tsx
+msgid "Cần chú ý"
+msgstr "Needs attention"
+
+#: src/components/InvoiceScanner.tsx
+#: src/lib/weekly.ts
+msgid "Cần chú ý:"
+msgstr "Needs attention:"
+
+#: src/components/StockMove.tsx
+msgid "Cần có ít nhất hai kho để chuyển. "
+msgstr "At least two warehouses are needed for a transfer."
+
+#: src/components/MilestonePanels.tsx
+msgid "Cần có mạng"
+msgstr "Connection required"
+
+#: src/components/StockReports.tsx
+msgid "Cần có mạng để xem báo cáo kho."
+msgstr "Connect to the internet to view stock reports."
+
+#: src/screens/StockPanel.tsx
+msgid "Cần có mạng để xem giao dịch."
+msgstr "Connect to the internet to view transactions."
+
+#: src/lib/production.ts
+msgid "Cần có mạng để xem nhật ký cũ hơn."
+msgstr "Connect to the internet to view older logs."
+
+#: src/screens/StockPanel.tsx
+msgid "Cần có mạng để xem sổ kho."
+msgstr "Connect to the internet to view the stock ledger."
+
 #: src/components/VoiceNote.tsx
 msgid "Cần có mạng. Giọng nói do trình duyệt của điện thoại xử lý; ứng dụng không ghi âm và không lưu lại. Điện thoại có thể kêu “tít” sau mỗi câu. Hãy đọc lại chữ trước khi bấm Lưu."
 msgstr "An internet connection is required. Your phone's browser processes the voice; the app does not record or store it. The phone may beep after each sentence. Check the text before pressing Save."
 
+#: src/components/TimesheetEntry.tsx
+msgid "Cần mạng để tải dữ liệu đã có."
+msgstr "Connect to the internet to load existing data."
+
 #: src/components/AbsencesSection.tsx
+#: src/components/TimesheetsSection.tsx
 msgid "Cần mạng để xem."
 msgstr "Connect to the internet to view."
+
+#: src/components/HomeStats.tsx
+msgid "cần xem lại"
+msgstr "needs review"
 
 #: src/components/AttendanceSection.tsx
 #: src/lib/labels.ts
 msgid "Cần xử lý"
 msgstr "Needs attention"
 
+#: src/components/HomeStats.tsx
+msgid "Cảnh báo kho"
+msgstr "Stock alerts"
+
 #: src/components/HomeLinks.tsx
 #: src/lib/labels.ts
 msgid "Cấu hình"
 msgstr "Settings"
+
+#: src/lib/kindStyle.ts
+msgid "Cây trồng"
+msgstr "Crops"
 
 #: src/components/HomeLinks.tsx
 msgid "Chấm công"
@@ -567,6 +1387,14 @@ msgstr "record attendance for others"
 msgid "Chăm sóc cây"
 msgstr "Plant care"
 
+#: src/screens/StockPanel.tsx
+msgid "Chế độ xem kho"
+msgstr "Stock view mode"
+
+#: src/lib/countLogic.ts
+msgid "Chết"
+msgstr "Dead"
+
 #: src/components/AbsenceSummary.tsx
 msgid "Chỉ chủ cơ sở đổi số ngày phép năm."
 msgstr "Only the farm owner can change the number of annual leave days."
@@ -574,6 +1402,18 @@ msgstr "Only the farm owner can change the number of annual leave days."
 #: src/components/AttendanceList.tsx
 msgid "Chỉ công đã xác nhận mới được tính tiền. Công từ máy chấm công nằm ở trạng thái Chờ xác nhận cho tới khi bạn xác nhận."
 msgstr "Only confirmed attendance is paid. Kiosk entries stay \"Awaiting confirmation\" until you confirm them."
+
+#: src/screens/StockPanel.tsx
+msgid "Chỉ hiện 200 giao dịch gần nhất; thu hẹp bộ lọc để xem cũ hơn."
+msgstr "Only the 200 most recent transactions are shown; narrow the filter to see older ones."
+
+#: src/screens/StockPanel.tsx
+msgid "Chỉ hiện 500 giao dịch gần nhất."
+msgstr "Only the 500 most recent transactions are shown."
+
+#: src/components/StockTake.tsx
+msgid "Chỉ hiện dòng chưa đếm"
+msgstr "Show uncounted lines only"
 
 #: src/components/LossAlerts.tsx
 msgid "Chỉ là nhắc. Hãy kiểm tra chuồng/ao, nước, thức ăn và hỏi cán bộ thú y/kỹ thuật nếu cần. Đổi ngưỡng ở chi tiết vụ → Số cây/con và hao hụt."
@@ -583,17 +1423,68 @@ msgstr "This is only a reminder. Check the pen/pond, water and feed, and ask a v
 msgid "Chỉ nghỉ nửa ngày"
 msgstr "Half day only"
 
+#: src/lib/permissions.ts
+#: src/lib/weekly.ts
+msgid "Chi phí"
+msgstr "Expenses"
+
+#: src/lib/cycleStatsLogic.ts
+msgid "Chi phí có phần ước tính hoặc tiền công chưa chốt."
+msgstr "Costs include estimates or unfinalized wages."
+
+#: src/components/HomeStats.tsx
+msgid "Chi phí đã ghi tháng này"
+msgstr "Expenses recorded this month"
+
+#: src/components/HomeWeekly.tsx
+msgid "Chi phí tuần"
+msgstr "Weekly expenses"
+
 #: src/components/SyncBadge.tsx
 msgid "Chi tiết kỹ thuật (gửi cho người hỗ trợ)"
 msgstr "Technical details (send to support)"
+
+#. placeholder {0}: formatQty(max)
+#. placeholder {1}: unitOf(mat)
+#: src/components/StockMove.tsx
+msgid "Chỉ trả được tối đa {0} {1} (đã xuất cho vụ trừ đã trả)."
+msgstr "You can return at most {0} {1} (issued to the season minus returned)."
+
+#: src/lib/permissions.ts
+msgid "Chỉ xem"
+msgstr "View only"
+
+#: src/components/StockMove.tsx
+msgid "Chia cho các vụ (không chọn vụ nào thì không tính vào vụ)"
+msgstr "Split across seasons (if none is selected, it is not charged to any season)"
+
+#: src/components/StockMove.tsx
+msgid "Chia đều (có vụ chưa có diện tích)"
+msgstr "Split equally (some seasons have no area)"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Chia đều cho các vụ"
 msgstr "Split equally between seasons"
 
+#: src/lib/production.ts
+msgid "chia phân khu thành nhà màng"
+msgstr "split a zone into greenhouses"
+
+#: src/components/StockMove.tsx
+msgid "Chia theo diện tích"
+msgstr "Split by area"
+
+#: src/components/CustomersSection.tsx
+msgid "Chỉnh sửa"
+msgstr "Edit"
+
 #: src/lib/labels.ts
 msgid "Cho ăn, bón phân, tưới"
 msgstr "Feeding, fertilizing, irrigation"
+
+#: src/components/HomeStats.tsx
+msgid "chờ duyệt"
+msgstr "awaiting approval"
 
 #: src/lib/work.ts
 msgid "Chờ duyệt"
@@ -611,6 +1502,10 @@ msgstr "Awaiting manager approval"
 msgid "Chờ vài giây, bảng \"Thêm vào Màn hình chính\" sẽ tự hiện, bấm vào đó. Nếu không thấy, bấm menu 3 chấm ở góc trên rồi chọn \"Cài đặt ứng dụng\"."
 msgstr "Wait a few seconds for the \"Add to Home screen\" banner and tap it. If it does not appear, tap the three-dot menu at the top and choose \"Install app\"."
 
+#: src/components/TimesheetEntry.tsx
+msgid "chờ xác nhận"
+msgstr "awaiting confirmation"
+
 #: src/components/AttendanceList.tsx
 #: src/components/AttendanceSection.tsx
 #: src/lib/work.ts
@@ -619,14 +1514,39 @@ msgstr "Wait a few seconds for the \"Add to Home screen\" banner and tap it. If 
 msgid "Chờ xác nhận"
 msgstr "Awaiting confirmation"
 
+#: src/components/HomeStats.tsx
+msgid "Chờ xác nhận chấm công"
+msgstr "Attendance awaiting confirmation"
+
+#: src/components/ImagePicker.tsx
+msgid "Chọn / chụp ảnh"
+msgstr "Choose / take photo"
+
 #: src/screens/AuthScreen.tsx
 msgid "Chọn chức năng"
 msgstr "Choose an action"
+
+#: src/components/StockTake.tsx
+msgid "Chọn kho…"
+msgstr "Select warehouse…"
+
+#: src/lib/fieldsLogic.ts
+msgid "Chọn một trong danh sách"
+msgstr "Choose one from a list"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Chọn ngày bắt đầu và kết thúc."
+msgstr "Select start and end dates."
+
+#: src/lib/fieldsLogic.ts
+msgid "Chọn nhiều trong danh sách"
+msgstr "Choose several from a list"
 
 #: src/components/InstallGuide.tsx
 msgid "Chọn nơi cài"
 msgstr "Choose where to install"
 
+#: src/components/AreaFilter.tsx
 #: src/components/AreaPick.tsx
 #: src/components/AreaPick.tsx
 #: src/components/AttendanceSection.tsx
@@ -637,6 +1557,10 @@ msgstr "Select a zone"
 #: src/screens/LogsScreen.tsx
 msgid "Chọn phân khu (hoặc Tất cả phân khu) để xem nhật ký."
 msgstr "Select a zone (or All zones) to view the logbook."
+
+#: src/components/CycleProgressList.tsx
+msgid "Chọn phân khu (hoặc Tất cả phân khu) để xem tiến độ."
+msgstr "Select a zone (or All zones) to view progress."
 
 #: src/components/HarvestSection.tsx
 msgid "Chọn phân khu (hoặc Tất cả phân khu) ở Bộ lọc để xem danh sách thu hoạch."
@@ -662,6 +1586,26 @@ msgstr "Select all seasons in this plot"
 msgid "chọn tổ trưởng ở Khai báo → Phòng / Tổ"
 msgstr "choose a team leader in Setup → Departments / Teams"
 
+#: src/components/StockTake.tsx
+msgid "Chọn vật tư…"
+msgstr "Select supply…"
+
+#: src/components/StockTake.tsx
+msgid "Chốt kiểm kho"
+msgstr "Close stocktake"
+
+#: src/components/StockTake.tsx
+msgid "Chốt kiểm kho? Các dòng lệch sẽ được ghi thành giao dịch \"Điều chỉnh\" và không sửa lại được. Dòng chưa đếm giữ nguyên."
+msgstr "Close the stocktake? Differences are recorded as \"Adjustment\" transactions and cannot be changed. Uncounted lines stay as they are."
+
+#: src/lib/fieldsLogic.ts
+msgid "Chữ"
+msgstr "Text"
+
+#: src/lib/roles.ts
+msgid "Chủ cơ sở"
+msgstr "Farm owner"
+
 #: src/screens/AuthScreen.tsx
 msgid "Chủ Hộ/HTX đăng ký bằng email. Hãy nhập email của bạn."
 msgstr "Household and cooperative owners sign up with email. Please enter your email."
@@ -671,8 +1615,29 @@ msgid "Chưa chọn phân khu · "
 msgstr "No zone selected ·"
 
 #: src/components/CatalogPick.tsx
+#: src/components/MilestonePanels.tsx
 msgid "chưa có"
 msgstr "none yet"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Chưa có bảng nào."
+msgstr "No sheets yet."
+
+#: src/lib/cycleStatsLogic.ts
+msgid "Chưa có doanh thu (chưa bán)"
+msgstr "No revenue yet (nothing sold)"
+
+#: src/components/StockTake.tsx
+msgid "Chưa có đợt kiểm kho nào."
+msgstr "No stocktakes yet."
+
+#: src/screens/StockPanel.tsx
+msgid "Chưa có giao dịch nào."
+msgstr "No transactions yet."
+
+#: src/components/CustomersSection.tsx
+msgid "Chưa có khách hàng nào. Thêm nơi bạn hay bán nông sản để ghi lần bán và theo dõi công nợ."
+msgstr "No customers yet. Add the places you usually sell produce to, to record sales and track debts."
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Chưa có kho để trừ vật tư. Hãy nhờ chủ cơ sở thêm kho ở mục \"Vật tư & chi phí\"."
@@ -682,13 +1647,50 @@ msgstr "No warehouse to deduct supplies from. Ask the farm owner to add one unde
 msgid "Chưa có kho nào nên chưa trừ được vật tư."
 msgstr "There is no warehouse yet, so supplies cannot be deducted."
 
+#: src/components/PurchaseEntry.tsx
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+msgid "Chưa có kho nào. "
+msgstr "No warehouse yet."
+
+#: src/lib/milestoneLogic.ts
+msgid "Chưa có ngày"
+msgstr "No date"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Chưa có người làm nào để lập bảng."
+msgstr "No workers to make a sheet for."
+
+#: src/components/PartnersSection.tsx
+msgid "Chưa có nhà cung ứng nào. Thêm nơi bạn hay mua vật tư để ghi hóa đơn và theo dõi công nợ."
+msgstr "No suppliers yet. Add the places you usually buy supplies from, to record invoices and track debts."
+
+#: src/components/TimesheetEntry.tsx
+msgid "Chưa có ô nào để lưu. Gõ ký hiệu vào các ô rồi bấm Lưu."
+msgstr "No cells to save. Type symbols into the cells, then press Save."
+
 #: src/components/HarvestSection.tsx
 msgid "Chưa có phiếu thu hoạch nào."
 msgstr "No harvest records yet."
 
+#: src/components/CustomersSection.tsx
+msgid "Chưa có sản phẩm nào trong danh mục. Thêm ở Khai báo → Sản phẩm, hoặc bấm ＋ Thêm khác."
+msgstr "No products in the catalog yet. Add them in Setup → Products, or press ＋ Add other."
+
 #: src/components/AttendanceSection.tsx
 msgid "Chưa có tổ trưởng"
 msgstr "No team leader yet"
+
+#: src/components/StockReports.tsx
+msgid "Chưa có vật tư nào xuất cho vụ trong kỳ."
+msgstr "No supplies were issued to seasons in this period."
+
+#: src/components/PurchaseEntry.tsx
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+msgid "Chưa có vật tư nào. "
+msgstr "No supplies yet."
 
 #: src/components/CatalogPick.tsx
 msgid "Chưa có vật tư nhóm Thức ăn. Thêm ở Khai báo → Vật tư để chọn nhanh lần sau, hoặc chọn 'Khác (gõ tên)'."
@@ -702,10 +1704,31 @@ msgstr "The supply list is empty. Ask the farm owner or the person in charge of 
 msgid "Chưa có vật tư trong danh mục. Thêm ở Khai báo → Vật tư, hoặc chọn 'Khác (gõ tên)'."
 msgstr "The supply list is empty. Add items in Setup → Supplies, or choose 'Other (type name)'."
 
+#: src/screens/StockPanel.tsx
+msgid "Chưa có vật tư. Hãy nhờ chủ cơ sở hoặc người phụ trách Kho & chi phí thêm vật tư."
+msgstr "No supplies yet. Ask the farm owner or the person in charge of Stock & expenses to add them."
+
+#: src/screens/StockPanel.tsx
+msgid "Chưa có vật tư. Vào Khai báo → Vật tư và Kho để thêm (cần có mạng)."
+msgstr "No supplies yet. Go to Setup → Supplies and Warehouses to add them (connection required)."
+
+#: src/components/CycleProgressList.tsx
+msgid "Chưa có việc."
+msgstr "No tasks yet."
+
 #: src/App.tsx
 #: src/components/Drawer.tsx
 msgid "Chưa có vụ đang sản xuất để ghi việc"
 msgstr "No active season to log work for"
+
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+msgid "Chưa có vụ nào"
+msgstr "No seasons yet"
+
+#: src/components/StockMove.tsx
+msgid "Chưa có vụ nào đang chạy để xuất vật tư. Chọn lý do khác hoặc tạo vụ trước."
+msgstr "No running season to issue supplies to. Choose another reason or create a season first."
 
 #: src/screens/HomeTab.tsx
 #: src/screens/LogActivityScreen.tsx
@@ -716,17 +1739,66 @@ msgstr "There is no active season, so work cannot be logged yet."
 msgid "Chưa có vụ nào. Hãy tạo vụ ở màn hình Sản xuất trước."
 msgstr "There is no season yet. Create one on the Production screen first."
 
+#: src/lib/milestoneLogic.ts
+msgid "Chưa đến"
+msgstr "Not yet due"
+
+#: src/lib/cycleStatsLogic.ts
+msgid "Chưa ghi doanh thu."
+msgstr "No revenue recorded."
+
+#: src/screens/StockPanel.tsx
+msgid "chưa ghi giá"
+msgstr "no price recorded"
+
+#: src/lib/cycleStatsLogic.ts
+msgid "Chưa ghi thu hoạch nên chưa tính được giá thành mỗi kg."
+msgstr "No harvest recorded yet, so the cost per kg cannot be calculated."
+
 #: src/screens/HomeTab.tsx
 msgid "chưa giao ai"
 msgstr "not assigned"
+
+#: src/lib/production.ts
+msgid "Chưa gửi hết phần chờ"
+msgstr "Pending items not fully sent"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "chưa khai diện tích"
 msgstr "area not set"
 
+#: src/lib/cycles.ts
+msgid "Chưa làm"
+msgstr "Not done"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Chưa lưu gì cả. Bước tiếp theo bạn xem lại phiếu nhập kho rồi mới bấm Lưu."
+msgstr "Nothing has been saved yet. Next, review the goods receipt, then press Save."
+
+#: src/components/TimesheetsSection.tsx
+msgid "Chưa nhập"
+msgstr "Not entered"
+
 #: src/components/LogWorkPicker.tsx
 msgid "Chưa tải được danh sách loại việc. Hãy kết nối mạng một lần để tải về."
 msgstr "The work type list has not been downloaded. Connect to the internet once to download it."
+
+#: src/components/CustomersSection.tsx
+#: src/components/PartnersSection.tsx
+msgid "Chưa tải được vì đang offline."
+msgstr "Not loaded because you are offline."
+
+#: src/components/CustomerOrders.tsx
+msgid "Chưa thu lần nào."
+msgstr "No payment received yet."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Chưa trả (nợ)"
+msgstr "Unpaid (owing)"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Chưa vào tổ"
+msgstr "Not in a team"
 
 #: src/components/CycleSelect.tsx
 #: src/lib/labels.ts
@@ -737,6 +1809,22 @@ msgstr "Preparing"
 msgid "Chuẩn bị & gieo trồng / thả giống"
 msgstr "Preparation & sowing / stocking"
 
+#: src/lib/prep.ts
+msgid "Chuẩn bị ở một nơi khác (vườn ươm, nhà sơ chế, ô khác…). Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được."
+msgstr "Prepare somewhere else (nursery, processing house, another plot…). The season stays \"Preparing\" but preparation work can be logged."
+
+#: src/lib/prep.ts
+msgid "Chuẩn bị trong 1 phần ô sản xuất"
+msgstr "Prepare in part of the production plot"
+
+#: src/lib/prep.ts
+msgid "Chuẩn bị trong khu riêng"
+msgstr "Prepare in a separate area"
+
+#: src/lib/prep.ts
+msgid "Chuẩn bị trong toàn diện tích của vụ"
+msgstr "Prepare across the season's whole area"
+
 #: src/components/Drawer.tsx
 msgid "Chức năng chính"
 msgstr "Main functions"
@@ -745,17 +1833,92 @@ msgstr "Main functions"
 msgid "Chức năng khác"
 msgstr "Other functions"
 
+#: src/lib/areas.ts
+msgid "Chuồng"
+msgstr "Pen"
+
+#: src/lib/assets.ts
+msgid "Chuồng trại"
+msgstr "Livestock housing"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Chụp bảng đã ghi (1–{MAX_PHOTOS} ảnh, chụp thẳng, đủ sáng, thấy cả tên và các cột ngày). Ứng dụng điền sẵn vào các ô còn trống; ô AI không chắc tô vàng. Ảnh không được lưu; bạn phải xem lại rồi bấm Lưu."
+msgstr "Photograph the filled sheet (1–{MAX_PHOTOS} photos, straight, well lit, showing all names and date columns). The app fills the empty cells; cells the AI is unsure of are yellow. Photos are not stored; you must review and press Save."
+
+#: src/components/InvoiceScanner.tsx
+msgid "Chụp hoặc chọn ảnh <0>hóa đơn / phiếu giao hàng</0> (tối đa {MAX_PHOTOS} ảnh; nhiều trang thì chụp từng trang). App đọc và <1>điền sẵn</1> vào phiếu nhập kho, bạn kiểm tra lại rồi mới lưu."
+msgstr "Take or choose photos of the <0>invoice / delivery note</0> (up to {MAX_PHOTOS}; one per page). The app reads them and <1>prefills</1> the goods receipt; check it before saving."
+
+#: src/components/InvoiceScanner.tsx
+msgid "Chụp lại"
+msgstr "Retake"
+
 #: src/components/Drawer.tsx
 msgid "Chuyển cơ sở"
 msgstr "Switch farm"
 
+#: src/lib/inventory.ts
+msgid "chuyển kho"
+msgstr "transfer stock"
+
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/screens/StockPanel.tsx
+msgid "Chuyển kho"
+msgstr "Transfer stock"
+
+#: src/screens/StockPanel.tsx
+msgid "Chuyển kho (đi)"
+msgstr "Transfer (out)"
+
+#: src/screens/StockPanel.tsx
+msgid "Chuyển kho (nhận)"
+msgstr "Transfer (in)"
+
+#: src/components/CustomerOrders.tsx
+msgid "chuyển khoản"
+msgstr "bank transfer"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Chuyển khoản"
+msgstr "Bank transfer"
+
+#: src/lib/countLogic.ts
+msgid "Chuyển nhóm"
+msgstr "Move group"
+
+#: src/components/StockMove.tsx
+msgid "Chuyển vật tư từ kho này sang kho khác trong cơ sở. Tổng tồn không đổi; lô và hạn dùng đi theo vật tư."
+msgstr "Move supplies from one warehouse to another within the farm. Total stock is unchanged; lots and expiry dates move with the supplies."
+
+#: src/lib/production.ts
+msgid "chuyển việc của vụ"
+msgstr "move season tasks"
+
 #: src/components/DynamicField.tsx
+#: src/lib/fieldsLogic.ts
 msgid "Có"
 msgstr "Yes"
+
+#: src/lib/fieldsLogic.ts
+msgid "Có / Không"
+msgstr "Yes / No"
 
 #: src/components/AttendanceList.tsx
 msgid "Có ảnh cờ đỏ"
 msgstr "Has red-flag photos"
+
+#: src/components/HomeStats.tsx
+msgid "cờ đỏ 7 ngày qua"
+msgstr "red flags in the last 7 days"
+
+#: src/lib/partners.ts
+msgid "Có dòng chưa chọn vật tư."
+msgstr "Some lines have no supply selected."
+
+#: src/screens/StockPanel.tsx
+msgid "Có giao dịch kho chưa gửi lên máy chủ; số tồn dưới đây đã tính cả các giao dịch này."
+msgstr "Some stock transactions have not been sent to the server; the balances below already include them."
 
 #. placeholder {0}: msg.slice(0, 160)
 #: src/lib/errors.ts
@@ -771,9 +1934,17 @@ msgstr "Something went wrong. Try again; if it persists, contact support."
 msgid "Có mạng"
 msgstr "Online"
 
+#: src/components/TimesheetEntry.tsx
+msgid "Có một hàng không ghép được vào bảng (STT"
+msgstr "One row could not be matched to the sheet (No."
+
 #: src/components/AttendanceList.tsx
 msgid "Có ngoại lệ / ảnh cờ đỏ"
 msgstr "Has exceptions / red-flag photos"
+
+#: src/components/StockTake.tsx
+msgid "Cơ sở dữ liệu chưa được cập nhật lên bản có Kiểm kho. Hãy nhờ người cài đặt chạy \"npx supabase db push\"."
+msgstr "The database has not been updated to the version with Stocktake. Ask your installer to run \"npx supabase db push\"."
 
 #: src/lib/errors.ts
 msgid "Cơ sở dữ liệu chưa được cập nhật lên bản mới nhất. Hãy nhờ người cài đặt chạy \"npx supabase db push\" rồi tải lại app."
@@ -795,6 +1966,14 @@ msgstr "With this number the app calculates the average weight per {unitName}; f
 msgid "cơ sở vật chất"
 msgstr "facility"
 
+#: src/lib/hr.ts
+msgid "Có thời hạn"
+msgstr "Fixed term"
+
+#: src/lib/cycleStatsLogic.ts
+msgid "Có vật tư đã dùng chưa có giá nên chi phí có thể thấp hơn thực tế."
+msgstr "Some used supplies have no price, so costs may be lower than actual."
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Có vụ chưa khai diện tích nên sẽ chia đều. Khai diện tích ở Sửa vụ để chia theo diện tích."
 msgstr "Some seasons have no area set, so the quantity will be split equally. Set the area in Edit season to split by area."
@@ -812,12 +1991,52 @@ msgid "Có xin phép trước"
 msgstr "Requested in advance"
 
 #: src/components/ExpiringLots.tsx
+#: src/components/InvoiceScanner.tsx
 msgid "Còn"
 msgstr "In"
+
+#. placeholder {0}: usage.remaining
+#. placeholder {1}: usage.limit
+#: src/components/TimesheetEntry.tsx
+msgid "Còn {0}/{1} lượt đọc ảnh tháng này (mỗi lần đọc tính một lượt, dùng chung với đọc hóa đơn)."
+msgstr "{0}/{1} photo reads left this month (each read counts once, shared with invoice reading)."
+
+#: src/components/TimesheetEntry.tsx
+msgid "Còn {filled} ô gõ chưa lưu. Thoát thì các ô này sẽ mất. Thoát không?"
+msgstr "{filled} typed cells are not saved. If you leave, they will be lost. Leave?"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Còn {invalid} ô sai ký hiệu (tô đỏ). Hãy sửa rồi lưu."
+msgstr "{invalid} cells have invalid symbols (red). Fix them, then save."
+
+#: src/lib/partners.ts
+#: src/lib/partners.ts
+msgid "Còn hạn"
+msgstr "Not expired"
 
 #: src/components/HarvestSection.tsx
 msgid "Còn lại sau hao hụt"
 msgstr "Remaining after losses"
+
+#: src/components/CustomerOrders.tsx
+#: src/components/PurchaseEntry.tsx
+msgid "Còn nợ"
+msgstr "Owing"
+
+#. placeholder {0}: formatMoney(r.remaining)
+#. placeholder {1}: r.due_date ? tx` (hạn ${fmtDate(r.due_date)})` : ''
+#: src/components/CustomerOrders.tsx
+msgid "còn nợ {0}{1}"
+msgstr "still owing {0}{1}"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Còn nợ mà chưa nhập hạn: app sẽ không nhắc quá hạn cho hóa đơn này."
+msgstr "There is an unpaid balance but no due date: the app will not remind you when this invoice is overdue."
+
+#. placeholder {0}: formatMoney(owed)
+#: src/components/PurchaseEntry.tsx
+msgid "Còn nợ nhà cung ứng: {0}"
+msgstr "Owed to suppliers: {0}"
 
 #. placeholder {0}: a.worker_name
 #. placeholder {1}: fmtDate(a.work_date)
@@ -845,14 +2064,87 @@ msgstr "Closed shifts will await confirmation."
 msgid "Công đóng xong sẽ được xác nhận luôn."
 msgstr "Closed shifts will be confirmed immediately."
 
+#: src/components/HomeStats.tsx
+msgid "của cả cơ sở"
+msgstr "whole farm"
+
 #: src/components/AttendanceList.tsx
 msgid "của chính ngày làm đó. Ca vào muộn hơn giờ này sẽ được giữ lại để bạn đóng riêng từng ca."
 msgstr "on that same work day. Shifts that started later than this time are kept so you can close them one by one."
+
+#: src/components/HomeStats.tsx
+msgid "Của cơ sở"
+msgstr "Farm's own"
+
+#: src/components/CustomersSection.tsx
+msgid "Cũng là nhà cung ứng"
+msgstr "Also a supplier"
+
+#: src/components/StockReports.tsx
+msgid "Cuối kỳ"
+msgstr "Closing"
+
+#: src/components/CycleProgressList.tsx
+msgid "đ"
+msgstr "VND"
+
+#. placeholder {0}: Math.round(s.sold).toLocaleString(dateLocale())
+#. placeholder {1}: Math.round(s.harvest_net).toLocaleString(dateLocale())
+#: src/lib/cycleStatsLogic.ts
+msgid "Đã bán {0} kg nhiều hơn thu hoạch sau hao hụt {1} kg: hãy kiểm tra số thu hoạch hoặc số bán."
+msgstr "{0} kg sold exceeds the harvest after losses of {1} kg: check the harvest or sales figures."
+
+#: src/components/TimesheetEntry.tsx
+msgid "Đã bỏ đánh dấu nhập xong."
+msgstr "Unmarked as fully entered."
 
 #: src/components/HarvestSection.tsx
 #: src/screens/LogsScreen.tsx
 msgid "Đã chỉnh sửa"
 msgstr "Edited"
+
+#. placeholder {0}: shortMoney(row.net_locked)
+#: src/components/HomePay.tsx
+msgid "đã chốt {0} · còn lại là ước tính"
+msgstr "{0} closed · the rest is estimated"
+
+#: src/components/StockTake.tsx
+msgid "Đã chốt kiểm kho. Số tồn đã khớp số đếm."
+msgstr "Stocktake closed. Stock now matches the count."
+
+#: src/components/StockMove.tsx
+msgid "Đã chuyển kho và lưu lên máy chủ."
+msgstr "Stock transferred and saved to the server."
+
+#. placeholder {0}: hoursText(wk.minutes)
+#. placeholder {1}: STATUS_TEXT[wk.status] ?? wk.status
+#. placeholder {2}: wk.mine ? tx` từ bảng này` : ''
+#: src/components/TimesheetEntry.tsx
+msgid "Đã có công {0} giờ ({1}){2}"
+msgstr "Already has {0} h of attendance ({1}){2}"
+
+#. placeholder {0}: ab?.mine ? tx` từ bảng này` : ''
+#: src/components/TimesheetEntry.tsx
+msgid "Đã có ghi nghỉ{0}"
+msgstr "Already has an absence record{0}"
+
+#: src/components/FindWebSuppliers.tsx
+msgid "Đã có trong nhà cung ứng"
+msgstr "Already in suppliers"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Đã đánh dấu bảng nhập xong."
+msgstr "Sheet marked as fully entered."
+
+#. placeholder {0}: lines.length
+#. placeholder {1}: head.tolerance_pct
+#: src/components/StockTake.tsx
+msgid "Đã đếm {countedNow}/{0} dòng. Dòng để trống là chưa đếm và sẽ không bị điều chỉnh. Lệch quá {1}% cần ghi chú lý do."
+msgstr "Counted {countedNow}/{0} lines. Blank lines are uncounted and will not be adjusted. Differences over {1}% need a note."
+
+#: src/components/TimesheetEntry.tsx
+msgid "Đã điền {filledN} ô từ ảnh. Hãy xem lại toàn bộ rồi bấm Lưu: ảnh chưa được lưu gì."
+msgstr "Filled {filledN} cells from the photo. Review everything, then press Save: nothing has been saved from the photo."
 
 #: src/screens/AuthScreen.tsx
 msgid "Đã đổi mật khẩu."
@@ -868,6 +2160,11 @@ msgstr "Closed {0} shifts{1}"
 msgid "Đã đồng bộ"
 msgstr "Synced"
 
+#: src/components/CustomersSection.tsx
+#: src/components/PartnersSection.tsx
+msgid "Đã dừng"
+msgstr "Stopped"
+
 #: src/lib/errors.ts
 msgid "Đã dùng hết số vụ của gói (vụ đang sản xuất và vụ đang tạm dừng đều được tính). Hãy kết thúc hoặc hủy một vụ, nâng gói, hoặc lưu vụ mới ở trạng thái \"Chưa bắt đầu\"."
 msgstr "All the seasons in your plan are used (active and paused seasons both count). End or cancel a season, upgrade the plan, or save the new season as \"Not started\"."
@@ -876,6 +2173,12 @@ msgstr "All the seasons in your plan are used (active and paused seasons both co
 msgid "Đã duyệt"
 msgstr "Approved"
 
+#: src/components/InvoiceScanner.tsx
+msgid "Đã ghép với \"{supplierName}\" ({partnerHow})."
+msgstr "Matched with \"{supplierName}\" ({partnerHow})."
+
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Đã ghi"
 msgstr "Logged"
@@ -902,6 +2205,7 @@ msgstr "expired or expiring soon ({expired} expired)"
 
 #: src/components/AbsencesSection.tsx
 #: src/components/HarvestSection.tsx
+#: src/components/StockTake.tsx
 #: src/lib/labels.ts
 #: src/screens/LogsScreen.tsx
 msgid "Đã hủy"
@@ -919,12 +2223,35 @@ msgstr "Ended"
 msgid "Đã khóa"
 msgstr "Locked"
 
+#: src/lib/milestoneLogic.ts
+msgid "Đã làm"
+msgstr "Done"
+
+#: src/components/MilestonePanels.tsx
+msgid "Đã làm xong"
+msgstr "Completed"
+
+#. placeholder {0}: r.saved
+#. placeholder {1}: r.unchanged ? tx`, ${r.unchanged} ô đã có từ trước` : ''
+#. placeholder {2}: r.skipped.length ? tx`. ${r.skipped.length} ô chưa lưu được (xem bên dưới)` : ''
+#: src/components/TimesheetEntry.tsx
+msgid "Đã lưu {0} ô{1}{2}."
+msgstr "Saved {0} cells{1}{2}."
+
 #. placeholder {0}: date.split('-').reverse().join('/')
 #. placeholder {1}: hhmm(s.toISOString())
 #. placeholder {2}: hhmm(t.toISOString())
 #: src/components/AttendanceSection.tsx
 msgid "Đã lưu công cho {who} (đang ở trạng thái Chờ xác nhận): {0} {1}–{2}."
 msgstr "Attendance saved for {who} (status: Awaiting confirmation): {0} {1}–{2}."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Đã lưu hóa đơn mua"
+msgstr "Purchase invoice saved"
+
+#: src/components/StockEntry.tsx
+msgid "Đã lưu lên máy chủ."
+msgstr "Saved to the server."
 
 #: src/components/AbsenceSummary.tsx
 msgid "Đã lưu số ngày phép năm."
@@ -938,6 +2265,31 @@ msgstr "Changes saved."
 msgid "Đã lưu trên thiết bị — chưa đồng bộ"
 msgstr "Saved on this device — not synced yet"
 
+#: src/components/CustomerOrders.tsx
+msgid "Đã mua"
+msgstr "Purchased"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Đã nhập"
+msgstr "Received"
+
+#: src/components/PurchaseEntry.tsx
+#: src/components/StockEntry.tsx
+msgid "Đã nhập hạn dùng thì cần nhập cả số lô."
+msgstr "If you enter an expiry date you must also enter a lot number."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Đã nhập kho"
+msgstr "Added to stock"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Đã nhập xong"
+msgstr "Fully entered"
+
+#: src/components/PartnersSection.tsx
+msgid "Đã nối với nhà cung ứng trùng tên có sẵn. Bổ sung ghi chú rồi lưu."
+msgstr "Linked to the existing supplier with the same name. Add notes, then save."
+
 #: src/components/AttendanceSection.tsx
 msgid "đã ra ca ("
 msgstr "clocked out ("
@@ -946,15 +2298,72 @@ msgstr "clocked out ("
 msgid "Đã rà soát"
 msgstr "Reviewed"
 
+#: src/components/ShowMore.tsx
+msgid "Đã tải hết các khoản cũ."
+msgstr "All older items are loaded."
+
 #: src/screens/LogsScreen.tsx
 msgid "Đã tải hết nhật ký."
 msgstr "All log entries are loaded."
+
+#: src/components/PartnersSection.tsx
+msgid "Đã thêm. Bổ sung ghi chú rồi lưu."
+msgstr "Added. Add notes, then save."
+
+#: src/components/CustomerOrders.tsx
+#: src/components/CustomerOrders.tsx
+msgid "Đã thu"
+msgstr "Collected"
+
+#: src/components/CustomerOrders.tsx
+msgid "đã thu đủ"
+msgstr "fully collected"
+
+#: src/lib/partners.ts
+msgid "Đã thu đủ"
+msgstr "Fully collected"
+
+#: src/lib/weekly.ts
+msgid "Đã thu nợ"
+msgstr "Debt collected"
+
+#: src/components/MilestonePanels.tsx
+msgid "Đã tiêm"
+msgstr "Vaccinated"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Đã trả (đ)"
+msgstr "Paid (VND)"
+
+#: src/lib/partners.ts
+msgid "Đã trả đủ"
+msgstr "Fully paid"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Đã trả đủ, không còn nợ."
+msgstr "Paid in full, no debt."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Đã trả đủ."
+msgstr "Paid in full."
+
+#: src/lib/weekly.ts
+msgid "Đã trả nợ"
+msgstr "Debt paid"
+
+#: src/components/StockMove.tsx
+msgid "Đã trả vật tư về kho và trừ khỏi giá vốn của vụ."
+msgstr "Supplies returned to stock and deducted from the season's cost."
 
 #: src/components/AttendanceList.tsx
 #: src/lib/work.ts
 #: src/lib/work.ts
 msgid "Đã từ chối"
 msgstr "Rejected"
+
+#: src/components/TimesheetEntry.tsx
+msgid "đã xác nhận"
+msgstr "confirmed"
 
 #: src/components/AttendanceList.tsx
 #: src/lib/work.ts
@@ -968,13 +2377,55 @@ msgstr "Confirmed"
 msgid "Đã xác nhận {0} công{1}."
 msgstr "Confirmed {0} entries{1}."
 
+#: src/components/HomeStats.tsx
+msgid "đã xong"
+msgstr "done"
+
+#: src/lib/cycles.ts
+msgid "Đã xong"
+msgstr "Done"
+
+#. placeholder {0}: s.heads_out ?? 0
+#. placeholder {1}: s.heads_left ?? 0
+#: src/lib/cycleStatsLogic.ts
+msgid "Đã xuất {0} con, còn {1} con: lãi/lỗ và giá thành/kg tính khi xuất hết"
+msgstr "{0} sold, {1} remaining: profit/loss and cost/kg are calculated when all are sold"
+
+#: src/components/StockMove.tsx
+msgid "Đã xuất kho và lưu lên máy chủ."
+msgstr "Supplies issued and saved to the server."
+
+#: src/components/StockTake.tsx
+msgid "Đang đếm"
+msgstr "Counting"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Đang đọc ảnh…"
+msgstr "Reading photos…"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Đang đọc phiếu… khoảng 10–30 giây, vui lòng đợi."
+msgstr "Reading the receipt… about 10–30 seconds, please wait."
+
+#: src/components/InvoiceScanner.tsx
+msgid "Đang đọc…"
+msgstr "Reading…"
+
 #: src/lib/labels.ts
 msgid "Đang đồng bộ"
 msgstr "Syncing"
 
+#: src/components/InvoiceScanner.tsx
+msgid "Đang dùng thử: "
+msgstr "In trial:"
+
 #: src/components/CatalogPick.tsx
 msgid "Đang ghi, chưa có trong danh sách (bấm để bỏ)"
 msgstr "Being entered, not yet in the list (tap to remove)"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Đang gõ"
+msgstr "Typing"
 
 #: src/components/PhoneSignupForm.tsx
 msgid "Đang gửi…"
@@ -985,10 +2436,14 @@ msgid "Đăng ký cần có mạng."
 msgstr "You need to be online to sign up."
 
 #: src/components/TodayPlan.tsx
+#: src/lib/cycles.ts
 msgid "Đang làm"
 msgstr "Working"
 
 #: src/components/AbsencesSection.tsx
+#: src/components/PurchaseEntry.tsx
+#: src/components/TimesheetEntry.tsx
+#: src/components/TimesheetsSection.tsx
 msgid "Đang lưu…"
 msgstr "Saving…"
 
@@ -1006,9 +2461,29 @@ msgstr "Offline (no connection)"
 msgid "Đang offline: chấm công cần có mạng. Hãy kết nối mạng rồi thử lại."
 msgstr "You are offline: attendance needs an internet connection. Reconnect and try again."
 
+#: src/components/CustomersSection.tsx
+msgid "Đang offline: danh sách khách hàng cần có mạng để xem và sửa."
+msgstr "You are offline: the customer list needs a connection to view and edit."
+
+#: src/components/PartnersSection.tsx
+msgid "Đang offline: danh sách nhà cung ứng cần có mạng để xem và sửa."
+msgstr "You are offline: the supplier list needs a connection to view and edit."
+
 #: src/components/AbsencesSection.tsx
 msgid "Đang offline: ghi nghỉ cần có mạng."
 msgstr "You are offline: recording absences needs a connection."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Đang offline: lưu hóa đơn cần có mạng. Bỏ tích \"Mua có hóa đơn\" để nhập kho không cần mạng."
+msgstr "You are offline: saving an invoice needs a connection. Untick \"Purchased with invoice\" to receive stock without a connection."
+
+#: src/components/TimesheetEntry.tsx
+msgid "Đang offline: lưu số liệu cần có mạng. Bạn vẫn gõ được, nhớ bấm Lưu khi có mạng."
+msgstr "You are offline: saving data needs a connection. You can keep typing; remember to press Save when online."
+
+#: src/components/TimesheetsSection.tsx
+msgid "Đang offline: tạo bảng cần có mạng."
+msgstr "You are offline: creating a sheet needs a connection."
 
 #: src/components/HarvestSection.tsx
 msgid "Đang offline: vẫn ghi được phiếu mới (tự gửi khi có mạng); sửa và hủy cần có mạng."
@@ -1018,9 +2493,21 @@ msgstr "You are offline: you can still add new records (sent automatically when 
 msgid "Đang offline: vẫn ghi được việc mới (tự gửi khi có mạng); sửa và hủy cần có mạng."
 msgstr "You are offline: you can still log new work (sent automatically when online); editing and cancelling need a connection."
 
+#: src/components/MilestonePanels.tsx
+msgid "Đang offline: xem được, đánh dấu \"đã làm\" cần có mạng."
+msgstr "You are offline: you can view, but marking \"done\" needs a connection."
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Đang offline. Bản ghi sẽ được lưu trên điện thoại và gửi sau."
 msgstr "You are offline. The record will be saved on your phone and sent later."
+
+#: src/components/StockMove.tsx
+msgid "Đang offline. Chuyển kho cần có mạng; hãy kết nối mạng rồi bấm Lưu."
+msgstr "You are offline. Transferring stock needs a connection; reconnect, then press Save."
+
+#: src/components/StockEntry.tsx
+msgid "Đang offline. Nhập kho và điều chỉnh cần có mạng; hãy kết nối mạng rồi bấm Lưu."
+msgstr "You are offline. Receiving and adjusting stock needs a connection; reconnect, then press Save."
 
 #: src/components/HarvestSection.tsx
 msgid "Đang offline. Phiếu sẽ được lưu trên điện thoại và tự gửi khi có mạng."
@@ -1034,6 +2521,14 @@ msgstr "You are offline. Editing a log needs a connection; reconnect, then press
 msgid "Đang offline. Sửa phiếu cần có mạng; hãy kết nối mạng rồi bấm Lưu thay đổi."
 msgstr "You are offline. Editing a record needs a connection; reconnect, then press Save changes."
 
+#: src/components/StockMove.tsx
+msgid "Đang offline. Trả vật tư cần có mạng; hãy kết nối mạng rồi bấm Lưu."
+msgstr "You are offline. Returning supplies needs a connection; reconnect, then press Save."
+
+#: src/components/StockMove.tsx
+msgid "Đang offline. Xuất kho cần có mạng; hãy kết nối mạng rồi bấm Lưu."
+msgstr "You are offline. Issuing stock needs a connection; reconnect, then press Save."
+
 #: src/components/CycleSelect.tsx
 #: src/lib/labels.ts
 msgid "Đang sản xuất"
@@ -1043,12 +2538,43 @@ msgstr "Active"
 msgid "Đang soạn"
 msgstr "Draft"
 
+#: src/components/ImagePicker.tsx
+msgid "Đang tải ảnh…"
+msgstr "Loading photo…"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Đang tải dữ liệu đã có…"
+msgstr "Loading existing data…"
+
 #: src/components/AbsencesSection.tsx
 #: src/components/AttendanceList.tsx
+#: src/components/CustomerOrders.tsx
+#: src/components/CustomerOrders.tsx
+#: src/components/CustomersSection.tsx
+#: src/components/MilestonePanels.tsx
+#: src/components/PartnersSection.tsx
+#: src/components/ShowMore.tsx
+#: src/components/StockTake.tsx
+#: src/components/StockTake.tsx
+#: src/components/TimesheetsSection.tsx
 #: src/screens/EditLogScreen.tsx
 #: src/screens/LogsScreen.tsx
+#: src/screens/StockPanel.tsx
+#: src/screens/StockPanel.tsx
 msgid "Đang tải…"
 msgstr "Loading…"
+
+#: src/components/FindWebSuppliers.tsx
+msgid "Đang tìm…"
+msgstr "Searching…"
+
+#: src/components/StockReports.tsx
+msgid "Đang tính…"
+msgstr "Calculating…"
+
+#: src/components/TimesheetEntry.tsx
+msgid "đang trong ca"
+msgstr "on shift"
 
 #: src/components/AttendanceList.tsx
 #: src/lib/work.ts
@@ -1058,6 +2584,10 @@ msgstr "On shift"
 #: src/components/AttendanceSection.tsx
 msgid "đang trong ca ·"
 msgstr "on shift ·"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Đang xử lý ảnh…"
+msgstr "Processing photo…"
 
 #: src/screens/AuthScreen.tsx
 msgid "Đang xử lý…"
@@ -1075,6 +2605,23 @@ msgstr "For household and cooperative owners <0>without email</0>. We will conta
 msgid "Dành cho chủ Hộ / Hợp tác xã. Nhân viên dùng tài khoản do chủ cơ sở cấp."
 msgstr "For household and cooperative owners. Staff use the account given by the farm owner."
 
+#: src/lib/timesheets.ts
+msgid "Đánh dấu ca (✓ ½ P Ô V K)"
+msgstr "Mark shifts (✓ ½ P Ô V K)"
+
+#: src/components/TimesheetEntry.tsx
+#: src/components/TimesheetsSection.tsx
+msgid "Đánh dấu đã nhập xong"
+msgstr "Mark as fully entered"
+
+#: src/components/CustomersSection.tsx
+msgid "Đánh dấu là khách hàng"
+msgstr "Mark as customer"
+
+#: src/lib/milestones.ts
+msgid "đánh dấu mốc an toàn"
+msgstr "mark a safety milestone"
+
 #: src/screens/HomeTab.tsx
 #: src/screens/HomeTab.tsx
 msgid "Đánh dấu xong"
@@ -1088,9 +2635,21 @@ msgstr "reviews not yet answered"
 msgid "Danh sách công"
 msgstr "Attendance list"
 
+#: src/lib/production.ts
+msgid "đặt kế hoạch vụ"
+msgstr "set the season plan"
+
 #: src/screens/AuthScreen.tsx
 msgid "Đặt mật khẩu mới"
 msgstr "Set a new password"
+
+#: src/components/StockReports.tsx
+msgid "Đầu kỳ"
+msgstr "Opening"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Đây chỉ là <0>bản nháp</0>. Hãy so với phiếu thật, nhất là số lượng và số tiền, rồi sửa nếu cần."
+msgstr "This is only a <0>draft</0>. Compare it with the real receipt, especially quantities and amounts, and fix if needed."
 
 #: src/lib/work.ts
 msgid "đề nghị sửa công"
@@ -1117,6 +2676,26 @@ msgstr "Request time correction"
 msgid "Đề nghị:"
 msgstr "Request:"
 
+#: src/components/StockEntry.tsx
+msgid "Để trống nếu chưa biết giá. Khi đó báo cáo sẽ ghi rõ là thiếu giá vốn, không tự đoán."
+msgstr "Leave blank if the price is unknown. Reports will then show the cost as missing rather than guessing."
+
+#: src/components/InvoiceScanner.tsx
+msgid "Để trống: app tự cộng các dòng"
+msgstr "Leave blank: the app adds up the lines"
+
+#: src/components/StockTake.tsx
+msgid "Đếm hàng thực tế rồi so với sổ kho. Khi chốt, chỗ nào lệch app thêm một dòng \"Điều chỉnh\" có lý do; lịch sử cũ giữ nguyên."
+msgstr "Count the actual goods and compare with the stock ledger. On closing, each difference gets an \"Adjustment\" line with a reason; older history is unchanged."
+
+#: src/components/StockTake.tsx
+msgid "Đếm mù (ẩn số sổ sách khi đếm, để khỏi đoán theo)"
+msgstr "Blind count (hide book figures while counting, to avoid guessing)"
+
+#: src/components/StockTake.tsx
+msgid "Đếm thực tế ("
+msgstr "Actual count ("
+
 #: src/components/TodayPlan.tsx
 msgid "đến "
 msgstr "to"
@@ -1125,22 +2704,35 @@ msgstr "to"
 msgid "Đến giờ"
 msgstr "To time"
 
+#: src/components/StockMove.tsx
+msgid "Đến kho"
+msgstr "To warehouse"
+
 #: src/components/AbsencesSection.tsx
 #: src/components/AttendanceList.tsx
+#: src/components/StockReports.tsx
+#: src/components/TimesheetsSection.tsx
 #: src/screens/LogsScreen.tsx
+#: src/screens/StockPanel.tsx
 msgid "Đến ngày"
 msgstr "To date"
 
 #: src/components/AttendanceList.tsx
+#: src/components/StockReports.tsx
 msgid "Đến ngày không được trước từ ngày."
 msgstr "The end date cannot be before the start date."
 
+#: src/components/AddressFields.tsx
 #: src/components/ContactCard.tsx
 msgid "Địa chỉ"
 msgstr "Address"
 
 #: src/components/CatalogPick.tsx
 #: src/components/ContactCard.tsx
+#: src/components/CustomersSection.tsx
+#: src/components/CustomersSection.tsx
+#: src/components/PartnersSection.tsx
+#: src/components/PartnersSection.tsx
 #: src/lib/absences.ts
 msgid "Điện thoại"
 msgstr "Phone"
@@ -1153,17 +2745,97 @@ msgstr "Android phone (Chrome)"
 msgid "Điện thoại:"
 msgstr "Phone:"
 
+#. placeholder {0}: s.phone
+#: src/components/FindWebSuppliers.tsx
+msgid "Điện thoại: <0>{0}</0>"
+msgstr "Phone: <0>{0}</0>"
+
+#: src/lib/terms.ts
+msgid "Diện tích ao / bể"
+msgstr "Pond / tank area"
+
+#: src/lib/terms.ts
+msgid "Diện tích chuồng"
+msgstr "Pen area"
+
+#: src/lib/terms.ts
+msgid "Diện tích trồng"
+msgstr "Planted area"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Điền vào phiếu nhập"
+msgstr "Fill into goods receipt"
+
+#: src/components/StockEntry.tsx
+#: src/components/StockReports.tsx
+#: src/lib/inventory.ts
+msgid "Điều chỉnh"
+msgstr "Adjustment"
+
+#. placeholder {0}: h.quantity_delta > 0 ? t`tăng` : t`giảm`
+#: src/screens/StockPanel.tsx
+msgid "Điều chỉnh {0}"
+msgstr "Adjustment {0}"
+
+#: src/components/StockEntry.tsx
+msgid "Điều chỉnh cần ghi lý do (ví dụ: kiểm kê, hao hụt, hỏng)."
+msgstr "An adjustment needs a reason (e.g. stocktake, loss, damage)."
+
+#: src/screens/StockPanel.tsx
+msgid "Điều chỉnh tồn"
+msgstr "Adjust stock"
+
+#: src/components/StockEntry.tsx
+msgid "Điều chỉnh tồn kho"
+msgstr "Stock adjustment"
+
+#: src/screens/StockPanel.tsx
+msgid "Điều chỉnh và chuyển kho"
+msgstr "Adjustments and transfers"
+
 #: src/App.tsx
 msgid "Điều hướng chính"
 msgstr "Main navigation"
+
+#: src/lib/permissions.ts
+msgid "Doanh thu bán hàng"
+msgstr "Sales revenue"
+
+#: src/components/HomeStats.tsx
+msgid "Doanh thu tháng này"
+msgstr "Revenue this month"
+
+#: src/components/HomeWeekly.tsx
+msgid "Doanh thu tuần"
+msgstr "Weekly revenue"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Đọc được"
+msgstr "Read"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Đọc phiếu"
+msgstr "Read receipt"
 
 #: src/components/LogWorkPicker.tsx
 msgid "Đổi"
 msgstr "Change"
 
+#: src/components/ImagePicker.tsx
+msgid "Đổi ảnh"
+msgstr "Change photo"
+
 #: src/lib/work.ts
 msgid "đổi đơn giá"
 msgstr "change a pay rate"
+
+#: src/lib/production.ts
+msgid "đổi ghi chú"
+msgstr "change a note"
+
+#: src/lib/production.ts
+msgid "đổi giai đoạn"
+msgstr "change a stage"
 
 #: src/lib/work.ts
 msgid "đổi ngày hết hiệu lực"
@@ -1173,6 +2845,18 @@ msgstr "change the end date"
 msgid "Đổi nơi ghi"
 msgstr "Change target"
 
+#: src/lib/production.ts
+msgid "đổi ô sản xuất của vụ"
+msgstr "change the season's production plot"
+
+#: src/lib/production.ts
+msgid "đổi quy trình của vụ"
+msgstr "change the season's workflow"
+
+#: src/lib/production.ts
+msgid "đổi trạng thái vụ"
+msgstr "change the season status"
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Đổi việc"
 msgstr "Change work"
@@ -1181,9 +2865,64 @@ msgstr "Change work"
 msgid "đơn đặt hàng cần xử lý"
 msgstr "orders to handle"
 
+#: src/lib/weekly.ts
+msgid "Đơn đặt hàng từ website"
+msgstr "Orders from the website"
+
+#: src/components/InvoiceScanner.tsx
+#: src/components/PurchaseEntry.tsx
+msgid "Đơn giá (đ)"
+msgstr "Unit price (VND)"
+
+#: src/lib/partners.ts
+msgid "Đơn giá phải là số tiền (đồng), không có phần lẻ."
+msgstr "The unit price must be a whole amount in VND."
+
+#: src/components/CustomersSection.tsx
+msgid "Đơn hàng và công nợ"
+msgstr "Orders and debts"
+
+#. placeholder {0}: p.name
+#: src/components/CustomersSection.tsx
+msgid "Đơn hàng và công nợ của {0}"
+msgstr "Orders and debts of {0}"
+
+#: src/components/CustomerOrders.tsx
+msgid "Đơn hàng và công nợ: {name}"
+msgstr "Orders and debts: {name}"
+
+#: src/components/StockEntry.tsx
+msgid "đơn vị"
+msgstr "unit"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Đơn vị phiếu ("
+msgstr "Invoice unit ("
+
+#: src/components/InvoiceScanner.tsx
+msgid "Đơn vị tính (đơn vị trong kho)"
+msgstr "Unit (stock unit)"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Dòng"
+msgstr "Line"
+
+#: src/components/CustomerOrders.tsx
+#: src/components/RowMenu.tsx
+#: src/components/RowMenu.tsx
 #: src/screens/LogsScreen.tsx
 msgid "Đóng"
 msgstr "Close"
+
+#: src/components/HomeStats.tsx
+#: src/components/HomeStats.tsx
+msgid "đồng"
+msgstr "VND"
+
+#. placeholder {0}: l.ten
+#: src/components/InvoiceScanner.tsx
+msgid "Dòng \"{0}\""
+msgstr "Line \"{0}\""
 
 #: src/components/AttendanceList.tsx
 msgid "Đóng ca (nhập giờ ra)"
@@ -1193,19 +2932,49 @@ msgstr "Close shift (enter clock-out time)"
 msgid "Đóng nhanh tất cả: giờ ra mỗi ngày"
 msgstr "Close all at once: daily clock-out time"
 
+#: src/components/ShowMore.tsx
+msgid "dòng nữa)"
+msgstr "more lines)"
+
 #. placeholder {0}: isOwner ? tx`Công đóng xong sẽ được xác nhận luôn.` : tx`Công đóng xong sẽ chờ xác nhận.`
 #: src/components/AttendanceList.tsx
 msgid "Đóng tất cả các ca quên ra ca lúc {closeAt} của từng ngày? {0} Ca vào muộn hơn {closeAt} sẽ được giữ lại."
 msgstr "Close all shifts without clock-out at {closeAt} of each day? {0} Shifts that started later than {closeAt} will be kept."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Dòng vật tư"
+msgstr "Supply line"
+
+#: src/components/PurchaseEntry.tsx
+msgid "dòng vật tư vào kho"
+msgstr "supply lines to stock"
 
 #: src/components/PhoneSignupForm.tsx
 #: src/screens/AuthScreen.tsx
 msgid "Đồng ý với <0>điều khoản dịch vụ và chính sách bảo mật</0> của hệ thống"
 msgstr "I agree to the system's <0>terms of service and privacy policy</0>"
 
+#. placeholder {0}: head.cancel_reason
+#: src/components/StockTake.tsx
+msgid "Đợt đã hủy: {0}"
+msgstr "Cancelled stocktake: {0}"
+
 #: src/screens/AuthScreen.tsx
 msgid "Dữ liệu của bạn riêng tư và được bảo vệ"
 msgstr "Your data is private and protected"
+
+#. placeholder {0}: p.name
+#: src/components/PartnersSection.tsx
+msgid "Dừng {0}"
+msgstr "Stop {0}"
+
+#: src/lib/inventory.ts
+msgid "Dùng cho vụ"
+msgstr "Used for season"
+
+#: src/lib/inventory.ts
+msgid "Dùng chung"
+msgstr "Shared use"
 
 #: src/screens/AuthScreen.tsx
 msgid "Dùng điện thoại"
@@ -1214,6 +2983,48 @@ msgstr "Use phone"
 #: src/screens/AuthScreen.tsx
 msgid "Dùng email"
 msgstr "Use email"
+
+#: src/components/CustomersSection.tsx
+msgid "Dừng khách này"
+msgstr "Stop this customer"
+
+#: src/screens/StockPanel.tsx
+msgid "dùng khi ghi việc"
+msgstr "used when logging work"
+
+#: src/components/StockMove.tsx
+msgid "Dùng khi vật tư đã xuất cho một vụ nhưng dùng không hết. Vật tư quay lại kho và được trừ khỏi giá vốn của vụ đó."
+msgstr "Use when supplies issued to a season were not used up. They go back to the warehouse and are deducted from that season's cost."
+
+#: src/components/StockMove.tsx
+msgid "Dùng khi vật tư ra khỏi kho mà không đi kèm một việc trong nhật ký: phát vật tư cho một vụ, hao hụt, hỏng, bán, dùng chung. Vật tư xuất cho vụ được tính vào giá thành của vụ (và cám vào FCR). Nếu đang làm việc ngoài đồng thì ghi ở Ghi việc."
+msgstr "Use when supplies leave the warehouse without a logged task: issued to a season, loss, damage, sale, shared use. Supplies issued to a season count in its cost (and feed in FCR). If you are working in the field, record it under Log work."
+
+#: src/components/CustomersSection.tsx
+msgid "Dùng lại"
+msgstr "Use again"
+
+#. placeholder {0}: p.name
+#: src/components/PartnersSection.tsx
+msgid "Dùng lại {0}"
+msgstr "Use {0} again"
+
+#: src/lib/milestoneLogic.ts
+msgid "đúng ngày bắt đầu"
+msgstr "on the start date"
+
+#: src/lib/milestoneLogic.ts
+msgid "đúng ngày thu / xuất dự kiến"
+msgstr "on the expected harvest / sale date"
+
+#: src/components/HomeStats.tsx
+msgid "đúng tiến độ"
+msgstr "on schedule"
+
+#: src/components/CycleProgressList.tsx
+#: src/components/CycleProgressList.tsx
+msgid "Đúng tiến độ"
+msgstr "On schedule"
 
 #: src/components/AttendanceList.tsx
 msgid "Duyệt"
@@ -1244,16 +3055,28 @@ msgstr "This email already has an account. Switch to \"Sign in\"."
 msgid "Email/số điện thoại hoặc mật khẩu chưa đúng. Hãy kiểm tra lại. Nếu quên mật khẩu: chủ Hộ/HTX chọn \"Quên mật khẩu\"; nhân viên nhờ chủ cơ sở đặt lại."
 msgstr "The email/phone number or password is incorrect. Check again. If you forgot the password: owners choose \"Forgot password\"; staff ask the farm owner to reset it."
 
+#: src/lib/partners.ts
+msgid "ghi bán hàng"
+msgstr "record a sale"
+
 #: src/components/LogWorkPicker.tsx
 msgid "Ghi cho: <0>{targetLabel}</0>"
 msgstr "Logging for: <0>{targetLabel}</0>"
 
 #: src/components/AbsencesSection.tsx
 #: src/components/AttendanceSection.tsx
+#: src/components/CustomersSection.tsx
+#: src/components/PartnersSection.tsx
+#: src/components/PurchaseEntry.tsx
 msgid "Ghi chú"
 msgstr "Note"
 
 #: src/components/HarvestSection.tsx
+#: src/components/MilestonePanels.tsx
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
 msgid "Ghi chú (không bắt buộc)"
 msgstr "Note (optional)"
 
@@ -1261,13 +3084,44 @@ msgstr "Note (optional)"
 msgid "Ghi chú cần nhớ"
 msgstr "Notes to remember"
 
+#: src/components/StockTake.tsx
+msgid "Ghi chú đợt (không bắt buộc)"
+msgstr "Stocktake note (optional)"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Ghi chú in trên đầu bảng (không bắt buộc)"
+msgstr "Note printed at the top of the sheet (optional)"
+
+#. placeholder {0}: draft.ghi_chu_khong_chac
+#: src/components/InvoiceScanner.tsx
+msgid "Ghi chú khi đọc: {0}"
+msgstr "Reading note: {0}"
+
+#: src/components/StockTake.tsx
+msgid "Ghi chú lý do"
+msgstr "Note the reason"
+
 #: src/components/AttendanceSection.tsx
 msgid "Ghi công"
 msgstr "Add attendance"
 
+#: src/lib/inventory.ts
+msgid "ghi giao dịch kho"
+msgstr "record a stock transaction"
+
 #: src/components/AbsencesSection.tsx
 msgid "Ghi lại việc xin nghỉ của người làm (họ nói miệng, nhắn Zalo hay gọi điện). Chỉ để ghi nhận, chưa tính vào bảng lương."
 msgstr "Record workers' leave requests (spoken, by Zalo message or phone call). For records only; not yet included in payroll."
+
+#: src/lib/partners.ts
+#: src/lib/partners.ts
+msgid "ghi lần thu tiền"
+msgstr "record a payment received"
+
+#: src/lib/partners.ts
+#: src/lib/partners.ts
+msgid "ghi lần trả tiền"
+msgstr "record a payment made"
 
 #: src/components/AbsencesSection.tsx
 msgid "Ghi nghỉ"
@@ -1283,9 +3137,17 @@ msgstr "Absence {0} {1}"
 msgid "Ghi nghỉ vừa được người khác sửa. Đã tải lại bản mới, hãy kiểm tra rồi lưu lại."
 msgstr "Someone else just edited this absence. The latest version has been loaded; check it and save again."
 
+#: src/components/StockMove.tsx
+msgid "Ghi rõ lý do (bắt buộc)"
+msgstr "State the reason (required)"
+
 #: src/lib/work.ts
 msgid "ghi sản lượng"
 msgstr "record output"
+
+#: src/lib/timesheets.ts
+msgid "Ghi số giờ làm mỗi ngày"
+msgstr "Record hours worked each day"
 
 #: src/components/HarvestSection.tsx
 msgid "Ghi thêm phiếu"
@@ -1299,6 +3161,15 @@ msgstr "If you save again, the supplies you selected will be deducted from stock
 #: src/components/HarvestSection.tsx
 msgid "Ghi thu hoạch"
 msgstr "Record harvest"
+
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+msgid "Ghi tiếp"
+msgstr "Continue recording"
+
+#: src/components/StockEntry.tsx
+msgid "Ghi trên bao bì"
+msgstr "As on the packaging"
 
 #: src/App.tsx
 #: src/App.tsx
@@ -1322,6 +3193,76 @@ msgstr "Log work just done"
 msgid "Ghi việc:"
 msgstr "Log work:"
 
+#. placeholder {0}: formatMoney(h.unit_cost)
+#: src/screens/StockPanel.tsx
+msgid "giá {0}"
+msgstr "price {0}"
+
+#: src/components/StockEntry.tsx
+msgid "Giá nhập mỗi"
+msgstr "Purchase price per"
+
+#: src/components/StockEntry.tsx
+msgid "Giá nhập phải là số tiền (đồng), không có phần lẻ."
+msgstr "The purchase price must be a whole amount in VND."
+
+#: src/lib/cycleStatsLogic.ts
+msgid "giá thành của vụ"
+msgstr "the season's cost"
+
+#: src/lib/cycleStatsLogic.ts
+msgid "giá thành tạm tính, chi phí còn thay đổi đến khi kết thúc vụ"
+msgstr "provisional cost; costs may still change until the season ends"
+
+#: src/components/StockReports.tsx
+msgid "Giá vốn"
+msgstr "Cost of goods"
+
+#: src/lib/weekly.ts
+#: src/screens/StockPanel.tsx
+msgid "giảm"
+msgstr "down"
+
+#: src/components/StockEntry.tsx
+msgid "Giảm tồn (hao hụt, hỏng, kiểm kê thấy ít hơn)"
+msgstr "Decrease stock (loss, damage, count shows less)"
+
+#: src/components/PartnersSection.tsx
+msgid "Gian hàng này đã có trong nhà cung ứng."
+msgstr "This shop is already in your suppliers."
+
+#: src/components/FindWebSuppliers.tsx
+msgid "Gian hàng vật tư đã đăng ký và được duyệt trên website. Bấm \"Thêm vào nhà cung ứng\" để sao thông tin sang danh sách của bạn, rồi chỉ cần thêm ghi chú."
+msgstr "Supply shops registered and approved on the website. Press \"Add to suppliers\" to copy their details into your list; you only need to add notes."
+
+#: src/components/PartnersSection.tsx
+msgid "gian hàng vật tư theo khu vực"
+msgstr "supply shops by area"
+
+#: src/screens/StockPanel.tsx
+msgid "Giao dịch"
+msgstr "Transactions"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Giấy không có giờ vào/ra cụ thể nên công được tạo theo ca mặc định hoặc số giờ bạn gõ; ghi chú của ca ghi rõ mã bảng."
+msgstr "Paper has no exact clock-in/out times, so entries use the default shift or the hours you type; each shift note shows the sheet code."
+
+#: src/components/HomeStats.tsx
+msgid "Giấy phép đã hết hạn"
+msgstr "The licence has expired"
+
+#: src/components/HomeStats.tsx
+msgid "Giấy phép sắp hết hạn"
+msgstr "The licence is expiring soon"
+
+#: src/components/HomePay.tsx
+msgid "Giờ công"
+msgstr "Hours"
+
+#: src/lib/weekly.ts
+msgid "Giờ công đã xác nhận"
+msgstr "Confirmed hours"
+
 #: src/components/AttendanceSection.tsx
 msgid "Giờ kết thúc phải sau giờ bắt đầu."
 msgstr "The end time must be after the start time."
@@ -1330,7 +3271,12 @@ msgstr "The end time must be after the start time."
 msgid "Giờ làm"
 msgstr "Working hours"
 
+#: src/components/TimesheetEntry.tsx
+msgid "giờ làm)."
+msgstr "working hours)."
+
 #: src/components/AttendanceList.tsx
+#: src/components/TimesheetsSection.tsx
 msgid "Giờ ra"
 msgstr "Clock-out"
 
@@ -1339,6 +3285,10 @@ msgstr "Clock-out"
 #: src/components/AttendanceList.tsx
 msgid "Giờ ra của {0} ngày {1} (giờ:phút, ví dụ 17:00)?"
 msgstr "Clock-out time of {0} on {1} (hh:mm, e.g. 17:00)?"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Giờ ra của ca mặc định phải sau giờ vào."
+msgstr "The default shift end must be after its start."
 
 #: src/components/AttendanceList.tsx
 msgid "Giờ ra nhập dạng giờ:phút, ví dụ 17:00."
@@ -1355,6 +3305,34 @@ msgstr "Clock-in"
 #: src/components/Drawer.tsx
 msgid "Giới thiệu, hướng dẫn trồng cây, vật nuôi, HTX"
 msgstr "Introduction and guides for crops, livestock and cooperatives"
+
+#: src/lib/terms.ts
+msgid "Giống"
+msgstr "Variety"
+
+#: src/lib/terms.ts
+msgid "Giống / dòng"
+msgstr "Breed / line"
+
+#: src/lib/terms.ts
+msgid "Giống / loài"
+msgstr "Breed / species"
+
+#: src/components/InvoiceScanner.tsx
+msgid "giống tên"
+msgstr "similar name"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Gõ <0>-</0> nếu trên giấy gạch ngang (không làm việc). <1>Để trống</1> nếu trên giấy chưa ghi: ô trống không được lưu."
+msgstr "Type <0>-</0> if the paper shows a dash (did not work). <1>Leave blank</1> if nothing is written: blank cells are not saved."
+
+#: src/components/TimesheetEntry.tsx
+msgid "Gõ <0>số giờ</0> làm cả ngày, ví dụ <1>8</1> hoặc <2>6,5</2>. Gõ <3>x</3> nếu trên giấy chỉ tick đủ ca."
+msgstr "Type <0>the hours</0> worked in the day, e.g. <1>8</1> or <2>6.5</2>. Type <3>x</3> if the paper only ticks a full shift."
+
+#: src/components/TimesheetEntry.tsx
+msgid "Gõ <0>x</0> (✓) = đủ ca · <1>0,5</1> (½) = nửa ca · <2>số giờ</2> (ví dụ 6,5) nếu làm khác ca mặc định."
+msgstr "Type <0>x</0> (✓) = full shift · <1>0.5</1> (½) = half shift · <2>hours</2> (e.g. 6.5) if different from the default shift."
 
 #: src/lib/errors.ts
 msgid "Gói dịch vụ đã hết hạn. Hãy gia hạn để tạo vụ mới. Dữ liệu của bạn vẫn được giữ nguyên."
@@ -1384,13 +3362,54 @@ msgstr "Send password reset email"
 msgid "Hai cách cài dùng cùng một tài khoản và cùng dữ liệu: đăng nhập ở đâu cũng thấy như nhau."
 msgstr "Both options use the same account and data: you see the same things wherever you sign in."
 
+#: src/components/PurchaseEntry.tsx
+#: src/components/StockEntry.tsx
+msgid "Hạn dùng"
+msgstr "Expiry date"
+
 #: src/components/TodayPlan.tsx
 msgid "Hạn hôm nay"
 msgstr "Due today"
 
+#: src/components/PurchaseEntry.tsx
+msgid "Hạn thanh toán (bạn nhập)"
+msgstr "Payment due date (entered by you)"
+
+#: src/lib/partners.ts
+msgid "Hạn thanh toán không được trước ngày mua."
+msgstr "The payment due date cannot be before the purchase date."
+
+#: src/lib/partners.ts
+msgid "Hạn thu tiền không được trước ngày bán."
+msgstr "The collection due date cannot be before the sale date."
+
 #: src/screens/HomeTab.tsx
 msgid "Hạn:"
 msgstr "Expires:"
+
+#. placeholder {0}: m.stt
+#. placeholder {1}: m.read
+#. placeholder {2}: m.expected
+#: src/components/TimesheetEntry.tsx
+msgid "Hàng {0}: tên đọc được “{1}” khác “{2}”. Cả hàng tô vàng, hãy đối chiếu."
+msgstr "Row {0}: the name read “{1}” differs from “{2}”. The whole row is yellow; please compare."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Hàng đã mua"
+msgstr "Goods purchased"
+
+#. placeholder {0}: rev.length
+#: src/components/InvoiceScanner.tsx
+msgid "Hàng đã mua ({0} dòng)"
+msgstr "Goods purchased ({0} lines)"
+
+#: src/lib/areas.ts
+msgid "Hạng mục"
+msgstr "Item"
+
+#: src/components/TimesheetEntry.tsx
+msgid "hàng, điền"
+msgstr "rows, filled"
 
 #: src/components/HarvestSection.tsx
 msgid "Hao hụt"
@@ -1399,6 +3418,16 @@ msgstr "Loss"
 #: src/components/HarvestSection.tsx
 msgid "Hao hụt (kg, không bắt buộc)"
 msgstr "Loss (kg, optional)"
+
+#: src/lib/inventory.ts
+msgid "Hao hụt / hỏng"
+msgstr "Loss / damage"
+
+#. placeholder {0}: f(st.cumPct)
+#. placeholder {1}: f(th.cumPct)
+#: src/lib/countLogic.ts
+msgid "Hao hụt cộng dồn {0}%, đã tới ngưỡng {1}%."
+msgstr "Cumulative loss {0}% has reached the {1}% threshold."
 
 #: src/lib/harvest.ts
 msgid "Hao hụt không được lớn hơn khối lượng thu."
@@ -1420,6 +3449,49 @@ msgstr "Loss:"
 msgid "Hãy chờ khung \"xác nhận bạn là người thật\" hiện xong rồi thử lại."
 msgstr "Wait for the \"verify you are human\" box to finish loading, then try again."
 
+#: src/components/InvoiceScanner.tsx
+msgid "Hãy chọn đơn vị tính."
+msgstr "Select a unit."
+
+#: src/components/StockMove.tsx
+msgid "Hãy chọn hai kho khác nhau."
+msgstr "Select two different warehouses."
+
+#: src/components/TimesheetsSection.tsx
+msgid "Hãy chọn ít nhất một người."
+msgstr "Select at least one person."
+
+#: src/lib/partners.ts
+msgid "Hãy chọn khách hàng."
+msgstr "Select a customer."
+
+#: src/components/StockTake.tsx
+msgid "Hãy chọn kho cần kiểm."
+msgstr "Select the warehouse to count."
+
+#: src/lib/partners.ts
+msgid "Hãy chọn kho nhận hàng."
+msgstr "Select the receiving warehouse."
+
+#: src/components/StockMove.tsx
+msgid "Hãy chọn kho nhận."
+msgstr "Select the destination warehouse."
+
+#: src/components/PurchaseEntry.tsx
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+msgid "Hãy chọn kho."
+msgstr "Select a warehouse."
+
+#: src/lib/image.ts
+#: src/lib/image.ts
+msgid "Hãy chọn một tệp ảnh."
+msgstr "Select an image file."
+
+#: src/components/TimesheetsSection.tsx
+msgid "Hãy chọn ngày bắt đầu và ngày kết thúc."
+msgstr "Select the start and end dates."
+
 #: src/components/AbsencesSection.tsx
 msgid "Hãy chọn người nghỉ."
 msgstr "Select who is absent."
@@ -1427,6 +3499,10 @@ msgstr "Select who is absent."
 #: src/components/AttendanceSection.tsx
 msgid "Hãy chọn người."
 msgstr "Select a person."
+
+#: src/lib/partners.ts
+msgid "Hãy chọn nhà cung ứng."
+msgstr "Select a supplier."
 
 #: src/components/HarvestSection.tsx
 msgid "Hãy chọn phân khu trước, rồi chọn vụ."
@@ -1437,6 +3513,7 @@ msgid "Hãy chọn phân khu."
 msgstr "Select a zone."
 
 #: src/components/AttendanceList.tsx
+#: src/components/StockReports.tsx
 msgid "Hãy chọn từ ngày và đến ngày."
 msgstr "Select the start and end dates."
 
@@ -1444,7 +3521,18 @@ msgstr "Select the start and end dates."
 msgid "Hãy chọn vật tư cho dòng \"Vật tư đã dùng\", hoặc xóa dòng đó."
 msgstr "Select a supply for the \"Supplies used\" row, or delete the row."
 
+#: src/components/PurchaseEntry.tsx
+msgid "Hãy chọn vật tư cho mọi dòng, hoặc xóa dòng thừa."
+msgstr "Select a supply for every line, or delete extra lines."
+
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+msgid "Hãy chọn vật tư."
+msgstr "Select a supply."
+
 #: src/components/HarvestSection.tsx
+#: src/components/StockMove.tsx
 msgid "Hãy chọn vụ."
 msgstr "Select a season."
 
@@ -1456,6 +3544,15 @@ msgstr "Give a reason for cancelling (at least 3 characters)."
 #: src/components/AttendanceList.tsx
 msgid "Hãy ghi lý do."
 msgstr "Give a reason."
+
+#: src/components/InvoiceScanner.tsx
+msgid "Hãy giữ lại ít nhất một dòng hàng để nhập kho."
+msgstr "Keep at least one goods line to receive."
+
+#. placeholder {0}: f.label
+#: src/lib/fieldsLogic.ts
+msgid "Hãy nhập \"{0}\"."
+msgstr "Enter \"{0}\"."
 
 #: src/screens/EditLogScreen.tsx
 #: src/screens/LogActivityScreen.tsx
@@ -1482,9 +3579,17 @@ msgstr "Enter the representative's full name (at least 2 characters)."
 msgid "Hãy nhập họ tên người đại diện."
 msgstr "Enter the representative's full name."
 
+#: src/components/PurchaseEntry.tsx
+msgid "Hãy nhập ít nhất một dòng vật tư."
+msgstr "Enter at least one supply line."
+
 #: src/components/AbsencesSection.tsx
 msgid "Hãy nhập ngày nghỉ."
 msgstr "Enter the absence date."
+
+#: src/components/MilestonePanels.tsx
+msgid "Hãy nhập nội dung nhắc."
+msgstr "Enter the reminder text."
 
 #: src/components/PhoneSignupForm.tsx
 msgid "Hãy nhập số điện thoại có dùng Zalo."
@@ -1494,6 +3599,18 @@ msgstr "Enter a phone number that uses Zalo."
 msgid "Hãy nhập tên cơ sở (ví dụ \"Vườn nhà Lan\")."
 msgstr "Enter the farm name (for example \"Lan's Garden\")."
 
+#: src/components/CustomersSection.tsx
+msgid "Hãy nhập tên khách hàng (ít nhất 2 ký tự)."
+msgstr "Enter the customer name (at least 2 characters)."
+
+#: src/components/PartnersSection.tsx
+msgid "Hãy nhập tên nhà cung ứng (ít nhất 2 ký tự)."
+msgstr "Enter the supplier name (at least 2 characters)."
+
+#: src/components/InvoiceScanner.tsx
+msgid "Hãy nhập tên vật tư (ít nhất 2 ký tự)."
+msgstr "Enter the supply name (at least 2 characters)."
+
 #: src/screens/HomeTab.tsx
 msgid "Hãy nhờ chủ cơ sở hoặc quản lý bắt đầu sản xuất."
 msgstr "Ask the farm owner or a manager to start production."
@@ -1501,6 +3618,19 @@ msgstr "Ask the farm owner or a manager to start production."
 #: src/screens/HomeTab.tsx
 msgid "Hãy nhờ chủ cơ sở hoặc quản lý tạo vụ nuôi trồng."
 msgstr "Ask the farm owner or a manager to create a season or batch."
+
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+msgid "Hãy tạo ở Khai báo → Vật tư và Kho (cần có mạng)."
+msgstr "Create one in Setup → Supplies and Warehouses (connection required)."
+
+#: src/components/StockEntry.tsx
+msgid "Hãy tạo trong mục \"Danh mục\" (cần có mạng), rồi quay lại đây."
+msgstr "Create it under \"Catalog\" (connection required), then come back here."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Hãy tạo trong tab Khai báo (Vật tư, Kho và đơn vị) rồi quay lại đây."
+msgstr "Create it in the Setup tab (Supplies, Warehouses and units), then come back here."
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Hãy tạo vụ ở màn hình Sản xuất."
@@ -1510,6 +3640,10 @@ msgstr "Create a season on the Production screen."
 #: src/screens/AuthScreen.tsx
 msgid "Hãy tích chọn đồng ý với điều khoản dịch vụ và chính sách bảo mật."
 msgstr "Please agree to the terms of service and privacy policy."
+
+#: src/lib/assets.ts
+msgid "Hệ thống tưới"
+msgstr "Irrigation system"
 
 #: src/components/ExpiringLots.tsx
 msgid "Hết hạn"
@@ -1525,6 +3659,14 @@ msgstr "Showing {0}–{1} of {total} records."
 msgid "Hiện cả bản ghi đã hủy"
 msgstr "Show cancelled logs too"
 
+#: src/components/CustomersSection.tsx
+msgid "Hiện cả khách hàng đã dừng"
+msgstr "Show stopped customers too"
+
+#: src/components/PartnersSection.tsx
+msgid "Hiện cả nhà cung ứng đã dừng"
+msgstr "Show stopped suppliers too"
+
 #: src/components/HarvestSection.tsx
 msgid "Hiện cả phiếu đã hủy"
 msgstr "Show cancelled records too"
@@ -1538,6 +3680,14 @@ msgstr "Show seasons no longer in production too"
 msgid "Hiện mật khẩu"
 msgstr "Show password"
 
+#: src/components/ImagePicker.tsx
+msgid "Hình ảnh"
+msgstr "Images"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Hình thức trả"
+msgstr "Payment method"
+
 #: src/components/PhoneSignupForm.tsx
 msgid "Hộ nông dân / trang trại"
 msgstr "Household farmer / farm"
@@ -1546,19 +3696,44 @@ msgstr "Household farmer / farm"
 msgid "Hồ sơ web"
 msgstr "Web profile"
 
+#: src/lib/permissions.ts
+msgid "Hồ sơ website và đơn khách"
+msgstr "Website profile and customer orders"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Họ tên"
+msgstr "Full name"
+
 #: src/components/PhoneSignupForm.tsx
 #: src/screens/AuthScreen.tsx
 msgid "Họ tên người đại diện"
 msgstr "Representative's full name"
 
+#: src/lib/permissions.ts
+msgid "Hộ thành viên (hợp tác xã)"
+msgstr "Member households (cooperative)"
+
 #: src/lib/labels.ts
 msgid "Hỗ trợ & Chia sẻ"
 msgstr "Support & Share"
+
+#: src/lib/partners.ts
+msgid "Hóa đơn cần ít nhất một dòng vật tư."
+msgstr "An invoice needs at least one supply line."
+
+#: src/components/HomeStats.tsx
+msgid "Hóa đơn mua quá hạn"
+msgstr "Overdue purchase invoices"
+
+#: src/components/HomeStats.tsx
+msgid "Hóa đơn mua sắp đến hạn"
+msgstr "Purchase invoices due soon"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Hôm kia"
 msgstr "2 days ago"
 
+#: src/lib/milestoneLogic.ts
 #: src/screens/HomeTab.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Hôm nay"
@@ -1604,9 +3779,21 @@ msgstr "Paid for these days (record only)"
 #: src/components/AttendanceList.tsx
 #: src/components/AttendanceSection.tsx
 #: src/components/CatalogPick.tsx
+#: src/components/CustomersSection.tsx
 #: src/components/HarvestSection.tsx
+#: src/components/InvoiceScanner.tsx
 #: src/components/LogTargetPicker.tsx
 #: src/components/LogWorkPicker.tsx
+#: src/components/MilestonePanels.tsx
+#: src/components/MilestonePanels.tsx
+#: src/components/PartnersSection.tsx
+#: src/components/PurchaseEntry.tsx
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockTake.tsx
+#: src/components/TimesheetsSection.tsx
 #: src/screens/EditLogScreen.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Hủy"
@@ -1616,6 +3803,10 @@ msgstr "Cancel"
 msgid "Hủy bản ghi"
 msgstr "Cancel log"
 
+#: src/components/StockTake.tsx
+msgid "Hủy đợt"
+msgstr "Cancel stocktake"
+
 #: src/components/AbsencesSection.tsx
 msgid "Hủy ghi nghỉ"
 msgstr "Cancel absence"
@@ -1624,6 +3815,26 @@ msgstr "Cancel absence"
 msgid "Hủy ghi nghỉ này? Ghi nghỉ đã hủy vẫn được giữ trong sổ."
 msgstr "Cancel this absence record? Cancelled records stay in the book."
 
+#: src/lib/partners.ts
+msgid "hủy hóa đơn"
+msgstr "cancel an invoice"
+
+#: src/lib/partners.ts
+msgid "hủy lần bán"
+msgstr "cancel a sale"
+
+#: src/lib/partners.ts
+msgid "hủy lần thu tiền"
+msgstr "cancel a payment received"
+
+#: src/lib/partners.ts
+msgid "hủy lần trả tiền"
+msgstr "cancel a payment made"
+
+#: src/lib/production.ts
+msgid "hủy nhật ký"
+msgstr "cancel a log"
+
 #: src/components/HarvestSection.tsx
 msgid "Hủy phiếu"
 msgstr "Cancel record"
@@ -1631,6 +3842,31 @@ msgstr "Cancel record"
 #: src/lib/harvest.ts
 msgid "hủy phiếu thu hoạch"
 msgstr "cancel a harvest record"
+
+#: src/components/InvoiceScanner.tsx
+#: src/components/InvoiceScanner.tsx
+msgid "Hủy, nhập tay"
+msgstr "Cancel, enter manually"
+
+#: src/components/StockTake.tsx
+msgid "In / Lưu PDF (biên bản)"
+msgstr "Print / Save PDF (record)"
+
+#: src/components/TimesheetsSection.tsx
+msgid "In bảng chấm công có sẵn tên người và các ngày để ghi tay trên giấy; cuối kỳ bấm Nhập số liệu để gõ lại đúng bảng đó vào hệ thống."
+msgstr "Print a timesheet with names and dates to fill in by hand; at the end of the period press Enter data to type that sheet into the system."
+
+#: src/components/TimesheetsSection.tsx
+msgid "In lại"
+msgstr "Reprint"
+
+#: src/components/MilestonePanels.tsx
+msgid "In trên chai/hộp vaccine"
+msgstr "Printed on the vaccine bottle/box"
+
+#: src/components/CustomersSection.tsx
+msgid "INVALID_PARTNER: Khách hàng này đã có trong danh sách."
+msgstr "INVALID_PARTNER: This customer is already in the list."
 
 #: src/components/InstallGuide.tsx
 msgid "iPhone / iPad (Safari)"
@@ -1664,18 +3900,82 @@ msgstr "Other (type name)"
 msgid "Khắc phục sự cố:"
 msgstr "Incident follow-up:"
 
+#: src/components/PurchaseEntry.tsx
+msgid "Khác tổng các dòng ("
+msgstr "Differs from the line total ("
+
+#: src/components/CustomersSection.tsx
+msgid "Khách đã dừng vẫn giữ lịch sử mua nhưng không chọn được cho lần bán mới. Thông tin khách là dữ liệu cá nhân: riêng tư, không công khai trên website."
+msgstr "Stopped customers keep their purchase history but cannot be chosen for new sales. Customer details are personal data: private, never shown on the website."
+
 #: src/components/WebInboxCard.tsx
 msgid "khách để lại số điện thoại/email"
 msgstr "visitors left a phone number/email"
+
+#: src/lib/partners.ts
+#: src/lib/partners.ts
+msgid "khách hàng"
+msgstr "customer"
+
+#. placeholder {0}: shown.length
+#: src/components/CustomersSection.tsx
+msgid "Khách hàng ({0})"
+msgstr "Customers ({0})"
+
+#: src/components/CustomerOrders.tsx
+msgid "Khách này chưa có đơn nào. Khi ghi bán hàng và chọn khách này, đơn sẽ hiện ở đây."
+msgstr "This customer has no orders yet. Orders appear here when you record a sale and choose this customer."
 
 #: src/components/HomeLinks.tsx
 #: src/lib/labels.ts
 msgid "Khai báo"
 msgstr "Setup"
 
+#: src/lib/permissions.ts
+msgid "Khai báo (sản phẩm, việc, quy trình mẫu, phân khu)"
+msgstr "Setup (products, work, workflow templates, zones)"
+
+#: src/lib/permissions.ts
+msgid "Kho (tồn kho, nhập kho, danh mục vật tư)"
+msgstr "Warehouse (stock, receipts, supply catalog)"
+
+#: src/lib/roles.ts
+msgid "Kho & chi phí"
+msgstr "Stock & expenses"
+
+#: src/components/StockTake.tsx
+msgid "Kho cần kiểm"
+msgstr "Warehouse to count"
+
+#. placeholder {0}: formatQty(have)
+#. placeholder {1}: unitOf(mat)
+#. placeholder {2}: formatQty(q)
+#: src/components/StockMove.tsx
+msgid "Kho chỉ còn {0} {1}, xuất {2} sẽ làm tồn âm. Vẫn xuất?"
+msgstr "The warehouse has only {0} {1}; issuing {2} would make stock negative. Issue anyway?"
+
+#. placeholder {0}: formatQty(have)
+#. placeholder {1}: unitOf(mat)
+#. placeholder {2}: formatQty(q)
+#: src/components/StockMove.tsx
+msgid "Kho đi chỉ còn {0} {1}, chuyển {2} sẽ làm tồn âm. Vẫn chuyển?"
+msgstr "The source warehouse has only {0} {1}; transferring {2} would make stock negative. Transfer anyway?"
+
 #: src/lib/work.ts
 msgid "khóa kỳ"
 msgstr "lock the pay period"
+
+#: src/components/HomeStats.tsx
+msgid "Khoản phải thu quá hạn"
+msgstr "Overdue receivables"
+
+#: src/components/HomeStats.tsx
+msgid "Khoản phải thu sắp đến hạn"
+msgstr "Receivables due soon"
+
+#: src/lib/hr.ts
+msgid "Khoán việc, dịch vụ"
+msgstr "Piecework and services"
 
 #: src/components/HarvestSection.tsx
 msgid "Khối lượng thu (kg)"
@@ -1686,6 +3986,7 @@ msgid "Khối lượng thu phải là số lớn hơn 0 (kg)."
 msgstr "The harvested weight must be a number greater than 0 (kg)."
 
 #: src/components/DynamicField.tsx
+#: src/lib/fieldsLogic.ts
 msgid "Không"
 msgstr "No"
 
@@ -1709,9 +4010,25 @@ msgstr "No records."
 msgid "Không có công hợp lệ nào cần xác nhận trong khoảng này."
 msgstr "No valid entries to confirm in this range."
 
+#: src/components/StockTake.tsx
+msgid "Không có dòng nào khớp bộ lọc."
+msgstr "No lines match the filter."
+
 #: src/components/AbsencesSection.tsx
 msgid "Không có ghi nghỉ nào trong tháng này."
 msgstr "No absences recorded this month."
+
+#: src/components/HomeWeekly.tsx
+msgid "không có gì gấp"
+msgstr "nothing urgent"
+
+#: src/components/StockReports.tsx
+msgid "Không có giao dịch kho nào."
+msgstr "No stock transactions."
+
+#: src/screens/StockPanel.tsx
+msgid "Không có giao dịch phù hợp."
+msgstr "No matching transactions."
 
 #: src/lib/errors.ts
 msgid "Không có kết nối mạng. Hãy kiểm tra Internet rồi thử lại."
@@ -1725,6 +4042,10 @@ msgstr "No logs match the filters."
 msgid "Không có thì để trống."
 msgstr "Leave blank if you have none."
 
+#: src/screens/StockPanel.tsx
+msgid "Không có vật tư phù hợp bộ lọc."
+msgstr "No supplies match the filter."
+
 #: src/components/AttendanceSection.tsx
 msgid "Không có việc cần xử lý."
 msgstr "Nothing to handle."
@@ -1733,9 +4054,21 @@ msgstr "Nothing to handle."
 msgid "Không có việc nào khớp."
 msgstr "No matching work."
 
+#: src/components/CycleProgressList.tsx
+msgid "Không có vụ đang chạy ở phân khu này."
+msgstr "No running season in this zone."
+
 #: src/components/LogTargetPicker.tsx
 msgid "Không có vụ nào khớp."
 msgstr "No matching season."
+
+#: src/components/InvoiceScanner.tsx
+msgid "không đọc được"
+msgstr "unreadable"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Không đọc được dòng hàng nào. Bạn có thể chụp lại rõ hơn hoặc nhập tay."
+msgstr "No goods lines could be read. Retake a clearer photo or enter manually."
 
 #: src/components/HarvestSection.tsx
 #: src/screens/LogsScreen.tsx
@@ -1746,13 +4079,91 @@ msgstr "Keep it"
 msgid "Không lương"
 msgstr "Unpaid"
 
+#: src/screens/StockPanel.tsx
+msgid "Không rõ người làm"
+msgstr "Unknown worker"
+
+#: src/lib/production.ts
+msgid "Không tải được chi phí/doanh thu"
+msgstr "Could not load expenses/revenue"
+
+#: src/lib/production.ts
+msgid "Không tải được dữ liệu sản xuất"
+msgstr "Could not load production data"
+
+#: src/lib/production.ts
+msgid "Không tải được mốc an toàn"
+msgstr "Could not load safety milestones"
+
+#: src/lib/production.ts
+msgid "Không tải được số đo"
+msgstr "Could not load measurements"
+
+#: src/lib/production.ts
+msgid "Không tải được số lượng"
+msgstr "Could not load counts"
+
+#: src/lib/production.ts
+msgid "Không tải được sự cố"
+msgstr "Could not load incidents"
+
+#: src/lib/production.ts
+msgid "Không tải được thời gian cách ly"
+msgstr "Could not load withdrawal periods"
+
+#: src/lib/production.ts
+msgid "Không tải được thu hoạch"
+msgstr "Could not load harvests"
+
+#: src/lib/production.ts
+msgid "Không tải được vật tư/kho"
+msgstr "Could not load supplies/warehouses"
+
+#: src/components/ShowMore.tsx
+msgid "Không tải được, thử lại."
+msgstr "Could not load, try again."
+
+#: src/lib/permissions.ts
+msgid "Không thấy"
+msgstr "Not found"
+
+#: src/lib/hr.ts
+msgid "Không thời hạn"
+msgstr "Open-ended"
+
 #: src/lib/errors.ts
 msgid "Không tìm thấy dữ liệu. Hãy tải lại rồi thử lại."
 msgstr "Data not found. Reload and try again."
 
+#: src/components/FindWebSuppliers.tsx
+msgid "Không tìm thấy gian hàng phù hợp. Thử bỏ bớt bộ lọc."
+msgstr "No matching shop found. Try removing some filters."
+
+#: src/lib/image.ts
+#: src/lib/image.ts
+#: src/lib/image.ts
+msgid "Không xử lý được ảnh trên thiết bị này."
+msgstr "This device cannot process the image."
+
+#: src/components/StockTake.tsx
+msgid "Khớp"
+msgstr "Matched"
+
+#: src/components/InvoiceScanner.tsx
+msgid "khớp mã số thuế"
+msgstr "tax code matches"
+
+#: src/components/InvoiceScanner.tsx
+msgid "khớp số điện thoại"
+msgstr "phone number matches"
+
 #: src/screens/LogActivityScreen.tsx
 msgid "khu này"
 msgstr "this area"
+
+#: src/lib/milestoneLogic.ts
+msgid "Khu này đang có vụ chạy. Nên đợi vụ đó xong và để trống chuồng trước khi nhập lứa mới."
+msgstr "This area has a running season. Wait for it to finish and leave the pen empty before bringing in a new batch."
 
 #: src/screens/LogActivityScreen.tsx
 #: src/screens/LogActivityScreen.tsx
@@ -1768,9 +4179,61 @@ msgstr "Area · {0}"
 msgid "Khu vực, cổng, kho, biogas… (không gắn vụ)"
 msgstr "Areas, gate, warehouse, biogas… (not tied to a season)"
 
+#: src/components/StockTake.tsx
+#: src/components/StockTake.tsx
+#: src/components/StockTake.tsx
+#: src/screens/StockPanel.tsx
+msgid "Kiểm kho"
+msgstr "Stocktake"
+
+#: src/components/StockTake.tsx
+msgid "Kiểm kho cần có mạng. Hãy kết nối Internet rồi thử lại."
+msgstr "Stocktake needs a connection. Connect to the internet and try again."
+
+#: src/components/StockTake.tsx
+msgid "Kiểm kho: {locName}"
+msgstr "Stocktake: {locName}"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Kiểm tra phiếu đã đọc"
+msgstr "Check the receipt that was read"
+
+#: src/components/TimesheetEntry.tsx
+msgid "kiểu đánh dấu ca"
+msgstr "shift marking style"
+
+#: src/components/TimesheetEntry.tsx
+msgid "kiểu ghi số giờ"
+msgstr "hours entry style"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Kiểu ghi trên giấy"
+msgstr "Style on paper"
+
+#: src/components/StockReports.tsx
+#: src/components/StockReports.tsx
+msgid "Kỳ"
+msgstr "Period"
+
+#: src/lib/timesheetCells.ts
+msgid "Ký hiệu chưa đúng. Dùng ✓ (x), ½, số giờ, P, Ô, V, K hoặc – (không làm)."
+msgstr "Invalid symbol. Use ✓ (x), ½, hours, P, Ô, V, K or – (did not work)."
+
+#: src/components/CycleProgressList.tsx
+msgid "Lãi / lỗ:"
+msgstr "Profit / loss:"
+
+#: src/components/CycleProgressList.tsx
+msgid "Lãi tạm tính"
+msgstr "Provisional profit"
+
 #: src/screens/LogsScreen.tsx
 msgid "Làm chung với {n} vụ khác"
 msgstr "{n, plural, one {Shared with # other season} other {Shared with # other seasons}}"
+
+#: src/components/InvoiceScanner.tsx
+msgid "lần đọc trong tháng này."
+msgstr "reads this month."
 
 #: src/components/LogTargetPicker.tsx
 msgid "lần ghi trước"
@@ -1780,9 +4243,27 @@ msgstr "last logged"
 msgid "Lấy từ kho"
 msgstr "Take from warehouse"
 
+#: src/components/MilestonePanels.tsx
+msgid "Lịch vaccine, tẩy giun do thú y của trại chốt: hãy tự thêm theo lịch đó."
+msgstr "The vaccine and deworming schedule is set by the farm's vet: add it yourself following that schedule."
+
+#: src/components/MilestonePanels.tsx
+msgid "Lịch xử lý nước, thuốc và thu tỉa theo hướng dẫn kỹ thuật của bạn: hãy tự thêm mốc."
+msgstr "Water treatment, medicine and partial harvest schedules follow your technical guidance: add the milestones yourself."
+
 #: src/components/Drawer.tsx
 msgid "Liên hệ hỗ trợ và gửi giới thiệu app cho người khác"
 msgstr "Contact support and share the app with others"
+
+#: src/components/LotPicker.tsx
+msgid "Lô (không bắt buộc)"
+msgstr "Lot (optional)"
+
+#. placeholder {0}: h.material_lots.lot_no
+#. placeholder {1}: h.material_lots.expiry_date ? t` (hạn ${new Date(h.material_lots.expiry_date).toLocaleDateString(dateLocale())})` : ''
+#: src/screens/StockPanel.tsx
+msgid "lô {0}{1}"
+msgstr "lot {0}{1}"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Lô đã chọn đã hết hạn: hãy ghi lý do dùng, hoặc chọn lô khác."
@@ -1796,17 +4277,31 @@ msgstr "Expired lots are not picked automatically when supplies are used. Check 
 msgid "lô sắp hết hạn"
 msgstr "lots expiring soon"
 
+#: src/components/CycleProgressList.tsx
+msgid "Lỗ tạm tính"
+msgstr "Provisional loss"
+
 #: src/components/ExpiringLots.tsx
 msgid "Lô vật tư sắp hết hạn"
 msgstr "Supply lots expiring soon"
 
 #: src/components/AbsencesSection.tsx
+#: src/components/MilestonePanels.tsx
+#: src/screens/StockPanel.tsx
 msgid "Loại"
 msgstr "Type"
+
+#: src/screens/StockPanel.tsx
+msgid "Loại / Người làm"
+msgstr "Type / Worker"
 
 #: src/components/HarvestSection.tsx
 msgid "Loại 1, cỡ lớn…"
 msgstr "Grade 1, large size…"
+
+#: src/components/StockReports.tsx
+msgid "Loại báo cáo kho"
+msgstr "Stock report type"
 
 #: src/components/CatalogPick.tsx
 msgid "Loại cám (không bắt buộc)"
@@ -1820,6 +4315,14 @@ msgstr "Grade / size (optional)"
 msgid "Loại cơ sở"
 msgstr "Farm type"
 
+#: src/components/PartnersSection.tsx
+msgid "Loại hàng thường mua"
+msgstr "Usual goods purchased"
+
+#: src/components/CustomersSection.tsx
+msgid "Loại khách"
+msgstr "Customer type"
+
 #: src/components/AbsencesSection.tsx
 msgid "Loại nghỉ"
 msgstr "Absence type"
@@ -1827,6 +4330,10 @@ msgstr "Absence type"
 #: src/components/TodayPlan.tsx
 msgid "Loại sản phẩm"
 msgstr "Product type"
+
+#: src/lib/countLogic.ts
+msgid "Loại thải"
+msgstr "Culled"
 
 #: src/screens/LogsScreen.tsx
 msgid "Loại việc"
@@ -1840,10 +4347,30 @@ msgstr "Filter seasons by status"
 msgid "Luồng công việc"
 msgstr "Workflow"
 
+#: src/components/HomePay.tsx
+msgid "Lương tháng này"
+msgstr "Payroll this month"
+
+#: src/components/CustomersSection.tsx
 #: src/components/HarvestSection.tsx
+#: src/components/MilestonePanels.tsx
+#: src/components/PartnersSection.tsx
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Lưu"
 msgstr "Save"
+
+#. placeholder {0}: filled > 0 ? filled + tx` ô` : ''
+#: src/components/TimesheetEntry.tsx
+msgid "Lưu {0}"
+msgstr "Save {0}"
+
+#: src/lib/production.ts
+msgid "lưu cách chuẩn bị"
+msgstr "save preparation method"
 
 #: src/components/AttendanceSection.tsx
 msgid "Lưu công"
@@ -1852,6 +4379,22 @@ msgstr "Save attendance"
 #: src/components/AbsencesSection.tsx
 msgid "Lưu ghi nghỉ"
 msgstr "Save absence"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Lưu hóa đơn"
+msgstr "Save invoice"
+
+#: src/lib/partners.ts
+msgid "lưu hóa đơn mua"
+msgstr "save a purchase invoice"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Lưu nhập kho"
+msgstr "Save goods receipt"
+
+#: src/components/StockTake.tsx
+msgid "Lưu số đã nhập"
+msgstr "Save entered data"
 
 #: src/components/AbsenceSummary.tsx
 msgid "Lưu số ngày phép năm"
@@ -1863,18 +4406,39 @@ msgstr "Save annual leave days"
 msgid "Lưu thay đổi"
 msgstr "Save changes"
 
+#: src/lib/production.ts
+msgid "lưu thông tin giống và diện tích"
+msgstr "save variety and area details"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Lưu vật tư"
+msgstr "Save supply"
+
 #: src/components/AbsencesSection.tsx
 msgid "Lý do"
 msgstr "Reason"
 
 #: src/components/AttendanceList.tsx
+#: src/components/StockEntry.tsx
 msgid "Lý do (bắt buộc)"
 msgstr "Reason (required)"
+
+#: src/components/CustomersSection.tsx
+msgid "Lý do ẩn danh (ví dụ: khách yêu cầu xóa dữ liệu):"
+msgstr "Reason for anonymizing (e.g. the customer asked for data deletion):"
+
+#: src/components/LotPicker.tsx
+msgid "Lý do dùng lô đã hết hạn (bắt buộc)"
+msgstr "Reason for using an expired lot (required)"
 
 #: src/components/HarvestSection.tsx
 #: src/screens/LogsScreen.tsx
 msgid "Lý do hủy"
 msgstr "Reason for cancelling"
+
+#: src/components/StockTake.tsx
+msgid "Lý do hủy đợt kiểm kho (ít nhất 3 ký tự):"
+msgstr "Reason for cancelling the stocktake (at least 3 characters):"
 
 #. placeholder {0}: h.void_reason
 #. placeholder {0}: l.void_reason
@@ -1891,10 +4455,24 @@ msgstr "Why are you rejecting this entry?"
 msgid "Lý do vẫn ghi vào ngày này (bắt buộc)"
 msgstr "Reason for still recording on this date (required)"
 
+#: src/components/StockMove.tsx
+msgid "Lý do xuất"
+msgstr "Issue reason"
+
+#. placeholder {0}: h.reason
+#: src/screens/StockPanel.tsx
+msgid "lý do: {0}"
+msgstr "reason: {0}"
+
 #. placeholder {0}: x.reason
 #: src/components/AttendanceList.tsx
 msgid "Lý do: {0}"
 msgstr "Reason: {0}"
+
+#: src/lib/terms.ts
+#: src/lib/terms.ts
+msgid "Mã đàn / số lô con giống"
+msgstr "Herd code / seed stock lot number"
 
 #: src/components/PhoneSignupForm.tsx
 #: src/screens/AuthScreen.tsx
@@ -1908,6 +4486,10 @@ msgstr "This code is already used by another area/pen in your farm. Choose a dif
 #: src/lib/errors.ts
 msgid "Mã này đã được dùng cho vụ khác trong cơ sở. Hãy đặt mã khác."
 msgstr "This code is already used by another season in your farm. Choose a different code."
+
+#: src/components/PartnersSection.tsx
+msgid "Mã số thuế (nếu có)"
+msgstr "Tax code (if any)"
 
 #: src/components/PhoneSignupForm.tsx
 #: src/screens/AuthScreen.tsx
@@ -1931,6 +4513,18 @@ msgstr "New password"
 msgid "Mật khẩu quá ngắn hoặc quá yếu. Hãy dùng ít nhất 8 ký tự."
 msgstr "The password is too short or too weak. Use at least 8 characters."
 
+#: src/components/MilestonePanels.tsx
+msgid "Mẫu gợi ý, cần thú y của trại xác nhận."
+msgstr "Suggested template; the farm's vet should confirm it."
+
+#: src/lib/assets.ts
+msgid "Máy bơm"
+msgstr "Water pump"
+
+#: src/lib/assets.ts
+msgid "Máy móc khác"
+msgstr "Other machinery"
+
 #: src/components/VoiceNote.tsx
 msgid "Máy này chưa hỗ trợ nói vào ứng dụng. Hãy bấm biểu tượng micro trên bàn phím điện thoại rồi nói vào ô trên."
 msgstr "This device does not support voice input in the app. Tap the microphone on your phone keyboard and speak into the box above."
@@ -1939,6 +4533,10 @@ msgstr "This device does not support voice input in the app. Tap the microphone 
 msgid "Máy tính (Chrome / Edge)"
 msgstr "Computer (Chrome / Edge)"
 
+#: src/components/InvoiceScanner.tsx
+msgid "Mẹo: đặt phiếu phẳng, đủ sáng, chụp thẳng và thấy hết chữ."
+msgstr "Tip: lay the receipt flat in good light, shoot straight and show all the text."
+
 #: src/components/AttendanceSection.tsx
 msgid "Mở danh sách nghỉ phép"
 msgstr "Open absence list"
@@ -1946,6 +4544,10 @@ msgstr "Open absence list"
 #: src/components/HarvestSection.tsx
 msgid "mở để nhập"
 msgstr "open to enter"
+
+#: src/components/StockTake.tsx
+msgid "Mở đợt kiểm kho mới"
+msgstr "Open a new stocktake"
 
 #: src/lib/work.ts
 msgid "mở khóa kỳ"
@@ -1983,6 +4585,23 @@ msgstr "Open season"
 msgid "Mở website"
 msgstr "Open website"
 
+#: src/components/MilestonePanels.tsx
+#: src/components/MilestonePanels.tsx
+msgid "Mốc an toàn cho ngày bắt đầu/thu hoạch"
+msgstr "Safety milestones for start/harvest dates"
+
+#: src/components/MilestonePanels.tsx
+msgid "Mốc an toàn đến hạn"
+msgstr "Safety milestones due"
+
+#: src/components/MilestonePanels.tsx
+msgid "Mốc tính từ ngày thu dự kiến sẽ có ngày khi vụ có ngày kết thúc dự kiến."
+msgstr "Milestones counted from the expected harvest date get a date once the season has an expected end date."
+
+#: src/components/MilestonePanels.tsx
+msgid "Mốc tự sinh nhắc ở Trang chủ cho mỗi vụ tạo từ quy trình này. Mốc \"trước ngày thu\" tự dời khi ngày thu dự kiến đổi."
+msgstr "Milestones create reminders on Home for every season made from this workflow. \"Before harvest\" milestones move when the expected harvest date changes."
+
 #: src/components/AttendanceList.tsx
 msgid "Mỗi ca được đóng lúc"
 msgstr "Each shift is closed at"
@@ -1990,6 +4609,28 @@ msgstr "Each shift is closed at"
 #: src/components/AttendanceList.tsx
 msgid "Mọi công đã ra ca nhưng chưa được xác nhận, của tất cả các ngày."
 msgstr "All clocked-out but unconfirmed entries, from all days."
+
+#: src/lib/countLogic.ts
+msgid "Mới sinh"
+msgstr "Newborn"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Một bảng tối đa 200 người. Hãy chia theo tổ."
+msgstr "A sheet holds at most 200 people. Split by team."
+
+#: src/components/TimesheetsSection.tsx
+msgid "Một bảng tối đa 31 ngày. Hãy chia thành nhiều bảng."
+msgstr "A sheet covers at most 31 days. Split into several sheets."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Mua có hóa đơn (ghi nhà cung ứng, công nợ)"
+msgstr "Purchased with invoice (records supplier and debt)"
+
+#. placeholder {0}: h.purchase_bills.partners.name
+#. placeholder {1}: h.purchase_bills.invoice_no ? t` (HĐ ${h.purchase_bills.invoice_no})` : ''
+#: src/screens/StockPanel.tsx
+msgid "mua của {0}{1}"
+msgstr "purchase from {0}{1}"
 
 #: src/components/AttendanceSection.tsx
 msgid "Mục chấm công"
@@ -1999,6 +4640,15 @@ msgstr "Attendance"
 msgid "Mục này đang được dùng ở nơi khác nên không xóa được. Hãy chọn \"Dừng\" (⏸) để không dùng nữa; lịch sử vẫn được giữ."
 msgstr "This item is used elsewhere, so it cannot be deleted. Choose \"Stop\" (⏸) to stop using it; history is kept."
 
+#: src/components/MilestonePanels.tsx
+#: src/components/MilestonePanels.tsx
+msgid "Mũi tiêm · "
+msgstr "Vaccination ·"
+
+#: src/components/MilestonePanels.tsx
+msgid "Mũi tiêm vaccine"
+msgstr "Vaccination"
+
 #: src/components/InstallGuide.tsx
 msgid "Muốn cài cho điện thoại, hãy mở trang này bằng điện thoại rồi làm theo các bước dưới đây."
 msgstr "To install on a phone, open this page on a phone and follow the steps below."
@@ -2007,6 +4657,10 @@ msgstr "To install on a phone, open this page on a phone and follow the steps be
 msgid "Muốn cài cho máy tính, hãy mở trang này bằng máy tính rồi làm theo các bước dưới đây."
 msgstr "To install on a computer, open this page on a computer and follow the steps below."
 
+#: src/components/CustomerOrders.tsx
+msgid "Muốn ghi thu tiền: vào Công nợ → Phải thu."
+msgstr "To record a payment received: go to Debts → Receivables."
+
 #: src/components/AbsenceSummary.tsx
 msgid "Năm"
 msgstr "Year"
@@ -2014,6 +4668,18 @@ msgstr "Year"
 #: src/components/AbsenceSummary.tsx
 msgid "Năm {year} chưa có ghi nghỉ nào."
 msgstr "No absences recorded in {year}."
+
+#: src/components/MilestonePanels.tsx
+msgid "Nạp lịch tiêm tham khảo (heo)"
+msgstr "Load sample vaccination schedule (pigs)"
+
+#: src/components/MilestonePanels.tsx
+msgid "Nạp lịch tiêm tham khảo cho heo? Đây chỉ là mẫu gợi ý, bạn cần cho thú y của trại xác nhận và sửa/xóa các mũi không dùng."
+msgstr "Load a sample vaccination schedule for pigs? This is only a suggestion; have the farm's vet confirm it and edit or delete unused shots."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Nếu có"
+msgstr "If any"
 
 #: src/screens/AuthScreen.tsx
 msgid "Nếu email này có tài khoản, bạn sẽ nhận được thư hướng dẫn đặt lại mật khẩu."
@@ -2035,34 +4701,117 @@ msgstr "If this is the same work already logged, there is no need to log it agai
 msgid "Nếu người quen hoặc đại lý vật tư đưa mã cho bạn thì nhập vào đây, không có thì để trống."
 msgstr "If an acquaintance or supply dealer gave you a code, enter it here; otherwise leave it blank."
 
+#: src/components/CycleProgressList.tsx
+msgid "Ngân sách đã dùng"
+msgstr "Budget used"
+
 #: src/components/AbsencesSection.tsx
+#: src/components/TimesheetEntry.tsx
 msgid "ngày"
 msgstr "days"
 
 #: src/components/AttendancePhotos.tsx
 #: src/components/AttendanceSection.tsx
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/lib/fieldsLogic.ts
 msgid "Ngày"
 msgstr "Date"
+
+#: src/components/TimesheetsSection.tsx
+msgid "ngày ·"
+msgstr "days ·"
 
 #: src/components/ExpiringLots.tsx
 msgid "ngày ("
 msgstr "days ("
 
+#: src/screens/StockPanel.tsx
+msgid "Ngày / loại"
+msgstr "Date / type"
+
+#: src/screens/StockPanel.tsx
+msgid "Ngày / vật tư"
+msgstr "Date / supply"
+
+#: src/lib/partners.ts
+msgid "Ngày bán không được sau ngày hôm nay."
+msgstr "The sale date cannot be after today."
+
+#: src/lib/terms.ts
+#: src/lib/terms.ts
+msgid "Ngày bắt đầu nuôi"
+msgstr "Rearing start date"
+
 #: src/components/AbsencesSection.tsx
 msgid "Ngày được báo"
 msgstr "Date notified"
+
+#: src/lib/terms.ts
+msgid "Ngày gieo"
+msgstr "Sowing date"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Ngày kết thúc không được trước ngày bắt đầu."
+msgstr "The end date cannot be before the start date."
 
 #: src/screens/HomeTab.tsx
 msgid "Ngày mai"
 msgstr "Tomorrow"
 
+#: src/components/InvoiceScanner.tsx
+#: src/components/PurchaseEntry.tsx
+msgid "Ngày mua"
+msgstr "Purchase date"
+
+#: src/lib/partners.ts
+msgid "Ngày mua không được sau ngày hôm nay."
+msgstr "The purchase date cannot be after today."
+
 #: src/components/AbsencesSection.tsx
 msgid "Ngày nghỉ đến không được trước ngày nghỉ từ."
 msgstr "The absence end date cannot be before the start date."
 
+#: src/components/PurchaseEntry.tsx
+msgid "Ngày nhập"
+msgstr "Receipt date"
+
+#: src/lib/terms.ts
+msgid "Ngày nhập chuồng"
+msgstr "Date moved into pens"
+
+#: src/components/PurchaseEntry.tsx
+#: src/components/StockEntry.tsx
+msgid "Ngày nhập kho không được sau ngày hôm nay."
+msgstr "The receipt date cannot be after today."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Ngày phải trả hết nợ cho nhà cung ứng; để trống nếu không có hạn."
+msgstr "Date the supplier must be fully paid; leave blank if there is no deadline."
+
 #: src/components/AttendancePhotos.tsx
 msgid "Ngày sau ▶"
 msgstr "Next day ▶"
+
+#: src/lib/terms.ts
+msgid "Ngày thả giống"
+msgstr "Stocking date"
+
+#. placeholder {0}: m.offset_days + 1
+#. placeholder {1}: m.offset_days
+#: src/lib/milestoneLogic.ts
+msgid "ngày thứ {0} kể từ khi bắt đầu (sau {1} ngày)"
+msgstr "day {0} from the start (after {1} days)"
+
+#: src/lib/partners.ts
+msgid "Ngày trả không được sau ngày hôm nay."
+msgstr "The payment date cannot be after today."
+
+#: src/lib/terms.ts
+msgid "Ngày trồng"
+msgstr "Planting date"
 
 #: src/components/ExpiringLots.tsx
 msgid "ngày trước"
@@ -2080,8 +4829,13 @@ msgstr "Approved absence: {0}{part}"
 
 #: src/components/AttendanceList.tsx
 #: src/components/AttendanceSection.tsx
+#: src/components/TimesheetsSection.tsx
 msgid "Nghỉ giữa ca (phút)"
 msgstr "Break during shift (minutes)"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Nghỉ giữa ca từ 0 đến 480 phút."
+msgstr "Break must be 0 to 480 minutes."
 
 #: src/lib/absences.ts
 msgid "Nghỉ không báo trước"
@@ -2095,13 +4849,38 @@ msgstr "Absent without notice{part}"
 msgid "Nghỉ không lương"
 msgstr "Unpaid leave"
 
+#: src/lib/timesheetCells.ts
+msgid "Nghỉ không lương / không báo trước"
+msgstr "Unpaid leave / no notice"
+
+#: src/lib/timesheetCells.ts
+msgid "Nghỉ ốm"
+msgstr "Sick leave"
+
 #: src/components/AttendanceSection.tsx
 msgid "Nghỉ phép"
 msgstr "Leave"
 
+#: src/lib/timesheetCells.ts
+msgid "Nghỉ phép năm"
+msgstr "Annual leave"
+
 #: src/components/AbsencesSection.tsx
 msgid "Nghỉ từ ngày"
 msgstr "Absent from"
+
+#: src/lib/timesheetCells.ts
+msgid "Nghỉ việc gia đình"
+msgstr "Family leave"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Nghỉ:"
+msgstr "Break:"
+
+#: src/components/TimesheetEntry.tsx
+#: src/components/TimesheetsSection.tsx
+msgid "người"
+msgstr "people"
 
 #: src/components/AbsencesSection.tsx
 #: src/components/AbsenceSummary.tsx
@@ -2128,6 +4907,7 @@ msgid "Người đã ngừng làm"
 msgstr "People who have left"
 
 #: src/components/AttendanceSection.tsx
+#: src/components/TimesheetEntry.tsx
 msgid "Người làm"
 msgstr "Worker"
 
@@ -2143,6 +4923,55 @@ msgstr "Who is absent"
 msgid "Người ngoài cơ sở (gõ tên)"
 msgstr "Person outside the farm (type name)"
 
+#. placeholder {0}: picked.size
+#. placeholder {1}: workers.length
+#: src/components/TimesheetsSection.tsx
+msgid "Người trong bảng ({0}/{1})"
+msgstr "People on the sheet ({0}/{1})"
+
+#: src/lib/terms.ts
+msgid "Nguồn giống (nơi mua, nhà cung cấp)"
+msgstr "Seed source (where bought, supplier)"
+
+#: src/components/StockTake.tsx
+msgid "Ngưỡng lệch phải từ 1 đến 100 phần trăm."
+msgstr "The difference threshold must be 1 to 100 percent."
+
+#: src/components/InvoiceScanner.tsx
+msgid "nhà cung cấp"
+msgstr "supplier"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Nhà cung cấp (bên bán)"
+msgstr "Supplier (seller)"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Nhà cung cấp trong danh bạ"
+msgstr "Supplier from contacts"
+
+#: src/lib/partners.ts
+#: src/lib/partners.ts
+msgid "nhà cung ứng"
+msgstr "supplier"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Nhà cung ứng"
+msgstr "Supplier"
+
+#. placeholder {0}: shown.length
+#: src/components/PartnersSection.tsx
+msgid "Nhà cung ứng ({0})"
+msgstr "Suppliers ({0})"
+
+#: src/components/PartnersSection.tsx
+msgid "Nhà cung ứng đã dừng vẫn giữ lịch sử mua nhưng không chọn được cho hóa đơn mới. Thông tin này riêng tư, không công khai trên website."
+msgstr "Stopped suppliers keep their purchase history but cannot be chosen for new invoices. This information is private, never shown on the website."
+
+#: src/lib/areas.ts
+#: src/lib/assets.ts
+msgid "Nhà màng"
+msgstr "Greenhouse"
+
 #: src/components/SafetyReminder.tsx
 msgid "Nhắc an toàn thực phẩm:"
 msgstr "Food safety reminder:"
@@ -2155,9 +4984,21 @@ msgstr "Today's reminders ("
 msgid "Nhân bản"
 msgstr "Duplicate"
 
+#: src/lib/roles.ts
+msgid "Nhân viên"
+msgstr "Staff"
+
 #: src/screens/AuthScreen.tsx
 msgid "Nhân viên dùng số điện thoại do chủ cơ sở cấp."
 msgstr "Staff use the phone number given by the farm owner."
+
+#: src/components/StockReports.tsx
+msgid "Nhập"
+msgstr "Receive"
+
+#: src/components/StockReports.tsx
+msgid "Nhập – xuất – tồn"
+msgstr "Received – issued – stock"
 
 #: src/components/AttendanceSection.tsx
 msgid "Nhập ca đã làm của người làm, kể cả của bạn (dành cho nơi không dùng máy chấm công)."
@@ -2167,6 +5008,39 @@ msgstr "Enter shifts worked by workers, including yourself (for farms without a 
 msgid "Nhập ca đã làm của người trong tổ."
 msgstr "Enter shifts worked by your team members."
 
+#: src/screens/StockPanel.tsx
+msgid "Nhập cuối"
+msgstr "Last receipt"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Nhập hóa đơn khác"
+msgstr "Enter another invoice"
+
+#: src/components/PurchaseEntry.tsx
+#: src/components/PurchaseEntry.tsx
+#: src/components/StockEntry.tsx
+#: src/lib/inventory.ts
+#: src/screens/StockPanel.tsx
+#: src/screens/StockPanel.tsx
+msgid "Nhập kho"
+msgstr "Receive stock"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Nhập số liệu"
+msgstr "Enter data"
+
+#: src/lib/countLogic.ts
+msgid "Nhập thêm / dặm"
+msgstr "Add / replace stock"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Nhập tiếp"
+msgstr "Continue entering"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Nhập vào kho"
+msgstr "Add to stock"
+
 #: src/screens/LogsScreen.tsx
 msgid "Nhật ký"
 msgstr "Logbook"
@@ -2175,39 +5049,121 @@ msgstr "Logbook"
 msgid "Nhớ tài khoản"
 msgstr "Remember account"
 
+#: src/screens/StockPanel.tsx
+msgid "Nhóm"
+msgstr "Group"
+
 #: src/components/Drawer.tsx
 msgid "Nhóm loại sản phẩm và các cấu hình mặc định"
 msgstr "Product groups and default settings"
+
+#: src/components/InvoiceScanner.tsx
+#: src/screens/StockPanel.tsx
+msgid "Nhóm vật tư"
+msgstr "Supply group"
+
+#: src/components/CustomersSection.tsx
+msgid "Nhu cầu thường mua"
+msgstr "Usual needs"
+
+#: src/lib/prep.ts
+msgid "Như hiện nay: bắt đầu sản xuất ngay, hoặc chờ ở trạng thái Chuẩn bị (lúc này chưa ghi việc được)."
+msgstr "As now: start production right away, or wait in \"Preparing\" (work cannot be logged yet)."
+
+#: src/components/MilestonePanels.tsx
+msgid "Nội dung nhắc"
+msgstr "Reminder text"
 
 #: src/screens/EditLogScreen.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Nội dung việc (bắt buộc)"
 msgstr "Work description (required)"
 
+#: src/lib/terms.ts
+#: src/lib/terms.ts
+msgid "Nơi mua con giống (trại giống, nhà cung cấp)"
+msgstr "Where the seed stock was bought (hatchery, supplier)"
+
 #: src/components/Drawer.tsx
 msgid "nông sản, giao thương, tin và giá"
 msgstr "produce, trade, news and prices"
+
+#: src/components/TimesheetEntry.tsx
+msgid "ô"
+msgstr "cells"
+
+#: src/components/TimesheetEntry.tsx
+msgid "ô chưa lưu"
+msgstr "unsaved cells"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Ô có nền xám đã có dữ liệu trong hệ thống nên khóa lại; muốn sửa hãy dùng Bảng công hoặc Nghỉ phép. Ô tô đỏ là ký hiệu sai hoặc chưa lưu được."
+msgstr "Grey cells already have data in the system and are locked; to change them use Timesheet or Leave. Red cells have invalid symbols or could not be saved."
 
 #: src/components/InstallGuide.tsx
 msgid "Ở cuối thanh địa chỉ, bấm vào biểu tượng \"Cài đặt\" (hình máy tính có mũi tên)."
 msgstr "At the end of the address bar, click the \"Install\" icon (a computer with an arrow)."
 
+#: src/components/TimesheetEntry.tsx
+msgid "ô nữa."
+msgstr "more cells."
+
+#: src/components/TimesheetEntry.tsx
+msgid "ô tô vàng cần xem kỹ."
+msgstr "yellow cells need a close look."
+
 #: src/lib/work.ts
 msgid "OFFLINE: Cần có mạng để {what}. Hãy kết nối mạng rồi thử lại."
 msgstr "OFFLINE: You need a connection to {what}. Reconnect and try again."
 
+#: src/lib/media.ts
+msgid "OFFLINE: Cần có mạng để chuyển ảnh. Hãy kết nối mạng rồi thử lại."
+msgstr "OFFLINE: A connection is needed to move photos. Reconnect and try again."
+
+#: src/lib/inventory.ts
+msgid "OFFLINE: Cần có mạng để thay đổi danh mục vật tư và kho."
+msgstr "OFFLINE: A connection is needed to change the supply catalog and warehouses."
+
+#: src/lib/media.ts
+msgid "OFFLINE: Cần có mạng để thêm ảnh. Hãy kết nối mạng rồi thử lại."
+msgstr "OFFLINE: A connection is needed to add photos. Reconnect and try again."
+
 #: src/lib/absences.ts
+#: src/lib/assets.ts
+#: src/lib/hr.ts
+#: src/lib/timesheets.ts
 msgid "OFFLINE: Cần có mạng để thực hiện. Hãy kết nối mạng rồi thử lại."
 msgstr "OFFLINE: You need a connection to do this. Reconnect and try again."
+
+#: src/lib/timesheetScan.ts
+msgid "OFFLINE: Đọc ảnh cần có mạng. Bạn vẫn nhập tay được."
+msgstr "OFFLINE: Reading photos needs a connection. You can still enter data manually."
+
+#: src/lib/invoiceScan.ts
+msgid "OFFLINE: Đọc nhãn cần có mạng. Bạn vẫn nhập tay được."
+msgstr "OFFLINE: Reading labels needs a connection. You can still enter data manually."
+
+#: src/lib/invoiceScan.ts
+msgid "OFFLINE: Đọc phiếu cần có mạng. Bạn vẫn nhập tay được."
+msgstr "OFFLINE: Reading receipts needs a connection. You can still enter data manually."
 
 #: src/lib/absences.ts
 msgid "Ốm"
 msgstr "Sick"
 
+#: src/components/HomeStats.tsx
+msgid "ổn"
+msgstr "OK"
+
+#: src/lib/prep.ts
+msgid "Phần còn lại của ô vẫn chạy vụ khác. Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được."
+msgstr "The rest of the plot still runs other seasons. The season stays \"Preparing\" but preparation work can be logged."
+
 #: src/components/HarvestSection.tsx
 msgid "Phần hỏng, chết, loại bỏ… đã tính trong khối lượng thu ở trên."
 msgstr "Spoiled, dead or discarded items are already included in the harvested weight above."
 
+#: src/components/AreaFilter.tsx
 #: src/components/AreaPick.tsx
 #: src/components/AreaPick.tsx
 #: src/components/AttendanceSection.tsx
@@ -2252,14 +5208,50 @@ msgstr "The record is on your phone and will be sent automatically when you are 
 msgid "Phiếu không bị xóa, chỉ được đánh dấu đã hủy và không khôi phục được."
 msgstr "The record is not deleted, only marked as cancelled, and cannot be restored."
 
+#: src/components/TimesheetsSection.tsx
+msgid "phút"
+msgstr "min"
+
+#: src/components/TimesheetEntry.tsx
+msgid "phút (đủ ca ="
+msgstr "min (full shift ="
+
+#: src/lib/milestoneLogic.ts
+#: src/lib/partners.ts
+#: src/lib/partners.ts
+msgid "Quá hạn"
+msgstr "Overdue"
+
+#: src/lib/roles.ts
+msgid "Quản lý"
+msgstr "Manager"
+
+#: src/lib/roles.ts
+msgid "Quản lý HTX"
+msgstr "Cooperative manager"
+
 #: src/components/HomeLinks.tsx
 msgid "Quản lý và kết nối cơ sở theo luồng công việc:"
 msgstr "Manage and connect your farm step by step:"
+
+#: src/components/CycleProgressList.tsx
+msgid "Quản lý vụ"
+msgstr "Season manager"
 
 #: src/components/Drawer.tsx
 msgid "Quản trị nền tảng"
 msgstr "Platform admin"
 
+#: src/lib/assets.ts
+msgid "Quạt, làm mát"
+msgstr "Fans, cooling"
+
+#: src/components/CustomersSection.tsx
+#: src/components/PurchaseEntry.tsx
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockTake.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Quay lại"
 msgstr "Back"
@@ -2267,6 +5259,23 @@ msgstr "Back"
 #: src/screens/AuthScreen.tsx
 msgid "Quay lại đăng nhập"
 msgstr "Back to sign in"
+
+#: src/components/StockTake.tsx
+msgid "Quay lại danh sách"
+msgstr "Back to list"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Quay lại danh sách bảng"
+msgstr "Back to sheet list"
+
+#: src/components/StockTake.tsx
+#: src/components/StockTake.tsx
+msgid "Quay lại Kho"
+msgstr "Back to Stock"
+
+#: src/screens/StockPanel.tsx
+msgid "Quay lại tồn kho"
+msgstr "Back to stock balances"
 
 #: src/screens/AuthScreen.tsx
 msgid "Quên mật khẩu"
@@ -2280,14 +5289,56 @@ msgstr "Forgot password (household / cooperative owner)"
 msgid "Quên ra ca"
 msgstr "Forgot to clock out"
 
+#: src/components/HomeStats.tsx
+msgid "Quên Ra ca"
+msgstr "Forgot to clock out"
+
+#: src/components/CycleProgressList.tsx
+msgid "Sản lượng so với dự kiến"
+msgstr "Yield vs expected"
+
 #: src/components/HomeLinks.tsx
 #: src/lib/labels.ts
 msgid "Sản xuất"
 msgstr "Production"
 
+#: src/lib/milestoneLogic.ts
+msgid "Sắp đến"
+msgstr "Upcoming"
+
+#: src/lib/partners.ts
+#: src/lib/partners.ts
+msgid "Sắp đến hạn"
+msgstr "Due soon"
+
+#: src/components/HomeStats.tsx
+#: src/screens/StockPanel.tsx
+msgid "Sắp hết"
+msgstr "Running low"
+
+#: src/screens/StockPanel.tsx
+msgid "Sắp hết ("
+msgstr "Running low ("
+
 #: src/components/HrReminders.tsx
 msgid "sắp hết hạn"
 msgstr "expiring soon"
+
+#: src/components/HomeStats.tsx
+msgid "sắp hết hoặc tồn âm"
+msgstr "running low or negative"
+
+#: src/components/HomeStats.tsx
+msgid "sau hao hụt"
+msgstr "after losses"
+
+#: src/components/MilestonePanels.tsx
+msgid "Sau ngày bắt đầu vụ"
+msgstr "After the season start date"
+
+#: src/lib/fieldsLogic.ts
+msgid "Số"
+msgstr "Number"
 
 #: src/components/HarvestSection.tsx
 msgid "Số {unitName} phải là số nguyên lớn hơn 0."
@@ -2296,6 +5347,11 @@ msgstr "The number of {unitName} must be a whole number greater than 0."
 #: src/components/Drawer.tsx
 msgid "Số bản ghi chưa gửi lên máy chủ: {waiting}. Đăng xuất bây giờ có thể làm mất chúng."
 msgstr "Records not yet sent to the server: {waiting}. Signing out now may lose them."
+
+#. placeholder {0}: l.material_name
+#: src/components/StockTake.tsx
+msgid "Số đếm của \"{0}\" chưa đúng: nhập số không âm."
+msgstr "The count for \"{0}\" is invalid: enter a number, 0 or more."
 
 #: src/components/PhoneSignupForm.tsx
 msgid "Số điện thoại (có dùng Zalo)"
@@ -2309,14 +5365,77 @@ msgstr "Phone number accounts: staff, ask your farm owner to reset the password;
 msgid "Số dòng mỗi trang"
 msgstr "Rows per page"
 
+#: src/lib/timesheetCells.ts
+msgid "Số giờ không quá {MAX_HOURS}."
+msgstr "Hours must not exceed {MAX_HOURS}."
+
+#: src/lib/timesheetCells.ts
+msgid "Số giờ phải lớn hơn 0 (không làm việc thì ghi –)."
+msgstr "Hours must be greater than 0 (if no work was done, type –)."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Số hóa đơn"
+msgstr "Invoice number"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Số hóa đơn / mã đơn"
+msgstr "Invoice number / order code"
+
+#: src/screens/StockPanel.tsx
+msgid "Sổ kho:"
+msgstr "Stock ledger:"
+
+#: src/components/StockEntry.tsx
+msgid "Số lô (không bắt buộc)"
+msgstr "Lot number (optional)"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Số lô (nếu có)"
+msgstr "Lot number (if any)"
+
+#: src/lib/terms.ts
+msgid "Số lô giống"
+msgstr "Seed lot number"
+
+#: src/components/MilestonePanels.tsx
+msgid "Số lô vaccine (không bắt buộc)"
+msgstr "Vaccine lot number (optional)"
+
+#: src/components/InvoiceScanner.tsx
+#: src/components/PurchaseEntry.tsx
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockReports.tsx
 #: src/screens/LogActivityScreen.tsx
 #: src/screens/LogActivityScreen.tsx
+#: src/screens/StockPanel.tsx
+#: src/screens/StockPanel.tsx
 msgid "Số lượng"
 msgstr "Quantity"
 
 #: src/components/HarvestSection.tsx
 msgid "Số lượng ("
 msgstr "Count ("
+
+#: src/lib/partners.ts
+msgid "Số lượng bán phải là số lớn hơn 0 (kg)."
+msgstr "The quantity sold must be a number greater than 0 (kg)."
+
+#: src/lib/partners.ts
+msgid "Số lượng ở mỗi dòng phải lớn hơn 0."
+msgstr "The quantity on each line must be greater than 0."
+
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+msgid "Số lượng phải là số lớn hơn 0."
+msgstr "The quantity must be a number greater than 0."
+
+#: src/components/StockMove.tsx
+msgid "Số lượng trả"
+msgstr "Quantity returned"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Số lượng vật tư đã dùng phải là số lớn hơn 0."
@@ -2330,9 +5449,17 @@ msgstr "Quantity:"
 msgid "Số này dùng để đăng nhập và để chúng tôi xác nhận qua Zalo."
 msgstr "This number is used to sign in and for us to verify you on Zalo."
 
+#: src/components/MilestonePanels.tsx
+msgid "Số ngày"
+msgstr "Number of days"
+
 #: src/components/AbsenceSummary.tsx
 msgid "số ngày nghỉ mỗi tháng"
 msgstr "days off each month"
+
+#: src/components/MilestonePanels.tsx
+msgid "Số ngày phải là số nguyên, không âm."
+msgstr "The number of days must be a whole number, not negative."
 
 #: src/components/AbsenceSummary.tsx
 msgid "Số ngày phép năm mỗi người"
@@ -2342,19 +5469,103 @@ msgstr "Annual leave days per person"
 msgid "Số ngày phép năm từ 0 đến 60."
 msgstr "Annual leave days must be from 0 to 60."
 
+#: src/components/AddressFields.tsx
+msgid "Số nhà, đường, thôn/ấp…"
+msgstr "House number, street, hamlet…"
+
+#: src/components/StockTake.tsx
+msgid "Sổ sách:"
+msgstr "Book:"
+
+#: src/lib/partners.ts
+msgid "Số tiền bán phải là số đồng không có phần lẻ."
+msgstr "The sale amount must be a whole number of VND."
+
+#: src/lib/partners.ts
+msgid "Số tiền đã thu không được lớn hơn số tiền bán."
+msgstr "The amount collected cannot exceed the sale amount."
+
+#: src/lib/partners.ts
+msgid "Số tiền đã thu phải là số tiền không âm."
+msgstr "The amount collected must be 0 or more."
+
+#: src/lib/partners.ts
+msgid "Số tiền đã trả không được lớn hơn tổng tiền hóa đơn."
+msgstr "The amount paid cannot exceed the invoice total."
+
+#: src/lib/partners.ts
+msgid "Số tiền đã trả phải là số tiền không âm."
+msgstr "The amount paid must be 0 or more."
+
+#: src/lib/partners.ts
+msgid "Số tiền trả phải là số tiền (đồng) lớn hơn 0, không có phần lẻ."
+msgstr "The payment must be a whole amount in VND greater than 0."
+
+#. placeholder {0}: maxAmount.toLocaleString(dateLocale())
+#: src/lib/partners.ts
+msgid "Số tiền trả vượt số còn nợ (còn nợ {0} đ)."
+msgstr "The payment exceeds the balance owed (still owing {0} VND)."
+
 #: src/components/AbsencesSection.tsx
 #: src/components/HarvestSection.tsx
 #: src/screens/LogsScreen.tsx
 msgid "Sửa"
 msgstr "Edit"
 
+#. placeholder {0}: p.name
+#: src/components/PartnersSection.tsx
+msgid "Sửa {0}"
+msgstr "Edit {0}"
+
+#: src/lib/production.ts
+msgid "sửa công đoạn"
+msgstr "edit a phase"
+
 #: src/components/AbsencesSection.tsx
 msgid "Sửa ghi nghỉ"
 msgstr "Edit absence"
 
+#: src/lib/production.ts
+msgid "sửa giai đoạn"
+msgstr "edit a stage"
+
+#: src/lib/partners.ts
+msgid "sửa hóa đơn"
+msgstr "edit an invoice"
+
+#: src/lib/partners.ts
+msgid "sửa khách hàng"
+msgstr "edit a customer"
+
+#. placeholder {0}: editRow.name
+#: src/components/CustomersSection.tsx
+msgid "Sửa khách hàng: {0}"
+msgstr "Edit customer: {0}"
+
+#: src/lib/partners.ts
+msgid "sửa lần bán"
+msgstr "edit a sale"
+
+#: src/lib/partners.ts
+msgid "sửa nhà cung ứng"
+msgstr "edit a supplier"
+
+#. placeholder {0}: editRow.name
+#: src/components/PartnersSection.tsx
+msgid "Sửa nhà cung ứng: {0}"
+msgstr "Edit supplier: {0}"
+
+#: src/lib/production.ts
+msgid "sửa nhật ký"
+msgstr "edit a log"
+
 #: src/screens/EditLogScreen.tsx
 msgid "Sửa nhật ký"
 msgstr "Edit log"
+
+#: src/lib/production.ts
+msgid "sửa phân khu"
+msgstr "edit a zone"
 
 #: src/lib/harvest.ts
 msgid "sửa phiếu thu hoạch"
@@ -2364,11 +5575,45 @@ msgstr "edit a harvest record"
 msgid "Sửa phiếu thu hoạch"
 msgstr "Edit harvest record"
 
+#: src/lib/production.ts
+msgid "sửa vụ"
+msgstr "edit a season"
+
 #: src/lib/labels.ts
 msgid "Sức khỏe & phòng bệnh"
 msgstr "Health & disease prevention"
 
+#: src/components/StockTake.tsx
 #: src/lib/absences.ts
+#: src/lib/assets.ts
+#: src/lib/cycleStats.ts
+#: src/lib/hr.ts
+#: src/lib/inventory.ts
+#: src/lib/media.ts
+#: src/lib/media.ts
+#: src/lib/milestones.ts
+#: src/lib/partners.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/production.ts
+#: src/lib/summary.ts
+#: src/lib/teams.ts
+#: src/lib/timesheets.ts
 #: src/lib/work.ts
 msgid "Supabase chưa được cấu hình"
 msgstr "Supabase is not configured"
@@ -2383,6 +5628,10 @@ msgstr "Account"
 msgid "Tài khoản đã tạo thành công, mã giới thiệu chưa đúng trong hệ thống."
 msgstr "Your account was created, but the referral code was not found in the system."
 
+#: src/components/PartnersSection.tsx
+msgid "Tài khoản ngân hàng (nếu có)"
+msgstr "Bank account (if any)"
+
 #: src/screens/LogsScreen.tsx
 msgid "Tải nhật ký cũ hơn từ máy chủ"
 msgstr "Load older logs from the server"
@@ -2390,6 +5639,10 @@ msgstr "Load older logs from the server"
 #: src/components/AssetReminders.tsx
 msgid "tài sản đến hạn bảo dưỡng:"
 msgstr "assets due for maintenance:"
+
+#: src/components/ShowMore.tsx
+msgid "Tải thêm khoản cũ hơn"
+msgstr "Load older items"
 
 #: src/components/CycleSelect.tsx
 #: src/lib/labels.ts
@@ -2400,6 +5653,19 @@ msgstr "Paused"
 msgid "Tạm ứng"
 msgstr "Advance"
 
+#: src/lib/weekly.ts
+#: src/screens/StockPanel.tsx
+msgid "tăng"
+msgstr "up"
+
+#: src/components/StockEntry.tsx
+msgid "Tăng tồn (kiểm kê thấy nhiều hơn)"
+msgstr "Increase stock (count shows more)"
+
+#: src/components/TimesheetsSection.tsx
+msgid "Tạo bảng chấm công"
+msgstr "Create timesheet"
+
 #: src/lib/work.ts
 msgid "tạo kỳ trả công"
 msgstr "create a pay period"
@@ -2409,12 +5675,19 @@ msgstr "create a pay period"
 msgid "Tạo tài khoản"
 msgstr "Create account"
 
+#: src/lib/production.ts
+#: src/lib/production.ts
+msgid "tạo vụ"
+msgstr "create a season"
+
 #: src/screens/HomeTab.tsx
 msgid "Tạo vụ đầu tiên"
 msgstr "Create your first season"
 
 #: src/components/AbsencesSection.tsx
 #: src/components/AttendanceList.tsx
+#: src/screens/StockPanel.tsx
+#: src/screens/StockPanel.tsx
 msgid "Tất cả"
 msgstr "All"
 
@@ -2423,10 +5696,26 @@ msgstr "All"
 msgid "Tất cả ({0})"
 msgstr "All ({0})"
 
+#: src/components/StockReports.tsx
+#: src/screens/StockPanel.tsx
+#: src/screens/StockPanel.tsx
+#: src/screens/StockPanel.tsx
+msgid "Tất cả kho"
+msgstr "All warehouses"
+
+#: src/components/FindWebSuppliers.tsx
+msgid "Tất cả khu vực"
+msgstr "All areas"
+
 #: src/screens/LogsScreen.tsx
 msgid "Tất cả loại việc"
 msgstr "All work types"
 
+#: src/screens/StockPanel.tsx
+msgid "Tất cả nhóm"
+msgstr "All groups"
+
+#: src/components/AreaFilter.tsx
 #: src/components/AreaPick.tsx
 #: src/components/AreaPick.tsx
 #: src/components/AttendanceSection.tsx
@@ -2440,6 +5729,11 @@ msgstr "All zones"
 msgid "Tất cả vụ"
 msgstr "All seasons"
 
+#: src/components/CustomersSection.tsx
+#: src/components/PartnersSection.tsx
+msgid "Tên"
+msgstr "Name"
+
 #: src/components/PhoneSignupForm.tsx
 msgid "Tên cơ sở"
 msgstr "Farm name"
@@ -2448,9 +5742,17 @@ msgstr "Farm name"
 msgid "Tên cơ sở cần ít nhất 2 ký tự."
 msgstr "The farm name needs at least 2 characters."
 
+#: src/components/StockTake.tsx
+msgid "Tên hoặc số lô"
+msgstr "Name or lot number"
+
 #: src/components/CatalogPick.tsx
 msgid "Tên khác"
 msgstr "Other name"
+
+#: src/components/CustomersSection.tsx
+msgid "Tên khách hàng"
+msgstr "Customer name"
 
 #: src/components/CatalogPick.tsx
 msgid "Tên mục khác"
@@ -2460,9 +5762,33 @@ msgstr "Other item name"
 msgid "Tên này đã có trong danh sách. Hãy dùng tên khác."
 msgstr "This name is already in the list. Use a different name."
 
+#: src/components/PartnersSection.tsx
+msgid "Tên nhà cung ứng"
+msgstr "Supplier name"
+
+#: src/lib/partners.ts
+msgid "Tên nhà cung ứng cần ít nhất 2 ký tự."
+msgstr "The supplier name needs at least 2 characters."
+
+#: src/components/InvoiceScanner.tsx
+msgid "Tên vật tư mới"
+msgstr "New supply name"
+
+#: src/screens/StockPanel.tsx
+msgid "Tên, nhà sản xuất…"
+msgstr "Name, manufacturer…"
+
 #: src/components/AbsencesSection.tsx
 msgid "Tháng"
 msgstr "Month"
+
+#: src/components/TimesheetEntry.tsx
+msgid "Tháng này đã hết lượt đọc ảnh theo gói. Bạn vẫn nhập tay được."
+msgstr "This month's photo reads under your plan are used up. You can still enter data manually."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Thành tiền:"
+msgstr "Amount:"
 
 #: src/components/CatalogPick.tsx
 msgid "Thêm"
@@ -2472,7 +5798,24 @@ msgstr "Add"
 msgid "thêm đơn giá"
 msgstr "add a pay rate"
 
+#: src/components/StockTake.tsx
+msgid "Thêm dòng"
+msgstr "Add line"
+
+#: src/lib/production.ts
+msgid "thêm ghi chú"
+msgstr "add a note"
+
+#: src/lib/production.ts
+msgid "thêm giai đoạn"
+msgstr "add a stage"
+
+#: src/lib/partners.ts
+msgid "thêm khách hàng"
+msgstr "add a customer"
+
 #: src/components/CatalogPick.tsx
+#: src/components/CustomersSection.tsx
 msgid "Thêm khách hàng"
 msgstr "Add customer"
 
@@ -2480,13 +5823,38 @@ msgstr "Add customer"
 msgid "thêm khoản cộng/trừ"
 msgstr "add an adjustment"
 
+#: src/lib/milestones.ts
+#: src/lib/milestones.ts
+msgid "thêm mốc an toàn"
+msgstr "add a safety milestone"
+
+#: src/lib/partners.ts
+#: src/lib/partners.ts
+msgid "thêm nhà cung ứng"
+msgstr "add a supplier"
+
 #: src/components/CatalogPick.tsx
+#: src/components/InvoiceScanner.tsx
+#: src/components/PartnersSection.tsx
+#: src/components/PurchaseEntry.tsx
 msgid "Thêm nhà cung ứng"
 msgstr "Add supplier"
+
+#: src/lib/production.ts
+msgid "thêm phân khu"
+msgstr "add a zone"
 
 #: src/screens/HomeTab.tsx
 msgid "Thêm phân khu đầu tiên"
 msgstr "Add your first zone"
+
+#: src/components/FindWebSuppliers.tsx
+msgid "Thêm vào nhà cung ứng"
+msgstr "Add to suppliers"
+
+#: src/components/StockTake.tsx
+msgid "Thêm vật tư chưa có trong kho này"
+msgstr "Add a supply not yet in this warehouse"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Theo diện tích của từng vụ"
@@ -2499,6 +5867,11 @@ msgstr "Monitoring & measurement"
 #: src/components/AbsenceSummary.tsx
 msgid "Theo từng tháng"
 msgstr "By month"
+
+#. placeholder {0}: formatQty(-diff)
+#: src/components/StockTake.tsx
+msgid "Thiếu {0}"
+msgstr "Short {0}"
 
 #: src/screens/EditLogScreen.tsx
 #: src/screens/LogActivityScreen.tsx
@@ -2523,6 +5896,11 @@ msgstr "The work time cannot be in the future. Choose today or the day it was do
 msgid "Thời điểm thu"
 msgstr "Harvest time"
 
+#: src/lib/hr.ts
+#: src/lib/hr.ts
+msgid "Thời vụ"
+msgstr "Seasonal"
+
 #: src/components/Drawer.tsx
 msgid "Thông tin cá nhân, mã QR, giấy phép"
 msgstr "Personal details, QR code, licences"
@@ -2535,9 +5913,34 @@ msgstr "Contact information"
 msgid "Thử gửi lại"
 msgstr "Try sending again"
 
+#: src/lib/permissions.ts
+msgid "Thu hoạch"
+msgstr "Harvest"
+
+#: src/lib/weekly.ts
+msgid "Thu hoạch (sau hao hụt)"
+msgstr "Harvest (after losses)"
+
 #: src/lib/labels.ts
 msgid "Thu hoạch / xuất bán"
 msgstr "Harvest / sale"
+
+#: src/components/HomeStats.tsx
+msgid "Thu hoạch tháng này"
+msgstr "Harvest this month"
+
+#: src/lib/hr.ts
+msgid "Thử việc"
+msgstr "Probation"
+
+#. placeholder {0}: formatQty(diff)
+#: src/components/StockTake.tsx
+msgid "Thừa {0}"
+msgstr "Over {0}"
+
+#: src/components/HomePay.tsx
+msgid "Thực nhận"
+msgstr "Net pay"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Thuộc công đoạn"
@@ -2547,9 +5950,41 @@ msgstr "Stage"
 msgid "Thưởng"
 msgstr "Bonus"
 
+#: src/lib/hr.ts
+msgid "Thường xuyên"
+msgstr "Permanent"
+
+#: src/lib/kindStyle.ts
+msgid "Thủy sản"
+msgstr "Aquaculture"
+
+#: src/lib/permissions.ts
+msgid "Tiền công (lương, giá công, thưởng/phạt)"
+msgstr "Wages (salary, rates, bonuses/penalties)"
+
+#: src/components/CycleProgressList.tsx
+msgid "Tiến độ các vụ đang chạy"
+msgstr "Progress of running seasons"
+
+#: src/components/CycleProgressList.tsx
+msgid "Tiến độ vụ"
+msgstr "Season progress"
+
 #: src/lib/work.ts
 msgid "Tiền khoán"
 msgstr "Piecework pay"
+
+#: src/components/CustomerOrders.tsx
+msgid "tiền mặt"
+msgstr "cash"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Tiền mặt"
+msgstr "Cash"
+
+#: src/components/StockTake.tsx
+msgid "Tiếp tục đếm"
+msgstr "Continue counting"
 
 #. placeholder {0}: remembered.title
 #: src/components/LogTargetPicker.tsx
@@ -2559,6 +5994,19 @@ msgstr "Continue: {0}"
 #: src/components/AttendanceList.tsx
 msgid "Tìm"
 msgstr "Search"
+
+#: src/components/FindWebSuppliers.tsx
+msgid "Tìm gian hàng"
+msgstr "Search shops"
+
+#: src/components/FindWebSuppliers.tsx
+msgid "Tìm theo tên gian hàng hoặc vật tư"
+msgstr "Search by shop or supply name"
+
+#: src/components/StockTake.tsx
+#: src/screens/StockPanel.tsx
+msgid "Tìm vật tư"
+msgstr "Search supplies"
 
 #: src/components/LogWorkPicker.tsx
 msgid "Tìm việc"
@@ -2584,17 +6032,136 @@ msgstr "Counted in calendar days (including Saturdays and Sundays); half a day c
 msgid "tính tiền công"
 msgstr "calculate pay"
 
+#: src/components/MilestonePanels.tsx
+msgid "Tính từ"
+msgstr "Counted from"
+
+#: src/components/AddressFields.tsx
+#: src/components/FindWebSuppliers.tsx
+msgid "Tỉnh/thành phố"
+msgstr "Province/city"
+
+#. placeholder {0}: g.team
+#: src/components/TimesheetsSection.tsx
+msgid "Tổ {0}"
+msgstr "Team {0}"
+
+#: src/components/HomeStats.tsx
+msgid "Tôi cần làm"
+msgstr "My to-do"
+
+#: src/components/StockMove.tsx
+msgid "Tối đa"
+msgstr "Maximum"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Tối đa {MAX_PHOTOS} ảnh cho một phiếu."
+msgstr "At most {MAX_PHOTOS} photos per receipt."
+
+#: src/components/InvoiceScanner.tsx
+msgid "Tôi đồng ý gửi ảnh phiếu tới dịch vụ đọc ảnh (Cloudflare) để lấy chữ. Ảnh chỉ gửi khi bấm \"Đọc phiếu\" và <0>không được lưu lại</0>."
+msgstr "I agree to send the receipt photo to the image reading service (Cloudflare) to extract text. Photos are sent only when I press \"Read receipt\" and are <0>not stored</0>."
+
+#: src/screens/StockPanel.tsx
+msgid "Tồn"
+msgstr "Stock"
+
+#: src/components/HomeStats.tsx
+msgid "Tồn âm"
+msgstr "Negative stock"
+
+#: src/screens/StockPanel.tsx
+msgid "Tồn âm — cần kiểm kê"
+msgstr "Negative stock — stocktake needed"
+
+#: src/screens/StockPanel.tsx
+msgid "Tồn âm ("
+msgstr "Negative stock ("
+
+#: src/lib/countLogic.ts
+msgid "Tồn đầu"
+msgstr "Opening"
+
+#: src/components/StockMove.tsx
+msgid "Tồn hiện có ở kho đi:"
+msgstr "Current stock in the source warehouse:"
+
+#: src/components/StockMove.tsx
+msgid "Tồn hiện có ở kho này:"
+msgstr "Current stock in this warehouse:"
+
+#: src/screens/StockPanel.tsx
+msgid "Tồn hiện tại"
+msgstr "Current stock"
+
+#: src/screens/StockPanel.tsx
+msgid "Tồn kho"
+msgstr "Stock"
+
+#: src/screens/StockPanel.tsx
+msgid "Tồn sau"
+msgstr "Balance after"
+
+#: src/screens/StockPanel.tsx
+msgid "Tồn sau tính theo số liệu trên máy chủ; giao dịch đang chờ gửi chưa nằm trong sổ."
+msgstr "The balance is calculated from server data; pending transactions are not yet in the ledger."
+
 #: src/components/AbsenceSummary.tsx
+#: src/components/TimesheetEntry.tsx
 msgid "Tổng"
 msgstr "Total"
+
+#: src/components/StockReports.tsx
+msgid "Tổng giá vốn"
+msgstr "Total cost of goods"
 
 #: src/components/AbsenceSummary.tsx
 msgid "Tổng hợp nghỉ năm {year}"
 msgstr "Leave summary for {year}"
 
+#: src/lib/permissions.ts
+msgid "Tổng kết vụ"
+msgstr "Season summary"
+
 #: src/components/HarvestSection.tsx
 msgid "Tổng thu"
 msgstr "Total harvest"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Tổng tiền hóa đơn (đ)"
+msgstr "Invoice total (VND)"
+
+#: src/lib/partners.ts
+msgid "Tổng tiền phải là số tiền (đồng), không có phần lẻ."
+msgstr "The total must be a whole amount in VND."
+
+#: src/components/InvoiceScanner.tsx
+msgid "Tổng tiền trên phiếu (đ)"
+msgstr "Total on the receipt (VND)"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Tổng tiền:"
+msgstr "Total:"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Trả đủ"
+msgstr "Paid in full"
+
+#: src/components/StockMove.tsx
+msgid "Trả vào kho"
+msgstr "Return to stock"
+
+#: src/lib/inventory.ts
+msgid "trả vật tư về kho"
+msgstr "return supplies to stock"
+
+#: src/components/StockMove.tsx
+msgid "Trả vật tư về kho"
+msgstr "Return supplies to stock"
+
+#: src/screens/StockPanel.tsx
+msgid "Trả về kho"
+msgstr "Return to stock"
 
 #: src/lib/labels.ts
 msgid "Trang chủ"
@@ -2604,13 +6171,41 @@ msgstr "Home"
 msgid "Trạng thái"
 msgstr "Status"
 
+#. placeholder {0}: p.delay
+#: src/components/CycleProgressList.tsx
+#: src/components/CycleProgressList.tsx
+msgid "Trễ {0} ngày"
+msgstr "{0} days late"
+
 #: src/components/TodayPlan.tsx
 msgid "Trễ {late} ngày"
 msgstr "{late, plural, one {# day late} other {# days late}}"
 
+#: src/components/InvoiceScanner.tsx
+msgid "Trên phiếu:"
+msgstr "On the receipt:"
+
+#: src/components/HomeStats.tsx
+msgid "trong 30 ngày"
+msgstr "within 30 days"
+
 #: src/lib/absences.ts
 msgid "Trực tiếp"
 msgstr "In person"
+
+#: src/components/MilestonePanels.tsx
+msgid "Trước ngày thu / xuất dự kiến"
+msgstr "Before the expected harvest / sale date"
+
+#. placeholder {0}: f.label
+#: src/lib/fieldsLogic.ts
+msgid "Trường \"{0}\" cần có ít nhất một lựa chọn."
+msgstr "Field \"{0}\" needs at least one option."
+
+#. placeholder {0}: f.label
+#: src/lib/fieldsLogic.ts
+msgid "Trường \"{0}\": giá trị nhỏ nhất lớn hơn giá trị lớn nhất."
+msgstr "Field \"{0}\": the minimum is greater than the maximum."
 
 #: src/components/AttendanceList.tsx
 msgid "Từ chối"
@@ -2624,14 +6219,55 @@ msgstr "reject attendance"
 msgid "Từ chối công"
 msgstr "Reject attendance"
 
+#: src/components/LotPicker.tsx
+msgid "Tự chọn lô hạn gần nhất"
+msgstr "Pick the nearest-expiry lot automatically"
+
+#: src/components/PurchaseEntry.tsx
+msgid "Tự cộng lại từ các dòng"
+msgstr "Recalculate from lines"
+
 #: src/components/AttendanceSection.tsx
 msgid "Từ giờ"
 msgstr "From time"
 
+#: src/components/StockMove.tsx
+msgid "Từ kho"
+msgstr "From warehouse"
+
 #: src/components/AttendanceList.tsx
+#: src/components/StockReports.tsx
+#: src/components/TimesheetsSection.tsx
 #: src/screens/LogsScreen.tsx
+#: src/screens/StockPanel.tsx
 msgid "Từ ngày"
 msgstr "From date"
+
+#: src/components/StockMove.tsx
+msgid "Từ vụ"
+msgstr "From season"
+
+#: src/lib/weekly.ts
+msgid "Tuần trước chưa có"
+msgstr "None last week"
+
+#: src/components/HomeWeekly.tsx
+msgid "Tuần vừa qua ·"
+msgstr "Last week ·"
+
+#: src/components/RowMenu.tsx
+msgid "Tuỳ chọn"
+msgstr "Options"
+
+#: src/components/RowMenu.tsx
+#: src/components/RowMenu.tsx
+msgid "Tùy chọn: {label}"
+msgstr "Option: {label}"
+
+#. placeholder {0}: s.heads_left ?? 0
+#: src/lib/cycleStatsLogic.ts
+msgid "ước theo cân trung bình đã xuất, còn {0} con chưa xuất"
+msgstr "estimated from the average weight sold, {0} animals not yet sold"
 
 #. placeholder {0}: hhmm(x.proposed.started_at)
 #: src/components/AttendanceList.tsx
@@ -2646,10 +6282,27 @@ msgstr "clocking in"
 msgid "Vào ca"
 msgstr "Clock-in"
 
+#: src/lib/kindStyle.ts
+msgid "Vật nuôi"
+msgstr "Livestock"
+
+#: src/components/PurchaseEntry.tsx
+#: src/components/StockEntry.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/components/StockReports.tsx
+#: src/components/StockReports.tsx
 #: src/screens/LogActivityScreen.tsx
 #: src/screens/LogActivityScreen.tsx
+#: src/screens/StockPanel.tsx
+#: src/screens/StockPanel.tsx
 msgid "Vật tư"
 msgstr "Supply"
+
+#: src/components/HomeStats.tsx
+msgid "Vật tư cần chú ý"
+msgstr "Supplies needing attention"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Vật tư đã dùng (không bắt buộc)"
@@ -2659,17 +6312,45 @@ msgstr "Supplies used (optional)"
 msgid "Vật tư đã dùng:"
 msgstr "Supplies used:"
 
+#: src/components/StockReports.tsx
+msgid "Vật tư dùng theo vụ"
+msgstr "Supplies used by season"
+
+#: src/components/HomeStats.tsx
+msgid "vật tư khác (xem ở Sản xuất → Kho)."
+msgstr "other supplies (see Production → Stock)."
+
+#: src/components/PurchaseEntry.tsx
+msgid "Vật tư nhập kho"
+msgstr "Supplies received"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Vật tư trong kho"
+msgstr "Supplies in stock"
+
 #: src/lib/labels.ts
 msgid "Vệ sinh & môi trường"
 msgstr "Hygiene & environment"
+
+#: src/components/InvoiceScanner.tsx
+msgid "Ví dụ 25 (bao 25 {stock})"
+msgstr "E.g. 25 (a 25 {stock} bag)"
 
 #: src/components/VoiceNote.tsx
 msgid "Ví dụ: Bón 20 ký NPK cho vụ dưa lưới"
 msgstr "Example: Applied 20 kg of NPK to the melon crop"
 
+#: src/lib/terms.ts
+msgid "Ví dụ: Cá tra, tôm thẻ chân trắng"
+msgstr "E.g. pangasius, whiteleg shrimp"
+
 #: src/components/CatalogPick.tsx
 msgid "Ví dụ: Cám heo vỗ béo"
 msgstr "Example: Pig finishing feed"
+
+#: src/components/CustomersSection.tsx
+msgid "Ví dụ: Chị Lan (chợ đầu mối)"
+msgstr "E.g. Ms Lan (wholesale market)"
 
 #: src/components/AbsencesSection.tsx
 msgid "Ví dụ: con ốm, đám cưới người nhà"
@@ -2679,27 +6360,64 @@ msgstr "Example: sick child, family wedding"
 msgid "Ví dụ: đã kiểm tra dư lượng, đạt yêu cầu"
 msgstr "Example: residue tested, meets requirements"
 
+#: src/components/LotPicker.tsx
+msgid "Ví dụ: đã kiểm tra, còn dùng được"
+msgstr "E.g. checked, still usable"
+
+#: src/components/PartnersSection.tsx
+msgid "Ví dụ: Đại lý vật tư An Phát"
+msgstr "E.g. An Phat supply shop"
+
 #: src/components/PhoneSignupForm.tsx
 #: src/screens/AuthScreen.tsx
 msgid "Ví dụ: DL-HUNG"
 msgstr "Example: DL-HUNG"
 
+#: src/components/TimesheetsSection.tsx
+msgid "Ví dụ: Đợt thu hoạch tuần 2"
+msgstr "E.g. week 2 harvest"
+
+#: src/lib/terms.ts
+msgid "Ví dụ: Dưa lưới Kim Cô Nương"
+msgstr "E.g. Kim Co Nuong cantaloupe"
+
 #: src/screens/LogsScreen.tsx
 msgid "Ví dụ: ghi nhầm vụ"
 msgstr "Example: logged under the wrong season"
+
+#: src/components/StockTake.tsx
+msgid "Ví dụ: hao hụt, rơi vãi, quên ghi xuất"
+msgstr "E.g. loss, spillage, forgot to record an issue"
+
+#: src/lib/terms.ts
+msgid "Ví dụ: Heo thịt 3 máu (Duroc × Landrace × Yorkshire)"
+msgstr "E.g. three-way cross finishing pigs (Duroc × Landrace × Yorkshire)"
+
+#: src/components/StockTake.tsx
+msgid "Ví dụ: Kiểm cuối tháng 11"
+msgstr "E.g. end of November count"
 
 #: src/components/HarvestSection.tsx
 msgid "Ví dụ: nhập nhầm số lượng"
 msgstr "Example: entered the wrong quantity"
 
+#: src/components/FindWebSuppliers.tsx
+msgid "Ví dụ: phân NPK, chế phẩm sinh học"
+msgstr "E.g. NPK fertilizer, bio products"
+
 #: src/components/AttendanceList.tsx
 msgid "Ví dụ: quên bấm Ra ca"
 msgstr "Example: forgot to clock out"
+
+#: src/components/MilestonePanels.tsx
+msgid "Ví dụ: Tiêm vaccine lần 1, Ngưng bón phân"
+msgstr "E.g. first vaccination, stop fertilizing"
 
 #: src/components/PhoneSignupForm.tsx
 msgid "Ví dụ: Vườn nhà Lan"
 msgstr "Example: Lan's Garden"
 
+#: src/components/CycleProgressList.tsx
 #: src/components/TodayPlan.tsx
 msgid "việc"
 msgstr "tasks"
@@ -2718,8 +6436,20 @@ msgstr "Pending items from the website"
 msgid "Việc của cơ sở"
 msgstr "Farm's own work"
 
+#: src/lib/weekly.ts
+msgid "Việc đã ghi"
+msgstr "Work logged"
+
 #: src/screens/HomeTab.tsx
 msgid "Việc đã ghi hôm nay"
+msgstr "Work logged today"
+
+#: src/components/HomeWeekly.tsx
+msgid "Việc đã ghi tuần"
+msgstr "Work logged this week"
+
+#: src/components/HomeStats.tsx
+msgid "Việc ghi hôm nay"
 msgstr "Work logged today"
 
 #: src/lib/absences.ts
@@ -2730,6 +6460,14 @@ msgstr "Family matters"
 msgid "Việc này làm chung cho vụ khác trong ô?"
 msgstr "Is this work shared with other seasons in the plot?"
 
+#: src/components/MilestonePanels.tsx
+msgid "Việc nhắc (tẩy giun, ngưng thuốc…)"
+msgstr "Reminder (deworming, stopping medicine…)"
+
+#: src/components/StockMove.tsx
+#: src/components/StockReports.tsx
+#: src/lib/cycles.ts
+#: src/lib/cycles.ts
 #: src/screens/HomeTab.tsx
 #: src/screens/HomeTab.tsx
 msgid "Vụ"
@@ -2738,6 +6476,15 @@ msgstr "Season"
 #: src/components/AttendanceSection.tsx
 msgid "Vụ (không bắt buộc)"
 msgstr "Season (optional)"
+
+#: src/lib/withdrawalLogic.ts
+msgid "Vụ còn {n} sự cố kim tiêm gãy chưa xử lý xong. Hãy tìm và xử lý con bị gãy kim rồi đóng sự cố trước khi thu hoặc bán."
+msgstr "{n, plural, one {The season still has # broken-needle incident unresolved. Find and treat the affected animal, then close the incident before harvesting or selling.} other {The season still has # broken-needle incidents unresolved. Find and treat the affected animals, then close the incidents before harvesting or selling.}}"
+
+#. placeholder {0}: vn(until)
+#: src/lib/withdrawalLogic.ts
+msgid "Vụ còn trong thời gian cách ly đến ngày {0}: {list}. Thu hoạch hoặc bán lúc này có thể chưa an toàn."
+msgstr "The season is in its withdrawal period until {0}: {list}. Harvesting or selling now may not be safe."
 
 #: src/components/HarvestSection.tsx
 msgid "Vụ còn trong thời gian cách ly: hãy ghi lý do vẫn thu hoạch vào ngày này (ít nhất 3 ký tự), hoặc đổi sang ngày đã hết cách ly."
@@ -2748,29 +6495,64 @@ msgstr "The season is still in its withdrawal period: give a reason for harvesti
 msgid "Vụ đang chuẩn bị hoặc tạm dừng chỉ ghi việc được sau khi bấm \"Bắt đầu sản xuất\" hoặc \"Tiếp tục\" ở màn Sản xuất."
 msgstr "Seasons that are preparing or paused accept logs only after you press \"Start production\" or \"Resume\" on the Production screen."
 
+#: src/components/HomeStats.tsx
+msgid "Vụ đang sản xuất"
+msgstr "Seasons in production"
+
 #: src/screens/LogActivityScreen.tsx
 msgid "vụ này"
 msgstr "this season"
+
+#: src/components/StockMove.tsx
+msgid "Vụ này chưa có vật tư đã xuất"
+msgstr "No supplies have been issued to this season"
+
+#: src/components/StockMove.tsx
+msgid "Vụ này chưa có vật tư nào đã xuất để trả về kho."
+msgstr "No supplies issued to this season can be returned to stock."
 
 #: src/components/SafetyReminder.tsx
 msgid "vụ này chưa ghi việc nào nên app không biết thuốc và phân đã dùng, chưa tính được thời gian cách ly. Nên ghi việc (nút ＋ Ghi việc, chọn vật tư đã dùng) mỗi lần phun thuốc, bón phân."
 msgstr "no work has been logged for this season, so the app does not know which pesticides and fertilizers were used and cannot calculate the withdrawal period. Log the work (＋ Log work button, select supplies used) each time you spray or fertilize."
 
-#: src/components/CycleWord.tsx
+#: src/lib/terms.ts
 msgid "vụ nuôi"
 msgstr "batch"
 
-#: src/components/CycleWord.tsx
+#: src/lib/terms.ts
+#: src/lib/terms.ts
 msgid "vụ nuôi trồng"
 msgstr "season / batch"
 
-#: src/components/CycleWord.tsx
+#: src/components/HomeStats.tsx
+msgid "Vụ trễ tiến độ"
+msgstr "Season behind schedule"
+
+#: src/lib/terms.ts
 msgid "vụ trồng"
 msgstr "season"
+
+#. placeholder {0}: latest.split('-').reverse().join('/')
+#. placeholder {1}: Math.max(gap, 0)
+#: src/lib/milestoneLogic.ts
+msgid "Vụ trước ở khu này kết thúc ngày {0}, mới cách {1} ngày. Nên để trống chuồng tối thiểu {minDays} ngày để vệ sinh, sát trùng."
+msgstr "The previous season in this area ended on {0}, only {1} days ago. Leave the pen empty at least {minDays} days for cleaning and disinfection."
+
+#: src/lib/cycleStatsLogic.ts
+msgid "Vụ vừa có tiền công ghi tay vừa có công chấm công chưa vào bảng lương: hãy kiểm tra xem có tính trùng không."
+msgstr "The season has both manually recorded wages and attendance not yet in payroll: check for double counting."
+
+#: src/lib/cycleStatsLogic.ts
+msgid "Vườn cây: xem lãi/lỗ ở từng mùa vụ (khấu hao đầu tư đã chia vào các vụ mùa)"
+msgstr "Orchard: see profit/loss for each harvest season (investment depreciation is spread across seasons)"
 
 #: src/components/AbsenceSummary.tsx
 msgid "vượt"
 msgstr "over"
+
+#: src/components/AddressFields.tsx
+msgid "Xã/phường"
+msgstr "Ward/commune"
 
 #. placeholder {0}: dry.count
 #: src/components/AttendanceList.tsx
@@ -2785,6 +6567,10 @@ msgstr "confirm attendance"
 msgid "Xác nhận công"
 msgstr "Confirm attendance"
 
+#: src/components/MilestonePanels.tsx
+msgid "Xác nhận đã tiêm"
+msgstr "Confirm vaccinated"
+
 #: src/components/AttendanceList.tsx
 msgid "Xác nhận hàng loạt cho mọi ngày cần cập nhật cơ sở dữ liệu lên bản mới (nhờ người cài đặt chạy \"npx supabase db push\"). Bạn vẫn xác nhận từng công được, hoặc quay lại bảng công, chọn Tháng này để xác nhận hàng loạt."
 msgstr "Bulk confirmation for all days requires updating the database (ask your installer to run \"npx supabase db push\"). You can still confirm entries one by one, or go back to the timesheet and choose This month to confirm in bulk."
@@ -2798,9 +6584,47 @@ msgstr "Confirm cancellation"
 msgid "xác nhận sản lượng"
 msgstr "confirm output"
 
+#: src/components/StockReports.tsx
+msgid "Xem báo cáo"
+msgstr "View report"
+
+#: src/components/StockTake.tsx
+msgid "Xem biên bản"
+msgstr "View record"
+
+#: src/screens/StockPanel.tsx
+msgid "Xem các đợt kiểm kho"
+msgstr "View stocktakes"
+
+#: src/components/CustomerOrders.tsx
+msgid "Xem các lần thu tiền"
+msgstr "View payments received"
+
+#: src/components/HomeStats.tsx
+msgid "xem ở Tài khoản"
+msgstr "see Account"
+
+#. placeholder {0}: m.name
+#: src/screens/StockPanel.tsx
+msgid "Xem sổ kho {0}"
+msgstr "View stock ledger of {0}"
+
+#: src/components/FindWebSuppliers.tsx
 #: src/screens/LogsScreen.tsx
 msgid "Xem thêm"
 msgstr "View more"
+
+#: src/components/ShowMore.tsx
+msgid "Xem thêm ("
+msgstr "View more ("
+
+#: src/components/TimesheetsSection.tsx
+msgid "Xem trước bảng"
+msgstr "Preview sheet"
+
+#: src/lib/permissions.ts
+msgid "Xem và nhập liệu"
+msgstr "View and enter"
 
 #: src/screens/HomeTab.tsx
 msgid "Xin chào"
@@ -2814,22 +6638,117 @@ msgstr "Hello, {myName}"
 msgid "Xin qua đâu"
 msgstr "Requested via"
 
+#: src/components/MilestonePanels.tsx
+#: src/components/MilestonePanels.tsx
+#: src/components/TimesheetEntry.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Xóa"
 msgstr "Delete"
+
+#: src/components/ImagePicker.tsx
+msgid "Xóa ảnh"
+msgstr "Delete photo"
+
+#: src/lib/production.ts
+msgid "xóa công đoạn"
+msgstr "delete a phase"
+
+#: src/components/PurchaseEntry.tsx
+#: src/components/PurchaseEntry.tsx
+msgid "Xóa dòng"
+msgstr "Delete line"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Xóa dòng vật tư"
 msgstr "Delete supply row"
 
+#: src/lib/production.ts
+msgid "xóa ghi chú"
+msgstr "delete a note"
+
+#: src/lib/production.ts
+msgid "xóa giai đoạn"
+msgstr "delete a stage"
+
 #: src/lib/work.ts
 msgid "xóa khoản điều chỉnh"
 msgstr "delete an adjustment"
+
+#: src/lib/milestones.ts
+#: src/lib/milestones.ts
+msgid "xóa mốc an toàn"
+msgstr "delete a safety milestone"
+
+#: src/components/MilestonePanels.tsx
+msgid "Xóa mốc an toàn này khỏi vụ?"
+msgstr "Delete this safety milestone from the season?"
+
+#: src/lib/production.ts
+#: src/lib/production.ts
+msgid "xóa vụ"
+msgstr "delete a season"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Xong"
 msgstr "Done"
 
+#: src/components/StockReports.tsx
+msgid "Xuất"
+msgstr "Issue"
+
+#: src/lib/countLogic.ts
+msgid "Xuất / chuyển đi"
+msgstr "Issued / transferred out"
+
+#: src/lib/inventory.ts
+msgid "Xuất bán"
+msgstr "Sale"
+
+#. placeholder {0}: cycleLabel(openCycles.find((c) => c.id === cyc)!)
+#: src/components/StockMove.tsx
+msgid "Xuất cho vụ {0}"
+msgstr "Issued to season {0}"
+
+#: src/components/StockReports.tsx
+msgid "Xuất CSV"
+msgstr "Export CSV"
+
+#: src/lib/inventory.ts
+msgid "Xuất dùng"
+msgstr "Issue for use"
+
+#: src/lib/inventory.ts
+#: src/lib/inventory.ts
+msgid "xuất kho"
+msgstr "issue stock"
+
+#: src/components/StockMove.tsx
+#: src/components/StockMove.tsx
+#: src/screens/StockPanel.tsx
+msgid "Xuất kho"
+msgstr "Issue stock"
+
+#: src/screens/StockPanel.tsx
+msgid "Xuất kho (dùng, hao hụt, bán…)"
+msgstr "Issue stock (use, loss, sale…)"
+
+#: src/components/StockMove.tsx
+msgid "Xuất kho cần ghi lý do (ví dụ: chuột cắn, bán cho anh Ba, mượn cho hộ bên cạnh)."
+msgstr "Issuing stock needs a reason (e.g. rat damage, sold to a neighbour, lent to another household)."
+
+#. placeholder {0}: ISSUE_KIND_LABEL[h.issue_kind] ?? h.issue_kind
+#: src/screens/StockPanel.tsx
+msgid "Xuất kho: {0}"
+msgstr "Stock issue: {0}"
+
+#: src/components/StockMove.tsx
+msgid "Xuất từ kho"
+msgstr "Issue from warehouse"
+
 #: src/components/WebInboxCard.tsx
 msgid "yêu cầu báo giá mới"
 msgstr "new quote requests"
+
+#: src/components/HomeStats.tsx
+msgid "Yêu cầu sửa công"
+msgstr "Attendance correction request"

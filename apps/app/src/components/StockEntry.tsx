@@ -5,6 +5,7 @@ import { friendlyError } from '../lib/errors';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { parseNumber, recordTransaction } from '../lib/inventory';
 import { useTable } from '../lib/tables';
+import { t } from '@lingui/core/macro';
 
 const LAST_LOCATION_KEY = 'agriconnect.lastLocation';
 
@@ -41,15 +42,15 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!effMaterial) return setError('Hãy chọn vật tư.');
-    if (!effLocation) return setError('Hãy chọn kho.');
+    if (!effMaterial) return setError(t`Hãy chọn vật tư.`);
+    if (!effLocation) return setError(t`Hãy chọn kho.`);
     const q = parseNumber(qty);
-    if (q === null || Number.isNaN(q) || q <= 0) return setError('Số lượng phải là số lớn hơn 0.');
+    if (q === null || Number.isNaN(q) || q <= 0) return setError(t`Số lượng phải là số lớn hơn 0.`);
     const c = parseNumber(cost);
-    if (c !== null && (Number.isNaN(c) || c < 0 || !Number.isInteger(c))) return setError('Giá nhập phải là số tiền (đồng), không có phần lẻ.');
-    if (lotExpiry && !lotNo.trim()) return setError('Đã nhập hạn dùng thì cần nhập cả số lô.');
-    if (mode === 'receipt' && date > todayLocal()) return setError('Ngày nhập kho không được sau ngày hôm nay.');
-    if (mode === 'adjustment' && reason.trim().length < 3) return setError('Điều chỉnh cần ghi lý do (ví dụ: kiểm kê, hao hụt, hỏng).');
+    if (c !== null && (Number.isNaN(c) || c < 0 || !Number.isInteger(c))) return setError(t`Giá nhập phải là số tiền (đồng), không có phần lẻ.`);
+    if (lotExpiry && !lotNo.trim()) return setError(t`Đã nhập hạn dùng thì cần nhập cả số lô.`);
+    if (mode === 'receipt' && date > todayLocal()) return setError(t`Ngày nhập kho không được sau ngày hôm nay.`);
+    if (mode === 'adjustment' && reason.trim().length < 3) return setError(t`Điều chỉnh cần ghi lý do (ví dụ: kiểm kê, hao hụt, hỏng).`);
     setBusy(true);
     try {
       const id = await recordTransaction({
@@ -76,14 +77,14 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
     setError(null);
   }
 
-  const title = mode === 'receipt' ? 'Nhập kho' : 'Điều chỉnh tồn kho';
+  const title = mode === 'receipt' ? t`Nhập kho` : t`Điều chỉnh tồn kho`;
 
   if (savedId) {
     return (
       <section>
-        <h1>Đã ghi</h1>
-        <p className="msg ok" role="status">Đã lưu lên máy chủ.</p>
-        <button className="primary" onClick={again}>Ghi tiếp</button>
+        <h1>{t`Đã ghi`}</h1>
+        <p className="msg ok" role="status">{t`Đã lưu lên máy chủ.`}</p>
+        <button className="primary" onClick={again}>{t`Ghi tiếp`}</button>
         <button className="secondary" onClick={onClose}>Xong</button>
       </section>
     );
@@ -94,10 +95,10 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
       <section>
         <h1>{title}</h1>
         <p className="msg warn">
-          {mats.length === 0 ? 'Chưa có vật tư nào. ' : ''}{locs.length === 0 ? 'Chưa có kho nào. ' : ''}
-          Hãy tạo trong mục "Danh mục" (cần có mạng), rồi quay lại đây.
+          {mats.length === 0 ? t`Chưa có vật tư nào. ` : ''}{locs.length === 0 ? t`Chưa có kho nào. ` : ''}
+          {t`Hãy tạo trong mục "Danh mục" (cần có mạng), rồi quay lại đây.`}
         </p>
-        <button className="secondary" onClick={onClose}>Quay lại</button>
+        <button className="secondary" onClick={onClose}>{t`Quay lại`}</button>
       </section>
     );
   }
@@ -107,7 +108,7 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
       <h1>{title}</h1>
       <form className="inline-form" onSubmit={onSubmit} noValidate>
         <label>
-          Vật tư
+          {t`Vật tư`}
           <select value={effMaterial} onChange={(e) => setMaterialId(e.target.value)}>
             {mats.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
@@ -122,45 +123,45 @@ export function StockEntry({ orgId, mode, onClose }: { orgId: string; mode: 'rec
         )}
         {mode === 'adjustment' && (
           <fieldset>
-            <legend>Điều chỉnh</legend>
+            <legend>{t`Điều chỉnh`}</legend>
             <label className="check">
-              <input type="radio" name="dir" checked={direction === 'decrease'} onChange={() => setDirection('decrease')} /> Giảm tồn (hao hụt, hỏng, kiểm kê thấy ít hơn)
+              <input type="radio" name="dir" checked={direction === 'decrease'} onChange={() => setDirection('decrease')} />{' '}{t`Giảm tồn (hao hụt, hỏng, kiểm kê thấy ít hơn)`}
             </label>
             <label className="check">
-              <input type="radio" name="dir" checked={direction === 'increase'} onChange={() => setDirection('increase')} /> Tăng tồn (kiểm kê thấy nhiều hơn)
+              <input type="radio" name="dir" checked={direction === 'increase'} onChange={() => setDirection('increase')} />{' '}{t`Tăng tồn (kiểm kê thấy nhiều hơn)`}
             </label>
           </fieldset>
         )}
         <label>
-          Số lượng{unitName ? ` (${unitName.toLowerCase()})` : ''}
+          {t`Số lượng`}{unitName ? ` (${unitName.toLowerCase()})` : ''}
           <input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} />
         </label>
         {mode === 'receipt' && (
           <label>
-            Giá nhập mỗi {unitName ? unitName.toLowerCase() : 'đơn vị'} (đồng, không bắt buộc)
+            {t`Giá nhập mỗi`}{' '}{unitName ? unitName.toLowerCase() : t`đơn vị`}{' '}{t`(đồng, không bắt buộc)`}
             <input value={cost} inputMode="numeric" onChange={(e) => setCost(e.target.value)} />
-            <small>Để trống nếu chưa biết giá. Khi đó báo cáo sẽ ghi rõ là thiếu giá vốn, không tự đoán.</small>
+            <small>{t`Để trống nếu chưa biết giá. Khi đó báo cáo sẽ ghi rõ là thiếu giá vốn, không tự đoán.`}</small>
           </label>
         )}
         {mode === 'receipt' && (
           <div className="pair">
-            <label>Số lô (không bắt buộc)<input value={lotNo} maxLength={60} onChange={(e) => setLotNo(e.target.value)} placeholder="Ghi trên bao bì" /></label>
-            <label>Hạn dùng<input type="date" value={lotExpiry} onChange={(e) => setLotExpiry(e.target.value)} /></label>
+            <label>{t`Số lô (không bắt buộc)`}<input value={lotNo} maxLength={60} onChange={(e) => setLotNo(e.target.value)} placeholder={t`Ghi trên bao bì`} /></label>
+            <label>{t`Hạn dùng`}<input type="date" value={lotExpiry} onChange={(e) => setLotExpiry(e.target.value)} /></label>
           </div>
         )}
         <label>
-          Ngày
+          {t`Ngày`}
           <input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} />
         </label>
         <label>
-          {mode === 'adjustment' ? 'Lý do (bắt buộc)' : 'Ghi chú (không bắt buộc)'}
+          {mode === 'adjustment' ? t`Lý do (bắt buộc)` : t`Ghi chú (không bắt buộc)`}
           <input value={reason} onChange={(e) => setReason(e.target.value)} />
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
-        {!online && <p className="msg warn">Đang offline. Nhập kho và điều chỉnh cần có mạng; hãy kết nối mạng rồi bấm Lưu.</p>}
+        {!online && <p className="msg warn">{t`Đang offline. Nhập kho và điều chỉnh cần có mạng; hãy kết nối mạng rồi bấm Lưu.`}</p>}
         <div className="btnrow">
-          <button type="submit" className="primary" disabled={!online || busy}>Lưu</button>
-          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+          <button type="submit" className="primary" disabled={!online || busy}>{t`Lưu`}</button>
+          <button type="button" className="secondary" onClick={onClose}>{t`Hủy`}</button>
         </div>
       </form>
     </section>

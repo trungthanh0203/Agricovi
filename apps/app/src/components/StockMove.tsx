@@ -11,6 +11,7 @@ import { useCatalog } from '../lib/catalog';
 import { areaPath, areaName } from '../lib/areas';
 import { cycleTitle } from '../lib/cycles';
 import { canLogCycle } from '../lib/prep';
+import { t as tx } from '@lingui/core/macro';
 
 /** Dữ liệu chung của hai biểu mẫu: vật tư, kho đang dùng và tồn hiện có để nhắc người nhập */
 function useStockChoices(orgId: string) {
@@ -28,9 +29,9 @@ function useStockChoices(orgId: string) {
 function Done({ text, onAgain, onClose }: { text: string; onAgain: () => void; onClose: () => void }) {
   return (
     <section>
-      <h1>Đã ghi</h1>
+      <h1>{tx`Đã ghi`}</h1>
       <p className="msg ok" role="status">{text}</p>
-      <button className="primary" onClick={onAgain}>Ghi tiếp</button>
+      <button className="primary" onClick={onAgain}>{tx`Ghi tiếp`}</button>
       <button className="secondary" onClick={onClose}>Xong</button>
     </section>
   );
@@ -77,16 +78,16 @@ export function StockIssue({ orgId, onClose }: { orgId: string; onClose: () => v
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!mat) return setError('Hãy chọn vật tư.');
-    if (!loc) return setError('Hãy chọn kho.');
+    if (!mat) return setError(tx`Hãy chọn vật tư.`);
+    if (!loc) return setError(tx`Hãy chọn kho.`);
     const q = parseNumber(qty);
-    if (q === null || Number.isNaN(q) || q <= 0) return setError('Số lượng phải là số lớn hơn 0.');
-    if (kind === 'cycle' && !cyc) return setError('Chưa có vụ nào đang chạy để xuất vật tư. Chọn lý do khác hoặc tạo vụ trước.');
-    if (kind !== 'cycle' && !(kind === 'shared' && shareIds.length > 0) && reason.trim().length < 3) return setError('Xuất kho cần ghi lý do (ví dụ: chuột cắn, bán cho anh Ba, mượn cho hộ bên cạnh).');
-    if (q > have && !window.confirm(`Kho chỉ còn ${formatQty(have)} ${unitOf(mat)}, xuất ${formatQty(q)} sẽ làm tồn âm. Vẫn xuất?`)) return;
+    if (q === null || Number.isNaN(q) || q <= 0) return setError(tx`Số lượng phải là số lớn hơn 0.`);
+    if (kind === 'cycle' && !cyc) return setError(tx`Chưa có vụ nào đang chạy để xuất vật tư. Chọn lý do khác hoặc tạo vụ trước.`);
+    if (kind !== 'cycle' && !(kind === 'shared' && shareIds.length > 0) && reason.trim().length < 3) return setError(tx`Xuất kho cần ghi lý do (ví dụ: chuột cắn, bán cho anh Ba, mượn cho hộ bên cạnh).`);
+    if (q > have && !window.confirm(tx`Kho chỉ còn ${formatQty(have)} ${unitOf(mat)}, xuất ${formatQty(q)} sẽ làm tồn âm. Vẫn xuất?`)) return;
     setBusy(true);
     try {
-      const rsn = kind === 'cycle' ? (reason.trim().length >= 3 ? reason : `Xuất cho vụ ${cycleLabel(openCycles.find((c) => c.id === cyc)!)}`) : reason;
+      const rsn = kind === 'cycle' ? (reason.trim().length >= 3 ? reason : tx`Xuất cho vụ ${cycleLabel(openCycles.find((c) => c.id === cyc)!)}`) : reason;
       if (kind === 'shared' && shareIds.length > 0) {
         await issueSharedToCycles({ organizationId: orgId, locationId: loc, materialId: mat, quantity: q, date, cycleIds: picked.map((c) => c.id), note: reason });
         setSaved(true);
@@ -97,68 +98,68 @@ export function StockIssue({ orgId, onClose }: { orgId: string; onClose: () => v
     } catch (err) { setError(friendlyError(err)); } finally { setBusy(false); }
   }
 
-  if (saved) return <Done text="Đã xuất kho và lưu lên máy chủ." onAgain={() => { setSaved(false); setDraftId(crypto.randomUUID()); setQty(''); setReason(''); }} onClose={onClose} />;
+  if (saved) return <Done text={tx`Đã xuất kho và lưu lên máy chủ.`} onAgain={() => { setSaved(false); setDraftId(crypto.randomUUID()); setQty(''); setReason(''); }} onClose={onClose} />;
   if (mats.length === 0 || locs.length === 0) {
     return (
       <section>
-        <h1>Xuất kho</h1>
-        <p className="msg warn">{mats.length === 0 ? 'Chưa có vật tư nào. ' : ''}{locs.length === 0 ? 'Chưa có kho nào. ' : ''}Hãy tạo ở Khai báo → Vật tư và Kho (cần có mạng).</p>
-        <button className="secondary" onClick={onClose}>Quay lại</button>
+        <h1>{tx`Xuất kho`}</h1>
+        <p className="msg warn">{mats.length === 0 ? tx`Chưa có vật tư nào. ` : ''}{locs.length === 0 ? tx`Chưa có kho nào. ` : ''}{tx`Hãy tạo ở Khai báo → Vật tư và Kho (cần có mạng).`}</p>
+        <button className="secondary" onClick={onClose}>{tx`Quay lại`}</button>
       </section>
     );
   }
   return (
     <section>
-      <h1>Xuất kho</h1>
-      <p className="muted">Dùng khi vật tư ra khỏi kho mà không đi kèm một việc trong nhật ký: phát vật tư cho một vụ, hao hụt, hỏng, bán, dùng chung. Vật tư xuất cho vụ được tính vào giá thành của vụ (và cám vào FCR). Nếu đang làm việc ngoài đồng thì ghi ở Ghi việc.</p>
+      <h1>{tx`Xuất kho`}</h1>
+      <p className="muted">{tx`Dùng khi vật tư ra khỏi kho mà không đi kèm một việc trong nhật ký: phát vật tư cho một vụ, hao hụt, hỏng, bán, dùng chung. Vật tư xuất cho vụ được tính vào giá thành của vụ (và cám vào FCR). Nếu đang làm việc ngoài đồng thì ghi ở Ghi việc.`}</p>
       <form className="inline-form" onSubmit={onSubmit} noValidate>
-        <label>Vật tư
+        <label>{tx`Vật tư`}
           <select value={mat} onChange={(e) => setMaterialId(e.target.value)}>{mats.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
         </label>
         {locs.length > 1 && (
-          <label>Xuất từ kho
+          <label>{tx`Xuất từ kho`}
             <select value={loc} onChange={(e) => setLocationId(e.target.value)}>{locs.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select>
           </label>
         )}
-        <label>Lý do xuất
+        <label>{tx`Lý do xuất`}
           <select value={kind} onChange={(e) => setKind(e.target.value)}>
             {Object.entries(ISSUE_KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </label>
         {(kind === 'cycle' || kind === 'shared') && <AreaPickField pick={pick} onPick={() => { setCycleId(''); setShareIds([]); }} />}
         {kind === 'cycle' && !pick.pending && (
-          <label>Vụ
+          <label>{tx`Vụ`}
             <select value={cyc} onChange={(e) => setCycleId(e.target.value)}>
-              {shownCycles.length === 0 && <option value="">Chưa có vụ nào</option>}
+              {shownCycles.length === 0 && <option value="">{tx`Chưa có vụ nào`}</option>}
               {shownCycles.map((c) => <option key={c.id} value={c.id}>{cycleLabel(c)}</option>)}
             </select>
           </label>
         )}
         {kind === 'shared' && shownCycles.length > 0 && (
           <fieldset className="roles">
-            <legend>Chia cho các vụ (không chọn vụ nào thì không tính vào vụ)</legend>
+            <legend>{tx`Chia cho các vụ (không chọn vụ nào thì không tính vào vụ)`}</legend>
             {shownCycles.map((c) => (
               <label className="check" key={c.id}>
                 <input type="checkbox" checked={shareIds.includes(c.id)} onChange={(e) => setShareIds((cur) => (e.target.checked ? [...cur, c.id] : cur.filter((x) => x !== c.id)))} />
-                <span>{cycleLabel(c)}{areaM2(c) ? ` · ${formatQty(areaM2(c)!)} m²` : ' · chưa có diện tích'}</span>
+                <span>{cycleLabel(c)}{areaM2(c) ? ` · ${formatQty(areaM2(c)!)} m²` : tx` · chưa có diện tích`}</span>
               </label>
             ))}
             {picked.length > 0 && (parseNumber(qty) ?? 0) > 0 && (
-              <p className="muted">{splitFor(parseNumber(qty) ?? 0).byArea ? 'Chia theo diện tích' : 'Chia đều (có vụ chưa có diện tích)'}: {picked.map((c, i) => `${cycleLabel(c)} ${formatQty(splitFor(parseNumber(qty) ?? 0).shares[i]!)} ${unitOf(mat)}`).join('; ')}</p>
+              <p className="muted">{splitFor(parseNumber(qty) ?? 0).byArea ? tx`Chia theo diện tích` : tx`Chia đều (có vụ chưa có diện tích)`}: {picked.map((c, i) => `${cycleLabel(c)} ${formatQty(splitFor(parseNumber(qty) ?? 0).shares[i]!)} ${unitOf(mat)}`).join('; ')}</p>
             )}
           </fieldset>
         )}
-        <label>Số lượng{unitOf(mat) ? ` (${unitOf(mat)})` : ''}
+        <label>{tx`Số lượng`}{unitOf(mat) ? ` (${unitOf(mat)})` : ''}
           <input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} />
-          <small>Tồn hiện có ở kho này: {formatQty(have)} {unitOf(mat)}</small>
+          <small>{tx`Tồn hiện có ở kho này:`}{' '}{formatQty(have)} {unitOf(mat)}</small>
         </label>
-        <label>Ngày<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
-        <label>{kind === 'cycle' || (kind === 'shared' && shareIds.length > 0) ? 'Ghi chú (không bắt buộc)' : 'Ghi rõ lý do (bắt buộc)'}<input value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+        <label>{tx`Ngày`}<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
+        <label>{kind === 'cycle' || (kind === 'shared' && shareIds.length > 0) ? tx`Ghi chú (không bắt buộc)` : tx`Ghi rõ lý do (bắt buộc)`}<input value={reason} onChange={(e) => setReason(e.target.value)} /></label>
         {error && <p className="msg error" role="alert">{error}</p>}
-        {!online && <p className="msg warn">Đang offline. Xuất kho cần có mạng; hãy kết nối mạng rồi bấm Lưu.</p>}
+        {!online && <p className="msg warn">{tx`Đang offline. Xuất kho cần có mạng; hãy kết nối mạng rồi bấm Lưu.`}</p>}
         <div className="btnrow">
-          <button type="submit" className="primary" disabled={!online || busy}>Lưu</button>
-          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+          <button type="submit" className="primary" disabled={!online || busy}>{tx`Lưu`}</button>
+          <button type="button" className="secondary" onClick={onClose}>{tx`Hủy`}</button>
         </div>
       </form>
     </section>
@@ -187,11 +188,11 @@ export function StockTransfer({ orgId, onClose }: { orgId: string; onClose: () =
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!mat) return setError('Hãy chọn vật tư.');
-    if (!from || !to || from === to) return setError('Hãy chọn hai kho khác nhau.');
+    if (!mat) return setError(tx`Hãy chọn vật tư.`);
+    if (!from || !to || from === to) return setError(tx`Hãy chọn hai kho khác nhau.`);
     const q = parseNumber(qty);
-    if (q === null || Number.isNaN(q) || q <= 0) return setError('Số lượng phải là số lớn hơn 0.');
-    if (q > have && !window.confirm(`Kho đi chỉ còn ${formatQty(have)} ${unitOf(mat)}, chuyển ${formatQty(q)} sẽ làm tồn âm. Vẫn chuyển?`)) return;
+    if (q === null || Number.isNaN(q) || q <= 0) return setError(tx`Số lượng phải là số lớn hơn 0.`);
+    if (q > have && !window.confirm(tx`Kho đi chỉ còn ${formatQty(have)} ${unitOf(mat)}, chuyển ${formatQty(q)} sẽ làm tồn âm. Vẫn chuyển?`)) return;
     setBusy(true);
     try {
       await transferStock({ organizationId: orgId, materialId: mat, fromId: from, toId: to, quantity: q, date, note });
@@ -199,43 +200,43 @@ export function StockTransfer({ orgId, onClose }: { orgId: string; onClose: () =
     } catch (err) { setError(friendlyError(err)); } finally { setBusy(false); }
   }
 
-  if (saved) return <Done text="Đã chuyển kho và lưu lên máy chủ." onAgain={() => { setSaved(false); setQty(''); setNote(''); }} onClose={onClose} />;
+  if (saved) return <Done text={tx`Đã chuyển kho và lưu lên máy chủ.`} onAgain={() => { setSaved(false); setQty(''); setNote(''); }} onClose={onClose} />;
   if (mats.length === 0 || locs.length < 2) {
     return (
       <section>
-        <h1>Chuyển kho</h1>
-        <p className="msg warn">{mats.length === 0 ? 'Chưa có vật tư nào. ' : ''}{locs.length < 2 ? 'Cần có ít nhất hai kho để chuyển. ' : ''}Hãy tạo ở Khai báo → Vật tư và Kho (cần có mạng).</p>
-        <button className="secondary" onClick={onClose}>Quay lại</button>
+        <h1>{tx`Chuyển kho`}</h1>
+        <p className="msg warn">{mats.length === 0 ? tx`Chưa có vật tư nào. ` : ''}{locs.length < 2 ? tx`Cần có ít nhất hai kho để chuyển. ` : ''}{tx`Hãy tạo ở Khai báo → Vật tư và Kho (cần có mạng).`}</p>
+        <button className="secondary" onClick={onClose}>{tx`Quay lại`}</button>
       </section>
     );
   }
   return (
     <section>
-      <h1>Chuyển kho</h1>
-      <p className="muted">Chuyển vật tư từ kho này sang kho khác trong cơ sở. Tổng tồn không đổi; lô và hạn dùng đi theo vật tư.</p>
+      <h1>{tx`Chuyển kho`}</h1>
+      <p className="muted">{tx`Chuyển vật tư từ kho này sang kho khác trong cơ sở. Tổng tồn không đổi; lô và hạn dùng đi theo vật tư.`}</p>
       <form className="inline-form" onSubmit={onSubmit} noValidate>
-        <label>Vật tư
+        <label>{tx`Vật tư`}
           <select value={mat} onChange={(e) => setMaterialId(e.target.value)}>{mats.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
         </label>
         <div className="pair">
-          <label>Từ kho
+          <label>{tx`Từ kho`}
             <select value={from} onChange={(e) => setFromId(e.target.value)}>{locs.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select>
           </label>
-          <label>Đến kho
+          <label>{tx`Đến kho`}
             <select value={to} onChange={(e) => setToId(e.target.value)}>{locs.filter((l) => l.id !== from).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select>
           </label>
         </div>
-        <label>Số lượng{unitOf(mat) ? ` (${unitOf(mat)})` : ''}
+        <label>{tx`Số lượng`}{unitOf(mat) ? ` (${unitOf(mat)})` : ''}
           <input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} />
-          <small>Tồn hiện có ở kho đi: {formatQty(have)} {unitOf(mat)}</small>
+          <small>{tx`Tồn hiện có ở kho đi:`}{' '}{formatQty(have)} {unitOf(mat)}</small>
         </label>
-        <label>Ngày<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
-        <label>Ghi chú (không bắt buộc)<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
+        <label>{tx`Ngày`}<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
+        <label>{tx`Ghi chú (không bắt buộc)`}<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
         {error && <p className="msg error" role="alert">{error}</p>}
-        {!online && <p className="msg warn">Đang offline. Chuyển kho cần có mạng; hãy kết nối mạng rồi bấm Lưu.</p>}
+        {!online && <p className="msg warn">{tx`Đang offline. Chuyển kho cần có mạng; hãy kết nối mạng rồi bấm Lưu.`}</p>}
         <div className="btnrow">
-          <button type="submit" className="primary" disabled={!online || busy}>Lưu</button>
-          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+          <button type="submit" className="primary" disabled={!online || busy}>{tx`Lưu`}</button>
+          <button type="button" className="secondary" onClick={onClose}>{tx`Hủy`}</button>
         </div>
       </form>
     </section>
@@ -274,12 +275,12 @@ export function StockReturn({ orgId, onClose }: { orgId: string; onClose: () => 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!cyc) return setError('Hãy chọn vụ.');
-    if (!mat) return setError('Vụ này chưa có vật tư nào đã xuất để trả về kho.');
-    if (!loc) return setError('Hãy chọn kho nhận.');
+    if (!cyc) return setError(tx`Hãy chọn vụ.`);
+    if (!mat) return setError(tx`Vụ này chưa có vật tư nào đã xuất để trả về kho.`);
+    if (!loc) return setError(tx`Hãy chọn kho nhận.`);
     const q = parseNumber(qty);
-    if (q === null || Number.isNaN(q) || q <= 0) return setError('Số lượng phải là số lớn hơn 0.');
-    if (q > max) return setError(`Chỉ trả được tối đa ${formatQty(max)} ${unitOf(mat)} (đã xuất cho vụ trừ đã trả).`);
+    if (q === null || Number.isNaN(q) || q <= 0) return setError(tx`Số lượng phải là số lớn hơn 0.`);
+    if (q > max) return setError(tx`Chỉ trả được tối đa ${formatQty(max)} ${unitOf(mat)} (đã xuất cho vụ trừ đã trả).`);
     setBusy(true);
     try {
       await returnToStock({ id: draftId, organizationId: orgId, locationId: loc, materialId: mat, cycleId: cyc, quantity: q, date, reason });
@@ -287,43 +288,43 @@ export function StockReturn({ orgId, onClose }: { orgId: string; onClose: () => 
     } catch (err) { setError(friendlyError(err)); } finally { setBusy(false); }
   }
 
-  if (saved) return <Done text="Đã trả vật tư về kho và trừ khỏi giá vốn của vụ." onAgain={() => { setSaved(false); setDraftId(crypto.randomUUID()); setQty(''); setReason(''); }} onClose={onClose} />;
+  if (saved) return <Done text={tx`Đã trả vật tư về kho và trừ khỏi giá vốn của vụ.`} onAgain={() => { setSaved(false); setDraftId(crypto.randomUUID()); setQty(''); setReason(''); }} onClose={onClose} />;
   return (
     <section>
-      <h1>Trả vật tư về kho</h1>
-      <p className="muted">Dùng khi vật tư đã xuất cho một vụ nhưng dùng không hết. Vật tư quay lại kho và được trừ khỏi giá vốn của vụ đó.</p>
+      <h1>{tx`Trả vật tư về kho`}</h1>
+      <p className="muted">{tx`Dùng khi vật tư đã xuất cho một vụ nhưng dùng không hết. Vật tư quay lại kho và được trừ khỏi giá vốn của vụ đó.`}</p>
       <form className="inline-form" onSubmit={onSubmit} noValidate>
         <AreaPickField pick={pick} onPick={() => setCycleId('')} />
         {!pick.pending && (
-          <label>Từ vụ
+          <label>{tx`Từ vụ`}
             <select value={cyc} onChange={(e) => setCycleId(e.target.value)}>
-              {shownOpen.length === 0 && <option value="">Chưa có vụ nào</option>}
+              {shownOpen.length === 0 && <option value="">{tx`Chưa có vụ nào`}</option>}
               {shownOpen.map((c) => <option key={c.id} value={c.id}>{label(c)}</option>)}
             </select>
           </label>
         )}
-        <label>Vật tư
+        <label>{tx`Vật tư`}
           <select value={mat} onChange={(e) => setMaterialId(e.target.value)}>
-            {usable.length === 0 && <option value="">Vụ này chưa có vật tư đã xuất</option>}
-            {usable.map((m) => <option key={m.id} value={m.id}>{m.name} (đã dùng {formatQty(net.get(m.id) ?? 0)} {unitOf(m.id)})</option>)}
+            {usable.length === 0 && <option value="">{tx`Vụ này chưa có vật tư đã xuất`}</option>}
+            {usable.map((m) => <option key={m.id} value={m.id}>{m.name}{' '}{tx`(đã dùng`}{' '}{formatQty(net.get(m.id) ?? 0)} {unitOf(m.id)})</option>)}
           </select>
         </label>
         {locs.length > 1 && (
-          <label>Trả vào kho
+          <label>{tx`Trả vào kho`}
             <select value={loc} onChange={(e) => setLocationId(e.target.value)}>{locs.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select>
           </label>
         )}
-        <label>Số lượng trả{unitOf(mat) ? ` (${unitOf(mat)})` : ''}
+        <label>{tx`Số lượng trả`}{unitOf(mat) ? ` (${unitOf(mat)})` : ''}
           <input value={qty} inputMode="decimal" onChange={(e) => setQty(e.target.value)} />
-          <small>Tối đa {formatQty(max)} {unitOf(mat)}</small>
+          <small>{tx`Tối đa`}{' '}{formatQty(max)} {unitOf(mat)}</small>
         </label>
-        <label>Ngày<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
-        <label>Ghi chú (không bắt buộc)<input value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+        <label>{tx`Ngày`}<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
+        <label>{tx`Ghi chú (không bắt buộc)`}<input value={reason} onChange={(e) => setReason(e.target.value)} /></label>
         {error && <p className="msg error" role="alert">{error}</p>}
-        {!online && <p className="msg warn">Đang offline. Trả vật tư cần có mạng; hãy kết nối mạng rồi bấm Lưu.</p>}
+        {!online && <p className="msg warn">{tx`Đang offline. Trả vật tư cần có mạng; hãy kết nối mạng rồi bấm Lưu.`}</p>}
         <div className="btnrow">
-          <button type="submit" className="primary" disabled={!online || busy}>Lưu</button>
-          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+          <button type="submit" className="primary" disabled={!online || busy}>{tx`Lưu`}</button>
+          <button type="button" className="secondary" onClick={onClose}>{tx`Hủy`}</button>
         </div>
       </form>
     </section>

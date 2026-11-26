@@ -20,6 +20,14 @@
 - Giữ tiếng Việt có chủ ý: tệp CSV bảng lương, gợi ý phân loại thu hoạch (được lưu vào dữ liệu).
 - **Đợt 1b còn lại:** Kho (`StockPanel` và các biểu mẫu kho), Bảng công giấy và quét giấy, số liệu Trang chủ (`HomeStats`, `HomeWeekly`, `HomePay`, `CycleProgressList`, `MilestonePanels`), khách hàng / nhà cung cấp mở từ Thu hoạch, và các tệp `lib/*` mà test Node nạp (cần bộ nạp macro cho test trước).
 
+## 0c. Đợt 1b (kho, bảng công giấy, số liệu Trang chủ, khách hàng và nhà cung ứng)
+
+- Tổng 1.537 câu có bản Anh. Đã dịch thêm: Kho và các biểu mẫu kho, kiểm kê, đọc hóa đơn, bảng công giấy (màn nhập), số liệu và tiến độ ở Trang chủ, mốc an toàn, khách hàng, nhà cung ứng, và nhiều tệp `lib/*` (vai trò, quyền, từ gọi vụ, ô nhập).
+- Test Node nạp được mã có macro nhờ `scripts/lingui-test-loader.mjs` (đã gắn vào `test:db`, `test:db:file`, `test:db:changed`); test chạy bằng tiếng Việt.
+- Giữ tiếng Việt: biên bản kiểm kê in, CSV kho, bảng in để chấm công tay, gợi ý mốc an toàn / lịch tiêm (được lưu vào dữ liệu).
+- `ui_simple.test.mjs` có một ca lệch thứ tự menu Sản xuất; `lib/tabs.ts` không bị đợt này sửa.
+- **Còn lại cho bước 2:** khai báo, cấu hình, chi tiết vụ và tạo vụ, báo cáo, nhân sự, tài khoản, máy chấm công, `lib/config.ts`.
+
 ## 1. Công nghệ chốt
 
 | Phần | Chọn | Lý do |

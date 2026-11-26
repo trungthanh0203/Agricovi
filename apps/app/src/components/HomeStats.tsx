@@ -12,6 +12,8 @@ import { canPerm } from '../lib/permissions';
 import { useAuth } from '../lib/auth';
 import { useTable } from '../lib/tables';
 import { fetchPayables, fetchReceivables, summarizePayables } from '../lib/partners';
+import { t } from '@lingui/core/macro';
+import { dateLocale } from '../lib/format';
 
 const HomeWeekly = lazy(() => import('./HomeWeekly'));
 const HomePay = lazy(() => import('./HomePay'));
@@ -35,13 +37,13 @@ export function KpiTile({ label, value, note, tone = 'neutral', title, onClick }
 /** Tiền rút gọn: 1,2 triệu · 3,4 tỷ (chạm vào thẻ để xem đủ số) */
 export function shortMoney(n: number): string {
   const a = Math.abs(n);
-  const f = (x: number) => x.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
-  if (a >= 1e9) return `${f(n / 1e9)} tỷ`;
-  if (a >= 1e6) return `${f(n / 1e6)} triệu`;
-  if (a >= 1e3) return `${f(n / 1e3)} nghìn`;
+  const f = (x: number) => x.toLocaleString(dateLocale(), { maximumFractionDigits: 1 });
+  if (a >= 1e9) return t`${f(n / 1e9)} tỷ`;
+  if (a >= 1e6) return t`${f(n / 1e6)} triệu`;
+  if (a >= 1e3) return t`${f(n / 1e3)} nghìn`;
   return f(n);
 }
-const fullMoney = (n: number) => `${n.toLocaleString('vi-VN')} đ`;
+const fullMoney = (n: number) => t`${n.toLocaleString(dateLocale())} đ`;
 
 /**
  * Thống kê Trang chủ (D41): của TÔI (việc đã ghi) và của CƠ SỞ (vụ, tiến độ, thu hoạch, chi, thu, tồn kho, cảnh báo).
@@ -153,45 +155,45 @@ export function HomeStats({ cycleIds, onGo }: { cycleIds: Set<string>; onGo: (ta
     <>
       {(canConfirmAtt || licSoon + licExpired > 0 || (debt !== null && debt.overdueCount + debt.soonCount > 0) || (recv !== null && recv.overdueCount + recv.soonCount > 0)) && (
         <>
-          <h2 className="sect">Tôi cần làm</h2>
+          <h2 className="sect">{t`Tôi cần làm`}</h2>
           <div className="kpis">
-            {canConfirmAtt && <KpiTile label="Chờ xác nhận chấm công" value={String(pendingAtt)} tone={pendingAtt > 0 ? 'warn' : 'ok'} note={pendingAtt > 0 ? 'bấm để xem và xác nhận' : 'đã xong'} onClick={() => onGo('production', 'attendance')} />}
-            {isAdminRole && photoFlags > 0 && <KpiTile label="Ảnh chấm công cần xem" value={String(photoFlags)} tone="bad" note="cờ đỏ 7 ngày qua" onClick={() => onGo('production', 'attendance')} />}
-            {isAdminRole && staleShifts > 0 && <KpiTile label="Quên Ra ca" value={String(staleShifts)} tone="bad" note="bấm để xem" onClick={() => onGo('production', 'attendance')} />}
-            {isAdminRole && pendingAdj > 0 && <KpiTile label="Yêu cầu sửa công" value={String(pendingAdj)} tone="warn" note="chờ duyệt" onClick={() => onGo('production', 'attendance')} />}
-            {debt !== null && debt.overdueCount > 0 && <KpiTile label="Hóa đơn mua quá hạn" value={String(debt.overdueCount)} tone="bad" note={`${shortMoney(debt.overdueAmount)} đồng`} onClick={() => onGo('reports', 'payables')} />}
-            {debt !== null && debt.soonCount > 0 && <KpiTile label="Hóa đơn mua sắp đến hạn" value={String(debt.soonCount)} tone="warn" note={`${shortMoney(debt.soonAmount)} đồng · trong 7 ngày`} onClick={() => onGo('reports', 'payables')} />}
-            {recv !== null && recv.overdueCount > 0 && <KpiTile label="Khoản phải thu quá hạn" value={String(recv.overdueCount)} tone="bad" note={`${shortMoney(recv.overdueAmount)} đồng`} onClick={() => onGo('reports', 'payables')} />}
-            {recv !== null && recv.soonCount > 0 && <KpiTile label="Khoản phải thu sắp đến hạn" value={String(recv.soonCount)} tone="warn" note={`${shortMoney(recv.soonAmount)} đồng · trong 7 ngày`} onClick={() => onGo('reports', 'payables')} />}
-            {licExpired > 0 && <KpiTile label="Giấy phép đã hết hạn" value={String(licExpired)} tone="bad" note="xem ở Tài khoản" onClick={() => onGo('profile')} />}
-            {licSoon > 0 && <KpiTile label="Giấy phép sắp hết hạn" value={String(licSoon)} tone="warn" note="trong 30 ngày" onClick={() => onGo('profile')} />}
+            {canConfirmAtt && <KpiTile label={t`Chờ xác nhận chấm công`} value={String(pendingAtt)} tone={pendingAtt > 0 ? 'warn' : 'ok'} note={pendingAtt > 0 ? t`bấm để xem và xác nhận` : t`đã xong`} onClick={() => onGo('production', 'attendance')} />}
+            {isAdminRole && photoFlags > 0 && <KpiTile label={t`Ảnh chấm công cần xem`} value={String(photoFlags)} tone="bad" note={t`cờ đỏ 7 ngày qua`} onClick={() => onGo('production', 'attendance')} />}
+            {isAdminRole && staleShifts > 0 && <KpiTile label={t`Quên Ra ca`} value={String(staleShifts)} tone="bad" note={t`bấm để xem`} onClick={() => onGo('production', 'attendance')} />}
+            {isAdminRole && pendingAdj > 0 && <KpiTile label={t`Yêu cầu sửa công`} value={String(pendingAdj)} tone="warn" note={t`chờ duyệt`} onClick={() => onGo('production', 'attendance')} />}
+            {debt !== null && debt.overdueCount > 0 && <KpiTile label={t`Hóa đơn mua quá hạn`} value={String(debt.overdueCount)} tone="bad" note={t`${shortMoney(debt.overdueAmount)} đồng`} onClick={() => onGo('reports', 'payables')} />}
+            {debt !== null && debt.soonCount > 0 && <KpiTile label={t`Hóa đơn mua sắp đến hạn`} value={String(debt.soonCount)} tone="warn" note={t`${shortMoney(debt.soonAmount)} đồng · trong 7 ngày`} onClick={() => onGo('reports', 'payables')} />}
+            {recv !== null && recv.overdueCount > 0 && <KpiTile label={t`Khoản phải thu quá hạn`} value={String(recv.overdueCount)} tone="bad" note={t`${shortMoney(recv.overdueAmount)} đồng`} onClick={() => onGo('reports', 'payables')} />}
+            {recv !== null && recv.soonCount > 0 && <KpiTile label={t`Khoản phải thu sắp đến hạn`} value={String(recv.soonCount)} tone="warn" note={t`${shortMoney(recv.soonAmount)} đồng · trong 7 ngày`} onClick={() => onGo('reports', 'payables')} />}
+            {licExpired > 0 && <KpiTile label={t`Giấy phép đã hết hạn`} value={String(licExpired)} tone="bad" note={t`xem ở Tài khoản`} onClick={() => onGo('profile')} />}
+            {licSoon > 0 && <KpiTile label={t`Giấy phép sắp hết hạn`} value={String(licSoon)} tone="warn" note={t`trong 30 ngày`} onClick={() => onGo('profile')} />}
           </div>
         </>
       )}
 
       <Suspense fallback={null}><HomePay orgId={active.id} onOpen={() => onGo('reports', 'paybook')} /></Suspense>
 
-      <h2 className="sect">Của cơ sở</h2>
+      <h2 className="sect">{t`Của cơ sở`}</h2>
       <div className="kpis">
-        <KpiTile label="Vụ đang sản xuất" value={String(running.length)} tone="info" />
-        <KpiTile label="Việc ghi hôm nay" value={String(stat.orgToday)} tone={stat.orgToday > 0 ? 'ok' : 'neutral'} note="của cả cơ sở" />
-        <KpiTile label="Vụ trễ tiến độ" value={String(late.length)} tone={late.length > 0 ? 'warn' : 'ok'} note={late.length > 0 ? 'cần xem lại' : 'đúng tiến độ'} />
-        {canStock && <KpiTile label="Vật tư cần chú ý" value={String(stockAlerts.length)} tone={stockAlerts.some((a) => a.state === 'neg') ? 'bad' : stockAlerts.length > 0 ? 'warn' : 'ok'} note={stockAlerts.length > 0 ? 'sắp hết hoặc tồn âm' : 'ổn'} />}
-        {canHarvest && <KpiTile label="Thu hoạch tháng này" value={`${formatQty(stat.harvestKg)} kg`} tone="ok" note="sau hao hụt" />}
-        {canExpense && <KpiTile label="Chi phí đã ghi tháng này" value={shortMoney(stat.spent)} tone="bad" title={fullMoney(stat.spent)} note="đồng" />}
-        {canSale && <KpiTile label="Doanh thu tháng này" value={shortMoney(stat.earned)} tone="ok" title={fullMoney(stat.earned)} note="đồng" />}
+        <KpiTile label={t`Vụ đang sản xuất`} value={String(running.length)} tone="info" />
+        <KpiTile label={t`Việc ghi hôm nay`} value={String(stat.orgToday)} tone={stat.orgToday > 0 ? 'ok' : 'neutral'} note={t`của cả cơ sở`} />
+        <KpiTile label={t`Vụ trễ tiến độ`} value={String(late.length)} tone={late.length > 0 ? 'warn' : 'ok'} note={late.length > 0 ? t`cần xem lại` : t`đúng tiến độ`} />
+        {canStock && <KpiTile label={t`Vật tư cần chú ý`} value={String(stockAlerts.length)} tone={stockAlerts.some((a) => a.state === 'neg') ? 'bad' : stockAlerts.length > 0 ? 'warn' : 'ok'} note={stockAlerts.length > 0 ? t`sắp hết hoặc tồn âm` : t`ổn`} />}
+        {canHarvest && <KpiTile label={t`Thu hoạch tháng này`} value={`${formatQty(stat.harvestKg)} kg`} tone="ok" note={t`sau hao hụt`} />}
+        {canExpense && <KpiTile label={t`Chi phí đã ghi tháng này`} value={shortMoney(stat.spent)} tone="bad" title={fullMoney(stat.spent)} note={t`đồng`} />}
+        {canSale && <KpiTile label={t`Doanh thu tháng này`} value={shortMoney(stat.earned)} tone="ok" title={fullMoney(stat.earned)} note={t`đồng`} />}
       </div>
       {hasRole(active.roles, 'manager') && <Suspense fallback={null}><HomeWeekly orgId={active.id} onOpen={() => onGo('reports', 'weekly')} /></Suspense>}
       {(stockAlerts.length > 0) && (
         <div className="card alert-warn">
-          <h2>Cảnh báo kho</h2>
+          <h2>{t`Cảnh báo kho`}</h2>
           {stockAlerts.slice(0, 6).map((a) => (
             <p key={a.m.id}>
-              <span className={a.state === 'neg' ? 'pill err' : 'pill warn'}>{a.state === 'neg' ? 'Tồn âm' : 'Sắp hết'}</span>{' '}
+              <span className={a.state === 'neg' ? 'pill err' : 'pill warn'}>{a.state === 'neg' ? t`Tồn âm` : t`Sắp hết`}</span>{' '}
               {a.m.name}: {formatQty(a.total)}
             </p>
           ))}
-          {stockAlerts.length > 6 && <p className="muted">… và {stockAlerts.length - 6} vật tư khác (xem ở Sản xuất → Kho).</p>}
+          {stockAlerts.length > 6 && <p className="muted">{t`… và`}{' '}{stockAlerts.length - 6}{' '}{t`vật tư khác (xem ở Sản xuất → Kho).`}</p>}
         </div>
       )}
     </>

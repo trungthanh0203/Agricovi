@@ -3,16 +3,17 @@
  * ngày nhập chuồng/bắt đầu nuôi". Cơ sở có cả hai loại thì dùng từ chung "vụ". Phần thuần.
  */
 import type { ProductKind as Kind } from './config';
+import { t } from '@lingui/core/macro';
 export type ProductKind = Kind | undefined;
 
 /** Danh từ gọi một vụ/lứa theo các loại sản phẩm đang có của cơ sở */
 export function cycleNoun(kinds: ProductKind[]): string {
   const set = new Set(kinds.filter(Boolean));
-  if (set.size === 0) return 'vụ nuôi trồng';
+  if (set.size === 0) return t`vụ nuôi trồng`;
   const animal = set.has('livestock') || set.has('aquatic');
-  if (set.has('crop') && !animal) return 'vụ trồng';
-  if (animal && !set.has('crop')) return 'vụ nuôi';
-  return 'vụ nuôi trồng';
+  if (set.has('crop') && !animal) return t`vụ trồng`;
+  if (animal && !set.has('crop')) return t`vụ nuôi`;
+  return t`vụ nuôi trồng`;
 }
 
 export const capFirst = (s: string) => (s ? s[0]!.toUpperCase() + s.slice(1) : s);
@@ -25,18 +26,18 @@ export interface InfoLabels {
 export function infoLabels(kind: ProductKind): InfoLabels {
   if (kind === 'aquatic') {
     return {
-      area: 'Diện tích ao / bể', variety: 'Giống / loài', varietyHint: 'Ví dụ: Cá tra, tôm thẻ chân trắng', source: 'Nơi mua con giống (trại giống, nhà cung cấp)',
-      lot: 'Mã đàn / số lô con giống', sowing: 'Ngày thả giống', planting: 'Ngày bắt đầu nuôi', count: 'con',
+      area: t`Diện tích ao / bể`, variety: t`Giống / loài`, varietyHint: t`Ví dụ: Cá tra, tôm thẻ chân trắng`, source: t`Nơi mua con giống (trại giống, nhà cung cấp)`,
+      lot: t`Mã đàn / số lô con giống`, sowing: t`Ngày thả giống`, planting: t`Ngày bắt đầu nuôi`, count: 'con',
     };
   }
   if (kind === 'livestock') {
     return {
-      area: 'Diện tích chuồng', variety: 'Giống / dòng', varietyHint: 'Ví dụ: Heo thịt 3 máu (Duroc × Landrace × Yorkshire)', source: 'Nơi mua con giống (trại giống, nhà cung cấp)',
-      lot: 'Mã đàn / số lô con giống', sowing: 'Ngày nhập chuồng', planting: 'Ngày bắt đầu nuôi', count: 'con',
+      area: t`Diện tích chuồng`, variety: t`Giống / dòng`, varietyHint: t`Ví dụ: Heo thịt 3 máu (Duroc × Landrace × Yorkshire)`, source: t`Nơi mua con giống (trại giống, nhà cung cấp)`,
+      lot: t`Mã đàn / số lô con giống`, sowing: t`Ngày nhập chuồng`, planting: t`Ngày bắt đầu nuôi`, count: 'con',
     };
   }
   return {
-    area: 'Diện tích trồng', variety: 'Giống', varietyHint: 'Ví dụ: Dưa lưới Kim Cô Nương', source: 'Nguồn giống (nơi mua, nhà cung cấp)',
-    lot: 'Số lô giống', sowing: 'Ngày gieo', planting: 'Ngày trồng', count: 'cây',
+    area: t`Diện tích trồng`, variety: t`Giống`, varietyHint: t`Ví dụ: Dưa lưới Kim Cô Nương`, source: t`Nguồn giống (nơi mua, nhà cung cấp)`,
+    lot: t`Số lô giống`, sowing: t`Ngày gieo`, planting: t`Ngày trồng`, count: 'cây',
   };
 }

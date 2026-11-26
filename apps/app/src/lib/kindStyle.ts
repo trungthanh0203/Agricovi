@@ -1,4 +1,5 @@
 import type { CropTypeRow } from './db';
+import { t } from '@lingui/core/macro';
 
 /**
  * Cách phân biệt việc theo loại sản phẩm ở Trang chủ: biểu tượng + chữ + vạch màu bên trái (class `kind-*` ở styles.css).
@@ -7,9 +8,9 @@ import type { CropTypeRow } from './db';
 export type KindKey = 'crop' | 'livestock' | 'aquatic' | 'other';
 export const KIND_ORDER: KindKey[] = ['crop', 'livestock', 'aquatic', 'other'];
 export const KIND_STYLE: Record<KindKey, { icon: string; label: string }> = {
-  crop: { icon: '🌱', label: 'Cây trồng' },
-  livestock: { icon: '🐖', label: 'Vật nuôi' },
-  aquatic: { icon: '🐟', label: 'Thủy sản' },
+  crop: { icon: '🌱', get label() { return t`Cây trồng`; } },
+  livestock: { icon: '🐖', get label() { return t`Vật nuôi`; } },
+  aquatic: { icon: '🐟', get label() { return t`Thủy sản`; } },
   other: { icon: '📋', label: 'Khác' },
 };
 

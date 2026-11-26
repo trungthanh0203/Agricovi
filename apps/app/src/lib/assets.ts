@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { t } from '@lingui/core/macro';
 
 /**
  * Tài sản, khấu hao đường thẳng theo tháng và nhắc bảo dưỡng (H9, D180). Chỉ làm khi có mạng (chức năng quản lý, D24); không lưu offline.
@@ -6,7 +7,7 @@ import { supabase } from './supabase';
  */
 export type AssetKind = 'greenhouse' | 'barn' | 'pump' | 'irrigation' | 'fan' | 'vehicle' | 'machine' | 'other';
 export const ASSET_KIND_LABEL: Record<AssetKind, string> = {
-  greenhouse: 'Nhà màng', barn: 'Chuồng trại', pump: 'Máy bơm', irrigation: 'Hệ thống tưới', fan: 'Quạt, làm mát', vehicle: 'Xe', machine: 'Máy móc khác', other: 'Khác',
+  get greenhouse() { return t`Nhà màng`; }, get barn() { return t`Chuồng trại`; }, get pump() { return t`Máy bơm`; }, get irrigation() { return t`Hệ thống tưới`; }, get fan() { return t`Quạt, làm mát`; }, vehicle: 'Xe', get machine() { return t`Máy móc khác`; }, other: 'Khác',
 };
 
 export interface Asset {
@@ -20,8 +21,8 @@ export interface DepItem { asset_id: string; name: string; area_id: string | nul
 export interface DepPreview { month: string; manual_exists: boolean; items: DepItem[] }
 
 async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  if (!navigator.onLine) throw new Error('OFFLINE: Cần có mạng để thực hiện. Hãy kết nối mạng rồi thử lại.');
+  if (!supabase) throw new Error(t`Supabase chưa được cấu hình`);
+  if (!navigator.onLine) throw new Error(t`OFFLINE: Cần có mạng để thực hiện. Hãy kết nối mạng rồi thử lại.`);
   const { data, error } = await supabase.rpc(fn, args);
   if (error) throw new Error(error.message);
   return data as T;

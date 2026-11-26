@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { db } from './db';
 import { dataUrlToFile, fileToBlobs } from './image';
 import { supabase } from './supabase';
+import { t } from '@lingui/core/macro';
 
 /**
  * Kho ảnh riêng 'org-media' (G2-1, D75). Cột image của bản ghi giữ tham chiếu ngắn "storage:<mã cơ sở>/<loại>/<mã ảnh>.jpg"
@@ -17,8 +18,8 @@ const thumbPath = (path: string) => path.replace(/\.jpg$/, '_t.jpg');
 
 /** Đưa một ảnh lên kho (cần mạng). Trả về tham chiếu để lưu vào cột image. */
 export async function uploadImage(file: File, orgId: string, kind: ImageKind): Promise<string> {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  if (!navigator.onLine) throw new Error('OFFLINE: Cần có mạng để thêm ảnh. Hãy kết nối mạng rồi thử lại.');
+  if (!supabase) throw new Error(t`Supabase chưa được cấu hình`);
+  if (!navigator.onLine) throw new Error(t`OFFLINE: Cần có mạng để thêm ảnh. Hãy kết nối mạng rồi thử lại.`);
   const { full, thumb } = await fileToBlobs(file);
   const path = `${orgId}/${kind}/${crypto.randomUUID()}.jpg`;
   const opts = { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false };
@@ -106,8 +107,8 @@ export interface MigrateReport { moved: number; failed: number }
  */
 export async function migrateOldImages(orgId: string, onProgress?: (done: number, total: number) => void): Promise<MigrateReport> {
   const client = supabase;
-  if (!client) throw new Error('Supabase chưa được cấu hình');
-  if (!navigator.onLine) throw new Error('OFFLINE: Cần có mạng để chuyển ảnh. Hãy kết nối mạng rồi thử lại.');
+  if (!client) throw new Error(t`Supabase chưa được cấu hình`);
+  if (!navigator.onLine) throw new Error(t`OFFLINE: Cần có mạng để chuyển ảnh. Hãy kết nối mạng rồi thử lại.`);
   const sources: { table: string; kind: ImageKind }[] = [
     { table: 'production_areas', kind: 'areas' },
     { table: 'crop_types', kind: 'crops' },

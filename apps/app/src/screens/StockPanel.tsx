@@ -17,6 +17,9 @@ import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { authorLabel } from '../lib/roles';
 import { useTable } from '../lib/tables';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
+import { dateLocale } from '../lib/format';
 
 type Mode = 'list' | 'receipt' | 'adjustment' | 'purchase' | 'issue' | 'transfer' | 'return' | 'stocktake';
 
@@ -70,20 +73,20 @@ function StockList({ orgId, canWrite, onReceipt, onAdjust, onIssue, onTransfer, 
     <>
       {canWrite && (
         <div className="actions">
-          <button className="primary" onClick={onReceipt}>Nhập kho</button>
-          <button className="secondary" onClick={onIssue}>Xuất kho</button>
-          <button className="secondary" onClick={onTransfer}>Chuyển kho</button>
-          <button className="secondary" onClick={onReturn}>Trả về kho</button>
-          <button className="secondary" onClick={onAdjust}>Điều chỉnh tồn</button>
-          <button className="secondary" onClick={onStocktake}>Kiểm kho</button>
+          <button className="primary" onClick={onReceipt}>{t`Nhập kho`}</button>
+          <button className="secondary" onClick={onIssue}>{t`Xuất kho`}</button>
+          <button className="secondary" onClick={onTransfer}>{t`Chuyển kho`}</button>
+          <button className="secondary" onClick={onReturn}>{t`Trả về kho`}</button>
+          <button className="secondary" onClick={onAdjust}>{t`Điều chỉnh tồn`}</button>
+          <button className="secondary" onClick={onStocktake}>{t`Kiểm kho`}</button>
         </div>
       )}
-      {!canWrite && <div className="actions"><button className="secondary" onClick={onStocktake}>Xem các đợt kiểm kho</button></div>}
-      {pendingCount > 0 && <p className="msg warn" role="status">Có giao dịch kho chưa gửi lên máy chủ; số tồn dưới đây đã tính cả các giao dịch này.</p>}
-      <div className="seg" role="tablist" aria-label="Chế độ xem kho">
-        <button role="tab" aria-selected={view === 'stock'} className={view === 'stock' ? 'on' : ''} onClick={() => setView('stock')}>Tồn kho</button>
-        <button role="tab" aria-selected={view === 'txns'} className={view === 'txns' ? 'on' : ''} onClick={() => setView('txns')}>Giao dịch</button>
-        <button role="tab" aria-selected={view === 'report'} className={view === 'report' ? 'on' : ''} onClick={() => setView('report')}>Báo cáo</button>
+      {!canWrite && <div className="actions"><button className="secondary" onClick={onStocktake}>{t`Xem các đợt kiểm kho`}</button></div>}
+      {pendingCount > 0 && <p className="msg warn" role="status">{t`Có giao dịch kho chưa gửi lên máy chủ; số tồn dưới đây đã tính cả các giao dịch này.`}</p>}
+      <div className="seg" role="tablist" aria-label={t`Chế độ xem kho`}>
+        <button role="tab" aria-selected={view === 'stock'} className={view === 'stock' ? 'on' : ''} onClick={() => setView('stock')}>{t`Tồn kho`}</button>
+        <button role="tab" aria-selected={view === 'txns'} className={view === 'txns' ? 'on' : ''} onClick={() => setView('txns')}>{t`Giao dịch`}</button>
+        <button role="tab" aria-selected={view === 'report'} className={view === 'report' ? 'on' : ''} onClick={() => setView('report')}>{t`Báo cáo`}</button>
       </div>
       {view === 'stock'
         ? <StockGrid orgId={orgId} canWrite={canWrite} d={d} onLedger={setLedgerOf} />
@@ -138,36 +141,36 @@ function StockGrid({ canWrite, d, onLedger }: { orgId: string; canWrite: boolean
   return (
     <>
       <div className="filters">
-        <label>Tìm vật tư<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tên, nhà sản xuất…" /></label>
+        <label>{t`Tìm vật tư`}<input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t`Tên, nhà sản xuất…`} /></label>
         {d.locations.filter((l) => l.is_active).length > 1 && (
           <label>Kho
             <select value={loc} onChange={(e) => setLoc(e.target.value)}>
-              <option value="">Tất cả kho</option>
+              <option value="">{t`Tất cả kho`}</option>
               {d.locations.filter((l) => l.is_active).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
           </label>
         )}
-        <label>Nhóm vật tư
+        <label>{t`Nhóm vật tư`}
           <select value={group} onChange={(e) => setGroup(e.target.value)}>
-            <option value="">Tất cả nhóm</option>
+            <option value="">{t`Tất cả nhóm`}</option>
             {cfg.materialGroups(group).map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
           </select>
         </label>
       </div>
       <div className="row">
-        <label className="check"><input type="checkbox" checked={low} onChange={(e) => setLow(e.target.checked)} /> Sắp hết ({lowCount})</label>
-        <label className="check"><input type="checkbox" checked={neg} onChange={(e) => setNeg(e.target.checked)} /> Tồn âm ({negCount})</label>
+        <label className="check"><input type="checkbox" checked={low} onChange={(e) => setLow(e.target.checked)} />{' '}{t`Sắp hết (`}{lowCount})</label>
+        <label className="check"><input type="checkbox" checked={neg} onChange={(e) => setNeg(e.target.checked)} />{' '}{t`Tồn âm (`}{negCount})</label>
       </div>
 
       <div className="tablewrap">
         <table className="grid">
-          <thead><tr><th>Vật tư <small className="muted">(Bấm tên vật tư để xem chi tiết)</small></th><th>Nhóm</th><th className="num">Tồn</th><th>Nhập cuối</th></tr></thead>
+          <thead><tr><th>{t`Vật tư`}{' '}<small className="muted">{t`(Bấm tên vật tư để xem chi tiết)`}</small></th><th>{t`Nhóm`}</th><th className="num">{t`Tồn`}</th><th>{t`Nhập cuối`}</th></tr></thead>
           <tbody>
             {rows.length === 0 && (
               <tr><td colSpan={4} className="muted">
                 {d.materials.length === 0
-                  ? (canWrite ? 'Chưa có vật tư. Vào Khai báo → Vật tư và Kho để thêm (cần có mạng).' : 'Chưa có vật tư. Hãy nhờ chủ cơ sở hoặc người phụ trách Kho & chi phí thêm vật tư.')
-                  : 'Không có vật tư phù hợp bộ lọc.'}
+                  ? (canWrite ? t`Chưa có vật tư. Vào Khai báo → Vật tư và Kho để thêm (cần có mạng).` : t`Chưa có vật tư. Hãy nhờ chủ cơ sở hoặc người phụ trách Kho & chi phí thêm vật tư.`)
+                  : t`Không có vật tư phù hợp bộ lọc.`}
               </td></tr>
             )}
             {rows.map(({ m, perLoc, total, missingCost, lastReceipt }) => {
@@ -175,42 +178,42 @@ function StockGrid({ canWrite, d, onLedger }: { orgId: string; canWrite: boolean
               return (
                 <tr key={m.id} className={total < 0 ? 'off' : ''}>
                   <td>
-                    <button className="link" onClick={() => onLedger(m.id)} aria-label={`Xem sổ kho ${m.name}`}><Thumb src={m.image} />{m.name}</button>
-                    {total < 0 && <span className="pill err">Tồn âm — cần kiểm kê</span>}
-                    {isLow && <span className="pill warn">Sắp hết</span>}
-                    {missingCost > 0 && <span className="pill warn">{missingCost} lần nhập chưa ghi giá</span>}
+                    <button className="link" onClick={() => onLedger(m.id)} aria-label={t`Xem sổ kho ${m.name}`}><Thumb src={m.image} />{m.name}</button>
+                    {total < 0 && <span className="pill err">{t`Tồn âm — cần kiểm kê`}</span>}
+                    {isLow && <span className="pill warn">{t`Sắp hết`}</span>}
+                    {missingCost > 0 && <span className="pill warn"><Trans>{missingCost} lần nhập chưa ghi giá</Trans></span>}
                     {!loc && perLoc.length > 1 && perLoc.map((p) => <span className="sub" key={p.locationId}>{d.locName(p.locationId)}: {formatQty(p.qty)} {d.unitOf(m.base_unit_id)}</span>)}
                   </td>
                   <td className="muted">{cfg.materialGroupLabel(m.material_group, m.group_item)}</td>
                   <td className="num"><strong>{formatQty(total)}</strong> {d.unitOf(m.base_unit_id)}</td>
-                  <td className="muted">{lastReceipt ? new Date(lastReceipt).toLocaleDateString('vi-VN') : '—'}</td>
+                  <td className="muted">{lastReceipt ? new Date(lastReceipt).toLocaleDateString(dateLocale()) : '—'}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
-      <p className="muted">Bấm tên vật tư để xem sổ kho (nhập, xuất, điều chỉnh và tồn sau mỗi lần).</p>
+      <p className="muted">{t`Bấm tên vật tư để xem sổ kho (nhập, xuất, điều chỉnh và tồn sau mỗi lần).`}</p>
       <ExpiringLots />
     </>
   );
 }
 
 const typeText = (h: TxnHistoryRow) => {
-  if (h.transfer_id) return h.quantity_delta > 0 ? 'Chuyển kho (nhận)' : 'Chuyển kho (đi)';
-  if (h.issue_kind) return `Xuất kho: ${ISSUE_KIND_LABEL[h.issue_kind] ?? h.issue_kind}`;
-  return h.txn_type === 'adjustment' ? `Điều chỉnh ${h.quantity_delta > 0 ? 'tăng' : 'giảm'}` : TXN_TYPE_LABEL[h.txn_type] ?? h.txn_type;
+  if (h.transfer_id) return h.quantity_delta > 0 ? t`Chuyển kho (nhận)` : t`Chuyển kho (đi)`;
+  if (h.issue_kind) return t`Xuất kho: ${ISSUE_KIND_LABEL[h.issue_kind] ?? h.issue_kind}`;
+  return h.txn_type === 'adjustment' ? t`Điều chỉnh ${h.quantity_delta > 0 ? t`tăng` : t`giảm`}` : TXN_TYPE_LABEL[h.txn_type] ?? h.txn_type;
 };
 
 function detailText(h: TxnHistoryRow, locName: (id: string) => string, withAuthor = true): string {
   return [
     locName(h.location_id),
-    h.unit_cost != null ? `giá ${formatMoney(h.unit_cost)}` : h.txn_type === 'receipt' ? 'chưa ghi giá' : '',
-    h.purchase_bills?.partners?.name ? `mua của ${h.purchase_bills.partners.name}${h.purchase_bills.invoice_no ? ` (HĐ ${h.purchase_bills.invoice_no})` : ''}` : '',
-    h.material_lots ? `lô ${h.material_lots.lot_no}${h.material_lots.expiry_date ? ` (hạn ${new Date(h.material_lots.expiry_date).toLocaleDateString('vi-VN')})` : ''}` : '',
-    h.activity_log_id ? 'dùng khi ghi việc' : '',
+    h.unit_cost != null ? t`giá ${formatMoney(h.unit_cost)}` : h.txn_type === 'receipt' ? t`chưa ghi giá` : '',
+    h.purchase_bills?.partners?.name ? t`mua của ${h.purchase_bills.partners.name}${h.purchase_bills.invoice_no ? t` (HĐ ${h.purchase_bills.invoice_no})` : ''}` : '',
+    h.material_lots ? t`lô ${h.material_lots.lot_no}${h.material_lots.expiry_date ? t` (hạn ${new Date(h.material_lots.expiry_date).toLocaleDateString(dateLocale())})` : ''}` : '',
+    h.activity_log_id ? t`dùng khi ghi việc` : '',
     withAuthor ? authorLabel(h.author_name, h.author_roles) ?? '' : '',
-    h.reason ? `lý do: ${h.reason}` : '',
+    h.reason ? t`lý do: ${h.reason}` : '',
   ].filter(Boolean).join(' · ');
 }
 
@@ -239,32 +242,32 @@ function Ledger({ orgId, materialId, d, onBack }: { orgId: string; materialId: s
   return (
     <>
       <div className="menubar">
-        <button className="menu-back" onClick={onBack} aria-label="Quay lại tồn kho">‹ Tồn kho</button>
-        <strong className="menu-cur">Sổ kho: {m?.name ?? '—'}</strong>
+        <button className="menu-back" onClick={onBack} aria-label={t`Quay lại tồn kho`}>{t`‹ Tồn kho`}</button>
+        <strong className="menu-cur">{t`Sổ kho:`}{' '}{m?.name ?? '—'}</strong>
       </div>
       {error && <p className="msg error" role="alert">{error}</p>}
       <div className="card slim">
-        <div className="row"><span>Tồn hiện tại{loc ? ` (${d.locName(loc)})` : ''}</span><strong>{formatQty(current)} {unit}</strong></div>
-        {m?.reorder_threshold != null && <p className="muted">Báo sắp hết khi tồn ≤ {formatQty(m.reorder_threshold)} {unit}</p>}
+        <div className="row"><span>{t`Tồn hiện tại`}{loc ? ` (${d.locName(loc)})` : ''}</span><strong>{formatQty(current)} {unit}</strong></div>
+        {m?.reorder_threshold != null && <p className="muted">{t`Báo sắp hết khi tồn ≤`}{' '}{formatQty(m.reorder_threshold)} {unit}</p>}
       </div>
       {activeLocs.length > 1 && (
         <label>Kho
           <select value={loc} onChange={(e) => setLoc(e.target.value)}>
-            <option value="">Tất cả kho</option>
+            <option value="">{t`Tất cả kho`}</option>
             {activeLocs.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
         </label>
       )}
-      {!navigator.onLine && <p className="msg warn" role="status">Cần có mạng để xem sổ kho.</p>}
+      {!navigator.onLine && <p className="msg warn" role="status">{t`Cần có mạng để xem sổ kho.`}</p>}
       <div className="tablewrap">
         <table className="grid">
-          <thead><tr><th>Ngày / loại</th><th className="num">Số lượng</th><th className="num">Tồn sau</th></tr></thead>
+          <thead><tr><th>{t`Ngày / loại`}</th><th className="num">{t`Số lượng`}</th><th className="num">{t`Tồn sau`}</th></tr></thead>
           <tbody>
-            {rows === null && <tr><td colSpan={3} className="muted">Đang tải…</td></tr>}
-            {rows !== null && rows.length === 0 && navigator.onLine && <tr><td colSpan={3} className="muted">Chưa có giao dịch nào.</td></tr>}
+            {rows === null && <tr><td colSpan={3} className="muted">{t`Đang tải…`}</td></tr>}
+            {rows !== null && rows.length === 0 && navigator.onLine && <tr><td colSpan={3} className="muted">{t`Chưa có giao dịch nào.`}</td></tr>}
             {withBalance.map(({ h, after }) => (
               <tr key={h.id}>
-                <td>{new Date(h.txn_date).toLocaleDateString('vi-VN')} · <strong>{typeText(h)}</strong><span className="sub">{detailText(h, d.locName)}</span></td>
+                <td>{new Date(h.txn_date).toLocaleDateString(dateLocale())} · <strong>{typeText(h)}</strong><span className="sub">{detailText(h, d.locName)}</span></td>
                 <td className={h.quantity_delta >= 0 ? 'num pos' : 'num neg'}>{h.quantity_delta > 0 ? '+' : ''}{formatQty(h.quantity_delta)}</td>
                 <td className="num"><strong>{formatQty(after)}</strong></td>
               </tr>
@@ -272,8 +275,8 @@ function Ledger({ orgId, materialId, d, onBack }: { orgId: string; materialId: s
           </tbody>
         </table>
       </div>
-      {rows !== null && rows.length >= 500 && <p className="muted">Chỉ hiện 500 giao dịch gần nhất.</p>}
-      <p className="muted">Tồn sau tính theo số liệu trên máy chủ; giao dịch đang chờ gửi chưa nằm trong sổ.</p>
+      {rows !== null && rows.length >= 500 && <p className="muted">{t`Chỉ hiện 500 giao dịch gần nhất.`}</p>}
+      <p className="muted">{t`Tồn sau tính theo số liệu trên máy chủ; giao dịch đang chờ gửi chưa nằm trong sổ.`}</p>
     </>
   );
 }
@@ -295,50 +298,50 @@ function TxnList({ orgId, d, refreshKey }: { orgId: string; d: Data; refreshKey:
   return (
     <>
       <div className="filters">
-        <label>Loại
+        <label>{t`Loại`}
           <select value={f.txnType ?? ''} onChange={(e) => set({ txnType: e.target.value || undefined })}>
-            <option value="">Tất cả</option>
-            <option value="receipt">Nhập kho</option>
-            <option value="issue">Xuất kho (dùng, hao hụt, bán…)</option>
-            <option value="adjustment">Điều chỉnh và chuyển kho</option>
+            <option value="">{t`Tất cả`}</option>
+            <option value="receipt">{t`Nhập kho`}</option>
+            <option value="issue">{t`Xuất kho (dùng, hao hụt, bán…)`}</option>
+            <option value="adjustment">{t`Điều chỉnh và chuyển kho`}</option>
           </select>
         </label>
         {d.locations.filter((l) => l.is_active).length > 1 && (
           <label>Kho
             <select value={f.locationId ?? ''} onChange={(e) => set({ locationId: e.target.value || undefined })}>
-              <option value="">Tất cả kho</option>
+              <option value="">{t`Tất cả kho`}</option>
               {d.locations.filter((l) => l.is_active).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
           </label>
         )}
-        <label>Vật tư
+        <label>{t`Vật tư`}
           <select value={f.materialId ?? ''} onChange={(e) => set({ materialId: e.target.value || undefined })}>
-            <option value="">Tất cả</option>
+            <option value="">{t`Tất cả`}</option>
             {[...d.materials].sort((a, b) => a.name.localeCompare(b.name, 'vi')).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
         </label>
-        <label>Từ ngày<input type="date" value={f.from ?? ''} onChange={(e) => set({ from: e.target.value || undefined })} /></label>
-        <label>Đến ngày<input type="date" value={f.to ?? ''} min={f.from} onChange={(e) => set({ to: e.target.value || undefined })} /></label>
+        <label>{t`Từ ngày`}<input type="date" value={f.from ?? ''} onChange={(e) => set({ from: e.target.value || undefined })} /></label>
+        <label>{t`Đến ngày`}<input type="date" value={f.to ?? ''} min={f.from} onChange={(e) => set({ to: e.target.value || undefined })} /></label>
       </div>
       {error && <p className="msg error" role="alert">{error}</p>}
-      {!navigator.onLine && <p className="msg warn" role="status">Cần có mạng để xem giao dịch.</p>}
+      {!navigator.onLine && <p className="msg warn" role="status">{t`Cần có mạng để xem giao dịch.`}</p>}
       <div className="tablewrap">
         <table className="grid">
-          <thead><tr><th>Ngày / vật tư</th><th>Loại / Người làm</th><th className="num">Số lượng</th></tr></thead>
+          <thead><tr><th>{t`Ngày / vật tư`}</th><th>{t`Loại / Người làm`}</th><th className="num">{t`Số lượng`}</th></tr></thead>
           <tbody>
-            {rows === null && <tr><td colSpan={3} className="muted">Đang tải…</td></tr>}
-            {rows !== null && rows.length === 0 && navigator.onLine && <tr><td colSpan={3} className="muted">Không có giao dịch phù hợp.</td></tr>}
+            {rows === null && <tr><td colSpan={3} className="muted">{t`Đang tải…`}</td></tr>}
+            {rows !== null && rows.length === 0 && navigator.onLine && <tr><td colSpan={3} className="muted">{t`Không có giao dịch phù hợp.`}</td></tr>}
             {(rows ?? []).map((h) => (
               <tr key={h.id}>
-                <td>{new Date(h.txn_date).toLocaleDateString('vi-VN')} · <strong>{d.matName(h.material_id)}</strong><span className="sub">{detailText(h, d.locName, false)}</span></td>
-                <td>{typeText(h)}<span className="sub">{authorLabel(h.author_name, h.author_roles) || 'Không rõ người làm'}</span></td>
+                <td>{new Date(h.txn_date).toLocaleDateString(dateLocale())} · <strong>{d.matName(h.material_id)}</strong><span className="sub">{detailText(h, d.locName, false)}</span></td>
+                <td>{typeText(h)}<span className="sub">{authorLabel(h.author_name, h.author_roles) || t`Không rõ người làm`}</span></td>
                 <td className={h.quantity_delta >= 0 ? 'num pos' : 'num neg'}>{h.quantity_delta > 0 ? '+' : ''}{formatQty(h.quantity_delta)} {d.matUnit(h.material_id)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      {rows !== null && rows.length >= 200 && <p className="muted">Chỉ hiện 200 giao dịch gần nhất; thu hẹp bộ lọc để xem cũ hơn.</p>}
+      {rows !== null && rows.length >= 200 && <p className="muted">{t`Chỉ hiện 200 giao dịch gần nhất; thu hẹp bộ lọc để xem cũ hơn.`}</p>}
     </>
   );
 }

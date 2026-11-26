@@ -12,7 +12,7 @@ export type Parsed =
 
 export const MAX_HOURS = 16;
 export const OFF_KINDS: CellKind[] = ['P', 'O', 'V', 'K'];
-export const OFF_LABEL: Record<'P' | 'O' | 'V' | 'K', string> = { P: 'Nghỉ phép năm', O: 'Nghỉ ốm', V: 'Nghỉ việc gia đình', K: 'Nghỉ không lương / không báo trước' };
+export const OFF_LABEL: Record<'P' | 'O' | 'V' | 'K', string> = { get P() { return tx`Nghỉ phép năm`; }, get O() { return tx`Nghỉ ốm`; }, get V() { return tx`Nghỉ việc gia đình`; }, get K() { return tx`Nghỉ không lương / không báo trước`; } };
 
 export function parseCell(text: string, mode: 'shift' | 'hours'): Parsed {
   const t = text.trim().replace(/\s+/g, '');
@@ -27,15 +27,15 @@ export function parseCell(text: string, mode: 'shift' | 'hours'): Parsed {
   if (u === 'K') return { kind: 'K' };
   if (/^\d+([.,]\d+)?$/.test(t)) {
     const n = Number(normalizeDecimal(t));
-    if (!(n > 0)) return { kind: 'error', message: 'Số giờ phải lớn hơn 0 (không làm việc thì ghi –).' };
-    if (n > MAX_HOURS) return { kind: 'error', message: `Số giờ không quá ${MAX_HOURS}.` };
+    if (!(n > 0)) return { kind: 'error', message: tx`Số giờ phải lớn hơn 0 (không làm việc thì ghi –).` };
+    if (n > MAX_HOURS) return { kind: 'error', message: tx`Số giờ không quá ${MAX_HOURS}.` };
     if (mode === 'shift') {
       if (n === 1) return { kind: 'full' };
       if (n === 0.5) return { kind: 'half' };
     }
     return { kind: 'hours', hours: n };
   }
-  return { kind: 'error', message: 'Ký hiệu chưa đúng. Dùng ✓ (x), ½, số giờ, P, Ô, V, K hoặc – (không làm).' };
+  return { kind: 'error', message: tx`Ký hiệu chưa đúng. Dùng ✓ (x), ½, số giờ, P, Ô, V, K hoặc – (không làm).` };
 }
 
 /** Chữ chuẩn để hiện lại trong ô sau khi gõ */
@@ -76,7 +76,8 @@ export function personTotals(cells: Parsed[], fullNet: number, extraMinutes = 0,
 /** Ngày công tương đương (theo ca đủ) hoặc giờ, hiển thị cột Tổng: kiểu ca "N công", kiểu giờ "N giờ" */
 export function totalText(t: Totals, mode: 'shift' | 'hours', fullNet: number): string {
   const fmt = (n: number) => numberToInput(Math.round(n * 10) / 10);
-  const main = mode === 'hours' ? `${fmt(t.minutes / 60)} giờ` : `${fmt(fullNet > 0 ? t.minutes / fullNet : 0)} công`;
-  return t.off > 0 ? `${main} · ${t.off} nghỉ` : main;
+  const main = mode === 'hours' ? tx`${fmt(t.minutes / 60)} giờ` : tx`${fmt(fullNet > 0 ? t.minutes / fullNet : 0)} công`;
+  return t.off > 0 ? tx`${main} · ${t.off} nghỉ` : main;
 }import { normalizeDecimal, numberToInput } from './format';
+import { t as tx } from '@lingui/core/macro';
 

@@ -1,4 +1,5 @@
 import type { MemberRole } from '@agriconnect/shared';
+import { t } from '@lingui/core/macro';
 
 /**
  * Kiểm tra quyền phía giao diện (chỉ để ẩn/hiện nút; máy chủ vẫn là nơi quyết định).
@@ -16,19 +17,19 @@ export const canManageProduction = (roles: readonly MemberRole[] | undefined) =>
   hasRole(roles, 'manager');
 
 export const ROLE_LABEL: Record<string, string> = {
-  owner: 'Chủ cơ sở',
-  manager: 'Quản lý',
-  worker: 'Nhân viên',
+  get owner() { return t`Chủ cơ sở`; },
+  get manager() { return t`Quản lý`; },
+  get worker() { return t`Nhân viên`; },
   // vai trò cũ (D83), chỉ còn để đọc bản ghi cũ
-  inventory_finance: 'Kho & chi phí',
-  cooperative_manager: 'Quản lý HTX',
-  profile_editor: 'Biên tập hồ sơ',
+  get inventory_finance() { return t`Kho & chi phí`; },
+  get cooperative_manager() { return t`Quản lý HTX`; },
+  get profile_editor() { return t`Biên tập hồ sơ`; },
 };
 
 /** "Quản lý, Kho & chi phí" - owner hiển thị kèm ghi chú đã bao gồm mọi vai trò */
 export function roleSummary(roles: readonly MemberRole[] | undefined): string {
   if (!roles || roles.length === 0) return '—';
-  if (roles.includes('owner')) return `${ROLE_LABEL.owner} (gồm mọi vai trò)`;
+  if (roles.includes('owner')) return t`${ROLE_LABEL.owner!} (gồm mọi vai trò)`;
   return roles.map((r) => ROLE_LABEL[r] ?? r).join(', ');
 }
 

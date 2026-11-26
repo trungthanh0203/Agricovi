@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import type { AreaRow } from '../lib/db';
 import { topAreas } from '../lib/areas';
+import { t as tx } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
 /** Phân khu (cấp 1) của một khu/ô: ô sản xuất thuộc phân khu cha; khu không có cha thì chính nó */
 export const topAreaIdOf = (areaId: string, areaById: Map<string, AreaRow>): string | undefined => {
@@ -31,11 +33,11 @@ export function AreaFilter({ areas, usedAreaIds, value, onChange }: { areas: Are
   return (
     <div className="filters">
       <label>
-        Phân khu
+        {tx`Phân khu`}
         <select value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="" disabled>Chọn phân khu</option>
-          <option value="all">Tất cả phân khu</option>
-          {options.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.count} vụ)</option>)}
+          <option value="" disabled>{tx`Chọn phân khu`}</option>
+          <option value="all">{tx`Tất cả phân khu`}</option>
+          {options.map((a) => <option key={a.id} value={a.id}><Trans>{a.name} ({a.count} vụ)</Trans></option>)}
         </select>
       </label>
     </div>

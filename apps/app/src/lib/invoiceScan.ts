@@ -1,6 +1,7 @@
 import { callFunction } from './staff';
 import { supabase } from './supabase';
 import { norm, type AliasLike } from './invoiceMatch';
+import { t } from '@lingui/core/macro';
 
 /**
  * Đọc ảnh phiếu / hóa đơn nhập kho (G2-3, D158). Ảnh được thu nhỏ ngay trên máy rồi gửi cho Edge Function `scan-invoice`; ảnh KHÔNG được lưu ở đâu cả.
@@ -25,7 +26,7 @@ const MAX_CHARS = 1_900_000; // dưới giới hạn 2 triệu ký tự của m�
 
 /** Thu nhỏ ảnh (cạnh dài tối đa 1600 điểm, tự xoay đúng chiều, JPEG), giảm chất lượng dần nếu vẫn quá lớn; trả về data URL */
 export async function prepareImage(file: Blob): Promise<string> {
-  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => { throw new Error('BAD_IMAGE: Không mở được ảnh này. Hãy chọn ảnh JPG hoặc PNG.'); });
+  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => { throw new Error(t`BAD_IMAGE: Không mở được ảnh này. Hãy chọn ảnh JPG hoặc PNG.`); });
   let side = MAX_SIDE, q = 0.82;
   for (let i = 0; i < 6; i++) {
     const k = Math.min(1, side / Math.max(bmp.width, bmp.height));
@@ -41,11 +42,11 @@ export async function prepareImage(file: Blob): Promise<string> {
     side = Math.round(side * 0.8); q = Math.max(0.6, q - 0.06);
   }
   bmp.close?.();
-  throw new Error('BAD_IMAGE: Ảnh quá lớn, hãy chụp lại gần hơn hoặc chọn ảnh nhỏ hơn.');
+  throw new Error(t`BAD_IMAGE: Ảnh quá lớn, hãy chụp lại gần hơn hoặc chọn ảnh nhỏ hơn.`);
 }
 
 export async function scanInvoice(orgId: string, images: string[]): Promise<{ draft: InvoiceDraft; usage: ScanUsage }> {
-  if (!navigator.onLine) throw new Error('OFFLINE: Đọc phiếu cần có mạng. Bạn vẫn nhập tay được.');
+  if (!navigator.onLine) throw new Error(t`OFFLINE: Đọc phiếu cần có mạng. Bạn vẫn nhập tay được.`);
   const res = await callFunction<{ ok: boolean; draft: InvoiceDraft; usage: ScanUsage }>({ organization_id: orgId, scan_id: crypto.randomUUID(), images }, 'scan-invoice');
   return { draft: res.draft, usage: res.usage };
 }
@@ -96,7 +97,7 @@ export interface LabelDraft {
 
 /** Đọc nhãn / tờ hướng dẫn vật tư (dùng chung hạn mức lượt đọc ảnh với phiếu nhập hàng; ảnh không được lưu) */
 export async function scanLabel(orgId: string, images: string[]): Promise<{ label: LabelDraft; usage: ScanUsage }> {
-  if (!navigator.onLine) throw new Error('OFFLINE: Đọc nhãn cần có mạng. Bạn vẫn nhập tay được.');
+  if (!navigator.onLine) throw new Error(t`OFFLINE: Đọc nhãn cần có mạng. Bạn vẫn nhập tay được.`);
   const res = await callFunction<{ ok: boolean; label: LabelDraft; usage: ScanUsage }>({ organization_id: orgId, scan_id: crypto.randomUUID(), kind: 'label', images }, 'scan-invoice');
   return { label: res.label, usage: res.usage };
 }

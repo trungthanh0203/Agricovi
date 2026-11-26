@@ -2,6 +2,7 @@ import { MAX_PHOTOS, getScanUsage, prepareImage, type ScanUsage } from './invoic
 import { callFunction } from './staff';
 import { DOW, listDays, type Sheet } from './timesheets';
 import type { ScanResult } from './timesheetScanMap';
+import { t } from '@lingui/core/macro';
 
 /**
  * Đọc ảnh bảng chấm công giấy bằng AI (D201, lớp B): đường đọc ảnh hóa đơn có sẵn (Edge Function `scan-invoice`, loại `timesheet`, dùng chung hạn mức
@@ -13,8 +14,8 @@ export type { ScanUsage };
 export const SCAN_MAX_ROWS = 60;
 
 export async function scanTimesheet(sheet: Sheet, images: string[]): Promise<{ result: ScanResult; usage: ScanUsage }> {
-  if (!navigator.onLine) throw new Error('OFFLINE: Đọc ảnh cần có mạng. Bạn vẫn nhập tay được.');
-  if (sheet.workers.length > SCAN_MAX_ROWS) throw new Error(`BAD_REQUEST: Bảng có quá nhiều người để đọc một lần (tối đa ${SCAN_MAX_ROWS}). Hãy lập bảng riêng cho từng tổ.`);
+  if (!navigator.onLine) throw new Error(t`OFFLINE: Đọc ảnh cần có mạng. Bạn vẫn nhập tay được.`);
+  if (sheet.workers.length > SCAN_MAX_ROWS) throw new Error(t`BAD_REQUEST: Bảng có quá nhiều người để đọc một lần (tối đa ${SCAN_MAX_ROWS}). Hãy lập bảng riêng cho từng tổ.`);
   const days = listDays(sheet.from_date, sheet.to_date);
   const res = await callFunction<{ ok: boolean; timesheet: ScanResult; usage: ScanUsage }>({
     organization_id: sheet.organization_id,

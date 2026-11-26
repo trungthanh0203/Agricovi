@@ -1,4 +1,5 @@
 import type { CycleRow } from './db';
+import { t } from '@lingui/core/macro';
 
 /**
  * Công đoạn chuẩn bị của vụ (D126, migration 0137): khi tạo vụ chọn một trong ba cách chuẩn bị THEO Ô SẢN XUẤT CỦA VỤ:
@@ -13,9 +14,9 @@ export const PREP_LOG_DAYS = 45;
 
 export function prepChoices(_kind?: string | null): { code: PrepMode; label: string; hint: string }[] {
   return [
-    { code: 'whole', label: 'Chuẩn bị trong toàn diện tích của vụ', hint: 'Như hiện nay: bắt đầu sản xuất ngay, hoặc chờ ở trạng thái Chuẩn bị (lúc này chưa ghi việc được).' },
-    { code: 'part', label: 'Chuẩn bị trong 1 phần ô sản xuất', hint: 'Phần còn lại của ô vẫn chạy vụ khác. Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được.' },
-    { code: 'separate', label: 'Chuẩn bị trong khu riêng', hint: 'Chuẩn bị ở một nơi khác (vườn ươm, nhà sơ chế, ô khác…). Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được.' },
+    { code: 'whole', label: t`Chuẩn bị trong toàn diện tích của vụ`, hint: t`Như hiện nay: bắt đầu sản xuất ngay, hoặc chờ ở trạng thái Chuẩn bị (lúc này chưa ghi việc được).` },
+    { code: 'part', label: t`Chuẩn bị trong 1 phần ô sản xuất`, hint: t`Phần còn lại của ô vẫn chạy vụ khác. Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được.` },
+    { code: 'separate', label: t`Chuẩn bị trong khu riêng`, hint: t`Chuẩn bị ở một nơi khác (vườn ươm, nhà sơ chế, ô khác…). Vụ ở trạng thái Chuẩn bị nhưng ghi việc chuẩn bị được.` },
   ];
 }
 

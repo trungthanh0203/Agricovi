@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { CellKind } from './timesheetCells';
+import { t as tx } from '@lingui/core/macro';
 
 /**
  * Bảng chấm công giấy (D199, migration 0226, lớp C): in bảng có sẵn tên người và các ngày từ-đến, kèm ghi chú cách ghi.
@@ -7,7 +8,7 @@ import type { CellKind } from './timesheetCells';
  * Chỉ làm khi có mạng (chức năng quản lý, D24).
  */
 export type SheetMode = 'shift' | 'hours';
-export const MODE_LABEL: Record<SheetMode, string> = { shift: 'Đánh dấu ca (✓ ½ P Ô V K)', hours: 'Ghi số giờ làm mỗi ngày' };
+export const MODE_LABEL: Record<SheetMode, string> = { get shift() { return tx`Đánh dấu ca (✓ ½ P Ô V K)`; }, get hours() { return tx`Ghi số giờ làm mỗi ngày`; } };
 
 export interface SheetWorker { worker_id: string; name: string; team: string | null }
 export interface SheetData {
@@ -18,8 +19,8 @@ export interface Sheet extends SheetData {
 }
 
 async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  if (!navigator.onLine) throw new Error('OFFLINE: Cần có mạng để thực hiện. Hãy kết nối mạng rồi thử lại.');
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
+  if (!navigator.onLine) throw new Error(tx`OFFLINE: Cần có mạng để thực hiện. Hãy kết nối mạng rồi thử lại.`);
   const { data, error } = await supabase.rpc(fn, args);
   if (error) throw new Error(error.message);
   return data as T;

@@ -1,4 +1,5 @@
 import type { MemberRole } from '@agriconnect/shared';
+import { t } from '@lingui/core/macro';
 
 /**
  * Quyền theo mục do chủ cơ sở cấp (quyết định D27). Phải khớp hàm `role_default_perm` và `perm_level` ở CSDL
@@ -12,21 +13,21 @@ export type EffectivePerms = Record<PermModule, PermLevel>;
 export const PERM_MODULES: PermModule[] = ['inventory', 'harvest', 'expenses', 'sales', 'summary', 'declare', 'payroll', 'website', 'coop'];
 
 export const PERM_MODULE_LABEL: Record<PermModule, string> = {
-  inventory: 'Kho (tồn kho, nhập kho, danh mục vật tư)',
-  harvest: 'Thu hoạch',
-  expenses: 'Chi phí',
-  sales: 'Doanh thu bán hàng',
-  summary: 'Tổng kết vụ',
-  declare: 'Khai báo (sản phẩm, việc, quy trình mẫu, phân khu)',
-  payroll: 'Tiền công (lương, giá công, thưởng/phạt)',
-  website: 'Hồ sơ website và đơn khách',
-  coop: 'Hộ thành viên (hợp tác xã)',
+  get inventory() { return t`Kho (tồn kho, nhập kho, danh mục vật tư)`; },
+  get harvest() { return t`Thu hoạch`; },
+  get expenses() { return t`Chi phí`; },
+  get sales() { return t`Doanh thu bán hàng`; },
+  get summary() { return t`Tổng kết vụ`; },
+  get declare() { return t`Khai báo (sản phẩm, việc, quy trình mẫu, phân khu)`; },
+  get payroll() { return t`Tiền công (lương, giá công, thưởng/phạt)`; },
+  get website() { return t`Hồ sơ website và đơn khách`; },
+  get coop() { return t`Hộ thành viên (hợp tác xã)`; },
 };
 
 export const PERM_LEVEL_LABEL: Record<PermLevel, string> = {
-  none: 'Không thấy',
-  view: 'Chỉ xem',
-  edit: 'Xem và nhập liệu',
+  get none() { return t`Không thấy`; },
+  get view() { return t`Chỉ xem`; },
+  get edit() { return t`Xem và nhập liệu`; },
 };
 
 const RANK: Record<PermLevel, number> = { none: 0, view: 1, edit: 2 };

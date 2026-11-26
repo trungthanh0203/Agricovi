@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { friendlyError } from '../lib/errors';
 import { addSupplierFromWeb, findWebShops, type WebShop } from '../lib/partners';
 import { PROVINCES, formatAddr } from '../lib/vnAddress';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
 /**
  * "Tìm trên website": gian hàng vật tư đang hoạt động trên website, lọc theo tỉnh/thành phố và từ khóa. Bấm "Thêm vào nhà cung ứng" thì
@@ -28,31 +30,31 @@ export function FindWebSuppliers({ orgId, defaultProvince, onAdded }: { orgId: s
 
   return (
     <div className="inline-form">
-      <p className="muted">Gian hàng vật tư đã đăng ký và được duyệt trên website. Bấm "Thêm vào nhà cung ứng" để sao thông tin sang danh sách của bạn, rồi chỉ cần thêm ghi chú.</p>
-      <label>Tỉnh/thành phố
+      <p className="muted">{t`Gian hàng vật tư đã đăng ký và được duyệt trên website. Bấm "Thêm vào nhà cung ứng" để sao thông tin sang danh sách của bạn, rồi chỉ cần thêm ghi chú.`}</p>
+      <label>{t`Tỉnh/thành phố`}
         <select value={province} onChange={(e) => setProvince(e.target.value)}>
-          <option value="">Tất cả khu vực</option>
+          <option value="">{t`Tất cả khu vực`}</option>
           {PROVINCES.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
       </label>
-      <label>Tìm theo tên gian hàng hoặc vật tư<input value={q} maxLength={80} placeholder="Ví dụ: phân NPK, chế phẩm sinh học" onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} /></label>
-      <div className="btnrow"><button type="button" className="primary" disabled={busy} onClick={() => void search()}>{busy ? 'Đang tìm…' : 'Tìm gian hàng'}</button></div>
+      <label>{t`Tìm theo tên gian hàng hoặc vật tư`}<input value={q} maxLength={80} placeholder={t`Ví dụ: phân NPK, chế phẩm sinh học`} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} /></label>
+      <div className="btnrow"><button type="button" className="primary" disabled={busy} onClick={() => void search()}>{busy ? t`Đang tìm…` : t`Tìm gian hàng`}</button></div>
       {error && <p className="msg error" role="alert">{error}</p>}
-      {res && <p className="muted">{res.total === 0 ? 'Không tìm thấy gian hàng phù hợp. Thử bỏ bớt bộ lọc.' : `${res.total} gian hàng`}</p>}
+      {res && <p className="muted">{res.total === 0 ? t`Không tìm thấy gian hàng phù hợp. Thử bỏ bớt bộ lọc.` : t`${res.total} gian hàng`}</p>}
       {res?.rows.map((s) => (
         <div className="card slim" key={s.id}>
-          <strong>{s.name}</strong>{s.license_verified && <span className="pill ok"> ✔ Đã kiểm tra giấy phép</span>}
+          <strong>{s.name}</strong>{s.license_verified && <span className="pill ok">{' '}{t`✔ Đã kiểm tra giấy phép`}</span>}
           <p className="muted">{formatAddr({ address: s.address, ward: s.ward, province: s.province })}</p>
-          {s.phone && <p className="muted">Điện thoại: <a href={`tel:${s.phone}`}>{s.phone}</a></p>}
-          {s.materials.length > 0 && <p className="muted">Bán: {s.materials.join(', ')}{s.material_count > s.materials.length ? ` … (${s.material_count} vật tư)` : ''}</p>}
+          {s.phone && <p className="muted"><Trans>Điện thoại: <a href={`tel:${s.phone}`}>{s.phone}</a></Trans></p>}
+          {s.materials.length > 0 && <p className="muted">{t`Bán:`}{' '}{s.materials.join(', ')}{s.material_count > s.materials.length ? t` … (${s.material_count} vật tư)` : ''}</p>}
           <div className="btnrow">
             {s.added_partner_id
-              ? <button type="button" className="secondary" disabled>Đã có trong nhà cung ứng</button>
-              : <button type="button" className="primary" disabled={busy} onClick={() => void add(s)}>Thêm vào nhà cung ứng</button>}
+              ? <button type="button" className="secondary" disabled>{t`Đã có trong nhà cung ứng`}</button>
+              : <button type="button" className="primary" disabled={busy} onClick={() => void add(s)}>{t`Thêm vào nhà cung ứng`}</button>}
           </div>
         </div>
       ))}
-      {res && res.rows.length < res.total && <div className="btnrow"><button type="button" className="secondary" disabled={busy} onClick={() => void search(res.rows.length)}>Xem thêm</button></div>}
+      {res && res.rows.length < res.total && <div className="btnrow"><button type="button" className="secondary" disabled={busy} onClick={() => void search(res.rows.length)}>{t`Xem thêm`}</button></div>}
     </div>
   );
 }

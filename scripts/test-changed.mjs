@@ -111,5 +111,5 @@ else if (files.length === 0) {
 }
 if (flag('--list')) process.exit(0);
 
-const r = spawnSync(process.execPath, ['--import', 'tsx', '--test', '--test-force-exit', ...files], { stdio: 'inherit' });
+const r = spawnSync(process.execPath, ['--import', 'tsx', '--import', './scripts/lingui-test-loader.mjs', '--test', '--test-force-exit', ...files], { stdio: 'inherit' });
 process.exit(r.status ?? 1);

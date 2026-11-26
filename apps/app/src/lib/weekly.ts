@@ -1,3 +1,5 @@
+import { t as tx } from '@lingui/core/macro';
+import { dateLocale } from './format';
 /**
  * Báo cáo tuần (G2-7, D80): kiểu dữ liệu từ hàm máy chủ `get_weekly_report`, so sánh với tuần trước, và tóm tắt dạng chữ để chia sẻ (Zalo…).
  * Máy chủ tính khi mở và kiểm quyền từng chỉ số. File này chỉ gồm kiểu và phần tính thuần (không import gì) để kiểm thử được; phần gọi máy chủ ở `weeklyApi.ts`.
@@ -85,42 +87,42 @@ export function deltaTone(key: MetricKey, d: Delta): 'ok' | 'bad' | 'neutral' {
 
 /** "▲ 20% so với tuần trước (30)" / "▼ 5% …" / "Bằng tuần trước" / "Tuần trước chưa có" */
 export function deltaText(d: Delta, prevText: string): string {
-  if (d.dir === 'flat') return 'Bằng tuần trước';
-  if (d.dir === 'new') return 'Tuần trước chưa có';
-  return `${d.dir === 'up' ? '▲' : '▼'} ${d.pct}% so với tuần trước (${prevText})`;
+  if (d.dir === 'flat') return tx`Bằng tuần trước`;
+  if (d.dir === 'new') return tx`Tuần trước chưa có`;
+  return tx`${d.dir === 'up' ? '▲' : '▼'} ${d.pct!}% so với tuần trước (${prevText})`;
 }
 
-const vn = (n: number, digits = 1) => n.toLocaleString('vi-VN', { maximumFractionDigits: digits });
-const money = (n: number) => `${Math.round(n).toLocaleString('vi-VN')} đ`;
+const vn = (n: number, digits = 1) => n.toLocaleString(dateLocale(), { maximumFractionDigits: digits });
+const money = (n: number) => tx`${Math.round(n).toLocaleString(dateLocale())} đ`;
 
 /** Tóm tắt dạng chữ để gửi qua Zalo/tin nhắn. Chỉ gồm các chỉ số người xem có quyền xem. */
 export function buildWeeklyText(r: WeeklyReport, orgName: string): string {
   const L: string[] = [];
-  L.push(`BÁO CÁO TUẦN ${weekLabel(r.week_start, r.week_end)} · ${orgName}`);
+  L.push(tx`BÁO CÁO TUẦN ${weekLabel(r.week_start, r.week_end)} · ${orgName}`);
   const line = (label: string, cur: number | null, prev: number | null, fmt: (n: number) => string) => {
     if (cur === null || prev === null) return;
     const d = delta(cur, prev);
-    L.push(`• ${label}: ${fmt(cur)}${d.dir === 'flat' ? ' (bằng tuần trước)' : d.dir === 'new' ? ' (tuần trước chưa có)' : ` (${d.dir === 'up' ? 'tăng' : 'giảm'} ${d.pct}% so với tuần trước)`}`);
+    L.push(`• ${label}: ${fmt(cur)}${d.dir === 'flat' ? tx` (bằng tuần trước)` : d.dir === 'new' ? tx` (tuần trước chưa có)` : tx` (${d.dir === 'up' ? tx`tăng` : tx`giảm`} ${d.pct!}% so với tuần trước)`}`);
   };
-  line('Việc đã ghi', r.cur.logs, r.prev.logs, (n) => String(n));
-  line('Thu hoạch (sau hao hụt)', r.cur.harvest_kg, r.prev.harvest_kg, (n) => `${vn(n)} kg`);
+  line(tx`Việc đã ghi`, r.cur.logs, r.prev.logs, (n) => String(n));
+  line(tx`Thu hoạch (sau hao hụt)`, r.cur.harvest_kg, r.prev.harvest_kg, (n) => `${vn(n)} kg`);
   line('Doanh thu', r.cur.revenue, r.prev.revenue, money);
-  line('Chi phí', r.cur.cost, r.prev.cost, money);
-  line('Giờ công đã xác nhận', r.cur.labor_hours, r.prev.labor_hours, (n) => `${vn(n)} giờ`);
-  line('Đã thu nợ', r.cur.collected, r.prev.collected, money);
-  line('Đã trả nợ', r.cur.paid_out, r.prev.paid_out, money);
-  line('Đơn đặt hàng từ website', r.cur.web_orders, r.prev.web_orders, (n) => String(n));
+  line(tx`Chi phí`, r.cur.cost, r.prev.cost, money);
+  line(tx`Giờ công đã xác nhận`, r.cur.labor_hours, r.prev.labor_hours, (n) => tx`${vn(n)} giờ`);
+  line(tx`Đã thu nợ`, r.cur.collected, r.prev.collected, money);
+  line(tx`Đã trả nợ`, r.cur.paid_out, r.prev.paid_out, money);
+  line(tx`Đơn đặt hàng từ website`, r.cur.web_orders, r.prev.web_orders, (n) => String(n));
   const a = r.attention;
   const todo: string[] = [];
-  if (a.overdue_payables && a.overdue_payables.count > 0) todo.push(`${a.overdue_payables.count} hóa đơn mua quá hạn (${money(a.overdue_payables.amount)})`);
-  if (a.overdue_receivables && a.overdue_receivables.count > 0) todo.push(`${a.overdue_receivables.count} khoản phải thu quá hạn (${money(a.overdue_receivables.amount)})`);
-  if (a.low_stock) todo.push(`${a.low_stock} vật tư sắp hết`);
-  if (a.late_cycles > 0) todo.push(`${a.late_cycles} vụ trễ tiến độ`);
-  if (a.open_incidents > 0) todo.push(`${a.open_incidents} sự cố đang mở${a.overdue_actions > 0 ? `, ${a.overdue_actions} việc khắc phục quá hạn` : ''}`);
-  if (a.pending_attendance > 0) todo.push(`${a.pending_attendance} ca công chờ xác nhận`);
-  if (a.web_orders_waiting) todo.push(`${a.web_orders_waiting} đơn website chờ báo giá`);
-  if (todo.length > 0) { L.push('Cần chú ý:'); for (const t of todo) L.push(`  - ${t}`); }
-  L.push('(Chi phí không gồm tiền mua vật tư vì đã tính khi dùng.)');
+  if (a.overdue_payables && a.overdue_payables.count > 0) todo.push(tx`${a.overdue_payables.count} hóa đơn mua quá hạn (${money(a.overdue_payables.amount)})`);
+  if (a.overdue_receivables && a.overdue_receivables.count > 0) todo.push(tx`${a.overdue_receivables.count} khoản phải thu quá hạn (${money(a.overdue_receivables.amount)})`);
+  if (a.low_stock) todo.push(tx`${a.low_stock} vật tư sắp hết`);
+  if (a.late_cycles > 0) todo.push(tx`${a.late_cycles} vụ trễ tiến độ`);
+  if (a.open_incidents > 0) todo.push(tx`${a.open_incidents} sự cố đang mở${a.overdue_actions > 0 ? tx`, ${a.overdue_actions} việc khắc phục quá hạn` : ''}`);
+  if (a.pending_attendance > 0) todo.push(tx`${a.pending_attendance} ca công chờ xác nhận`);
+  if (a.web_orders_waiting) todo.push(tx`${a.web_orders_waiting} đơn website chờ báo giá`);
+  if (todo.length > 0) { L.push(tx`Cần chú ý:`); for (const t of todo) L.push(`  - ${t}`); }
+  L.push(tx`(Chi phí không gồm tiền mua vật tư vì đã tính khi dùng.)`);
   return L.join('\n');
 }
 

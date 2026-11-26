@@ -8,6 +8,8 @@ import { formatMoney, formatQty } from '../lib/inventory';
 import { useOrgs } from '../lib/orgs';
 import { buildStockCsv, fetchMaterialUse, fetchStockPeriod, useTotals, type PeriodRow, type UseRow } from '../lib/stockReports';
 import { downloadCsv } from '../lib/summary';
+import { t as tx } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
 type Which = 'period' | 'use';
 const monthStart = () => `${todayLocal().slice(0, 7)}-01`;
@@ -32,8 +34,8 @@ export function StockReports({ orgId }: { orgId: string }) {
 
   async function run() {
     setError(null);
-    if (!from || !to) return setError('Hãy chọn từ ngày và đến ngày.');
-    if (to < from) return setError('Đến ngày không được trước từ ngày.');
+    if (!from || !to) return setError(tx`Hãy chọn từ ngày và đến ngày.`);
+    if (to < from) return setError(tx`Đến ngày không được trước từ ngày.`);
     setBusy(true);
     try {
       if (which === 'period') { setPeriod(await fetchStockPeriod(orgId, from, to, loc || null)); setUse(null); }
@@ -58,37 +60,37 @@ export function StockReports({ orgId }: { orgId: string }) {
   const t = use ? useTotals(use) : null;
   return (
     <div className="inline-form">
-      <div className="chips" role="tablist" aria-label="Loại báo cáo kho">
-        <button role="tab" aria-selected={which === 'period'} className={which === 'period' ? 'chip active' : 'chip'} onClick={() => { setWhich('period'); setShown(null); }}>Nhập – xuất – tồn</button>
-        <button role="tab" aria-selected={which === 'use'} className={which === 'use' ? 'chip active' : 'chip'} onClick={() => { setWhich('use'); setShown(null); }}>Vật tư dùng theo vụ</button>
+      <div className="chips" role="tablist" aria-label={tx`Loại báo cáo kho`}>
+        <button role="tab" aria-selected={which === 'period'} className={which === 'period' ? 'chip active' : 'chip'} onClick={() => { setWhich('period'); setShown(null); }}>{tx`Nhập – xuất – tồn`}</button>
+        <button role="tab" aria-selected={which === 'use'} className={which === 'use' ? 'chip active' : 'chip'} onClick={() => { setWhich('use'); setShown(null); }}>{tx`Vật tư dùng theo vụ`}</button>
       </div>
       <div className="pair">
-        <label>Từ ngày<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
-        <label>Đến ngày<input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
+        <label>{tx`Từ ngày`}<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label>{tx`Đến ngày`}<input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
       </div>
       {which === 'period' && locations.length > 1 && (
         <label>Kho
           <select value={loc} onChange={(e) => setLoc(e.target.value)}>
-            <option value="">Tất cả kho</option>
+            <option value="">{tx`Tất cả kho`}</option>
             {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
         </label>
       )}
       {error && <p className="msg error" role="alert">{error}</p>}
-      {!online && <p className="msg warn" role="status">Cần có mạng để xem báo cáo kho.</p>}
+      {!online && <p className="msg warn" role="status">{tx`Cần có mạng để xem báo cáo kho.`}</p>}
       <div className="btnrow">
-        <button className="primary" disabled={busy || !online} onClick={() => void run()}>{busy ? 'Đang tính…' : 'Xem báo cáo'}</button>
-        {shown && <button className="secondary" onClick={exportCsv}>Xuất CSV</button>}
+        <button className="primary" disabled={busy || !online} onClick={() => void run()}>{busy ? tx`Đang tính…` : tx`Xem báo cáo`}</button>
+        {shown && <button className="secondary" onClick={exportCsv}>{tx`Xuất CSV`}</button>}
       </div>
 
       {shown && which === 'period' && period && (
         <>
-          <p className="muted">Kỳ {fmtDate(shown.from)} – {fmtDate(shown.to)}{loc ? ` · ${locations.find((l) => l.id === loc)?.name ?? ''}` : ''}. Tồn cuối kỳ = tồn đầu kỳ + nhập − xuất + điều chỉnh (gồm chuyển kho, trả về kho, kiểm kê).</p>
+          <p className="muted">{tx`Kỳ`}{' '}{fmtDate(shown.from)} – {fmtDate(shown.to)}{loc ? ` · ${locations.find((l) => l.id === loc)?.name ?? ''}` : ''}{tx`. Tồn cuối kỳ = tồn đầu kỳ + nhập − xuất + điều chỉnh (gồm chuyển kho, trả về kho, kiểm kê).`}</p>
           <div className="tablewrap">
             <table className="grid">
-              <thead><tr><th>Vật tư</th><th className="num">Đầu kỳ</th><th className="num">Nhập</th><th className="num">Xuất</th><th className="num">Điều chỉnh</th><th className="num">Cuối kỳ</th></tr></thead>
+              <thead><tr><th>{tx`Vật tư`}</th><th className="num">{tx`Đầu kỳ`}</th><th className="num">{tx`Nhập`}</th><th className="num">{tx`Xuất`}</th><th className="num">{tx`Điều chỉnh`}</th><th className="num">{tx`Cuối kỳ`}</th></tr></thead>
               <tbody>
-                {period.length === 0 && <tr><td colSpan={6} className="muted">Không có giao dịch kho nào.</td></tr>}
+                {period.length === 0 && <tr><td colSpan={6} className="muted">{tx`Không có giao dịch kho nào.`}</td></tr>}
                 {period.map((r) => (
                   <tr key={r.material_id}>
                     <td>{r.material_name}<span className="sub">{r.unit_name}</span></td>
@@ -104,12 +106,12 @@ export function StockReports({ orgId }: { orgId: string }) {
 
       {shown && which === 'use' && use && t && (
         <>
-          <p className="muted">Kỳ {fmtDate(shown.from)} – {fmtDate(shown.to)}. Số lượng là lượng đã xuất cho vụ trừ lượng đã trả về kho; giá vốn theo bình quân gia quyền.</p>
+          <p className="muted">{tx`Kỳ`}{' '}{fmtDate(shown.from)} – {fmtDate(shown.to)}{tx`. Số lượng là lượng đã xuất cho vụ trừ lượng đã trả về kho; giá vốn theo bình quân gia quyền.`}</p>
           <div className="tablewrap">
             <table className="grid">
-              <thead><tr><th>Vụ</th><th>Vật tư</th><th className="num">Số lượng</th><th className="num">Giá vốn</th></tr></thead>
+              <thead><tr><th>{tx`Vụ`}</th><th>{tx`Vật tư`}</th><th className="num">{tx`Số lượng`}</th><th className="num">{tx`Giá vốn`}</th></tr></thead>
               <tbody>
-                {use.length === 0 && <tr><td colSpan={4} className="muted">Chưa có vật tư nào xuất cho vụ trong kỳ.</td></tr>}
+                {use.length === 0 && <tr><td colSpan={4} className="muted">{tx`Chưa có vật tư nào xuất cho vụ trong kỳ.`}</td></tr>}
                 {use.map((r) => (
                   <tr key={`${r.cycle_id}|${r.material_id}`}>
                     <td>{r.cycle_name}<span className="sub">{r.area_name}</span></td>
@@ -119,10 +121,10 @@ export function StockReports({ orgId }: { orgId: string }) {
                   </tr>
                 ))}
               </tbody>
-              {use.length > 0 && <tfoot><tr><td colSpan={3}><strong>Tổng giá vốn</strong></td><td className="num"><strong>{formatMoney(t.cost)}</strong></td></tr></tfoot>}
+              {use.length > 0 && <tfoot><tr><td colSpan={3}><strong>{tx`Tổng giá vốn`}</strong></td><td className="num"><strong>{formatMoney(t.cost)}</strong></td></tr></tfoot>}
             </table>
           </div>
-          {t.unknown > 0 && <p className="msg warn">* Có {t.unknown} lần xuất chưa có giá nhập nên chưa tính giá vốn. Hãy ghi giá khi nhập kho để báo cáo đủ.</p>}
+          {t.unknown > 0 && <p className="msg warn"><Trans>* Có {t.unknown} lần xuất chưa có giá nhập nên chưa tính giá vốn. Hãy ghi giá khi nhập kho để báo cáo đủ.</Trans></p>}
         </>
       )}
     </div>

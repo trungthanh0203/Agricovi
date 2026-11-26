@@ -1,6 +1,8 @@
 import { syncInventoryDown } from './inventory';
 import { insertRow, requireOnline, updateVersioned } from './serverWrite';
 import { supabase } from './supabase';
+import { t } from '@lingui/core/macro';
+import { dateLocale } from './format';
 
 /**
  * Đối tác (nhà cung ứng) và mua theo hóa đơn (G2-2, D76). Mọi thao tác cần mạng, ghi thẳng lên máy chủ (D24); dữ liệu giá và công nợ
@@ -41,7 +43,7 @@ const COLUMNS = 'id, organization_id, name, phone, address, province, ward, tax_
 const nz = (s: string | undefined) => (s && s.trim() ? s.trim() : null);
 
 function client() {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  if (!supabase) throw new Error(t`Supabase chưa được cấu hình`);
   return supabase;
 }
 
@@ -53,13 +55,13 @@ export async function listSuppliers(orgId: string): Promise<Partner[]> {
 }
 
 export function validatePartner(f: PartnerInput): string | null {
-  if (f.name.trim().length < 2) return 'Tên nhà cung ứng cần ít nhất 2 ký tự.';
+  if (f.name.trim().length < 2) return t`Tên nhà cung ứng cần ít nhất 2 ký tự.`;
   return null;
 }
 
 /** Thêm nhà cung ứng; trả về mã mới */
 export async function createSupplier(orgId: string, f: PartnerInput, id: string = crypto.randomUUID()): Promise<string> {
-  requireOnline('thêm nhà cung ứng');
+  requireOnline(t`thêm nhà cung ứng`);
   const bad = validatePartner(f);
   if (bad) throw new Error(`INVALID_PARTNER: ${bad}`);
   await insertRow('partners', {
@@ -71,7 +73,7 @@ export async function createSupplier(orgId: string, f: PartnerInput, id: string 
 
 /** Sửa hoặc dừng/dùng lại có kiểm tra phiên bản (người khác sửa trước thì báo xung đột, không ghi đè) */
 export async function updateSupplier(p: Partner, changes: Partial<PartnerInput> & { is_active?: boolean }): Promise<Partner> {
-  requireOnline('sửa nhà cung ứng');
+  requireOnline(t`sửa nhà cung ứng`);
   if (changes.name !== undefined) {
     const bad = validatePartner({ name: changes.name });
     if (bad) throw new Error(`INVALID_PARTNER: ${bad}`);
@@ -117,25 +119,25 @@ export const linesTotal = (lines: { quantity: number; unitCost: number }[]): num
 
 /** Kiểm tra trước khi gửi; trả về câu báo lỗi hoặc null */
 export function validatePurchase(i: PurchaseInput, today: string): string | null {
-  if (!i.partnerId) return 'Hãy chọn nhà cung ứng.';
-  if (i.lines.length === 0) return 'Hóa đơn cần ít nhất một dòng vật tư.';
+  if (!i.partnerId) return t`Hãy chọn nhà cung ứng.`;
+  if (i.lines.length === 0) return t`Hóa đơn cần ít nhất một dòng vật tư.`;
   for (const l of i.lines) {
-    if (!l.materialId) return 'Có dòng chưa chọn vật tư.';
-    if (!(l.quantity > 0)) return 'Số lượng ở mỗi dòng phải lớn hơn 0.';
-    if (!Number.isInteger(l.unitCost) || l.unitCost < 0) return 'Đơn giá phải là số tiền (đồng), không có phần lẻ.';
+    if (!l.materialId) return t`Có dòng chưa chọn vật tư.`;
+    if (!(l.quantity > 0)) return t`Số lượng ở mỗi dòng phải lớn hơn 0.`;
+    if (!Number.isInteger(l.unitCost) || l.unitCost < 0) return t`Đơn giá phải là số tiền (đồng), không có phần lẻ.`;
   }
-  if (!i.locationId) return 'Hãy chọn kho nhận hàng.';
-  if (i.billDate > today) return 'Ngày mua không được sau ngày hôm nay.';
-  if (i.dueDate && i.dueDate < i.billDate) return 'Hạn thanh toán không được trước ngày mua.';
-  if (!Number.isInteger(i.total) || i.total < 0) return 'Tổng tiền phải là số tiền (đồng), không có phần lẻ.';
-  if (!Number.isInteger(i.paid) || i.paid < 0) return 'Số tiền đã trả phải là số tiền không âm.';
-  if (i.paid > i.total) return 'Số tiền đã trả không được lớn hơn tổng tiền hóa đơn.';
+  if (!i.locationId) return t`Hãy chọn kho nhận hàng.`;
+  if (i.billDate > today) return t`Ngày mua không được sau ngày hôm nay.`;
+  if (i.dueDate && i.dueDate < i.billDate) return t`Hạn thanh toán không được trước ngày mua.`;
+  if (!Number.isInteger(i.total) || i.total < 0) return t`Tổng tiền phải là số tiền (đồng), không có phần lẻ.`;
+  if (!Number.isInteger(i.paid) || i.paid < 0) return t`Số tiền đã trả phải là số tiền không âm.`;
+  if (i.paid > i.total) return t`Số tiền đã trả không được lớn hơn tổng tiền hóa đơn.`;
   return null;
 }
 
 /** Mua theo hóa đơn: tạo hóa đơn + các dòng nhập kho + lần trả đầu trong MỘT giao dịch ở máy chủ (lỗi thì không lưu gì) */
 export async function recordPurchase(i: PurchaseInput): Promise<void> {
-  requireOnline('lưu hóa đơn mua');
+  requireOnline(t`lưu hóa đơn mua`);
   const { error } = await client().rpc('record_purchase', {
     p_id: i.id,
     p_org: i.orgId,
@@ -174,7 +176,7 @@ export interface PayableBill {
 }
 
 export const PAYABLE_STATUS_LABEL: Record<PayableStatus, string> = {
-  overdue: 'Quá hạn', due_soon: 'Sắp đến hạn', ok: 'Còn hạn', paid: 'Đã trả đủ',
+  get overdue() { return t`Quá hạn`; }, get due_soon() { return t`Sắp đến hạn`; }, get ok() { return t`Còn hạn`; }, get paid() { return t`Đã trả đủ`; },
 };
 
 /** Công nợ của cơ sở: mỗi hóa đơn chưa hủy kèm đã trả, còn nợ, tình trạng hạn. `onlyOpen` = chỉ hóa đơn còn nợ. */
@@ -205,35 +207,35 @@ export async function listBillPayments(billId: string): Promise<BillPayment[]> {
 export interface PayInput { amount: number; paidOn: string; method: 'cash' | 'transfer'; note: string; /** mã lần ghi tạo sẵn: bấm lặp không ghi hai lần */ opId?: string }
 
 export function validatePay(i: PayInput, maxAmount: number, today: string): string | null {
-  if (!Number.isInteger(i.amount) || i.amount <= 0) return 'Số tiền trả phải là số tiền (đồng) lớn hơn 0, không có phần lẻ.';
-  if (i.amount > maxAmount) return `Số tiền trả vượt số còn nợ (còn nợ ${maxAmount.toLocaleString('vi-VN')} đ).`;
-  if (i.paidOn > today) return 'Ngày trả không được sau ngày hôm nay.';
+  if (!Number.isInteger(i.amount) || i.amount <= 0) return t`Số tiền trả phải là số tiền (đồng) lớn hơn 0, không có phần lẻ.`;
+  if (i.amount > maxAmount) return t`Số tiền trả vượt số còn nợ (còn nợ ${maxAmount.toLocaleString(dateLocale())} đ).`;
+  if (i.paidOn > today) return t`Ngày trả không được sau ngày hôm nay.`;
   return null;
 }
 
 /** Trả tiền một hóa đơn (mã lần trả tạo sẵn: bấm lặp không ghi hai lần) */
 export async function payBill(billId: string, i: PayInput, id: string = i.opId ?? crypto.randomUUID()): Promise<void> {
-  requireOnline('ghi lần trả tiền');
+  requireOnline(t`ghi lần trả tiền`);
   const { error } = await client().rpc('pay_bill', { p_id: id, p_bill: billId, p_amount: i.amount, p_paid_on: i.paidOn, p_method: i.method, p_note: i.note.trim() || null });
   if (error) throw new Error(error.message);
 }
 
 /** Trả cho nhà cung ứng: máy chủ tự trừ vào các hóa đơn cũ nhất trước */
 export async function payPartner(partnerId: string, i: PayInput, opId: string = i.opId ?? crypto.randomUUID()): Promise<void> {
-  requireOnline('ghi lần trả tiền');
+  requireOnline(t`ghi lần trả tiền`);
   const { error } = await client().rpc('pay_partner', { p_op_id: opId, p_partner: partnerId, p_amount: i.amount, p_paid_on: i.paidOn, p_method: i.method, p_note: i.note.trim() || null });
   if (error) throw new Error(error.message);
 }
 
 export async function voidPayment(paymentId: string, reason: string): Promise<void> {
-  requireOnline('hủy lần trả tiền');
+  requireOnline(t`hủy lần trả tiền`);
   const { error } = await client().rpc('void_bill_payment', { p_id: paymentId, p_reason: reason });
   if (error) throw new Error(error.message);
 }
 
 /** Sửa số hóa đơn, hạn thanh toán, ghi chú (không sửa được tổng tiền, ngày mua, dòng hàng) */
 export async function editBill(b: { bill_id: string; version: number }, changes: { invoice_no?: string; due_date?: string | null; note?: string }): Promise<void> {
-  requireOnline('sửa hóa đơn');
+  requireOnline(t`sửa hóa đơn`);
   const patch: Record<string, unknown> = { ...changes };
   if ('due_date' in changes) patch.due_date = changes.due_date || null; // chuỗi rỗng = bỏ hạn
   await updateVersioned('purchase_bills', b.bill_id, b.version, patch);
@@ -241,7 +243,7 @@ export async function editBill(b: { bill_id: string; version: number }, changes:
 
 /** Hủy hóa đơn (kèm lý do). Không đảo kho: hàng đã nhập vẫn nằm trong kho, muốn bỏ thì điều chỉnh tồn. */
 export async function voidBill(b: { bill_id: string; version: number }, reason: string): Promise<void> {
-  requireOnline('hủy hóa đơn');
+  requireOnline(t`hủy hóa đơn`);
   await updateVersioned('purchase_bills', b.bill_id, b.version, { voided_at: new Date().toISOString(), void_reason: reason });
 }
 
@@ -289,9 +291,9 @@ export async function listAllPartners(orgId: string): Promise<Pick<Partner, 'id'
 }
 
 export async function createCustomer(orgId: string, f: CustomerInput, id: string = crypto.randomUUID()): Promise<string> {
-  requireOnline('thêm khách hàng');
+  requireOnline(t`thêm khách hàng`);
   const bad = validatePartner(f);
-  if (bad) throw new Error(`INVALID_PARTNER: ${bad.replace('nhà cung ứng', 'khách hàng')}`);
+  if (bad) throw new Error(`INVALID_PARTNER: ${bad.replace(t`nhà cung ứng`, t`khách hàng`)}`);
   await insertRow('partners', {
     id, organization_id: orgId, name: f.name.trim(), phone: nz(f.phone), address: nz(f.address), province: nz(f.province), ward: nz(f.ward), tax_code: nz(f.tax_code),
     bank_account: nz(f.bank_account), goods: nz(f.goods), note: nz(f.note), is_supplier: false, is_customer: true, customer_kind: f.customer_kind || null,
@@ -300,10 +302,10 @@ export async function createCustomer(orgId: string, f: CustomerInput, id: string
 }
 
 export async function updateCustomer(p: Pick<Partner, 'id' | 'version'>, changes: Partial<CustomerInput> & { is_active?: boolean; is_customer?: boolean }): Promise<Customer> {
-  requireOnline('sửa khách hàng');
+  requireOnline(t`sửa khách hàng`);
   if (changes.name !== undefined) {
     const bad = validatePartner({ name: changes.name });
-    if (bad) throw new Error(`INVALID_PARTNER: ${bad.replace('nhà cung ứng', 'khách hàng')}`);
+    if (bad) throw new Error(`INVALID_PARTNER: ${bad.replace(t`nhà cung ứng`, t`khách hàng`)}`);
   }
   const patch: Record<string, unknown> = { ...changes };
   if (changes.name !== undefined) patch.name = changes.name.trim();
@@ -331,19 +333,19 @@ export interface SaleCreditInput {
 }
 
 export function validateSaleCredit(i: SaleCreditInput, today: string): string | null {
-  if (!i.partnerId) return 'Hãy chọn khách hàng.';
-  if (!(i.quantity > 0)) return 'Số lượng bán phải là số lớn hơn 0 (kg).';
-  if (!Number.isInteger(i.amount) || i.amount < 0) return 'Số tiền bán phải là số đồng không có phần lẻ.';
-  if (i.date > today) return 'Ngày bán không được sau ngày hôm nay.';
-  if (i.dueDate && i.dueDate < i.date) return 'Hạn thu tiền không được trước ngày bán.';
-  if (!Number.isInteger(i.collected) || i.collected < 0) return 'Số tiền đã thu phải là số tiền không âm.';
-  if (i.collected > i.amount) return 'Số tiền đã thu không được lớn hơn số tiền bán.';
+  if (!i.partnerId) return t`Hãy chọn khách hàng.`;
+  if (!(i.quantity > 0)) return t`Số lượng bán phải là số lớn hơn 0 (kg).`;
+  if (!Number.isInteger(i.amount) || i.amount < 0) return t`Số tiền bán phải là số đồng không có phần lẻ.`;
+  if (i.date > today) return t`Ngày bán không được sau ngày hôm nay.`;
+  if (i.dueDate && i.dueDate < i.date) return t`Hạn thu tiền không được trước ngày bán.`;
+  if (!Number.isInteger(i.collected) || i.collected < 0) return t`Số tiền đã thu phải là số tiền không âm.`;
+  if (i.collected > i.amount) return t`Số tiền đã thu không được lớn hơn số tiền bán.`;
   return null;
 }
 
 /** Ghi lần bán CÓ KHÁCH + lần thu đầu trong một giao dịch ở máy chủ; trả về dòng bán để lưu vào máy */
 export async function recordSaleWithCustomer(i: SaleCreditInput): Promise<Record<string, unknown>> {
-  requireOnline('ghi bán hàng');
+  requireOnline(t`ghi bán hàng`);
   const { data, error } = await client().rpc('record_sale', {
     p_id: i.id, p_org: i.orgId, p_cycle: i.cycleId, p_date: i.date, p_qty: i.quantity, p_amount: i.amount,
     p_buyer_note: i.buyerNote.trim() || null, p_partner: i.partnerId, p_invoice: i.invoiceNo.trim() || null,
@@ -375,7 +377,7 @@ export interface ReceivableSale {
 }
 
 export const RECEIVABLE_STATUS_LABEL: Record<PayableStatus, string> = {
-  overdue: 'Quá hạn', due_soon: 'Sắp đến hạn', ok: 'Còn hạn', paid: 'Đã thu đủ',
+  get overdue() { return t`Quá hạn`; }, get due_soon() { return t`Sắp đến hạn`; }, get ok() { return t`Còn hạn`; }, get paid() { return t`Đã thu đủ`; },
 };
 
 /** Công nợ phải thu của cơ sở: mỗi lần bán có khách (chưa hủy) kèm đã thu, còn phải thu, tình trạng hạn */
@@ -407,27 +409,27 @@ export async function listSaleReceipts(saleId: string): Promise<SaleReceipt[]> {
 
 /** Thu tiền một lần bán (mã lần thu tạo sẵn: bấm lặp không ghi hai lần) */
 export async function collectSale(saleId: string, i: PayInput, id: string = i.opId ?? crypto.randomUUID()): Promise<void> {
-  requireOnline('ghi lần thu tiền');
+  requireOnline(t`ghi lần thu tiền`);
   const { error } = await client().rpc('collect_sale', { p_id: id, p_sale: saleId, p_amount: i.amount, p_received_on: i.paidOn, p_method: i.method, p_note: i.note.trim() || null });
   if (error) throw new Error(error.message);
 }
 
 /** Thu của một khách: máy chủ tự trừ vào các lần bán cũ nhất trước */
 export async function collectPartner(partnerId: string, i: PayInput, opId: string = i.opId ?? crypto.randomUUID()): Promise<void> {
-  requireOnline('ghi lần thu tiền');
+  requireOnline(t`ghi lần thu tiền`);
   const { error } = await client().rpc('collect_partner', { p_op_id: opId, p_partner: partnerId, p_amount: i.amount, p_received_on: i.paidOn, p_method: i.method, p_note: i.note.trim() || null });
   if (error) throw new Error(error.message);
 }
 
 export async function voidSaleReceipt(receiptId: string, reason: string): Promise<void> {
-  requireOnline('hủy lần thu tiền');
+  requireOnline(t`hủy lần thu tiền`);
   const { error } = await client().rpc('void_sale_receipt', { p_id: receiptId, p_reason: reason });
   if (error) throw new Error(error.message);
 }
 
 /** Sửa số phiếu và hạn thu của lần bán có khách (không sửa số tiền ở đây) */
 export async function editSaleCredit(s: { sale_id: string; version: number }, changes: { invoice_no?: string; due_date?: string }): Promise<void> {
-  requireOnline('sửa lần bán');
+  requireOnline(t`sửa lần bán`);
   const patch: Record<string, unknown> = {};
   if ('invoice_no' in changes) patch.invoice_no = changes.invoice_no ?? '';
   if ('due_date' in changes) patch.due_date = changes.due_date || '';
@@ -436,13 +438,13 @@ export async function editSaleCredit(s: { sale_id: string; version: number }, ch
 
 /** Hủy lần bán còn nợ (kèm lý do). Máy chủ từ chối nếu còn lần thu chưa hủy. */
 export async function voidSaleCredit(s: { sale_id: string; version: number }, reason: string): Promise<Record<string, unknown>> {
-  requireOnline('hủy lần bán');
+  requireOnline(t`hủy lần bán`);
   return updateVersioned<Record<string, unknown>>('sales_records', s.sale_id, s.version, { voided_at: new Date().toISOString(), void_reason: reason });
 }
 
 /** Ẩn danh khách theo yêu cầu xóa dữ liệu: xóa dữ liệu cá nhân, giữ số tiền và công nợ (không hoàn tác) */
 export async function anonymizeCustomer(id: string, reason: string): Promise<void> {
-  requireOnline('ẩn danh khách hàng');
+  requireOnline(t`ẩn danh khách hàng`);
   const { error } = await client().rpc('anonymize_partner', { p_id: id, p_reason: reason });
   if (error) throw new Error(error.message);
 }
@@ -461,7 +463,7 @@ export async function findWebShops(orgId: string, q: string, province: string, o
 
 /** Thêm gian hàng vào nhà cung ứng (sao tên, điện thoại, địa chỉ, tỉnh, xã, loại hàng). status: created | existing | linked (nối vào nhà cung ứng trùng tên) */
 export async function addSupplierFromWeb(orgId: string, shopId: string): Promise<{ id: string; status: 'created' | 'existing' | 'linked' }> {
-  requireOnline('thêm nhà cung ứng');
+  requireOnline(t`thêm nhà cung ứng`);
   const { data, error } = await client().rpc('add_supplier_from_web', { p_org: orgId, p_shop: shopId, p_note: null });
   if (error) throw new Error(error.message);
   return data as { id: string; status: 'created' | 'existing' | 'linked' };

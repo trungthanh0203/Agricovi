@@ -13,6 +13,9 @@ import { useOrgs } from '../lib/orgs';
 import { useTable } from '../lib/tables';
 import { cycleTitle } from '../lib/cycles';
 import type { MilestoneRow } from '../lib/db';
+import { t as tx } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
+import { dateLocale } from '../lib/format';
 
 const vn = (iso: string | null) => (iso ? iso.split('-').reverse().join('/') : '—');
 const pillClass = (s: MilestoneStatus) => (s === 'overdue' ? 'pill err' : s === 'today' || s === 'soon' ? 'pill warn' : s === 'done' ? 'pill ok' : 'pill');
@@ -21,14 +24,14 @@ const pillClass = (s: MilestoneStatus) => (s === 'overdue' ? 'pill err' : s === 
 function DoneButton({ m, disabled, onDone }: { m: MilestoneRow; disabled: boolean; onDone: (lot?: string) => void }) {
   const [asking, setAsking] = useState(false);
   const [lot, setLot] = useState('');
-  if (m.kind !== 'vaccine') return <button className="secondary" disabled={disabled} onClick={() => onDone()}>Đã làm xong</button>;
-  if (!asking) return <button className="secondary" disabled={disabled} onClick={() => setAsking(true)}>Đã tiêm</button>;
+  if (m.kind !== 'vaccine') return <button className="secondary" disabled={disabled} onClick={() => onDone()}>{tx`Đã làm xong`}</button>;
+  if (!asking) return <button className="secondary" disabled={disabled} onClick={() => setAsking(true)}>{tx`Đã tiêm`}</button>;
   return (
     <div className="inline-form">
-      <label>Số lô vaccine (không bắt buộc)<input value={lot} maxLength={60} onChange={(e) => setLot(e.target.value)} placeholder="In trên chai/hộp vaccine" /></label>
+      <label>{tx`Số lô vaccine (không bắt buộc)`}<input value={lot} maxLength={60} onChange={(e) => setLot(e.target.value)} placeholder={tx`In trên chai/hộp vaccine`} /></label>
       <div className="btnrow">
-        <button className="primary" disabled={disabled} onClick={() => onDone(lot)}>Xác nhận đã tiêm</button>
-        <button type="button" className="secondary" onClick={() => setAsking(false)}>Hủy</button>
+        <button className="primary" disabled={disabled} onClick={() => onDone(lot)}>{tx`Xác nhận đã tiêm`}</button>
+        <button type="button" className="secondary" onClick={() => setAsking(false)}>{tx`Hủy`}</button>
       </div>
     </div>
   );
@@ -57,19 +60,19 @@ export function HomeReminders() {
   const late = rows.filter((r) => r.status === 'overdue').length;
   const label = (c: CycleRow) => `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')}${c.code ? ` (${c.code})` : ''}`;
   return (
-    <Collapsible title="Mốc an toàn đến hạn" summary={`${rows.length} mốc${late > 0 ? ` · ${late} quá hạn` : ''}`} warn={late > 0} defaultOpen={late > 0}>
+    <Collapsible title={tx`Mốc an toàn đến hạn`} summary={tx`${rows.length} mốc${late > 0 ? tx` · ${late} quá hạn` : ''}`} warn={late > 0} defaultOpen={late > 0}>
       {error && <p className="msg error" role="alert">{error}</p>}
       {rows.map(({ m, c, status, due }) => (
         <div className="card slim" key={m.id}>
           <div className="row"><strong className="grow">{m.title}</strong><span className={pillClass(status)}>{MILESTONE_STATUS_LABEL[status]} · {vn(due)}</span></div>
-          <p className="muted">{m.kind === 'vaccine' ? 'Mũi tiêm · ' : ''}{label(c)}{m.note ? ` · ${m.note}` : ''}</p>
+          <p className="muted">{m.kind === 'vaccine' ? tx`Mũi tiêm · ` : ''}{label(c)}{m.note ? ` · ${m.note}` : ''}</p>
           <DoneButton m={m} disabled={!online || busyId === m.id} onDone={(lot) => {
             setBusyId(m.id); setError(null);
             void setMilestoneDone(m.id, true, lot).catch((e) => setError(friendlyError(e))).finally(() => setBusyId(null));
           }} />
         </div>
       ))}
-      {!online && <p className="muted">Đang offline: xem được, đánh dấu "đã làm" cần có mạng.</p>}
+      {!online && <p className="muted">{tx`Đang offline: xem được, đánh dấu "đã làm" cần có mạng.`}</p>}
     </Collapsible>
   );
 }
@@ -91,31 +94,31 @@ export function CycleMilestones({ cycle, canManage, canMark, animal = false }: {
   const run = async (fn: () => Promise<unknown>) => { setBusy(true); setError(null); try { await fn(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); } };
 
   return (
-    <Collapsible title="Mốc an toàn cho ngày bắt đầu/thu hoạch" summary={items.length === 0 ? 'chưa có' : `${open} chưa làm / ${items.length}`}>
+    <Collapsible title={tx`Mốc an toàn cho ngày bắt đầu/thu hoạch`} summary={items.length === 0 ? tx`chưa có` : tx`${open} chưa làm / ${items.length}`}>
       {error && <p className="msg error" role="alert">{error}</p>}
       {sorted.map((i) => {
         const s = milestoneStatus(i, cycle, today);
         return (
           <div className="card slim" key={i.id}>
             <div className="row"><strong className="grow">{i.title}</strong><span className={pillClass(s)}>{MILESTONE_STATUS_LABEL[s]}{s !== 'done' && milestoneDue(i, cycle) ? ` · ${vn(milestoneDue(i, cycle))}` : ''}</span></div>
-            <p className="muted">{i.kind === 'vaccine' ? 'Mũi tiêm · ' : ''}{milestoneWhen(i)}{i.note ? ` · ${i.note}` : ''}{i.done_at ? ` · ${i.done_name ?? ''} ${new Date(i.done_at).toLocaleDateString('vi-VN')}${i.lot_no ? ` · lô ${i.lot_no}` : ''}` : ''}</p>
+            <p className="muted">{i.kind === 'vaccine' ? tx`Mũi tiêm · ` : ''}{milestoneWhen(i)}{i.note ? ` · ${i.note}` : ''}{i.done_at ? ` · ${i.done_name ?? ''} ${new Date(i.done_at).toLocaleDateString(dateLocale())}${i.lot_no ? tx` · lô ${i.lot_no}` : ''}` : ''}</p>
             <div className="btnrow">
-              {canMark && i.done_at && <button className="secondary" disabled={busy || !online} onClick={() => void run(() => setMilestoneDone(i.id, false))}>Bỏ đánh dấu</button>}
+              {canMark && i.done_at && <button className="secondary" disabled={busy || !online} onClick={() => void run(() => setMilestoneDone(i.id, false))}>{tx`Bỏ đánh dấu`}</button>}
               {canMark && !i.done_at && <DoneButton m={i} disabled={busy || !online} onDone={(lot) => void run(() => setMilestoneDone(i.id, true, lot))} />}
-              {canManage && <button className="link inline" disabled={busy || !online} onClick={() => { if (window.confirm('Xóa mốc an toàn này khỏi vụ?')) void run(() => deleteCycleMilestone(i.id)); }}>Xóa</button>}
+              {canManage && <button className="link inline" disabled={busy || !online} onClick={() => { if (window.confirm(tx`Xóa mốc an toàn này khỏi vụ?`)) void run(() => deleteCycleMilestone(i.id)); }}>{tx`Xóa`}</button>}
             </div>
           </div>
         );
       })}
-      {canManage && !form && <button className="secondary" disabled={!online} onClick={() => setForm(true)}>{animal ? '+ Thêm mốc / mũi tiêm' : '+ Thêm mốc an toàn'}</button>}
+      {canManage && !form && <button className="secondary" disabled={!online} onClick={() => setForm(true)}>{animal ? tx`+ Thêm mốc / mũi tiêm` : tx`+ Thêm mốc an toàn`}</button>}
       {canManage && animal && !form && !items.some((i) => i.kind === 'vaccine') && (
         <div>
           <button className="secondary" disabled={busy || !online} onClick={() => {
-            if (window.confirm('Nạp lịch tiêm tham khảo cho heo? Đây chỉ là mẫu gợi ý, bạn cần cho thú y của trại xác nhận và sửa/xóa các mũi không dùng.')) {
+            if (window.confirm(tx`Nạp lịch tiêm tham khảo cho heo? Đây chỉ là mẫu gợi ý, bạn cần cho thú y của trại xác nhận và sửa/xóa các mũi không dùng.`)) {
               void run(async () => { for (const v of VACCINE_SAMPLE_PIG) await addCycleMilestone(cycle.id, v); });
             }
-          }}>Nạp lịch tiêm tham khảo (heo)</button>
-          <p className="muted">Mẫu gợi ý, cần thú y của trại xác nhận.</p>
+          }}>{tx`Nạp lịch tiêm tham khảo (heo)`}</button>
+          <p className="muted">{tx`Mẫu gợi ý, cần thú y của trại xác nhận.`}</p>
         </div>
       )}
       {canManage && form && (
@@ -123,7 +126,7 @@ export function CycleMilestones({ cycle, canManage, canMark, animal = false }: {
           onSave={(v) => run(async () => { await addCycleMilestone(cycle.id, v); setForm(false); setM({ title: '', anchor: 'start', offset: 0, note: '' }); setOffset('0'); })}
           onClose={() => setForm(false)} />
       )}
-      {!cycle.expected_end_date && <p className="muted">Mốc tính từ ngày thu dự kiến sẽ có ngày khi vụ có ngày kết thúc dự kiến.</p>}
+      {!cycle.expected_end_date && <p className="muted">{tx`Mốc tính từ ngày thu dự kiến sẽ có ngày khi vụ có ngày kết thúc dự kiến.`}</p>}
     </Collapsible>
   );
 }
@@ -135,33 +138,33 @@ function MilestoneForm({ m, offset, setM, setOffset, busy, animal = false, onSav
   return (
     <div className="inline-form">
       {animal && (
-        <label>Loại
+        <label>{tx`Loại`}
           <select value={m.kind ?? 'task'} onChange={(e) => setM({ ...m, kind: e.target.value as 'task' | 'vaccine' })}>
-            <option value="task">Việc nhắc (tẩy giun, ngưng thuốc…)</option>
-            <option value="vaccine">Mũi tiêm vaccine</option>
+            <option value="task">{tx`Việc nhắc (tẩy giun, ngưng thuốc…)`}</option>
+            <option value="vaccine">{tx`Mũi tiêm vaccine`}</option>
           </select>
         </label>
       )}
-      <label>Nội dung nhắc<input value={m.title} maxLength={160} onChange={(e) => setM({ ...m, title: e.target.value })} placeholder="Ví dụ: Tiêm vaccine lần 1, Ngưng bón phân" /></label>
+      <label>{tx`Nội dung nhắc`}<input value={m.title} maxLength={160} onChange={(e) => setM({ ...m, title: e.target.value })} placeholder={tx`Ví dụ: Tiêm vaccine lần 1, Ngưng bón phân`} /></label>
       <div className="pair">
-        <label>Tính từ
+        <label>{tx`Tính từ`}
           <select value={m.anchor} onChange={(e) => setM({ ...m, anchor: e.target.value as 'start' | 'end' })}>
-            <option value="start">Sau ngày bắt đầu vụ</option>
-            <option value="end">Trước ngày thu / xuất dự kiến</option>
+            <option value="start">{tx`Sau ngày bắt đầu vụ`}</option>
+            <option value="end">{tx`Trước ngày thu / xuất dự kiến`}</option>
           </select>
         </label>
-        <label>Số ngày<input value={offset} inputMode="numeric" onChange={(e) => setOffset(e.target.value)} /></label>
+        <label>{tx`Số ngày`}<input value={offset} inputMode="numeric" onChange={(e) => setOffset(e.target.value)} /></label>
       </div>
-      <label>Ghi chú (không bắt buộc)<input value={m.note} maxLength={300} onChange={(e) => setM({ ...m, note: e.target.value })} /></label>
+      <label>{tx`Ghi chú (không bắt buộc)`}<input value={m.note} maxLength={300} onChange={(e) => setM({ ...m, note: e.target.value })} /></label>
       {err && <p className="msg error" role="alert">{err}</p>}
       <div className="btnrow">
         <button className="primary" disabled={busy} onClick={() => {
           const n = Number(offset);
-          if (m.title.trim().length < 2) return setErr('Hãy nhập nội dung nhắc.');
-          if (!Number.isInteger(n) || n < 0) return setErr('Số ngày phải là số nguyên, không âm.');
+          if (m.title.trim().length < 2) return setErr(tx`Hãy nhập nội dung nhắc.`);
+          if (!Number.isInteger(n) || n < 0) return setErr(tx`Số ngày phải là số nguyên, không âm.`);
           setErr(null); onSave({ ...m, offset: n });
-        }}>Lưu</button>
-        <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+        }}>{tx`Lưu`}</button>
+        <button type="button" className="secondary" onClick={onClose}>{tx`Hủy`}</button>
       </div>
     </div>
   );
@@ -182,21 +185,21 @@ export function TemplateMilestones({ templateId, kind, canEdit }: { templateId: 
   const suggestions = MILESTONE_SUGGESTIONS[kind === 'livestock' || kind === 'aquatic' ? 'livestock' : 'crop'].filter((s) => !(items ?? []).some((i) => i.title === s.title));
 
   return (
-    <Collapsible title="Mốc an toàn cho ngày bắt đầu/thu hoạch" summary={items ? `${items.length} mốc` : online ? 'Đang tải…' : 'Cần có mạng'}>
-      <p className="muted">Mốc tự sinh nhắc ở Trang chủ cho mỗi vụ tạo từ quy trình này. Mốc "trước ngày thu" tự dời khi ngày thu dự kiến đổi. {kind === 'livestock' ? 'Lịch vaccine, tẩy giun do thú y của trại chốt: hãy tự thêm theo lịch đó.' : kind === 'aquatic' ? 'Lịch xử lý nước, thuốc và thu tỉa theo hướng dẫn kỹ thuật của bạn: hãy tự thêm mốc.' : ''}</p>
+    <Collapsible title={tx`Mốc an toàn cho ngày bắt đầu/thu hoạch`} summary={items ? tx`${items.length} mốc` : online ? tx`Đang tải…` : tx`Cần có mạng`}>
+      <p className="muted">{tx`Mốc tự sinh nhắc ở Trang chủ cho mỗi vụ tạo từ quy trình này. Mốc "trước ngày thu" tự dời khi ngày thu dự kiến đổi.`}{' '}{kind === 'livestock' ? tx`Lịch vaccine, tẩy giun do thú y của trại chốt: hãy tự thêm theo lịch đó.` : kind === 'aquatic' ? tx`Lịch xử lý nước, thuốc và thu tỉa theo hướng dẫn kỹ thuật của bạn: hãy tự thêm mốc.` : ''}</p>
       {error && <p className="msg error" role="alert">{error}</p>}
       {(items ?? []).map((i) => (
         <div className="card slim" key={i.id}>
-          <div className="row"><strong className="grow">{i.title}</strong>{canEdit && <button className="link inline" disabled={busy || !online} onClick={() => void run(() => deleteTemplateMilestone(i.id))}>Xóa</button>}</div>
+          <div className="row"><strong className="grow">{i.title}</strong>{canEdit && <button className="link inline" disabled={busy || !online} onClick={() => void run(() => deleteTemplateMilestone(i.id))}>{tx`Xóa`}</button>}</div>
           <p className="muted">{milestoneWhen(i)}{i.note ? ` · ${i.note}` : ''}</p>
         </div>
       ))}
       {canEdit && suggestions.length > 0 && (
         <div className="btnrow">
-          {suggestions.map((s) => <button key={s.title} className="secondary" disabled={busy || !online} onClick={() => void run(() => addTemplateMilestone(templateId, s))}>+ {s.title} ({s.offset} ngày trước thu)</button>)}
+          {suggestions.map((s) => <button key={s.title} className="secondary" disabled={busy || !online} onClick={() => void run(() => addTemplateMilestone(templateId, s))}><Trans>+ {s.title} ({s.offset} ngày trước thu)</Trans></button>)}
         </div>
       )}
-      {canEdit && !form && <button className="secondary" disabled={!online} onClick={() => setForm(true)}>+ Thêm mốc an toàn</button>}
+      {canEdit && !form && <button className="secondary" disabled={!online} onClick={() => setForm(true)}>{tx`+ Thêm mốc an toàn`}</button>}
       {canEdit && form && (
         <MilestoneForm m={m} offset={offset} setM={setM} setOffset={setOffset} busy={busy || !online}
           onSave={(v) => run(async () => { await addTemplateMilestone(templateId, v); setForm(false); setM({ title: '', anchor: 'start', offset: 0, note: '' }); setOffset('0'); })}

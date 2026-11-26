@@ -2,6 +2,7 @@ import { db } from './db';
 import { EXPORT_LOCKED_MSG, isExportLocked } from './exportLock';
 import { supabase } from './supabase';
 import type { CycleSummary } from './summaryReport';
+import { t } from '@lingui/core/macro';
 
 /** Các bảng mà tổng kết vụ dựa vào: bản ghi còn chờ gửi sẽ chưa có trong số liệu máy chủ */
 const SUMMARY_TABLES = new Set(['harvest_records', 'expense_records', 'sales_records', 'inventory_transactions']);
@@ -13,7 +14,7 @@ export async function countPendingForSummary(): Promise<number> {
 
 /** Tính tổng kết trên máy chủ (kiểm quyền ở CSDL) rồi lưu bản này để xem lại khi mất mạng */
 export async function fetchCycleSummary(cycleId: string): Promise<CycleSummary> {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  if (!supabase) throw new Error(t`Supabase chưa được cấu hình`);
   const { data, error } = await supabase.rpc('get_cycle_summary', { p_cycle: cycleId });
   if (error) throw error;
   const s = data as CycleSummary;

@@ -1,6 +1,7 @@
 import { db, type MilestoneRow } from './db';
 import { requireOnline } from './serverWrite';
 import { supabase } from './supabase';
+import { t } from '@lingui/core/macro';
 
 /**
  * Mốc nhắc việc an toàn (P4 gọn, D100). Xem được cả khi mất mạng (bản lưu trên máy); thêm/xóa/đánh dấu "đã làm" cần mạng (D24).
@@ -20,12 +21,12 @@ export async function syncMilestonesDown(): Promise<void> {
 }
 
 function client() {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  if (!supabase) throw new Error(t`Supabase chưa được cấu hình`);
   return supabase;
 }
 
 export async function setMilestoneDone(id: string, done: boolean, lot?: string): Promise<void> {
-  requireOnline('đánh dấu mốc an toàn');
+  requireOnline(t`đánh dấu mốc an toàn`);
   const { data, error } = await client().rpc('set_milestone_done', { p_id: id, p_done: done, p_lot: lot?.trim() || null });
   if (error) throw new Error(error.message);
   await db.milestones.put(data as MilestoneRow);
@@ -34,14 +35,14 @@ export async function setMilestoneDone(id: string, done: boolean, lot?: string):
 export interface MilestoneInput { title: string; anchor: 'start' | 'end'; offset: number; note: string; kind?: 'task' | 'vaccine' }
 
 export async function addCycleMilestone(cycleId: string, m: MilestoneInput): Promise<void> {
-  requireOnline('thêm mốc an toàn');
+  requireOnline(t`thêm mốc an toàn`);
   const { data, error } = await client().rpc('add_cycle_milestone', { p_cycle: cycleId, p_title: m.title, p_anchor: m.anchor, p_offset: m.offset, p_note: m.note || null, p_kind: m.kind ?? 'task' });
   if (error) throw new Error(error.message);
   await db.milestones.put(data as MilestoneRow);
 }
 
 export async function deleteCycleMilestone(id: string): Promise<void> {
-  requireOnline('xóa mốc an toàn');
+  requireOnline(t`xóa mốc an toàn`);
   const { error } = await client().rpc('delete_cycle_milestone', { p_id: id });
   if (error) throw new Error(error.message);
   await db.milestones.delete(id);
@@ -56,12 +57,12 @@ export async function listTemplateMilestones(templateId: string): Promise<Templa
   return (data ?? []) as TemplateMilestone[];
 }
 export async function addTemplateMilestone(templateId: string, m: MilestoneInput): Promise<void> {
-  requireOnline('thêm mốc an toàn');
+  requireOnline(t`thêm mốc an toàn`);
   const { error } = await client().from('template_milestones').insert({ template_id: templateId, title: m.title.trim(), anchor: m.anchor, offset_days: m.offset, note: m.note.trim() || null });
   if (error) throw new Error(error.message);
 }
 export async function deleteTemplateMilestone(id: string): Promise<void> {
-  requireOnline('xóa mốc an toàn');
+  requireOnline(t`xóa mốc an toàn`);
   const { error } = await client().from('template_milestones').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }

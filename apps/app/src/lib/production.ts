@@ -13,6 +13,7 @@ import { syncInventoryDown } from './inventory';
 import { enqueue, flushOutbox } from './outbox';
 import { insertAndCache, requireOnline, updateAndCache } from './serverWrite';
 import { supabase } from './supabase';
+import { t as tx } from '@lingui/core/macro';
 
 const CYCLE_COLUMNS_BASE =
   'id, owner_org_id, area_id, crop_type_id, status, start_date, expected_end_date, note, version, created_at, name, template_id, template_name, template_version';
@@ -123,7 +124,7 @@ export async function syncDown(): Promise<void> {
 
 async function syncDownRaw(): Promise<void> {
   if (!supabase || !navigator.onLine) return;
-  await flushOutbox().catch((e) => console.warn('Chưa gửi hết phần chờ', e)); // gửi phần còn chờ trước để dữ liệu nhìn thấy khớp máy chủ
+  await flushOutbox().catch((e) => console.warn(tx`Chưa gửi hết phần chờ`, e)); // gửi phần còn chờ trước để dữ liệu nhìn thấy khớp máy chủ
 
   const pendingIds = new Set(
     (await db.outbox.where('state').notEqual('synced').toArray()).map((i) => i.payload.id as string),
@@ -150,14 +151,14 @@ async function syncDownRaw(): Promise<void> {
   // Vật tư/kho, thu hoạch, chi phí/doanh thu: lỗi ở đây không làm hỏng đồng bộ sản xuất.
   const extras = Promise.all([
     refreshCatalogIfStale(), // sản phẩm, loại việc và bản chỉnh của cơ sở (tải lại tối đa 12 giờ một lần)
-    syncInventoryDown().catch((e) => console.warn('Không tải được vật tư/kho', e)),
-    syncHarvestsDown().catch((e) => console.warn('Không tải được thu hoạch', e)),
-    syncFinanceDown().catch((e) => console.warn('Không tải được chi phí/doanh thu', e)),
-    syncIncidentsDown().catch((e) => console.warn('Không tải được sự cố', e)),
-    syncCountEventsDown().catch((e) => console.warn('Không tải được số lượng', e)),
-    syncMeasuresDown().catch((e) => console.warn('Không tải được số đo', e)),
-    syncMilestonesDown().catch((e) => console.warn('Không tải được mốc an toàn', e)),
-    syncWithdrawalsDown().catch((e) => console.warn('Không tải được thời gian cách ly', e)),
+    syncInventoryDown().catch((e) => console.warn(tx`Không tải được vật tư/kho`, e)),
+    syncHarvestsDown().catch((e) => console.warn(tx`Không tải được thu hoạch`, e)),
+    syncFinanceDown().catch((e) => console.warn(tx`Không tải được chi phí/doanh thu`, e)),
+    syncIncidentsDown().catch((e) => console.warn(tx`Không tải được sự cố`, e)),
+    syncCountEventsDown().catch((e) => console.warn(tx`Không tải được số lượng`, e)),
+    syncMeasuresDown().catch((e) => console.warn(tx`Không tải được số đo`, e)),
+    syncMilestonesDown().catch((e) => console.warn(tx`Không tải được mốc an toàn`, e)),
+    syncWithdrawalsDown().catch((e) => console.warn(tx`Không tải được thời gian cách ly`, e)),
   ]);
 
   extras.catch(() => undefined); // lỗi được báo ở lệnh await cuối, tránh cảnh báo sớm
@@ -179,7 +180,7 @@ async function syncDownRaw(): Promise<void> {
     if (!logs.error) await db.logs.bulkPut(fresh(logs.data as LogRow[]));
   });
   await extras;
-  if (firstErr) throw new Error(firstErr.message ?? 'Không tải được dữ liệu sản xuất');
+  if (firstErr) throw new Error(firstErr.message ?? tx`Không tải được dữ liệu sản xuất`);
 }
 
 /**
@@ -187,7 +188,7 @@ async function syncDownRaw(): Promise<void> {
  * Trả về số bản ghi mới tải được.
  */
 export async function loadOlderLogs(beforeIso: string, limit = 100): Promise<number> {
-  if (!supabase || !navigator.onLine) throw new Error('Cần có mạng để xem nhật ký cũ hơn.');
+  if (!supabase || !navigator.onLine) throw new Error(tx`Cần có mạng để xem nhật ký cũ hơn.`);
   const { data, error } = await supabase
     .from('activity_logs').select(LOG_COLUMNS)
     .lt('performed_at', beforeIso).order('performed_at', { ascending: false }).limit(limit);
@@ -250,14 +251,14 @@ export async function createArea(organizationId: string, f: FarmInput): Promise<
     ...(f.kind_item ? { kind_item: f.kind_item } : {}),
     ...(f.parent_id ? { parent_id: f.parent_id } : {}),
   };
-  await insertAndCache('production_areas', { ...row }, { ...row }, 'thêm phân khu');
+  await insertAndCache('production_areas', { ...row }, { ...row }, tx`thêm phân khu`);
   return id;
 }
 
 /** Chia phân khu đang có vụ thành nhà màng: tạo nhà màng đầu tiên và chuyển các vụ hiện có sang đó (cần mạng, quyền khai báo) */
 export async function splitAreaIntoCells(parentId: string, name: string): Promise<void> {
-  requireOnline('chia phân khu thành nhà màng');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`chia phân khu thành nhà màng`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { error } = await supabase.rpc('split_area_into_cells', { p_parent: parentId, p_name: name });
   if (error) throw new Error(error.message);
   await syncDown().catch(() => undefined);
@@ -265,8 +266,8 @@ export async function splitAreaIntoCells(parentId: string, name: string): Promis
 
 /** Đổi tên hoặc dừng/dùng lại phân khu (cần mạng). Phân khu đã dừng giữ lịch sử, không dùng để tạo vụ mới. */
 export async function updateArea(id: string, c: Partial<FarmInput> & { is_active?: boolean }): Promise<void> {
-  requireOnline('sửa phân khu');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`sửa phân khu`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const patch: Record<string, unknown> = {};
   if (c.name !== undefined) patch.name = c.name.trim();
   if (c.description !== undefined) patch.description = c.description?.trim() || null;
@@ -321,8 +322,8 @@ export interface CropInfo {
 
 /** Đặt cách chuẩn bị ("whole" | "part" | "separate" + nơi chuẩn bị riêng) và "nối tiếp sau vụ" cho một vụ (cần mạng, người quản lý vụ). Chọn "part"/"separate" chỉ khi vụ còn Chuẩn bị (D126). */
 export async function setCyclePrep(cycleId: string, mode: 'whole' | 'part' | 'separate', areaId: string | null, followsId: string | null): Promise<void> {
-  requireOnline('lưu cách chuẩn bị');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`lưu cách chuẩn bị`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { error } = await supabase.rpc('set_cycle_prep', { p_cycle: cycleId, p_mode: mode, p_area: areaId, p_follows: followsId });
   if (error) throw new Error(error.message);
   await refreshCycle(cycleId).catch(() => undefined);
@@ -330,8 +331,8 @@ export async function setCyclePrep(cycleId: string, mode: 'whole' | 'part' | 'se
 
 /** Đặt thông tin giống và diện tích của vụ (cần mạng, người quản lý vụ); trống = bỏ */
 export async function setCycleInfo(cycleId: string, i: CropInfo): Promise<void> {
-  requireOnline('lưu thông tin giống và diện tích');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`lưu thông tin giống và diện tích`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { error } = await supabase.rpc('set_cycle_info', {
     p_cycle: cycleId, p_area_m2: i.areaM2, p_plants: i.plants, p_variety: i.variety, p_seed_source: i.seedSource, p_seed_lot: i.seedLot,
     p_sowing: i.sowingDate, p_planting: i.plantingDate,
@@ -351,8 +352,8 @@ export async function setCycleInfo(cycleId: string, i: CropInfo): Promise<void> 
 
 /** Tạo vụ theo quy trình mẫu (cần mạng): máy chủ kiểm hạn mức, sao chép giai đoạn và tính ngày kế hoạch */
 export async function createCycle(c: NewCycle): Promise<string> {
-  requireOnline('tạo vụ');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`tạo vụ`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const id = crypto.randomUUID();
   const { error } = await supabase.rpc('create_cycle_checked', {
     p_id: id, p_owner_org: c.ownerOrgId, p_area: c.areaId, p_template: c.templateId,
@@ -387,8 +388,8 @@ export interface MidstartInput {
 
 /** Tạo vụ đang sản xuất bắt đầu từ giữa quy trình: các việc trước ghi nhận "làm trước khi dùng app" (không đòi nhật ký) */
 export async function createCycleMidstart(c: NewCycle, m: MidstartInput): Promise<string> {
-  requireOnline('tạo vụ');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`tạo vụ`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const id = crypto.randomUUID();
   const { error } = await supabase.rpc('create_cycle_checked', {
     p_id: id, p_owner_org: c.ownerOrgId, p_area: c.areaId, p_template: c.templateId, p_start: c.startDate, p_status: 'active', p_name: c.name?.trim() || null,
@@ -407,8 +408,8 @@ export async function createCycleMidstart(c: NewCycle, m: MidstartInput): Promis
 
 /** Đổi quy trình mẫu của vụ chưa bắt đầu (migration 0181): tạo lại việc và mốc theo ngày bắt đầu hiện tại */
 export async function changeCycleTemplate(cycleId: string, templateId: string): Promise<void> {
-  requireOnline('đổi quy trình của vụ');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`đổi quy trình của vụ`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { error } = await supabase.rpc('change_cycle_template', { p_cycle: cycleId, p_template: templateId });
   if (error) throw new Error(error.message);
   await refreshCycle(cycleId);
@@ -416,8 +417,8 @@ export async function changeCycleTemplate(cycleId: string, templateId: string): 
 
 /** Vụ đang sản xuất mà thực tế đang ở giữa: chuyển tới một việc; các việc đã chọn (chưa có nhật ký) thành "làm trước khi dùng app" */
 export async function jumpCycleToStage(cycleId: string, stageId: string, doneStageIds: string[], date: string | null, note: string): Promise<void> {
-  requireOnline('chuyển việc của vụ');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`chuyển việc của vụ`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { error } = await supabase.rpc('jump_cycle_to_stage', { p_cycle: cycleId, p_stage: stageId, p_done: doneStageIds, p_date: date, p_origin_note: note.trim() || null });
   if (error) throw new Error(error.message);
   await refreshCycle(cycleId);
@@ -429,7 +430,7 @@ export interface AreaFree {
   cycles: { id: string; name: string | null; area_m2: number | null; status: string; intercrop: boolean; start: string; end: string | null }[];
 }
 export async function fetchAreaFree(areaId: string, from: string | null, to: string | null): Promise<AreaFree> {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { data, error } = await supabase.rpc('area_free_m2', { p_area: areaId, p_from: from, p_to: to, p_exclude: null });
   if (error) throw new Error(error.message);
   return data as AreaFree;
@@ -437,8 +438,8 @@ export async function fetchAreaFree(areaId: string, from: string | null, to: str
 
 /** Đặt sản lượng dự kiến (kg) và ngân sách dự kiến (đồng) của vụ; null = bỏ (cần mạng, người quản lý vụ) */
 export async function setCyclePlan(cycleId: string, targetYield: number | null, budget: number | null): Promise<void> {
-  requireOnline('đặt kế hoạch vụ');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`đặt kế hoạch vụ`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { error } = await supabase.rpc('set_cycle_plan', { p_cycle: cycleId, p_target_yield: targetYield, p_budget: budget });
   if (error) throw new Error(error.message);
   await refreshCycle(cycleId);
@@ -470,14 +471,14 @@ export async function refreshCycle(id: string): Promise<void> {
 export async function editCycle(cycleId: string, c: { name?: string; start_date?: string | null; note?: string }): Promise<void> {
   const cur = await db.cycles.get(cycleId);
   if (!cur) return;
-  await updateAndCache('production_cycles', cycleId, cur.version, { ...c }, 'sửa vụ');
+  await updateAndCache('production_cycles', cycleId, cur.version, { ...c }, tx`sửa vụ`);
   if (c.start_date !== undefined) await refreshCycle(cycleId).catch(() => undefined); // đổi ngày bắt đầu thì lịch các giai đoạn dời theo (máy chủ)
 }
 
 /** Xóa vụ (cần mạng). Chỉ xóa được vụ chưa có dữ liệu; máy chủ từ chối nếu đã có nhật ký, thu hoạch, chi phí… */
 export async function deleteCycle(cycleId: string): Promise<void> {
-  requireOnline('xóa vụ');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`xóa vụ`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { error } = await supabase.rpc('delete_cycle', { p_id: cycleId });
   if (error) throw new Error(error.message);
   await db.transaction('rw', [db.cycles, db.stages, db.notes], async () => {
@@ -489,8 +490,8 @@ export async function deleteCycle(cycleId: string): Promise<void> {
 
 /** Vụ chưa bắt đầu làm sai ô sản xuất: đổi sang ô sản xuất khác cùng cơ sở, giữ nhật ký chuẩn bị đã ghi (D155; cần mạng) */
 export async function changeCycleArea(cycleId: string, areaId: string): Promise<void> {
-  requireOnline('đổi ô sản xuất của vụ');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`đổi ô sản xuất của vụ`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { error } = await supabase.rpc('change_cycle_area', { p_cycle: cycleId, p_area: areaId });
   if (error) throw new Error(error.message);
   await refreshCycle(cycleId);
@@ -501,8 +502,8 @@ export async function changeCycleArea(cycleId: string, areaId: string): Promise<
  * Trả 'deleted' hoặc 'cancelled'.
  */
 export async function discardUnstartedCycle(cycleId: string, reason: string): Promise<'deleted' | 'cancelled'> {
-  requireOnline('xóa vụ');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`xóa vụ`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { data, error } = await supabase.rpc('discard_unstarted_cycle', { p_cycle: cycleId, p_reason: reason.trim() });
   if (error) throw new Error(error.message);
   if (data === 'deleted') {
@@ -531,7 +532,7 @@ export interface StageEdit {
 
 async function stageRpc(fn: string, args: Record<string, unknown>, cycleId: string, action: string): Promise<void> {
   requireOnline(action);
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { error } = await supabase.rpc(fn, args);
   if (error) throw new Error(error.message);
   await refreshCycle(cycleId); // ngày dự kiến xong của vụ cũng có thể đổi
@@ -539,28 +540,28 @@ async function stageRpc(fn: string, args: Record<string, unknown>, cycleId: stri
 
 /** Sửa thông tin một giai đoạn của vụ (tên, việc, ngày kế hoạch, ghi chú) */
 export const updateCycleStage = (cycleId: string, stageId: string, c: StageEdit) =>
-  stageRpc('update_cycle_stage', { p_stage: stageId, p_changes: c }, cycleId, 'sửa giai đoạn');
+  stageRpc('update_cycle_stage', { p_stage: stageId, p_changes: c }, cycleId, tx`sửa giai đoạn`);
 
 /** Đổi số thứ tự (mã) và tên một công đoạn của vụ: áp cho mọi việc trong công đoạn */
 export const updateCyclePhase = (cycleId: string, oldName: string, code: string, name: string) =>
-  stageRpc('update_cycle_phase', { p_cycle: cycleId, p_old_name: oldName, p_new_code: code, p_new_name: name }, cycleId, 'sửa công đoạn');
+  stageRpc('update_cycle_phase', { p_cycle: cycleId, p_old_name: oldName, p_new_code: code, p_new_name: name }, cycleId, tx`sửa công đoạn`);
 
 /** Xóa công đoạn khỏi vụ: giữ các việc (chỉ bỏ khỏi công đoạn) hoặc xóa luôn các việc */
 export const deleteCyclePhase = (cycleId: string, name: string, withItems: boolean) =>
-  stageRpc('delete_cycle_phase', { p_cycle: cycleId, p_name: name, p_with_items: withItems }, cycleId, 'xóa công đoạn');
+  stageRpc('delete_cycle_phase', { p_cycle: cycleId, p_name: name, p_with_items: withItems }, cycleId, tx`xóa công đoạn`);
 
 /** Thêm giai đoạn vào cuối quy trình của vụ */
 export const addCycleStage = (cycleId: string, s: { workTypeId: string | null; name: string; start: string; end: string; note?: string }) =>
-  stageRpc('add_cycle_stage', { p_cycle: cycleId, p_work_type: s.workTypeId, p_name: s.name, p_start: s.start, p_end: s.end, p_note: s.note ?? null }, cycleId, 'thêm giai đoạn');
+  stageRpc('add_cycle_stage', { p_cycle: cycleId, p_work_type: s.workTypeId, p_name: s.name, p_start: s.start, p_end: s.end, p_note: s.note ?? null }, cycleId, tx`thêm giai đoạn`);
 
 export const deleteCycleStage = (cycleId: string, stageId: string) =>
-  stageRpc('delete_cycle_stage', { p_stage: stageId }, cycleId, 'xóa giai đoạn');
+  stageRpc('delete_cycle_stage', { p_stage: stageId }, cycleId, tx`xóa giai đoạn`);
 
 /** Thêm ghi chú cho một ngày của vụ (cần mạng) */
 export async function addNote(cycle: CycleRow, userId: string, noteDate: string, content: string): Promise<void> {
   const row = { id: crypto.randomUUID(), cycle_id: cycle.id, note_date: noteDate, content: content.trim(), created_by: userId };
-  requireOnline('thêm ghi chú');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`thêm ghi chú`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { error } = await supabase.from('cycle_notes').insert(row);
   if (error) throw new Error(error.message);
   await db.notes.put({ ...row, organization_id: cycle.owner_org_id, done: false });
@@ -568,16 +569,16 @@ export async function addNote(cycle: CycleRow, userId: string, noteDate: string,
 
 /** Đánh dấu đã xong / chưa xong một ghi chú */
 export async function setNoteDone(id: string, done: boolean): Promise<void> {
-  requireOnline('đổi ghi chú');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`đổi ghi chú`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { error } = await supabase.from('cycle_notes').update({ done }).eq('id', id);
   if (error) throw new Error(error.message);
   await db.notes.update(id, { done });
 }
 
 export async function deleteNote(id: string): Promise<void> {
-  requireOnline('xóa ghi chú');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`xóa ghi chú`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { error } = await supabase.from('cycle_notes').delete().eq('id', id);
   if (error) throw new Error(error.message);
   await db.notes.delete(id);
@@ -585,8 +586,8 @@ export async function deleteNote(id: string): Promise<void> {
 
 /** Bắt đầu / hoàn thành / mở lại một giai đoạn của vụ (cần mạng, người quản lý vụ). Ngày thực tế mặc định là hôm nay. */
 export async function advanceStage(stageId: string, action: 'start' | 'complete' | 'reopen', date?: string, waiverReason?: string): Promise<void> {
-  requireOnline('đổi giai đoạn');
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  requireOnline(tx`đổi giai đoạn`);
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   const { data, error } = await supabase.rpc('advance_stage', { p_stage: stageId, p_action: action, p_date: date ?? null, ...(waiverReason ? { p_reason: waiverReason } : {}) });
   if (error) throw new Error(error.message);
   const row = data as unknown as StageRow | null;
@@ -600,7 +601,7 @@ export async function advanceStage(stageId: string, action: 'start' | 'complete'
 export async function setCycleStatus(cycleId: string, status: CycleStatus): Promise<void> {
   const cur = await db.cycles.get(cycleId);
   if (!cur) return;
-  await updateAndCache('production_cycles', cycleId, cur.version, { status }, 'đổi trạng thái vụ');
+  await updateAndCache('production_cycles', cycleId, cur.version, { status }, tx`đổi trạng thái vụ`);
   // bắt đầu chạy vụ: máy chủ đặt ngày bắt đầu = hôm nay và dời lịch các giai đoạn theo; tải lại để thấy ngay
   if (status === 'active') await refreshCycle(cycleId).catch(() => undefined);
 }
@@ -716,12 +717,12 @@ export async function editLog(logId: string, e: LogEdit): Promise<void> {
   const cur = await db.logs.get(logId);
   if (!cur) return;
   const note = e.note.trim() || null;
-  await updateAndCache('activity_logs', logId, cur.version, { performed_at: e.performedAt, data: e.data, note }, 'sửa nhật ký');
+  await updateAndCache('activity_logs', logId, cur.version, { performed_at: e.performedAt, data: e.data, note }, tx`sửa nhật ký`);
 }
 
 /** Hủy nhật ký (không xóa, cần mạng): cần lý do; bản ghi đã hủy không khôi phục được. */
 export async function voidLog(logId: string, reason: string): Promise<void> {
   const cur = await db.logs.get(logId);
   if (!cur) return;
-  await updateAndCache('activity_logs', logId, cur.version, { voided_at: new Date().toISOString(), void_reason: reason.trim() }, 'hủy nhật ký');
+  await updateAndCache('activity_logs', logId, cur.version, { voided_at: new Date().toISOString(), void_reason: reason.trim() }, tx`hủy nhật ký`);
 }

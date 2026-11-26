@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { AreaRow } from './db';
 import { profitPending, type CycleStat } from './cycleStatsLogic';
 import { useTable } from './tables';
+import { t as tx } from '@lingui/core/macro';
 
 /**
  * Hai cấp khu (D125, migration 0136): PHÂN KHU (cấp 1, cụm) → Ô SẢN XUẤT (cấp 2: nhà màng, chuồng, ao…, nơi chạy vụ; tên chung D127). Vụ gắn vào cấp thấp nhất:
@@ -13,11 +14,11 @@ export const CELL_NAME = 'Ô sản xuất';
 
 /** Tên gợi ý khi đặt tên các ô (người dùng sửa được): theo loại khu, ví dụ "Nhà màng 1", "Chuồng 2" */
 export function cellDefaultName(kind?: string | null): string {
-  if (kind === 'livestock') return 'Chuồng';
+  if (kind === 'livestock') return tx`Chuồng`;
   if (kind === 'aquatic') return 'Ao';
   if (kind === 'other') return 'Ô';
-  if (kind === 'facility') return 'Hạng mục';
-  return 'Nhà màng';
+  if (kind === 'facility') return tx`Hạng mục`;
+  return tx`Nhà màng`;
 }
 
 const byName = (a: AreaRow, b: AreaRow) => a.name.localeCompare(b.name, 'vi', { numeric: true });

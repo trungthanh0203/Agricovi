@@ -11,6 +11,8 @@ import { AddressFields } from './AddressFields';
 import { Collapsible } from './Collapsible';
 import { FindWebSuppliers } from './FindWebSuppliers';
 import { formatAddr, type Addr } from '../lib/vnAddress';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
 /**
  * Nhà cung ứng của cơ sở (G2-2): danh bạ nơi mua vật tư, giống, dịch vụ. Thêm bằng biểu mẫu, sửa bằng ✎, dừng/dùng lại bằng ⏸/▶.
@@ -49,29 +51,29 @@ export function PartnersSection() {
 
   return (
     <>
-      {!online && <p className="msg warn" role="status">Đang offline: danh sách nhà cung ứng cần có mạng để xem và sửa.</p>}
+      {!online && <p className="msg warn" role="status">{t`Đang offline: danh sách nhà cung ứng cần có mạng để xem và sửa.`}</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
       {canEdit && !adding && !editRow && (
-        <div className="actions"><button className="primary" disabled={!online} onClick={() => setAdding(true)}>+ Thêm nhà cung ứng</button></div>
+        <div className="actions"><button className="primary" disabled={!online} onClick={() => setAdding(true)}>{t`+ Thêm nhà cung ứng`}</button></div>
       )}
       {canEdit && !adding && !editRow && online && (
-        <Collapsible title="🔎 Tìm trên website" summary="gian hàng vật tư theo khu vực" inline>
-          <FindWebSuppliers orgId={orgId} onAdded={(id, st) => { setAdding(false); setNotice(st === 'existing' ? 'Gian hàng này đã có trong nhà cung ứng.' : st === 'linked' ? 'Đã nối với nhà cung ứng trùng tên có sẵn. Bổ sung ghi chú rồi lưu.' : 'Đã thêm. Bổ sung ghi chú rồi lưu.'); void load().then(() => setEditing(id)); }} />
+        <Collapsible title={t`🔎 Tìm trên website`} summary={t`gian hàng vật tư theo khu vực`} inline>
+          <FindWebSuppliers orgId={orgId} onAdded={(id, st) => { setAdding(false); setNotice(st === 'existing' ? t`Gian hàng này đã có trong nhà cung ứng.` : st === 'linked' ? t`Đã nối với nhà cung ứng trùng tên có sẵn. Bổ sung ghi chú rồi lưu.` : t`Đã thêm. Bổ sung ghi chú rồi lưu.`); void load().then(() => setEditing(id)); }} />
         </Collapsible>
       )}
       {notice && <p className="msg ok" role="status">{notice}</p>}
       {canEdit && adding && (
-        <SupplierForm title="Thêm nhà cung ứng" busy={busy || !online} onClose={() => setAdding(false)}
+        <SupplierForm title={t`Thêm nhà cung ứng`} busy={busy || !online} onClose={() => setAdding(false)}
           onSave={(f) => run(async () => { await createSupplier(orgId, f); setAdding(false); })} />
       )}
 
-      <h2 className="sect">Nhà cung ứng ({shown.length})</h2>
-      {rows === null && !error && <p className="muted">{online ? 'Đang tải…' : 'Chưa tải được vì đang offline.'}</p>}
-      {rows !== null && shown.length === 0 && <p className="muted">Chưa có nhà cung ứng nào. Thêm nơi bạn hay mua vật tư để ghi hóa đơn và theo dõi công nợ.</p>}
+      <h2 className="sect"><Trans>Nhà cung ứng ({shown.length})</Trans></h2>
+      {rows === null && !error && <p className="muted">{online ? t`Đang tải…` : t`Chưa tải được vì đang offline.`}</p>}
+      {rows !== null && shown.length === 0 && <p className="muted">{t`Chưa có nhà cung ứng nào. Thêm nơi bạn hay mua vật tư để ghi hóa đơn và theo dõi công nợ.`}</p>}
       {shown.length > 0 && (
         <table className="grid">
-          <thead><tr><th>Tên</th><th>Điện thoại</th><th></th></tr></thead>
+          <thead><tr><th>{t`Tên`}</th><th>{t`Điện thoại`}</th><th></th></tr></thead>
           <tbody>
             {shownPage.map((p) => (
               <tr key={p.id} className={p.is_active ? '' : 'off'}>
@@ -79,14 +81,14 @@ export function PartnersSection() {
                   {p.name}
                   {p.goods && <span className="sub">{p.goods}</span>}
                   {formatAddr(p) && <span className="sub">{formatAddr(p)}</span>}
-                  {!p.is_active && <span className="sub">Đã dừng</span>}
+                  {!p.is_active && <span className="sub">{t`Đã dừng`}</span>}
                 </td>
                 <td>{p.phone ? <a href={`tel:${p.phone}`}>{p.phone}</a> : '—'}</td>
                 <td className="act">
                   {canEdit && (
                     <>
-                      <button className="icon" disabled={busy || !online} aria-label={`Sửa ${p.name}`} onClick={() => { setAdding(false); setEditing(p.id); }}>✎</button>{' '}
-                      <button className="icon" disabled={busy || !online} aria-label={p.is_active ? `Dừng ${p.name}` : `Dùng lại ${p.name}`}
+                      <button className="icon" disabled={busy || !online} aria-label={t`Sửa ${p.name}`} onClick={() => { setAdding(false); setEditing(p.id); }}>✎</button>{' '}
+                      <button className="icon" disabled={busy || !online} aria-label={p.is_active ? t`Dừng ${p.name}` : t`Dùng lại ${p.name}`}
                         onClick={() => void run(() => updateSupplier(p, { is_active: !p.is_active }))}>{p.is_active ? '⏸' : '▶'}</button>
                     </>
                   )}
@@ -97,11 +99,11 @@ export function PartnersSection() {
         </table>
       )}
       {shownMore}
-      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả nhà cung ứng đã dừng</label>
-      <p className="muted">Nhà cung ứng đã dừng vẫn giữ lịch sử mua nhưng không chọn được cho hóa đơn mới. Thông tin này riêng tư, không công khai trên website.</p>
+      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} />{' '}{t`Hiện cả nhà cung ứng đã dừng`}</label>
+      <p className="muted">{t`Nhà cung ứng đã dừng vẫn giữ lịch sử mua nhưng không chọn được cho hóa đơn mới. Thông tin này riêng tư, không công khai trên website.`}</p>
 
       {canEdit && editRow && (
-        <SupplierForm key={editRow.id} title={`Sửa nhà cung ứng: ${editRow.name}`} initial={editRow} busy={busy || !online} onClose={() => setEditing(null)}
+        <SupplierForm key={editRow.id} title={t`Sửa nhà cung ứng: ${editRow.name}`} initial={editRow} busy={busy || !online} onClose={() => setEditing(null)}
           onSave={(f) => run(async () => { await updateSupplier(editRow, f); setEditing(null); })} />
       )}
     </>
@@ -126,21 +128,21 @@ export function SupplierForm({ title, initial, busy, onSave, onClose }: {
     <div className="card">
       <h2>{title}</h2>
       <div className="inline-form">
-        <label>Tên nhà cung ứng<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Đại lý vật tư An Phát" /></label>
-        <label>Điện thoại<input value={phone} maxLength={40} inputMode="tel" onChange={(e) => setPhone(e.target.value)} /></label>
+        <label>{t`Tên nhà cung ứng`}<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder={t`Ví dụ: Đại lý vật tư An Phát`} /></label>
+        <label>{t`Điện thoại`}<input value={phone} maxLength={40} inputMode="tel" onChange={(e) => setPhone(e.target.value)} /></label>
         <AddressFields value={addr} onChange={setAddr} maxAddress={300} />
-        <ChipsPicker label="Loại hàng thường mua" value={goods} onChange={setGoods} options={groupNames} />
-        <label>Mã số thuế (nếu có)<input value={tax} maxLength={40} onChange={(e) => setTax(e.target.value)} /></label>
-        <label>Tài khoản ngân hàng (nếu có)<input value={bank} maxLength={120} onChange={(e) => setBank(e.target.value)} /></label>
-        <label>Ghi chú<textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} /></label>
+        <ChipsPicker label={t`Loại hàng thường mua`} value={goods} onChange={setGoods} options={groupNames} />
+        <label>{t`Mã số thuế (nếu có)`}<input value={tax} maxLength={40} onChange={(e) => setTax(e.target.value)} /></label>
+        <label>{t`Tài khoản ngân hàng (nếu có)`}<input value={bank} maxLength={120} onChange={(e) => setBank(e.target.value)} /></label>
+        <label>{t`Ghi chú`}<textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} /></label>
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
           <button type="button" className="primary" disabled={busy} onClick={() => {
-            if (name.trim().length < 2) return setErr('Hãy nhập tên nhà cung ứng (ít nhất 2 ký tự).');
+            if (name.trim().length < 2) return setErr(t`Hãy nhập tên nhà cung ứng (ít nhất 2 ký tự).`);
             setErr(null);
             void onSave({ name, phone, address: addr.address, province: addr.province, ward: addr.ward, goods, tax_code: tax, bank_account: bank, note }).catch(() => undefined);
-          }}>Lưu</button>
-          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+          }}>{t`Lưu`}</button>
+          <button type="button" className="secondary" onClick={onClose}>{t`Hủy`}</button>
         </div>
       </div>
     </div>

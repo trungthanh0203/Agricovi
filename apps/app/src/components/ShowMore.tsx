@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { loadOlderFinance } from '../lib/finance';
+import { t } from '@lingui/core/macro';
 
 /**
  * Danh sách dài chỉ vẽ 50 dòng đầu, bấm "Xem thêm" để vẽ tiếp (Đợt 2 hiệu năng, D140).
@@ -12,7 +13,7 @@ export function useShowMore<T>(items: T[], resetKey = '', step = 50) {
   const more = items.length > n ? (
     <div className="btnrow">
       <button type="button" className="secondary" onClick={() => setN((x) => x + step)}>
-        Xem thêm ({items.length - n} dòng nữa)
+        {t`Xem thêm (`}{items.length - n}{' '}{t`dòng nữa)`}
       </button>
     </div>
   ) : null;
@@ -25,15 +26,15 @@ export function LoadOlder({ kind, online, loaded }: { kind: 'expenses' | 'sales'
   const [done, setDone] = useState(false);
   const [err, setErr] = useState('');
   if (loaded < 200 && !done) return null; // chưa đủ 200 khoản thì không có gì cũ hơn
-  if (done) return <p className="muted">Đã tải hết các khoản cũ.</p>;
+  if (done) return <p className="muted">{t`Đã tải hết các khoản cũ.`}</p>;
   return (
     <div className="btnrow">
       <button type="button" className="secondary" disabled={busy || !online} onClick={async () => {
         setBusy(true); setErr('');
         try { const more = await loadOlderFinance(kind); if (!more) setDone(true); }
-        catch (e) { setErr(e instanceof Error ? e.message : 'Không tải được, thử lại.'); }
+        catch (e) { setErr(e instanceof Error ? e.message : t`Không tải được, thử lại.`); }
         finally { setBusy(false); }
-      }}>{busy ? 'Đang tải…' : 'Tải thêm khoản cũ hơn'}</button>
+      }}>{busy ? t`Đang tải…` : t`Tải thêm khoản cũ hơn`}</button>
       {err && <span className="msg error" role="alert">{err}</span>}
     </div>
   );

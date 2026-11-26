@@ -12,8 +12,11 @@ import { fmtDate } from '../lib/dates';
 import { todayLocal } from '../lib/hooks';
 import { useTable } from '../lib/tables';
 import { useCycleTitle } from '../lib/useCycleTitle';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
+import { dateLocale } from '../lib/format';
 
-const kg = (n: number) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} kg`;
+const kg = (n: number) => `${n.toLocaleString(dateLocale(), { maximumFractionDigits: 0 })} kg`;
 
 function Bar({ label, pct, text, tone }: { label: string; pct: number; text: string; tone: 'ok' | 'warn' | 'bad' }) {
   return (
@@ -53,29 +56,29 @@ export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<str
     .map((c) => ({ c, p: cycleProgress(stages.filter((s) => s.cycle_id === c.id), today) }));
   if (running.length === 0) return null;
   return (
-    <Collapsible title="Tiến độ các vụ đang chạy" summary={`${running.length} vụ${progress.some(({ p }) => p.delay > 0) ? ` · ${progress.filter(({ p }) => p.delay > 0).length} vụ trễ` : ''}`} warn={progress.some(({ p }) => p.delay > 0)}>
+    <Collapsible title={t`Tiến độ các vụ đang chạy`} summary={t`${running.length} vụ${progress.some(({ p }) => p.delay > 0) ? t` · ${progress.filter(({ p }) => p.delay > 0).length} vụ trễ` : ''}`} warn={progress.some(({ p }) => p.delay > 0)}>
       {active && <CycleStatsLoader orgId={active.id} ids={progress.map(({ c }) => c.id)} refreshKey={progress.map(({ c }) => `${c.id}:${c.version}`).join(',')} onData={setStats} />}
       <AreaFilter areas={areas} usedAreaIds={running.map((c) => c.area_id)} value={areaFilter} onChange={setAreaFilter} />
-      {areaPending && <p className="muted">Chọn phân khu (hoặc Tất cả phân khu) để xem tiến độ.</p>}
-      {!areaPending && progress.length === 0 && <p className="muted">Không có vụ đang chạy ở phân khu này.</p>}
+      {areaPending && <p className="muted">{t`Chọn phân khu (hoặc Tất cả phân khu) để xem tiến độ.`}</p>}
+      {!areaPending && progress.length === 0 && <p className="muted">{t`Không có vụ đang chạy ở phân khu này.`}</p>}
       {progress.map(({ c, p }) => (
         <div className="card slim" key={c.id}>
           <div className="row">
             <strong className="grow">{titleOf(c)}</strong>
-            <button className="secondary mini" onClick={() => onOpenCycle(c.id)}>Quản lý vụ</button>
+            <button className="secondary mini" onClick={() => onOpenCycle(c.id)}>{t`Quản lý vụ`}</button>
           </div>
           {p.total > 0 ? (
             <>
-              <div className="progress" role="progressbar" aria-valuenow={p.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Tiến độ vụ"><i style={{ width: `${p.percent}%` }} /></div>
+              <div className="progress" role="progressbar" aria-valuenow={p.percent} aria-valuemin={0} aria-valuemax={100} aria-label={t`Tiến độ vụ`}><i style={{ width: `${p.percent}%` }} /></div>
               <div className="progline">
-                <span className="muted">{p.done}/{p.total} việc{p.current ? ` · Hiện tại: ${p.current.name} (đến ${fmtDate(p.current.planned_end)})` : ' · Đã hoàn tất'}</span>
-                {p.delay > 0 ? <span className="pill warn">Trễ {p.delay} ngày</span> : <span className="pill ok">Đúng tiến độ</span>}
+                <span className="muted">{p.done}/{p.total}{' '}{t`việc`}{p.current ? t` · Hiện tại: ${p.current.name} (đến ${fmtDate(p.current.planned_end)})` : t` · Đã hoàn tất`}</span>
+                {p.delay > 0 ? <span className="pill warn"><Trans>Trễ {p.delay} ngày</Trans></span> : <span className="pill ok">{t`Đúng tiến độ`}</span>}
               </div>
             </>
           ) : (
             <div className="progline">
-              <span className="muted">Chưa có việc.</span>
-              {p.delay > 0 ? <span className="pill warn">Trễ {p.delay} ngày</span> : <span className="pill ok">Đúng tiến độ</span>}
+              <span className="muted">{t`Chưa có việc.`}</span>
+              {p.delay > 0 ? <span className="pill warn"><Trans>Trễ {p.delay} ngày</Trans></span> : <span className="pill ok">{t`Đúng tiến độ`}</span>}
             </div>
           )}
           {(() => {
@@ -85,12 +88,12 @@ export function CycleProgressList({ cycleIds, onOpenCycle }: { cycleIds: Set<str
             const yp = pctOf(s.harvest_net, s.target_yield_kg);
             return (
               <>
-                {bp !== null && s.budget_amount !== null && s.cost_total !== null && <Bar label="Ngân sách đã dùng" pct={bp} tone={budgetTone(bp)} text={`${shortMoney(s.cost_total)} / ${shortMoney(s.budget_amount)}`} />}
-                {yp !== null && s.target_yield_kg !== null && s.harvest_net !== null && <Bar label="Sản lượng so với dự kiến" pct={yp} tone="ok" text={`${kg(s.harvest_net)} / ${kg(s.target_yield_kg)}`} />}
-                {s.profit !== null && profitPending(s) && <p className="muted yield-line">Lãi / lỗ: {profitPendingText(s)}.</p>}
+                {bp !== null && s.budget_amount !== null && s.cost_total !== null && <Bar label={t`Ngân sách đã dùng`} pct={bp} tone={budgetTone(bp)} text={`${shortMoney(s.cost_total)} / ${shortMoney(s.budget_amount)}`} />}
+                {yp !== null && s.target_yield_kg !== null && s.harvest_net !== null && <Bar label={t`Sản lượng so với dự kiến`} pct={yp} tone="ok" text={`${kg(s.harvest_net)} / ${kg(s.target_yield_kg)}`} />}
+                {s.profit !== null && profitPending(s) && <p className="muted yield-line">{t`Lãi / lỗ:`}{' '}{profitPendingText(s)}.</p>}
                 {s.profit !== null && !profitPending(s) && (
                   <p className="muted yield-line">
-                    {s.profit >= 0 ? 'Lãi tạm tính' : 'Lỗ tạm tính'}: <span className={s.profit >= 0 ? 'pill ok' : 'pill err'}>{shortMoney(Math.abs(s.profit))} đ</span>
+                    {s.profit >= 0 ? t`Lãi tạm tính` : t`Lỗ tạm tính`}: <span className={s.profit >= 0 ? 'pill ok' : 'pill err'}>{shortMoney(Math.abs(s.profit))}{' '}{t`đ`}</span>
                   </p>
                 )}
               </>

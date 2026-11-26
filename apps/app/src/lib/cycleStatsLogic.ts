@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+import { dateLocale } from './format';
 /**
  * Số liệu tóm tắt của vụ (D93), phần thuần (kiểu, tỉ lệ so với kế hoạch). Số tính ở máy chủ (get_cycles_stats); null = người xem không có quyền mục đó.
  */
@@ -34,8 +36,8 @@ export function profitPending(s: Pick<CycleStat, 'status' | 'revenue' | 'partial
 
 /** Lý do chưa có lãi/lỗ, viết cho người xem */
 export function profitPendingText(s: Pick<CycleStat, 'partial_out' | 'heads_out' | 'heads_left' | 'cycle_mode' | 'seasons'>): string {
-  if (s.cycle_mode === 'perennial' && (s.seasons ?? 0) > 0) return 'Vườn cây: xem lãi/lỗ ở từng mùa vụ (khấu hao đầu tư đã chia vào các vụ mùa)';
-  return s.partial_out ? `Đã xuất ${s.heads_out ?? 0} con, còn ${s.heads_left ?? 0} con: lãi/lỗ và giá thành/kg tính khi xuất hết` : 'Chưa có doanh thu (chưa bán)';
+  if (s.cycle_mode === 'perennial' && (s.seasons ?? 0) > 0) return t`Vườn cây: xem lãi/lỗ ở từng mùa vụ (khấu hao đầu tư đã chia vào các vụ mùa)`;
+  return s.partial_out ? t`Đã xuất ${s.heads_out ?? 0} con, còn ${s.heads_left ?? 0} con: lãi/lỗ và giá thành/kg tính khi xuất hết` : t`Chưa có doanh thu (chưa bán)`;
 }
 
 /** Phần trăm đã dùng so với kế hoạch (làm tròn); null khi chưa có kế hoạch hoặc kế hoạch bằng 0 */
@@ -52,13 +54,13 @@ export function budgetTone(pct: number): 'ok' | 'warn' | 'bad' {
 /** Những điều cần chú ý khi số liệu chưa đủ (hiện ở "Xem thêm") */
 export function statWarnings(s: CycleStat): string[] {
   const w: string[] = [];
-  if (s.missing_cost) w.push('Có vật tư đã dùng chưa có giá nên chi phí có thể thấp hơn thực tế.');
-  if (s.has_estimate) w.push('Chi phí có phần ước tính hoặc tiền công chưa chốt.');
-  if ((s.labor_manual ?? 0) > 0 && (s.labor_unposted ?? 0) > 0) w.push('Vụ vừa có tiền công ghi tay vừa có công chấm công chưa vào bảng lương: hãy kiểm tra xem có tính trùng không.');
-  if ((s.labor_unposted_missing_rate ?? 0) > 0) w.push(`${s.labor_unposted_missing_rate} ca công chưa có đơn giá giờ nên chưa tính vào chi phí.`);
-  if (s.sold !== null && s.harvest_net !== null && s.harvest_net > 0 && s.sold > s.harvest_net + 0.5) w.push(`Đã bán ${Math.round(s.sold).toLocaleString('vi-VN')} kg nhiều hơn thu hoạch sau hao hụt ${Math.round(s.harvest_net).toLocaleString('vi-VN')} kg: hãy kiểm tra số thu hoạch hoặc số bán.`);
-  if (s.missing_harvest) w.push('Chưa ghi thu hoạch nên chưa tính được giá thành mỗi kg.');
-  if (s.missing_revenue) w.push('Chưa ghi doanh thu.');
+  if (s.missing_cost) w.push(t`Có vật tư đã dùng chưa có giá nên chi phí có thể thấp hơn thực tế.`);
+  if (s.has_estimate) w.push(t`Chi phí có phần ước tính hoặc tiền công chưa chốt.`);
+  if ((s.labor_manual ?? 0) > 0 && (s.labor_unposted ?? 0) > 0) w.push(t`Vụ vừa có tiền công ghi tay vừa có công chấm công chưa vào bảng lương: hãy kiểm tra xem có tính trùng không.`);
+  if ((s.labor_unposted_missing_rate ?? 0) > 0) w.push(t`${s.labor_unposted_missing_rate!} ca công chưa có đơn giá giờ nên chưa tính vào chi phí.`);
+  if (s.sold !== null && s.harvest_net !== null && s.harvest_net > 0 && s.sold > s.harvest_net + 0.5) w.push(t`Đã bán ${Math.round(s.sold).toLocaleString(dateLocale())} kg nhiều hơn thu hoạch sau hao hụt ${Math.round(s.harvest_net).toLocaleString(dateLocale())} kg: hãy kiểm tra số thu hoạch hoặc số bán.`);
+  if (s.missing_harvest) w.push(t`Chưa ghi thu hoạch nên chưa tính được giá thành mỗi kg.`);
+  if (s.missing_revenue) w.push(t`Chưa ghi doanh thu.`);
   return w;
 }
 
@@ -75,13 +77,13 @@ export function hasAnyStat(s: CycleStat | undefined): boolean {
 export function saleCostHint(s: CycleStat | undefined): { perKg: number; estimated: boolean; note: string } | null {
   if (!s || s.cost_total === null) return null;
   if (s.cost_per_kg !== null && s.cost_per_kg > 0) {
-    return { perKg: Math.round(s.cost_per_kg), estimated: s.status !== 'ended', note: s.status === 'ended' ? 'giá thành của vụ' : 'giá thành tạm tính, chi phí còn thay đổi đến khi kết thúc vụ' };
+    return { perKg: Math.round(s.cost_per_kg), estimated: s.status !== 'ended', note: s.status === 'ended' ? t`giá thành của vụ` : t`giá thành tạm tính, chi phí còn thay đổi đến khi kết thúc vụ` };
   }
   if (s.partial_out && s.harvest_net !== null && s.harvest_net > 0 && (s.heads_out ?? 0) > 0) {
     const heads = (s.heads_out ?? 0) + (s.heads_left ?? 0);
     const projectedKg = (s.harvest_net / (s.heads_out ?? 1)) * heads;
     if (projectedKg > 0 && s.cost_total > 0) {
-      return { perKg: Math.round(s.cost_total / projectedKg), estimated: true, note: `ước theo cân trung bình đã xuất, còn ${s.heads_left ?? 0} con chưa xuất` };
+      return { perKg: Math.round(s.cost_total / projectedKg), estimated: true, note: t`ước theo cân trung bình đã xuất, còn ${s.heads_left ?? 0} con chưa xuất` };
     }
   }
   return null;

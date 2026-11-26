@@ -5,6 +5,8 @@ import { formatMoney, formatQty } from '../lib/inventory';
 import { fetchReceivables, listSaleReceipts, RECEIVABLE_STATUS_LABEL, type ReceivableSale, type SaleReceipt } from '../lib/partners';
 import { KpiTile } from './HomeStats';
 import { useShowMore } from './ShowMore';
+import { t as tx } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
 /**
  * Lịch sử mua hàng và công nợ của MỘT khách (D146): tổng đã mua, đã thu, còn nợ; từng đơn (ngày, phiếu, số lượng, tiền, đã thu, còn nợ, hạn)
@@ -39,18 +41,18 @@ export function CustomerOrders({ orgId, partnerId, name, onClose }: { orgId: str
   return (
     <div className="card">
       <div className="row">
-        <strong>Đơn hàng và công nợ: {name}</strong>
-        <button type="button" className="link" onClick={onClose}>Đóng</button>
+        <strong><Trans>Đơn hàng và công nợ: {name}</Trans></strong>
+        <button type="button" className="link" onClick={onClose}>{tx`Đóng`}</button>
       </div>
       {err && <p className="msg error" role="alert">{err}</p>}
-      {rows === null && !err && <p className="muted">Đang tải…</p>}
-      {rows !== null && rows.length === 0 && <p className="muted">Khách này chưa có đơn nào. Khi ghi bán hàng và chọn khách này, đơn sẽ hiện ở đây.</p>}
+      {rows === null && !err && <p className="muted">{tx`Đang tải…`}</p>}
+      {rows !== null && rows.length === 0 && <p className="muted">{tx`Khách này chưa có đơn nào. Khi ghi bán hàng và chọn khách này, đơn sẽ hiện ở đây.`}</p>}
       {rows !== null && rows.length > 0 && (
         <>
           <div className="kpis">
-            <KpiTile label="Đã mua" value={formatMoney(total.bought)} note={`${rows.length} đơn · ${formatQty(total.qty)} kg`} />
-            <KpiTile label="Đã thu" value={formatMoney(total.paid)} tone="ok" />
-            <KpiTile label="Còn nợ" value={formatMoney(total.owe)} tone={total.owe > 0 ? 'bad' : 'neutral'} />
+            <KpiTile label={tx`Đã mua`} value={formatMoney(total.bought)} note={tx`${rows.length} đơn · ${formatQty(total.qty)} kg`} />
+            <KpiTile label={tx`Đã thu`} value={formatMoney(total.paid)} tone="ok" />
+            <KpiTile label={tx`Còn nợ`} value={formatMoney(total.owe)} tone={total.owe > 0 ? 'bad' : 'neutral'} />
           </div>
           {visible.map((r) => (
             <div className="card slim" key={r.sale_id}>
@@ -59,22 +61,22 @@ export function CustomerOrders({ orgId, partnerId, name, onClose }: { orgId: str
                 <span className={r.status === 'overdue' ? 'pill err' : r.status === 'paid' ? 'pill ok' : 'pill warn'}>{RECEIVABLE_STATUS_LABEL[r.status]}</span>
               </div>
               <p>{formatQty(r.quantity)} kg · {formatMoney(r.total_amount)}</p>
-              <p className="muted">Đã thu {formatMoney(r.collected)} · {r.remaining > 0 ? `còn nợ ${formatMoney(r.remaining)}${r.due_date ? ` (hạn ${fmtDate(r.due_date)})` : ''}` : 'đã thu đủ'}</p>
+              <p className="muted">{tx`Đã thu`}{' '}{formatMoney(r.collected)} · {r.remaining > 0 ? tx`còn nợ ${formatMoney(r.remaining)}${r.due_date ? tx` (hạn ${fmtDate(r.due_date)})` : ''}` : tx`đã thu đủ`}</p>
               <button type="button" className="link" aria-expanded={open === r.sale_id} onClick={() => void toggle(r.sale_id)}>
-                {open === r.sale_id ? 'Ẩn các lần thu tiền' : 'Xem các lần thu tiền'}
+                {open === r.sale_id ? tx`Ẩn các lần thu tiền` : tx`Xem các lần thu tiền`}
               </button>
               {open === r.sale_id && (() => {
                 const list = receipts[r.sale_id]?.filter((x) => !x.voided_at);
-                if (!list) return <p className="muted">Đang tải…</p>;
-                if (list.length === 0) return <p className="muted">Chưa thu lần nào.</p>;
+                if (!list) return <p className="muted">{tx`Đang tải…`}</p>;
+                if (list.length === 0) return <p className="muted">{tx`Chưa thu lần nào.`}</p>;
                 return list.map((x) => (
-                  <p key={x.id} className="muted">{fmtDate(x.received_on)} · {formatMoney(x.amount)} · {x.method === 'transfer' ? 'chuyển khoản' : 'tiền mặt'}{x.note ? ` · ${x.note}` : ''}</p>
+                  <p key={x.id} className="muted">{fmtDate(x.received_on)} · {formatMoney(x.amount)} · {x.method === 'transfer' ? tx`chuyển khoản` : tx`tiền mặt`}{x.note ? ` · ${x.note}` : ''}</p>
                 ));
               })()}
             </div>
           ))}
           {more}
-          <p className="muted">Muốn ghi thu tiền: vào Công nợ → Phải thu.</p>
+          <p className="muted">{tx`Muốn ghi thu tiền: vào Công nợ → Phải thu.`}</p>
         </>
       )}
     </div>

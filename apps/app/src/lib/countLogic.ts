@@ -14,7 +14,7 @@ export interface CountSummary {
   m2PerUnit: number | null;
 }
 
-export const COUNT_KIND_LABEL: Record<string, string> = { in: 'Nhập thêm / dặm', dead: 'Chết', culled: 'Loại thải', out: 'Xuất / chuyển đi', born: 'Mới sinh', move: 'Chuyển nhóm', open: 'Tồn đầu' };
+export const COUNT_KIND_LABEL: Record<string, string> = { get in() { return t`Nhập thêm / dặm`; }, get dead() { return t`Chết`; }, get culled() { return t`Loại thải`; }, get out() { return t`Xuất / chuyển đi`; }, get born() { return t`Mới sinh`; }, get move() { return t`Chuyển nhóm`; }, get open() { return t`Tồn đầu`; } };
 
 export function countSummary(
   cycle: { plant_count?: number | null; planted_area_m2?: number | null },
@@ -117,8 +117,10 @@ export function lossStatus(
 export function lossMessages(st: LossStatus, th: LossThresholds, unit: string): string[] {
   const f = (n: number) => numberToInput(n);
   const out: string[] = [];
-  if (st.cumAlert && st.cumPct !== null) out.push(`Hao hụt cộng dồn ${f(st.cumPct)}%, đã tới ngưỡng ${f(th.cumPct)}%.`);
-  if (st.weekAlert && st.weekPct !== null && th.weekPct !== null) out.push(`7 ngày gần đây hao ${f(st.weekPct)}% (${st.weekLoss.toLocaleString('vi-VN')} ${unit}), vượt ngưỡng ${f(th.weekPct)}%.`);
+  if (st.cumAlert && st.cumPct !== null) out.push(t`Hao hụt cộng dồn ${f(st.cumPct)}%, đã tới ngưỡng ${f(th.cumPct)}%.`);
+  if (st.weekAlert && st.weekPct !== null && th.weekPct !== null) out.push(t`7 ngày gần đây hao ${f(st.weekPct)}% (${st.weekLoss.toLocaleString(dateLocale())} ${unit}), vượt ngưỡng ${f(th.weekPct)}%.`);
   return out;
 }import { numberToInput } from './format';
+import { t } from '@lingui/core/macro';
+import { dateLocale } from './format';
 

@@ -13,6 +13,8 @@ import {
 import { canPerm } from '../lib/permissions';
 import { AddressFields } from './AddressFields';
 import { type Addr } from '../lib/vnAddress';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
 type Existing = Awaited<ReturnType<typeof listAllPartners>>[number];
 
@@ -61,7 +63,7 @@ export function CustomersSection() {
     const key = f.name.trim().toLowerCase();
     const hit = all.find((p) => p.name.trim().toLowerCase() === key);
     if (hit) {
-      if (hit.is_customer) throw new Error('INVALID_PARTNER: Khách hàng này đã có trong danh sách.');
+      if (hit.is_customer) throw new Error(t`INVALID_PARTNER: Khách hàng này đã có trong danh sách.`);
       setDupe({ existing: hit, input: f });
       return;
     }
@@ -74,33 +76,33 @@ export function CustomersSection() {
 
   return (
     <>
-      {!online && <p className="msg warn" role="status">Đang offline: danh sách khách hàng cần có mạng để xem và sửa.</p>}
+      {!online && <p className="msg warn" role="status">{t`Đang offline: danh sách khách hàng cần có mạng để xem và sửa.`}</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
       {canEdit && !adding && !editRow && !dupe && (
-        <div className="actions"><button className="primary" disabled={!online} onClick={() => setAdding(true)}>+ Thêm khách hàng</button></div>
+        <div className="actions"><button className="primary" disabled={!online} onClick={() => setAdding(true)}>{t`+ Thêm khách hàng`}</button></div>
       )}
       {dupe && (
         <div className="card">
-          <p><strong>"{dupe.existing.name}"</strong> đã có trong danh bạ (đang là nhà cung ứng). Đánh dấu thêm là khách hàng để dùng chung một hồ sơ?</p>
+          <p><Trans><strong>"{dupe.existing.name}"</strong> đã có trong danh bạ (đang là nhà cung ứng). Đánh dấu thêm là khách hàng để dùng chung một hồ sơ?</Trans></p>
           <div className="btnrow">
             <button className="primary" disabled={busy || !online}
-              onClick={() => void run(async () => { await updateCustomer(dupe.existing, { is_customer: true, customer_kind: dupe.input.customer_kind || undefined }); setDupe(null); setAdding(false); })}>Đánh dấu là khách hàng</button>
-            <button className="secondary" onClick={() => setDupe(null)}>Quay lại</button>
+              onClick={() => void run(async () => { await updateCustomer(dupe.existing, { is_customer: true, customer_kind: dupe.input.customer_kind || undefined }); setDupe(null); setAdding(false); })}>{t`Đánh dấu là khách hàng`}</button>
+            <button className="secondary" onClick={() => setDupe(null)}>{t`Quay lại`}</button>
           </div>
         </div>
       )}
       {canEdit && adding && !dupe && (
-        <CustomerForm title="Thêm khách hàng" busy={busy || !online} onClose={() => setAdding(false)} onSave={(f) => run(() => addCustomer(f))} />
+        <CustomerForm title={t`Thêm khách hàng`} busy={busy || !online} onClose={() => setAdding(false)} onSave={(f) => run(() => addCustomer(f))} />
       )}
 
-      <h2 className="sect">Khách hàng ({shown.length})</h2>
-      {rows === null && !error && <p className="muted">{online ? 'Đang tải…' : 'Chưa tải được vì đang offline.'}</p>}
-      {rows !== null && shown.length === 0 && <p className="muted">Chưa có khách hàng nào. Thêm nơi bạn hay bán nông sản để ghi lần bán và theo dõi công nợ.</p>}
+      <h2 className="sect"><Trans>Khách hàng ({shown.length})</Trans></h2>
+      {rows === null && !error && <p className="muted">{online ? t`Đang tải…` : t`Chưa tải được vì đang offline.`}</p>}
+      {rows !== null && shown.length === 0 && <p className="muted">{t`Chưa có khách hàng nào. Thêm nơi bạn hay bán nông sản để ghi lần bán và theo dõi công nợ.`}</p>}
       {history && <CustomerOrders orgId={orgId} partnerId={history.id} name={history.name} onClose={() => setHistory(null)} />}
       {shown.length > 0 && (
         <table className="grid">
-          <thead><tr><th>Tên</th><th>Điện thoại</th><th></th></tr></thead>
+          <thead><tr><th>{t`Tên`}</th><th>{t`Điện thoại`}</th><th></th></tr></thead>
           <tbody>
             {shownPage.map((p) => (
               <tr key={p.id} className={p.is_active ? '' : 'off'}>
@@ -108,21 +110,21 @@ export function CustomersSection() {
                   {p.name}
                   {p.customer_kind && <span className="sub">{customerKindText(p.customer_kind)}</span>}
                   {p.goods && <span className="sub">{p.goods}</span>}
-                  {p.is_supplier && <span className="sub">Cũng là nhà cung ứng</span>}
-                  {!p.is_active && <span className="sub">Đã dừng</span>}
+                  {p.is_supplier && <span className="sub">{t`Cũng là nhà cung ứng`}</span>}
+                  {!p.is_active && <span className="sub">{t`Đã dừng`}</span>}
                 </td>
                 <td>{p.phone ? <a href={`tel:${p.phone}`}>{p.phone}</a> : '—'}</td>
                 <td className="act">
-                  <button type="button" className="icon" aria-label={`Đơn hàng và công nợ của ${p.name}`} title="Đơn hàng và công nợ" onClick={() => setHistory({ id: p.id, name: p.name })}>🧾</button>
+                  <button type="button" className="icon" aria-label={t`Đơn hàng và công nợ của ${p.name}`} title={t`Đơn hàng và công nợ`} onClick={() => setHistory({ id: p.id, name: p.name })}>🧾</button>
                   {canEdit && (
                     <RowMenu label={p.name} items={[
-                      { label: 'Chỉnh sửa', icon: '✎', disabled: busy || !online, onClick: () => { setAdding(false); setEditing(p.id); } },
-                      { label: p.is_active ? 'Dừng khách này' : 'Dùng lại', icon: p.is_active ? '⏸' : '▶', disabled: busy || !online, onClick: () => void run(() => updateCustomer(p, { is_active: !p.is_active })) },
-                      { label: 'Ẩn danh (theo yêu cầu xóa dữ liệu)', icon: '🕶', danger: true, disabled: busy || !online, onClick: () => {
-                        if (!window.confirm(`Ẩn danh "${p.name}"?
+                      { label: t`Chỉnh sửa`, icon: '✎', disabled: busy || !online, onClick: () => { setAdding(false); setEditing(p.id); } },
+                      { label: p.is_active ? t`Dừng khách này` : t`Dùng lại`, icon: p.is_active ? '⏸' : '▶', disabled: busy || !online, onClick: () => void run(() => updateCustomer(p, { is_active: !p.is_active })) },
+                      { label: t`Ẩn danh (theo yêu cầu xóa dữ liệu)`, icon: '🕶', danger: true, disabled: busy || !online, onClick: () => {
+                        if (!window.confirm(t`Ẩn danh "${p.name}"?
 
 Tên, điện thoại, địa chỉ, ghi chú sẽ bị xóa và KHÔNG khôi phục được. Số tiền và công nợ vẫn được giữ.`)) return;
-                        const r = window.prompt('Lý do ẩn danh (ví dụ: khách yêu cầu xóa dữ liệu):');
+                        const r = window.prompt(t`Lý do ẩn danh (ví dụ: khách yêu cầu xóa dữ liệu):`);
                         if (r && r.trim().length >= 3) void run(() => anonymizeCustomer(p.id, r.trim()));
                       } },
                     ]} />
@@ -134,11 +136,11 @@ Tên, điện thoại, địa chỉ, ghi chú sẽ bị xóa và KHÔNG khôi ph
         </table>
       )}
       {shownMore}
-      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện cả khách hàng đã dừng</label>
-      <p className="muted">Khách đã dừng vẫn giữ lịch sử mua nhưng không chọn được cho lần bán mới. Thông tin khách là dữ liệu cá nhân: riêng tư, không công khai trên website.</p>
+      <label className="check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} />{' '}{t`Hiện cả khách hàng đã dừng`}</label>
+      <p className="muted">{t`Khách đã dừng vẫn giữ lịch sử mua nhưng không chọn được cho lần bán mới. Thông tin khách là dữ liệu cá nhân: riêng tư, không công khai trên website.`}</p>
 
       {canEdit && editRow && (
-        <CustomerForm key={editRow.id} title={`Sửa khách hàng: ${editRow.name}`} initial={editRow} busy={busy || !online} onClose={() => setEditing(null)}
+        <CustomerForm key={editRow.id} title={t`Sửa khách hàng: ${editRow.name}`} initial={editRow} busy={busy || !online} onClose={() => setEditing(null)}
           onSave={(f) => run(async () => { await updateCustomer(editRow, f); setEditing(null); })} />
       )}
     </>
@@ -163,25 +165,25 @@ export function CustomerForm({ title, initial, busy, onSave, onClose }: {
     <div className="card">
       <h2>{title}</h2>
       <div className="inline-form">
-        <label>Tên khách hàng<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Chị Lan (chợ đầu mối)" /></label>
-        <label>Loại khách
+        <label>{t`Tên khách hàng`}<input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder={t`Ví dụ: Chị Lan (chợ đầu mối)`} /></label>
+        <label>{t`Loại khách`}
           <select value={kind} onChange={(e) => setKind(e.target.value)}>
-            <option value="">— Chưa phân loại —</option>
+            <option value="">{t`— Chưa phân loại —`}</option>
             {kindChoices.map((k) => <option key={k} value={k}>{k}</option>)}
           </select>
         </label>
-        <label>Điện thoại<input value={phone} maxLength={40} inputMode="tel" onChange={(e) => setPhone(e.target.value)} /></label>
+        <label>{t`Điện thoại`}<input value={phone} maxLength={40} inputMode="tel" onChange={(e) => setPhone(e.target.value)} /></label>
         <AddressFields value={addr} onChange={setAddr} maxAddress={300} />
-        <ChipsPicker label="Nhu cầu thường mua" value={goods} onChange={setGoods} options={cropNames} hint="Chưa có sản phẩm nào trong danh mục. Thêm ở Khai báo → Sản phẩm, hoặc bấm ＋ Thêm khác." />
-        <label>Ghi chú<textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} /></label>
+        <ChipsPicker label={t`Nhu cầu thường mua`} value={goods} onChange={setGoods} options={cropNames} hint={t`Chưa có sản phẩm nào trong danh mục. Thêm ở Khai báo → Sản phẩm, hoặc bấm ＋ Thêm khác.`} />
+        <label>{t`Ghi chú`}<textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} /></label>
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
           <button type="button" className="primary" disabled={busy} onClick={() => {
-            if (name.trim().length < 2) return setErr('Hãy nhập tên khách hàng (ít nhất 2 ký tự).');
+            if (name.trim().length < 2) return setErr(t`Hãy nhập tên khách hàng (ít nhất 2 ký tự).`);
             setErr(null);
             void onSave({ name, customer_kind: kind, phone, address: addr.address, province: addr.province, ward: addr.ward, goods, note }).catch(() => undefined);
-          }}>Lưu</button>
-          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+          }}>{t`Lưu`}</button>
+          <button type="button" className="secondary" onClick={onClose}>{t`Hủy`}</button>
         </div>
       </div>
     </div>

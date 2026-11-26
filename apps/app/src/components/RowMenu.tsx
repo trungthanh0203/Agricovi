@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { t } from '@lingui/core/macro';
 
 export interface MenuItem { label: string; icon?: string; onClick: () => void; danger?: boolean; disabled?: boolean; hint?: string }
 
@@ -19,14 +20,14 @@ export function RowMenu({ items, label }: { items: MenuItem[]; label: string }) 
   if (shown.length === 0) return null;
   return (
     <>
-      <button type="button" className="icon rowmenu-btn" aria-label={`Tùy chọn: ${label}`} aria-haspopup="dialog" onClick={() => setOpen(true)}>⋮</button>
+      <button type="button" className="icon rowmenu-btn" aria-label={t`Tùy chọn: ${label}`} aria-haspopup="dialog" onClick={() => setOpen(true)}>⋮</button>
       {open && (
         <>
           <div className="sheet-back" onClick={() => setOpen(false)} />
-          <div className="sheet" role="dialog" aria-modal="true" aria-label={`Tùy chọn: ${label}`}>
+          <div className="sheet" role="dialog" aria-modal="true" aria-label={t`Tùy chọn: ${label}`}>
             <div className="sheet-head">
-              <strong className="grow">Tuỳ chọn</strong>
-              <button type="button" className="sheet-x" aria-label="Đóng" onClick={() => setOpen(false)}>✕</button>
+              <strong className="grow">{t`Tuỳ chọn`}</strong>
+              <button type="button" className="sheet-x" aria-label={t`Đóng`} onClick={() => setOpen(false)}>✕</button>
             </div>
             <p className="sheet-sub">{label}</p>
             {shown.map((it) => (
@@ -36,7 +37,7 @@ export function RowMenu({ items, label }: { items: MenuItem[]; label: string }) 
                 <span className="grow">{it.label}{it.hint && <small className="muted"> {it.hint}</small>}</span>
               </button>
             ))}
-            <button type="button" className="sheet-item" onClick={() => setOpen(false)}><span aria-hidden>✕</span><span className="grow">Đóng</span></button>
+            <button type="button" className="sheet-item" onClick={() => setOpen(false)}><span aria-hidden>✕</span><span className="grow">{t`Đóng`}</span></button>
           </div>
         </>
       )}

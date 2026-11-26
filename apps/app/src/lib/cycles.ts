@@ -1,12 +1,13 @@
 import type { StageRow } from './db';
 import { diffDays } from './dates';
 import { canLogCycle } from './prep';
+import { t } from '@lingui/core/macro';
 
 /** Nhãn trạng thái công đoạn của vụ */
 export const STAGE_STATUS_LABEL_VI: Record<StageRow['status'], string> = {
-  pending: 'Chưa làm',
-  in_progress: 'Đang làm',
-  done: 'Đã xong',
+  get pending() { return t`Chưa làm`; },
+  get in_progress() { return t`Đang làm`; },
+  get done() { return t`Đã xong`; },
 };
 
 /** Công đoạn hiện tại: đang làm; nếu không có thì công đoạn chưa làm đầu tiên; xong hết thì null */
@@ -76,7 +77,7 @@ export function cycleTitle(c: { name?: string | null; start_date?: string | null
   const n = c.name?.trim();
   if (n) return n;
   const d = c.start_date ? c.start_date.slice(0, 10).split('-') : null;
-  return d && d.length === 3 ? `${productName || 'Vụ'} ${d[2]}/${d[1]}` : productName || 'Vụ';
+  return d && d.length === 3 ? `${productName || t`Vụ`} ${d[2]}/${d[1]}` : productName || t`Vụ`;
 }
 
 /**

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { t } from '@lingui/core/macro';
 
 export interface TeamRow {
   id: string;
@@ -28,7 +29,7 @@ export interface OrphanWorker {
 }
 
 function client() {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  if (!supabase) throw new Error(t`Supabase chưa được cấu hình`);
   return supabase;
 }
 

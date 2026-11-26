@@ -1,14 +1,15 @@
 import { supabase } from './supabase';
+import { t } from '@lingui/core/macro';
 
 /**
  * Hồ sơ nhân sự gọn và hợp đồng lao động (D188, migration 0222). Chỉ LƯU và NHẮC hạn; không soạn hợp đồng, không lưu số CCCD/bảo hiểm.
  * Chỉ làm khi có mạng (chức năng quản lý, D24). Quyền theo mục Tiền công.
  */
 export type EmploymentType = 'regular' | 'seasonal';
-export const EMPLOYMENT_LABEL: Record<EmploymentType, string> = { regular: 'Thường xuyên', seasonal: 'Thời vụ' };
+export const EMPLOYMENT_LABEL: Record<EmploymentType, string> = { get regular() { return t`Thường xuyên`; }, get seasonal() { return t`Thời vụ`; } };
 export type ContractKind = 'probation' | 'fixed_term' | 'indefinite' | 'seasonal' | 'service';
 export const CONTRACT_KIND_LABEL: Record<ContractKind, string> = {
-  probation: 'Thử việc', fixed_term: 'Có thời hạn', indefinite: 'Không thời hạn', seasonal: 'Thời vụ', service: 'Khoán việc, dịch vụ',
+  get probation() { return t`Thử việc`; }, get fixed_term() { return t`Có thời hạn`; }, get indefinite() { return t`Không thời hạn`; }, get seasonal() { return t`Thời vụ`; }, get service() { return t`Khoán việc, dịch vụ`; },
 };
 
 export interface WorkerHr {
@@ -23,8 +24,8 @@ export interface WorkerContract {
 export interface ContractInput { id: string; kind: ContractKind; start: string; end: string; payNote: string; file: string; note: string }
 
 async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  if (!navigator.onLine) throw new Error('OFFLINE: Cần có mạng để thực hiện. Hãy kết nối mạng rồi thử lại.');
+  if (!supabase) throw new Error(t`Supabase chưa được cấu hình`);
+  if (!navigator.onLine) throw new Error(t`OFFLINE: Cần có mạng để thực hiện. Hãy kết nối mạng rồi thử lại.`);
   const { data, error } = await supabase.rpc(fn, args);
   if (error) throw new Error(error.message);
   return data as T;

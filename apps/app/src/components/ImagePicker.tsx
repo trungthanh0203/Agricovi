@@ -3,6 +3,7 @@ import { friendlyError } from '../lib/errors';
 import { fileToSmallImage } from '../lib/image';
 import { uploadImage, useImageSrc, type ImageKind } from '../lib/media';
 import { useOrgs } from '../lib/orgs';
+import { t } from '@lingui/core/macro';
 
 /**
  * Hình từ cột image: ảnh cũ (data URL) hoặc tham chiếu kho ảnh ("storage:…") đều hiện được.
@@ -20,7 +21,7 @@ export function Img({ value, alt = '', className, size = 't' }: { value: string 
  * Có `store` (loại ảnh) thì ảnh được đưa lên kho ảnh của cơ sở đang chọn (cần mạng); không có thì giữ dạng data URL như trước
  * (dùng cho ảnh công khai của website, chưa chuyển sang kho ảnh).
  */
-export function ImagePicker({ value, onChange, label = 'Hình ảnh', disabled, store }: {
+export function ImagePicker({ value, onChange, label = t`Hình ảnh`, disabled, store }: {
   value: string; onChange: (v: string) => void; label?: string; disabled?: boolean; store?: ImageKind;
 }) {
   const ref = useRef<HTMLInputElement>(null);
@@ -51,9 +52,9 @@ export function ImagePicker({ value, onChange, label = 'Hình ảnh', disabled, 
       <div className="row">
         {value ? <Img value={value} className="thumb" /> : <span className="thumb empty" aria-hidden>🖼</span>}
         <button type="button" className="secondary" style={{ width: 'auto', margin: 0, padding: '0 14px' }} disabled={disabled || busy} onClick={() => ref.current?.click()}>
-          {busy ? 'Đang tải ảnh…' : value ? 'Đổi ảnh' : 'Chọn / chụp ảnh'}
+          {busy ? t`Đang tải ảnh…` : value ? t`Đổi ảnh` : t`Chọn / chụp ảnh`}
         </button>
-        {value && <button type="button" className="icon" disabled={disabled || busy} aria-label="Xóa ảnh" onClick={() => onChange('')}>✕</button>}
+        {value && <button type="button" className="icon" disabled={disabled || busy} aria-label={t`Xóa ảnh`} onClick={() => onChange('')}>✕</button>}
       </div>
       <input ref={ref} type="file" accept="image/*" hidden
         onChange={(e) => {

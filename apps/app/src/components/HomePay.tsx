@@ -4,6 +4,8 @@ import { useAuth } from '../lib/auth';
 import { todayLocal, useOnline } from '../lib/hooks';
 import { cachedOverview, fetchPayOverview } from '../lib/payBook';
 import { hoursText, rangeOf, type PayRow } from '../lib/payBookLogic';
+import { t } from '@lingui/core/macro';
+import { dateLocale } from '../lib/format';
 
 /** Thẻ "Lương tháng này" ở Trang chủ (D88): thực nhận (đã chốt + dự tính), giờ công và số ngày của CHÍNH MÌNH; bấm để mở Bảng lương. Tải lười; ẩn nếu chưa có hồ sơ chấm công. */
 export default function HomePay({ orgId, onOpen }: { orgId: string; onOpen: () => void }) {
@@ -26,10 +28,10 @@ export default function HomePay({ orgId, onOpen }: { orgId: string; onOpen: () =
   if (!row) return null;
   return (
     <>
-      <h2 className="sect">Lương tháng này</h2>
+      <h2 className="sect">{t`Lương tháng này`}</h2>
       <div className="kpis">
-        <KpiTile label="Thực nhận" value={shortMoney(row.net)} tone="info" title={`${Math.round(row.net).toLocaleString('vi-VN')} đ`} note={`đã chốt ${shortMoney(row.net_locked)} · còn lại là ước tính`} onClick={onOpen} />
-        <KpiTile label="Giờ công" value={hoursText(row.hours)} note={`${row.days} ngày${row.pending_hours > 0 ? ` · chờ xác nhận ${hoursText(row.pending_hours)}` : ''}`} onClick={onOpen} />
+        <KpiTile label={t`Thực nhận`} value={shortMoney(row.net)} tone="info" title={t`${Math.round(row.net).toLocaleString(dateLocale())} đ`} note={t`đã chốt ${shortMoney(row.net_locked)} · còn lại là ước tính`} onClick={onOpen} />
+        <KpiTile label={t`Giờ công`} value={hoursText(row.hours)} note={t`${row.days} ngày${row.pending_hours > 0 ? t` · chờ xác nhận ${hoursText(row.pending_hours)}` : ''}`} onClick={onOpen} />
       </div>
     </>
   );

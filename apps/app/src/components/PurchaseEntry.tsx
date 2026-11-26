@@ -10,6 +10,7 @@ import {
   createSupplier, linesTotal, listSuppliers, recordPurchase, validatePurchase, type Partner, type PurchaseInput,
 } from '../lib/partners';
 import { useTable } from '../lib/tables';
+import { t } from '@lingui/core/macro';
 
 const LAST_LOCATION_KEY = 'agriconnect.lastLocation';
 
@@ -74,16 +75,16 @@ export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: st
 
   async function onSubmitPlain() {
     setError(null);
-    if (!effLocation) return setError('Hãy chọn kho.');
-    if (billDate > todayLocal()) return setError('Ngày nhập kho không được sau ngày hôm nay.');
+    if (!effLocation) return setError(t`Hãy chọn kho.`);
+    if (billDate > todayLocal()) return setError(t`Ngày nhập kho không được sau ngày hôm nay.`);
     const used = parsed.filter((l) => l.materialId || l.qty.trim() || l.cost.trim());
-    if (used.length === 0) return setError('Hãy nhập ít nhất một dòng vật tư.');
+    if (used.length === 0) return setError(t`Hãy nhập ít nhất một dòng vật tư.`);
     for (const l of used) {
-      const name = mats.find((m) => m.id === l.materialId)?.name ?? 'Dòng vật tư';
-      if (!l.materialId) return setError('Hãy chọn vật tư cho mọi dòng, hoặc xóa dòng thừa.');
-      if (l.quantity === null || Number.isNaN(l.quantity) || l.quantity <= 0) return setError(`${name}: số lượng phải là số lớn hơn 0.`);
-      if (l.unitCost !== null && (Number.isNaN(l.unitCost) || l.unitCost < 0 || !Number.isInteger(l.unitCost))) return setError(`${name}: đơn giá phải là số tiền (đồng), không có phần lẻ.`);
-      if (l.lotExpiry && !l.lotNo.trim()) return setError(`${name}: đã nhập hạn dùng thì cần nhập cả số lô.`);
+      const name = mats.find((m) => m.id === l.materialId)?.name ?? t`Dòng vật tư`;
+      if (!l.materialId) return setError(t`Hãy chọn vật tư cho mọi dòng, hoặc xóa dòng thừa.`);
+      if (l.quantity === null || Number.isNaN(l.quantity) || l.quantity <= 0) return setError(t`${name}: số lượng phải là số lớn hơn 0.`);
+      if (l.unitCost !== null && (Number.isNaN(l.unitCost) || l.unitCost < 0 || !Number.isInteger(l.unitCost))) return setError(t`${name}: đơn giá phải là số tiền (đồng), không có phần lẻ.`);
+      if (l.lotExpiry && !l.lotNo.trim()) return setError(t`${name}: đã nhập hạn dùng thì cần nhập cả số lô.`);
     }
     setBusy(true);
     try {
@@ -113,7 +114,7 @@ export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: st
     };
     const bad = validatePurchase(input, todayLocal());
     if (bad) return setError(bad);
-    if (parsed.some((l) => l.lotExpiry && !l.lotNo.trim())) return setError('Đã nhập hạn dùng thì cần nhập cả số lô.');
+    if (parsed.some((l) => l.lotExpiry && !l.lotNo.trim())) return setError(t`Đã nhập hạn dùng thì cần nhập cả số lô.`);
     setBusy(true);
     try {
       await recordPurchase(input);
@@ -162,18 +163,18 @@ export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: st
     const left = saved.total - saved.paid;
     return (
       <section>
-        <h1>Đã lưu hóa đơn mua</h1>
+        <h1>{t`Đã lưu hóa đơn mua`}</h1>
         <div className="card">
-          <p><strong>{saved.partner}</strong>{saved.invoice ? ` · hóa đơn ${saved.invoice}` : ''}</p>
-          <p>Tổng tiền: <strong>{formatMoney(saved.total)}</strong> · Đã trả: {formatMoney(saved.paid)}</p>
+          <p><strong>{saved.partner}</strong>{saved.invoice ? t` · hóa đơn ${saved.invoice}` : ''}</p>
+          <p>{t`Tổng tiền:`}{' '}<strong>{formatMoney(saved.total)}</strong>{' '}{t`· Đã trả:`}{' '}{formatMoney(saved.paid)}</p>
           {left > 0 ? (
-            <p className="msg warn" role="status">Còn nợ {formatMoney(left)}{saved.due ? `, hạn thanh toán ${fmtDate(saved.due)}` : ''}.</p>
+            <p className="msg warn" role="status">{t`Còn nợ`}{' '}{formatMoney(left)}{saved.due ? t`, hạn thanh toán ${fmtDate(saved.due)}` : ''}.</p>
           ) : (
-            <p className="msg ok" role="status">Đã trả đủ.</p>
+            <p className="msg ok" role="status">{t`Đã trả đủ.`}</p>
           )}
-          <p className="muted">Các dòng vật tư đã được nhập vào kho.</p>
+          <p className="muted">{t`Các dòng vật tư đã được nhập vào kho.`}</p>
         </div>
-        <button className="primary" onClick={again}>Nhập hóa đơn khác</button>
+        <button className="primary" onClick={again}>{t`Nhập hóa đơn khác`}</button>
         <button className="secondary" onClick={onClose}>Xong</button>
       </section>
     );
@@ -182,9 +183,9 @@ export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: st
   if (savedPlain !== null) {
     return (
       <section>
-        <h1>Đã nhập kho</h1>
-        <p className="msg ok" role="status">Đã nhập {savedPlain} dòng vật tư vào kho{navigator.onLine ? '' : '; sẽ tự gửi lên máy chủ khi có mạng'}.</p>
-        <button className="primary" onClick={again}>Nhập tiếp</button>
+        <h1>{t`Đã nhập kho`}</h1>
+        <p className="msg ok" role="status">{t`Đã nhập`}{' '}{savedPlain}{' '}{t`dòng vật tư vào kho`}{navigator.onLine ? '' : t`; sẽ tự gửi lên máy chủ khi có mạng`}.</p>
+        <button className="primary" onClick={again}>{t`Nhập tiếp`}</button>
         <button className="secondary" onClick={onClose}>Xong</button>
       </section>
     );
@@ -193,12 +194,12 @@ export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: st
   if (mats.length === 0 || locs.length === 0) {
     return (
       <section>
-        <h1>Nhập kho</h1>
+        <h1>{t`Nhập kho`}</h1>
         <p className="msg warn">
-          {mats.length === 0 ? 'Chưa có vật tư nào. ' : ''}{locs.length === 0 ? 'Chưa có kho nào. ' : ''}
-          Hãy tạo trong tab Khai báo (Vật tư, Kho và đơn vị) rồi quay lại đây.
+          {mats.length === 0 ? t`Chưa có vật tư nào. ` : ''}{locs.length === 0 ? t`Chưa có kho nào. ` : ''}
+          {t`Hãy tạo trong tab Khai báo (Vật tư, Kho và đơn vị) rồi quay lại đây.`}
         </p>
-        <button className="secondary" onClick={onClose}>Quay lại</button>
+        <button className="secondary" onClick={onClose}>{t`Quay lại`}</button>
       </section>
     );
   }
@@ -209,25 +210,25 @@ export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: st
 
   return (
     <section>
-      <h1>Nhập kho</h1>
-      {canInvoice && online && <button type="button" className="secondary" onClick={() => setScanning(true)}>📷 Chụp phiếu / hóa đơn để điền sẵn</button>}
-      {hasInvoice && !online && <p className="msg warn" role="status">Đang offline: lưu hóa đơn cần có mạng. Bỏ tích "Mua có hóa đơn" để nhập kho không cần mạng.</p>}
+      <h1>{t`Nhập kho`}</h1>
+      {canInvoice && online && <button type="button" className="secondary" onClick={() => setScanning(true)}>{t`📷 Chụp phiếu / hóa đơn để điền sẵn`}</button>}
+      {hasInvoice && !online && <p className="msg warn" role="status">{t`Đang offline: lưu hóa đơn cần có mạng. Bỏ tích "Mua có hóa đơn" để nhập kho không cần mạng.`}</p>}
       <form className="inline-form" onSubmit={onSubmit} noValidate>
         <label className="check">
           <input type="checkbox" checked={hasInvoice} disabled={!canInvoice} onChange={(e) => setHasInvoice(e.target.checked)} />
-          <span>Mua có hóa đơn (ghi nhà cung ứng, công nợ){!canInvoice ? ' — cần quyền sửa Chi phí' : ''}</span>
+          <span>{t`Mua có hóa đơn (ghi nhà cung ứng, công nợ)`}{!canInvoice ? t` — cần quyền sửa Chi phí` : ''}</span>
         </label>
         {hasInvoice && (<>
         <label>
-          Nhà cung ứng
+          {t`Nhà cung ứng`}
           <select value={partnerId} onChange={(e) => setPartnerId(e.target.value)}>
-            <option value="">— Chọn nhà cung ứng —</option>
+            <option value="">{t`— Chọn nhà cung ứng —`}</option>
             {partners.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </label>
-        {!quickAdd && <button type="button" className="link" onClick={() => setQuickAdd(true)}>+ Thêm nhà cung ứng mới</button>}
+        {!quickAdd && <button type="button" className="link" onClick={() => setQuickAdd(true)}>{t`+ Thêm nhà cung ứng mới`}</button>}
         {quickAdd && (
-          <SupplierForm title="Thêm nhà cung ứng" busy={busy || !online} onClose={() => setQuickAdd(false)}
+          <SupplierForm title={t`Thêm nhà cung ứng`} busy={busy || !online} onClose={() => setQuickAdd(false)}
             onSave={async (f) => {
               try {
                 const nid = await createSupplier(orgId, f);
@@ -239,15 +240,15 @@ export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: st
         )}
 
         <div className="pair">
-          <label>Số hóa đơn<input value={invoice} maxLength={60} onChange={(e) => setInvoice(e.target.value)} placeholder="Nếu có" /></label>
-          <label>Ngày mua<input type="date" value={billDate} max={todayLocal()} onChange={(e) => changeBillDate(e.target.value)} /></label>
+          <label>{t`Số hóa đơn`}<input value={invoice} maxLength={60} onChange={(e) => setInvoice(e.target.value)} placeholder={t`Nếu có`} /></label>
+          <label>{t`Ngày mua`}<input type="date" value={billDate} max={todayLocal()} onChange={(e) => changeBillDate(e.target.value)} /></label>
         </div>
         </>)}
-        {!hasInvoice && <label>Ngày nhập<input type="date" value={billDate} max={todayLocal()} onChange={(e) => changeBillDate(e.target.value)} /></label>}
+        {!hasInvoice && <label>{t`Ngày nhập`}<input type="date" value={billDate} max={todayLocal()} onChange={(e) => changeBillDate(e.target.value)} /></label>}
 
         {locs.length > 1 && (
           <label>
-            Nhập vào kho
+            {t`Nhập vào kho`}
             <select value={effLocation} onChange={(e) => setLocationId(e.target.value)}>
               {locs.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
@@ -255,71 +256,71 @@ export function PurchaseEntry({ orgId, onClose, canInvoice = true }: { orgId: st
         )}
 
         <fieldset className="roles">
-          <legend>{hasInvoice ? 'Hàng đã mua' : 'Vật tư nhập kho'}</legend>
+          <legend>{hasInvoice ? t`Hàng đã mua` : t`Vật tư nhập kho`}</legend>
           {parsed.map((l) => (
             <div className="member" key={l.key}>
-              <select aria-label="Vật tư" value={l.materialId} onChange={(e) => setLine(l.key, { materialId: e.target.value })}>
-                <option value="">— Chọn vật tư —</option>
+              <select aria-label={t`Vật tư`} value={l.materialId} onChange={(e) => setLine(l.key, { materialId: e.target.value })}>
+                <option value="">{t`— Chọn vật tư —`}</option>
                 {mats.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
               <div className="pair">
-                <label>Số lượng{l.materialId ? ` (${unitOf(l.materialId)})` : ''}
+                <label>{t`Số lượng`}{l.materialId ? ` (${unitOf(l.materialId)})` : ''}
                   <input value={lines.find((x) => x.key === l.key)!.qty} inputMode="decimal" onChange={(e) => setLine(l.key, { qty: e.target.value })} />
                 </label>
-                <label>Đơn giá (đ){l.materialId && unitOf(l.materialId) ? ` / ${unitOf(l.materialId)}` : ''}{hasInvoice ? '' : ' (không bắt buộc)'}
+                <label>{t`Đơn giá (đ)`}{l.materialId && unitOf(l.materialId) ? ` / ${unitOf(l.materialId)}` : ''}{hasInvoice ? '' : t` (không bắt buộc)`}
                   <input value={lines.find((x) => x.key === l.key)!.cost} inputMode="numeric" onChange={(e) => setLine(l.key, { cost: e.target.value })} />
                 </label>
               </div>
               <div className="pair">
-                <label>Số lô (nếu có)<input value={l.lotNo} maxLength={60} onChange={(e) => setLine(l.key, { lotNo: e.target.value })} /></label>
-                <label>Hạn dùng<input type="date" value={l.lotExpiry} onChange={(e) => setLine(l.key, { lotExpiry: e.target.value })} /></label>
+                <label>{t`Số lô (nếu có)`}<input value={l.lotNo} maxLength={60} onChange={(e) => setLine(l.key, { lotNo: e.target.value })} /></label>
+                <label>{t`Hạn dùng`}<input type="date" value={l.lotExpiry} onChange={(e) => setLine(l.key, { lotExpiry: e.target.value })} /></label>
               </div>
               <div className="row">
-                <span className="muted">Thành tiền: <strong>{formatMoney(lineValue(l))}</strong>{l.quantity ? ` (${formatQty(l.quantity)} ${unitOf(l.materialId)})` : ''}</span>
-                {lines.length > 1 && <button type="button" className="link inline" aria-label="Xóa dòng" onClick={() => setLines((s) => s.filter((x) => x.key !== l.key))}>Xóa dòng</button>}
+                <span className="muted">{t`Thành tiền:`}{' '}<strong>{formatMoney(lineValue(l))}</strong>{l.quantity ? ` (${formatQty(l.quantity)} ${unitOf(l.materialId)})` : ''}</span>
+                {lines.length > 1 && <button type="button" className="link inline" aria-label={t`Xóa dòng`} onClick={() => setLines((s) => s.filter((x) => x.key !== l.key))}>{t`Xóa dòng`}</button>}
               </div>
             </div>
           ))}
-          <button type="button" className="secondary" onClick={() => setLines((s) => [...s, newLine()])}>+ Thêm dòng vật tư</button>
+          <button type="button" className="secondary" onClick={() => setLines((s) => [...s, newLine()])}>{t`+ Thêm dòng vật tư`}</button>
         </fieldset>
 
         {hasInvoice && (<>
         <label>
-          Tổng tiền hóa đơn (đ)
+          {t`Tổng tiền hóa đơn (đ)`}
           <input value={totalText ?? String(sum)} inputMode="numeric" onChange={(e) => setTotalText(e.target.value)} />
-          {totalText !== null && total !== sum && <small className="warn">Khác tổng các dòng ({formatMoney(sum)}). Chỉ sửa khi hóa đơn có thêm phí vận chuyển, chiết khấu…</small>}
-          {totalText !== null && <button type="button" className="link inline" onClick={() => setTotalText(null)}>Tự cộng lại từ các dòng</button>}
+          {totalText !== null && total !== sum && <small className="warn">{t`Khác tổng các dòng (`}{formatMoney(sum)}{t`). Chỉ sửa khi hóa đơn có thêm phí vận chuyển, chiết khấu…`}</small>}
+          {totalText !== null && <button type="button" className="link inline" onClick={() => setTotalText(null)}>{t`Tự cộng lại từ các dòng`}</button>}
         </label>
 
         <div className="pair">
-          <label>Đã trả (đ)
+          <label>{t`Đã trả (đ)`}
             <input value={paidText} inputMode="numeric" onChange={(e) => setPaidText(e.target.value)} />
           </label>
-          <label>Hình thức trả
+          <label>{t`Hình thức trả`}
             <select value={method} onChange={(e) => setMethod(e.target.value as 'cash' | 'transfer')}>
-              <option value="cash">Tiền mặt</option>
-              <option value="transfer">Chuyển khoản</option>
+              <option value="cash">{t`Tiền mặt`}</option>
+              <option value="transfer">{t`Chuyển khoản`}</option>
             </select>
           </label>
         </div>
         <div className="pair">
-          <button type="button" className="secondary" onClick={() => setPaidText(String(total))}>Trả đủ</button>
-          <button type="button" className="secondary" onClick={() => setPaidText('0')}>Chưa trả (nợ)</button>
+          <button type="button" className="secondary" onClick={() => setPaidText(String(total))}>{t`Trả đủ`}</button>
+          <button type="button" className="secondary" onClick={() => setPaidText('0')}>{t`Chưa trả (nợ)`}</button>
         </div>
-        <p className={owed > 0 ? 'msg warn' : 'msg ok'} role="status">{owed > 0 ? `Còn nợ nhà cung ứng: ${formatMoney(owed)}` : 'Đã trả đủ, không còn nợ.'}</p>
+        <p className={owed > 0 ? 'msg warn' : 'msg ok'} role="status">{owed > 0 ? t`Còn nợ nhà cung ứng: ${formatMoney(owed)}` : t`Đã trả đủ, không còn nợ.`}</p>
 
         <label>
-          Hạn thanh toán (bạn nhập)
+          {t`Hạn thanh toán (bạn nhập)`}
           <input type="date" value={due} min={billDate} onChange={(e) => setDue(e.target.value)} />
-          <small>{owed > 0 && !due ? 'Còn nợ mà chưa nhập hạn: app sẽ không nhắc quá hạn cho hóa đơn này.' : 'Ngày phải trả hết nợ cho nhà cung ứng; để trống nếu không có hạn.'}</small>
+          <small>{owed > 0 && !due ? t`Còn nợ mà chưa nhập hạn: app sẽ không nhắc quá hạn cho hóa đơn này.` : t`Ngày phải trả hết nợ cho nhà cung ứng; để trống nếu không có hạn.`}</small>
         </label>
         </>)}
-        <label>Ghi chú<input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} /></label>
+        <label>{t`Ghi chú`}<input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} /></label>
 
         {error && <p className="msg error" role="alert">{error}</p>}
         <div className="btnrow">
-          <button type="submit" className="primary" disabled={busy || (hasInvoice && !online)}>{busy ? 'Đang lưu…' : hasInvoice ? 'Lưu hóa đơn' : 'Lưu nhập kho'}</button>
-          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+          <button type="submit" className="primary" disabled={busy || (hasInvoice && !online)}>{busy ? t`Đang lưu…` : hasInvoice ? t`Lưu hóa đơn` : t`Lưu nhập kho`}</button>
+          <button type="button" className="secondary" onClick={onClose}>{t`Hủy`}</button>
         </div>
       </form>
     </section>

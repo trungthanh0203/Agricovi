@@ -11,8 +11,10 @@ import { OFF_LABEL, cellLabel, parseCell, personTotals, totalText, type Parsed }
 import { MAX_PHOTOS, SCAN_MAX_ROWS, getScanUsage, prepareImage, scanTimesheet, type ScanUsage } from '../lib/timesheetScan';
 import { mapScan, type MapOut } from '../lib/timesheetScanMap';
 import { Collapsible } from './Collapsible';
+import { t as tx } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
-const STATUS_TEXT: Record<string, string> = { confirmed: 'đã xác nhận', needs_confirmation: 'chờ xác nhận', open: 'đang trong ca' };
+const STATUS_TEXT: Record<string, string> = { get confirmed() { return tx`đã xác nhận`; }, get needs_confirmation() { return tx`chờ xác nhận`; }, get open() { return tx`đang trong ca`; } };
 const KIND_LETTER: Record<string, string> = { annual: 'P', sick: 'Ô', family: 'V', unpaid: 'K', no_notice: 'K', other: 'K' };
 const hoursText = (min: number) => numberToInput(Math.round(min / 6) / 10);
 const key = (w: string, d: string) => `${w}|${d}`;
@@ -101,7 +103,7 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
       const { result, usage: u } = await scanTimesheet(sheet, images);
       setUsage(u);
       const map = mapScan(result, sheet.workers, days.map((d) => d.date), sheet.code);
-      if (map.codeMismatch && !window.confirm(`Ảnh có mã bảng ${map.codeMismatch}, khác bảng đang nhập (${sheet.code}). Vẫn điền số liệu từ ảnh này?`)) return;
+      if (map.codeMismatch && !window.confirm(tx`Ảnh có mã bảng ${map.codeMismatch}, khác bảng đang nhập (${sheet.code}). Vẫn điền số liệu từ ảnh này?`)) return;
       let filledN = 0, keptN = 0;
       const nextWarn = new Set(warn);
       const next = { ...text };
@@ -115,13 +117,13 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
       }
       setText(next); setWarn(nextWarn);
       setScanOut({ map, filled: filledN, kept: keptN, notes: result.canh_bao });
-      setMsg(`Đã điền ${filledN} ô từ ảnh. Hãy xem lại toàn bộ rồi bấm Lưu: ảnh chưa được lưu gì.`);
+      setMsg(tx`Đã điền ${filledN} ô từ ảnh. Hãy xem lại toàn bộ rồi bấm Lưu: ảnh chưa được lưu gì.`);
     } catch (e) { setError(friendlyError(e)); } finally { setScanBusy(false); }
   }
 
   async function save() {
     setError(null); setMsg(null); setResult(null);
-    if (invalid > 0) return setError(`Còn ${invalid} ô sai ký hiệu (tô đỏ). Hãy sửa rồi lưu.`);
+    if (invalid > 0) return setError(tx`Còn ${invalid} ô sai ký hiệu (tô đỏ). Hãy sửa rồi lưu.`);
     const cells: CellOut[] = [];
     for (const w of sheet.workers) for (const d of days) {
       if (locked(w.worker_id, d.date)) continue;
@@ -129,7 +131,7 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
       if (p.kind === 'empty' || p.kind === 'none' || p.kind === 'error') continue;
       cells.push({ w: w.worker_id, d: d.date, k: p.kind, ...(p.kind === 'hours' ? { h: p.hours } : {}) });
     }
-    if (cells.length === 0) return setError('Chưa có ô nào để lưu. Gõ ký hiệu vào các ô rồi bấm Lưu.');
+    if (cells.length === 0) return setError(tx`Chưa có ô nào để lưu. Gõ ký hiệu vào các ô rồi bấm Lưu.`);
     setBusy(true);
     try {
       const r = await recordTimesheet(sheet.id, cells);
@@ -139,18 +141,18 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
       // ô đã lưu hoặc đã có từ trước thì bỏ chữ đã gõ (sẽ hiện thành ô khóa); ô bị bỏ qua giữ lại để sửa
       setText((t) => { const n = { ...t }; for (const c of cells) { const k = key(c.w, c.d); if (!bad[k]) delete n[k]; } return n; });
       setWarn((s) => { const n = new Set(s); for (const c of cells) n.delete(key(c.w, c.d)); return n; });
-      setMsg(`Đã lưu ${r.saved} ô${r.unchanged ? `, ${r.unchanged} ô đã có từ trước` : ''}${r.skipped.length ? `. ${r.skipped.length} ô chưa lưu được (xem bên dưới)` : ''}.`);
+      setMsg(tx`Đã lưu ${r.saved} ô${r.unchanged ? tx`, ${r.unchanged} ô đã có từ trước` : ''}${r.skipped.length ? tx`. ${r.skipped.length} ô chưa lưu được (xem bên dưới)` : ''}.`);
       await load();
     } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
   async function toggleEntered() {
     setBusy(true); setError(null);
-    try { const s = await markSheetEntered(cur.id, cur.version, cur.status !== 'entered'); setCur(s); onChanged(s); setMsg(s.status === 'entered' ? 'Đã đánh dấu bảng nhập xong.' : 'Đã bỏ đánh dấu nhập xong.'); }
-    catch (e) { setError(/CONFLICT/.test(String((e as Error).message)) ? 'Bảng vừa được người khác sửa. Hãy mở lại bảng.' : friendlyError(e)); }
+    try { const s = await markSheetEntered(cur.id, cur.version, cur.status !== 'entered'); setCur(s); onChanged(s); setMsg(s.status === 'entered' ? tx`Đã đánh dấu bảng nhập xong.` : tx`Đã bỏ đánh dấu nhập xong.`); }
+    catch (e) { setError(/CONFLICT/.test(String((e as Error).message)) ? tx`Bảng vừa được người khác sửa. Hãy mở lại bảng.` : friendlyError(e)); }
     finally { setBusy(false); }
   }
   function back() {
-    if (filled > 0 && !window.confirm(`Còn ${filled} ô gõ chưa lưu. Thoát thì các ô này sẽ mất. Thoát không?`)) return;
+    if (filled > 0 && !window.confirm(tx`Còn ${filled} ô gõ chưa lưu. Thoát thì các ô này sẽ mất. Thoát không?`)) return;
     onBack();
   }
 
@@ -178,54 +180,54 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
   return (
     <div className="ts-entry">
       <div className="menubar">
-        <button className="menu-back" onClick={back} aria-label="Quay lại danh sách bảng">‹ Bảng giấy</button>
+        <button className="menu-back" onClick={back} aria-label={tx`Quay lại danh sách bảng`}>{tx`‹ Bảng giấy`}</button>
         <strong className="menu-cur">{sheet.code}</strong>
       </div>
-      <p>{orgName} · {fmtDate(sheet.from_date)} – {fmtDate(sheet.to_date)} · {sheet.workers.length} người{sheet.note ? ` · ${sheet.note}` : ''}</p>
-      {!online && <p className="msg warn" role="status">Đang offline: lưu số liệu cần có mạng. Bạn vẫn gõ được, nhớ bấm Lưu khi có mạng.</p>}
+      <p>{orgName} · {fmtDate(sheet.from_date)} – {fmtDate(sheet.to_date)} · {sheet.workers.length}{' '}{tx`người`}{sheet.note ? ` · ${sheet.note}` : ''}</p>
+      {!online && <p className="msg warn" role="status">{tx`Đang offline: lưu số liệu cần có mạng. Bạn vẫn gõ được, nhớ bấm Lưu khi có mạng.`}</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
       {msg && <p className="msg ok" role="status">{msg}</p>}
 
-      <Collapsible title="Cách ghi" summary={hours ? 'kiểu ghi số giờ' : 'kiểu đánh dấu ca'}>
+      <Collapsible title={tx`Cách ghi`} summary={hours ? tx`kiểu ghi số giờ` : tx`kiểu đánh dấu ca`}>
         <ul className="ts-legend">
-          <li>Ca mặc định: <strong>{hhmm(sheet.shift_start)} – {hhmm(sheet.shift_end)}</strong>, nghỉ giữa ca {sheet.break_minutes} phút (đủ ca = {hoursText(fullNet)} giờ làm).</li>
+          <li>{tx`Ca mặc định:`}{' '}<strong>{hhmm(sheet.shift_start)} – {hhmm(sheet.shift_end)}</strong>{tx`, nghỉ giữa ca`}{' '}{sheet.break_minutes}{' '}{tx`phút (đủ ca =`}{' '}{hoursText(fullNet)}{' '}{tx`giờ làm).`}</li>
           {hours
-            ? <li>Gõ <b>số giờ</b> làm cả ngày, ví dụ <b>8</b> hoặc <b>6,5</b>. Gõ <b>x</b> nếu trên giấy chỉ tick đủ ca.</li>
-            : <li>Gõ <b>x</b> (✓) = đủ ca · <b>0,5</b> (½) = nửa ca · <b>số giờ</b> (ví dụ 6,5) nếu làm khác ca mặc định.</li>}
-          <li>Nghỉ: <b>p</b> = P {OFF_LABEL.P.toLowerCase()} · <b>o</b> = Ô {OFF_LABEL.O.toLowerCase()} · <b>v</b> = V {OFF_LABEL.V.toLowerCase()} · <b>k</b> = K {OFF_LABEL.K.toLowerCase()}.</li>
-          <li>Gõ <b>-</b> nếu trên giấy gạch ngang (không làm việc). <b>Để trống</b> nếu trên giấy chưa ghi: ô trống không được lưu.</li>
-          <li>Ô có nền xám đã có dữ liệu trong hệ thống nên khóa lại; muốn sửa hãy dùng Bảng công hoặc Nghỉ phép. Ô tô đỏ là ký hiệu sai hoặc chưa lưu được.</li>
-          <li>Giấy không có giờ vào/ra cụ thể nên công được tạo theo ca mặc định hoặc số giờ bạn gõ; ghi chú của ca ghi rõ mã bảng.</li>
+            ? <li><Trans>Gõ <b>số giờ</b> làm cả ngày, ví dụ <b>8</b> hoặc <b>6,5</b>. Gõ <b>x</b> nếu trên giấy chỉ tick đủ ca.</Trans></li>
+            : <li><Trans>Gõ <b>x</b> (✓) = đủ ca · <b>0,5</b> (½) = nửa ca · <b>số giờ</b> (ví dụ 6,5) nếu làm khác ca mặc định.</Trans></li>}
+          <li>{tx`Nghỉ:`}{' '}<b>p</b> = P {OFF_LABEL.P.toLowerCase()} · <b>o</b>{' '}{tx`= Ô`}{' '}{OFF_LABEL.O.toLowerCase()} · <b>v</b> = V {OFF_LABEL.V.toLowerCase()} · <b>k</b> = K {OFF_LABEL.K.toLowerCase()}.</li>
+          <li><Trans>Gõ <b>-</b> nếu trên giấy gạch ngang (không làm việc). <b>Để trống</b> nếu trên giấy chưa ghi: ô trống không được lưu.</Trans></li>
+          <li>{tx`Ô có nền xám đã có dữ liệu trong hệ thống nên khóa lại; muốn sửa hãy dùng Bảng công hoặc Nghỉ phép. Ô tô đỏ là ký hiệu sai hoặc chưa lưu được.`}</li>
+          <li>{tx`Giấy không có giờ vào/ra cụ thể nên công được tạo theo ca mặc định hoặc số giờ bạn gõ; ghi chú của ca ghi rõ mã bảng.`}</li>
         </ul>
       </Collapsible>
 
       <div className="card slim ts-scan">
-        <p><strong>📷 Đọc từ ảnh bảng giấy</strong> <span className="muted">(không bắt buộc)</span></p>
-        <p className="muted">Chụp bảng đã ghi (1–{MAX_PHOTOS} ảnh, chụp thẳng, đủ sáng, thấy cả tên và các cột ngày). Ứng dụng điền sẵn vào các ô còn trống; ô AI không chắc tô vàng. Ảnh không được lưu; bạn phải xem lại rồi bấm Lưu.</p>
+        <p><strong>{tx`📷 Đọc từ ảnh bảng giấy`}</strong> <span className="muted">{tx`(không bắt buộc)`}</span></p>
+        <p className="muted"><Trans>Chụp bảng đã ghi (1–{MAX_PHOTOS} ảnh, chụp thẳng, đủ sáng, thấy cả tên và các cột ngày). Ứng dụng điền sẵn vào các ô còn trống; ô AI không chắc tô vàng. Ảnh không được lưu; bạn phải xem lại rồi bấm Lưu.</Trans></p>
         <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => void onPhotos(e.target.files)} />
         <div className="btnrow">
-          <button type="button" className="secondary" disabled={scanBusy || busy || !online || existing === null || sheet.workers.length > SCAN_MAX_ROWS || (usage !== null && usage.remaining <= 0)} onClick={() => fileRef.current?.click()}>{scanBusy ? 'Đang đọc ảnh…' : '📷 Chụp / chọn ảnh bảng'}</button>
+          <button type="button" className="secondary" disabled={scanBusy || busy || !online || existing === null || sheet.workers.length > SCAN_MAX_ROWS || (usage !== null && usage.remaining <= 0)} onClick={() => fileRef.current?.click()}>{scanBusy ? tx`Đang đọc ảnh…` : tx`📷 Chụp / chọn ảnh bảng`}</button>
         </div>
-        {sheet.workers.length > SCAN_MAX_ROWS && <p className="muted">Bảng có hơn {SCAN_MAX_ROWS} người nên chưa đọc ảnh được; hãy lập bảng riêng cho từng tổ.</p>}
-        {usage && <p className="muted">{usage.remaining > 0 ? `Còn ${usage.remaining}/${usage.limit} lượt đọc ảnh tháng này (mỗi lần đọc tính một lượt, dùng chung với đọc hóa đơn).` : 'Tháng này đã hết lượt đọc ảnh theo gói. Bạn vẫn nhập tay được.'}</p>}
+        {sheet.workers.length > SCAN_MAX_ROWS && <p className="muted"><Trans>Bảng có hơn {SCAN_MAX_ROWS} người nên chưa đọc ảnh được; hãy lập bảng riêng cho từng tổ.</Trans></p>}
+        {usage && <p className="muted">{usage.remaining > 0 ? tx`Còn ${usage.remaining}/${usage.limit} lượt đọc ảnh tháng này (mỗi lần đọc tính một lượt, dùng chung với đọc hóa đơn).` : tx`Tháng này đã hết lượt đọc ảnh theo gói. Bạn vẫn nhập tay được.`}</p>}
         {scanOut && (
           <div>
-            <p>Đọc được <strong>{scanOut.map.rowsMatched}</strong> hàng, điền <strong>{scanOut.filled}</strong> ô{scanOut.kept ? `, giữ nguyên ${scanOut.kept} ô đã gõ hoặc đã có` : ''}; <strong>{warn.size}</strong> ô tô vàng cần xem kỹ.</p>
-            {scanOut.map.nameMismatch.map((m) => <p key={m.stt} className="msg warn">Hàng {m.stt}: tên đọc được “{m.read}” khác “{m.expected}”. Cả hàng tô vàng, hãy đối chiếu.</p>)}
-            {scanOut.map.unmatched.map((m) => <p key={m.stt} className="msg warn">Có một hàng không ghép được vào bảng (STT {m.stt}{m.read ? `, tên “${m.read}”` : ''}); không điền.</p>)}
+            <p>{tx`Đọc được`}{' '}<strong>{scanOut.map.rowsMatched}</strong>{' '}{tx`hàng, điền`}{' '}<strong>{scanOut.filled}</strong>{' '}{tx`ô`}{scanOut.kept ? tx`, giữ nguyên ${scanOut.kept} ô đã gõ hoặc đã có` : ''}; <strong>{warn.size}</strong>{' '}{tx`ô tô vàng cần xem kỹ.`}</p>
+            {scanOut.map.nameMismatch.map((m) => <p key={m.stt} className="msg warn"><Trans>Hàng {m.stt}: tên đọc được “{m.read}” khác “{m.expected}”. Cả hàng tô vàng, hãy đối chiếu.</Trans></p>)}
+            {scanOut.map.unmatched.map((m) => <p key={m.stt} className="msg warn">{tx`Có một hàng không ghép được vào bảng (STT`}{' '}{m.stt}{m.read ? tx`, tên “${m.read}”` : ''}{tx`); không điền.`}</p>)}
             {scanOut.notes.map((n, i) => <p key={i} className="msg warn">{n}</p>)}
           </div>
         )}
       </div>
 
-      {existing === null ? <p className="muted">{online ? 'Đang tải dữ liệu đã có…' : 'Cần mạng để tải dữ liệu đã có.'}</p> : (
+      {existing === null ? <p className="muted">{online ? tx`Đang tải dữ liệu đã có…` : tx`Cần mạng để tải dữ liệu đã có.`}</p> : (
         <div className="table-scroll ts-scroll">
           <table className="grid ts-entry-table">
             <thead>
               <tr>
-                <th className="sticky">Họ tên</th>
+                <th className="sticky">{tx`Họ tên`}</th>
                 {days.map((d) => <th key={d.date} className={d.dow === 0 ? 'sun' : undefined}><b>{d.day}</b><small>{DOW[d.dow]}</small></th>)}
-                <th>Tổng</th>
+                <th>{tx`Tổng`}</th>
               </tr>
             </thead>
             <tbody>
@@ -243,17 +245,17 @@ export function TimesheetEntry({ sheet, orgName, onBack, onChanged }: { sheet: S
 
       {result && result.skipped.length > 0 && (
         <div className="card alert-warn">
-          <h2>{result.skipped.length} ô chưa lưu được</h2>
-          {result.skipped.slice(0, 30).map((s, i) => <p key={i}><strong>{nameOf.get(s.w) ?? 'Người làm'}</strong> ngày {fmtDate(s.d)}: {s.reason}</p>)}
-          {result.skipped.length > 30 && <p className="muted">… và {result.skipped.length - 30} ô nữa.</p>}
-          <p className="muted">Các ô này vẫn giữ chữ bạn gõ (tô đỏ) để sửa hoặc xóa.</p>
+          <h2><Trans>{result.skipped.length} ô chưa lưu được</Trans></h2>
+          {result.skipped.slice(0, 30).map((s, i) => <p key={i}><strong>{nameOf.get(s.w) ?? tx`Người làm`}</strong>{' '}{tx`ngày`}{' '}{fmtDate(s.d)}: {s.reason}</p>)}
+          {result.skipped.length > 30 && <p className="muted">{tx`… và`}{' '}{result.skipped.length - 30}{' '}{tx`ô nữa.`}</p>}
+          <p className="muted">{tx`Các ô này vẫn giữ chữ bạn gõ (tô đỏ) để sửa hoặc xóa.`}</p>
         </div>
       )}
 
-      <p className="muted">Đang gõ {filled} ô chưa lưu{invalid > 0 ? `, ${invalid} ô sai` : ''}. Công do chủ nhập được xác nhận luôn; công do quản lý hoặc tổ trưởng nhập chờ xác nhận.</p>
+      <p className="muted">{tx`Đang gõ`}{' '}{filled}{' '}{tx`ô chưa lưu`}{invalid > 0 ? tx`, ${invalid} ô sai` : ''}{tx`. Công do chủ nhập được xác nhận luôn; công do quản lý hoặc tổ trưởng nhập chờ xác nhận.`}</p>
       <div className="btnrow">
-        <button type="button" className="primary" disabled={busy || !online || filled === 0} onClick={() => void save()}>{busy ? 'Đang lưu…' : `Lưu ${filled > 0 ? filled + ' ô' : ''}`.trim()}</button>
-        <button type="button" className="secondary" disabled={busy || !online} onClick={() => void toggleEntered()}>{cur.status === 'entered' ? 'Bỏ đánh dấu nhập xong' : 'Đánh dấu đã nhập xong'}</button>
+        <button type="button" className="primary" disabled={busy || !online || filled === 0} onClick={() => void save()}>{busy ? tx`Đang lưu…` : tx`Lưu ${filled > 0 ? filled + tx` ô` : ''}`.trim()}</button>
+        <button type="button" className="secondary" disabled={busy || !online} onClick={() => void toggleEntered()}>{cur.status === 'entered' ? tx`Bỏ đánh dấu nhập xong` : tx`Đánh dấu đã nhập xong`}</button>
       </div>
     </div>
   );
@@ -280,15 +282,15 @@ const EntryRow = memo(function EntryRow({ w, days, mode, fullNet, lock, texts, w
       <td className="sticky">
         <strong>{w.name}</strong>{w.team ? <small> · {w.team}</small> : null}
         <span className="ts-rowact">
-          <button type="button" className="link" onClick={() => onFill(wid)}>✓ trừ CN</button>
-          <button type="button" className="link" onClick={() => onClear(wid)}>Xóa</button>
+          <button type="button" className="link" onClick={() => onFill(wid)}>{tx`✓ trừ CN`}</button>
+          <button type="button" className="link" onClick={() => onClear(wid)}>{tx`Xóa`}</button>
         </span>
       </td>
       {days.map((d, i) => {
         const c = lock?.get(d.date);
         if (c?.wk || c?.ab) {
           const wk = c.wk, ab = c.ab;
-          const title = wk ? `Đã có công ${hoursText(wk.minutes)} giờ (${STATUS_TEXT[wk.status] ?? wk.status})${wk.mine ? ' từ bảng này' : ''}` : `Đã có ghi nghỉ${ab?.mine ? ' từ bảng này' : ''}`;
+          const title = wk ? tx`Đã có công ${hoursText(wk.minutes)} giờ (${STATUS_TEXT[wk.status] ?? wk.status})${wk.mine ? tx` từ bảng này` : ''}` : tx`Đã có ghi nghỉ${ab?.mine ? tx` từ bảng này` : ''}`;
           return <td key={d.date} className={`lock${d.dow === 0 ? ' sun' : ''}`} title={title}>{wk ? hoursText(wk.minutes) : KIND_LETTER[ab!.kind] ?? 'N'}</td>;
         }
         const p = parsedCells[i]!;
@@ -297,7 +299,7 @@ const EntryRow = memo(function EntryRow({ w, days, mode, fullNet, lock, texts, w
         return (
           <td key={d.date} className={d.dow === 0 ? 'sun' : undefined}>
             <input ref={(el) => register(k, el)} className={bad ? 'cell bad' : warns[i] ? 'cell warn' : 'cell'} value={texts[i] ?? ''} maxLength={6} autoComplete="off" spellCheck={false}
-              aria-label={`${w.name} ngày ${d.day}`} title={bad ?? (warns[i] ? 'AI không chắc ô này: hãy đối chiếu với tờ giấy.' : undefined)}
+              aria-label={tx`${w.name} ngày ${d.day}`} title={bad ?? (warns[i] ? tx`AI không chắc ô này: hãy đối chiếu với tờ giấy.` : undefined)}
               onChange={(e) => onCell(wid, d.date, e.target.value)} onBlur={() => onBlurCell(wid, d.date)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); onMove(wid, d.date, 1); } else if (e.key === 'ArrowUp') { e.preventDefault(); onMove(wid, d.date, -1); } }} />
           </td>

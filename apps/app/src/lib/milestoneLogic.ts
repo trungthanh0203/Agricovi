@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 /**
  * Mốc nhắc việc an toàn (P4 gọn, D100), phần thuần. Ngày đến hạn được TÍNH từ ngày của vụ, không lưu:
  * 'end' = N ngày trước ngày thu/xuất dự kiến, 'start' = N ngày sau ngày bắt đầu. Đổi ngày của vụ thì mốc tự dời.
@@ -29,12 +30,12 @@ export function milestoneStatus(m: MilestoneLite, c: CycleDates, today: string, 
 }
 
 export const MILESTONE_STATUS_LABEL: Record<MilestoneStatus, string> = {
-  done: 'Đã làm', overdue: 'Quá hạn', today: 'Hôm nay', soon: 'Sắp đến', later: 'Chưa đến', nodate: 'Chưa có ngày',
+  get done() { return t`Đã làm`; }, get overdue() { return t`Quá hạn`; }, get today() { return t`Hôm nay`; }, get soon() { return t`Sắp đến`; }, get later() { return t`Chưa đến`; }, get nodate() { return t`Chưa có ngày`; },
 };
 
 export function milestoneWhen(m: MilestoneLite): string {
-  return m.anchor === 'end' ? (m.offset_days === 0 ? 'đúng ngày thu / xuất dự kiến' : `${m.offset_days} ngày trước ngày thu / xuất dự kiến`)
-    : m.offset_days === 0 ? 'đúng ngày bắt đầu' : `ngày thứ ${m.offset_days + 1} kể từ khi bắt đầu (sau ${m.offset_days} ngày)`;
+  return m.anchor === 'end' ? (m.offset_days === 0 ? t`đúng ngày thu / xuất dự kiến` : t`${m.offset_days} ngày trước ngày thu / xuất dự kiến`)
+    : m.offset_days === 0 ? t`đúng ngày bắt đầu` : t`ngày thứ ${m.offset_days + 1} kể từ khi bắt đầu (sau ${m.offset_days} ngày)`;
 }
 
 /**
@@ -47,7 +48,7 @@ export function restWarning(
   lastActualEnd: (cycleId: string) => string | null,
 ): string | null {
   const same = cycles.filter((c) => c.area_id === areaId);
-  if (same.some((c) => c.status === 'active' || c.status === 'paused')) return 'Khu này đang có vụ chạy. Nên đợi vụ đó xong và để trống chuồng trước khi nhập lứa mới.';
+  if (same.some((c) => c.status === 'active' || c.status === 'paused')) return t`Khu này đang có vụ chạy. Nên đợi vụ đó xong và để trống chuồng trước khi nhập lứa mới.`;
   let latest: string | null = null;
   for (const c of same.filter((x) => x.status === 'ended')) {
     const end = lastActualEnd(c.id) ?? c.expected_end_date ?? null;
@@ -55,5 +56,5 @@ export function restWarning(
   }
   if (!latest) return null;
   const gap = Math.round((toMs(startDate) - toMs(latest)) / DAY);
-  return gap < minDays ? `Vụ trước ở khu này kết thúc ngày ${latest.split('-').reverse().join('/')}, mới cách ${Math.max(gap, 0)} ngày. Nên để trống chuồng tối thiểu ${minDays} ngày để vệ sinh, sát trùng.` : null;
+  return gap < minDays ? t`Vụ trước ở khu này kết thúc ngày ${latest.split('-').reverse().join('/')}, mới cách ${Math.max(gap, 0)} ngày. Nên để trống chuồng tối thiểu ${minDays} ngày để vệ sinh, sát trùng.` : null;
 }

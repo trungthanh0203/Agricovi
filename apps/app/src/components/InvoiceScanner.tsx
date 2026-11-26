@@ -10,6 +10,8 @@ import { parseNumber } from '../lib/inventory';
 import { useConfig } from '../lib/config';
 import { todayLocal } from '../lib/hooks';
 import type { MaterialRow, UnitRow } from '../lib/db';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
 /** Kết quả đã được người dùng kiểm tra, trả về cho màn Nhập kho để điền vào phiếu */
 export interface ScanApply {
@@ -63,7 +65,7 @@ export function InvoiceScanner({ orgId, partners, mats, units, reloadPartners, o
     if (!list || list.length === 0) return;
     setError(null);
     const room = MAX_PHOTOS - photos.length;
-    if (room <= 0) return setError(`Tối đa ${MAX_PHOTOS} ảnh cho một phiếu.`);
+    if (room <= 0) return setError(t`Tối đa ${MAX_PHOTOS} ảnh cho một phiếu.`);
     setBusy(true);
     try {
       const added: Photo[] = [];
@@ -83,7 +85,7 @@ export function InvoiceScanner({ orgId, partners, mats, units, reloadPartners, o
       const al = await loadAliases(orgId, ps?.id ?? null);
       setAliases(al);
       setPartnerId(ps?.id ?? '');
-      setPartnerHow(ps ? (ps.via === 'tax' ? 'khớp mã số thuế' : ps.via === 'phone' ? 'khớp số điện thoại' : 'giống tên') : null);
+      setPartnerHow(ps ? (ps.via === 'tax' ? t`khớp mã số thuế` : ps.via === 'phone' ? t`khớp số điện thoại` : t`giống tên`) : null);
       setInvoiceNo(d.ma_don ?? '');
       setBillDate(d.ngay && d.ngay <= todayLocal() ? d.ngay : todayLocal());
       setTotalText(d.tong_tien !== null ? String(d.tong_tien) : '');
@@ -108,22 +110,22 @@ export function InvoiceScanner({ orgId, partners, mats, units, reloadPartners, o
   function apply() {
     setError(null);
     const picked = rev.filter((l) => l.include);
-    if (picked.length === 0) return setError('Hãy giữ lại ít nhất một dòng hàng để nhập kho.');
+    if (picked.length === 0) return setError(t`Hãy giữ lại ít nhất một dòng hàng để nhập kho.`);
     const out: ScanApply['lines'] = [];
     for (const [i, l] of picked.entries()) {
-      const label = `Dòng "${l.ten}"`;
-      if (!l.materialId) return setError(`${label}: hãy chọn vật tư, thêm vật tư mới, hoặc bỏ tích "Nhập dòng này".`);
+      const label = t`Dòng "${l.ten}"`;
+      if (!l.materialId) return setError(t`${label}: hãy chọn vật tư, thêm vật tư mới, hoặc bỏ tích "Nhập dòng này".`);
       let qty = parseNumber(l.qty);
       let price = parseNumber(l.price);
-      if (qty === null || Number.isNaN(qty) || qty <= 0) return setError(`${label}: hãy nhập số lượng lớn hơn 0.`);
+      if (qty === null || Number.isNaN(qty) || qty <= 0) return setError(t`${label}: hãy nhập số lượng lớn hơn 0.`);
       const stock = unitOf(l.materialId);
       if (unitsDiffer(l.unit, stock)) {
         const f = parseNumber(l.factor);
-        if (f === null || Number.isNaN(f) || f <= 0) return setError(`${label}: đơn vị trên phiếu (${l.unit}) khác đơn vị kho (${stock}). Hãy nhập 1 ${l.unit} bằng bao nhiêu ${stock}.`);
+        if (f === null || Number.isNaN(f) || f <= 0) return setError(t`${label}: đơn vị trên phiếu (${l.unit!}) khác đơn vị kho (${stock}). Hãy nhập 1 ${l.unit!} bằng bao nhiêu ${stock}.`);
         qty = Math.round(qty * f * 1000) / 1000;
         if (price !== null && !Number.isNaN(price)) price = Math.round(price / f);
       }
-      if (price !== null && !Number.isNaN(price) && (!Number.isInteger(price) || price < 0)) return setError(`${label}: đơn giá phải là số tiền (đồng).`);
+      if (price !== null && !Number.isNaN(price) && (!Number.isInteger(price) || price < 0)) return setError(t`${label}: đơn giá phải là số tiền (đồng).`);
       out.push({ materialId: l.materialId, qty: numberToInput(qty), cost: price !== null && !Number.isNaN(price) ? String(price) : '' });
       void i;
     }
@@ -141,36 +143,36 @@ export function InvoiceScanner({ orgId, partners, mats, units, reloadPartners, o
     const noQuota = usage !== null && usage.remaining <= 0;
     return (
       <section>
-        <h1>📷 Chụp phiếu nhập hàng</h1>
-        <p>Chụp hoặc chọn ảnh <strong>hóa đơn / phiếu giao hàng</strong> (tối đa {MAX_PHOTOS} ảnh; nhiều trang thì chụp từng trang). App đọc và <strong>điền sẵn</strong> vào phiếu nhập kho, bạn kiểm tra lại rồi mới lưu.</p>
-        <p className="muted">Mẹo: đặt phiếu phẳng, đủ sáng, chụp thẳng và thấy hết chữ.</p>
-        {usage && <p className={noQuota ? 'msg warn' : 'muted'} role="status">{usage.status === 'trial' ? 'Đang dùng thử: ' : ''}Còn <strong>{usage.remaining}</strong>/{usage.limit} lần đọc trong tháng này.</p>}
+        <h1>{t`📷 Chụp phiếu nhập hàng`}</h1>
+        <p><Trans>Chụp hoặc chọn ảnh <strong>hóa đơn / phiếu giao hàng</strong> (tối đa {MAX_PHOTOS} ảnh; nhiều trang thì chụp từng trang). App đọc và <strong>điền sẵn</strong> vào phiếu nhập kho, bạn kiểm tra lại rồi mới lưu.</Trans></p>
+        <p className="muted">{t`Mẹo: đặt phiếu phẳng, đủ sáng, chụp thẳng và thấy hết chữ.`}</p>
+        {usage && <p className={noQuota ? 'msg warn' : 'muted'} role="status">{usage.status === 'trial' ? t`Đang dùng thử: ` : ''}{t`Còn`}{' '}<strong>{usage.remaining}</strong>/{usage.limit}{' '}{t`lần đọc trong tháng này.`}</p>}
         <input ref={camera} type="file" accept="image/*" capture="environment" hidden onChange={(e) => { void addFiles(e.target.files); e.target.value = ''; }} />
         <input ref={gallery} type="file" accept="image/*" multiple hidden onChange={(e) => { void addFiles(e.target.files); e.target.value = ''; }} />
         <div className="btnrow">
-          <button type="button" className="secondary" disabled={busy || reading || photos.length >= MAX_PHOTOS} onClick={() => camera.current?.click()}>📷 Chụp ảnh</button>
-          <button type="button" className="secondary" disabled={busy || reading || photos.length >= MAX_PHOTOS} onClick={() => gallery.current?.click()}>🖼 Chọn ảnh có sẵn</button>
+          <button type="button" className="secondary" disabled={busy || reading || photos.length >= MAX_PHOTOS} onClick={() => camera.current?.click()}>{t`📷 Chụp ảnh`}</button>
+          <button type="button" className="secondary" disabled={busy || reading || photos.length >= MAX_PHOTOS} onClick={() => gallery.current?.click()}>{t`🖼 Chọn ảnh có sẵn`}</button>
         </div>
         {photos.length > 0 && (
           <div className="scan-thumbs">
             {photos.map((p, i) => (
               <figure key={p.id}>
-                <img src={p.preview} alt={`Ảnh ${i + 1}`} />
-                <button type="button" className="link inline" disabled={reading} onClick={() => { URL.revokeObjectURL(p.preview); setPhotos((s) => s.filter((x) => x.id !== p.id)); }}>Bỏ ảnh {i + 1}</button>
+                <img src={p.preview} alt={t`Ảnh ${i + 1}`} />
+                <button type="button" className="link inline" disabled={reading} onClick={() => { URL.revokeObjectURL(p.preview); setPhotos((s) => s.filter((x) => x.id !== p.id)); }}>{t`Bỏ ảnh`}{' '}{i + 1}</button>
               </figure>
             ))}
           </div>
         )}
-        {busy && <p className="muted" role="status">Đang xử lý ảnh…</p>}
+        {busy && <p className="muted" role="status">{t`Đang xử lý ảnh…`}</p>}
         <label className="check">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-          <span>Tôi đồng ý gửi ảnh phiếu tới dịch vụ đọc ảnh (Cloudflare) để lấy chữ. Ảnh chỉ gửi khi bấm "Đọc phiếu" và <strong>không được lưu lại</strong>.</span>
+          <span><Trans>Tôi đồng ý gửi ảnh phiếu tới dịch vụ đọc ảnh (Cloudflare) để lấy chữ. Ảnh chỉ gửi khi bấm "Đọc phiếu" và <strong>không được lưu lại</strong>.</Trans></span>
         </label>
         {error && <p className="msg error" role="alert">{error}</p>}
-        {reading && <p className="msg ok" role="status">Đang đọc phiếu… khoảng 10–30 giây, vui lòng đợi.</p>}
+        {reading && <p className="msg ok" role="status">{t`Đang đọc phiếu… khoảng 10–30 giây, vui lòng đợi.`}</p>}
         <div className="btnrow">
-          <button type="button" className="primary" disabled={photos.length === 0 || !consent || busy || reading || noQuota} onClick={() => void read()}>{reading ? 'Đang đọc…' : 'Đọc phiếu'}</button>
-          <button type="button" className="secondary" disabled={reading} onClick={onCancel}>Hủy, nhập tay</button>
+          <button type="button" className="primary" disabled={photos.length === 0 || !consent || busy || reading || noQuota} onClick={() => void read()}>{reading ? t`Đang đọc…` : t`Đọc phiếu`}</button>
+          <button type="button" className="secondary" disabled={reading} onClick={onCancel}>{t`Hủy, nhập tay`}</button>
         </div>
       </section>
     );
@@ -184,27 +186,27 @@ export function InvoiceScanner({ orgId, partners, mats, units, reloadPartners, o
   };
   return (
     <section>
-      <h1>Kiểm tra phiếu đã đọc</h1>
-      <p className="msg warn" role="status">Đây chỉ là <strong>bản nháp</strong>. Hãy so với phiếu thật, nhất là số lượng và số tiền, rồi sửa nếu cần.</p>
+      <h1>{t`Kiểm tra phiếu đã đọc`}</h1>
+      <p className="msg warn" role="status"><Trans>Đây chỉ là <strong>bản nháp</strong>. Hãy so với phiếu thật, nhất là số lượng và số tiền, rồi sửa nếu cần.</Trans></p>
       {draft && draft.canh_bao.length > 0 && (
-        <div className="msg warn" role="status"><strong>Cần chú ý:</strong><ul>{draft.canh_bao.map((w) => <li key={w}>{w}</li>)}</ul></div>
+        <div className="msg warn" role="status"><strong>{t`Cần chú ý:`}</strong><ul>{draft.canh_bao.map((w) => <li key={w}>{w}</li>)}</ul></div>
       )}
-      {draft?.ghi_chu_khong_chac && <p className="muted">Ghi chú khi đọc: {draft.ghi_chu_khong_chac}</p>}
+      {draft?.ghi_chu_khong_chac && <p className="muted"><Trans>Ghi chú khi đọc: {draft.ghi_chu_khong_chac}</Trans></p>}
 
       <div className="card">
-        <h2>Nhà cung cấp (bên bán)</h2>
-        <p className="muted">Trên phiếu: <strong>{draft?.nha_cung_cap.ten ?? 'không đọc được'}</strong>{draft?.nha_cung_cap.ma_so_thue ? ` · MST ${draft.nha_cung_cap.ma_so_thue}` : ''}{draft?.nha_cung_cap.dien_thoai ? ` · ${draft.nha_cung_cap.dien_thoai}` : ''}</p>
+        <h2>{t`Nhà cung cấp (bên bán)`}</h2>
+        <p className="muted">{t`Trên phiếu:`}{' '}<strong>{draft?.nha_cung_cap.ten ?? t`không đọc được`}</strong>{draft?.nha_cung_cap.ma_so_thue ? ` · MST ${draft.nha_cung_cap.ma_so_thue}` : ''}{draft?.nha_cung_cap.dien_thoai ? ` · ${draft.nha_cung_cap.dien_thoai}` : ''}</p>
         <label>
-          Nhà cung cấp trong danh bạ
+          {t`Nhà cung cấp trong danh bạ`}
           <select value={partnerId} onChange={(e) => { setPartnerId(e.target.value); setPartnerHow(null); }}>
-            <option value="">— Chưa chọn —</option>
+            <option value="">{t`— Chưa chọn —`}</option>
             {partners.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </label>
-        {partnerId && partnerHow && <p className="msg ok" role="status">Đã ghép với "{supplierName}" ({partnerHow}).</p>}
-        {!partnerId && !supplierForm && <button type="button" className="secondary" onClick={() => setSupplierForm(true)}>+ Thêm "{draft?.nha_cung_cap.ten ?? 'nhà cung cấp'}" vào danh bạ</button>}
+        {partnerId && partnerHow && <p className="msg ok" role="status"><Trans>Đã ghép với "{supplierName}" ({partnerHow}).</Trans></p>}
+        {!partnerId && !supplierForm && <button type="button" className="secondary" onClick={() => setSupplierForm(true)}>{t`+ Thêm "`}{draft?.nha_cung_cap.ten ?? t`nhà cung cấp`}{t`" vào danh bạ`}</button>}
         {supplierForm && (
-          <SupplierForm title="Thêm nhà cung ứng" initial={pseudo} busy={busy} onClose={() => setSupplierForm(false)}
+          <SupplierForm title={t`Thêm nhà cung ứng`} initial={pseudo} busy={busy} onClose={() => setSupplierForm(false)}
             onSave={async (f) => {
               setBusy(true);
               try { const nid = await createSupplier(orgId, f); await reloadPartners(); setPartnerId(nid); setPartnerHow(null); setSupplierForm(false); setAliases(await loadAliases(orgId, nid)); }
@@ -212,14 +214,14 @@ export function InvoiceScanner({ orgId, partners, mats, units, reloadPartners, o
             }} />
         )}
         <div className="pair">
-          <label>Số hóa đơn / mã đơn<input value={invoiceNo} maxLength={60} onChange={(e) => setInvoiceNo(e.target.value)} /></label>
-          <label>Ngày mua<input type="date" value={billDate} max={todayLocal()} onChange={(e) => setBillDate(e.target.value)} /></label>
+          <label>{t`Số hóa đơn / mã đơn`}<input value={invoiceNo} maxLength={60} onChange={(e) => setInvoiceNo(e.target.value)} /></label>
+          <label>{t`Ngày mua`}<input type="date" value={billDate} max={todayLocal()} onChange={(e) => setBillDate(e.target.value)} /></label>
         </div>
-        <label>Tổng tiền trên phiếu (đ)<input value={totalText} inputMode="numeric" onChange={(e) => setTotalText(e.target.value)} placeholder="Để trống: app tự cộng các dòng" /></label>
+        <label>{t`Tổng tiền trên phiếu (đ)`}<input value={totalText} inputMode="numeric" onChange={(e) => setTotalText(e.target.value)} placeholder={t`Để trống: app tự cộng các dòng`} /></label>
       </div>
 
-      <h2>Hàng đã mua ({rev.length} dòng)</h2>
-      {rev.length === 0 && <p className="msg warn">Không đọc được dòng hàng nào. Bạn có thể chụp lại rõ hơn hoặc nhập tay.</p>}
+      <h2><Trans>Hàng đã mua ({rev.length} dòng)</Trans></h2>
+      {rev.length === 0 && <p className="msg warn">{t`Không đọc được dòng hàng nào. Bạn có thể chụp lại rõ hơn hoặc nhập tay.`}</p>}
       {rev.map((l, idx) => {
         const stock = unitOf(l.materialId);
         const differ = l.materialId ? unitsDiffer(l.unit, stock) : false;
@@ -227,17 +229,17 @@ export function InvoiceScanner({ orgId, partners, mats, units, reloadPartners, o
           <div className={`card scan-line${l.warn ? ' warn' : ''}${l.include ? '' : ' off'}`} key={l.key}>
             <label className="check">
               <input type="checkbox" checked={l.include} onChange={(e) => setLine(l.key, { include: e.target.checked })} />
-              <span>Dòng {idx + 1}: <strong>{l.ten}</strong>{l.unit ? ` (${l.unit})` : ''}</span>
+              <span>{t`Dòng`}{' '}{idx + 1}: <strong>{l.ten}</strong>{l.unit ? ` (${l.unit})` : ''}</span>
             </label>
             {l.include && (<>
               <label>
-                Vật tư trong kho{l.via === 'alias' ? ' (đã nhớ từ lần trước)' : l.via === 'name' ? ' (gợi ý theo tên, hãy kiểm tra)' : ''}
+                {t`Vật tư trong kho`}{l.via === 'alias' ? t` (đã nhớ từ lần trước)` : l.via === 'name' ? t` (gợi ý theo tên, hãy kiểm tra)` : ''}
                 <select value={l.materialId} onChange={(e) => setLine(l.key, { materialId: e.target.value, via: null, factor: '' })}>
-                  <option value="">— Chưa chọn vật tư —</option>
+                  <option value="">{t`— Chưa chọn vật tư —`}</option>
                   {sortedMats.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                 </select>
               </label>
-              {!l.materialId && !l.newOpen && <button type="button" className="link" onClick={() => setLine(l.key, { newOpen: true })}>+ Thêm "{l.ten}" thành vật tư mới</button>}
+              {!l.materialId && !l.newOpen && <button type="button" className="link" onClick={() => setLine(l.key, { newOpen: true })}><Trans>+ Thêm "{l.ten}" thành vật tư mới</Trans></button>}
               {l.newOpen && !l.materialId && (
                 <NewMaterial name={l.ten} units={units} unitHint={l.unit} groups={cfg.materialGroups('')} busy={busy}
                   onClose={() => setLine(l.key, { newOpen: false })}
@@ -248,13 +250,13 @@ export function InvoiceScanner({ orgId, partners, mats, units, reloadPartners, o
                   }} />
               )}
               <div className="pair">
-                <label>Số lượng{l.unit ? ` (${l.unit})` : ''}<input value={l.qty} inputMode="decimal" onChange={(e) => setLine(l.key, { qty: e.target.value, warn: false })} /></label>
-                <label>Đơn giá (đ){l.unit ? ` / ${l.unit}` : ''}<input value={l.price} inputMode="numeric" onChange={(e) => setLine(l.key, { price: e.target.value, warn: false })} /></label>
+                <label>{t`Số lượng`}{l.unit ? ` (${l.unit})` : ''}<input value={l.qty} inputMode="decimal" onChange={(e) => setLine(l.key, { qty: e.target.value, warn: false })} /></label>
+                <label>{t`Đơn giá (đ)`}{l.unit ? ` / ${l.unit}` : ''}<input value={l.price} inputMode="numeric" onChange={(e) => setLine(l.key, { price: e.target.value, warn: false })} /></label>
               </div>
               {differ && (
                 <label>
-                  Đơn vị phiếu ({l.unit}) khác đơn vị kho ({stock}): 1 {l.unit} = bao nhiêu {stock}?
-                  <input value={l.factor} inputMode="decimal" onChange={(e) => setLine(l.key, { factor: e.target.value })} placeholder={`Ví dụ 25 (bao 25 ${stock})`} />
+                  {t`Đơn vị phiếu (`}{l.unit}{t`) khác đơn vị kho (`}{stock}): 1 {l.unit}{' '}{t`= bao nhiêu`}{' '}{stock}?
+                  <input value={l.factor} inputMode="decimal" onChange={(e) => setLine(l.key, { factor: e.target.value })} placeholder={t`Ví dụ 25 (bao 25 ${stock})`} />
                 </label>
               )}
             </>)}
@@ -264,11 +266,11 @@ export function InvoiceScanner({ orgId, partners, mats, units, reloadPartners, o
 
       {error && <p className="msg error" role="alert">{error}</p>}
       <div className="btnrow">
-        <button type="button" className="primary" disabled={busy || rev.length === 0} onClick={apply}>Điền vào phiếu nhập</button>
-        <button type="button" className="secondary" disabled={busy} onClick={() => { setStage('pick'); setError(null); }}>Chụp lại</button>
-        <button type="button" className="secondary" disabled={busy} onClick={onCancel}>Hủy, nhập tay</button>
+        <button type="button" className="primary" disabled={busy || rev.length === 0} onClick={apply}>{t`Điền vào phiếu nhập`}</button>
+        <button type="button" className="secondary" disabled={busy} onClick={() => { setStage('pick'); setError(null); }}>{t`Chụp lại`}</button>
+        <button type="button" className="secondary" disabled={busy} onClick={onCancel}>{t`Hủy, nhập tay`}</button>
       </div>
-      <p className="muted">Chưa lưu gì cả. Bước tiếp theo bạn xem lại phiếu nhập kho rồi mới bấm Lưu.</p>
+      <p className="muted">{t`Chưa lưu gì cả. Bước tiếp theo bạn xem lại phiếu nhập kho rồi mới bấm Lưu.`}</p>
     </section>
   );
 }
@@ -285,20 +287,20 @@ function NewMaterial({ name, units, unitHint, groups, busy, onCreate, onClose }:
   const [err, setErr] = useState<string | null>(null);
   return (
     <div className="inline-form">
-      <label>Tên vật tư mới<input value={n} maxLength={120} onChange={(e) => setN(e.target.value)} /></label>
-      <label>Nhóm vật tư
+      <label>{t`Tên vật tư mới`}<input value={n} maxLength={120} onChange={(e) => setN(e.target.value)} /></label>
+      <label>{t`Nhóm vật tư`}
         <select value={group} onChange={(e) => setGroup(e.target.value)}>
-          <option value="">— Chưa phân nhóm —</option>
+          <option value="">{t`— Chưa phân nhóm —`}</option>
           {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
         </select>
       </label>
-      <label>Đơn vị tính (đơn vị trong kho)
+      <label>{t`Đơn vị tính (đơn vị trong kho)`}
         <select value={unitId} onChange={(e) => setUnitId(e.target.value)}>{sorted.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select>
       </label>
       {err && <p className="msg error" role="alert">{err}</p>}
       <div className="btnrow">
-        <button type="button" className="primary" disabled={busy} onClick={() => { if (n.trim().length < 2) return setErr('Hãy nhập tên vật tư (ít nhất 2 ký tự).'); if (!unitId) return setErr('Hãy chọn đơn vị tính.'); setErr(null); void onCreate({ name: n, unitId, group }); }}>Lưu vật tư</button>
-        <button type="button" className="secondary" disabled={busy} onClick={onClose}>Hủy</button>
+        <button type="button" className="primary" disabled={busy} onClick={() => { if (n.trim().length < 2) return setErr(t`Hãy nhập tên vật tư (ít nhất 2 ký tự).`); if (!unitId) return setErr(t`Hãy chọn đơn vị tính.`); setErr(null); void onCreate({ name: n, unitId, group }); }}>{t`Lưu vật tư`}</button>
+        <button type="button" className="secondary" disabled={busy} onClick={onClose}>{t`Hủy`}</button>
       </div>
     </div>
   );

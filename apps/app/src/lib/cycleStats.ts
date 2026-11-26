@@ -1,5 +1,6 @@
 import type { CycleStat } from './cycleStatsLogic';
 import { supabase } from './supabase';
+import { t } from '@lingui/core/macro';
 
 /** Số liệu tóm tắt của các vụ (máy chủ tính, kiểm quyền từng mục) và bản lưu để xem lại khi mất mạng. */
 export interface CycleStats { generated_at: string; can_money: boolean; can_ops: boolean; cycles: CycleStat[] }
@@ -45,7 +46,7 @@ export const STATS_MAX_CYCLES = 120;
  * (vụ đã tải trước đó giữ nguyên cho tới khi tải lại) và trả về toàn bộ bản gộp để màn hình tra theo mã vụ.
  */
 export async function fetchCycleStatsFor(orgId: string, ids: string[]): Promise<CycleStats> {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  if (!supabase) throw new Error(t`Supabase chưa được cấu hình`);
   const base = cachedCycleStats(orgId);
   const byId = new Map((base?.cycles ?? []).map((c) => [c.cycle_id, c]));
   let head = base ? { generated_at: base.generated_at, can_money: base.can_money, can_ops: base.can_ops } : { generated_at: '', can_money: false, can_ops: false };
