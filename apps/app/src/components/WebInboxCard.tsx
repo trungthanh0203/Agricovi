@@ -3,6 +3,7 @@ import { useOnline } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
 import { supabase } from '../lib/supabase';
+import { t } from '@lingui/core/macro';
 
 interface Inbox { orders_new: number; orders_todo: number; quotes_new: number; reviews_unreplied: number }
 
@@ -30,13 +31,13 @@ export function WebInboxCard({ onGo }: { onGo?: (tab: 'reports', section?: strin
   );
   return (
     <div className="card">
-      <strong className="band">Việc chờ từ website</strong>
+      <strong className="band">{t`Việc chờ từ website`}</strong>
       <ul style={{ margin: '6px 0', paddingLeft: '1.1em' }}>
-        {inApp('orders', inbox.orders_new > 0 ? `${inbox.orders_new} đơn mới chờ báo giá` : '', inbox.orders_todo, 'đơn đặt hàng cần xử lý')}
-        {inApp('quotes', 'khách để lại số điện thoại/email', inbox.quotes_new, 'yêu cầu báo giá mới')}
-        {link('/danh-gia/', '', inbox.reviews_unreplied, 'đánh giá chưa trả lời')}
+        {inApp('orders', inbox.orders_new > 0 ? t`${inbox.orders_new} đơn mới chờ báo giá` : '', inbox.orders_todo, t`đơn đặt hàng cần xử lý`)}
+        {inApp('quotes', t`khách để lại số điện thoại/email`, inbox.quotes_new, t`yêu cầu báo giá mới`)}
+        {link('/danh-gia/', '', inbox.reviews_unreplied, t`đánh giá chưa trả lời`)}
       </ul>
-      <p className="muted" style={{ margin: 0 }}>Bấm vào đơn hoặc yêu cầu để xử lý ngay trong ứng dụng.</p>
+      <p className="muted" style={{ margin: 0 }}>{t`Bấm vào đơn hoặc yêu cầu để xử lý ngay trong ứng dụng.`}</p>
     </div>
   );
 }

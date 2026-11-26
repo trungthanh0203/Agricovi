@@ -1,3 +1,4 @@
+import { normalizeDecimal } from '../lib/format';
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
@@ -58,7 +59,7 @@ function StockTakeList({ orgId, canWrite, onOpen, onClose }: { orgId: string; ca
   }, [orgId, reload]);
 
   async function start() {
-    const t = Number(tol.replace(',', '.'));
+    const t = Number(normalizeDecimal(tol));
     if (!loc) return setError('Hãy chọn kho cần kiểm.');
     if (!Number.isFinite(t) || t < 1 || t > 100) return setError('Ngưỡng lệch phải từ 1 đến 100 phần trăm.');
     setBusy(true); setError(null);

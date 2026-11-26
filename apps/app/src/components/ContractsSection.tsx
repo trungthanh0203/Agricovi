@@ -1,3 +1,4 @@
+import { getLang, normalizeDecimal } from '../lib/format';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { useCatalog } from '../lib/catalog';
@@ -91,7 +92,7 @@ export function ContractsSection() {
     if (form.product.trim().length < 2) return setError('Hãy chọn hoặc nhập sản phẩm.');
     const price = form.price.trim() ? money(form.price) : null;
     if (form.mode !== 'market' && !(price && price > 0)) return setError('Giá cố định hoặc giá sàn cần có đơn giá lớn hơn 0.');
-    const qty = form.qty.trim() ? Number(form.qty.replace(/\./g, '').replace(',', '.')) : null;
+    const qty = form.qty.trim() ? Number(normalizeDecimal(getLang() === 'vi' ? form.qty.replace(/\./g, '') : form.qty)) : null;
     if (qty !== null && !(qty > 0)) return setError('Khối lượng dự kiến phải lớn hơn 0.');
     const payDays = form.payDays.trim() === '' ? null : Number(form.payDays);
     if (payDays !== null && (!Number.isInteger(payDays) || payDays < 0 || payDays > 365)) return setError('Số ngày thanh toán từ 0 đến 365.');

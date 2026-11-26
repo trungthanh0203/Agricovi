@@ -1,3 +1,4 @@
+import { numberToInput } from '../lib/format';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fmtDate } from '../lib/dates';
 import { friendlyError } from '../lib/errors';
@@ -13,7 +14,7 @@ import { Collapsible } from './Collapsible';
 
 const STATUS_TEXT: Record<string, string> = { confirmed: 'đã xác nhận', needs_confirmation: 'chờ xác nhận', open: 'đang trong ca' };
 const KIND_LETTER: Record<string, string> = { annual: 'P', sick: 'Ô', family: 'V', unpaid: 'K', no_notice: 'K', other: 'K' };
-const hoursText = (min: number) => `${String(Math.round(min / 6) / 10).replace('.', ',')}`;
+const hoursText = (min: number) => numberToInput(Math.round(min / 6) / 10);
 const key = (w: string, d: string) => `${w}|${d}`;
 
 /**

@@ -1,3 +1,4 @@
+import { normalizeDecimal } from '../lib/format';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCatalog } from '../lib/catalog';
 import { friendlyError } from '../lib/errors';
@@ -228,7 +229,7 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
   const sameArea = allCycles.filter((c) => c.area_id === areaId && (c.status === 'active' || c.status === 'paused' || c.status === 'preparing'));
   const prepEarly = prepMode !== 'whole';
   const cycleLabel = (c: { name?: string | null; crop_type_id: string; start_date?: string | null }) => cycleTitle(c, cropName(c.crop_type_id));
-  const areaNum = parseFloat((cropInfo.area || '').replace(',', '.'));
+  const areaNum = parseFloat(normalizeDecimal((cropInfo.area || '')));
   const areaM2 = areaNum > 0 ? toM2(areaNum, cropInfo.unit) : 0;
   const wholeArea = !!free?.capacity_m2 && areaM2 >= free.capacity_m2 * 0.95;
   const rest = areaId && startDate && wholeArea
@@ -336,8 +337,8 @@ export function CreateCycleScreen({ onDone, onCancel, onGo }: { onDone: (cycleId
         plantingDate: mode === 'perennial' ? cropInfo.planting : null,
         groups: mode === 'herd' ? groups.filter((g) => Number(g.count.replace(/[.,\s]/g, '')) > 0).map((g) => ({ group: g.group.trim(), count: Number(g.count.replace(/[.,\s]/g, '')) })) : undefined,
         periodLabel: nonBatch ? (periodLabel.trim() || periodDefault) : undefined,
-        maturityYears: mode === 'perennial' ? Number(maturity.replace(',', '.')) || 3 : null,
-        amortYears: mode === 'perennial' ? Math.round(Number(amort.replace(',', '.')) || 15) : null,
+        maturityYears: mode === 'perennial' ? Number(normalizeDecimal(maturity)) || 3 : null,
+        amortYears: mode === 'perennial' ? Math.round(Number(normalizeDecimal(amort)) || 15) : null,
       } as const;
       const newId = midOn
         ? await createCycleMidstart(base, { currentTplStageId: mid.currentId, doneTplStageIds: mid.doneIds, currentStart: midCurStart || null, origin: 'resume', note: [midNote.trim(), prepMode === 'separate' && prepArea ? `Đã chuẩn bị tại khu ${areaPath(prepArea, areas)}` : ''].filter(Boolean).join(' · ') })

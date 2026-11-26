@@ -1,6 +1,8 @@
 import { db, type LocalShift } from './db';
 import { enqueue, flushOutbox } from './outbox';
 import { supabase } from './supabase';
+import { t as tx } from '@lingui/core/macro';
+import { fmtMoney } from './format';
 
 /**
  * Chấm công, sản lượng, đơn giá, tiền công (D42). Mọi thao tác cần mạng và ghi thẳng lên máy chủ
@@ -8,11 +10,11 @@ import { supabase } from './supabase';
  */
 
 function client() {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  if (!supabase) throw new Error(tx`Supabase chưa được cấu hình`);
   return supabase;
 }
 function needOnline(what: string) {
-  if (!navigator.onLine) throw new Error(`OFFLINE: Cần có mạng để ${what}. Hãy kết nối mạng rồi thử lại.`);
+  if (!navigator.onLine) throw new Error(tx`OFFLINE: Cần có mạng để ${what}. Hãy kết nối mạng rồi thử lại.`);
 }
 async function ok<T>(p: PromiseLike<{ data: T; error: { message: string } | null }>): Promise<T> {
   const { data, error } = await p;
@@ -41,15 +43,15 @@ export interface AdjustmentRow { id: string; worker_id: string; period_id: strin
 export interface PayrollResult { lines: number; salary_lines?: number; missing_rate_hours: number; missing_rate_output: number; total: number; workers: number }
 
 export const ATT_STATUS_LABEL: Record<AttendanceRow['status'], string> = {
-  open: 'Đang trong ca', needs_confirmation: 'Chờ xác nhận', confirmed: 'Đã xác nhận', rejected: 'Đã từ chối',
+  get open() { return tx`Đang trong ca`; }, get needs_confirmation() { return tx`Chờ xác nhận`; }, get confirmed() { return tx`Đã xác nhận`; }, get rejected() { return tx`Đã từ chối`; },
 };
 export const OUTPUT_STATUS_LABEL: Record<OutputRow['status'], string> = {
-  draft: 'Chờ xác nhận', confirmed: 'Đã xác nhận', approved: 'Đã duyệt', rejected: 'Đã từ chối',
+  get draft() { return tx`Chờ xác nhận`; }, get confirmed() { return tx`Đã xác nhận`; }, get approved() { return tx`Đã duyệt`; }, get rejected() { return tx`Đã từ chối`; },
 };
 export const PERIOD_STATUS_LABEL: Record<PeriodRow['status'], string> = {
-  draft: 'Đang soạn', pending_confirmation: 'Chờ xác nhận', reviewed: 'Đã rà soát', pending_approval: 'Chờ duyệt', locked: 'Đã khóa',
+  get draft() { return tx`Đang soạn`; }, get pending_confirmation() { return tx`Chờ xác nhận`; }, get reviewed() { return tx`Đã rà soát`; }, get pending_approval() { return tx`Chờ duyệt`; }, get locked() { return tx`Đã khóa`; },
 };
-export const ADJ_KIND_LABEL: Record<AdjustmentRow['kind'], string> = { bonus: 'Thưởng', deduction: 'Phạt / khấu trừ', advance: 'Tạm ứng', piece: 'Tiền khoán' };
+export const ADJ_KIND_LABEL: Record<AdjustmentRow['kind'], string> = { get bonus() { return tx`Thưởng`; }, get deduction() { return tx`Phạt / khấu trừ`; }, get advance() { return tx`Tạm ứng`; }, get piece() { return tx`Tiền khoán`; } };
 
 const num = <T extends object>(rows: T[] | null, keys: (keyof T)[]): T[] =>
   (rows ?? []).map((r) => {
@@ -60,7 +62,7 @@ const num = <T extends object>(rows: T[] | null, keys: (keyof T)[]): T[] =>
 
 /** Chủ/quản lý/nhân viên tự có hồ sơ lao động để chấm công như nhân sự khác (tạo một lần) */
 export async function ensureMyWorker(orgId: string): Promise<string> {
-  needOnline('bật chấm công');
+  needOnline(tx`bật chấm công`);
   return (await ok(client().rpc('ensure_my_worker', { p_org: orgId }))) as string;
 }
 
@@ -106,11 +108,11 @@ export function recalledMyWorker(org: string, uid: string): string | null {
 
 /** Đề nghị sửa công (giờ vào/ra/phút nghỉ); quản lý hoặc chủ duyệt */
 export async function requestAdjustment(attendanceId: string, proposed: { started_at?: string; ended_at?: string; break_minutes?: number }, reason: string): Promise<void> {
-  needOnline('đề nghị sửa công');
+  needOnline(tx`đề nghị sửa công`);
   await ok(client().rpc('request_attendance_adjustment', { p_attendance: attendanceId, p_proposed: proposed, p_reason: reason }));
 }
 export async function decideAdjustment(id: string, approve: boolean): Promise<void> {
-  needOnline('duyệt yêu cầu sửa công');
+  needOnline(tx`duyệt yêu cầu sửa công`);
   await ok(client().rpc('decide_attendance_adjustment', { p_id: id, p_approve: approve }));
 }
 export interface AdjustmentRequest {
@@ -139,18 +141,18 @@ export async function fetchMyPay(workerId: string): Promise<MyPay[]> {
 }
 
 export async function recordShift(workerId: string, start: Date, end: Date, breakMinutes: number, note: string, cycleId: string | null = null): Promise<void> {
-  needOnline('chấm công hộ');
+  needOnline(tx`chấm công hộ`);
   await ok(client().rpc('record_shift', {
     p_id: crypto.randomUUID(), p_worker: workerId, p_start: start.toISOString(), p_end: end.toISOString(),
     p_break: breakMinutes, p_cycle: cycleId, p_note: note || null,
   }));
 }
 export async function confirmAttendance(id: string, minutes?: number): Promise<void> {
-  needOnline('xác nhận công');
+  needOnline(tx`xác nhận công`);
   await ok(client().rpc('confirm_attendance', { p_id: id, p_minutes: minutes ?? null }));
 }
 export async function rejectAttendance(id: string, reason: string): Promise<void> {
-  needOnline('từ chối công');
+  needOnline(tx`từ chối công`);
   await ok(client().rpc('reject_attendance', { p_id: id, p_reason: reason }));
 }
 
@@ -161,13 +163,13 @@ export async function listOutputs(orgId: string, fromDate: string): Promise<Outp
   return num((rows ?? []) as OutputRow[], ['quantity']);
 }
 export async function recordOutput(workerId: string, date: string, qty: number, unit: string, note: string, cycleId: string | null = null): Promise<void> {
-  needOnline('ghi sản lượng');
+  needOnline(tx`ghi sản lượng`);
   await ok(client().rpc('record_output', {
     p_id: crypto.randomUUID(), p_worker: workerId, p_date: date, p_cycle: cycleId, p_work_type: null, p_qty: qty, p_unit: unit, p_note: note || null,
   }));
 }
 export async function confirmOutput(id: string): Promise<void> {
-  needOnline('xác nhận sản lượng');
+  needOnline(tx`xác nhận sản lượng`);
   await ok(client().rpc('confirm_output', { p_id: id }));
 }
 
@@ -179,14 +181,14 @@ export async function listRates(orgId: string): Promise<RateRow[]> {
   return num((rows ?? []) as RateRow[], ['amount']);
 }
 export async function addRate(orgId: string, r: { type: 'hour' | 'month' | 'quantity'; workerId: string | null; teamId: string | null; unit: string | null; amount: number; validFrom: string; validTo?: string | null }): Promise<void> {
-  needOnline('thêm đơn giá');
+  needOnline(tx`thêm đơn giá`);
   await ok(client().from('work_rates').insert({
     organization_id: orgId, rate_type: r.type, worker_id: r.workerId, team_id: r.teamId, unit: r.type === 'quantity' ? r.unit : null,
     amount: r.amount, valid_from: r.validFrom, valid_to: r.validTo ?? null,
   }));
 }
 export async function setRateActive(id: string, active: boolean): Promise<void> {
-  needOnline('đổi đơn giá');
+  needOnline(tx`đổi đơn giá`);
   await ok(client().from('work_rates').update({ is_active: active }).eq('id', id));
 }
 
@@ -196,13 +198,13 @@ export async function listPeriods(orgId: string): Promise<PeriodRow[]> {
   return (rows ?? []) as PeriodRow[];
 }
 export async function createPeriod(orgId: string, start: string, end: string): Promise<string> {
-  needOnline('tạo kỳ trả công');
+  needOnline(tx`tạo kỳ trả công`);
   const id = crypto.randomUUID();
   await ok(client().from('payroll_periods').insert({ id, organization_id: orgId, start_date: start, end_date: end }));
   return id;
 }
 export async function computePayroll(periodId: string): Promise<PayrollResult> {
-  needOnline('tính tiền công');
+  needOnline(tx`tính tiền công`);
   return (await ok(client().rpc('compute_payroll', { p_period: periodId }))) as PayrollResult;
 }
 export async function loadStatements(periodId: string): Promise<{ statements: StatementRow[]; lines: LineRow[]; adjustments: AdjustmentRow[] }> {
@@ -218,15 +220,15 @@ export async function loadStatements(periodId: string): Promise<{ statements: St
   return { statements, lines, adjustments: num((a ?? []) as AdjustmentRow[], ['amount']) };
 }
 export async function addAdjustment(orgId: string, periodId: string, workerId: string, kind: AdjustmentRow['kind'], amount: number, reason: string): Promise<void> {
-  needOnline('thêm khoản cộng/trừ');
+  needOnline(tx`thêm khoản cộng/trừ`);
   await ok(client().from('pay_adjustments').insert({ organization_id: orgId, period_id: periodId, worker_id: workerId, kind, amount, reason }));
 }
 export async function lockPayroll(periodId: string): Promise<void> {
-  needOnline('khóa kỳ');
+  needOnline(tx`khóa kỳ`);
   await ok(client().rpc('lock_payroll', { p_period: periodId }));
 }
 export async function unlockPayroll(periodId: string, reason: string): Promise<void> {
-  needOnline('mở khóa kỳ');
+  needOnline(tx`mở khóa kỳ`);
   await ok(client().rpc('unlock_payroll', { p_period: periodId, p_reason: reason }));
 }
 
@@ -254,17 +256,17 @@ export function buildPayrollCsv(period: { start_date: string; end_date: string; 
   return String.fromCharCode(0xfeff) + `Kỳ ${period.start_date} đến ${period.end_date}` + NL + rows.map((r) => r.map(cell).join(',')).join(NL) + NL;
 }
 
-export const fmtMinutes = (m: number | null) => (m == null ? '—' : `${Math.floor(m / 60)} giờ ${String(m % 60).padStart(2, '0')} phút`);
-export const fmtVnd = (n: number) => `${Math.round(n).toLocaleString('vi-VN')} đ`;
+export const fmtMinutes = (m: number | null) => (m == null ? '—' : tx`${Math.floor(m / 60)} giờ ${String(m % 60).padStart(2, '0')} phút`);
+export const fmtVnd = (n: number) => fmtMoney(Math.round(n));
 
 /** Xóa một khoản thưởng/phạt/tạm ứng (chỉ khi kỳ chưa khóa; máy chủ chặn nếu đã khóa) */
 export async function deleteAdjustment(id: string): Promise<void> {
-  needOnline('xóa khoản điều chỉnh');
+  needOnline(tx`xóa khoản điều chỉnh`);
   await ok(client().from('pay_adjustments').delete().eq('id', id));
 }
 
 /** Đặt (hoặc bỏ) ngày hết hiệu lực của một dòng đơn giá/lương */
 export async function setRateEnd(id: string, validTo: string | null): Promise<void> {
-  needOnline('đổi ngày hết hiệu lực');
+  needOnline(tx`đổi ngày hết hiệu lực`);
   await ok(client().from('work_rates').update({ valid_to: validTo }).eq('id', id));
 }

@@ -1,3 +1,4 @@
+import { normalizeDecimal } from '../lib/format';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
@@ -16,7 +17,7 @@ import { clearOverride, createWorkType, newFieldKey, refreshCatalogCache, saveOv
 /** Nhập các trường dữ liệu của một loại việc (form động, D96). Khóa trường giữ nguyên khi sửa nhãn để nhật ký cũ vẫn hiện đúng. */
 function FieldsEditor({ fields, onChange }: { fields: FieldDef[]; onChange: (f: FieldDef[]) => void }) {
   const set = (i: number, patch: Partial<FieldDef>) => onChange(fields.map((f, j) => (j === i ? { ...f, ...patch } : f)));
-  const numOrUndef = (v: string) => { const n = Number(v.replace(',', '.')); return v.trim() === '' || Number.isNaN(n) ? undefined : n; };
+  const numOrUndef = (v: string) => { const n = Number(normalizeDecimal(v)); return v.trim() === '' || Number.isNaN(n) ? undefined : n; };
   return (
     <fieldset className="roles">
       <legend>Các việc chi tiết (nếu có)</legend>

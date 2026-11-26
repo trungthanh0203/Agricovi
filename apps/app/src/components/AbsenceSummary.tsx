@@ -3,6 +3,9 @@ import { ABSENCE_KIND_LABEL, aggregateYear, fetchYearSummary, fmtDays, setAnnual
 import { friendlyError } from '../lib/errors';
 import type { WorkerLite } from '../lib/work';
 import { Collapsible } from './Collapsible';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
+import { dateLocale } from '../lib/format';
 
 const KINDS = Object.keys(ABSENCE_KIND_LABEL) as AbsenceKind[];
 
@@ -29,32 +32,32 @@ export function AbsenceSummary({ orgId, workers, isOwner, online, refreshKey }: 
 
   async function saveAllow() {
     const n = Number(allow);
-    if (!Number.isInteger(n) || n < 0 || n > 60) return setError('Số ngày phép năm từ 0 đến 60.');
+    if (!Number.isInteger(n) || n < 0 || n > 60) return setError(t`Số ngày phép năm từ 0 đến 60.`);
     setError(null); setMsg(null);
-    try { await setAnnualLeaveDays(orgId, n); setMsg('Đã lưu số ngày phép năm.'); await load(); } catch (e) { setError(friendlyError(e)); }
+    try { await setAnnualLeaveDays(orgId, n); setMsg(t`Đã lưu số ngày phép năm.`); await load(); } catch (e) { setError(friendlyError(e)); }
   }
 
   return (
-    <Collapsible title={`Tổng hợp nghỉ năm ${year}`} summary={data ? `${rows.length} người, ${fmtDays(total)}` : undefined}>
+    <Collapsible title={t`Tổng hợp nghỉ năm ${year}`} summary={data ? t`${rows.length} người, ${fmtDays(total)}` : undefined}>
       <div className="inline-form">
         {error && <p className="msg error" role="alert">{error}</p>}
         {msg && <p className="msg ok" role="status">{msg}</p>}
         <div className="pair">
-          <label>Năm<input type="number" value={year} min={2000} max={2100} onChange={(e) => e.target.value && setYear(Number(e.target.value))} /></label>
-          <label>Số ngày phép năm mỗi người<input inputMode="numeric" value={allow} disabled={!isOwner || !online} onChange={(e) => setAllow(e.target.value)} /></label>
+          <label>{t`Năm`}<input type="number" value={year} min={2000} max={2100} onChange={(e) => e.target.value && setYear(Number(e.target.value))} /></label>
+          <label>{t`Số ngày phép năm mỗi người`}<input inputMode="numeric" value={allow} disabled={!isOwner || !online} onChange={(e) => setAllow(e.target.value)} /></label>
         </div>
-        {isOwner && <button type="button" className="secondary" disabled={!online || !data || allow === String(data.allowance)} onClick={() => void saveAllow()}>Lưu số ngày phép năm</button>}
-        {!isOwner && <p className="muted">Chỉ chủ cơ sở đổi số ngày phép năm.</p>}
-        {data && rows.length === 0 && <p className="muted">Năm {year} chưa có ghi nghỉ nào.</p>}
+        {isOwner && <button type="button" className="secondary" disabled={!online || !data || allow === String(data.allowance)} onClick={() => void saveAllow()}>{t`Lưu số ngày phép năm`}</button>}
+        {!isOwner && <p className="muted">{t`Chỉ chủ cơ sở đổi số ngày phép năm.`}</p>}
+        {data && rows.length === 0 && <p className="muted"><Trans>Năm {year} chưa có ghi nghỉ nào.</Trans></p>}
         {rows.length > 0 && (
           <div className="table-scroll">
             <table className="grid">
-              <thead><tr><th>Người</th><th>Phép năm còn lại</th>{KINDS.map((k) => <th key={k}>{ABSENCE_KIND_LABEL[k]}</th>)}<th>Tổng</th></tr></thead>
+              <thead><tr><th>{t`Người`}</th><th>{t`Phép năm còn lại`}</th>{KINDS.map((k) => <th key={k}>{ABSENCE_KIND_LABEL[k]}</th>)}<th>{t`Tổng`}</th></tr></thead>
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.workerId}>
-                    <td>{names.get(r.workerId) ?? 'Người đã ngừng làm'}</td>
-                    <td>{r.annualLeft < 0 ? <span className="pill err">vượt {fmtDays(-r.annualLeft)}</span> : fmtDays(r.annualLeft)}</td>
+                    <td>{names.get(r.workerId) ?? t`Người đã ngừng làm`}</td>
+                    <td>{r.annualLeft < 0 ? <span className="pill err">{t`vượt`}{' '}{fmtDays(-r.annualLeft)}</span> : fmtDays(r.annualLeft)}</td>
                     {KINDS.map((k) => <td key={k}>{r.byKind[k] ? fmtDays(r.byKind[k]) : '—'}</td>)}
                     <td><strong>{fmtDays(r.total)}</strong></td>
                   </tr>
@@ -64,15 +67,15 @@ export function AbsenceSummary({ orgId, workers, isOwner, online, refreshKey }: 
           </div>
         )}
         {rows.length > 0 && (
-          <Collapsible inline title="Theo từng tháng" summary="số ngày nghỉ mỗi tháng">
+          <Collapsible inline title={t`Theo từng tháng`} summary={t`số ngày nghỉ mỗi tháng`}>
             <div className="table-scroll">
               <table className="grid">
-                <thead><tr><th>Người</th>{Array.from({ length: 12 }, (_, i) => <th key={i}>T{i + 1}</th>)}</tr></thead>
+                <thead><tr><th>{t`Người`}</th>{Array.from({ length: 12 }, (_, i) => <th key={i}>T{i + 1}</th>)}</tr></thead>
                 <tbody>
                   {rows.map((r) => (
                     <tr key={r.workerId}>
-                      <td>{names.get(r.workerId) ?? 'Người đã ngừng làm'}</td>
-                      {r.months.map((m, i) => <td key={i}>{m ? m.toLocaleString('vi-VN', { maximumFractionDigits: 1 }) : '—'}</td>)}
+                      <td>{names.get(r.workerId) ?? t`Người đã ngừng làm`}</td>
+                      {r.months.map((m, i) => <td key={i}>{m ? m.toLocaleString(dateLocale(), { maximumFractionDigits: 1 }) : '—'}</td>)}
                     </tr>
                   ))}
                 </tbody>
@@ -80,7 +83,7 @@ export function AbsenceSummary({ orgId, workers, isOwner, online, refreshKey }: 
             </div>
           </Collapsible>
         )}
-        <p className="muted">Tính theo ngày dương lịch (kể cả thứ bảy, chủ nhật); nửa ngày tính 0,5. Chưa tự trừ vào bảng lương.</p>
+        <p className="muted">{t`Tính theo ngày dương lịch (kể cả thứ bảy, chủ nhật); nửa ngày tính 0,5. Chưa tự trừ vào bảng lương.`}</p>
       </div>
     </Collapsible>
   );

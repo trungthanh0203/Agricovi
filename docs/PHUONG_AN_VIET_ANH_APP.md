@@ -11,6 +11,15 @@
 - **Bước 1 phải làm:** các chỗ tự đọc số bằng `replace(',', '.')` hoặc tự viết số bằng `replace('.', ',')` ngoài màn Ghi việc chưa theo ngôn ngữ (dùng `normalizeDecimal`, `numberToInput` ở `lib/format.ts`). Tệp `lib/*` được test Node nạp thì không dùng macro Lingui trực tiếp (cần cách nạp riêng cho test, quyết trước khi dịch lỗi).
 - **Chưa thử:** Trang chủ và Ghi việc ở tiếng Anh sau đăng nhập, chạy offline trên bản build, dung lượng tăng thêm.
 
+## 0b. Kết quả bước 1, đợt 1a (thu hoạch, nhật ký, chấm công)
+
+- Tổng 663 câu có bản Anh. Đã dịch: Thu hoạch, Nhật ký và sửa nhật ký, Chấm công (nhập công, danh sách, ảnh, nghỉ phép), khối nhắc ở Trang chủ (việc hôm nay, lô sắp hết hạn, hao hụt, tài sản, hợp đồng, website), thông báo lỗi chung.
+- Đọc và điền số theo ngôn ngữ ở toàn app.
+- Cách bọc: hàm thuần và thành phần mới dùng thẳng `t` từ `@lingui/core/macro` (đổi ngôn ngữ là tải lại app nên an toàn); nhãn khai ngoài hàm viết bằng getter `get x() { return t`…`; }`. **Không** đọc các nhãn đó lúc nạp mô-đun.
+- Chữ bị tách quanh ô nhập hoặc số được dịch theo từng đoạn: cần người soát câu tiếng Anh trên màn thật.
+- Giữ tiếng Việt có chủ ý: tệp CSV bảng lương, gợi ý phân loại thu hoạch (được lưu vào dữ liệu).
+- **Đợt 1b còn lại:** Kho (`StockPanel` và các biểu mẫu kho), Bảng công giấy và quét giấy, số liệu Trang chủ (`HomeStats`, `HomeWeekly`, `HomePay`, `CycleProgressList`, `MilestonePanels`), khách hàng / nhà cung cấp mở từ Thu hoạch, và các tệp `lib/*` mà test Node nạp (cần bộ nạp macro cho test trước).
+
 ## 1. Công nghệ chốt
 
 | Phần | Chọn | Lý do |

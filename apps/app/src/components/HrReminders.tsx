@@ -4,6 +4,7 @@ import { fetchExpiringContracts, type ExpiringContract } from '../lib/hr';
 import { todayLocal } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
+import { t } from '@lingui/core/macro';
 
 /** Trang chủ: hợp đồng lao động sắp hết hạn (≤ 30 ngày) hoặc đã hết hạn (D188). Chỉ người xem được mục Tiền công; không hiện gì nếu không có hoặc đang offline. */
 export function HrReminders({ onGo }: { onGo: (tab: 'declare', section: string) => void }) {
@@ -22,8 +23,8 @@ export function HrReminders({ onGo }: { onGo: (tab: 'declare', section: string) 
   const expired = rows.filter((r) => r.end_date < today).length;
   return (
     <div className="card slim">
-      <p className="msg warn" role="status">📄 {rows.length} hợp đồng lao động {expired > 0 ? `đã hoặc sắp hết hạn (${expired} đã hết)` : 'sắp hết hạn'}: {rows.slice(0, 3).map((r) => `${r.full_name} (${fmtDate(r.end_date)})`).join(', ')}{rows.length > 3 ? '…' : ''}</p>
-      <button type="button" className="link" onClick={() => onGo('declare', 'members')}>Mở Nhân sự</button>
+      <p className="msg warn" role="status">📄 {rows.length}{' '}{t`hợp đồng lao động`}{' '}{expired > 0 ? t`đã hoặc sắp hết hạn (${expired} đã hết)` : t`sắp hết hạn`}: {rows.slice(0, 3).map((r) => `${r.full_name} (${fmtDate(r.end_date)})`).join(', ')}{rows.length > 3 ? '…' : ''}</p>
+      <button type="button" className="link" onClick={() => onGo('declare', 'members')}>{t`Mở Nhân sự`}</button>
     </div>
   );
 }

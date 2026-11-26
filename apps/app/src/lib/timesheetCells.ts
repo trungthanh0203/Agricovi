@@ -26,7 +26,7 @@ export function parseCell(text: string, mode: 'shift' | 'hours'): Parsed {
   if (u === 'V') return { kind: 'V' };
   if (u === 'K') return { kind: 'K' };
   if (/^\d+([.,]\d+)?$/.test(t)) {
-    const n = Number(t.replace(',', '.'));
+    const n = Number(normalizeDecimal(t));
     if (!(n > 0)) return { kind: 'error', message: 'Số giờ phải lớn hơn 0 (không làm việc thì ghi –).' };
     if (n > MAX_HOURS) return { kind: 'error', message: `Số giờ không quá ${MAX_HOURS}.` };
     if (mode === 'shift') {
@@ -45,7 +45,7 @@ export function cellLabel(p: Parsed): string {
     case 'none': return '–';
     case 'full': return '✓';
     case 'half': return '½';
-    case 'hours': return String(p.hours).replace('.', ',');
+    case 'hours': return numberToInput(p.hours!);
     case 'error': return '';
     case 'O': return 'Ô';
     default: return p.kind;
@@ -75,7 +75,8 @@ export function personTotals(cells: Parsed[], fullNet: number, extraMinutes = 0,
 
 /** Ngày công tương đương (theo ca đủ) hoặc giờ, hiển thị cột Tổng: kiểu ca "N công", kiểu giờ "N giờ" */
 export function totalText(t: Totals, mode: 'shift' | 'hours', fullNet: number): string {
-  const fmt = (n: number) => String(Math.round(n * 10) / 10).replace('.', ',');
+  const fmt = (n: number) => numberToInput(Math.round(n * 10) / 10);
   const main = mode === 'hours' ? `${fmt(t.minutes / 60)} giờ` : `${fmt(fullNet > 0 ? t.minutes / fullNet : 0)} công`;
   return t.off > 0 ? `${main} · ${t.off} nghỉ` : main;
-}
+}import { normalizeDecimal, numberToInput } from './format';
+

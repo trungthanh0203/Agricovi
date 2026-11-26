@@ -13,13 +13,133 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: fmtDate(a.noticed_on)
+#: src/components/AbsencesSection.tsx
+msgid " · báo {0}"
+msgstr " · reported {0}"
+
+#: src/components/HarvestSection.tsx
+msgid " · cả phiếu đã hủy"
+msgstr " · including cancelled records"
+
+#. placeholder {0}: h.lot_code
+#: src/components/HarvestSection.tsx
+msgid " · mã lô {0}"
+msgstr " · lot code {0}"
+
+#: src/components/AttendanceList.tsx
+msgid " · máy chấm công"
+msgstr " · attendance kiosk"
+
+#: src/components/AttendanceList.tsx
+msgid " (đang trong ca)"
+msgstr " (on shift)"
+
+#: src/components/AttendanceList.tsx
+msgid " (quên ra ca)"
+msgstr " (forgot to clock out)"
+
+#: src/components/HarvestSection.tsx
+msgid " của vụ đã chọn"
+msgstr " of the selected season"
+
+#: src/components/DynamicField.tsx
+#: src/components/DynamicField.tsx
+msgid "— Chọn —"
+msgstr "— Select —"
+
+#: src/components/CatalogPick.tsx
+msgid "— Chọn từ danh bạ —"
+msgstr "— Select from contacts —"
+
+#: src/components/CatalogPick.tsx
+msgid "— Chọn từ danh mục —"
+msgstr "— Select from catalog —"
+
+#: src/components/CatalogPick.tsx
+msgid "— Chọn từ nhân sự —"
+msgstr "— Select from staff —"
+
 #: src/screens/LogActivityScreen.tsx
 msgid "— Chọn vật tư —"
 msgstr "— Select a supply —"
 
+#: src/components/HarvestSection.tsx
+msgid "— không đổi được vụ; muốn đổi hãy hủy phiếu và ghi lại. Mọi thay đổi được lưu lịch sử."
+msgstr "— the season cannot be changed; to change it, cancel the record and enter it again. All changes are kept in history."
+
 #: src/screens/LogActivityScreen.tsx
 msgid "— Không gắn công đoạn —"
 msgstr "— No stage —"
+
+#: src/components/AttendanceSection.tsx
+msgid "— Không gắn vụ —"
+msgstr "— No season —"
+
+#: src/components/AbsencesSection.tsx
+msgid "— Không rõ —"
+msgstr "— Unknown —"
+
+#: src/screens/EditLogScreen.tsx
+msgid "— mọi thay đổi được lưu lịch sử."
+msgstr "— all changes are kept in history."
+
+#. placeholder {0}: r.skipped
+#: src/components/AttendanceList.tsx
+msgid ", bỏ qua {0} công (kỳ lương đã khóa hoặc không đủ quyền)"
+msgstr ", skipped {0} entries (pay period locked or no permission)"
+
+#: src/components/HarvestSection.tsx
+msgid ", không bắt buộc)"
+msgstr ", optional)"
+
+#: src/components/AttendanceList.tsx
+msgid ", nhưng có chấm công"
+msgstr ", but has attendance"
+
+#: src/lib/absences.ts
+msgid ", nửa ngày"
+msgstr ", half day"
+
+#: src/components/SafetyReminder.tsx
+msgid ", rồi đánh dấu \"đã làm\" ở khối Mốc nhắc việc của vụ."
+msgstr ", then mark it \"done\" in the season's Reminder milestones block."
+
+#: src/components/HarvestSection.tsx
+msgid ". Chỉ tính phiếu chưa hủy."
+msgstr ". Only records that are not cancelled are counted."
+
+#. placeholder {0}: r.skipped
+#: src/components/AttendanceList.tsx
+msgid ". Còn {0} ca chưa đóng (vào muộn hơn {closeAt}, kỳ lương đã khóa hoặc không đủ quyền): đóng riêng từng ca ở bảng dưới."
+msgstr ". {0} shifts are still open (clocked in later than {closeAt}, pay period locked or no permission): close each one in the table below."
+
+#: src/components/AttendancePhotos.tsx
+msgid "· cách mẫu"
+msgstr "· distance from sample"
+
+#: src/components/ExpiringLots.tsx
+msgid "· còn"
+msgstr "·"
+
+#: src/components/ExpiringLots.tsx
+msgid "· lô"
+msgstr "· lot"
+
+#: src/components/AttendanceList.tsx
+msgid "‹ Quay lại bảng công"
+msgstr "‹ Back to timesheet"
+
+#: src/components/AttendanceList.tsx
+#: src/components/TodayPlan.tsx
+msgid "‹ Trước"
+msgstr "‹ Previous"
+
+#. placeholder {0}: m.title
+#. placeholder {1}: m.offset_days
+#: src/components/SafetyReminder.tsx
+msgid "\"{0}\" ({1} ngày trước thu)"
+msgstr "\"{0}\" ({1} days before harvest)"
 
 #: src/screens/HomeTab.tsx
 msgid "(đã hết hạn)"
@@ -40,6 +160,66 @@ msgstr "{0, plural, one {# day overdue} other {# days overdue}}"
 msgid "{0, plural, one {Xem tất cả # vụ} other {Xem tất cả # vụ}}"
 msgstr "{0, plural, one {View # season} other {View all # seasons}}"
 
+#. placeholder {0}: fmtDate(a.from_date)
+#: src/components/AbsencesSection.tsx
+msgid "{0} (nửa ngày)"
+msgstr "{0} (half day)"
+
+#. placeholder {0}: a.name
+#. placeholder {1}: fmtDate(nextMaintenance(a)!)
+#: src/components/AssetReminders.tsx
+msgid "{0} (từ {1})"
+msgstr "{0} (from {1})"
+
+#. placeholder {0}: filtered.length
+#: src/screens/LogsScreen.tsx
+msgid "{0} bản ghi"
+msgstr "{0, plural, one {# record} other {# records}}"
+
+#. placeholder {0}: sum.pending
+#: src/components/AttendanceSection.tsx
+msgid "{0} công"
+msgstr "{0} work entries"
+
+#. placeholder {0}: inbox.orders_new
+#: src/components/WebInboxCard.tsx
+msgid "{0} đơn mới chờ báo giá"
+msgstr "{0, plural, one {# new order awaiting a quote} other {# new orders awaiting a quote}}"
+
+#. placeholder {0}: Math.floor(m / 60)
+#. placeholder {1}: String(m % 60).padStart(2, '0')
+#: src/lib/work.ts
+msgid "{0} giờ {1} phút"
+msgstr "{0} h {1} min"
+
+#. placeholder {0}: n.toLocaleString(dateLocale(), { maximumFractionDigits: 1 })
+#: src/lib/absences.ts
+msgid "{0} ngày"
+msgstr "{0, plural, one {# day} other {# days}}"
+
+#. placeholder {0}: absToday.length
+#: src/components/AttendanceSection.tsx
+msgid "{0} nghỉ"
+msgstr "{0} off"
+
+#. placeholder {0}: orphans.length
+#. placeholder {0}: sum.flagged_people ?? sum.flagged
+#: src/components/AttendanceSection.tsx
+#: src/components/AttendanceSection.tsx
+msgid "{0} người"
+msgstr "{0, plural, one {# person} other {# people}}"
+
+#. placeholder {0}: rows.length
+#. placeholder {1}: fmtDays(total)
+#: src/components/AbsenceSummary.tsx
+msgid "{0} người, {1}"
+msgstr "{0} people, {1}"
+
+#. placeholder {0}: rows.length
+#: src/components/LossAlerts.tsx
+msgid "{0} vụ/lứa"
+msgstr "{0} seasons/batches"
+
 #: src/App.tsx
 msgid "{attention, plural, one {# bản ghi} other {# bản ghi}}"
 msgstr "{attention, plural, one {# record} other {# records}}"
@@ -52,25 +232,62 @@ msgstr "{count, plural, one {This date already has # \"{workName}\" record for {
 msgid "{d, plural, one {Còn # ngày} other {Còn # ngày}}"
 msgstr "{d, plural, one {# day left} other {# days left}}"
 
+#: src/components/ExpiringLots.tsx
+msgid "{expired} lô đã hết hạn, "
+msgstr "{expired, plural, one {# lot has expired, } other {# lots have expired, }}"
+
 #: src/screens/HomeTab.tsx
 msgid "{failed, plural, one {Có # bản ghi cần xử lý (chưa gửi được lên máy chủ).} other {Có # bản ghi cần xử lý (chưa gửi được lên máy chủ).}}"
 msgstr "{failed, plural, one {# record needs attention (not yet sent to the server).} other {# records need attention (not yet sent to the server).}}"
+
+#: src/components/CatalogPick.tsx
+msgid "{name} (đang ghi)"
+msgstr "{name} (being entered)"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "{savedCount, plural, one {Đã ghi cho # vụ} other {Đã ghi cho # vụ}}"
 msgstr "{savedCount, plural, one {Logged for # season} other {Logged for # seasons}}"
 
+#: src/components/CatalogPick.tsx
+#: src/components/CatalogPick.tsx
+msgid "{value} (đang ghi)"
+msgstr "{value} (being entered)"
+
 #: src/App.tsx
 msgid "{waiting, plural, one {# bản ghi} other {# bản ghi}}"
 msgstr "{waiting, plural, one {# record} other {# records}}"
+
+#: src/components/AttendanceSection.tsx
+msgid "＋ Ghi công"
+msgstr "＋ Add attendance"
+
+#: src/components/AbsencesSection.tsx
+msgid "＋ Ghi nghỉ"
+msgstr "＋ Record absence"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "+ Thêm dòng"
 msgstr "+ Add row"
 
+#: src/components/CatalogPick.tsx
+msgid "＋ Thêm khác"
+msgstr "＋ Add other"
+
+#: src/components/CatalogPick.tsx
+msgid "＋ Thêm khách hàng mới"
+msgstr "＋ Add new customer"
+
+#: src/components/CatalogPick.tsx
+msgid "＋ Thêm nhà cung cấp mới"
+msgstr "＋ Add new supplier"
+
 #: src/screens/LogActivityScreen.tsx
 msgid "+ Thêm vật tư đã dùng"
 msgstr "+ Add supplies used"
+
+#: src/components/HarvestSection.tsx
+msgid "＋ Thông tin thêm theo mẫu của cơ sở"
+msgstr "＋ Extra fields from your farm's template"
 
 #: src/components/LogWorkPicker.tsx
 msgid "⏰ Đến hạn hôm nay"
@@ -79,6 +296,18 @@ msgstr "⏰ Due today"
 #: src/components/VoiceNote.tsx
 msgid "⏹ Dừng"
 msgstr "⏹ Stop"
+
+#: src/components/AttendancePhotos.tsx
+msgid "◀ Ngày trước"
+msgstr "◀ Previous day"
+
+#: src/components/AttendanceList.tsx
+msgid "✔ Đóng tất cả {total} ca lúc {closeAt}"
+msgstr "✔ Close all {total} shifts at {closeAt}"
+
+#: src/components/AttendanceList.tsx
+msgid "✔ Xác nhận các công hợp lệ trong khoảng này"
+msgstr "✔ Confirm valid entries in this range"
 
 #: src/components/LogWorkPicker.tsx
 msgid "⭐ Hay làm gần đây"
@@ -135,6 +364,36 @@ msgstr "🗑 Clear & dictate again"
 msgid "Ẩn mật khẩu"
 msgstr "Hide password"
 
+#. placeholder {0}: sum && sum.flagged > 0 ? ` (${sum.flagged})` : ''
+#: src/components/AttendanceSection.tsx
+msgid "Ảnh cờ đỏ{0}"
+msgstr "Red-flag photos{0}"
+
+#: src/components/AbsencesSection.tsx
+msgid "Ảnh đính kèm"
+msgstr "Attached photos"
+
+#: src/components/AbsencesSection.tsx
+msgid "Ảnh đính kèm (giấy khám, tin nhắn… không bắt buộc)"
+msgstr "Attached photos (medical note, messages… optional)"
+
+#: src/components/AttendancePhotos.tsx
+msgid "Ảnh mẫu"
+msgstr "Sample photo"
+
+#. placeholder {0}: r.wk_name
+#: src/components/AttendancePhotos.tsx
+msgid "Ảnh mẫu của {0}"
+msgstr "Sample photo of {0}"
+
+#: src/components/AttendanceSection.tsx
+msgid "Ảnh nghi vấn"
+msgstr "Suspicious photos"
+
+#: src/components/AttendancePhotos.tsx
+msgid "Ảnh nhỏ góc dưới là ảnh mẫu khi đăng ký. “Cách mẫu” càng nhỏ càng giống (dưới 0,50 là khớp, từ 0,60 có thể khác người). Ảnh được giữ 60 ngày. Thấy ảnh không đúng người: vào mục “Công”, tìm công đó và từ chối kèm lý do."
+msgstr "The small photo in the lower corner is the sample taken at registration. The smaller the \"distance from sample\", the closer the match (below 0.50 matches; from 0.60 it may be a different person). Photos are kept for 60 days. If a photo shows the wrong person, go to \"Attendance\", find that entry and reject it with a reason."
+
 #: src/components/InstallGuide.tsx
 msgid "App sẽ có biểu tượng riêng trên màn hình/Dock, mở lên không cần trình duyệt."
 msgstr "The app gets its own icon on the desktop/Dock and opens without a browser."
@@ -147,21 +406,46 @@ msgstr "Tap \"Install\" or \"Add\"."
 msgid "Bấm \"Cài đặt\" trong hộp thoại hiện ra."
 msgstr "Click \"Install\" in the dialog that appears."
 
+#: src/components/AttendanceList.tsx
+msgid "bấm Duyệt hoặc Từ chối"
+msgstr "press Approve or Reject"
+
 #: src/components/InstallGuide.tsx
 msgid "Bấm nút Chia sẻ (hình vuông có mũi tên đi lên) ở thanh dưới cùng."
 msgstr "Tap the Share button (a square with an upward arrow) on the bottom bar."
 
+#: src/components/WebInboxCard.tsx
+msgid "Bấm vào đơn hoặc yêu cầu để xử lý ngay trong ứng dụng."
+msgstr "Tap an order or request to handle it right in the app."
+
 #: src/screens/HomeTab.tsx
+#: src/screens/LogsScreen.tsx
 msgid "Bạn"
 msgstr "You"
+
+#: src/components/HarvestSection.tsx
+msgid "Bạn chỉ được xem thu hoạch (chủ cơ sở cấp quyền nhập liệu)."
+msgstr "You can only view harvests (the farm owner grants data entry permission)."
+
+#: src/lib/errors.ts
+msgid "Bạn chưa có quyền thực hiện thao tác này."
+msgstr "You do not have permission to do this."
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Bản ghi đang nằm trên điện thoại và sẽ tự gửi khi có mạng."
 msgstr "This record is on your phone and will be sent automatically when you are online."
 
+#: src/screens/LogsScreen.tsx
+msgid "Bản ghi không bị xóa, chỉ được đánh dấu đã hủy và không khôi phục được."
+msgstr "The record is not deleted, only marked as cancelled, and cannot be restored."
+
 #: src/components/LogTargetPicker.tsx
 msgid "Bạn ghi việc cho đối tượng nào?"
 msgstr "What are you logging work for?"
+
+#: src/lib/errors.ts
+msgid "Bạn thao tác quá nhanh. Hãy đợi một lát rồi thử lại."
+msgstr "You are doing this too fast. Wait a moment and try again."
 
 #: src/components/Drawer.tsx
 msgid "Bạn vẫn muốn đăng xuất?"
@@ -170,6 +454,14 @@ msgstr "Do you still want to sign out?"
 #: src/components/LogWorkPicker.tsx
 msgid "Bạn vừa làm việc gì?"
 msgstr "What did you just do?"
+
+#: src/components/AttendanceSection.tsx
+msgid "Bảng công"
+msgstr "Timesheet"
+
+#: src/components/AttendanceSection.tsx
+msgid "Bảng giấy"
+msgstr "Paper sheet"
 
 #: src/components/HomeLinks.tsx
 msgid "Bảng lương"
@@ -180,6 +472,14 @@ msgstr "Payroll"
 msgid "Báo cáo"
 msgstr "Reports"
 
+#: src/lib/absences.ts
+msgid "Báo sau"
+msgstr "Reported afterwards"
+
+#: src/lib/work.ts
+msgid "bật chấm công"
+msgstr "turn on attendance"
+
 #: src/components/InstallGuide.tsx
 msgid "Biểu tượng app xuất hiện ngay ở màn hình chính điện thoại."
 msgstr "The app icon appears on your phone's home screen."
@@ -187,6 +487,26 @@ msgstr "The app icon appears on your phone's home screen."
 #: src/components/InstallGuide.tsx
 msgid "Biểu tượng app xuất hiện ở màn hình chính, mở lên như một app bình thường."
 msgstr "The app icon appears on the home screen and opens like a normal app."
+
+#: src/components/HarvestSection.tsx
+msgid "Bộ lọc"
+msgstr "Filters"
+
+#: src/components/AttendanceList.tsx
+msgid "Ca quên ra ca"
+msgstr "Shifts without clock-out"
+
+#: src/components/AttendanceList.tsx
+msgid "Các ca chưa ra ca"
+msgstr "Open shifts"
+
+#: src/components/AttendanceList.tsx
+msgid "Các ca đã mở từ những ngày trước mà chưa ra ca."
+msgstr "Shifts opened on earlier days that were never clocked out."
+
+#: src/components/AttendanceList.tsx
+msgid "Các công chờ xác nhận"
+msgstr "Entries awaiting confirmation"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "các vụ đã chọn"
@@ -200,14 +520,28 @@ msgstr "How to split"
 msgid "Cách đăng ký"
 msgstr "Sign-up method"
 
+#: src/lib/absences.ts
+msgid "Cách khác"
+msgstr "Other way"
+
 #: src/components/InstallGuide.tsx
 msgid "Cài app ngay"
 msgstr "Install app now"
+
+#: src/components/CatalogPick.tsx
+#: src/components/CatalogPick.tsx
+msgid "Cán bộ kỹ thuật / thú y phụ trách"
+msgstr "Technician / veterinarian in charge"
 
 #: src/components/VoiceNote.tsx
 msgid "Cần có mạng. Giọng nói do trình duyệt của điện thoại xử lý; ứng dụng không ghi âm và không lưu lại. Điện thoại có thể kêu “tít” sau mỗi câu. Hãy đọc lại chữ trước khi bấm Lưu."
 msgstr "An internet connection is required. Your phone's browser processes the voice; the app does not record or store it. The phone may beep after each sentence. Check the text before pressing Save."
 
+#: src/components/AbsencesSection.tsx
+msgid "Cần mạng để xem."
+msgstr "Connect to the internet to view."
+
+#: src/components/AttendanceSection.tsx
 #: src/lib/labels.ts
 msgid "Cần xử lý"
 msgstr "Needs attention"
@@ -221,9 +555,33 @@ msgstr "Settings"
 msgid "Chấm công"
 msgstr "Attendance"
 
+#: src/components/AttendanceSection.tsx
+msgid "Chấm công do máy chấm công ghi, hoặc do chủ, quản lý, tổ trưởng nhập cho người làm. Bạn xem công của mình ở bảng dưới."
+msgstr "Attendance is recorded by the kiosk, or entered for workers by the owner, a manager or a team leader. Your own attendance is in the table below."
+
+#: src/lib/work.ts
+msgid "chấm công hộ"
+msgstr "record attendance for others"
+
 #: src/lib/labels.ts
 msgid "Chăm sóc cây"
 msgstr "Plant care"
+
+#: src/components/AbsenceSummary.tsx
+msgid "Chỉ chủ cơ sở đổi số ngày phép năm."
+msgstr "Only the farm owner can change the number of annual leave days."
+
+#: src/components/AttendanceList.tsx
+msgid "Chỉ công đã xác nhận mới được tính tiền. Công từ máy chấm công nằm ở trạng thái Chờ xác nhận cho tới khi bạn xác nhận."
+msgstr "Only confirmed attendance is paid. Kiosk entries stay \"Awaiting confirmation\" until you confirm them."
+
+#: src/components/LossAlerts.tsx
+msgid "Chỉ là nhắc. Hãy kiểm tra chuồng/ao, nước, thức ăn và hỏi cán bộ thú y/kỹ thuật nếu cần. Đổi ngưỡng ở chi tiết vụ → Số cây/con và hao hụt."
+msgstr "This is only a reminder. Check the pen/pond, water and feed, and ask a vet or technician if needed. Change the threshold in season details → Counts and losses."
+
+#: src/components/AbsencesSection.tsx
+msgid "Chỉ nghỉ nửa ngày"
+msgstr "Half day only"
 
 #: src/components/SyncBadge.tsx
 msgid "Chi tiết kỹ thuật (gửi cho người hỗ trợ)"
@@ -237,9 +595,29 @@ msgstr "Split equally between seasons"
 msgid "Cho ăn, bón phân, tưới"
 msgstr "Feeding, fertilizing, irrigation"
 
+#: src/lib/work.ts
+msgid "Chờ duyệt"
+msgstr "Awaiting approval"
+
+#: src/components/AttendanceList.tsx
+msgid "chờ quản lý duyệt"
+msgstr "awaiting manager approval"
+
+#: src/components/AttendanceList.tsx
+msgid "Chờ quản lý duyệt"
+msgstr "Awaiting manager approval"
+
 #: src/components/InstallGuide.tsx
 msgid "Chờ vài giây, bảng \"Thêm vào Màn hình chính\" sẽ tự hiện, bấm vào đó. Nếu không thấy, bấm menu 3 chấm ở góc trên rồi chọn \"Cài đặt ứng dụng\"."
 msgstr "Wait a few seconds for the \"Add to Home screen\" banner and tap it. If it does not appear, tap the three-dot menu at the top and choose \"Install app\"."
+
+#: src/components/AttendanceList.tsx
+#: src/components/AttendanceSection.tsx
+#: src/lib/work.ts
+#: src/lib/work.ts
+#: src/lib/work.ts
+msgid "Chờ xác nhận"
+msgstr "Awaiting confirmation"
 
 #: src/screens/AuthScreen.tsx
 msgid "Chọn chức năng"
@@ -249,21 +627,52 @@ msgstr "Choose an action"
 msgid "Chọn nơi cài"
 msgstr "Choose where to install"
 
+#: src/components/AreaPick.tsx
+#: src/components/AreaPick.tsx
+#: src/components/AttendanceSection.tsx
 #: src/components/LogTargetPicker.tsx
 msgid "Chọn phân khu"
 msgstr "Select a zone"
+
+#: src/screens/LogsScreen.tsx
+msgid "Chọn phân khu (hoặc Tất cả phân khu) để xem nhật ký."
+msgstr "Select a zone (or All zones) to view the logbook."
+
+#: src/components/HarvestSection.tsx
+msgid "Chọn phân khu (hoặc Tất cả phân khu) ở Bộ lọc để xem danh sách thu hoạch."
+msgstr "Select a zone (or All zones) in Filters to see the harvest list."
+
+#: src/components/AttendanceSection.tsx
+msgid "Chọn phân khu để nhập công."
+msgstr "Select a zone to enter attendance."
 
 #: src/components/LogTargetPicker.tsx
 msgid "Chọn phân khu để xem các vụ."
 msgstr "Select a zone to see its seasons."
 
+#: src/components/AreaPick.tsx
+msgid "Chọn phân khu trước, rồi mới chọn vụ."
+msgstr "Select a zone first, then a season."
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Chọn tất cả vụ trong ô"
 msgstr "Select all seasons in this plot"
 
+#: src/components/AttendanceSection.tsx
+msgid "chọn tổ trưởng ở Khai báo → Phòng / Tổ"
+msgstr "choose a team leader in Setup → Departments / Teams"
+
 #: src/screens/AuthScreen.tsx
 msgid "Chủ Hộ/HTX đăng ký bằng email. Hãy nhập email của bạn."
 msgstr "Household and cooperative owners sign up with email. Please enter your email."
+
+#: src/components/HarvestSection.tsx
+msgid "Chưa chọn phân khu · "
+msgstr "No zone selected ·"
+
+#: src/components/CatalogPick.tsx
+msgid "chưa có"
+msgstr "none yet"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Chưa có kho để trừ vật tư. Hãy nhờ chủ cơ sở thêm kho ở mục \"Vật tư & chi phí\"."
@@ -273,9 +682,25 @@ msgstr "No warehouse to deduct supplies from. Ask the farm owner to add one unde
 msgid "Chưa có kho nào nên chưa trừ được vật tư."
 msgstr "There is no warehouse yet, so supplies cannot be deducted."
 
+#: src/components/HarvestSection.tsx
+msgid "Chưa có phiếu thu hoạch nào."
+msgstr "No harvest records yet."
+
+#: src/components/AttendanceSection.tsx
+msgid "Chưa có tổ trưởng"
+msgstr "No team leader yet"
+
+#: src/components/CatalogPick.tsx
+msgid "Chưa có vật tư nhóm Thức ăn. Thêm ở Khai báo → Vật tư để chọn nhanh lần sau, hoặc chọn 'Khác (gõ tên)'."
+msgstr "There are no supplies in the Feed group yet. Add them in Setup → Supplies for quick selection next time, or choose 'Other (type name)'."
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Chưa có vật tư trong danh mục. Hãy nhờ chủ cơ sở hoặc người phụ trách Kho & chi phí thêm ở mục \"Vật tư & chi phí\" (cần có mạng một lần để tải về máy)."
 msgstr "The supply list is empty. Ask the farm owner or the person in charge of Stock & expenses to add items under \"Supplies & expenses\" (you need to be online once to download them)."
+
+#: src/components/DynamicField.tsx
+msgid "Chưa có vật tư trong danh mục. Thêm ở Khai báo → Vật tư, hoặc chọn 'Khác (gõ tên)'."
+msgstr "The supply list is empty. Add items in Setup → Supplies, or choose 'Other (type name)'."
 
 #: src/App.tsx
 #: src/components/Drawer.tsx
@@ -286,6 +711,10 @@ msgstr "No active season to log work for"
 #: src/screens/LogActivityScreen.tsx
 msgid "Chưa có vụ nào đang sản xuất nên chưa ghi việc được."
 msgstr "There is no active season, so work cannot be logged yet."
+
+#: src/components/HarvestSection.tsx
+msgid "Chưa có vụ nào. Hãy tạo vụ ở màn hình Sản xuất trước."
+msgstr "There is no season yet. Create one on the Production screen first."
 
 #: src/screens/HomeTab.tsx
 msgid "chưa giao ai"
@@ -299,6 +728,7 @@ msgstr "area not set"
 msgid "Chưa tải được danh sách loại việc. Hãy kết nối mạng một lần để tải về."
 msgstr "The work type list has not been downloaded. Connect to the internet once to download it."
 
+#: src/components/CycleSelect.tsx
 #: src/lib/labels.ts
 msgid "Chuẩn bị"
 msgstr "Preparing"
@@ -319,10 +749,35 @@ msgstr "Other functions"
 msgid "Chuyển cơ sở"
 msgstr "Switch farm"
 
+#: src/components/DynamicField.tsx
+msgid "Có"
+msgstr "Yes"
+
+#: src/components/AttendanceList.tsx
+msgid "Có ảnh cờ đỏ"
+msgstr "Has red-flag photos"
+
+#. placeholder {0}: msg.slice(0, 160)
+#: src/lib/errors.ts
+msgid "Có lỗi xảy ra. Hãy thử lại; nếu vẫn lỗi, gửi dòng này cho người hỗ trợ: {0}"
+msgstr "Something went wrong. Try again; if it persists, send this line to support: {0}"
+
+#: src/lib/errors.ts
+msgid "Có lỗi xảy ra. Hãy thử lại; nếu vẫn lỗi, liên hệ hỗ trợ."
+msgstr "Something went wrong. Try again; if it persists, contact support."
+
 #: src/App.tsx
 #: src/App.tsx
 msgid "Có mạng"
 msgstr "Online"
+
+#: src/components/AttendanceList.tsx
+msgid "Có ngoại lệ / ảnh cờ đỏ"
+msgstr "Has exceptions / red-flag photos"
+
+#: src/lib/errors.ts
+msgid "Cơ sở dữ liệu chưa được cập nhật lên bản mới nhất. Hãy nhờ người cài đặt chạy \"npx supabase db push\" rồi tải lại app."
+msgstr "The database has not been updated to the latest version. Ask your installer to run \"npx supabase db push\" and reload the app."
 
 #: src/components/Drawer.tsx
 msgid "Cơ sở Hộ nuôi trồng"
@@ -331,6 +786,10 @@ msgstr "Household farm"
 #: src/components/Drawer.tsx
 msgid "Cơ sở Hợp tác xã"
 msgstr "Cooperative"
+
+#: src/components/HarvestSection.tsx
+msgid "Có số này, app tính khối lượng trung bình mỗi {unitName}; với vật nuôi, thủy sản thì tự trừ vào số còn lại của vụ."
+msgstr "With this number the app calculates the average weight per {unitName}; for livestock and aquaculture it is also deducted from the season's remaining count."
 
 #: src/screens/LogActivityScreen.tsx
 msgid "cơ sở vật chất"
@@ -344,37 +803,178 @@ msgstr "Some seasons have no area set, so the quantity will be split equally. Se
 msgid "Có vụ khác cùng ô hoặc cùng loại. Việc làm chung (tưới, phun, tiêm vaccine, dọn…) thì tích các vụ cùng làm: app ghi một nhật ký cho mỗi vụ."
 msgstr "There are other seasons in the same plot or of the same type. For shared work (watering, spraying, vaccinating, cleaning…), tick the seasons involved: the app creates one log for each."
 
+#: src/components/AbsencesSection.tsx
+msgid "Có xin phép không?"
+msgstr "Was leave requested?"
+
+#: src/lib/absences.ts
+msgid "Có xin phép trước"
+msgstr "Requested in advance"
+
+#: src/components/ExpiringLots.tsx
+msgid "Còn"
+msgstr "In"
+
+#: src/components/HarvestSection.tsx
+msgid "Còn lại sau hao hụt"
+msgstr "Remaining after losses"
+
+#. placeholder {0}: a.worker_name
+#. placeholder {1}: fmtDate(a.work_date)
+#: src/components/AttendanceList.tsx
+msgid "Công {0} {1}"
+msgstr "Attendance {0} {1}"
+
+#: src/components/AttendanceList.tsx
+msgid "Công chờ xác nhận"
+msgstr "Attendance awaiting confirmation"
+
+#: src/components/AttendanceList.tsx
+msgid "Công đóng xong được xác nhận luôn."
+msgstr "Closed shifts are confirmed immediately."
+
+#: src/components/AttendanceList.tsx
+msgid "Công đóng xong ở trạng thái chờ xác nhận."
+msgstr "Closed shifts are left awaiting confirmation."
+
+#: src/components/AttendanceList.tsx
+msgid "Công đóng xong sẽ chờ xác nhận."
+msgstr "Closed shifts will await confirmation."
+
+#: src/components/AttendanceList.tsx
+msgid "Công đóng xong sẽ được xác nhận luôn."
+msgstr "Closed shifts will be confirmed immediately."
+
+#: src/components/AttendanceList.tsx
+msgid "của chính ngày làm đó. Ca vào muộn hơn giờ này sẽ được giữ lại để bạn đóng riêng từng ca."
+msgstr "on that same work day. Shifts that started later than this time are kept so you can close them one by one."
+
+#: src/components/HarvestSection.tsx
+#: src/screens/LogsScreen.tsx
+msgid "Đã chỉnh sửa"
+msgstr "Edited"
+
 #: src/screens/AuthScreen.tsx
 msgid "Đã đổi mật khẩu."
 msgstr "Password changed."
+
+#. placeholder {0}: r.closed
+#. placeholder {1}: r.skipped ? tx`. Còn ${r.skipped} ca chưa đóng (vào muộn hơn ${closeAt}, kỳ lương đã khóa hoặc không đủ quyền): đóng riêng từng ca ở bảng dưới.` : '.'
+#: src/components/AttendanceList.tsx
+msgid "Đã đóng {0} ca{1}"
+msgstr "Closed {0} shifts{1}"
 
 #: src/lib/labels.ts
 msgid "Đã đồng bộ"
 msgstr "Synced"
 
+#: src/lib/errors.ts
+msgid "Đã dùng hết số vụ của gói (vụ đang sản xuất và vụ đang tạm dừng đều được tính). Hãy kết thúc hoặc hủy một vụ, nâng gói, hoặc lưu vụ mới ở trạng thái \"Chưa bắt đầu\"."
+msgstr "All the seasons in your plan are used (active and paused seasons both count). End or cancel a season, upgrade the plan, or save the new season as \"Not started\"."
+
+#: src/lib/work.ts
+msgid "Đã duyệt"
+msgstr "Approved"
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Đã ghi"
 msgstr "Logged"
+
+#: src/components/AttendanceList.tsx
+msgid "Đã ghi nghỉ ngày này:"
+msgstr "Absence recorded for this day:"
+
+#: src/components/AbsencesSection.tsx
+msgid "Đã ghi nghỉ."
+msgstr "Absence recorded."
+
+#: src/components/HarvestSection.tsx
+msgid "Đã ghi thu hoạch"
+msgstr "Harvest recorded"
 
 #: src/screens/AuthScreen.tsx
 msgid "Đã gửi thư xác nhận. Hãy mở email, bấm liên kết xác nhận, rồi quay lại đăng nhập."
 msgstr "Confirmation email sent. Open the email, click the confirmation link, then come back to sign in."
 
+#: src/components/HrReminders.tsx
+msgid "đã hoặc sắp hết hạn ({expired} đã hết)"
+msgstr "expired or expiring soon ({expired} expired)"
+
+#: src/components/AbsencesSection.tsx
+#: src/components/HarvestSection.tsx
 #: src/lib/labels.ts
+#: src/screens/LogsScreen.tsx
 msgid "Đã hủy"
 msgstr "Cancelled"
+
+#: src/components/AbsencesSection.tsx
+msgid "Đã hủy ghi nghỉ."
+msgstr "Absence record cancelled."
 
 #: src/lib/labels.ts
 msgid "Đã kết thúc"
 msgstr "Ended"
 
+#: src/lib/work.ts
+msgid "Đã khóa"
+msgstr "Locked"
+
+#. placeholder {0}: date.split('-').reverse().join('/')
+#. placeholder {1}: hhmm(s.toISOString())
+#. placeholder {2}: hhmm(t.toISOString())
+#: src/components/AttendanceSection.tsx
+msgid "Đã lưu công cho {who} (đang ở trạng thái Chờ xác nhận): {0} {1}–{2}."
+msgstr "Attendance saved for {who} (status: Awaiting confirmation): {0} {1}–{2}."
+
+#: src/components/AbsenceSummary.tsx
+msgid "Đã lưu số ngày phép năm."
+msgstr "Annual leave days saved."
+
+#: src/components/AbsencesSection.tsx
+msgid "Đã lưu thay đổi."
+msgstr "Changes saved."
+
 #: src/lib/labels.ts
 msgid "Đã lưu trên thiết bị — chưa đồng bộ"
 msgstr "Saved on this device — not synced yet"
 
+#: src/components/AttendanceSection.tsx
+msgid "đã ra ca ("
+msgstr "clocked out ("
+
+#: src/lib/work.ts
+msgid "Đã rà soát"
+msgstr "Reviewed"
+
+#: src/screens/LogsScreen.tsx
+msgid "Đã tải hết nhật ký."
+msgstr "All log entries are loaded."
+
+#: src/components/AttendanceList.tsx
+#: src/lib/work.ts
+#: src/lib/work.ts
+msgid "Đã từ chối"
+msgstr "Rejected"
+
+#: src/components/AttendanceList.tsx
+#: src/lib/work.ts
+#: src/lib/work.ts
+msgid "Đã xác nhận"
+msgstr "Confirmed"
+
+#. placeholder {0}: r.count
+#. placeholder {1}: r.skipped ? tx`, bỏ qua ${r.skipped} công (kỳ lương đã khóa hoặc không đủ quyền)` : ''
+#: src/components/AttendanceList.tsx
+msgid "Đã xác nhận {0} công{1}."
+msgstr "Confirmed {0} entries{1}."
+
 #: src/lib/labels.ts
 msgid "Đang đồng bộ"
 msgstr "Syncing"
+
+#: src/components/CatalogPick.tsx
+msgid "Đang ghi, chưa có trong danh sách (bấm để bỏ)"
+msgstr "Being entered, not yet in the list (tap to remove)"
 
 #: src/components/PhoneSignupForm.tsx
 msgid "Đang gửi…"
@@ -383,6 +983,14 @@ msgstr "Sending…"
 #: src/components/PhoneSignupForm.tsx
 msgid "Đăng ký cần có mạng."
 msgstr "You need to be online to sign up."
+
+#: src/components/TodayPlan.tsx
+msgid "Đang làm"
+msgstr "Working"
+
+#: src/components/AbsencesSection.tsx
+msgid "Đang lưu…"
+msgstr "Saving…"
 
 #: src/screens/AuthScreen.tsx
 #: src/screens/AuthScreen.tsx
@@ -394,13 +1002,62 @@ msgstr "Sign in"
 msgid "Đang offline (mất mạng)"
 msgstr "Offline (no connection)"
 
+#: src/components/AttendanceSection.tsx
+msgid "Đang offline: chấm công cần có mạng. Hãy kết nối mạng rồi thử lại."
+msgstr "You are offline: attendance needs an internet connection. Reconnect and try again."
+
+#: src/components/AbsencesSection.tsx
+msgid "Đang offline: ghi nghỉ cần có mạng."
+msgstr "You are offline: recording absences needs a connection."
+
+#: src/components/HarvestSection.tsx
+msgid "Đang offline: vẫn ghi được phiếu mới (tự gửi khi có mạng); sửa và hủy cần có mạng."
+msgstr "You are offline: you can still add new records (sent automatically when online); editing and cancelling need a connection."
+
+#: src/screens/LogsScreen.tsx
+msgid "Đang offline: vẫn ghi được việc mới (tự gửi khi có mạng); sửa và hủy cần có mạng."
+msgstr "You are offline: you can still log new work (sent automatically when online); editing and cancelling need a connection."
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Đang offline. Bản ghi sẽ được lưu trên điện thoại và gửi sau."
 msgstr "You are offline. The record will be saved on your phone and sent later."
 
+#: src/components/HarvestSection.tsx
+msgid "Đang offline. Phiếu sẽ được lưu trên điện thoại và tự gửi khi có mạng."
+msgstr "You are offline. The record will be saved on your phone and sent when you are online."
+
+#: src/screens/EditLogScreen.tsx
+msgid "Đang offline. Sửa nhật ký cần có mạng; hãy kết nối mạng rồi bấm Lưu thay đổi."
+msgstr "You are offline. Editing a log needs a connection; reconnect, then press Save changes."
+
+#: src/components/HarvestSection.tsx
+msgid "Đang offline. Sửa phiếu cần có mạng; hãy kết nối mạng rồi bấm Lưu thay đổi."
+msgstr "You are offline. Editing a record needs a connection; reconnect, then press Save changes."
+
+#: src/components/CycleSelect.tsx
 #: src/lib/labels.ts
 msgid "Đang sản xuất"
 msgstr "Active"
+
+#: src/lib/work.ts
+msgid "Đang soạn"
+msgstr "Draft"
+
+#: src/components/AbsencesSection.tsx
+#: src/components/AttendanceList.tsx
+#: src/screens/EditLogScreen.tsx
+#: src/screens/LogsScreen.tsx
+msgid "Đang tải…"
+msgstr "Loading…"
+
+#: src/components/AttendanceList.tsx
+#: src/lib/work.ts
+msgid "Đang trong ca"
+msgstr "On shift"
+
+#: src/components/AttendanceSection.tsx
+msgid "đang trong ca ·"
+msgstr "on shift ·"
 
 #: src/screens/AuthScreen.tsx
 msgid "Đang xử lý…"
@@ -423,21 +1080,78 @@ msgstr "For household and cooperative owners. Staff use the account given by the
 msgid "Đánh dấu xong"
 msgstr "Mark as done"
 
+#: src/components/WebInboxCard.tsx
+msgid "đánh giá chưa trả lời"
+msgstr "reviews not yet answered"
+
+#: src/components/AttendanceList.tsx
+msgid "Danh sách công"
+msgstr "Attendance list"
+
 #: src/screens/AuthScreen.tsx
 msgid "Đặt mật khẩu mới"
 msgstr "Set a new password"
+
+#: src/lib/work.ts
+msgid "đề nghị sửa công"
+msgstr "request an attendance correction"
+
+#: src/components/AttendanceList.tsx
+msgid "Đề nghị sửa công"
+msgstr "Request attendance correction"
+
+#. placeholder {0}: pendingAdjs.length
+#: src/components/AttendanceList.tsx
+msgid "Đề nghị sửa công chờ duyệt ({0})"
+msgstr "Pending attendance correction requests ({0})"
+
+#: src/components/AttendanceList.tsx
+msgid "Đề nghị sửa công ngày"
+msgstr "Correction request for"
+
+#: src/components/AttendanceList.tsx
+msgid "Đề nghị sửa giờ"
+msgstr "Request time correction"
+
+#: src/components/AttendanceList.tsx
+msgid "Đề nghị:"
+msgstr "Request:"
+
+#: src/components/TodayPlan.tsx
+msgid "đến "
+msgstr "to"
+
+#: src/components/AttendanceSection.tsx
+msgid "Đến giờ"
+msgstr "To time"
+
+#: src/components/AbsencesSection.tsx
+#: src/components/AttendanceList.tsx
+#: src/screens/LogsScreen.tsx
+msgid "Đến ngày"
+msgstr "To date"
+
+#: src/components/AttendanceList.tsx
+msgid "Đến ngày không được trước từ ngày."
+msgstr "The end date cannot be before the start date."
 
 #: src/components/ContactCard.tsx
 msgid "Địa chỉ"
 msgstr "Address"
 
+#: src/components/CatalogPick.tsx
 #: src/components/ContactCard.tsx
+#: src/lib/absences.ts
 msgid "Điện thoại"
 msgstr "Phone"
 
 #: src/components/InstallGuide.tsx
 msgid "Điện thoại Android (Chrome)"
 msgstr "Android phone (Chrome)"
+
+#: src/components/CatalogPick.tsx
+msgid "Điện thoại:"
+msgstr "Phone:"
 
 #: src/App.tsx
 msgid "Điều hướng chính"
@@ -447,6 +1161,14 @@ msgstr "Main navigation"
 msgid "Đổi"
 msgstr "Change"
 
+#: src/lib/work.ts
+msgid "đổi đơn giá"
+msgstr "change a pay rate"
+
+#: src/lib/work.ts
+msgid "đổi ngày hết hiệu lực"
+msgstr "change the end date"
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Đổi nơi ghi"
 msgstr "Change target"
@@ -454,6 +1176,27 @@ msgstr "Change target"
 #: src/screens/LogActivityScreen.tsx
 msgid "Đổi việc"
 msgstr "Change work"
+
+#: src/components/WebInboxCard.tsx
+msgid "đơn đặt hàng cần xử lý"
+msgstr "orders to handle"
+
+#: src/screens/LogsScreen.tsx
+msgid "Đóng"
+msgstr "Close"
+
+#: src/components/AttendanceList.tsx
+msgid "Đóng ca (nhập giờ ra)"
+msgstr "Close shift (enter clock-out time)"
+
+#: src/components/AttendanceList.tsx
+msgid "Đóng nhanh tất cả: giờ ra mỗi ngày"
+msgstr "Close all at once: daily clock-out time"
+
+#. placeholder {0}: isOwner ? tx`Công đóng xong sẽ được xác nhận luôn.` : tx`Công đóng xong sẽ chờ xác nhận.`
+#: src/components/AttendanceList.tsx
+msgid "Đóng tất cả các ca quên ra ca lúc {closeAt} của từng ngày? {0} Ca vào muộn hơn {closeAt} sẽ được giữ lại."
+msgstr "Close all shifts without clock-out at {closeAt} of each day? {0} Shifts that started later than {closeAt} will be kept."
 
 #: src/components/PhoneSignupForm.tsx
 #: src/screens/AuthScreen.tsx
@@ -472,22 +1215,90 @@ msgstr "Use phone"
 msgid "Dùng email"
 msgstr "Use email"
 
+#: src/components/AttendanceList.tsx
+msgid "Duyệt"
+msgstr "Approve"
+
+#: src/lib/work.ts
+msgid "duyệt yêu cầu sửa công"
+msgstr "approve a correction request"
+
+#: src/lib/errors.ts
+msgid "Email chưa đúng định dạng."
+msgstr "The email format is not valid."
+
+#: src/lib/errors.ts
+msgid "Email chưa được xác nhận. Hãy mở thư xác nhận trong hộp thư của bạn."
+msgstr "The email is not confirmed yet. Open the confirmation email in your inbox."
+
 #: src/screens/AuthScreen.tsx
 #: src/screens/AuthScreen.tsx
 msgid "Email hoặc số điện thoại"
 msgstr "Email or phone number"
 
+#: src/lib/errors.ts
+msgid "Email này đã có tài khoản. Hãy chuyển sang \"Đăng nhập\"."
+msgstr "This email already has an account. Switch to \"Sign in\"."
+
+#: src/lib/errors.ts
+msgid "Email/số điện thoại hoặc mật khẩu chưa đúng. Hãy kiểm tra lại. Nếu quên mật khẩu: chủ Hộ/HTX chọn \"Quên mật khẩu\"; nhân viên nhờ chủ cơ sở đặt lại."
+msgstr "The email/phone number or password is incorrect. Check again. If you forgot the password: owners choose \"Forgot password\"; staff ask the farm owner to reset it."
+
 #: src/components/LogWorkPicker.tsx
 msgid "Ghi cho: <0>{targetLabel}</0>"
 msgstr "Logging for: <0>{targetLabel}</0>"
+
+#: src/components/AbsencesSection.tsx
+#: src/components/AttendanceSection.tsx
+msgid "Ghi chú"
+msgstr "Note"
+
+#: src/components/HarvestSection.tsx
+msgid "Ghi chú (không bắt buộc)"
+msgstr "Note (optional)"
 
 #: src/screens/HomeTab.tsx
 msgid "Ghi chú cần nhớ"
 msgstr "Notes to remember"
 
+#: src/components/AttendanceSection.tsx
+msgid "Ghi công"
+msgstr "Add attendance"
+
+#: src/components/AbsencesSection.tsx
+msgid "Ghi lại việc xin nghỉ của người làm (họ nói miệng, nhắn Zalo hay gọi điện). Chỉ để ghi nhận, chưa tính vào bảng lương."
+msgstr "Record workers' leave requests (spoken, by Zalo message or phone call). For records only; not yet included in payroll."
+
+#: src/components/AbsencesSection.tsx
+msgid "Ghi nghỉ"
+msgstr "Record absence"
+
+#. placeholder {0}: names.get(a.worker_id) ?? ''
+#. placeholder {1}: fmtDate(a.from_date)
+#: src/components/AbsencesSection.tsx
+msgid "Ghi nghỉ {0} {1}"
+msgstr "Absence {0} {1}"
+
+#: src/components/AbsencesSection.tsx
+msgid "Ghi nghỉ vừa được người khác sửa. Đã tải lại bản mới, hãy kiểm tra rồi lưu lại."
+msgstr "Someone else just edited this absence. The latest version has been loaded; check it and save again."
+
+#: src/lib/work.ts
+msgid "ghi sản lượng"
+msgstr "record output"
+
+#: src/components/HarvestSection.tsx
+msgid "Ghi thêm phiếu"
+msgstr "Add another record"
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Ghi thêm thì vật tư bạn vừa chọn sẽ bị trừ kho thêm một lần nữa."
 msgstr "If you save again, the supplies you selected will be deducted from stock a second time."
+
+#: src/components/HarvestSection.tsx
+#: src/components/HarvestSection.tsx
+msgid "Ghi thu hoạch"
+msgstr "Record harvest"
 
 #: src/App.tsx
 #: src/App.tsx
@@ -511,13 +1322,59 @@ msgstr "Log work just done"
 msgid "Ghi việc:"
 msgstr "Log work:"
 
+#: src/components/AttendanceSection.tsx
+msgid "Giờ kết thúc phải sau giờ bắt đầu."
+msgstr "The end time must be after the start time."
+
+#: src/components/AttendanceList.tsx
+msgid "Giờ làm"
+msgstr "Working hours"
+
+#: src/components/AttendanceList.tsx
+msgid "Giờ ra"
+msgstr "Clock-out"
+
+#. placeholder {0}: a.worker_name
+#. placeholder {1}: fmtDate(a.work_date)
+#: src/components/AttendanceList.tsx
+msgid "Giờ ra của {0} ngày {1} (giờ:phút, ví dụ 17:00)?"
+msgstr "Clock-out time of {0} on {1} (hh:mm, e.g. 17:00)?"
+
+#: src/components/AttendanceList.tsx
+msgid "Giờ ra nhập dạng giờ:phút, ví dụ 17:00."
+msgstr "Enter the clock-out time as hh:mm, e.g. 17:00."
+
+#: src/components/AttendanceList.tsx
+msgid "Giờ ra phải sau giờ vào."
+msgstr "Clock-out must be after clock-in."
+
+#: src/components/AttendanceList.tsx
+msgid "Giờ vào"
+msgstr "Clock-in"
+
 #: src/components/Drawer.tsx
 msgid "Giới thiệu, hướng dẫn trồng cây, vật nuôi, HTX"
 msgstr "Introduction and guides for crops, livestock and cooperatives"
 
+#: src/lib/errors.ts
+msgid "Gói dịch vụ đã hết hạn. Hãy gia hạn để tạo vụ mới. Dữ liệu của bạn vẫn được giữ nguyên."
+msgstr "Your plan has expired. Renew it to create new seasons. Your data is kept as it is."
+
+#: src/lib/errors.ts
+msgid "Gói Khởi đầu (miễn phí) chỉ có 1 vụ (kể cả vụ đã kết thúc). Muốn làm thêm vụ: vào Cơ sở của tôi → Gói dịch vụ để nâng cấp, hoặc liên hệ hỗ trợ."
+msgstr "The Starter (free) plan allows only 1 season (including ended ones). To add more: go to My farm → Service plan to upgrade, or contact support."
+
+#: src/lib/errors.ts
+msgid "Gói Khởi đầu (miễn phí) chỉ thêm được 1 hộ. Muốn thêm hộ: vào Cơ sở của tôi → Gói dịch vụ để nâng cấp, hoặc liên hệ hỗ trợ."
+msgstr "The Starter (free) plan allows only 1 household. To add more: go to My farm → Service plan to upgrade, or contact support."
+
 #: src/components/PhoneSignupForm.tsx
 msgid "Gửi đăng ký"
 msgstr "Send registration"
+
+#: src/components/AttendanceList.tsx
+msgid "Gửi đề nghị"
+msgstr "Send request"
 
 #: src/screens/AuthScreen.tsx
 msgid "Gửi thư đặt lại mật khẩu"
@@ -527,18 +1384,80 @@ msgstr "Send password reset email"
 msgid "Hai cách cài dùng cùng một tài khoản và cùng dữ liệu: đăng nhập ở đâu cũng thấy như nhau."
 msgstr "Both options use the same account and data: you see the same things wherever you sign in."
 
+#: src/components/TodayPlan.tsx
+msgid "Hạn hôm nay"
+msgstr "Due today"
+
 #: src/screens/HomeTab.tsx
 msgid "Hạn:"
 msgstr "Expires:"
+
+#: src/components/HarvestSection.tsx
+msgid "Hao hụt"
+msgstr "Loss"
+
+#: src/components/HarvestSection.tsx
+msgid "Hao hụt (kg, không bắt buộc)"
+msgstr "Loss (kg, optional)"
+
+#: src/lib/harvest.ts
+msgid "Hao hụt không được lớn hơn khối lượng thu."
+msgstr "The loss cannot exceed the harvested weight."
+
+#: src/lib/harvest.ts
+msgid "Hao hụt phải là số không âm (kg)."
+msgstr "The loss must be a number, 0 or more (kg)."
+
+#: src/components/LossAlerts.tsx
+msgid "Hao hụt vượt ngưỡng"
+msgstr "Loss above threshold"
+
+#: src/components/HarvestSection.tsx
+msgid "Hao hụt:"
+msgstr "Loss:"
 
 #: src/components/PhoneSignupForm.tsx
 msgid "Hãy chờ khung \"xác nhận bạn là người thật\" hiện xong rồi thử lại."
 msgstr "Wait for the \"verify you are human\" box to finish loading, then try again."
 
+#: src/components/AbsencesSection.tsx
+msgid "Hãy chọn người nghỉ."
+msgstr "Select who is absent."
+
+#: src/components/AttendanceSection.tsx
+msgid "Hãy chọn người."
+msgstr "Select a person."
+
+#: src/components/HarvestSection.tsx
+msgid "Hãy chọn phân khu trước, rồi chọn vụ."
+msgstr "Select a zone first, then a season."
+
+#: src/components/AttendanceSection.tsx
+msgid "Hãy chọn phân khu."
+msgstr "Select a zone."
+
+#: src/components/AttendanceList.tsx
+msgid "Hãy chọn từ ngày và đến ngày."
+msgstr "Select the start and end dates."
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Hãy chọn vật tư cho dòng \"Vật tư đã dùng\", hoặc xóa dòng đó."
 msgstr "Select a supply for the \"Supplies used\" row, or delete the row."
 
+#: src/components/HarvestSection.tsx
+msgid "Hãy chọn vụ."
+msgstr "Select a season."
+
+#: src/components/HarvestSection.tsx
+#: src/screens/LogsScreen.tsx
+msgid "Hãy ghi lý do hủy (ít nhất 3 ký tự)."
+msgstr "Give a reason for cancelling (at least 3 characters)."
+
+#: src/components/AttendanceList.tsx
+msgid "Hãy ghi lý do."
+msgstr "Give a reason."
+
+#: src/screens/EditLogScreen.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Hãy nhập \"Nội dung việc\": gõ chữ hoặc bấm Nói để đọc nội dung đã làm."
 msgstr "Enter the \"Work description\": describe what was done."
@@ -547,6 +1466,14 @@ msgstr "Enter the \"Work description\": describe what was done."
 msgid "Hãy nhập email hoặc số điện thoại."
 msgstr "Enter your email or phone number."
 
+#: src/components/AttendanceSection.tsx
+msgid "Hãy nhập giờ bắt đầu và giờ kết thúc."
+msgstr "Enter the start and end times."
+
+#: src/components/AttendanceList.tsx
+msgid "Hãy nhập giờ vào và giờ ra."
+msgstr "Enter the clock-in and clock-out times."
+
 #: src/screens/AuthScreen.tsx
 msgid "Hãy nhập họ tên người đại diện (ít nhất 2 ký tự)."
 msgstr "Enter the representative's full name (at least 2 characters)."
@@ -554,6 +1481,10 @@ msgstr "Enter the representative's full name (at least 2 characters)."
 #: src/components/PhoneSignupForm.tsx
 msgid "Hãy nhập họ tên người đại diện."
 msgstr "Enter the representative's full name."
+
+#: src/components/AbsencesSection.tsx
+msgid "Hãy nhập ngày nghỉ."
+msgstr "Enter the absence date."
 
 #: src/components/PhoneSignupForm.tsx
 msgid "Hãy nhập số điện thoại có dùng Zalo."
@@ -579,6 +1510,28 @@ msgstr "Create a season on the Production screen."
 #: src/screens/AuthScreen.tsx
 msgid "Hãy tích chọn đồng ý với điều khoản dịch vụ và chính sách bảo mật."
 msgstr "Please agree to the terms of service and privacy policy."
+
+#: src/components/ExpiringLots.tsx
+msgid "Hết hạn"
+msgstr "Expired"
+
+#. placeholder {0}: page * size + 1
+#. placeholder {1}: Math.min(total, (page + 1) * size)
+#: src/components/AttendanceList.tsx
+msgid "Hiện {0}–{1} trong {total} bản ghi."
+msgstr "Showing {0}–{1} of {total} records."
+
+#: src/screens/LogsScreen.tsx
+msgid "Hiện cả bản ghi đã hủy"
+msgstr "Show cancelled logs too"
+
+#: src/components/HarvestSection.tsx
+msgid "Hiện cả phiếu đã hủy"
+msgstr "Show cancelled records too"
+
+#: src/components/HarvestSection.tsx
+msgid "Hiện cả vụ không còn sản xuất"
+msgstr "Show seasons no longer in production too"
 
 #: src/components/PhoneSignupForm.tsx
 #: src/screens/AuthScreen.tsx
@@ -615,9 +1568,21 @@ msgstr "Today"
 msgid "Hôm nay chưa ghi việc nào."
 msgstr "No work logged today."
 
+#: src/components/TodayPlan.tsx
+msgid "Hôm nay không có việc nào theo kế hoạch."
+msgstr "Nothing is planned for today."
+
+#: src/components/AttendanceSection.tsx
+msgid "Hôm nay:"
+msgstr "Today:"
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Hôm qua"
 msgstr "Yesterday"
+
+#: src/components/HrReminders.tsx
+msgid "hợp đồng lao động"
+msgstr "employment contracts"
 
 #: src/components/PhoneSignupForm.tsx
 msgid "Hợp tác xã"
@@ -627,11 +1592,45 @@ msgstr "Cooperative"
 msgid "Hướng dẫn sử dụng"
 msgstr "User guide"
 
+#: src/components/AbsencesSection.tsx
+msgid "Hưởng lương"
+msgstr "Paid"
+
+#: src/components/AbsencesSection.tsx
+msgid "Hưởng lương những ngày này (chỉ ghi nhận)"
+msgstr "Paid for these days (record only)"
+
+#: src/components/AbsencesSection.tsx
+#: src/components/AttendanceList.tsx
+#: src/components/AttendanceSection.tsx
+#: src/components/CatalogPick.tsx
+#: src/components/HarvestSection.tsx
 #: src/components/LogTargetPicker.tsx
 #: src/components/LogWorkPicker.tsx
+#: src/screens/EditLogScreen.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Hủy"
 msgstr "Cancel"
+
+#: src/screens/LogsScreen.tsx
+msgid "Hủy bản ghi"
+msgstr "Cancel log"
+
+#: src/components/AbsencesSection.tsx
+msgid "Hủy ghi nghỉ"
+msgstr "Cancel absence"
+
+#: src/components/AbsencesSection.tsx
+msgid "Hủy ghi nghỉ này? Ghi nghỉ đã hủy vẫn được giữ trong sổ."
+msgstr "Cancel this absence record? Cancelled records stay in the book."
+
+#: src/components/HarvestSection.tsx
+msgid "Hủy phiếu"
+msgstr "Cancel record"
+
+#: src/lib/harvest.ts
+msgid "hủy phiếu thu hoạch"
+msgstr "cancel a harvest record"
 
 #: src/components/InstallGuide.tsx
 msgid "iPhone / iPad (Safari)"
@@ -649,22 +1648,86 @@ msgstr "Scroll down, choose \"Add to Home Screen\", then tap \"Add\"."
 msgid "Kết nối nông nghiệp số Việt Nam"
 msgstr "Connecting Vietnam's digital agriculture"
 
+#: src/components/CycleSelect.tsx
+msgid "Kết thúc"
+msgstr "End"
+
 #: src/lib/labels.ts
 msgid "Khác"
 msgstr "Other"
 
+#: src/components/CatalogPick.tsx
+msgid "Khác (gõ tên)"
+msgstr "Other (type name)"
+
 #: src/screens/HomeTab.tsx
 msgid "Khắc phục sự cố:"
 msgstr "Incident follow-up:"
+
+#: src/components/WebInboxCard.tsx
+msgid "khách để lại số điện thoại/email"
+msgstr "visitors left a phone number/email"
 
 #: src/components/HomeLinks.tsx
 #: src/lib/labels.ts
 msgid "Khai báo"
 msgstr "Setup"
 
+#: src/lib/work.ts
+msgid "khóa kỳ"
+msgstr "lock the pay period"
+
+#: src/components/HarvestSection.tsx
+msgid "Khối lượng thu (kg)"
+msgstr "Harvested weight (kg)"
+
+#: src/lib/harvest.ts
+msgid "Khối lượng thu phải là số lớn hơn 0 (kg)."
+msgstr "The harvested weight must be a number greater than 0 (kg)."
+
+#: src/components/DynamicField.tsx
+msgid "Không"
+msgstr "No"
+
+#: src/lib/absences.ts
+msgid "Không báo"
+msgstr "No notice"
+
+#: src/components/CatalogPick.tsx
+msgid "Không bắt buộc"
+msgstr "Optional"
+
+#: src/components/AttendancePhotos.tsx
+msgid "Không có ảnh nào cần xem trong ngày này. Mọi lượt chấm công đều nhận ra đúng người."
+msgstr "No photos to review for this day. Every clock-in matched the right person."
+
+#: src/components/AttendanceList.tsx
+msgid "Không có bản ghi nào."
+msgstr "No records."
+
+#: src/components/AttendanceList.tsx
+msgid "Không có công hợp lệ nào cần xác nhận trong khoảng này."
+msgstr "No valid entries to confirm in this range."
+
+#: src/components/AbsencesSection.tsx
+msgid "Không có ghi nghỉ nào trong tháng này."
+msgstr "No absences recorded this month."
+
+#: src/lib/errors.ts
+msgid "Không có kết nối mạng. Hãy kiểm tra Internet rồi thử lại."
+msgstr "No network connection. Check your internet and try again."
+
+#: src/screens/LogsScreen.tsx
+msgid "Không có nhật ký nào khớp bộ lọc."
+msgstr "No logs match the filters."
+
 #: src/screens/AuthScreen.tsx
 msgid "Không có thì để trống."
 msgstr "Leave blank if you have none."
+
+#: src/components/AttendanceSection.tsx
+msgid "Không có việc cần xử lý."
+msgstr "Nothing to handle."
 
 #: src/components/LogWorkPicker.tsx
 msgid "Không có việc nào khớp."
@@ -673,6 +1736,19 @@ msgstr "No matching work."
 #: src/components/LogTargetPicker.tsx
 msgid "Không có vụ nào khớp."
 msgstr "No matching season."
+
+#: src/components/HarvestSection.tsx
+#: src/screens/LogsScreen.tsx
+msgid "Không hủy"
+msgstr "Keep it"
+
+#: src/components/AbsencesSection.tsx
+msgid "Không lương"
+msgstr "Unpaid"
+
+#: src/lib/errors.ts
+msgid "Không tìm thấy dữ liệu. Hãy tải lại rồi thử lại."
+msgstr "Data not found. Reload and try again."
 
 #: src/screens/LogActivityScreen.tsx
 msgid "khu này"
@@ -683,9 +1759,18 @@ msgstr "this area"
 msgid "Khu vực"
 msgstr "Area"
 
+#. placeholder {0}: areaPath(areaId, areas)
+#: src/screens/LogsScreen.tsx
+msgid "Khu vực · {0}"
+msgstr "Area · {0}"
+
 #: src/components/LogTargetPicker.tsx
 msgid "Khu vực, cổng, kho, biogas… (không gắn vụ)"
 msgstr "Areas, gate, warehouse, biogas… (not tied to a season)"
+
+#: src/screens/LogsScreen.tsx
+msgid "Làm chung với {n} vụ khác"
+msgstr "{n, plural, one {Shared with # other season} other {Shared with # other seasons}}"
 
 #: src/components/LogTargetPicker.tsx
 msgid "lần ghi trước"
@@ -703,22 +1788,126 @@ msgstr "Contact support and share the app with others"
 msgid "Lô đã chọn đã hết hạn: hãy ghi lý do dùng, hoặc chọn lô khác."
 msgstr "The selected lot has expired: give a reason for using it, or choose another lot."
 
+#: src/components/ExpiringLots.tsx
+msgid "Lô đã hết hạn không được tự gắn khi xuất dùng. Hãy kiểm tra và điều chỉnh tồn (hủy bỏ) nếu không còn dùng được."
+msgstr "Expired lots are not picked automatically when supplies are used. Check them and adjust stock (discard) if they can no longer be used."
+
+#: src/components/ExpiringLots.tsx
+msgid "lô sắp hết hạn"
+msgstr "lots expiring soon"
+
+#: src/components/ExpiringLots.tsx
+msgid "Lô vật tư sắp hết hạn"
+msgstr "Supply lots expiring soon"
+
+#: src/components/AbsencesSection.tsx
+msgid "Loại"
+msgstr "Type"
+
+#: src/components/HarvestSection.tsx
+msgid "Loại 1, cỡ lớn…"
+msgstr "Grade 1, large size…"
+
+#: src/components/CatalogPick.tsx
+msgid "Loại cám (không bắt buộc)"
+msgstr "Feed type (optional)"
+
+#: src/components/HarvestSection.tsx
+msgid "Loại cỡ (không bắt buộc)"
+msgstr "Grade / size (optional)"
+
 #: src/components/PhoneSignupForm.tsx
 msgid "Loại cơ sở"
 msgstr "Farm type"
+
+#: src/components/AbsencesSection.tsx
+msgid "Loại nghỉ"
+msgstr "Absence type"
+
+#: src/components/TodayPlan.tsx
+msgid "Loại sản phẩm"
+msgstr "Product type"
+
+#: src/screens/LogsScreen.tsx
+msgid "Loại việc"
+msgstr "Work type"
+
+#: src/components/CycleSelect.tsx
+msgid "Lọc vụ theo trạng thái"
+msgstr "Filter seasons by status"
 
 #: src/components/HomeLinks.tsx
 msgid "Luồng công việc"
 msgstr "Workflow"
 
+#: src/components/HarvestSection.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Lưu"
 msgstr "Save"
+
+#: src/components/AttendanceSection.tsx
+msgid "Lưu công"
+msgstr "Save attendance"
+
+#: src/components/AbsencesSection.tsx
+msgid "Lưu ghi nghỉ"
+msgstr "Save absence"
+
+#: src/components/AbsenceSummary.tsx
+msgid "Lưu số ngày phép năm"
+msgstr "Save annual leave days"
+
+#: src/components/AbsencesSection.tsx
+#: src/components/HarvestSection.tsx
+#: src/screens/EditLogScreen.tsx
+msgid "Lưu thay đổi"
+msgstr "Save changes"
+
+#: src/components/AbsencesSection.tsx
+msgid "Lý do"
+msgstr "Reason"
+
+#: src/components/AttendanceList.tsx
+msgid "Lý do (bắt buộc)"
+msgstr "Reason (required)"
+
+#: src/components/HarvestSection.tsx
+#: src/screens/LogsScreen.tsx
+msgid "Lý do hủy"
+msgstr "Reason for cancelling"
+
+#. placeholder {0}: h.void_reason
+#. placeholder {0}: l.void_reason
+#: src/components/HarvestSection.tsx
+#: src/screens/LogsScreen.tsx
+msgid "Lý do hủy: {0}"
+msgstr "Cancel reason: {0}"
+
+#: src/components/AttendanceList.tsx
+msgid "Lý do từ chối công này?"
+msgstr "Why are you rejecting this entry?"
+
+#: src/components/WithdrawalNotice.tsx
+msgid "Lý do vẫn ghi vào ngày này (bắt buộc)"
+msgstr "Reason for still recording on this date (required)"
+
+#. placeholder {0}: x.reason
+#: src/components/AttendanceList.tsx
+msgid "Lý do: {0}"
+msgstr "Reason: {0}"
 
 #: src/components/PhoneSignupForm.tsx
 #: src/screens/AuthScreen.tsx
 msgid "Mã giới thiệu (nếu có)"
 msgstr "Referral code (if any)"
+
+#: src/lib/errors.ts
+msgid "Mã này đã được dùng cho khu/chuồng khác trong cơ sở. Hãy đặt mã khác."
+msgstr "This code is already used by another area/pen in your farm. Choose a different code."
+
+#: src/lib/errors.ts
+msgid "Mã này đã được dùng cho vụ khác trong cơ sở. Hãy đặt mã khác."
+msgstr "This code is already used by another season in your farm. Choose a different code."
 
 #: src/components/PhoneSignupForm.tsx
 #: src/screens/AuthScreen.tsx
@@ -738,6 +1927,10 @@ msgstr "The password needs at least 8 characters."
 msgid "Mật khẩu mới"
 msgstr "New password"
 
+#: src/lib/errors.ts
+msgid "Mật khẩu quá ngắn hoặc quá yếu. Hãy dùng ít nhất 8 ký tự."
+msgstr "The password is too short or too weak. Use at least 8 characters."
+
 #: src/components/VoiceNote.tsx
 msgid "Máy này chưa hỗ trợ nói vào ứng dụng. Hãy bấm biểu tượng micro trên bàn phím điện thoại rồi nói vào ô trên."
 msgstr "This device does not support voice input in the app. Tap the microphone on your phone keyboard and speak into the box above."
@@ -746,9 +1939,29 @@ msgstr "This device does not support voice input in the app. Tap the microphone 
 msgid "Máy tính (Chrome / Edge)"
 msgstr "Computer (Chrome / Edge)"
 
+#: src/components/AttendanceSection.tsx
+msgid "Mở danh sách nghỉ phép"
+msgstr "Open absence list"
+
+#: src/components/HarvestSection.tsx
+msgid "mở để nhập"
+msgstr "open to enter"
+
+#: src/lib/work.ts
+msgid "mở khóa kỳ"
+msgstr "unlock the pay period"
+
 #: src/App.tsx
 msgid "Mở menu"
 msgstr "Open menu"
+
+#: src/components/HrReminders.tsx
+msgid "Mở Nhân sự"
+msgstr "Open Staff"
+
+#: src/components/AssetReminders.tsx
+msgid "Mở Tài sản"
+msgstr "Open Assets"
 
 #: src/components/InstallGuide.tsx
 msgid "Mở trang web này bằng Chrome hoặc Edge."
@@ -762,9 +1975,29 @@ msgstr "Open this website in Chrome."
 msgid "Mở trang web này bằng Safari (bắt buộc: Chrome trên iPhone không cài được)."
 msgstr "Open this website in Safari (required: Chrome on iPhone cannot install it)."
 
+#: src/components/LossAlerts.tsx
+msgid "Mở vụ"
+msgstr "Open season"
+
 #: src/components/Drawer.tsx
 msgid "Mở website"
 msgstr "Open website"
+
+#: src/components/AttendanceList.tsx
+msgid "Mỗi ca được đóng lúc"
+msgstr "Each shift is closed at"
+
+#: src/components/AttendanceList.tsx
+msgid "Mọi công đã ra ca nhưng chưa được xác nhận, của tất cả các ngày."
+msgstr "All clocked-out but unconfirmed entries, from all days."
+
+#: src/components/AttendanceSection.tsx
+msgid "Mục chấm công"
+msgstr "Attendance"
+
+#: src/lib/errors.ts
+msgid "Mục này đang được dùng ở nơi khác nên không xóa được. Hãy chọn \"Dừng\" (⏸) để không dùng nữa; lịch sử vẫn được giữ."
+msgstr "This item is used elsewhere, so it cannot be deleted. Choose \"Stop\" (⏸) to stop using it; history is kept."
 
 #: src/components/InstallGuide.tsx
 msgid "Muốn cài cho điện thoại, hãy mở trang này bằng điện thoại rồi làm theo các bước dưới đây."
@@ -774,9 +2007,25 @@ msgstr "To install on a phone, open this page on a phone and follow the steps be
 msgid "Muốn cài cho máy tính, hãy mở trang này bằng máy tính rồi làm theo các bước dưới đây."
 msgstr "To install on a computer, open this page on a computer and follow the steps below."
 
+#: src/components/AbsenceSummary.tsx
+msgid "Năm"
+msgstr "Year"
+
+#: src/components/AbsenceSummary.tsx
+msgid "Năm {year} chưa có ghi nghỉ nào."
+msgstr "No absences recorded in {year}."
+
 #: src/screens/AuthScreen.tsx
 msgid "Nếu email này có tài khoản, bạn sẽ nhận được thư hướng dẫn đặt lại mật khẩu."
 msgstr "If this email has an account, you will receive instructions to reset the password."
+
+#: src/components/SafetyReminder.tsx
+msgid "Nếu không ghi, hãy chắc bạn đã làm đủ các mốc:"
+msgstr "If you do not log it, make sure you have completed these milestones:"
+
+#: src/components/SafetyReminder.tsx
+msgid "Nếu không ghi, hãy chắc đã ngưng thuốc và phân đủ số ngày ghi trên nhãn trước khi thu hoạch."
+msgstr "If you do not log it, make sure pesticides and fertilizers were stopped for the number of days on the label before harvest."
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn vẫn muốn ghi thêm?"
@@ -786,13 +2035,141 @@ msgstr "If this is the same work already logged, there is no need to log it agai
 msgid "Nếu người quen hoặc đại lý vật tư đưa mã cho bạn thì nhập vào đây, không có thì để trống."
 msgstr "If an acquaintance or supply dealer gave you a code, enter it here; otherwise leave it blank."
 
+#: src/components/AbsencesSection.tsx
+msgid "ngày"
+msgstr "days"
+
+#: src/components/AttendancePhotos.tsx
+#: src/components/AttendanceSection.tsx
+msgid "Ngày"
+msgstr "Date"
+
+#: src/components/ExpiringLots.tsx
+msgid "ngày ("
+msgstr "days ("
+
+#: src/components/AbsencesSection.tsx
+msgid "Ngày được báo"
+msgstr "Date notified"
+
 #: src/screens/HomeTab.tsx
 msgid "Ngày mai"
 msgstr "Tomorrow"
 
+#: src/components/AbsencesSection.tsx
+msgid "Ngày nghỉ đến không được trước ngày nghỉ từ."
+msgstr "The absence end date cannot be before the start date."
+
+#: src/components/AttendancePhotos.tsx
+msgid "Ngày sau ▶"
+msgstr "Next day ▶"
+
+#: src/components/ExpiringLots.tsx
+msgid "ngày trước"
+msgstr "days ago"
+
+#. placeholder {0}: x.proposed.break_minutes
+#: src/components/AttendanceList.tsx
+msgid "nghỉ {0} phút"
+msgstr "{0} min break"
+
+#. placeholder {0}: kind.toLowerCase()
+#: src/lib/absences.ts
+msgid "Nghỉ có phép: {0}{part}"
+msgstr "Approved absence: {0}{part}"
+
+#: src/components/AttendanceList.tsx
+#: src/components/AttendanceSection.tsx
+msgid "Nghỉ giữa ca (phút)"
+msgstr "Break during shift (minutes)"
+
+#: src/lib/absences.ts
+msgid "Nghỉ không báo trước"
+msgstr "Absent without prior notice"
+
+#: src/lib/absences.ts
+msgid "Nghỉ không báo{part}"
+msgstr "Absent without notice{part}"
+
+#: src/lib/absences.ts
+msgid "Nghỉ không lương"
+msgstr "Unpaid leave"
+
+#: src/components/AttendanceSection.tsx
+msgid "Nghỉ phép"
+msgstr "Leave"
+
+#: src/components/AbsencesSection.tsx
+msgid "Nghỉ từ ngày"
+msgstr "Absent from"
+
+#: src/components/AbsencesSection.tsx
+#: src/components/AbsenceSummary.tsx
+#: src/components/AbsenceSummary.tsx
+msgid "Người"
+msgstr "Person"
+
+#: src/components/AttendanceList.tsx
+msgid "Người · ngày"
+msgstr "Person · days"
+
+#: src/components/AbsencesSection.tsx
+msgid "Người · ngày nghỉ"
+msgstr "Person · day off"
+
+#: src/components/AttendanceSection.tsx
+msgid "người có mặt)"
+msgstr "people present)"
+
+#: src/components/AbsencesSection.tsx
+#: src/components/AbsenceSummary.tsx
+#: src/components/AbsenceSummary.tsx
+msgid "Người đã ngừng làm"
+msgstr "People who have left"
+
+#: src/components/AttendanceSection.tsx
+msgid "Người làm"
+msgstr "Worker"
+
+#: src/components/AttendanceSection.tsx
+msgid "Người lao động"
+msgstr "Worker"
+
+#: src/components/AbsencesSection.tsx
+msgid "Người nghỉ"
+msgstr "Who is absent"
+
+#: src/components/CatalogPick.tsx
+msgid "Người ngoài cơ sở (gõ tên)"
+msgstr "Person outside the farm (type name)"
+
+#: src/components/SafetyReminder.tsx
+msgid "Nhắc an toàn thực phẩm:"
+msgstr "Food safety reminder:"
+
+#: src/components/TodayPlan.tsx
+msgid "Nhắc việc hôm nay ("
+msgstr "Today's reminders ("
+
+#: src/screens/LogsScreen.tsx
+msgid "Nhân bản"
+msgstr "Duplicate"
+
 #: src/screens/AuthScreen.tsx
 msgid "Nhân viên dùng số điện thoại do chủ cơ sở cấp."
 msgstr "Staff use the phone number given by the farm owner."
+
+#: src/components/AttendanceSection.tsx
+msgid "Nhập ca đã làm của người làm, kể cả của bạn (dành cho nơi không dùng máy chấm công)."
+msgstr "Enter shifts worked by workers, including yourself (for farms without a kiosk)."
+
+#: src/components/AttendanceSection.tsx
+msgid "Nhập ca đã làm của người trong tổ."
+msgstr "Enter shifts worked by your team members."
+
+#: src/screens/LogsScreen.tsx
+msgid "Nhật ký"
+msgstr "Logbook"
 
 #: src/screens/AuthScreen.tsx
 msgid "Nhớ tài khoản"
@@ -802,6 +2179,7 @@ msgstr "Remember account"
 msgid "Nhóm loại sản phẩm và các cấu hình mặc định"
 msgstr "Product groups and default settings"
 
+#: src/screens/EditLogScreen.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Nội dung việc (bắt buộc)"
 msgstr "Work description (required)"
@@ -814,14 +2192,65 @@ msgstr "produce, trade, news and prices"
 msgid "Ở cuối thanh địa chỉ, bấm vào biểu tượng \"Cài đặt\" (hình máy tính có mũi tên)."
 msgstr "At the end of the address bar, click the \"Install\" icon (a computer with an arrow)."
 
+#: src/lib/work.ts
+msgid "OFFLINE: Cần có mạng để {what}. Hãy kết nối mạng rồi thử lại."
+msgstr "OFFLINE: You need a connection to {what}. Reconnect and try again."
+
+#: src/lib/absences.ts
+msgid "OFFLINE: Cần có mạng để thực hiện. Hãy kết nối mạng rồi thử lại."
+msgstr "OFFLINE: You need a connection to do this. Reconnect and try again."
+
+#: src/lib/absences.ts
+msgid "Ốm"
+msgstr "Sick"
+
+#: src/components/HarvestSection.tsx
+msgid "Phần hỏng, chết, loại bỏ… đã tính trong khối lượng thu ở trên."
+msgstr "Spoiled, dead or discarded items are already included in the harvested weight above."
+
+#: src/components/AreaPick.tsx
+#: src/components/AreaPick.tsx
+#: src/components/AttendanceSection.tsx
 #: src/components/LogTargetPicker.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Phân khu"
 msgstr "Zone"
 
+#: src/components/AttendanceSection.tsx
+msgid "Phân khu này chưa có vụ đang chạy."
+msgstr "This zone has no running season."
+
+#: src/components/AreaPick.tsx
+msgid "Phân khu này chưa có vụ phù hợp."
+msgstr "This zone has no suitable season."
+
 #: src/components/Drawer.tsx
 msgid "Phân khu, sản phẩm, vật tư, nhân sự, tổ"
 msgstr "Zones, products, supplies, staff, teams"
+
+#: src/lib/work.ts
+msgid "Phạt / khấu trừ"
+msgstr "Penalty / deduction"
+
+#: src/lib/absences.ts
+msgid "Phép năm"
+msgstr "Annual leave"
+
+#: src/components/AbsenceSummary.tsx
+msgid "Phép năm còn lại"
+msgstr "Annual leave left"
+
+#: src/components/HarvestSection.tsx
+msgid "phiếu"
+msgstr "records"
+
+#: src/components/HarvestSection.tsx
+msgid "Phiếu đang nằm trên điện thoại và sẽ tự gửi khi có mạng."
+msgstr "The record is on your phone and will be sent automatically when you are online."
+
+#: src/components/HarvestSection.tsx
+msgid "Phiếu không bị xóa, chỉ được đánh dấu đã hủy và không khôi phục được."
+msgstr "The record is not deleted, only marked as cancelled, and cannot be restored."
 
 #: src/components/HomeLinks.tsx
 msgid "Quản lý và kết nối cơ sở theo luồng công việc:"
@@ -847,10 +2276,22 @@ msgstr "Forgot password"
 msgid "Quên mật khẩu (chủ Hộ / HTX)"
 msgstr "Forgot password (household / cooperative owner)"
 
+#: src/components/AttendanceSection.tsx
+msgid "Quên ra ca"
+msgstr "Forgot to clock out"
+
 #: src/components/HomeLinks.tsx
 #: src/lib/labels.ts
 msgid "Sản xuất"
 msgstr "Production"
+
+#: src/components/HrReminders.tsx
+msgid "sắp hết hạn"
+msgstr "expiring soon"
+
+#: src/components/HarvestSection.tsx
+msgid "Số {unitName} phải là số nguyên lớn hơn 0."
+msgstr "The number of {unitName} must be a whole number greater than 0."
 
 #: src/components/Drawer.tsx
 msgid "Số bản ghi chưa gửi lên máy chủ: {waiting}. Đăng xuất bây giờ có thể làm mất chúng."
@@ -864,22 +2305,73 @@ msgstr "Phone number (with Zalo)"
 msgid "Số điện thoại: nhân viên hãy nhờ chủ cơ sở đặt lại mật khẩu; chủ hộ đăng ký bằng số điện thoại hãy liên hệ Acovin qua Zalo để được đặt lại."
 msgstr "Phone number accounts: staff, ask your farm owner to reset the password; owners who signed up by phone, contact Acovin on Zalo to have it reset."
 
+#: src/components/AttendanceList.tsx
+msgid "Số dòng mỗi trang"
+msgstr "Rows per page"
+
 #: src/screens/LogActivityScreen.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Số lượng"
 msgstr "Quantity"
 
+#: src/components/HarvestSection.tsx
+msgid "Số lượng ("
+msgstr "Count ("
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Số lượng vật tư đã dùng phải là số lớn hơn 0."
 msgstr "The quantity of supplies used must be a number greater than 0."
+
+#: src/components/HarvestSection.tsx
+msgid "Số lượng:"
+msgstr "Quantity:"
 
 #: src/components/PhoneSignupForm.tsx
 msgid "Số này dùng để đăng nhập và để chúng tôi xác nhận qua Zalo."
 msgstr "This number is used to sign in and for us to verify you on Zalo."
 
+#: src/components/AbsenceSummary.tsx
+msgid "số ngày nghỉ mỗi tháng"
+msgstr "days off each month"
+
+#: src/components/AbsenceSummary.tsx
+msgid "Số ngày phép năm mỗi người"
+msgstr "Annual leave days per person"
+
+#: src/components/AbsenceSummary.tsx
+msgid "Số ngày phép năm từ 0 đến 60."
+msgstr "Annual leave days must be from 0 to 60."
+
+#: src/components/AbsencesSection.tsx
+#: src/components/HarvestSection.tsx
+#: src/screens/LogsScreen.tsx
+msgid "Sửa"
+msgstr "Edit"
+
+#: src/components/AbsencesSection.tsx
+msgid "Sửa ghi nghỉ"
+msgstr "Edit absence"
+
+#: src/screens/EditLogScreen.tsx
+msgid "Sửa nhật ký"
+msgstr "Edit log"
+
+#: src/lib/harvest.ts
+msgid "sửa phiếu thu hoạch"
+msgstr "edit a harvest record"
+
+#: src/components/HarvestSection.tsx
+msgid "Sửa phiếu thu hoạch"
+msgstr "Edit harvest record"
+
 #: src/lib/labels.ts
 msgid "Sức khỏe & phòng bệnh"
 msgstr "Health & disease prevention"
+
+#: src/lib/absences.ts
+#: src/lib/work.ts
+msgid "Supabase chưa được cấu hình"
+msgstr "Supabase is not configured"
 
 #: src/components/Drawer.tsx
 #: src/components/Drawer.tsx
@@ -891,9 +2383,26 @@ msgstr "Account"
 msgid "Tài khoản đã tạo thành công, mã giới thiệu chưa đúng trong hệ thống."
 msgstr "Your account was created, but the referral code was not found in the system."
 
+#: src/screens/LogsScreen.tsx
+msgid "Tải nhật ký cũ hơn từ máy chủ"
+msgstr "Load older logs from the server"
+
+#: src/components/AssetReminders.tsx
+msgid "tài sản đến hạn bảo dưỡng:"
+msgstr "assets due for maintenance:"
+
+#: src/components/CycleSelect.tsx
 #: src/lib/labels.ts
 msgid "Tạm dừng"
 msgstr "Paused"
+
+#: src/lib/work.ts
+msgid "Tạm ứng"
+msgstr "Advance"
+
+#: src/lib/work.ts
+msgid "tạo kỳ trả công"
+msgstr "create a pay period"
 
 #: src/screens/AuthScreen.tsx
 #: src/screens/AuthScreen.tsx
@@ -904,13 +2413,76 @@ msgstr "Create account"
 msgid "Tạo vụ đầu tiên"
 msgstr "Create your first season"
 
+#: src/components/AbsencesSection.tsx
+#: src/components/AttendanceList.tsx
+msgid "Tất cả"
+msgstr "All"
+
+#. placeholder {0}: cycles.length
+#: src/components/CycleSelect.tsx
+msgid "Tất cả ({0})"
+msgstr "All ({0})"
+
+#: src/screens/LogsScreen.tsx
+msgid "Tất cả loại việc"
+msgstr "All work types"
+
+#: src/components/AreaPick.tsx
+#: src/components/AreaPick.tsx
+#: src/components/AttendanceSection.tsx
 #: src/components/LogTargetPicker.tsx
 msgid "Tất cả phân khu"
 msgstr "All zones"
 
+#: src/components/HarvestSection.tsx
+#: src/components/HarvestSection.tsx
+#: src/screens/LogsScreen.tsx
+msgid "Tất cả vụ"
+msgstr "All seasons"
+
 #: src/components/PhoneSignupForm.tsx
 msgid "Tên cơ sở"
 msgstr "Farm name"
+
+#: src/lib/errors.ts
+msgid "Tên cơ sở cần ít nhất 2 ký tự."
+msgstr "The farm name needs at least 2 characters."
+
+#: src/components/CatalogPick.tsx
+msgid "Tên khác"
+msgstr "Other name"
+
+#: src/components/CatalogPick.tsx
+msgid "Tên mục khác"
+msgstr "Other item name"
+
+#: src/lib/errors.ts
+msgid "Tên này đã có trong danh sách. Hãy dùng tên khác."
+msgstr "This name is already in the list. Use a different name."
+
+#: src/components/AbsencesSection.tsx
+msgid "Tháng"
+msgstr "Month"
+
+#: src/components/CatalogPick.tsx
+msgid "Thêm"
+msgstr "Add"
+
+#: src/lib/work.ts
+msgid "thêm đơn giá"
+msgstr "add a pay rate"
+
+#: src/components/CatalogPick.tsx
+msgid "Thêm khách hàng"
+msgstr "Add customer"
+
+#: src/lib/work.ts
+msgid "thêm khoản cộng/trừ"
+msgstr "add an adjustment"
+
+#: src/components/CatalogPick.tsx
+msgid "Thêm nhà cung ứng"
+msgstr "Add supplier"
 
 #: src/screens/HomeTab.tsx
 msgid "Thêm phân khu đầu tiên"
@@ -924,14 +2496,21 @@ msgstr "By area of each season"
 msgid "Theo dõi & đo đạc"
 msgstr "Monitoring & measurement"
 
+#: src/components/AbsenceSummary.tsx
+msgid "Theo từng tháng"
+msgstr "By month"
+
+#: src/screens/EditLogScreen.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Thời điểm bắt đầu làm"
 msgstr "Start time"
 
+#: src/screens/EditLogScreen.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Thời điểm kết thúc"
 msgstr "End time"
 
+#: src/screens/EditLogScreen.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Thời điểm kết thúc không được trước thời điểm bắt đầu."
 msgstr "The end time cannot be before the start time."
@@ -939,6 +2518,10 @@ msgstr "The end time cannot be before the start time."
 #: src/screens/LogActivityScreen.tsx
 msgid "Thời điểm làm không được ở tương lai. Chọn hôm nay hoặc ngày đã làm (ghi bù được cho những ngày trước)."
 msgstr "The work time cannot be in the future. Choose today or the day it was done (you can log earlier days)."
+
+#: src/components/HarvestSection.tsx
+msgid "Thời điểm thu"
+msgstr "Harvest time"
 
 #: src/components/Drawer.tsx
 msgid "Thông tin cá nhân, mã QR, giấy phép"
@@ -960,10 +2543,22 @@ msgstr "Harvest / sale"
 msgid "Thuộc công đoạn"
 msgstr "Stage"
 
+#: src/lib/work.ts
+msgid "Thưởng"
+msgstr "Bonus"
+
+#: src/lib/work.ts
+msgid "Tiền khoán"
+msgstr "Piecework pay"
+
 #. placeholder {0}: remembered.title
 #: src/components/LogTargetPicker.tsx
 msgid "Tiếp tục: {0}"
 msgstr "Continue: {0}"
+
+#: src/components/AttendanceList.tsx
+msgid "Tìm"
+msgstr "Search"
 
 #: src/components/LogWorkPicker.tsx
 msgid "Tìm việc"
@@ -981,9 +2576,75 @@ msgstr "Search seasons"
 msgid "Tìm vụ theo tên hoặc nơi…"
 msgstr "Search seasons by name or location…"
 
+#: src/components/AbsenceSummary.tsx
+msgid "Tính theo ngày dương lịch (kể cả thứ bảy, chủ nhật); nửa ngày tính 0,5. Chưa tự trừ vào bảng lương."
+msgstr "Counted in calendar days (including Saturdays and Sundays); half a day counts as 0.5. Not yet deducted from payroll automatically."
+
+#: src/lib/work.ts
+msgid "tính tiền công"
+msgstr "calculate pay"
+
+#: src/components/AbsenceSummary.tsx
+msgid "Tổng"
+msgstr "Total"
+
+#: src/components/AbsenceSummary.tsx
+msgid "Tổng hợp nghỉ năm {year}"
+msgstr "Leave summary for {year}"
+
+#: src/components/HarvestSection.tsx
+msgid "Tổng thu"
+msgstr "Total harvest"
+
 #: src/lib/labels.ts
 msgid "Trang chủ"
 msgstr "Home"
+
+#: src/components/AttendanceList.tsx
+msgid "Trạng thái"
+msgstr "Status"
+
+#: src/components/TodayPlan.tsx
+msgid "Trễ {late} ngày"
+msgstr "{late, plural, one {# day late} other {# days late}}"
+
+#: src/lib/absences.ts
+msgid "Trực tiếp"
+msgstr "In person"
+
+#: src/components/AttendanceList.tsx
+msgid "Từ chối"
+msgstr "Reject"
+
+#: src/lib/work.ts
+msgid "từ chối công"
+msgstr "reject attendance"
+
+#: src/components/AttendanceList.tsx
+msgid "Từ chối công"
+msgstr "Reject attendance"
+
+#: src/components/AttendanceSection.tsx
+msgid "Từ giờ"
+msgstr "From time"
+
+#: src/components/AttendanceList.tsx
+#: src/screens/LogsScreen.tsx
+msgid "Từ ngày"
+msgstr "From date"
+
+#. placeholder {0}: hhmm(x.proposed.started_at)
+#: src/components/AttendanceList.tsx
+msgid "vào {0} "
+msgstr "in at {0}"
+
+#: src/components/AttendancePhotos.tsx
+msgid "vào ca"
+msgstr "clocking in"
+
+#: src/components/AttendancePhotos.tsx
+msgid "Vào ca"
+msgstr "Clock-in"
 
 #: src/screens/LogActivityScreen.tsx
 #: src/screens/LogActivityScreen.tsx
@@ -1006,18 +2667,52 @@ msgstr "Hygiene & environment"
 msgid "Ví dụ: Bón 20 ký NPK cho vụ dưa lưới"
 msgstr "Example: Applied 20 kg of NPK to the melon crop"
 
+#: src/components/CatalogPick.tsx
+msgid "Ví dụ: Cám heo vỗ béo"
+msgstr "Example: Pig finishing feed"
+
+#: src/components/AbsencesSection.tsx
+msgid "Ví dụ: con ốm, đám cưới người nhà"
+msgstr "Example: sick child, family wedding"
+
+#: src/components/WithdrawalNotice.tsx
+msgid "Ví dụ: đã kiểm tra dư lượng, đạt yêu cầu"
+msgstr "Example: residue tested, meets requirements"
+
 #: src/components/PhoneSignupForm.tsx
 #: src/screens/AuthScreen.tsx
 msgid "Ví dụ: DL-HUNG"
 msgstr "Example: DL-HUNG"
 
+#: src/screens/LogsScreen.tsx
+msgid "Ví dụ: ghi nhầm vụ"
+msgstr "Example: logged under the wrong season"
+
+#: src/components/HarvestSection.tsx
+msgid "Ví dụ: nhập nhầm số lượng"
+msgstr "Example: entered the wrong quantity"
+
+#: src/components/AttendanceList.tsx
+msgid "Ví dụ: quên bấm Ra ca"
+msgstr "Example: forgot to clock out"
+
 #: src/components/PhoneSignupForm.tsx
 msgid "Ví dụ: Vườn nhà Lan"
 msgstr "Example: Lan's Garden"
 
+#: src/components/TodayPlan.tsx
+msgid "việc"
+msgstr "tasks"
+
+#: src/screens/EditLogScreen.tsx
 #: src/screens/HomeTab.tsx
+#: src/screens/LogsScreen.tsx
 msgid "Việc"
 msgstr "Work"
+
+#: src/components/WebInboxCard.tsx
+msgid "Việc chờ từ website"
+msgstr "Pending items from the website"
 
 #: src/lib/labels.ts
 msgid "Việc của cơ sở"
@@ -1026,6 +2721,10 @@ msgstr "Farm's own work"
 #: src/screens/HomeTab.tsx
 msgid "Việc đã ghi hôm nay"
 msgstr "Work logged today"
+
+#: src/lib/absences.ts
+msgid "Việc gia đình"
+msgstr "Family matters"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Việc này làm chung cho vụ khác trong ô?"
@@ -1036,6 +2735,14 @@ msgstr "Is this work shared with other seasons in the plot?"
 msgid "Vụ"
 msgstr "Season"
 
+#: src/components/AttendanceSection.tsx
+msgid "Vụ (không bắt buộc)"
+msgstr "Season (optional)"
+
+#: src/components/HarvestSection.tsx
+msgid "Vụ còn trong thời gian cách ly: hãy ghi lý do vẫn thu hoạch vào ngày này (ít nhất 3 ký tự), hoặc đổi sang ngày đã hết cách ly."
+msgstr "The season is still in its withdrawal period: give a reason for harvesting on this date (at least 3 characters), or choose a date after the period ends."
+
 #: src/screens/HomeTab.tsx
 #: src/screens/LogActivityScreen.tsx
 msgid "Vụ đang chuẩn bị hoặc tạm dừng chỉ ghi việc được sau khi bấm \"Bắt đầu sản xuất\" hoặc \"Tiếp tục\" ở màn Sản xuất."
@@ -1044,6 +2751,10 @@ msgstr "Seasons that are preparing or paused accept logs only after you press \"
 #: src/screens/LogActivityScreen.tsx
 msgid "vụ này"
 msgstr "this season"
+
+#: src/components/SafetyReminder.tsx
+msgid "vụ này chưa ghi việc nào nên app không biết thuốc và phân đã dùng, chưa tính được thời gian cách ly. Nên ghi việc (nút ＋ Ghi việc, chọn vật tư đã dùng) mỗi lần phun thuốc, bón phân."
+msgstr "no work has been logged for this season, so the app does not know which pesticides and fertilizers were used and cannot calculate the withdrawal period. Log the work (＋ Log work button, select supplies used) each time you spray or fertilize."
 
 #: src/components/CycleWord.tsx
 msgid "vụ nuôi"
@@ -1057,6 +2768,40 @@ msgstr "season / batch"
 msgid "vụ trồng"
 msgstr "season"
 
+#: src/components/AbsenceSummary.tsx
+msgid "vượt"
+msgstr "over"
+
+#. placeholder {0}: dry.count
+#: src/components/AttendanceList.tsx
+msgid "Xác nhận {0} công hợp lệ (đã Ra ca, không có ngoại lệ hay ảnh cờ đỏ)? Công có dấu hiệu bất thường sẽ được giữ lại để bạn xem từng cái."
+msgstr "Confirm {0} valid entries (clocked out, no exceptions or red-flag photos)? Entries with anything unusual are kept for you to review one by one."
+
+#: src/lib/work.ts
+msgid "xác nhận công"
+msgstr "confirm attendance"
+
+#: src/components/AttendanceList.tsx
+msgid "Xác nhận công"
+msgstr "Confirm attendance"
+
+#: src/components/AttendanceList.tsx
+msgid "Xác nhận hàng loạt cho mọi ngày cần cập nhật cơ sở dữ liệu lên bản mới (nhờ người cài đặt chạy \"npx supabase db push\"). Bạn vẫn xác nhận từng công được, hoặc quay lại bảng công, chọn Tháng này để xác nhận hàng loạt."
+msgstr "Bulk confirmation for all days requires updating the database (ask your installer to run \"npx supabase db push\"). You can still confirm entries one by one, or go back to the timesheet and choose This month to confirm in bulk."
+
+#: src/components/HarvestSection.tsx
+#: src/screens/LogsScreen.tsx
+msgid "Xác nhận hủy"
+msgstr "Confirm cancellation"
+
+#: src/lib/work.ts
+msgid "xác nhận sản lượng"
+msgstr "confirm output"
+
+#: src/screens/LogsScreen.tsx
+msgid "Xem thêm"
+msgstr "View more"
+
 #: src/screens/HomeTab.tsx
 msgid "Xin chào"
 msgstr "Hello"
@@ -1064,6 +2809,10 @@ msgstr "Hello"
 #: src/screens/HomeTab.tsx
 msgid "Xin chào, {myName}"
 msgstr "Hello, {myName}"
+
+#: src/components/AbsencesSection.tsx
+msgid "Xin qua đâu"
+msgstr "Requested via"
 
 #: src/screens/LogActivityScreen.tsx
 msgid "Xóa"
@@ -1073,6 +2822,14 @@ msgstr "Delete"
 msgid "Xóa dòng vật tư"
 msgstr "Delete supply row"
 
+#: src/lib/work.ts
+msgid "xóa khoản điều chỉnh"
+msgstr "delete an adjustment"
+
 #: src/screens/LogActivityScreen.tsx
 msgid "Xong"
 msgstr "Done"
+
+#: src/components/WebInboxCard.tsx
+msgid "yêu cầu báo giá mới"
+msgstr "new quote requests"

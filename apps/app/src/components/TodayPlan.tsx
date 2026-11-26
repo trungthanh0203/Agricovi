@@ -5,6 +5,8 @@ import { diffDays, fmtDate } from '../lib/dates';
 import { todayLocal } from '../lib/hooks';
 import { useTable } from '../lib/tables';
 import { useCycleTitle } from '../lib/useCycleTitle';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
 const PAGE = 15; // số dòng mỗi trang
 
@@ -44,9 +46,9 @@ export function TodayPlan({ cycleIds, onOpenCycle }: { cycleIds: Set<string>; on
   const shown = items.slice(cur * PAGE, (cur + 1) * PAGE);
   return (
     <div className="card">
-      <h2>Nhắc việc hôm nay ({multi ? all.length : items.length})</h2>
+      <h2>{t`Nhắc việc hôm nay (`}{multi ? all.length : items.length})</h2>
       {multi && (
-        <div className="chips" role="tablist" aria-label="Loại sản phẩm">
+        <div className="chips" role="tablist" aria-label={t`Loại sản phẩm`}>
           {kinds.map((k) => (
             <button key={k} type="button" role="tab" aria-selected={curKind === k} className={curKind === k ? 'chip active' : 'chip'} onClick={() => { setPicked(k); setPage(0); }}>
               {KIND_STYLE[k].icon} {KIND_STYLE[k].label} ({kindCount.get(k) ?? 0})
@@ -54,24 +56,24 @@ export function TodayPlan({ cycleIds, onOpenCycle }: { cycleIds: Set<string>; on
           ))}
         </div>
       )}
-      {items.length === 0 && <p className="muted">Hôm nay không có việc nào theo kế hoạch.</p>}
+      {items.length === 0 && <p className="muted">{t`Hôm nay không có việc nào theo kế hoạch.`}</p>}
       {shown.map(({ s, late }) => {
         const c = runningById.get(s.cycle_id)!;
         return (
           <div className={`note-row kind-row kind-${cycleKind(c.crop_type_id, cropTypes)}`} key={s.id}>
             <button type="button" className="link grow" style={{ textAlign: 'left' }} onClick={() => onOpenCycle(c.id)}>
               <span aria-hidden>{KIND_STYLE[cycleKind(c.crop_type_id, cropTypes)].icon} </span>{s.name}
-              <small className="muted"> — {titleOf(c)} · {s.planned_start ? `${fmtDate(s.planned_start)} – ` : 'đến '}{fmtDate(s.planned_end!)}</small>
+              <small className="muted"> — {titleOf(c)} · {s.planned_start ? `${fmtDate(s.planned_start)} – ` : t`đến `}{fmtDate(s.planned_end!)}</small>
               <small className="kind-tag"> · {KIND_STYLE[cycleKind(c.crop_type_id, cropTypes)].label}</small>
             </button>
-            {late > 0 ? <span className="pill err">Trễ {late} ngày</span> : late === 0 ? <span className="pill warn">Hạn hôm nay</span> : <span className="pill">Đang làm</span>}
+            {late > 0 ? <span className="pill err"><Trans>Trễ {late} ngày</Trans></span> : late === 0 ? <span className="pill warn">{t`Hạn hôm nay`}</span> : <span className="pill">{t`Đang làm`}</span>}
           </div>
         );
       })}
       {items.length > PAGE && (
         <div className="btnrow pager">
-          <button type="button" className="secondary" disabled={cur === 0} onClick={() => setPage(cur - 1)}>‹ Trước</button>
-          <span className="muted">Trang {cur + 1}/{pages} · {items.length} việc</span>
+          <button type="button" className="secondary" disabled={cur === 0} onClick={() => setPage(cur - 1)}>{t`‹ Trước`}</button>
+          <span className="muted">Trang {cur + 1}/{pages} · {items.length}{' '}{t`việc`}</span>
           <button type="button" className="secondary" disabled={cur + 1 >= pages} onClick={() => setPage(cur + 1)}>Sau ›</button>
         </div>
       )}

@@ -9,6 +9,7 @@ import { VoiceNote } from '../components/VoiceNote';
 import { friendlyError } from '../lib/errors';
 import { toLocalInput, useOnline } from '../lib/hooks';
 import { editLog } from '../lib/production';
+import { t } from '@lingui/core/macro';
 
 /** Sửa nhật ký đã ghi (FR-LOG-005). Không đổi được vụ hay loại việc: muốn đổi hãy hủy và ghi lại. */
 export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () => void }) {
@@ -28,7 +29,7 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
   const [error, setError] = useState<string | null>(null);
   const online = useOnline();
 
-  if (!log) return <p className="center muted">Đang tải…</p>;
+  if (!log) return <p className="center muted">{t`Đang tải…`}</p>;
   const workType = workTypes.find((w) => w.id === log.work_type_id);
   const schema: FieldDef[] = workType?.field_schema ?? [];
 
@@ -39,10 +40,10 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!noteV.trim()) return setError('Hãy nhập "Nội dung việc": gõ chữ hoặc bấm Nói để đọc nội dung đã làm.');
+    if (!noteV.trim()) return setError(t`Hãy nhập "Nội dung việc": gõ chữ hoặc bấm Nói để đọc nội dung đã làm.`);
     const bad = validateFields(schema, valuesV);
     if (bad) return setError(bad);
-    if (endV && new Date(endV).getTime() < new Date(whenV).getTime()) return setError('Thời điểm kết thúc không được trước thời điểm bắt đầu.');
+    if (endV && new Date(endV).getTime() < new Date(whenV).getTime()) return setError(t`Thời điểm kết thúc không được trước thời điểm bắt đầu.`);
     const data = fieldsToData(schema, valuesV, log!.data);
     if (endV) data.ended_at = new Date(endV).toISOString(); else delete data.ended_at;
     setError(null);
@@ -56,28 +57,28 @@ export function EditLogScreen({ logId, onClose }: { logId: string; onClose: () =
 
   return (
     <main className="auth">
-      <h1>Sửa nhật ký</h1>
-      <p className="muted">{workType?.name ?? 'Việc'} — mọi thay đổi được lưu lịch sử.</p>
+      <h1>{t`Sửa nhật ký`}</h1>
+      <p className="muted">{workType?.name ?? t`Việc`}{' '}{t`— mọi thay đổi được lưu lịch sử.`}</p>
       <form className="inline-form" onSubmit={onSubmit} noValidate>
         <div className="pair">
           <label>
-            Thời điểm bắt đầu làm
+            {t`Thời điểm bắt đầu làm`}
             <input type="datetime-local" value={whenV} onChange={(e) => setWhen(e.target.value)} />
           </label>
           <label>
-            Thời điểm kết thúc
+            {t`Thời điểm kết thúc`}
             <input type="datetime-local" value={endV} min={whenV} onChange={(e) => setEndWhen(e.target.value)} />
           </label>
         </div>
         {schema.map((f) => (
           <DynamicField key={f.key} def={f} value={valuesV[f.key] ?? ''} onChange={(v) => setValues({ ...valuesV, [f.key]: v })} />
         ))}
-        <VoiceNote label="Nội dung việc (bắt buộc)" value={noteV} onChange={setNote} />
+        <VoiceNote label={t`Nội dung việc (bắt buộc)`} value={noteV} onChange={setNote} />
         {error && <p className="msg error" role="alert">{error}</p>}
-        {!online && <p className="msg warn">Đang offline. Sửa nhật ký cần có mạng; hãy kết nối mạng rồi bấm Lưu thay đổi.</p>}
+        {!online && <p className="msg warn">{t`Đang offline. Sửa nhật ký cần có mạng; hãy kết nối mạng rồi bấm Lưu thay đổi.`}</p>}
         <div className="btnrow">
-          <button type="submit" className="primary" disabled={!online}>Lưu thay đổi</button>
-          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+          <button type="submit" className="primary" disabled={!online}>{t`Lưu thay đổi`}</button>
+          <button type="button" className="secondary" onClick={onClose}>{t`Hủy`}</button>
         </div>
       </form>
     </main>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useKeptState } from '../lib/keptState';
 import { areaFamily } from '../lib/payFilter';
 import { useTable } from '../lib/tables';
+import { t as tx } from '@lingui/core/macro';
 
 /**
  * Chọn phân khu TRƯỚC, rồi mới chọn vụ (biểu mẫu Ghi chi phí, Thu hoạch, Bán hàng; D214).
@@ -28,14 +29,14 @@ export function useAreaPick(orgId: string | undefined, enabled: boolean) {
 export function AreaPickField({ pick, onPick, empty }: { pick: ReturnType<typeof useAreaPick>; onPick?: () => void; empty?: boolean }) {
   if (!pick.need) return null;
   return (
-    <label>Phân khu
+    <label>{tx`Phân khu`}
       <select value={pick.sel} onChange={(e) => { pick.setSel(e.target.value); onPick?.(); }}>
-        <option value="" disabled>Chọn phân khu</option>
-        <option value="all">Tất cả phân khu</option>
+        <option value="" disabled>{tx`Chọn phân khu`}</option>
+        <option value="all">{tx`Tất cả phân khu`}</option>
         {pick.tops.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
       </select>
-      {pick.pending && <small>Chọn phân khu trước, rồi mới chọn vụ.</small>}
-      {empty && !pick.pending && <small>Phân khu này chưa có vụ phù hợp.</small>}
+      {pick.pending && <small>{tx`Chọn phân khu trước, rồi mới chọn vụ.`}</small>}
+      {empty && !pick.pending && <small>{tx`Phân khu này chưa có vụ phù hợp.`}</small>}
     </label>
   );
 }
@@ -72,10 +73,10 @@ export function useAreaFilter(cycleList: { id: string }[], keepKey?: string) {
 export function AreaFilterField({ f, onPick }: { f: ReturnType<typeof useAreaFilter>; onPick?: () => void }) {
   if (!f.gate) return null;
   return (
-    <label>Phân khu
+    <label>{tx`Phân khu`}
       <select value={f.sel} onChange={(e) => { f.setSel(e.target.value); onPick?.(); }}>
-        <option value="" disabled>Chọn phân khu</option>
-        <option value="all">Tất cả phân khu</option>
+        <option value="" disabled>{tx`Chọn phân khu`}</option>
+        <option value="all">{tx`Tất cả phân khu`}</option>
         {f.tops.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
       </select>
     </label>

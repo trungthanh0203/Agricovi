@@ -1,8 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { CYCLE_STATUS_LABEL_VI } from '@agriconnect/shared';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
 const ORDER = ['active', 'preparing', 'paused', 'ended'] as const;
-const CHIP_LABEL: Record<(typeof ORDER)[number], string> = { active: 'Đang sản xuất', preparing: 'Chuẩn bị', paused: 'Tạm dừng', ended: 'Kết thúc' };
+const CHIP_LABEL: Record<(typeof ORDER)[number], string> = { get active() { return t`Đang sản xuất`; }, get preparing() { return t`Chuẩn bị`; }, get paused() { return t`Tạm dừng`; }, get ended() { return t`Kết thúc`; } };
 
 /**
  * Bộ chọn vụ có lọc theo trạng thái: một hàng nút (Tất cả, Đang sản xuất, Chuẩn bị, Tạm dừng, Kết thúc, kèm số vụ; trạng thái không có vụ thì ẩn)
@@ -52,8 +54,8 @@ export function CycleSelect({ label, cycles, value, onChange, labelOf, emptyLabe
   return (
     <>
       {chips.length > 1 && (
-        <div className="chips" role="group" aria-label="Lọc vụ theo trạng thái">
-          {!noAll && <button type="button" className={f === 'all' ? 'chip active' : 'chip'} aria-pressed={f === 'all'} onClick={() => pick('all')}>Tất cả ({cycles.length})</button>}
+        <div className="chips" role="group" aria-label={t`Lọc vụ theo trạng thái`}>
+          {!noAll && <button type="button" className={f === 'all' ? 'chip active' : 'chip'} aria-pressed={f === 'all'} onClick={() => pick('all')}><Trans>Tất cả ({cycles.length})</Trans></button>}
           {chips.map((st) => (
             <button type="button" key={st} className={f === st ? 'chip active' : 'chip'} aria-pressed={f === st} onClick={() => pick(st)}>{CHIP_LABEL[st]} ({count(st)})</button>
           ))}

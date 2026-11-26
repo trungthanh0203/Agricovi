@@ -2,6 +2,7 @@
  * Đơn vị diện tích (D94): dữ liệu lưu theo m²; người dùng nhập/xem bằng m², ha, sào hoặc công (nhớ lựa chọn trên máy).
  * Sào và công khác nhau theo vùng nên ghi rõ số m² trong tên đơn vị.
  */
+import { getLang, normalizeDecimal } from './format';
 export interface AreaUnit { id: string; label: string; short: string; m2: number }
 
 export const AREA_UNITS: AreaUnit[] = [
@@ -18,7 +19,7 @@ const unitOf = (id: string): AreaUnit => AREA_UNITS.find((u) => u.id === id) ?? 
 export function parseDecimal(s: string): number | null {
   const t = s.trim().replace(/\s/g, '');
   if (!t) return null;
-  const n = /^\d{1,3}(\.\d{3})+$/.test(t) ? Number(t.replace(/\./g, '')) : Number(t.replace(',', '.'));
+  const n = getLang() === 'en' ? Number(normalizeDecimal(t)) : /^\d{1,3}(\.\d{3})+$/.test(t) ? Number(t.replace(/\./g, '')) : Number(t.replace(',', '.'));
   return Number.isFinite(n) ? n : null;
 }
 

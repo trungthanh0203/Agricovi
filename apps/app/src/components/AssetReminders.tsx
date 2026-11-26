@@ -4,6 +4,7 @@ import { fmtDate } from '../lib/dates';
 import { todayLocal } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { canPerm } from '../lib/permissions';
+import { t } from '@lingui/core/macro';
 
 /** Trang chủ: tài sản đến hạn bảo dưỡng (H9). Chỉ người xem được Chi phí; không hiện gì nếu không có tài sản đến hạn hoặc đang offline. */
 export function AssetReminders({ onGo }: { onGo: (tab: 'declare', section: string) => void }) {
@@ -22,8 +23,8 @@ export function AssetReminders({ onGo }: { onGo: (tab: 'declare', section: strin
   if (due.length === 0) return null;
   return (
     <div className="card slim">
-      <p className="msg warn" role="status">🛠️ {due.length} tài sản đến hạn bảo dưỡng: {due.slice(0, 3).map((a) => `${a.name} (từ ${fmtDate(nextMaintenance(a)!)})`).join(', ')}{due.length > 3 ? '…' : ''}</p>
-      <button type="button" className="link" onClick={() => onGo('declare', 'assets')}>Mở Tài sản</button>
+      <p className="msg warn" role="status">🛠️ {due.length}{' '}{t`tài sản đến hạn bảo dưỡng:`}{' '}{due.slice(0, 3).map((a) => t`${a.name} (từ ${fmtDate(nextMaintenance(a)!)})`).join(', ')}{due.length > 3 ? '…' : ''}</p>
+      <button type="button" className="link" onClick={() => onGo('declare', 'assets')}>{t`Mở Tài sản`}</button>
     </div>
   );
 }

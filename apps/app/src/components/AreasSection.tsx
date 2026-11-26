@@ -1,3 +1,4 @@
+import { normalizeDecimal } from '../lib/format';
 import { Suspense, lazy } from 'react';
 import { useFeature } from '../lib/features';
 import { useAreaGeos } from '../lib/areaGeo';
@@ -19,7 +20,7 @@ const fmtSize = (a: AreaRow) => (a.area_size != null ? `${a.area_size.toLocaleSt
 const fmtM2 = (m2: number) => (m2 >= 10000 ? `${(m2 / 10000).toLocaleString('vi-VN', { maximumFractionDigits: 2 })} ha` : `${m2.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} m²`);
 const parseSize = (s: string): number | null | 'bad' => {
   if (s.trim() === '') return null;
-  const n = Number(s.replace(',', '.'));
+  const n = Number(normalizeDecimal(s));
   return Number.isNaN(n) || n < 0 ? 'bad' : n;
 };
 

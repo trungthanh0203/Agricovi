@@ -10,16 +10,19 @@ import {
   ATT_STATUS_LABEL, confirmAttendance, decideAdjustment, fmtMinutes, listAdjustments, rejectAttendance, requestAdjustment,
   type AdjustmentRequest, type AttendanceRow, type WorkerLite,
 } from '../lib/work';
+import { t as tx } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
+import { dateLocale } from '../lib/format';
 
-const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+const hhmm = (iso: string) => new Date(iso).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' });
 
 const STATUS_OPTIONS: { id: AttStatusFilter; label: string }[] = [
-  { id: '', label: 'Tất cả' },
-  { id: 'pending', label: 'Chờ xác nhận' },
-  { id: 'open', label: 'Đang trong ca' },
-  { id: 'flagged', label: 'Có ngoại lệ / ảnh cờ đỏ' },
-  { id: 'confirmed', label: 'Đã xác nhận' },
-  { id: 'rejected', label: 'Đã từ chối' },
+  { id: '', get label() { return tx`Tất cả`; } },
+  { id: 'pending', get label() { return tx`Chờ xác nhận`; } },
+  { id: 'open', get label() { return tx`Đang trong ca`; } },
+  { id: 'flagged', get label() { return tx`Có ngoại lệ / ảnh cờ đỏ`; } },
+  { id: 'confirmed', get label() { return tx`Đã xác nhận`; } },
+  { id: 'rejected', get label() { return tx`Đã từ chối`; } },
 ];
 
 export interface ListPreset { status: AttStatusFilter; range: 'prev' | 'today' | 'month' | 'all' | 'stale'; stamp: number; expected?: number }
@@ -101,15 +104,15 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
     setBusy(true); setError(null); setNotice(null);
     try {
       const dry = await bulkConfirmAttendance(orgId, from, to, appliedQ, true);
-      if (dry.count === 0) { setNotice('Không có công hợp lệ nào cần xác nhận trong khoảng này.'); return; }
-      if (!window.confirm(`Xác nhận ${dry.count} công hợp lệ (đã Ra ca, không có ngoại lệ hay ảnh cờ đỏ)? Công có dấu hiệu bất thường sẽ được giữ lại để bạn xem từng cái.`)) return;
+      if (dry.count === 0) { setNotice(tx`Không có công hợp lệ nào cần xác nhận trong khoảng này.`); return; }
+      if (!window.confirm(tx`Xác nhận ${dry.count} công hợp lệ (đã Ra ca, không có ngoại lệ hay ảnh cờ đỏ)? Công có dấu hiệu bất thường sẽ được giữ lại để bạn xem từng cái.`)) return;
       const r = await bulkConfirmAttendance(orgId, from, to, appliedQ, false);
-      setNotice(`Đã xác nhận ${r.count} công${r.skipped ? `, bỏ qua ${r.skipped} công (kỳ lương đã khóa hoặc không đủ quyền)` : ''}.`);
+      setNotice(tx`Đã xác nhận ${r.count} công${r.skipped ? tx`, bỏ qua ${r.skipped} công (kỳ lương đã khóa hoặc không đủ quyền)` : ''}.`);
       await load(); onChanged();
     } catch (e) {
       // CSDL cũ (chưa chạy migration 0229) chỉ cho xác nhận hàng loạt trong 31 ngày
       setError(/31 ngày/.test(String((e as Error).message)) && focused
-        ? 'Xác nhận hàng loạt cho mọi ngày cần cập nhật cơ sở dữ liệu lên bản mới (nhờ người cài đặt chạy "npx supabase db push"). Bạn vẫn xác nhận từng công được, hoặc quay lại bảng công, chọn Tháng này để xác nhận hàng loạt.'
+        ? tx`Xác nhận hàng loạt cho mọi ngày cần cập nhật cơ sở dữ liệu lên bản mới (nhờ người cài đặt chạy "npx supabase db push"). Bạn vẫn xác nhận từng công được, hoặc quay lại bảng công, chọn Tháng này để xác nhận hàng loạt.`
         : friendlyError(e));
     } finally { setBusy(false); }
   }
@@ -117,18 +120,18 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
   const canCloseAll = isAdmin || workers.length > 0;
   async function closeAll() {
     if (busy || !closeAt) return;
-    if (!window.confirm(`Đóng tất cả các ca quên ra ca lúc ${closeAt} của từng ngày? ${isOwner ? 'Công đóng xong sẽ được xác nhận luôn.' : 'Công đóng xong sẽ chờ xác nhận.'} Ca vào muộn hơn ${closeAt} sẽ được giữ lại.`)) return;
+    if (!window.confirm(tx`Đóng tất cả các ca quên ra ca lúc ${closeAt} của từng ngày? ${isOwner ? tx`Công đóng xong sẽ được xác nhận luôn.` : tx`Công đóng xong sẽ chờ xác nhận.`} Ca vào muộn hơn ${closeAt} sẽ được giữ lại.`)) return;
     setBusy(true); setError(null); setNotice(null);
     try {
       const r = await closeStaleShifts(orgId, closeAt);
-      setNotice(`Đã đóng ${r.closed} ca${r.skipped ? `. Còn ${r.skipped} ca chưa đóng (vào muộn hơn ${closeAt}, kỳ lương đã khóa hoặc không đủ quyền): đóng riêng từng ca ở bảng dưới.` : '.'}`);
+      setNotice(tx`Đã đóng ${r.closed} ca${r.skipped ? tx`. Còn ${r.skipped} ca chưa đóng (vào muộn hơn ${closeAt}, kỳ lương đã khóa hoặc không đủ quyền): đóng riêng từng ca ở bảng dưới.` : '.'}`);
       await load(); onChanged();
     } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
   function closeOne(a: { id: string; work_date: string; worker_name: string }) {
-    const t = window.prompt(`Giờ ra của ${a.worker_name} ngày ${fmtDate(a.work_date)} (giờ:phút, ví dụ 17:00)?`, closeAt);
+    const t = window.prompt(tx`Giờ ra của ${a.worker_name} ngày ${fmtDate(a.work_date)} (giờ:phút, ví dụ 17:00)?`, closeAt);
     if (!t) return;
-    if (!/^\d{1,2}:\d{2}$/.test(t.trim())) return setError('Giờ ra nhập dạng giờ:phút, ví dụ 17:00.');
+    if (!/^\d{1,2}:\d{2}$/.test(t.trim())) return setError(tx`Giờ ra nhập dạng giờ:phút, ví dụ 17:00.`);
     const [h, m] = t.trim().split(':');
     void run(() => closeOpenShift(a.id, new Date(`${a.work_date}T${h!.padStart(2, '0')}:${m}:00`)));
   }
@@ -144,14 +147,14 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
     <>
       {focused ? (
         <div className="card">
-          <button type="button" className="link" onClick={() => { setRange('custom'); setDFrom(todayLocal()); setDTo(todayLocal()); setFromIn(todayLocal()); setToIn(todayLocal()); setStatus('pending'); setStatusIn('pending'); setPage(0); }}>‹ Quay lại bảng công</button>
-          <h2 ref={headRef}>{range === 'all' ? 'Công chờ xác nhận' : 'Ca quên ra ca'}{data ? ` (${total})` : ''}</h2>
-          <p className="muted">{range === 'all' ? 'Mọi công đã ra ca nhưng chưa được xác nhận, của tất cả các ngày.' : 'Các ca đã mở từ những ngày trước mà chưa ra ca.'}</p>
+          <button type="button" className="link" onClick={() => { setRange('custom'); setDFrom(todayLocal()); setDTo(todayLocal()); setFromIn(todayLocal()); setToIn(todayLocal()); setStatus('pending'); setStatusIn('pending'); setPage(0); }}>{tx`‹ Quay lại bảng công`}</button>
+          <h2 ref={headRef}>{range === 'all' ? tx`Công chờ xác nhận` : tx`Ca quên ra ca`}{data ? ` (${total})` : ''}</h2>
+          <p className="muted">{range === 'all' ? tx`Mọi công đã ra ca nhưng chưa được xác nhận, của tất cả các ngày.` : tx`Các ca đã mở từ những ngày trước mà chưa ra ca.`}</p>
           {range === 'stale' && canCloseAll && total > 0 && (
             <div className="inline-form">
-              <label>Đóng nhanh tất cả: giờ ra mỗi ngày<input type="time" value={closeAt} onChange={(e) => setCloseAt(e.target.value)} /></label>
-              <button type="button" className="primary" disabled={busy || !online || !closeAt} onClick={() => void closeAll()}>✔ Đóng tất cả {total} ca lúc {closeAt}</button>
-              <p className="muted">Mỗi ca được đóng lúc {closeAt || '…'} của chính ngày làm đó. Ca vào muộn hơn giờ này sẽ được giữ lại để bạn đóng riêng từng ca. {isOwner ? 'Công đóng xong được xác nhận luôn.' : 'Công đóng xong ở trạng thái chờ xác nhận.'}</p>
+              <label>{tx`Đóng nhanh tất cả: giờ ra mỗi ngày`}<input type="time" value={closeAt} onChange={(e) => setCloseAt(e.target.value)} /></label>
+              <button type="button" className="primary" disabled={busy || !online || !closeAt} onClick={() => void closeAll()}><Trans>✔ Đóng tất cả {total} ca lúc {closeAt}</Trans></button>
+              <p className="muted">{tx`Mỗi ca được đóng lúc`}{' '}{closeAt || '…'}{' '}{tx`của chính ngày làm đó. Ca vào muộn hơn giờ này sẽ được giữ lại để bạn đóng riêng từng ca.`}{' '}{isOwner ? tx`Công đóng xong được xác nhận luôn.` : tx`Công đóng xong ở trạng thái chờ xác nhận.`}</p>
             </div>
           )}
         </div>
@@ -159,20 +162,20 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
         <>
           <div className="filters att-filters">
             <div className="pair">
-              <label>Từ ngày<input type="date" value={fromIn} max={toIn || today} onChange={(e) => setFromIn(e.target.value)} /></label>
-              <label>Đến ngày<input type="date" value={toIn} min={fromIn} max={today} onChange={(e) => setToIn(e.target.value)} /></label>
+              <label>{tx`Từ ngày`}<input type="date" value={fromIn} max={toIn || today} onChange={(e) => setFromIn(e.target.value)} /></label>
+              <label>{tx`Đến ngày`}<input type="date" value={toIn} min={fromIn} max={today} onChange={(e) => setToIn(e.target.value)} /></label>
             </div>
             <div className="searchrow">
-              <label>Trạng thái
+              <label>{tx`Trạng thái`}
                 <select value={statusIn} onChange={(e) => setStatusIn(e.target.value as AttStatusFilter)}>
                   {STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
                 </select>
               </label>
               <button type="button" className="secondary" onClick={() => {
-                if (!fromIn || !toIn) { setError('Hãy chọn từ ngày và đến ngày.'); return; }
-                if (toIn < fromIn) { setError('Đến ngày không được trước từ ngày.'); return; }
+                if (!fromIn || !toIn) { setError(tx`Hãy chọn từ ngày và đến ngày.`); return; }
+                if (toIn < fromIn) { setError(tx`Đến ngày không được trước từ ngày.`); return; }
                 setError(null); setDFrom(fromIn); setDTo(toIn); setStatus(statusIn); setPage(0);
-              }}>Tìm</button>
+              }}>{tx`Tìm`}</button>
             </div>
           </div>
         </>
@@ -182,53 +185,53 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
       {notice && <p className="msg ok" role="status">{notice}</p>}
 
       {pendingAdjs.length > 0 && (
-        <Collapsible inline defaultOpen title={`Đề nghị sửa công chờ duyệt (${pendingAdjs.length})`} warn summary={isAdmin ? 'bấm Duyệt hoặc Từ chối' : 'chờ quản lý duyệt'}>
+        <Collapsible inline defaultOpen title={tx`Đề nghị sửa công chờ duyệt (${pendingAdjs.length})`} warn summary={isAdmin ? tx`bấm Duyệt hoặc Từ chối` : tx`chờ quản lý duyệt`}>
           {pendingAdjs.map((x) => {
             const rec = rows.find((r) => r.id === x.attendance_id);
             return (
             <div className="card slim" key={x.id}>
-              <strong>{rec ? rec.worker_name : 'Đề nghị sửa công'}</strong>{rec ? ` · ${fmtDate(rec.work_date)}` : ''}
-              <p className="muted">Đề nghị: {x.proposed.started_at ? `vào ${hhmm(x.proposed.started_at)} ` : ''}{x.proposed.ended_at ? `ra ${hhmm(x.proposed.ended_at)} ` : ''}{x.proposed.break_minutes != null ? `nghỉ ${x.proposed.break_minutes} phút` : ''}</p>
-              <p className="muted">Lý do: {x.reason}</p>
+              <strong>{rec ? rec.worker_name : tx`Đề nghị sửa công`}</strong>{rec ? ` · ${fmtDate(rec.work_date)}` : ''}
+              <p className="muted">{tx`Đề nghị:`}{' '}{x.proposed.started_at ? tx`vào ${hhmm(x.proposed.started_at)} ` : ''}{x.proposed.ended_at ? `ra ${hhmm(x.proposed.ended_at)} ` : ''}{x.proposed.break_minutes != null ? tx`nghỉ ${x.proposed.break_minutes} phút` : ''}</p>
+              <p className="muted"><Trans>Lý do: {x.reason}</Trans></p>
               {isAdmin ? (
                 <div className="actions">
-                  <button className="primary" disabled={busy || !online} onClick={() => void run(async () => { await decideAdjustment(x.id, true); setAdjs(await listAdjustments(orgId)); })}>Duyệt</button>
-                  <button className="secondary" disabled={busy || !online} onClick={() => void run(async () => { await decideAdjustment(x.id, false); setAdjs(await listAdjustments(orgId)); })}>Từ chối</button>
+                  <button className="primary" disabled={busy || !online} onClick={() => void run(async () => { await decideAdjustment(x.id, true); setAdjs(await listAdjustments(orgId)); })}>{tx`Duyệt`}</button>
+                  <button className="secondary" disabled={busy || !online} onClick={() => void run(async () => { await decideAdjustment(x.id, false); setAdjs(await listAdjustments(orgId)); })}>{tx`Từ chối`}</button>
                 </div>
-              ) : <span className="pill warn">Chờ quản lý duyệt</span>}
+              ) : <span className="pill warn">{tx`Chờ quản lý duyệt`}</span>}
             </div>
             );
           })}
         </Collapsible>
       )}
 
-      {!focused && <h2 className="sect" ref={headRef}>{status === 'pending' ? 'Các công chờ xác nhận' : status === 'open' ? 'Các ca chưa ra ca' : status === '' ? 'Danh sách công' : STATUS_OPTIONS.find((o) => o.id === status)?.label}</h2>}
-      <p className="muted">{data ? (total === 0 ? 'Không có bản ghi nào.' : `Hiện ${page * size + 1}–${Math.min(total, (page + 1) * size)} trong ${total} bản ghi.`) : 'Đang tải…'}</p>
+      {!focused && <h2 className="sect" ref={headRef}>{status === 'pending' ? tx`Các công chờ xác nhận` : status === 'open' ? tx`Các ca chưa ra ca` : status === '' ? tx`Danh sách công` : STATUS_OPTIONS.find((o) => o.id === status)?.label}</h2>}
+      <p className="muted">{data ? (total === 0 ? tx`Không có bản ghi nào.` : tx`Hiện ${page * size + 1}–${Math.min(total, (page + 1) * size)} trong ${total} bản ghi.`) : tx`Đang tải…`}</p>
       <table className="grid">
-        <thead><tr><th>Người · ngày</th><th>Giờ làm</th><th></th></tr></thead>
+        <thead><tr><th>{tx`Người · ngày`}</th><th>{tx`Giờ làm`}</th><th></th></tr></thead>
         <tbody>
           {rows.map((a) => (
             <tr key={a.id} className={a.status === 'rejected' ? 'off' : ''}>
               <td>
-                {a.worker_name}<span className="sub">{fmtDate(a.work_date)} · {hhmm(a.started_at)}{a.ended_at ? `–${hhmm(a.ended_at)}` : (a.work_date < today ? ' (quên ra ca)' : ' (đang trong ca)')}{a.source === 'kiosk' ? ' · máy chấm công' : ''}</span>
-                {(() => { const ab = absenceOn(abs, a.worker_id, a.work_date); return ab ? <span className="pill warn">Đã ghi nghỉ ngày này: {absenceBadge(ab)}, nhưng có chấm công</span> : null; })()}
+                {a.worker_name}<span className="sub">{fmtDate(a.work_date)} · {hhmm(a.started_at)}{a.ended_at ? `–${hhmm(a.ended_at)}` : (a.work_date < today ? tx` (quên ra ca)` : tx` (đang trong ca)`)}{a.source === 'kiosk' ? tx` · máy chấm công` : ''}</span>
+                {(() => { const ab = absenceOn(abs, a.worker_id, a.work_date); return ab ? <span className="pill warn">{tx`Đã ghi nghỉ ngày này:`}{' '}{absenceBadge(ab)}{tx`, nhưng có chấm công`}</span> : null; })()}
                 {a.exception_reason && <span className="sub">{a.exception_reason}</span>}
-                {a.has_photo && <span className="pill warn">Có ảnh cờ đỏ</span>}
+                {a.has_photo && <span className="pill warn">{tx`Có ảnh cờ đỏ`}</span>}
               </td>
               <td>
                 {a.ended_at ? fmtMinutes(a.status === 'confirmed' ? a.approved_minutes : a.declared_minutes) : '—'}
                 <span className={a.status === 'confirmed' ? 'pill ok' : a.status === 'rejected' ? 'pill err' : 'pill warn'}>{ATT_STATUS_LABEL[a.status]}</span>
               </td>
               <td className="act">
-                <RowMenu label={`Công ${a.worker_name} ${fmtDate(a.work_date)}`} items={[
+                <RowMenu label={tx`Công ${a.worker_name} ${fmtDate(a.work_date)}`} items={[
                   ...(!a.ended_at && a.status !== 'rejected' && a.work_date < today && canConfirm(a)
-                    ? [{ label: 'Đóng ca (nhập giờ ra)', icon: '⏹', disabled: busy || !online, onClick: () => closeOne(a) }] : []),
+                    ? [{ label: tx`Đóng ca (nhập giờ ra)`, icon: '⏹', disabled: busy || !online, onClick: () => closeOne(a) }] : []),
                   ...(a.ended_at && a.status !== 'rejected' && (a.worker_id === meId || canConfirm(a))
-                    ? [{ label: 'Đề nghị sửa giờ', icon: '✎', disabled: busy || !online, onClick: () => setAdjFor(adjFor === a.id ? null : a.id) }] : []),
+                    ? [{ label: tx`Đề nghị sửa giờ`, icon: '✎', disabled: busy || !online, onClick: () => setAdjFor(adjFor === a.id ? null : a.id) }] : []),
                   ...(a.ended_at && a.status === 'needs_confirmation' && canConfirm(a) ? [
-                    { label: 'Xác nhận công', icon: '✔', disabled: busy || !online, onClick: () => void run(() => confirmAttendance(a.id)) },
-                    { label: 'Từ chối công', icon: '✕', danger: true, disabled: busy || !online, onClick: () => {
-                      const r = window.prompt('Lý do từ chối công này?');
+                    { label: tx`Xác nhận công`, icon: '✔', disabled: busy || !online, onClick: () => void run(() => confirmAttendance(a.id)) },
+                    { label: tx`Từ chối công`, icon: '✕', danger: true, disabled: busy || !online, onClick: () => {
+                      const r = window.prompt(tx`Lý do từ chối công này?`);
                       if (r) void run(() => rejectAttendance(a.id, r));
                     } },
                   ] : []),
@@ -241,7 +244,7 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
 
       {(pages > 1 || size !== 50) && (
         <div className="btnrow">
-          <label className="inline-label">Số dòng mỗi trang
+          <label className="inline-label">{tx`Số dòng mỗi trang`}
             <select value={size} onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}>
               <option value={50}>50</option>
               <option value={100}>100</option>
@@ -252,14 +255,14 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
 
       {pages > 1 && (
         <div className="btnrow">
-          <button className="secondary" disabled={page === 0 || busy} onClick={() => setPage(page - 1)}>‹ Trước</button>
+          <button className="secondary" disabled={page === 0 || busy} onClick={() => setPage(page - 1)}>{tx`‹ Trước`}</button>
           <span className="muted pager">Trang {page + 1}/{pages}</span>
           <button className="secondary" disabled={page + 1 >= pages || busy} onClick={() => setPage(page + 1)}>Sau ›</button>
         </div>
       )}
 
       {isAdmin && (status === '' || status === 'pending') && (status === 'pending' ? total > 0 : rows.some((r) => r.status === 'needs_confirmation')) && (
-        <button className="primary" disabled={busy || !online} onClick={() => void bulk()}>✔ Xác nhận các công hợp lệ trong khoảng này</button>
+        <button className="primary" disabled={busy || !online} onClick={() => void bulk()}>{tx`✔ Xác nhận các công hợp lệ trong khoảng này`}</button>
       )}
 
       {adjRec && (
@@ -267,7 +270,7 @@ export function AttendanceList({ orgId, isAdmin, isOwner, meId, workers, online,
           onSave={(p, r) => run(async () => { await requestAdjustment(adjRec.id, p, r); setAdjFor(null); setAdjs(await listAdjustments(orgId)); })} />
       )}
 
-      <p className="muted">Chỉ công đã xác nhận mới được tính tiền. Công từ máy chấm công nằm ở trạng thái Chờ xác nhận cho tới khi bạn xác nhận.</p>
+      <p className="muted">{tx`Chỉ công đã xác nhận mới được tính tiền. Công từ máy chấm công nằm ở trạng thái Chờ xác nhận cho tới khi bạn xác nhận.`}</p>
     </>
   );
 }
@@ -284,27 +287,27 @@ function AdjustForm({ rec, busy, onSave, onClose }: {
   const [err, setErr] = useState<string | null>(null);
   return (
     <div className="card">
-      <h2>Đề nghị sửa công ngày {fmtDate(rec.work_date)}</h2>
+      <h2>{tx`Đề nghị sửa công ngày`}{' '}{fmtDate(rec.work_date)}</h2>
       <div className="inline-form">
         <div className="pair">
-          <label>Giờ vào<input type="time" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
-          <label>Giờ ra<input type="time" value={to} onChange={(e) => setTo(e.target.value)} /></label>
+          <label>{tx`Giờ vào`}<input type="time" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+          <label>{tx`Giờ ra`}<input type="time" value={to} onChange={(e) => setTo(e.target.value)} /></label>
         </div>
-        <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
-        <label>Lý do (bắt buộc)<input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Ví dụ: quên bấm Ra ca" /></label>
+        <label>{tx`Nghỉ giữa ca (phút)`}<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
+        <label>{tx`Lý do (bắt buộc)`}<input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={tx`Ví dụ: quên bấm Ra ca`} /></label>
         {err && <p className="msg error" role="alert">{err}</p>}
         <div className="btnrow">
           <button className="primary" disabled={busy} onClick={() => {
-            if (reason.trim().length < 3) return setErr('Hãy ghi lý do.');
-            if (!from || !to) return setErr('Hãy nhập giờ vào và giờ ra.');
+            if (reason.trim().length < 3) return setErr(tx`Hãy ghi lý do.`);
+            if (!from || !to) return setErr(tx`Hãy nhập giờ vào và giờ ra.`);
             const day = rec.work_date;
             const s = new Date(`${day}T${from}:00`);
             const e = new Date(`${day}T${to}:00`);
-            if (!(e > s)) return setErr('Giờ ra phải sau giờ vào.');
+            if (!(e > s)) return setErr(tx`Giờ ra phải sau giờ vào.`);
             setErr(null);
             void onSave({ started_at: s.toISOString(), ended_at: e.toISOString(), break_minutes: Math.max(0, parseInt(brk || '0', 10) || 0) }, reason).catch(() => undefined);
-          }}>Gửi đề nghị</button>
-          <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+          }}>{tx`Gửi đề nghị`}</button>
+          <button type="button" className="secondary" onClick={onClose}>{tx`Hủy`}</button>
         </div>
       </div>
     </div>

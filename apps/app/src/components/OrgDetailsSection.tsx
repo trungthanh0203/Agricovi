@@ -1,3 +1,4 @@
+import { normalizeDecimal } from '../lib/format';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { friendlyError } from '../lib/errors';
 import { EMPTY_DETAILS, fetchOrgDetails, missingCount, saveOrgDetails, type OrgDetails } from '../lib/orgDetails';
@@ -38,10 +39,10 @@ export function OrgDetailsSection() {
     const year = d.started_year.trim();
     if (year && !/^\d{4}$/.test(year)) return setMsg({ ok: false, text: 'Năm bắt đầu gồm 4 chữ số, ví dụ 2019.' });
     const area = d.total_area_m2.trim();
-    if (area && (Number.isNaN(Number(area.replace(',', '.'))) || Number(area.replace(',', '.')) < 0)) return setMsg({ ok: false, text: 'Diện tích phải là số không âm (đơn vị m²).' });
+    if (area && (Number.isNaN(Number(normalizeDecimal(area))) || Number(normalizeDecimal(area)) < 0)) return setMsg({ ok: false, text: 'Diện tích phải là số không âm (đơn vị m²).' });
     setBusy(true);
     try {
-      const v = await saveOrgDetails(orgId, { ...d, total_area_m2: area.replace(',', '.') }, version);
+      const v = await saveOrgDetails(orgId, { ...d, total_area_m2: normalizeDecimal(area) }, version);
       setVersion(v);
       setMsg({ ok: true, text: 'Đã lưu thông tin cơ sở.' });
     } catch (err) {

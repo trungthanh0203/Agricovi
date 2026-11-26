@@ -1,3 +1,4 @@
+import { normalizeDecimal } from '../lib/format';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AreaFilterField, useAreaFilter } from './AreaPick';
 import { Collapsible } from './Collapsible';
@@ -75,7 +76,7 @@ export function PieceJobsSection({ orgId, range, people, online, onChanged, stan
     let workers: { worker_id: string; pct: number | null }[];
     if (form.split === 'equal') workers = form.picked.map((w) => ({ worker_id: w, pct: null }));
     else {
-      workers = form.picked.map((w) => ({ worker_id: w, pct: Number((form.pcts[w] ?? '').replace(',', '.')) }));
+      workers = form.picked.map((w) => ({ worker_id: w, pct: Number(normalizeDecimal((form.pcts[w] ?? ''))) }));
       const sum = workers.reduce((s, w) => s + (w.pct ?? 0), 0);
       if (workers.some((w) => !(w.pct! > 0)) || Math.abs(sum - 100) > 0.01) return setError(`Tổng phần chia phải bằng 100% (hiện là ${Math.round(sum * 100) / 100}%).`);
     }
@@ -152,7 +153,7 @@ export function PieceJobsSection({ orgId, range, people, online, onChanged, stan
       {data && jobs.length === 0 && <p className="muted">Chưa có phiếu khoán nào trong kỳ này.</p>}
       {jobs.map((j) => {
         const st = statusText(j);
-        const q = confirming?.id === j.id ? Number(confirming.qty.replace(',', '.')) : NaN;
+        const q = confirming?.id === j.id ? Number(normalizeDecimal(confirming.qty)) : NaN;
         const total = j.pay_mode === 'lump' ? j.lump_amount ?? 0 : Number.isFinite(q) && q > 0 ? Math.round((j.unit_price ?? 0) * q) : 0;
         const prev = total > 0 ? previewShares(total, j.shares.map((s) => s.pct)) : [];
         return (

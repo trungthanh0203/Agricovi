@@ -1,3 +1,4 @@
+import { numberToInput } from '../lib/format';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SupplierForm } from './PartnersSection';
 import { friendlyError } from '../lib/errors';
@@ -90,7 +91,7 @@ export function InvoiceScanner({ orgId, partners, mats, units, reloadPartners, o
         const m = matchMaterial(l.ten, mats, al, ps?.id ?? null);
         return {
           key: crypto.randomUUID(), ten: l.ten, unit: l.don_vi, materialId: m?.id ?? '', via: m?.via ?? null, include: true, factor: '', newOpen: false,
-          qty: l.so_luong !== null ? String(l.so_luong).replace('.', ',') : '', price: l.don_gia !== null ? String(l.don_gia) : (l.so_luong && l.thanh_tien ? String(Math.round(l.thanh_tien / l.so_luong)) : ''),
+          qty: l.so_luong !== null ? numberToInput(l.so_luong) : '', price: l.don_gia !== null ? String(l.don_gia) : (l.so_luong && l.thanh_tien ? String(Math.round(l.thanh_tien / l.so_luong)) : ''),
           warn: l.so_luong === null || l.don_gia === null,
         };
       }));
@@ -123,7 +124,7 @@ export function InvoiceScanner({ orgId, partners, mats, units, reloadPartners, o
         if (price !== null && !Number.isNaN(price)) price = Math.round(price / f);
       }
       if (price !== null && !Number.isNaN(price) && (!Number.isInteger(price) || price < 0)) return setError(`${label}: đơn giá phải là số tiền (đồng).`);
-      out.push({ materialId: l.materialId, qty: String(qty).replace('.', ','), cost: price !== null && !Number.isNaN(price) ? String(price) : '' });
+      out.push({ materialId: l.materialId, qty: numberToInput(qty), cost: price !== null && !Number.isNaN(price) ? String(price) : '' });
       void i;
     }
     const total = parseNumber(totalText);

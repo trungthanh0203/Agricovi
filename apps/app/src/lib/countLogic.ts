@@ -115,9 +115,10 @@ export function lossStatus(
 
 /** Câu cảnh báo ngắn gọn cho người dùng; mảng rỗng nếu không có cảnh báo */
 export function lossMessages(st: LossStatus, th: LossThresholds, unit: string): string[] {
-  const f = (n: number) => String(n).replace('.', ',');
+  const f = (n: number) => numberToInput(n);
   const out: string[] = [];
   if (st.cumAlert && st.cumPct !== null) out.push(`Hao hụt cộng dồn ${f(st.cumPct)}%, đã tới ngưỡng ${f(th.cumPct)}%.`);
   if (st.weekAlert && st.weekPct !== null && th.weekPct !== null) out.push(`7 ngày gần đây hao ${f(st.weekPct)}% (${st.weekLoss.toLocaleString('vi-VN')} ${unit}), vượt ngưỡng ${f(th.weekPct)}%.`);
   return out;
-}
+}import { numberToInput } from './format';
+

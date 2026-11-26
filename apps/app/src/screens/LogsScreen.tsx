@@ -19,6 +19,9 @@ import { useTable } from '../lib/tables';
 import { CycleWord } from '../components/CycleWord';
 import { areaPath, areaName } from '../lib/areas';
 import { cycleTitle } from '../lib/cycles';
+import { t as tx } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
+import { dateLocale } from '../lib/format';
 
 const PAGE = 30;
 const OWN_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // khớp chính sách logs_update_own ở máy chủ
@@ -66,7 +69,7 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
 
   const cycleLabel = (id: string | null, areaId?: string | null) => {
     const c = cycles.find((x) => x.id === id);
-    if (!c) return areaPath(areaId, areas) ? `Khu vực · ${areaPath(areaId, areas)}` : '';
+    if (!c) return areaPath(areaId, areas) ? tx`Khu vực · ${areaPath(areaId, areas)}` : '';
     return `${cycleTitle(c, cropTypes.find((t) => t.id === c.crop_type_id)?.name ?? '')} · ${areaName(c.area_id, areas)}`;
   };
 
@@ -89,7 +92,7 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
   const visible = filtered.slice(0, limit);
 
   /** Người làm (vai trò); việc mình vừa ghi offline chưa có bản chụp từ máy chủ thì hiện "Bạn" */
-  const whoLabel = (l: LogRow) => authorLabel(l.author_name, l.author_roles) || (uid && l.created_by === uid ? 'Bạn' : '');
+  const whoLabel = (l: LogRow) => authorLabel(l.author_name, l.author_roles) || (uid && l.created_by === uid ? tx`Bạn` : '');
 
   function canEdit(l: LogRow): boolean {
     if (l.voided_at) return false;
@@ -109,7 +112,7 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
     setLoadingOld(true);
     try {
       const n = await loadOlderLogs(oldest);
-      if (n === 0) setMsg('Đã tải hết nhật ký.');
+      if (n === 0) setMsg(tx`Đã tải hết nhật ký.`);
       else setLimit((x) => x + PAGE);
     } catch (e) {
       setMsg(friendlyError(e));
@@ -119,7 +122,7 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
   }
 
   async function confirmVoid(id: string) {
-    if (reason.trim().length < 3) return setMsg('Hãy ghi lý do hủy (ít nhất 3 ký tự).');
+    if (reason.trim().length < 3) return setMsg(tx`Hãy ghi lý do hủy (ít nhất 3 ký tự).`);
     try {
       await voidLog(id, reason);
       setVoiding(null);
@@ -136,36 +139,36 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
     <main className={embedded ? '' : 'auth wide'}>
       {!embedded && (
         <div className="row">
-          <h1>Nhật ký</h1>
-          <button className="link" onClick={onClose}>Đóng</button>
+          <h1>{tx`Nhật ký`}</h1>
+          <button className="link" onClick={onClose}>{tx`Đóng`}</button>
         </div>
       )}
 
       <AreaFilterField f={af} onPick={() => { setCycleId(''); setLimit(PAGE); }} />
-      {!af.pending && <CycleSelect label={<CycleWord cap />} cycles={af.cyclesIn(myCycles)} value={cycleId} onChange={(v) => { setCycleId(v); setLimit(PAGE); }} labelOf={cycleLabel} emptyLabel="Tất cả vụ" />}
+      {!af.pending && <CycleSelect label={<CycleWord cap />} cycles={af.cyclesIn(myCycles)} value={cycleId} onChange={(v) => { setCycleId(v); setLimit(PAGE); }} labelOf={cycleLabel} emptyLabel={tx`Tất cả vụ`} />}
       <div className="filters">
         <label>
-          Loại việc
+          {tx`Loại việc`}
           <select value={typeId} onChange={(e) => { setTypeId(e.target.value); setLimit(PAGE); }}>
-            <option value="">Tất cả loại việc</option>
+            <option value="">{tx`Tất cả loại việc`}</option>
             {workTypes.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
           </select>
         </label>
         <div className="two">
-          <label>Từ ngày<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
-          <label>Đến ngày<input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
+          <label>{tx`Từ ngày`}<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+          <label>{tx`Đến ngày`}<input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
         </div>
         <label className="check">
           <input type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
-          Hiện cả bản ghi đã hủy
+          {tx`Hiện cả bản ghi đã hủy`}
         </label>
       </div>
 
-      {!online && <p className="muted">Đang offline: vẫn ghi được việc mới (tự gửi khi có mạng); sửa và hủy cần có mạng.</p>}
+      {!online && <p className="muted">{tx`Đang offline: vẫn ghi được việc mới (tự gửi khi có mạng); sửa và hủy cần có mạng.`}</p>}
       {msg && <p className="msg warn" role="status">{msg}</p>}
-      {!af.pending && <p className="muted">{filtered.length} bản ghi</p>}
-      {af.pending && <p className="muted">Chọn phân khu (hoặc Tất cả phân khu) để xem nhật ký.</p>}
-      {!af.pending && filtered.length === 0 && <p className="muted">Không có nhật ký nào khớp bộ lọc.</p>}
+      {!af.pending && <p className="muted"><Trans>{filtered.length} bản ghi</Trans></p>}
+      {af.pending && <p className="muted">{tx`Chọn phân khu (hoặc Tất cả phân khu) để xem nhật ký.`}</p>}
+      {!af.pending && filtered.length === 0 && <p className="muted">{tx`Không có nhật ký nào khớp bộ lọc.`}</p>}
 
       {visible.map((l) => {
         const wt = workTypes.find((w) => w.id === l.work_type_id);
@@ -174,10 +177,10 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
         return (
           <div className={l.voided_at ? 'card slim voided' : 'card slim'} key={l.id}>
             <div className="row">
-              <strong>{wt?.name ?? 'Việc'}{whoLabel(l) ? ` - ${whoLabel(l)}` : ''}</strong>
+              <strong>{wt?.name ?? tx`Việc`}{whoLabel(l) ? ` - ${whoLabel(l)}` : ''}</strong>
               <span className="muted">
-                {new Date(l.performed_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
-                {typeof l.data?.ended_at === 'string' ? ` → ${new Date(l.data.ended_at).toLocaleTimeString('vi-VN', { timeStyle: 'short' })}` : ''}
+                {new Date(l.performed_at).toLocaleString(dateLocale(), { dateStyle: 'short', timeStyle: 'short' })}
+                {typeof l.data?.ended_at === 'string' ? ` → ${new Date(l.data.ended_at).toLocaleTimeString(dateLocale(), { timeStyle: 'short' })}` : ''}
               </span>
             </div>
             <p className="muted">{cycleLabel(l.cycle_id, l.area_id)}</p>
@@ -185,34 +188,34 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
             {wtRaw && fieldAlerts(fieldsForKind(wtRaw, active?.id, kindOfLog(l)), l.data).map((a) => <span key={a.key} className="pill warn">⚠ {a.text}</span>)}
             {l.note && <p>{l.note}</p>}
             <div className="badges">
-              {l.version > 1 && !l.voided_at && <span className="pill">Đã chỉnh sửa</span>}
-              {(() => { const g = typeof l.data?.shared_group === 'string' ? l.data.shared_group : null; const n = g ? logs.filter((x) => x.id !== l.id && !x.voided_at && x.data?.shared_group === g).length : 0; return n > 0 ? <span className="pill">Làm chung với {n} vụ khác</span> : null; })()}
-              {l.voided_at && <span className="pill err">Đã hủy</span>}
+              {l.version > 1 && !l.voided_at && <span className="pill">{tx`Đã chỉnh sửa`}</span>}
+              {(() => { const g = typeof l.data?.shared_group === 'string' ? l.data.shared_group : null; const n = g ? logs.filter((x) => x.id !== l.id && !x.voided_at && x.data?.shared_group === g).length : 0; return n > 0 ? <span className="pill"><Trans>Làm chung với {n} vụ khác</Trans></span> : null; })()}
+              {l.voided_at && <span className="pill err">{tx`Đã hủy`}</span>}
               <SyncBadge sync={s} />
             </div>
-            {l.voided_at && l.void_reason && <p className="muted">Lý do hủy: {l.void_reason}</p>}
+            {l.voided_at && l.void_reason && <p className="muted"><Trans>Lý do hủy: {l.void_reason}</Trans></p>}
 
             {onClone && !l.voided_at && voiding !== l.id && (
               <div className="actions">
-                <button className="secondary" onClick={() => onClone(l.id)}>Nhân bản</button>
+                <button className="secondary" onClick={() => onClone(l.id)}>{tx`Nhân bản`}</button>
               </div>
             )}
             {canEdit(l) && voiding !== l.id && (
               <div className="actions">
-                <button className="secondary" onClick={() => setEditing(l.id)}>Sửa</button>
-                <button className="secondary" onClick={() => { setVoiding(l.id); setReason(''); setMsg(null); }}>Hủy bản ghi</button>
+                <button className="secondary" onClick={() => setEditing(l.id)}>{tx`Sửa`}</button>
+                <button className="secondary" onClick={() => { setVoiding(l.id); setReason(''); setMsg(null); }}>{tx`Hủy bản ghi`}</button>
               </div>
             )}
             {voiding === l.id && (
               <div className="inline-form">
                 <label>
-                  Lý do hủy
-                  <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Ví dụ: ghi nhầm vụ" />
+                  {tx`Lý do hủy`}
+                  <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={tx`Ví dụ: ghi nhầm vụ`} />
                 </label>
-                <p className="muted">Bản ghi không bị xóa, chỉ được đánh dấu đã hủy và không khôi phục được.</p>
+                <p className="muted">{tx`Bản ghi không bị xóa, chỉ được đánh dấu đã hủy và không khôi phục được.`}</p>
                 <div className="actions">
-                  <button className="secondary" onClick={() => void confirmVoid(l.id)}>Xác nhận hủy</button>
-                  <button className="link" onClick={() => setVoiding(null)}>Không hủy</button>
+                  <button className="secondary" onClick={() => void confirmVoid(l.id)}>{tx`Xác nhận hủy`}</button>
+                  <button className="link" onClick={() => setVoiding(null)}>{tx`Không hủy`}</button>
                 </div>
               </div>
             )}
@@ -222,7 +225,7 @@ export function LogsScreen({ onClose, embedded, onClone }: { onClose: () => void
 
       {filtered.length > 0 && (
         <button className="secondary" disabled={loadingOld} onClick={() => void loadMore()}>
-          {limit < filtered.length ? 'Xem thêm' : loadingOld ? 'Đang tải…' : 'Tải nhật ký cũ hơn từ máy chủ'}
+          {limit < filtered.length ? tx`Xem thêm` : loadingOld ? tx`Đang tải…` : tx`Tải nhật ký cũ hơn từ máy chủ`}
         </button>
       )}
     </main>

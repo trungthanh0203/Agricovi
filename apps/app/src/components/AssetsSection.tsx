@@ -1,3 +1,4 @@
+import { normalizeDecimal, numberToInput } from '../lib/format';
 import { useCallback, useEffect, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { areaPath } from '../lib/areas';
@@ -52,7 +53,7 @@ export function AssetsSection() {
 
   async function save() {
     if (!form) return;
-    const cost = parseNumber(form.cost), salvage = parseNumber(form.salvage || '0'), life = Number(form.life.replace(',', '.'));
+    const cost = parseNumber(form.cost), salvage = parseNumber(form.salvage || '0'), life = Number(normalizeDecimal(form.life));
     const every = form.every.trim() ? Number(form.every) : null;
     if (form.name.trim().length < 1) return setError('Hãy nhập tên tài sản.');
     if (cost === null || Number.isNaN(cost) || cost <= 0) return setError('Hãy nhập giá mua lớn hơn 0.');
@@ -115,7 +116,7 @@ export function AssetsSection() {
           </div>
           <label>Bảo dưỡng mỗi (tháng; để trống nếu không cần nhắc)<input value={form.every} inputMode="numeric" onChange={(e) => setForm({ ...form, every: e.target.value })} /></label>
           <label>Ghi chú (không bắt buộc)<input value={form.note} maxLength={300} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
-          <p className="muted">Khấu hao mỗi tháng khoảng {formatMoney(monthlyAmount({ cost: parseNumber(form.cost) ?? 0, salvage: parseNumber(form.salvage || '0') ?? 0, life_years: Number(form.life.replace(',', '.')) || 0 }))}, bắt đầu từ tháng sau tháng mua.</p>
+          <p className="muted">Khấu hao mỗi tháng khoảng {formatMoney(monthlyAmount({ cost: parseNumber(form.cost) ?? 0, salvage: parseNumber(form.salvage || '0') ?? 0, life_years: Number(normalizeDecimal(form.life)) || 0 }))}, bắt đầu từ tháng sau tháng mua.</p>
           <div className="btnrow">
             <button type="button" className="primary" disabled={busy || !online} onClick={() => void save()}>{form.version === null ? 'Lưu tài sản' : 'Lưu thay đổi'}</button>
             <button type="button" className="secondary" onClick={() => { setForm(null); setError(null); }}>Hủy</button>
@@ -159,7 +160,7 @@ export function AssetsSection() {
         return (
           <div className={a.status === 'disposed' ? 'card slim voided' : 'card slim'} key={a.id}>
             <div className="row"><strong>{a.name}</strong><span className="muted">{ASSET_KIND_LABEL[a.kind]}</span></div>
-            <p className="muted">{placeName(a.area_id)} · mua {fmtDate(a.purchase_date)} · {formatMoney(a.cost)} · dùng {String(a.life_years).replace('.', ',')} năm</p>
+            <p className="muted">{placeName(a.area_id)} · mua {fmtDate(a.purchase_date)} · {formatMoney(a.cost)} · dùng {numberToInput(a.life_years)} năm</p>
             {a.status === 'disposed'
               ? <p className="muted">Đã thanh lý {a.disposed_date ? fmtDate(a.disposed_date) : ''}</p>
               : <p>Khấu hao khoảng {formatMoney(monthlyAmount(a))}/tháng{next ? <span className={due ? 'msg warn' : 'muted'}> · bảo dưỡng {due ? 'đã đến hạn từ' : 'kế tiếp'} {fmtDate(next)}</span> : null}</p>}

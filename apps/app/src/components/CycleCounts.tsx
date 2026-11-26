@@ -1,3 +1,4 @@
+import { numberToInput } from '../lib/format';
 import { useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { useAuth } from '../lib/auth';
@@ -65,7 +66,7 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
   if (!cycle) return null;
   const closed = cycle.status === 'ended' || cycle.status === 'cancelled';
 
-  const summary = s.remaining === null ? 'chưa có số liệu' : `còn ${fmt(s.remaining)} ${unit}${s.lossPct !== null && s.dead + s.culled > 0 ? ` · hao ${String(s.lossPct).replace('.', ',')}%` : ''}`;
+  const summary = s.remaining === null ? 'chưa có số liệu' : `còn ${fmt(s.remaining)} ${unit}${s.lossPct !== null && s.dead + s.culled > 0 ? ` · hao ${numberToInput(s.lossPct)}%` : ''}`;
 
   async function save() {
     const n = Number(qty.replace(/[.,\s]/g, ''));
@@ -124,8 +125,8 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
           {s.culled > 0 && <div className="row"><span>Loại thải</span><strong>−{fmt(s.culled)}</strong></div>}
           {s.out > 0 && <div className="row"><span>Xuất / chuyển đi{harvestOut > 0 ? ' (gồm phiếu thu hoạch)' : ''}</span><strong>−{fmt(s.out)}</strong></div>}
           <div className="row"><span>Còn lại</span><strong>{fmt(s.remaining)} {unit}</strong></div>
-          {s.lossPct !== null && <div className="row"><span>Tỉ lệ hao (chết + loại)</span><strong>{String(s.lossPct).replace('.', ',')}%</strong></div>}
-          {s.m2PerUnit !== null && <div className="row"><span>Diện tích mỗi {unit}</span><strong>{String(s.m2PerUnit).replace('.', ',')} m²</strong></div>}
+          {s.lossPct !== null && <div className="row"><span>Tỉ lệ hao (chết + loại)</span><strong>{numberToInput(s.lossPct)}%</strong></div>}
+          {s.m2PerUnit !== null && <div className="row"><span>Diện tích mỗi {unit}</span><strong>{numberToInput(s.m2PerUnit)} m²</strong></div>}
         </div>
       )}
 
@@ -172,7 +173,7 @@ export function CycleCounts({ cycleId, canManage, userId, online, today }: { cyc
       )}
 
       {canLimits && (
-        <Collapsible inline title="⚙ Ngưỡng cảnh báo hao hụt" summary={`cộng dồn ${String(th.cumPct).replace('.', ',')}% · 7 ngày ${th.weekPct === null ? 'tắt' : `${String(th.weekPct).replace('.', ',')}%`}`}>
+        <Collapsible inline title="⚙ Ngưỡng cảnh báo hao hụt" summary={`cộng dồn ${numberToInput(th.cumPct)}% · 7 ngày ${th.weekPct === null ? 'tắt' : `${numberToInput(th.weekPct)}%`}`}>
           <p className="muted">Áp cho mọi vụ/lứa của cơ sở. Chỉ là nhắc, không chặn việc ghi. Nên hỏi cán bộ thú y/kỹ thuật để chọn mức phù hợp.</p>
           {limMsg && <p className="msg ok" role="status">{limMsg}</p>}
           <div className="inline-form">

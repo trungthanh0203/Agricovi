@@ -7,7 +7,7 @@ import type { FieldDef } from './db';
  */
 export interface FieldAlert { key: string; label: string; text: string }
 
-const fmt = (n: number) => String(n).replace('.', ',');
+const fmt = (n: number) => numberToInput(n);
 
 /** Cảnh báo của MỘT ô: chuỗi nhập (hoặc số đã lưu); null nếu trong ngưỡng, trống hoặc không có ngưỡng */
 export function alertOf(def: FieldDef, raw: unknown): string | null {

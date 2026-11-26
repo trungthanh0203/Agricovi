@@ -1,3 +1,4 @@
+import { normalizeDecimal } from './format';
 import { countSummary, type CountEventLite } from './countLogic';
 import type { FeedByDate } from './growthLogic';
 
@@ -32,7 +33,7 @@ export function parseNormRows(rows: { from_day: string; kg: string }[]): { ok: t
   const out: FeedNorm[] = [];
   for (const r of rows) {
     if (!r.from_day.trim() && !r.kg.trim()) continue; // bỏ dòng trống
-    const d = Number(r.from_day.replace(/\s/g, '')), k = Number(r.kg.replace(/\s/g, '').replace(',', '.'));
+    const d = Number(r.from_day.replace(/\s/g, '')), k = Number(normalizeDecimal(r.kg.replace(/\s/g, '')));
     if (!Number.isInteger(d) || d < 0 || d > 3650) return { ok: false, error: 'Ngày tuổi phải là số nguyên từ 0 đến 3650.' };
     if (!Number.isFinite(k) || k <= 0 || k > 50) return { ok: false, error: 'Lượng cám phải lớn hơn 0 và không quá 50 kg/con/ngày.' };
     out.push({ from_day: d, kg: k });

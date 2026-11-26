@@ -12,6 +12,8 @@ import { useOrgs } from '../lib/orgs';
 import { createCustomer, createSupplier, listCustomers, listSuppliers } from '../lib/partners';
 import { canPerm } from '../lib/permissions';
 import { supabase } from '../lib/supabase';
+import { t as tx } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
 /**
  * Các ô "chọn từ danh mục" dùng khi ghi việc và khai báo vụ (nhóm A, D159): thay cho ô gõ tay.
@@ -34,14 +36,14 @@ export function NamePicker({ label, value, onChange, names, hint, emptyHint }: {
           if (v === '__legacy') return;
           onChange(v);
         }}>
-          <option value="">— Chọn từ danh mục —</option>
-          {value && !known && <option value="__legacy">{value} (đang ghi)</option>}
+          <option value="">{tx`— Chọn từ danh mục —`}</option>
+          {value && !known && <option value="__legacy"><Trans>{value} (đang ghi)</Trans></option>}
           {names.map((n) => <option key={n} value={n}>{n}</option>)}
-          <option value="__other">Khác (gõ tên)</option>
+          <option value="__other">{tx`Khác (gõ tên)`}</option>
         </select>
         {names.length === 0 && emptyHint && <small className="muted">{emptyHint}</small>}
       </label>
-      {other && <label>Tên khác<input value={known ? '' : value} maxLength={120} placeholder={hint} onChange={(e) => onChange(e.target.value)} /></label>}
+      {other && <label>{tx`Tên khác`}<input value={known ? '' : value} maxLength={120} placeholder={hint} onChange={(e) => onChange(e.target.value)} /></label>}
     </>
   );
 }
@@ -57,7 +59,7 @@ export function useMaterialNames(groups?: string[]): string[] {
 /** Loại cám: chọn từ vật tư nhóm Thức ăn */
 export function FeedNamePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const names = useMaterialNames(['feed']);
-  return <NamePicker label="Loại cám (không bắt buộc)" value={value} onChange={onChange} names={names} hint="Ví dụ: Cám heo vỗ béo" emptyHint="Chưa có vật tư nhóm Thức ăn. Thêm ở Khai báo → Vật tư để chọn nhanh lần sau, hoặc chọn 'Khác (gõ tên)'." />;
+  return <NamePicker label={tx`Loại cám (không bắt buộc)`} value={value} onChange={onChange} names={names} hint={tx`Ví dụ: Cám heo vỗ béo`} emptyHint={tx`Chưa có vật tư nhóm Thức ăn. Thêm ở Khai báo → Vật tư để chọn nhanh lần sau, hoặc chọn 'Khác (gõ tên)'.`} />;
 }
 
 /** Khách hàng / nhà cung cấp: chọn từ danh bạ, thêm mới ngay tại chỗ. Cần mạng và quyền xem Chi phí; không được thì gõ tay. */
@@ -95,16 +97,16 @@ export function PartnerNamePicker({ kind, label, value, onChange, hint }: { kind
           if (v === '__legacy') return;
           onChange(v);
         }}>
-          <option value="">— Chọn từ danh bạ —</option>
-          {value && !known && <option value="__legacy">{value} (đang ghi)</option>}
+          <option value="">{tx`— Chọn từ danh bạ —`}</option>
+          {value && !known && <option value="__legacy"><Trans>{value} (đang ghi)</Trans></option>}
           {names.map((n) => <option key={n} value={n}>{n}</option>)}
-          <option value="__new">{kind === 'customer' ? '＋ Thêm khách hàng mới' : '＋ Thêm nhà cung cấp mới'}</option>
+          <option value="__new">{kind === 'customer' ? tx`＋ Thêm khách hàng mới` : tx`＋ Thêm nhà cung cấp mới`}</option>
         </select>
       </label>
       {adding && (kind === 'customer'
-        ? <CustomerForm title="Thêm khách hàng" busy={busy} onClose={() => setAdding(false)}
+        ? <CustomerForm title={tx`Thêm khách hàng`} busy={busy} onClose={() => setAdding(false)}
             onSave={async (f) => { setBusy(true); try { await createCustomer(orgId, f); await load(); onChange(f.name.trim()); setAdding(false); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); } }} />
-        : <SupplierForm title="Thêm nhà cung ứng" busy={busy} onClose={() => setAdding(false)}
+        : <SupplierForm title={tx`Thêm nhà cung ứng`} busy={busy} onClose={() => setAdding(false)}
             onSave={async (f) => { setBusy(true); try { await createSupplier(orgId, f); await load(); onChange(f.name.trim()); setAdding(false); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); } }} />)}
       {error && <p className="msg error" role="alert">{error}</p>}
     </>
@@ -129,8 +131,8 @@ export function SupervisorFields({ name, phone, onChange }: { name: string; phon
 
   const typed = (
     <div className="pair">
-      <label>Cán bộ kỹ thuật / thú y phụ trách<input value={name} maxLength={120} onChange={(e) => onChange(e.target.value, phone)} placeholder="Không bắt buộc" /></label>
-      <label>Điện thoại<input value={phone} maxLength={30} inputMode="tel" onChange={(e) => onChange(name, e.target.value)} /></label>
+      <label>{tx`Cán bộ kỹ thuật / thú y phụ trách`}<input value={name} maxLength={120} onChange={(e) => onChange(e.target.value, phone)} placeholder={tx`Không bắt buộc`} /></label>
+      <label>{tx`Điện thoại`}<input value={phone} maxLength={30} inputMode="tel" onChange={(e) => onChange(name, e.target.value)} /></label>
     </div>
   );
   if (!workers || workers.length === 0) return typed;
@@ -138,7 +140,7 @@ export function SupervisorFields({ name, phone, onChange }: { name: string; phon
   const sel = other ? '__other' : hit ? hit.id : name ? '__legacy' : '';
   return (
     <>
-      <label>Cán bộ kỹ thuật / thú y phụ trách
+      <label>{tx`Cán bộ kỹ thuật / thú y phụ trách`}
         <select value={sel} onChange={(e) => {
           const v = e.target.value;
           if (v === '__other') { setOther(true); return; }
@@ -148,14 +150,14 @@ export function SupervisorFields({ name, phone, onChange }: { name: string; phon
           const w = workers.find((x) => x.id === v);
           if (w) onChange(w.full_name, w.phone ?? '');
         }}>
-          <option value="">— Chọn từ nhân sự —</option>
-          {name && !hit && <option value="__legacy">{name} (đang ghi)</option>}
+          <option value="">{tx`— Chọn từ nhân sự —`}</option>
+          {name && !hit && <option value="__legacy"><Trans>{name} (đang ghi)</Trans></option>}
           {workers.map((w) => <option key={w.id} value={w.id}>{w.full_name}{w.phone ? ` · ${w.phone}` : ''}</option>)}
-          <option value="__other">Người ngoài cơ sở (gõ tên)</option>
+          <option value="__other">{tx`Người ngoài cơ sở (gõ tên)`}</option>
         </select>
       </label>
       {(other || (!hit && name)) && typed}
-      {hit && <p className="muted">Điện thoại: {phone || 'chưa có'}</p>}
+      {hit && <p className="muted">{tx`Điện thoại:`}{' '}{phone || tx`chưa có`}</p>}
     </>
   );
 }
@@ -182,16 +184,16 @@ export function ChipsPicker({ label, value, onChange, options, hint }: { label: 
       <legend>{label}</legend>
       <div className="pickchips">
         {options.map((o) => <button key={o} type="button" className={has(o) ? 'chip active' : 'chip'} aria-pressed={has(o)} onClick={() => toggle(o)}>{o}</button>)}
-        {extra.map((o) => <button key={o} type="button" className="chip active" aria-pressed title="Đang ghi, chưa có trong danh sách (bấm để bỏ)" onClick={() => toggle(o)}>{o} ✕</button>)}
-        {!adding && <button type="button" className="chip" onClick={() => setAdding(true)}>＋ Thêm khác</button>}
+        {extra.map((o) => <button key={o} type="button" className="chip active" aria-pressed title={tx`Đang ghi, chưa có trong danh sách (bấm để bỏ)`} onClick={() => toggle(o)}>{o} ✕</button>)}
+        {!adding && <button type="button" className="chip" onClick={() => setAdding(true)}>{tx`＋ Thêm khác`}</button>}
       </div>
       {options.length === 0 && extra.length === 0 && hint && <small className="muted">{hint}</small>}
       {adding && (
         <div className="pair">
-          <input value={text} maxLength={60} placeholder="Tên mục khác" onChange={(e) => setText(e.target.value)} />
+          <input value={text} maxLength={60} placeholder={tx`Tên mục khác`} onChange={(e) => setText(e.target.value)} />
           <div className="btnrow">
-            <button type="button" className="secondary" onClick={() => { const t = text.trim(); if (t && !has(t)) onChange(joinItems([...chosen, t])); setText(''); setAdding(false); }}>Thêm</button>
-            <button type="button" className="link" onClick={() => { setText(''); setAdding(false); }}>Hủy</button>
+            <button type="button" className="secondary" onClick={() => { const t = text.trim(); if (t && !has(t)) onChange(joinItems([...chosen, t])); setText(''); setAdding(false); }}>{tx`Thêm`}</button>
+            <button type="button" className="link" onClick={() => { setText(''); setAdding(false); }}>{tx`Hủy`}</button>
           </div>
         </div>
       )}

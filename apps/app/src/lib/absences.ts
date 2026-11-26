@@ -1,4 +1,6 @@
 import { supabase } from './supabase';
+import { t } from '@lingui/core/macro';
+import { dateLocale } from './format';
 
 /**
  * Ghi nghỉ việc theo chấm công (D189, migration 0223). Người làm ít dùng app nên chủ/quản lý (tổ trưởng với người trong tổ) ghi hộ.
@@ -6,14 +8,14 @@ import { supabase } from './supabase';
  */
 export type AbsenceKind = 'annual' | 'sick' | 'family' | 'unpaid' | 'no_notice' | 'other';
 export const ABSENCE_KIND_LABEL: Record<AbsenceKind, string> = {
-  annual: 'Phép năm', sick: 'Ốm', family: 'Việc gia đình', unpaid: 'Nghỉ không lương', no_notice: 'Nghỉ không báo trước', other: 'Khác',
+  get annual() { return t`Phép năm`; }, get sick() { return t`Ốm`; }, get family() { return t`Việc gia đình`; }, get unpaid() { return t`Nghỉ không lương`; }, get no_notice() { return t`Nghỉ không báo trước`; }, other: 'Khác',
 };
 /** Loại nghỉ thường được hưởng lương (chỉ là gợi ý ô "Hưởng lương", chủ đổi được) */
 export const ABSENCE_KIND_PAID: Record<AbsenceKind, boolean> = { annual: true, sick: true, family: true, unpaid: false, no_notice: false, other: false };
 export type AbsenceNotice = 'before' | 'after' | 'none';
-export const ABSENCE_NOTICE_LABEL: Record<AbsenceNotice, string> = { before: 'Có xin phép trước', after: 'Báo sau', none: 'Không báo' };
+export const ABSENCE_NOTICE_LABEL: Record<AbsenceNotice, string> = { get before() { return t`Có xin phép trước`; }, get after() { return t`Báo sau`; }, get none() { return t`Không báo`; } };
 export type AbsenceChannel = 'in_person' | 'phone' | 'zalo' | 'other';
-export const ABSENCE_CHANNEL_LABEL: Record<AbsenceChannel, string> = { in_person: 'Trực tiếp', phone: 'Điện thoại', zalo: 'Zalo', other: 'Cách khác' };
+export const ABSENCE_CHANNEL_LABEL: Record<AbsenceChannel, string> = { get in_person() { return t`Trực tiếp`; }, get phone() { return t`Điện thoại`; }, zalo: 'Zalo', get other() { return t`Cách khác`; } };
 
 export interface Absence {
   id: string; organization_id: string; worker_id: string; from_date: string; to_date: string; half_day: boolean; kind: AbsenceKind;
@@ -26,8 +28,8 @@ export interface AbsenceInput {
 }
 
 async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  if (!navigator.onLine) throw new Error('OFFLINE: Cần có mạng để thực hiện. Hãy kết nối mạng rồi thử lại.');
+  if (!supabase) throw new Error(t`Supabase chưa được cấu hình`);
+  if (!navigator.onLine) throw new Error(t`OFFLINE: Cần có mạng để thực hiện. Hãy kết nối mạng rồi thử lại.`);
   const { data, error } = await supabase.rpc(fn, args);
   if (error) throw new Error(error.message);
   return data as T;
@@ -60,8 +62,8 @@ export function absenceOn(list: Absence[], workerId: string, day: string): Absen
 /** Nhãn ngắn: "Nghỉ phép (Ốm)" / "Nghỉ không báo (Nghỉ không báo trước)" */
 export function absenceBadge(a: Absence): string {
   const kind = ABSENCE_KIND_LABEL[a.kind];
-  const part = a.half_day ? ', nửa ngày' : '';
-  return a.notice === 'none' || a.kind === 'no_notice' ? `Nghỉ không báo${part}` : `Nghỉ có phép: ${kind.toLowerCase()}${part}`;
+  const part = a.half_day ? t`, nửa ngày` : '';
+  return a.notice === 'none' || a.kind === 'no_notice' ? t`Nghỉ không báo${part}` : t`Nghỉ có phép: ${kind.toLowerCase()}${part}`;
 }
 
 /** Số ngày một ghi nghỉ chiếm (nửa ngày = 0,5); dùng cho tóm tắt */
@@ -94,4 +96,4 @@ export function aggregateYear(s: YearSummary): WorkerYear[] {
   for (const w of by.values()) w.annualLeft = s.allowance - w.byKind.annual;
   return [...by.values()].sort((a, b) => b.total - a.total);
 }
-export const fmtDays = (n: number): string => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ngày`;
+export const fmtDays = (n: number): string => t`${n.toLocaleString(dateLocale(), { maximumFractionDigits: 1 })} ngày`;

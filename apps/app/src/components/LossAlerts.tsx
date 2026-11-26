@@ -6,6 +6,8 @@ import { cycleTitle } from '../lib/cycles';
 import { todayLocal } from '../lib/hooks';
 import { useOrgs } from '../lib/orgs';
 import { useTable } from '../lib/tables';
+import { t as tx } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 
 /**
  * Trang chủ: các vụ/lứa đang chạy có hao hụt vượt ngưỡng của cơ sở (cộng dồn hoặc 7 ngày gần đây; mục 14). Không hiện gì nếu không có cảnh báo,
@@ -41,17 +43,17 @@ export function LossAlerts({ cycleIds, onOpenCycle }: { cycleIds: Set<string>; o
   return (
     <details className="fold">
       <summary>
-        <span className="fold-title">Hao hụt vượt ngưỡng</span>
-        <span className="fold-sum warn">{rows.length} vụ/lứa</span>
+        <span className="fold-title">{tx`Hao hụt vượt ngưỡng`}</span>
+        <span className="fold-sum warn"><Trans>{rows.length} vụ/lứa</Trans></span>
       </summary>
       <div className="fold-body">
         {rows.map((r) => (
           <div key={r.id}>
-            <p><strong>{r.title}</strong> <button type="button" className="link inline" onClick={() => onOpenCycle(r.id)}>Mở vụ</button></p>
+            <p><strong>{r.title}</strong> <button type="button" className="link inline" onClick={() => onOpenCycle(r.id)}>{tx`Mở vụ`}</button></p>
             {r.msgs.map((m) => <p className="msg warn" role="status" key={m}>{m}</p>)}
           </div>
         ))}
-        <p className="muted">Chỉ là nhắc. Hãy kiểm tra chuồng/ao, nước, thức ăn và hỏi cán bộ thú y/kỹ thuật nếu cần. Đổi ngưỡng ở chi tiết vụ → Số cây/con và hao hụt.</p>
+        <p className="muted">{tx`Chỉ là nhắc. Hãy kiểm tra chuồng/ao, nước, thức ăn và hỏi cán bộ thú y/kỹ thuật nếu cần. Đổi ngưỡng ở chi tiết vụ → Số cây/con và hao hụt.`}</p>
       </div>
     </details>
   );

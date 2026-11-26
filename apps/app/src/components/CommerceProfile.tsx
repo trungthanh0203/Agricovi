@@ -1,3 +1,4 @@
+import { normalizeDecimal } from '../lib/format';
 import { AreaFilterField, useAreaFilter } from './AreaPick';
 import { CycleSelect } from './CycleSelect';
 import { NamePicker } from './CatalogPick';
@@ -156,7 +157,7 @@ function IntroForm({ p, onSaved }: { p: BizProfile; onSaved: () => Promise<unkno
     if (!f.province.trim()) return act.setNote({ kind: 'error', text: 'Hãy nhập tỉnh/thành.' });
     const year = f.established_year.trim() === '' ? null : Number(f.established_year);
     if (year !== null && (!Number.isInteger(year) || year < 1900 || year > 2100)) return act.setNote({ kind: 'error', text: 'Năm thành lập chưa đúng.' });
-    const area = f.total_area.trim() === '' ? null : Number(f.total_area.replace(',', '.'));
+    const area = f.total_area.trim() === '' ? null : Number(normalizeDecimal(f.total_area));
     if (area !== null && (Number.isNaN(area) || area < 0)) return act.setNote({ kind: 'error', text: 'Diện tích phải là số không âm.' });
     const patch: Partial<ProfileForm> = { ...f, established_year: year, total_area: area };
     void act.run(async () => { await saveProfile(p.id, patch); await onSaved(); }, 'Đã lưu phần giới thiệu');

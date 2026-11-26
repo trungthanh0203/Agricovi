@@ -2,6 +2,7 @@
  * Số đo nhập tay của vụ (mục 6 báo cáo đối thủ), phần thuần: danh sách chỉ số, so với ngưỡng, số đo mới nhất.
  * Ngưỡng mặc định TRỐNG: chưa đặt ngưỡng thì không cảnh báo (chờ chuyên gia duyệt, chủ cơ sở tự đặt).
  */
+import { getLang, normalizeDecimal } from './format';
 export interface MetricDef { key: string; label: string; unit: string; decimals: number; /** loại hình nào thường dùng */ kinds: string[]; custom?: boolean }
 
 /** Chỉ số chuẩn; khóa trùng với migration 0195 */
@@ -89,6 +90,6 @@ export function measureAlerts<T extends ReadingLite>(readings: T[], limits: Limi
 export function parseNumber(s: string): number {
   const t = s.trim().replace(/\s/g, '');
   if (!t) return NaN;
-  const n = Number(t.includes(',') && !t.includes('.') ? t.replace(',', '.') : t.replace(/,/g, ''));
+  const n = Number(getLang() === 'en' ? normalizeDecimal(t) : t.includes(',') && !t.includes('.') ? t.replace(',', '.') : t.replace(/,/g, ''));
   return Number.isFinite(n) ? n : NaN;
 }

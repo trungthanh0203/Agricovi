@@ -1,3 +1,4 @@
+import { normalizeDecimal } from '../lib/format';
 import { useEffect, useMemo, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { cycleTitle } from '../lib/cycles';
@@ -88,9 +89,9 @@ export function FeedNormPanel({ cycle, raw, canEdit }: { cycle: CycleRow; raw: G
   }
   async function save() {
     const f = unit === 'g' ? 0.001 : 1;
-    const parsed = parseNormRows(lines.map((l) => ({ from_day: l.from_day, kg: l.kg.trim() ? String(Number(l.kg.replace(',', '.')) * f) : '' })));
+    const parsed = parseNormRows(lines.map((l) => ({ from_day: l.from_day, kg: l.kg.trim() ? String(Number(normalizeDecimal(l.kg)) * f) : '' })));
     if (!parsed.ok) return setError(parsed.error);
-    const a = Number(age), t = Number(tol.replace(',', '.'));
+    const a = Number(age), t = Number(normalizeDecimal(tol));
     if (!Number.isInteger(a) || a < 0 || a > 3650) return setError('Tuổi con giống lúc nhập chuồng phải là số ngày nguyên từ 0 đến 3650.');
     if (!Number.isFinite(t) || t < 5 || t > 100) return setError('Ngưỡng lệch phải từ 5 đến 100 phần trăm.');
     await run(async () => {

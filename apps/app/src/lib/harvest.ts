@@ -2,6 +2,7 @@ import { db, type CycleRow, type HarvestRow } from './db';
 import { enqueue, flushOutbox } from './outbox';
 import { updateAndCache } from './serverWrite';
 import { supabase } from './supabase';
+import { t } from '@lingui/core/macro';
 
 /**
  * Thu hoạch (FR-INV-007, quyết định D20, D21).
@@ -99,20 +100,20 @@ export async function editHarvest(id: string, e: HarvestEdit): Promise<void> {
     ...(e.unitCount !== undefined && (e.unitCount || cur.unit_count) ? { unit_count: e.unitCount ? String(e.unitCount) : '' } : {}),
     ...(e.extra !== undefined && (Object.keys(e.extra).length > 0 || Object.keys(cur.extra ?? {}).length > 0) ? { extra: e.extra } : {}),
   };
-  await updateAndCache('harvest_records', id, cur.version, changes, 'sửa phiếu thu hoạch');
+  await updateAndCache('harvest_records', id, cur.version, changes, t`sửa phiếu thu hoạch`);
 }
 
 /** Hủy phiếu (không xóa, cần mạng): cần lý do; không khôi phục được. */
 export async function voidHarvest(id: string, reason: string): Promise<void> {
   const cur = await db.harvests.get(id);
   if (!cur) return;
-  await updateAndCache('harvest_records', id, cur.version, { voided_at: new Date().toISOString(), void_reason: reason.trim() }, 'hủy phiếu thu hoạch');
+  await updateAndCache('harvest_records', id, cur.version, { voided_at: new Date().toISOString(), void_reason: reason.trim() }, t`hủy phiếu thu hoạch`);
 }
 
 /** Kiểm tra số liệu nhập: trả về thông báo lỗi tiếng Việt hoặc null nếu hợp lệ */
 export function validateHarvest(quantity: number | null, loss: number | null): string | null {
-  if (quantity === null || Number.isNaN(quantity) || quantity <= 0) return 'Khối lượng thu phải là số lớn hơn 0 (kg).';
-  if (loss !== null && (Number.isNaN(loss) || loss < 0)) return 'Hao hụt phải là số không âm (kg).';
-  if (loss !== null && loss > quantity) return 'Hao hụt không được lớn hơn khối lượng thu.';
+  if (quantity === null || Number.isNaN(quantity) || quantity <= 0) return t`Khối lượng thu phải là số lớn hơn 0 (kg).`;
+  if (loss !== null && (Number.isNaN(loss) || loss < 0)) return t`Hao hụt phải là số không âm (kg).`;
+  if (loss !== null && loss > quantity) return t`Hao hụt không được lớn hơn khối lượng thu.`;
   return null;
 }

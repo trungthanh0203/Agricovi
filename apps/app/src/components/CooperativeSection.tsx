@@ -1,3 +1,4 @@
+import { normalizeDecimal } from '../lib/format';
 import { ChipsPicker, useCropNames } from './CatalogPick';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { RowMenu } from './RowMenu';
@@ -101,7 +102,7 @@ function ForCooperative({ org }: { org: MyOrg }) {
     e.preventDefault();
     const isNew = form === 'new';
     if (isNew && name.trim().length < 2) return r.setError('Tên hộ cần ít nhất 2 ký tự.');
-    const n = areaText.trim() === '' ? null : Number(areaText.replace(',', '.'));
+    const n = areaText.trim() === '' ? null : Number(normalizeDecimal(areaText));
     if (n !== null && (Number.isNaN(n) || n < 0)) return r.setError('Diện tích phải là số không âm (đơn vị m²).');
     const info = { ...f, area_ha: n === null ? null : n / 10000 };   // nhập m², lưu ha
     const id = form;

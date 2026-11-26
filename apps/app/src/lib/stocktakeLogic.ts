@@ -31,7 +31,7 @@ export function overTolerance(book: number | null, counted: number | null, toler
 
 /** Đọc ô nhập số đếm: '' = chưa đếm (null); số không hợp lệ hoặc âm = 'bad' */
 export function parseCount(raw: string): number | null | 'bad' {
-  const s = raw.trim().replace(',', '.');
+  const s = normalizeDecimal(raw);
   if (s === '') return null;
   const n = Number(s);
   return Number.isFinite(n) && n >= 0 ? n : 'bad';
@@ -50,4 +50,5 @@ export function stocktakeTotals(lines: StocktakeLine[]): StocktakeTotals {
     if (l.adjust_qty! < 0) shortage = (shortage ?? 0) + v; else surplus = (surplus ?? 0) + v;
   }
   return { counted: counted.length, total: lines.length, diffLines: diff.length, shortage, surplus, net: shortage === null && surplus === null ? null : (surplus ?? 0) - (shortage ?? 0) };
-}
+}import { normalizeDecimal } from './format';
+

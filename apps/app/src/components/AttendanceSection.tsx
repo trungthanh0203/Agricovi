@@ -20,8 +20,11 @@ import { areaPath } from '../lib/areas';
 import { areaFamily } from '../lib/payFilter';
 import type { AreaRow } from '../lib/db';
 import { useCycleTitle } from '../lib/useCycleTitle';
+import { t as tx } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
+import { dateLocale } from '../lib/format';
 
-const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+const hhmm = (iso: string) => new Date(iso).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' });
 
 type Tab = 'list' | 'sheets' | 'absences' | 'photos';
 
@@ -87,32 +90,32 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
 
   if (!active) return null;
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'list', label: 'Bảng công' },
-    ...(isAdmin || canRecordFor.length > 0 ? [{ id: 'sheets' as Tab, label: 'Bảng giấy' }, { id: 'absences' as Tab, label: 'Nghỉ phép' }] : []),
+    { id: 'list', label: tx`Bảng công` },
+    ...(isAdmin || canRecordFor.length > 0 ? [{ id: 'sheets' as Tab, label: tx`Bảng giấy` }, { id: 'absences' as Tab, label: tx`Nghỉ phép` }] : []),
     ...(isAdmin ? [
-      { id: 'photos' as Tab, label: `Ảnh cờ đỏ${sum && sum.flagged > 0 ? ` (${sum.flagged})` : ''}` },
+      { id: 'photos' as Tab, label: tx`Ảnh cờ đỏ${sum && sum.flagged > 0 ? ` (${sum.flagged})` : ''}` },
     ] : []),
   ];
 
   // Cần xử lý: mỗi việc một dòng "Tên: số lượng  Xem"
   const todo: { key: string; label: string; value: string; hint?: string; go?: () => void }[] = [];
   if (sum) {
-    if (sum.pending > 0) todo.push({ key: 'pending', label: 'Chờ xác nhận', value: `${sum.pending} công`, go: () => goList('pending', 'all', sum.pending) });
-    if (sum.stale > 0) todo.push({ key: 'stale', label: 'Quên ra ca', value: `${sum.stale} ca`, go: () => goList('open', 'stale', sum.stale) });
-    if (isAdmin && sum.flagged > 0) todo.push({ key: 'flagged', label: 'Ảnh nghi vấn', value: `${sum.flagged_people ?? sum.flagged} người`, go: () => setTab('photos') });
-    if (orphans.length > 0) todo.push({ key: 'orphans', label: 'Chưa có tổ trưởng', value: `${orphans.length} người`, hint: 'chọn tổ trưởng ở Khai báo → Phòng / Tổ' });
+    if (sum.pending > 0) todo.push({ key: 'pending', label: tx`Chờ xác nhận`, value: tx`${sum.pending} công`, go: () => goList('pending', 'all', sum.pending) });
+    if (sum.stale > 0) todo.push({ key: 'stale', label: tx`Quên ra ca`, value: `${sum.stale} ca`, go: () => goList('open', 'stale', sum.stale) });
+    if (isAdmin && sum.flagged > 0) todo.push({ key: 'flagged', label: tx`Ảnh nghi vấn`, value: tx`${sum.flagged_people ?? sum.flagged} người`, go: () => setTab('photos') });
+    if (orphans.length > 0) todo.push({ key: 'orphans', label: tx`Chưa có tổ trưởng`, value: tx`${orphans.length} người`, hint: tx`chọn tổ trưởng ở Khai báo → Phòng / Tổ` });
   }
   const recordBtn = canRecordFor.length > 0
-    ? <button type="button" className="chip add" disabled={!online} aria-expanded={panel === 'shift'} onClick={() => setPanel(panel === 'shift' ? null : 'shift')}>＋ Ghi công</button>
+    ? <button type="button" className="chip add" disabled={!online} aria-expanded={panel === 'shift'} onClick={() => setPanel(panel === 'shift' ? null : 'shift')}>{tx`＋ Ghi công`}</button>
     : null;
   const todoNode = !sum ? null : todo.length === 0 ? (
     <>
-      <p className="msg ok" role="status">Không có việc cần xử lý.</p>
+      <p className="msg ok" role="status">{tx`Không có việc cần xử lý.`}</p>
       {recordBtn && <div className="chips">{recordBtn}</div>}
     </>
   ) : (
     <div className="card alert-warn">
-      <h2>Cần xử lý</h2>
+      <h2>{tx`Cần xử lý`}</h2>
       {todo.map((t) => (
         <p key={t.key} className="todo-line"><strong>{t.label}:</strong> {t.value}{t.go && <> <button type="button" className="link" onClick={t.go}>Xem</button></>}{t.hint && <span className="muted"> ({t.hint})</span>}</p>
       ))}
@@ -121,19 +124,19 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
   );
   const shiftPanel = panel === 'shift' && canRecordFor.length > 0 ? (
     <div className="card">
-      <h2>Ghi công</h2>
-      <p className="muted">{isAdmin ? 'Nhập ca đã làm của người làm, kể cả của bạn (dành cho nơi không dùng máy chấm công).' : 'Nhập ca đã làm của người trong tổ.'}</p>
+      <h2>{tx`Ghi công`}</h2>
+      <p className="muted">{isAdmin ? tx`Nhập ca đã làm của người làm, kể cả của bạn (dành cho nơi không dùng máy chấm công).` : tx`Nhập ca đã làm của người trong tổ.`}</p>
       <ShiftForm workers={canRecordFor} cycles={cycles} areas={areas} busy={busy || !online} onCancel={() => setPanel(null)} onSave={(w, s, e, b, n, c) => run(() => recordShift(w, s, e, b, n, c))} />
     </div>
   ) : null;
 
   return (
     <>
-      {!online && <p className="msg warn" role="status">Đang offline: chấm công cần có mạng. Hãy kết nối mạng rồi thử lại.</p>}
+      {!online && <p className="msg warn" role="status">{tx`Đang offline: chấm công cần có mạng. Hãy kết nối mạng rồi thử lại.`}</p>}
       {error && <p className="msg error" role="alert">{error}</p>}
 
       {tabs.length > 1 && (
-        <div className="chips" role="tablist" aria-label="Mục chấm công">
+        <div className="chips" role="tablist" aria-label={tx`Mục chấm công`}>
           {tabs.map((t) => (
             <button key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'chip active' : 'chip'} onClick={() => setTab(t.id)}>{t.label}</button>
           ))}
@@ -143,19 +146,19 @@ export function AttendanceSection(_props: { onOpenCycle?: (id: string, opts?: { 
       {tab === 'list' && (
         <>
           {canRecordFor.length === 0 && (
-            <p className="muted">Chấm công do máy chấm công ghi, hoặc do chủ, quản lý, tổ trưởng nhập cho người làm. Bạn xem công của mình ở bảng dưới.</p>
+            <p className="muted">{tx`Chấm công do máy chấm công ghi, hoặc do chủ, quản lý, tổ trưởng nhập cho người làm. Bạn xem công của mình ở bảng dưới.`}</p>
           )}
 
           {sum && (
             <p className="att-summary">
-              Hôm nay: <strong>{sum.in_shift}</strong> đang trong ca · <strong>{sum.done}</strong> đã ra ca ({sum.present}/{sum.workers} người có mặt)
-              {absToday.length > 0 && <> · <button type="button" className="link" onClick={() => setShowAbs((v) => !v)}>{absToday.length} nghỉ</button></>}
+              {tx`Hôm nay:`}{' '}<strong>{sum.in_shift}</strong>{' '}{tx`đang trong ca ·`}{' '}<strong>{sum.done}</strong>{' '}{tx`đã ra ca (`}{sum.present}/{sum.workers}{' '}{tx`người có mặt)`}
+              {absToday.length > 0 && <> · <button type="button" className="link" onClick={() => setShowAbs((v) => !v)}><Trans>{absToday.length} nghỉ</Trans></button></>}
             </p>
           )}
           {showAbs && absToday.length > 0 && (
             <div className="card slim">
-              {absToday.slice(0, 12).map((x) => <p key={x.id} className="muted">{workers.find((w) => w.id === x.worker_id)?.full_name ?? 'Người làm'}: {absenceBadge(x)}{x.reason ? ` · ${x.reason}` : ''}</p>)}
-              <button type="button" className="link" onClick={() => setTab('absences')}>Mở danh sách nghỉ phép</button>
+              {absToday.slice(0, 12).map((x) => <p key={x.id} className="muted">{workers.find((w) => w.id === x.worker_id)?.full_name ?? tx`Người làm`}: {absenceBadge(x)}{x.reason ? ` · ${x.reason}` : ''}</p>)}
+              <button type="button" className="link" onClick={() => setTab('absences')}>{tx`Mở danh sách nghỉ phép`}</button>
             </div>
           )}
 
@@ -181,7 +184,7 @@ type CycleOpt = { id: string; status?: string; name?: string | null; crop_type_i
 const ShiftCycleSelect = ({ cycles, value, onChange }: { cycles: CycleOpt[]; value: string; onChange: (v: string) => void }) => {
   const titleOf = useCycleTitle();
   return cycles.length === 0 ? null : (
-  <CycleSelect label="Vụ (không bắt buộc)" cycles={cycles.map((c) => ({ id: c.id, status: c.status ?? '' }))} value={value} onChange={onChange} emptyLabel="— Không gắn vụ —"
+  <CycleSelect label={tx`Vụ (không bắt buộc)`} cycles={cycles.map((c) => ({ id: c.id, status: c.status ?? '' }))} value={value} onChange={onChange} emptyLabel={tx`— Không gắn vụ —`}
     labelOf={(id) => { const c = cycles.find((x) => x.id === id); return c ? titleOf(c) : ''; }} />
   );
 };
@@ -207,49 +210,49 @@ function ShiftForm({ workers, cycles, areas, busy, onSave, onCancel }: { workers
     const s = new Date(`${date}T${from}:00`);
     const t = new Date(`${date}T${to}:00`);
     const wid = w || workers[0]?.id;
-    if (!showRest) return setErr('Hãy chọn phân khu.');
-    if (!wid) return setErr('Hãy chọn người.');
-    if (!from || !to) return setErr('Hãy nhập giờ bắt đầu và giờ kết thúc.');
-    if (!(t > s)) return setErr('Giờ kết thúc phải sau giờ bắt đầu.');
+    if (!showRest) return setErr(tx`Hãy chọn phân khu.`);
+    if (!wid) return setErr(tx`Hãy chọn người.`);
+    if (!from || !to) return setErr(tx`Hãy nhập giờ bắt đầu và giờ kết thúc.`);
+    if (!(t > s)) return setErr(tx`Giờ kết thúc phải sau giờ bắt đầu.`);
     setErr(null);
     setOk(null);
     const who = workers.find((x) => x.id === wid)?.full_name ?? '';
     void onSave(wid, s, t, Math.max(0, parseInt(brk || '0', 10) || 0), note, cyc || null)
-      .then(() => { setNote(''); setFrom(''); setTo(''); setOk(`Đã lưu công cho ${who} (đang ở trạng thái Chờ xác nhận): ${date.split('-').reverse().join('/')} ${hhmm(s.toISOString())}–${hhmm(t.toISOString())}.`); })
+      .then(() => { setNote(''); setFrom(''); setTo(''); setOk(tx`Đã lưu công cho ${who} (đang ở trạng thái Chờ xác nhận): ${date.split('-').reverse().join('/')} ${hhmm(s.toISOString())}–${hhmm(t.toISOString())}.`); })
       .catch(() => undefined);
   }
   return (
     <form className="inline-form" onSubmit={submit} noValidate>
       {needArea && (
-        <label>Phân khu
+        <label>{tx`Phân khu`}
           <select value={areaId} onChange={(e) => { setAreaId(e.target.value); setCyc(''); }}>
-            <option value="" disabled>Chọn phân khu</option>
-            <option value="all">Tất cả phân khu</option>
+            <option value="" disabled>{tx`Chọn phân khu`}</option>
+            <option value="all">{tx`Tất cả phân khu`}</option>
             {topAreas.sort((x, y) => x.name.localeCompare(y.name, 'vi')).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
           </select>
-          {areaId && areaId !== 'all' && cycOpts.length === 0 && <small>Phân khu này chưa có vụ đang chạy.</small>}
+          {areaId && areaId !== 'all' && cycOpts.length === 0 && <small>{tx`Phân khu này chưa có vụ đang chạy.`}</small>}
         </label>
       )}
       {showRest ? (
         <>
-          <label>Người lao động
+          <label>{tx`Người lao động`}
             <select value={w || workers[0]?.id} onChange={(e) => setW(e.target.value)}>{workers.map((x) => <option key={x.id} value={x.id}>{x.full_name}</option>)}</select>
           </label>
-          <label>Ngày<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
+          <label>{tx`Ngày`}<input type="date" value={date} max={todayLocal()} onChange={(e) => setDate(e.target.value)} /></label>
           <div className="pair">
-            <label>Từ giờ<input type="time" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
-            <label>Đến giờ<input type="time" value={to} onChange={(e) => setTo(e.target.value)} /></label>
+            <label>{tx`Từ giờ`}<input type="time" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+            <label>{tx`Đến giờ`}<input type="time" value={to} onChange={(e) => setTo(e.target.value)} /></label>
           </div>
-          <label>Nghỉ giữa ca (phút)<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
+          <label>{tx`Nghỉ giữa ca (phút)`}<input value={brk} inputMode="numeric" onChange={(e) => setBrk(e.target.value)} /></label>
           <ShiftCycleSelect cycles={cycOpts} value={cyc} onChange={setCyc} />
-          <label>Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
+          <label>{tx`Ghi chú`}<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
         </>
-      ) : <p className="muted">Chọn phân khu để nhập công.</p>}
+      ) : <p className="muted">{tx`Chọn phân khu để nhập công.`}</p>}
       {err && <p className="msg error" role="alert">{err}</p>}
       {ok && <p className="msg ok" role="status">{ok}</p>}
       <div className="btnrow">
-        <button type="submit" className="primary" disabled={busy}>Lưu công</button>
-        <button type="button" className="secondary" onClick={onCancel}>Hủy</button>
+        <button type="submit" className="primary" disabled={busy}>{tx`Lưu công`}</button>
+        <button type="button" className="secondary" onClick={onCancel}>{tx`Hủy`}</button>
       </div>
     </form>
   );

@@ -1,3 +1,4 @@
+import { normalizeDecimal } from '../lib/format';
 import { useEffect, useState } from 'react';
 import { Collapsible } from './Collapsible';
 import { addDays, fmtDate } from '../lib/dates';
@@ -145,7 +146,7 @@ export function CyclePeriods({ cycle, periods, reload, canManage, online, today,
             <p className="muted">Chi phí tích "Chi phí đầu tư vườn cây" khi ghi chi phí sẽ được khấu hao đều theo số năm khấu hao, bắt đầu sau thời gian kiến thiết.</p>
             <div className="btnrow">
               <button type="button" className="primary" disabled={!online || busy || !plant}
-                onClick={() => void act(() => setOrchardParams(cycle.id, plant, Number(mat.replace(',', '.')) || 3, Math.max(1, Math.round(Number(am.replace(',', '.')) || 15))))}>Lưu</button>
+                onClick={() => void act(() => setOrchardParams(cycle.id, plant, Number(normalizeDecimal(mat)) || 3, Math.max(1, Math.round(Number(normalizeDecimal(am)) || 15))))}>Lưu</button>
             </div>
           </div>
         </Collapsible>

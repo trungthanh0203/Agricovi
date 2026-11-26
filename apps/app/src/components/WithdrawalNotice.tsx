@@ -1,6 +1,7 @@
 import { useTable } from '../lib/tables';
 import { needleMessage } from '../lib/withdrawalLogic';
 import { withdrawalMessage } from '../lib/withdrawalLogic';
+import { t } from '@lingui/core/macro';
 
 /**
  * Cảnh báo thời gian cách ly (D96) khi ghi thu hoạch/bán vào ngày `date` (yyyy-mm-dd): hiện lý do còn cách ly và ô bắt buộc
@@ -16,8 +17,8 @@ export function WithdrawalNotice({ cycleId, date, reason, onReason }: { cycleId:
     <div className="msg warn" role="status">
       <p style={{ margin: 0 }}>{msg}</p>
       <label>
-        Lý do vẫn ghi vào ngày này (bắt buộc)
-        <input value={reason} maxLength={300} onChange={(e) => onReason(e.target.value)} placeholder="Ví dụ: đã kiểm tra dư lượng, đạt yêu cầu" />
+        {t`Lý do vẫn ghi vào ngày này (bắt buộc)`}
+        <input value={reason} maxLength={300} onChange={(e) => onReason(e.target.value)} placeholder={t`Ví dụ: đã kiểm tra dư lượng, đạt yêu cầu`} />
       </label>
     </div>
   );
