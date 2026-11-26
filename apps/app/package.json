@@ -7,10 +7,14 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build && node ../../scripts/include-admin.mjs",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "i18n:extract": "lingui extract --clean",
+    "i18n:check": "node ../../scripts/i18n-check.mjs"
   },
   "dependencies": {
     "@agriconnect/shared": "*",
+    "@lingui/core": "^5.9.5",
+    "@lingui/react": "^5.9.5",
     "@supabase/supabase-js": "^2.45.4",
     "@vladmandic/face-api": "^1.7.15",
     "dexie": "^4.0.8",
@@ -21,6 +25,10 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@lingui/babel-plugin-lingui-macro": "^5.9.5",
+    "@lingui/cli": "^5.9.5",
+    "@lingui/format-po": "^5.9.5",
+    "@lingui/vite-plugin": "^5.9.5",
     "@types/leaflet": "^1.9.12",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",

@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { getLang } from '../lib/format';
 import { appendSentence, fmtClock, MAX_LISTEN_SECONDS, useSpeech } from '../lib/speech';
 
 /**
@@ -8,6 +10,8 @@ import { appendSentence, fmtClock, MAX_LISTEN_SECONDS, useSpeech } from '../lib/
  * "Xóa & đọc lại" xóa hết chữ trong ô rồi nghe lại từ đầu (khi đọc sai hoặc chưa đúng).
  */
 export function VoiceNote({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
+  const { t } = useLingui();
+  const voiceOn = getLang() === 'vi'; // bộ nhận và hiểu giọng nói mới làm cho tiếng Việt
   const cur = useRef(value);
   cur.current = value;
   const [interim, setInterim] = useState('');
@@ -27,27 +31,27 @@ export function VoiceNote({ value, onChange, label }: { value: string; onChange:
     <div className="voicenote">
       <label>
         {label}
-        <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} placeholder="Ví dụ: Bón 20 ký NPK cho vụ dưa lưới" />
+        <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} placeholder={t`Ví dụ: Bón 20 ký NPK cho vụ dưa lưới`} />
       </label>
       {listening && (
         <p className="voice-live" role="status">
-          🎤 Đang nghe {fmtClock(elapsed)} / {fmtClock(MAX_LISTEN_SECONDS)}… nói từng câu rõ ràng, bấm Dừng khi xong
+          <Trans>🎤 Đang nghe {fmtClock(elapsed)} / {fmtClock(MAX_LISTEN_SECONDS)}… nói từng câu rõ ràng, bấm Dừng khi xong</Trans>
           {interim && <><br /><em>{interim}</em></>}
         </p>
       )}
-      {supported ? (
+      {!voiceOn ? null : supported ? (
         <div className="btnrow">
           <button type="button" className={listening ? 'primary' : 'secondary'} onClick={listening ? stop : start} aria-pressed={listening}>
-            {listening ? '⏹ Dừng' : '🎤 Nói'}
+            {listening ? t`⏹ Dừng` : t`🎤 Nói`}
           </button>
-          <button type="button" className="secondary" onClick={redo} disabled={!value && !listening}>🗑 Xóa &amp; đọc lại</button>
+          <button type="button" className="secondary" onClick={redo} disabled={!value && !listening}><Trans>🗑 Xóa &amp; đọc lại</Trans></button>
         </div>
       ) : (
-        <p className="muted">Máy này chưa hỗ trợ nói vào ứng dụng. Hãy bấm biểu tượng micro trên bàn phím điện thoại rồi nói vào ô trên.</p>
+        <p className="muted"><Trans>Máy này chưa hỗ trợ nói vào ứng dụng. Hãy bấm biểu tượng micro trên bàn phím điện thoại rồi nói vào ô trên.</Trans></p>
       )}
       {error && <p className="msg warn" role="status">{error}</p>}
       {notice && !error && <p className="msg ok" role="status">{notice}</p>}
-      {supported && <p className="muted voice-note">Cần có mạng. Giọng nói do trình duyệt của điện thoại xử lý; ứng dụng không ghi âm và không lưu lại. Điện thoại có thể kêu “tít” sau mỗi câu. Hãy đọc lại chữ trước khi bấm Lưu.</p>}
+      {voiceOn && supported && <p className="muted voice-note"><Trans>Cần có mạng. Giọng nói do trình duyệt của điện thoại xử lý; ứng dụng không ghi âm và không lưu lại. Điện thoại có thể kêu “tít” sau mỗi câu. Hãy đọc lại chữ trước khi bấm Lưu.</Trans></p>}
     </div>
   );
 }

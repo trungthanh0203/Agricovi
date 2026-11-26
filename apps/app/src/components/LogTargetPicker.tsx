@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { Plural } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { KIND_GROUP_LABEL } from '../lib/labels';
 import { KIND_GROUP } from '../lib/logGroups';
 
 export interface LogTarget { id: string; title: string; place: string; kind: string; status: string; lastAt: string | null; topId: string; topName: string }
@@ -12,6 +15,7 @@ export function LogTargetPicker({ targets, rememberedId, hasAreas, onPickCycle, 
   onPickCycle: (id: string) => void; onPickArea: () => void; onCancel: () => void;
 }) {
   // Chọn phân khu trước (D216): từ 2 phân khu trở lên thì chưa liệt kê vụ cho tới khi chọn; "Tất cả phân khu" là một mục
+  const { t: tx, i18n } = useLingui();
   const [areaSel, setAreaSel] = useState('');
   const tops = [...new Map(targets.map((t) => [t.topId, t.topName])).entries()].sort((x, y) => x[1].localeCompare(y[1], 'vi'));
   const gate = tops.length >= 2;
@@ -29,21 +33,21 @@ export function LogTargetPicker({ targets, rememberedId, hasAreas, onPickCycle, 
 
   return (
     <>
-      <p className="muted">Bạn ghi việc cho đối tượng nào?</p>
+      <p className="muted"><Trans>Bạn ghi việc cho đối tượng nào?</Trans></p>
       {gate && (
-        <label>Phân khu
+        <label><Trans>Phân khu</Trans>
           <select value={areaSel} onChange={(e) => { setAreaSel(e.target.value); setAll(false); setQ(''); }}>
-            <option value="" disabled>Chọn phân khu</option>
-            <option value="all">Tất cả phân khu</option>
+            <option value="" disabled>{tx`Chọn phân khu`}</option>
+            <option value="all">{tx`Tất cả phân khu`}</option>
             {tops.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
           </select>
         </label>
       )}
-      {pending && <p className="muted">Chọn phân khu để xem các vụ.</p>}
-      {many && <input type="search" placeholder="Tìm vụ theo tên hoặc nơi…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Tìm vụ" />}
+      {pending && <p className="muted"><Trans>Chọn phân khu để xem các vụ.</Trans></p>}
+      {many && <input type="search" placeholder={tx`Tìm vụ theo tên hoặc nơi…`} value={q} onChange={(e) => setQ(e.target.value)} aria-label={tx`Tìm vụ`} />}
       {remembered && !q.trim() && (
         <button type="button" className="bigchoice" onClick={() => onPickCycle(remembered.id)}>
-          <strong>Tiếp tục: {remembered.title}</strong><br /><small>{remembered.place} · lần ghi trước</small>
+          <strong><Trans>Tiếp tục: {remembered.title}</Trans></strong><br /><small>{remembered.place} · <Trans>lần ghi trước</Trans></small>
         </button>
       )}
       {KIND_GROUP.map((g) => {
@@ -51,7 +55,7 @@ export function LogTargetPicker({ targets, rememberedId, hasAreas, onPickCycle, 
         if (list.length === 0) return null;
         return (
           <section key={g.kind}>
-            <h2 className="logsect">{g.label}</h2>
+            <h2 className="logsect">{KIND_GROUP_LABEL[g.kind] ? i18n._(KIND_GROUP_LABEL[g.kind]!) : g.label}</h2>
             <div className="grid2">
               {list.map((t) => (
                 <button key={t.id} type="button" className="bigchoice" onClick={() => onPickCycle(t.id)}>
@@ -62,15 +66,15 @@ export function LogTargetPicker({ targets, rememberedId, hasAreas, onPickCycle, 
           </section>
         );
       })}
-      {many && !all && !q.trim() && targets.length > shown.length && <button type="button" className="link" onClick={() => setAll(true)}>Xem tất cả {targets.length} vụ</button>}
-      {shown.length === 0 && targets.length > 0 && <p className="muted">Không có vụ nào khớp.</p>}
+      {many && !all && !q.trim() && targets.length > shown.length && <button type="button" className="link" onClick={() => setAll(true)}><Plural value={targets.length} one="Xem tất cả # vụ" other="Xem tất cả # vụ" /></button>}
+      {shown.length === 0 && targets.length > 0 && <p className="muted"><Trans>Không có vụ nào khớp.</Trans></p>}
       {hasAreas && (
         <section>
-          <h2 className="logsect">🏠 Khu vực / cơ sở vật chất</h2>
-          <button type="button" className="bigchoice" onClick={onPickArea}>Khu vực, cổng, kho, biogas… (không gắn vụ)</button>
+          <h2 className="logsect"><Trans>🏠 Khu vực / cơ sở vật chất</Trans></h2>
+          <button type="button" className="bigchoice" onClick={onPickArea}><Trans>Khu vực, cổng, kho, biogas… (không gắn vụ)</Trans></button>
         </section>
       )}
-      <button type="button" className="link" onClick={onCancel}>Hủy</button>
+      <button type="button" className="link" onClick={onCancel}><Trans>Hủy</Trans></button>
     </>
   );
 }

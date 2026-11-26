@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { WORK_GROUP_LABEL } from '../lib/labels';
 import { groupWorkTypes } from '../lib/logGroups';
 
 export interface PickWork { id: string; code: string; name: string; shared?: boolean }
@@ -12,6 +14,7 @@ export function LogWorkPicker({ targetLabel, onChangeTarget, workTypes, dueIds, 
   workTypes: PickWork[]; dueIds: string[]; recentIds: string[];
   shortcuts?: ReactNode; onPick: (id: string) => void; onCancel: () => void;
 }) {
+  const { t, i18n } = useLingui();
   const [q, setQ] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const byId = new Map(workTypes.map((w) => [w.id, w]));
@@ -26,38 +29,38 @@ export function LogWorkPicker({ targetLabel, onChangeTarget, workTypes, dueIds, 
   return (
     <>
       <div className="row">
-        <p className="grow" style={{ margin: 0 }}>Ghi cho: <strong>{targetLabel}</strong></p>
-        {onChangeTarget && <button type="button" className="link inline" onClick={onChangeTarget}>Đổi</button>}
+        <p className="grow" style={{ margin: 0 }}><Trans>Ghi cho: <strong>{targetLabel}</strong></Trans></p>
+        {onChangeTarget && <button type="button" className="link inline" onClick={onChangeTarget}><Trans>Đổi</Trans></button>}
       </div>
       {shortcuts}
-      <p className="muted">Bạn vừa làm việc gì?</p>
+      <p className="muted"><Trans>Bạn vừa làm việc gì?</Trans></p>
       {showFast && due.length > 0 && (
         <section>
-          <h2 className="logsect">⏰ Đến hạn hôm nay</h2>
+          <h2 className="logsect"><Trans>⏰ Đến hạn hôm nay</Trans></h2>
           <div className="grid2">{due.map((w) => <button key={w.id} type="button" className="bigchoice" onClick={() => onPick(w.id)}>{w.name}</button>)}</div>
         </section>
       )}
       {showFast && recent.length > 0 && (
         <section>
-          <h2 className="logsect">⭐ Hay làm gần đây</h2>
+          <h2 className="logsect"><Trans>⭐ Hay làm gần đây</Trans></h2>
           <div className="grid2">{recent.map((w) => <button key={w.id} type="button" className="bigchoice" onClick={() => onPick(w.id)}>{w.name}</button>)}</div>
         </section>
       )}
-      <input type="search" placeholder="Tìm việc…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Tìm việc" />
+      <input type="search" placeholder={t`Tìm việc…`} value={q} onChange={(e) => setQ(e.target.value)} aria-label={t`Tìm việc`} />
       {groups.map((g) => {
         const isOpen = Boolean(term) || (open[g.id] ?? groups.length <= 2);
         return (
           <section key={g.id}>
             <button type="button" className="logsect-toggle" aria-expanded={isOpen} onClick={() => setOpen((o) => ({ ...o, [g.id]: !isOpen }))}>
-              <span>{g.label} ({g.items.length})</span><span aria-hidden>{isOpen ? '▾' : '▸'}</span>
+              <span>{WORK_GROUP_LABEL[g.id] ? i18n._(WORK_GROUP_LABEL[g.id]!) : g.label} ({g.items.length})</span><span aria-hidden>{isOpen ? '▾' : '▸'}</span>
             </button>
             {isOpen && <div className="grid2">{g.items.map((w) => <button key={w.id} type="button" className="bigchoice" onClick={() => onPick(w.id)}>{w.name}</button>)}</div>}
           </section>
         );
       })}
-      {workTypes.length === 0 && <p className="muted">Chưa tải được danh sách loại việc. Hãy kết nối mạng một lần để tải về.</p>}
-      {workTypes.length > 0 && groups.length === 0 && <p className="muted">Không có việc nào khớp.</p>}
-      <button type="button" className="link" onClick={onCancel}>Hủy</button>
+      {workTypes.length === 0 && <p className="muted"><Trans>Chưa tải được danh sách loại việc. Hãy kết nối mạng một lần để tải về.</Trans></p>}
+      {workTypes.length > 0 && groups.length === 0 && <p className="muted"><Trans>Không có việc nào khớp.</Trans></p>}
+      <button type="button" className="link" onClick={onCancel}><Trans>Hủy</Trans></button>
     </>
   );
 }

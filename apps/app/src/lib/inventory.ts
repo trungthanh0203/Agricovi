@@ -1,3 +1,4 @@
+import { fmtMoney, fmtNumber, normalizeDecimal } from './format';
 import type { OutboxItem } from '@agriconnect/shared';
 import { db, type BalanceRow, type LocationRow, type MaterialRow, type UnitRow } from './db';
 import { insertRow, requireOnline } from './serverWrite';
@@ -331,13 +332,13 @@ export async function createUnit(orgId: string, name: string): Promise<void> {
 
 /** "12,5" hoặc "12.5" -> 12.5; trống -> null; không phải số -> NaN */
 export function parseNumber(raw: string): number | null {
-  const s = raw.trim().replace(',', '.');
+  const s = normalizeDecimal(raw);
   if (s === '') return null;
   return Number(s);
 }
 
-export const formatQty = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 3 });
-export const formatMoney = (n: number) => `${n.toLocaleString('vi-VN')} đ`;
+export const formatQty = (n: number) => fmtNumber(n);
+export const formatMoney = (n: number) => fmtMoney(n);
 
 // Nhóm vật tư (D98: quyết định cách app xử lý, FCR lấy nhóm thức ăn) nay nằm ở lib/config.ts (cấu hình 'material_groups', mã cố định).
 

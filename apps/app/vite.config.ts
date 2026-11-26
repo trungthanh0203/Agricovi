@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { lingui } from '@lingui/vite-plugin';
 import { VitePWA } from 'vite-plugin-pwa';
 
 declare const process: { env: Record<string, string | undefined> }; // chỉ cần đọc biến môi trường lúc build
@@ -27,7 +28,8 @@ export default defineConfig({
     },
   },
   plugins: [
-    react(),
+    lingui(),
+    react({ babel: { plugins: ['@lingui/babel-plugin-lingui-macro'] } }),
     VitePWA({
       registerType: 'autoUpdate', // bản mới tự thay âm thầm, có hiệu lực ở lần mở app kế tiếp (không hiện thông báo, không tự tải lại giữa lúc nhập)
       includeAssets: ['favicon.ico', 'favicon-32.png', 'favicon-16.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'logo-mark.png', 'welcome.webp'],

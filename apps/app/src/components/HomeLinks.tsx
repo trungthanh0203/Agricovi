@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { HO_SO_WEB_ICON, IconGlyph, SECTION_ICONS } from './SubTabs';
 import { canSeeConfig, declareSections, productionSections, reportSections, type TabId } from '../lib/tabs';
 import { hasRole } from '../lib/roles';
@@ -21,25 +22,26 @@ const ARROW: { r: number; c: number; ch: string }[] = [{ r: 1, c: 2, ch: '→' }
  * Chỉ hiện bước/lối tắt mà người dùng được phép (giống menu).
  */
 export function HomeLinks({ org, onGo }: { org: MyOrg; onGo: (tab: TabId, section?: string) => void }) {
+  const { t } = useLingui();
   const manager = hasRole(org.roles, 'manager');
   const steps = useMemo<Step[]>(() => {
     const out: Step[] = [];
-    if (canSeeConfig(org)) out.push({ key: 'config', label: 'Cấu hình', icon: '⚙️', tab: 'config' });
-    if (declareSections(org).length > 0) out.push({ key: 'declare', label: 'Khai báo', icon: '🧰', tab: 'declare' });
-    out.push({ key: 'production', label: 'Sản xuất', icon: '🌱', tab: 'production' });
-    if (reportSections(org).length > 0) out.push({ key: 'reports', label: 'Báo cáo', icon: '📊', tab: 'reports' });
-    if (reportSections(org).some((s) => s.id === 'commerce')) out.push({ key: 'web', label: 'Hồ sơ web', icon: HO_SO_WEB_ICON, tab: 'reports', section: 'commerce' });
+    if (canSeeConfig(org)) out.push({ key: 'config', label: t`Cấu hình`, icon: '⚙️', tab: 'config' });
+    if (declareSections(org).length > 0) out.push({ key: 'declare', label: t`Khai báo`, icon: '🧰', tab: 'declare' });
+    out.push({ key: 'production', label: t`Sản xuất`, icon: '🌱', tab: 'production' });
+    if (reportSections(org).length > 0) out.push({ key: 'reports', label: t`Báo cáo`, icon: '📊', tab: 'reports' });
+    if (reportSections(org).some((s) => s.id === 'commerce')) out.push({ key: 'web', label: t`Hồ sơ web`, icon: HO_SO_WEB_ICON, tab: 'reports', section: 'commerce' });
     out.push({ key: 'site', label: 'Website', icon: '🌐', href: SITE_URL });
     return out.slice(0, POS.length);
-  }, [org]);
+  }, [org, t]);
 
   const shortcuts = useMemo(() => {
     const prod = productionSections(org), rep = reportSections(org);
     return [
-      prod.some((s) => s.id === 'attendance') ? { id: 'attendance', label: 'Chấm công', tab: 'production' as TabId } : null,
-      rep.some((s) => s.id === 'paybook') ? { id: 'paybook', label: 'Bảng lương', tab: 'reports' as TabId } : null,
+      prod.some((s) => s.id === 'attendance') ? { id: 'attendance', label: t`Chấm công`, tab: 'production' as TabId } : null,
+      rep.some((s) => s.id === 'paybook') ? { id: 'paybook', label: t`Bảng lương`, tab: 'reports' as TabId } : null,
     ].filter((x): x is { id: string; label: string; tab: TabId } => x !== null);
-  }, [org]);
+  }, [org, t]);
 
   if (!manager) {
     if (shortcuts.length === 0) return null;
@@ -59,8 +61,8 @@ export function HomeLinks({ org, onGo }: { org: MyOrg; onGo: (tab: TabId, sectio
 
   return (
     <div className="flow-wrap">
-      <p className="flow-title">Quản lý và kết nối cơ sở theo luồng công việc:</p>
-      <nav className="flow" aria-label="Luồng công việc">
+      <p className="flow-title"><Trans>Quản lý và kết nối cơ sở theo luồng công việc:</Trans></p>
+      <nav className="flow" aria-label={t`Luồng công việc`}>
         {steps.map((s, i) => {
           const inner = (<><span className="flow-circle" aria-hidden><IconGlyph icon={s.icon} /></span><span className="flow-label">{s.label}</span></>);
           const style = { gridRow: POS[i]!.r, gridColumn: POS[i]!.c };

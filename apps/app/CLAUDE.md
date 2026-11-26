@@ -12,6 +12,7 @@ Chat này chỉ làm **APP**: app PWA quản lý cơ sở và trang quản trị
 - **Không đụng** `apps/web`, `apps/webadmin`, bảng/hàm `site_*`, `web_*`, `trade*`, `shops`, `public_*` (của website). Hồ sơ thương mại/`public_cycles` do app *ghi* nhưng cấu trúc đã chốt (D53, D55): đổi thì báo người dùng.
 - Migration mới đặt tên `..._app_*.sql`.
 - Mọi chữ trên giao diện tiếng Việt, dễ hiểu; mỗi màn ngắn gọn (`Collapsible`, nút Lưu/Hủy cặp đôi).
+- Song ngữ (Lingui, `docs/PHUONG_AN_VIET_ANH_APP.md`): tệp đã dùng `Trans`/`t` thì chữ mới cũng phải bọc và điền `locales/en.po` (`i18n:extract`, `i18n:check`); không dùng macro trong tệp `lib/*` mà test Node nạp; số, tiền, ngày qua `lib/format.ts`.
 
 ## Thêm một trường mới đi qua đâu (đỡ phải dò)
 1. Migration `..._app_*.sql`: cột + ràng buộc; ghi qua hàm `set_*` (có kiểm quyền) hoặc cập nhật trực tiếp nếu bảng cho phép. Test gọn trong `supabase/tests`.

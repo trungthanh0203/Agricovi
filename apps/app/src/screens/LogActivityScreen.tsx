@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { productKindOfArea, useCatalog, useKindWorkTypes } from '../lib/catalog';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { CYCLE_STATUS_LABEL_VI, SYNC_STATE_LABEL_VI } from '@agriconnect/shared';
+import { plural } from '@lingui/core/macro';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
+import { fmtNumber, fmtTime, numberToInput } from '../lib/format';
+import { CYCLE_STATUS_LABEL, SYNC_STATE_LABEL } from '../lib/labels';
 import { SyncBadge } from '../components/SyncBadge';
 import { db } from '../lib/db';
 import { DynamicField } from '../components/DynamicField';
@@ -36,6 +39,7 @@ const LAST_LOCATION_KEY = 'agriconnect.lastLocation'; // dùng chung với màn 
 
 /** Luồng "Ghi việc vừa làm" (v1.1 mục 3.4): chọn loại việc -> xác nhận vụ -> lưu. Dùng được offline. */
 export function LogActivityScreen({ onClose, preset, onOpenCycle }: { onClose: () => void; preset?: LogPreset | null; onOpenCycle?: (cycleId: string) => void }) {
+  const { t, i18n } = useLingui();
   const { session } = useAuth();
   const { active } = useOrgs();
   const sync = useRecordSync();
@@ -157,7 +161,7 @@ export function LogActivityScreen({ onClose, preset, onOpenCycle }: { onClose: (
   const todayStr = dayAgo(0);
   const dueIds = areaMode ? [] : stages.filter((s) => s.work_type_id && s.status !== 'done' && (s.status === 'in_progress' || (s.planned_start && s.planned_end && todayStr >= s.planned_start && todayStr <= s.planned_end))).map((s) => s.work_type_id).filter((x): x is string => !!x);
   const recentIds = recentWorkTypeIds(allLogs, session?.user.id, new Set(workTypes.map((w) => w.id)));
-  const targetLabel = areaMode ? (siteArea ? areaPath(siteArea.id, areas) : 'Khu vực') : cycle ? `${cycleTitle(cycle, cropName(cycle.crop_type_id))} · ${areaName(cycle.area_id)}` : '';
+  const targetLabel = areaMode ? (siteArea ? areaPath(siteArea.id, areas) : t`Khu vực`) : cycle ? `${cycleTitle(cycle, cropName(cycle.crop_type_id))} · ${areaName(cycle.area_id)}` : '';
   const canChangeTarget = nTargets > 1;
   const backToTarget = () => { setWorkTypeId(null); setStageSel(undefined); setTargetDone(false); };
   // nút tắt theo loại vụ: số con (nhập, chết, loại, bán) cho vật nuôi / thủy sản; kỳ thu hoạch cho cây lâu năm
@@ -188,7 +192,7 @@ export function LogActivityScreen({ onClose, preset, onOpenCycle }: { onClose: (
     if (supabase && navigator.onLine) {
       void supabase.from('inventory_transactions').select('material_id, quantity_delta').eq('activity_log_id', copySrc.id).eq('txn_type', 'issue').then(({ data }) => {
         const rows = (data ?? []) as { material_id: string; quantity_delta: number | string }[];
-        if (rows.length > 0) { setUsed(rows.map((t) => ({ materialId: t.material_id, qty: String(-Number(t.quantity_delta)).replace('.', ',') }))); setUsedOpen(true); }
+        if (rows.length > 0) { setUsed(rows.map((t) => ({ materialId: t.material_id, qty: numberToInput(-Number(t.quantity_delta)) }))); setUsedOpen(true); }
       });
     }
   }, [copySrc, workType]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -219,12 +223,12 @@ export function LogActivityScreen({ onClose, preset, onOpenCycle }: { onClose: (
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!workType || !session || (areaMode ? !siteArea || !active : !cycle)) return;
-    if (!note.trim()) return setError('Hãy nhập "Nội dung việc": gõ chữ hoặc bấm Nói để đọc nội dung đã làm.');
+    if (!note.trim()) return setError(t`Hãy nhập "Nội dung việc": gõ chữ hoặc bấm Nói để đọc nội dung đã làm.`);
     const merged = { ...initialValues(workType.field_schema), ...values };
     const bad = validateFields(workType.field_schema, merged);
     if (bad) return setError(bad);
-    if (new Date(when).getTime() > Date.now() + 5 * 60_000) return setError('Thời điểm làm không được ở tương lai. Chọn hôm nay hoặc ngày đã làm (ghi bù được cho những ngày trước).');
-    if (endWhen && new Date(endWhen).getTime() < new Date(when).getTime()) return setError('Thời điểm kết thúc không được trước thời điểm bắt đầu.');
+    if (new Date(when).getTime() > Date.now() + 5 * 60_000) return setError(t`Thời điểm làm không được ở tương lai. Chọn hôm nay hoặc ngày đã làm (ghi bù được cho những ngày trước).`);
+    if (endWhen && new Date(endWhen).getTime() < new Date(when).getTime()) return setError(t`Thời điểm kết thúc không được trước thời điểm bắt đầu.`);
     const data = fieldsToData(workType.field_schema, merged, endWhen ? { ended_at: new Date(endWhen).toISOString() } : {});
     // dòng vật tư: bỏ dòng trống hoàn toàn; dòng đã nhập dở thì báo để người dùng sửa, không âm thầm bỏ
     const items: { materialId: string; quantity: number; lotId?: string; reason?: string }[] = [];
@@ -232,22 +236,27 @@ export function LogActivityScreen({ onClose, preset, onOpenCycle }: { onClose: (
       if (!row.materialId && row.qty.trim() === '') continue;
       if (row.suggested && row.qty.trim() === '') continue; // vật tư gợi ý chưa nhập số lượng: không dùng
       const q = parseNumber(row.qty);
-      if (!row.materialId) return setError('Hãy chọn vật tư cho dòng "Vật tư đã dùng", hoặc xóa dòng đó.');
-      if (q === null || Number.isNaN(q) || q <= 0) return setError('Số lượng vật tư đã dùng phải là số lớn hơn 0.');
-      if (row.lotId && !(row.lotReason ?? '').trim() && row.lotExpired) return setError('Lô đã chọn đã hết hạn: hãy ghi lý do dùng, hoặc chọn lô khác.');
+      if (!row.materialId) return setError(t`Hãy chọn vật tư cho dòng "Vật tư đã dùng", hoặc xóa dòng đó.`);
+      if (q === null || Number.isNaN(q) || q <= 0) return setError(t`Số lượng vật tư đã dùng phải là số lớn hơn 0.`);
+      if (row.lotId && !(row.lotReason ?? '').trim() && row.lotExpired) return setError(t`Lô đã chọn đã hết hạn: hãy ghi lý do dùng, hoặc chọn lô khác.`);
       items.push({ materialId: row.materialId, quantity: q, lotId: row.lotId || undefined, reason: row.lotReason });
     }
     // Cảnh báo ghi trùng: cùng loại việc, cùng vụ (hoặc khu), cùng ngày đã có bản ghi (quy định: một việc, một người phụ trách ghi)
     const groupIds = new Set(group.map((g) => g.id));
     const sameDay = allLogs.filter((l) => !l.voided_at && l.work_type_id === workType.id && (areaMode ? l.area_id === siteArea?.id : groupIds.has(l.cycle_id ?? '')) && toLocalInput(new Date(l.performed_at)).slice(0, 10) === when.slice(0, 10));
     if (sameDay.length > 0) {
-      const who = sameDay.map((l) => `${new Date(l.performed_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}${l.author_name ? ` (${l.author_name})` : ''}`).join(', ');
-      const msg = `Ngày này đã có ${sameDay.length} bản ghi "${workType.name}" của ${areaMode ? 'khu' : group.length > 1 ? 'các vụ đã chọn' : 'vụ'} này, ghi lúc ${who}.${items.length > 0 ? ' Ghi thêm thì vật tư bạn vừa chọn sẽ bị trừ kho thêm một lần nữa.' : ''}
-
-Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn vẫn muốn ghi thêm?`;
+      const who = sameDay.map((l) => `${fmtTime(new Date(l.performed_at))}${l.author_name ? ` (${l.author_name})` : ''}`).join(', ');
+      const count = sameDay.length, workName = workType.name;
+      const place = areaMode ? t`khu này` : group.length > 1 ? t`các vụ đã chọn` : t`vụ này`;
+      const msg = [
+        plural(count, { one: `Ngày này đã có # bản ghi "${workName}" của ${place}, ghi lúc ${who}.`, other: `Ngày này đã có # bản ghi "${workName}" của ${place}, ghi lúc ${who}.` }),
+        items.length > 0 ? t`Ghi thêm thì vật tư bạn vừa chọn sẽ bị trừ kho thêm một lần nữa.` : '',
+        '',
+        t`Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn vẫn muốn ghi thêm?`,
+      ].join('\n');
       if (!window.confirm(msg)) return;
     }
-    if (items.length > 0 && !effLocation) return setError('Chưa có kho để trừ vật tư. Hãy nhờ chủ cơ sở thêm kho ở mục "Vật tư & chi phí".');
+    if (items.length > 0 && !effLocation) return setError(t`Chưa có kho để trừ vật tư. Hãy nhờ chủ cơ sở thêm kho ở mục "Vật tư & chi phí".`);
     setError(null);
     // một việc làm chung cho nhiều vụ: mỗi vụ một nhật ký, vật tư chia theo diện tích (hoặc chia đều); các nhật ký cùng một nhóm
     const shared = !areaMode && group.length > 1;
@@ -297,22 +306,22 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
     const s = sync.get(savedId);
     return (
       <div className="auth">
-        <h1>{savedCount > 1 ? `Đã ghi cho ${savedCount} vụ` : 'Đã ghi'}</h1>
+        <h1>{savedCount > 1 ? plural(savedCount, { one: 'Đã ghi cho # vụ', other: 'Đã ghi cho # vụ' }) : t`Đã ghi`}</h1>
         <p className="msg ok" role="status">
-          {s && s.state !== 'synced' ? SYNC_STATE_LABEL_VI.local_only : SYNC_STATE_LABEL_VI.synced}
+          {i18n._(s && s.state !== 'synced' ? SYNC_STATE_LABEL.local_only : SYNC_STATE_LABEL.synced)}
         </p>
         <SyncBadge sync={s} />
         {savedItems.length > 0 && (
           <p>
-            Vật tư đã dùng:{' '}
-            {savedItems.map((it) => `${materials.find((m) => m.id === it.materialId)?.name ?? 'Vật tư'} ${formatQty(it.quantity)} ${unitOf(it.materialId)}`).join('; ')}
+            <Trans>Vật tư đã dùng:</Trans>{' '}
+            {savedItems.map((it) => `${materials.find((m) => m.id === it.materialId)?.name ?? t`Vật tư`} ${formatQty(it.quantity)} ${unitOf(it.materialId)}`).join('; ')}
           </p>
         )}
         {(!s || s.state !== 'synced') && !navigator.onLine && (
-          <p className="muted">Bản ghi đang nằm trên điện thoại và sẽ tự gửi khi có mạng.</p>
+          <p className="muted"><Trans>Bản ghi đang nằm trên điện thoại và sẽ tự gửi khi có mạng.</Trans></p>
         )}
-        <button className="primary" onClick={again}>Ghi việc khác</button>
-        <button className="secondary" onClick={onClose}>Xong</button>
+        <button className="primary" onClick={again}><Trans>Ghi việc khác</Trans></button>
+        <button className="secondary" onClick={onClose}><Trans>Xong</Trans></button>
       </div>
     );
   }
@@ -321,26 +330,26 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
     <div className="auth">
       {workType ? (
         <div className="row">
-          <h1 className="grow">Ghi việc: {workType.name}</h1>
-          <button type="button" className="link inline" onClick={() => { setWorkTypeId(null); setStageSel(undefined); }}>Đổi việc</button>
-          {canChangeTarget && <button type="button" className="link inline" onClick={backToTarget}>Đổi nơi ghi</button>}
+          <h1 className="grow"><Trans>Ghi việc:</Trans> {workType.name}</h1>
+          <button type="button" className="link inline" onClick={() => { setWorkTypeId(null); setStageSel(undefined); }}><Trans>Đổi việc</Trans></button>
+          {canChangeTarget && <button type="button" className="link inline" onClick={backToTarget}><Trans>Đổi nơi ghi</Trans></button>}
           <HelpButton topic="log" />
         </div>
-      ) : <div className="row"><h1 className="grow">Ghi việc vừa làm</h1><HelpButton topic="log" /></div>}
+      ) : <div className="row"><h1 className="grow"><Trans>Ghi việc vừa làm</Trans></h1><HelpButton topic="log" /></div>}
 
       {options.length === 0 && siteAreas.length === 0 ? (
         <>
           <p className="msg warn">
-            Chưa có vụ nào đang sản xuất nên chưa ghi việc được.{' '}
+            <Trans>Chưa có vụ nào đang sản xuất nên chưa ghi việc được.</Trans>{' '}
             {notStarted.length > 0
-              ? 'Vụ đang chuẩn bị hoặc tạm dừng chỉ ghi việc được sau khi bấm "Bắt đầu sản xuất" hoặc "Tiếp tục" ở màn Sản xuất.'
-              : 'Hãy tạo vụ ở màn hình Sản xuất.'}
+              ? t`Vụ đang chuẩn bị hoặc tạm dừng chỉ ghi việc được sau khi bấm "Bắt đầu sản xuất" hoặc "Tiếp tục" ở màn Sản xuất.`
+              : t`Hãy tạo vụ ở màn hình Sản xuất.`}
           </p>
-          <button className="secondary" onClick={onClose}>Quay lại</button>
+          <button className="secondary" onClick={onClose}><Trans>Quay lại</Trans></button>
         </>
       ) : !workType && !targetDone && nTargets > 1 ? (
         <LogTargetPicker
-          targets={options.map((c) => ({ id: c.id, title: cycleTitle(c, cropName(c.crop_type_id)), place: areaName(c.area_id), kind: kindOfCycle(c), status: CYCLE_STATUS_LABEL_VI[c.status], lastAt: lastAtByCycle.get(c.id) ?? null, topId: areas.find((a) => a.id === c.area_id)?.parent_id ?? c.area_id, topName: areaName(areas.find((a) => a.id === c.area_id)?.parent_id ?? c.area_id) }))}
+          targets={options.map((c) => ({ id: c.id, title: cycleTitle(c, cropName(c.crop_type_id)), place: areaName(c.area_id), kind: kindOfCycle(c), status: i18n._(CYCLE_STATUS_LABEL[c.status]), lastAt: lastAtByCycle.get(c.id) ?? null, topId: areas.find((a) => a.id === c.area_id)?.parent_id ?? c.area_id, topName: areaName(areas.find((a) => a.id === c.area_id)?.parent_id ?? c.area_id) }))}
           rememberedId={options.find((c) => c.id === remembered)?.id ?? null}
           hasAreas={siteAreas.length > 0}
           onPickCycle={(id) => { setCycleId(id); setForArea(false); setStageSel(undefined); setTargetDone(true); }}
@@ -362,9 +371,9 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
         <form className="inline-form" onSubmit={onSubmit} noValidate>
           {!areaMode && stages.length > 0 && (
             <label>
-              Thuộc công đoạn
+              <Trans>Thuộc công đoạn</Trans>
               <select value={effStage ?? ''} onChange={(e) => setStageSel(e.target.value || null)}>
-                <option value="">— Không gắn công đoạn —</option>
+                <option value="">{t`— Không gắn công đoạn —`}</option>
                 {stages.map((st) => <option key={st.id} value={st.id}>{st.phase_name ? `${st.phase_name} › ${st.name}` : st.name}</option>)}
               </select>
             </label>
@@ -372,15 +381,15 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
 
           {areaMode ? (
             <label>
-              Khu vực
+              <Trans>Khu vực</Trans>
               <select value={siteArea?.id ?? ''} onChange={(e) => setAreaPick(e.target.value)}>
-                {siteAreas.map((a) => <option key={a.id} value={a.id}>{areaPath(a.id, areas)}{a.code ? ` · ${a.code}` : ''}{a.kind === 'facility' ? ' (cơ sở vật chất)' : ''}</option>)}
+                {siteAreas.map((a) => <option key={a.id} value={a.id}>{areaPath(a.id, areas)}{a.code ? ` · ${a.code}` : ''}{a.kind === 'facility' ? ` (${t`cơ sở vật chất`})` : ''}</option>)}
               </select>
             </label>
           ) : (
           <>
           {formTops.length >= 2 && (
-            <label>Phân khu
+            <label><Trans>Phân khu</Trans>
               <select value={topOfCycle(cycle?.area_id)} onChange={(e) => {
                 const first = options.find((c) => topOfCycle(c.area_id) === e.target.value);
                 if (!first) return;
@@ -401,7 +410,7 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
             }}>
               {(formTops.length >= 2 ? options.filter((c) => topOfCycle(c.area_id) === topOfCycle(cycle?.area_id)) : options).map((c) => (
                 <option key={c.id} value={c.id}>
-                  {cycleTitle(c, cropName(c.crop_type_id))} · {areaName(c.area_id)} ({CYCLE_STATUS_LABEL_VI[c.status]})
+                  {cycleTitle(c, cropName(c.crop_type_id))} · {areaName(c.area_id)} ({i18n._(CYCLE_STATUS_LABEL[c.status])})
                 </option>
               ))}
             </select>
@@ -411,30 +420,30 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
 
           {!areaMode && coCandidates.length > 0 && (
             <fieldset className="roles">
-              <legend>Việc này làm chung cho vụ khác trong ô?</legend>
-              <p className="muted">Có vụ khác cùng ô hoặc cùng loại. Việc làm chung (tưới, phun, tiêm vaccine, dọn…) thì tích các vụ cùng làm: app ghi một nhật ký cho mỗi vụ.</p>
+              <legend><Trans>Việc này làm chung cho vụ khác trong ô?</Trans></legend>
+              <p className="muted"><Trans>Có vụ khác cùng ô hoặc cùng loại. Việc làm chung (tưới, phun, tiêm vaccine, dọn…) thì tích các vụ cùng làm: app ghi một nhật ký cho mỗi vụ.</Trans></p>
               {coCandidates.map((c) => (
                 <label className="check" key={c.id}>
                   <input type="checkbox" checked={coIds.includes(c.id)} onChange={(e) => setCoIds((s) => (e.target.checked ? [...s, c.id] : s.filter((x) => x !== c.id)))} />
-                  <span>{cycleTitle(c, cropName(c.crop_type_id))} · {c.planted_area_m2 ? `${Math.round(c.planted_area_m2).toLocaleString('vi-VN')} m²` : 'chưa khai diện tích'}</span>
+                  <span>{cycleTitle(c, cropName(c.crop_type_id))} · {c.planted_area_m2 ? `${fmtNumber(Math.round(c.planted_area_m2), 0)} m²` : t`chưa khai diện tích`}</span>
                 </label>
               ))}
-              {coIds.length < coCandidates.length && <button type="button" className="link" onClick={() => setCoIds(coCandidates.map((c) => c.id))}>Chọn tất cả vụ trong ô</button>}
+              {coIds.length < coCandidates.length && <button type="button" className="link" onClick={() => setCoIds(coCandidates.map((c) => c.id))}><Trans>Chọn tất cả vụ trong ô</Trans></button>}
             </fieldset>
           )}
 
           <div className="btnrow">
-            {[[0, 'Hôm nay'], [1, 'Hôm qua'], [2, 'Hôm kia']].map(([back, label]) => (
+            {[[0, t`Hôm nay`], [1, t`Hôm qua`], [2, t`Hôm kia`]].map(([back, label]) => (
               <button key={label as string} type="button" className={dayOfWhen === dayAgo(back as number) ? 'chip active' : 'chip'} onClick={() => { setWhen(`${dayAgo(back as number)}${back === 0 ? toLocalInput(new Date()).slice(10) : when.slice(10)}`); setEndWhen(''); setStageSel(undefined); }}>{label}</button>
             ))}
           </div>
           <div className="pair">
             <label>
-              Thời điểm bắt đầu làm
+              <Trans>Thời điểm bắt đầu làm</Trans>
               <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
             </label>
             <label>
-              Thời điểm kết thúc
+              <Trans>Thời điểm kết thúc</Trans>
               <input type="datetime-local" value={endWhen} min={when} onChange={(e) => setEndWhen(e.target.value)} />
             </label>
           </div>
@@ -443,31 +452,31 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
             <DynamicField key={f.key} def={f} value={values[f.key] ?? initialValues([f])[f.key] ?? ''} onChange={(v) => setValues((s) => ({ ...s, [f.key]: v }))} />
           ))}
 
-          <VoiceNote label="Nội dung việc (bắt buộc)" value={note} onChange={setNote} />
+          <VoiceNote label={t`Nội dung việc (bắt buộc)`} value={note} onChange={setNote} />
 
           {canIssue && (
             <fieldset className="roles">
-              <legend>Vật tư đã dùng (không bắt buộc)</legend>
+              <legend><Trans>Vật tư đã dùng (không bắt buộc)</Trans></legend>
               {!usedOpen ? (
                 <button type="button" className="secondary" onClick={() => { setUsedOpen(true); if (used.length === 0) setUsed([{ materialId: '', qty: '' }]); }}>
-                  + Thêm vật tư đã dùng
+                  <Trans>+ Thêm vật tư đã dùng</Trans>
                 </button>
               ) : materials.length === 0 ? (
-                <p className="muted">Chưa có vật tư trong danh mục. Hãy nhờ chủ cơ sở hoặc người phụ trách Kho & chi phí thêm ở mục "Vật tư & chi phí" (cần có mạng một lần để tải về máy).</p>
+                <p className="muted"><Trans>Chưa có vật tư trong danh mục. Hãy nhờ chủ cơ sở hoặc người phụ trách Kho & chi phí thêm ở mục "Vật tư & chi phí" (cần có mạng một lần để tải về máy).</Trans></p>
               ) : (
                 <>
                   {used.map((row, i) => (
                     <div key={i}><div className="row member">
-                      <select aria-label="Vật tư" value={row.materialId} className="grow"
+                      <select aria-label={t`Vật tư`} value={row.materialId} className="grow"
                         onChange={(e) => setUsed((s) => s.map((r, j) => (j === i ? { ...r, materialId: e.target.value, lotId: '', lotExpired: false, lotReason: '' } : r)))}>
-                        <option value="">— Chọn vật tư —</option>
+                        <option value="">{t`— Chọn vật tư —`}</option>
                         {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                       </select>
-                      <input aria-label={`Số lượng${row.materialId ? ` (${unitOf(row.materialId)})` : ''}`} placeholder={unitOf(row.materialId) || 'Số lượng'}
+                      <input aria-label={`${t`Số lượng`}${row.materialId ? ` (${unitOf(row.materialId)})` : ''}`} placeholder={unitOf(row.materialId) || t`Số lượng`}
                         inputMode="decimal" size={6} value={row.qty}
                         onChange={(e) => setUsed((s) => s.map((r, j) => (j === i ? { ...r, qty: e.target.value } : r)))} />
-                      <button type="button" className="link inline" aria-label="Xóa dòng vật tư"
-                        onClick={() => setUsed((s) => s.filter((_, j) => j !== i))}>Xóa</button>
+                      <button type="button" className="link inline" aria-label={t`Xóa dòng vật tư`}
+                        onClick={() => setUsed((s) => s.filter((_, j) => j !== i))}><Trans>Xóa</Trans></button>
                     </div>
                     {row.materialId && (
                         <LotPicker materialId={row.materialId} lotId={row.lotId ?? ''} reason={row.lotReason ?? ''}
@@ -476,17 +485,17 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
                       )}
                     </div>
                   ))}
-                  <button type="button" className="secondary" onClick={() => setUsed((s) => [...s, { materialId: '', qty: '' }])}>+ Thêm dòng</button>
+                  <button type="button" className="secondary" onClick={() => setUsed((s) => [...s, { materialId: '', qty: '' }])}><Trans>+ Thêm dòng</Trans></button>
                   {!areaMode && group.length > 1 && (
                     <>
-                      <p className="muted">Nhập <strong>tổng</strong> số lượng dùng cho {group.length} vụ; app chia cho từng vụ:</p>
-                      <label>Cách chia
+                      <p className="muted"><Plural value={group.length} one="Nhập tổng số lượng dùng cho # vụ; app chia cho từng vụ:" other="Nhập tổng số lượng dùng cho # vụ; app chia cho từng vụ:" /></p>
+                      <label><Trans>Cách chia</Trans>
                         <select value={splitMode} onChange={(e) => setSplitMode(e.target.value as 'area' | 'equal')}>
-                          <option value="area">Theo diện tích của từng vụ</option>
-                          <option value="equal">Chia đều cho các vụ</option>
+                          <option value="area">{t`Theo diện tích của từng vụ`}</option>
+                          <option value="equal">{t`Chia đều cho các vụ`}</option>
                         </select>
                       </label>
-                      {group.some((g) => !(g.planted_area_m2 && g.planted_area_m2 > 0)) && splitMode === 'area' && <p className="msg warn" role="status">Có vụ chưa khai diện tích nên sẽ chia đều. Khai diện tích ở Sửa vụ để chia theo diện tích.</p>}
+                      {group.some((g) => !(g.planted_area_m2 && g.planted_area_m2 > 0)) && splitMode === 'area' && <p className="msg warn" role="status"><Trans>Có vụ chưa khai diện tích nên sẽ chia đều. Khai diện tích ở Sửa vụ để chia theo diện tích.</Trans></p>}
                       {used.filter((r) => r.materialId && parseNumber(r.qty)).map((r, m) => {
                         const q = parseNumber(r.qty) as number;
                         const parts = splitQuantity(q, group.map((g) => g.planted_area_m2), splitMode).parts;
@@ -496,23 +505,23 @@ Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn v
                   )}
                   {locationsHere.length > 1 && (
                     <label>
-                      Lấy từ kho
+                      <Trans>Lấy từ kho</Trans>
                       <select value={effLocation} onChange={(e) => setLocationId(e.target.value)}>
                         {locationsHere.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
                       </select>
                     </label>
                   )}
-                  {locations.length === 0 && <p className="msg warn">Chưa có kho nào nên chưa trừ được vật tư.</p>}
+                  {locations.length === 0 && <p className="msg warn"><Trans>Chưa có kho nào nên chưa trừ được vật tư.</Trans></p>}
                 </>
               )}
             </fieldset>
           )}
 
           {error && <p className="msg error" role="alert">{error}</p>}
-          {!navigator.onLine && <p className="msg warn">Đang offline. Bản ghi sẽ được lưu trên điện thoại và gửi sau.</p>}
+          {!navigator.onLine && <p className="msg warn"><Trans>Đang offline. Bản ghi sẽ được lưu trên điện thoại và gửi sau.</Trans></p>}
           <div className="btnrow">
-            <button type="submit" className="primary">Lưu</button>
-            <button type="button" className="secondary" onClick={onClose}>Hủy</button>
+            <button type="submit" className="primary"><Trans>Lưu</Trans></button>
+            <button type="button" className="secondary" onClick={onClose}><Trans>Hủy</Trans></button>
           </div>
         </form>
       )}

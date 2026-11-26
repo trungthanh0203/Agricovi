@@ -1,0 +1,1078 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-11-26 07:43+0700\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "— Chọn vật tư —"
+msgstr "— Select a supply —"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "— Không gắn công đoạn —"
+msgstr "— No stage —"
+
+#: src/screens/HomeTab.tsx
+msgid "(đã hết hạn)"
+msgstr "(expired)"
+
+#. placeholder {0}: group.length
+#: src/screens/LogActivityScreen.tsx
+msgid "{0, plural, one {Nhập tổng số lượng dùng cho # vụ; app chia cho từng vụ:} other {Nhập tổng số lượng dùng cho # vụ; app chia cho từng vụ:}}"
+msgstr "{0, plural, one {Enter the total quantity used for # season; the app splits it per season:} other {Enter the total quantity used for # seasons; the app splits it between them:}}"
+
+#. placeholder {0}: -d
+#: src/screens/HomeTab.tsx
+msgid "{0, plural, one {Quá hạn # ngày} other {Quá hạn # ngày}}"
+msgstr "{0, plural, one {# day overdue} other {# days overdue}}"
+
+#. placeholder {0}: targets.length
+#: src/components/LogTargetPicker.tsx
+msgid "{0, plural, one {Xem tất cả # vụ} other {Xem tất cả # vụ}}"
+msgstr "{0, plural, one {View # season} other {View all # seasons}}"
+
+#: src/App.tsx
+msgid "{attention, plural, one {# bản ghi} other {# bản ghi}}"
+msgstr "{attention, plural, one {# record} other {# records}}"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "{count, plural, one {Ngày này đã có # bản ghi \"{workName}\" của {place}, ghi lúc {who}.} other {Ngày này đã có # bản ghi \"{workName}\" của {place}, ghi lúc {who}.}}"
+msgstr "{count, plural, one {This date already has # \"{workName}\" record for {place}, logged at {who}.} other {This date already has # \"{workName}\" records for {place}, logged at {who}.}}"
+
+#: src/screens/HomeTab.tsx
+msgid "{d, plural, one {Còn # ngày} other {Còn # ngày}}"
+msgstr "{d, plural, one {# day left} other {# days left}}"
+
+#: src/screens/HomeTab.tsx
+msgid "{failed, plural, one {Có # bản ghi cần xử lý (chưa gửi được lên máy chủ).} other {Có # bản ghi cần xử lý (chưa gửi được lên máy chủ).}}"
+msgstr "{failed, plural, one {# record needs attention (not yet sent to the server).} other {# records need attention (not yet sent to the server).}}"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "{savedCount, plural, one {Đã ghi cho # vụ} other {Đã ghi cho # vụ}}"
+msgstr "{savedCount, plural, one {Logged for # season} other {Logged for # seasons}}"
+
+#: src/App.tsx
+msgid "{waiting, plural, one {# bản ghi} other {# bản ghi}}"
+msgstr "{waiting, plural, one {# record} other {# records}}"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "+ Thêm dòng"
+msgstr "+ Add row"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "+ Thêm vật tư đã dùng"
+msgstr "+ Add supplies used"
+
+#: src/components/LogWorkPicker.tsx
+msgid "⏰ Đến hạn hôm nay"
+msgstr "⏰ Due today"
+
+#: src/components/VoiceNote.tsx
+msgid "⏹ Dừng"
+msgstr "⏹ Stop"
+
+#: src/components/LogWorkPicker.tsx
+msgid "⭐ Hay làm gần đây"
+msgstr "⭐ Recently done"
+
+#: src/lib/labels.ts
+msgid "🌱 Trồng trọt"
+msgstr "🌱 Crops"
+
+#. placeholder {0}: fmtClock(elapsed)
+#. placeholder {1}: fmtClock(MAX_LISTEN_SECONDS)
+#: src/components/VoiceNote.tsx
+msgid "🎤 Đang nghe {0} / {1}… nói từng câu rõ ràng, bấm Dừng khi xong"
+msgstr "🎤 Listening {0} / {1}… speak one clear sentence at a time, press Stop when done"
+
+#: src/components/VoiceNote.tsx
+msgid "🎤 Nói"
+msgstr "🎤 Speak"
+
+#: src/components/LogTargetPicker.tsx
+msgid "🏠 Khu vực / cơ sở vật chất"
+msgstr "🏠 Areas / facilities"
+
+#: src/lib/labels.ts
+msgid "🐖 Vật nuôi"
+msgstr "🐖 Livestock"
+
+#: src/lib/labels.ts
+msgid "🐟 Thủy sản"
+msgstr "🐟 Aquaculture"
+
+#: src/components/InstallGuide.tsx
+msgid "💻 Cài cho máy tính"
+msgstr "💻 Install on a computer"
+
+#: src/lib/labels.ts
+msgid "📦 Khác"
+msgstr "📦 Other"
+
+#: src/components/InstallGuide.tsx
+msgid "📱 Cài cho điện thoại"
+msgstr "📱 Install on a phone"
+
+#: src/components/InstallGuide.tsx
+msgid "📲 Cài app về máy để dùng tiện hơn"
+msgstr "📲 Install the app for easier use"
+
+#: src/components/VoiceNote.tsx
+msgid "🗑 Xóa & đọc lại"
+msgstr "🗑 Clear & dictate again"
+
+#: src/components/PhoneSignupForm.tsx
+#: src/screens/AuthScreen.tsx
+msgid "Ẩn mật khẩu"
+msgstr "Hide password"
+
+#: src/components/InstallGuide.tsx
+msgid "App sẽ có biểu tượng riêng trên màn hình/Dock, mở lên không cần trình duyệt."
+msgstr "The app gets its own icon on the desktop/Dock and opens without a browser."
+
+#: src/components/InstallGuide.tsx
+msgid "Bấm \"Cài đặt\" hoặc \"Thêm\"."
+msgstr "Tap \"Install\" or \"Add\"."
+
+#: src/components/InstallGuide.tsx
+msgid "Bấm \"Cài đặt\" trong hộp thoại hiện ra."
+msgstr "Click \"Install\" in the dialog that appears."
+
+#: src/components/InstallGuide.tsx
+msgid "Bấm nút Chia sẻ (hình vuông có mũi tên đi lên) ở thanh dưới cùng."
+msgstr "Tap the Share button (a square with an upward arrow) on the bottom bar."
+
+#: src/screens/HomeTab.tsx
+msgid "Bạn"
+msgstr "You"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Bản ghi đang nằm trên điện thoại và sẽ tự gửi khi có mạng."
+msgstr "This record is on your phone and will be sent automatically when you are online."
+
+#: src/components/LogTargetPicker.tsx
+msgid "Bạn ghi việc cho đối tượng nào?"
+msgstr "What are you logging work for?"
+
+#: src/components/Drawer.tsx
+msgid "Bạn vẫn muốn đăng xuất?"
+msgstr "Do you still want to sign out?"
+
+#: src/components/LogWorkPicker.tsx
+msgid "Bạn vừa làm việc gì?"
+msgstr "What did you just do?"
+
+#: src/components/HomeLinks.tsx
+msgid "Bảng lương"
+msgstr "Payroll"
+
+#: src/components/HomeLinks.tsx
+#: src/lib/labels.ts
+msgid "Báo cáo"
+msgstr "Reports"
+
+#: src/components/InstallGuide.tsx
+msgid "Biểu tượng app xuất hiện ngay ở màn hình chính điện thoại."
+msgstr "The app icon appears on your phone's home screen."
+
+#: src/components/InstallGuide.tsx
+msgid "Biểu tượng app xuất hiện ở màn hình chính, mở lên như một app bình thường."
+msgstr "The app icon appears on the home screen and opens like a normal app."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "các vụ đã chọn"
+msgstr "the selected seasons"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Cách chia"
+msgstr "How to split"
+
+#: src/screens/AuthScreen.tsx
+msgid "Cách đăng ký"
+msgstr "Sign-up method"
+
+#: src/components/InstallGuide.tsx
+msgid "Cài app ngay"
+msgstr "Install app now"
+
+#: src/components/VoiceNote.tsx
+msgid "Cần có mạng. Giọng nói do trình duyệt của điện thoại xử lý; ứng dụng không ghi âm và không lưu lại. Điện thoại có thể kêu “tít” sau mỗi câu. Hãy đọc lại chữ trước khi bấm Lưu."
+msgstr "An internet connection is required. Your phone's browser processes the voice; the app does not record or store it. The phone may beep after each sentence. Check the text before pressing Save."
+
+#: src/lib/labels.ts
+msgid "Cần xử lý"
+msgstr "Needs attention"
+
+#: src/components/HomeLinks.tsx
+#: src/lib/labels.ts
+msgid "Cấu hình"
+msgstr "Settings"
+
+#: src/components/HomeLinks.tsx
+msgid "Chấm công"
+msgstr "Attendance"
+
+#: src/lib/labels.ts
+msgid "Chăm sóc cây"
+msgstr "Plant care"
+
+#: src/components/SyncBadge.tsx
+msgid "Chi tiết kỹ thuật (gửi cho người hỗ trợ)"
+msgstr "Technical details (send to support)"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Chia đều cho các vụ"
+msgstr "Split equally between seasons"
+
+#: src/lib/labels.ts
+msgid "Cho ăn, bón phân, tưới"
+msgstr "Feeding, fertilizing, irrigation"
+
+#: src/components/InstallGuide.tsx
+msgid "Chờ vài giây, bảng \"Thêm vào Màn hình chính\" sẽ tự hiện, bấm vào đó. Nếu không thấy, bấm menu 3 chấm ở góc trên rồi chọn \"Cài đặt ứng dụng\"."
+msgstr "Wait a few seconds for the \"Add to Home screen\" banner and tap it. If it does not appear, tap the three-dot menu at the top and choose \"Install app\"."
+
+#: src/screens/AuthScreen.tsx
+msgid "Chọn chức năng"
+msgstr "Choose an action"
+
+#: src/components/InstallGuide.tsx
+msgid "Chọn nơi cài"
+msgstr "Choose where to install"
+
+#: src/components/LogTargetPicker.tsx
+msgid "Chọn phân khu"
+msgstr "Select a zone"
+
+#: src/components/LogTargetPicker.tsx
+msgid "Chọn phân khu để xem các vụ."
+msgstr "Select a zone to see its seasons."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Chọn tất cả vụ trong ô"
+msgstr "Select all seasons in this plot"
+
+#: src/screens/AuthScreen.tsx
+msgid "Chủ Hộ/HTX đăng ký bằng email. Hãy nhập email của bạn."
+msgstr "Household and cooperative owners sign up with email. Please enter your email."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Chưa có kho để trừ vật tư. Hãy nhờ chủ cơ sở thêm kho ở mục \"Vật tư & chi phí\"."
+msgstr "No warehouse to deduct supplies from. Ask the farm owner to add one under \"Supplies & expenses\"."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Chưa có kho nào nên chưa trừ được vật tư."
+msgstr "There is no warehouse yet, so supplies cannot be deducted."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Chưa có vật tư trong danh mục. Hãy nhờ chủ cơ sở hoặc người phụ trách Kho & chi phí thêm ở mục \"Vật tư & chi phí\" (cần có mạng một lần để tải về máy)."
+msgstr "The supply list is empty. Ask the farm owner or the person in charge of Stock & expenses to add items under \"Supplies & expenses\" (you need to be online once to download them)."
+
+#: src/App.tsx
+#: src/components/Drawer.tsx
+msgid "Chưa có vụ đang sản xuất để ghi việc"
+msgstr "No active season to log work for"
+
+#: src/screens/HomeTab.tsx
+#: src/screens/LogActivityScreen.tsx
+msgid "Chưa có vụ nào đang sản xuất nên chưa ghi việc được."
+msgstr "There is no active season, so work cannot be logged yet."
+
+#: src/screens/HomeTab.tsx
+msgid "chưa giao ai"
+msgstr "not assigned"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "chưa khai diện tích"
+msgstr "area not set"
+
+#: src/components/LogWorkPicker.tsx
+msgid "Chưa tải được danh sách loại việc. Hãy kết nối mạng một lần để tải về."
+msgstr "The work type list has not been downloaded. Connect to the internet once to download it."
+
+#: src/lib/labels.ts
+msgid "Chuẩn bị"
+msgstr "Preparing"
+
+#: src/lib/labels.ts
+msgid "Chuẩn bị & gieo trồng / thả giống"
+msgstr "Preparation & sowing / stocking"
+
+#: src/components/Drawer.tsx
+msgid "Chức năng chính"
+msgstr "Main functions"
+
+#: src/components/Drawer.tsx
+msgid "Chức năng khác"
+msgstr "Other functions"
+
+#: src/components/Drawer.tsx
+msgid "Chuyển cơ sở"
+msgstr "Switch farm"
+
+#: src/App.tsx
+#: src/App.tsx
+msgid "Có mạng"
+msgstr "Online"
+
+#: src/components/Drawer.tsx
+msgid "Cơ sở Hộ nuôi trồng"
+msgstr "Household farm"
+
+#: src/components/Drawer.tsx
+msgid "Cơ sở Hợp tác xã"
+msgstr "Cooperative"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "cơ sở vật chất"
+msgstr "facility"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Có vụ chưa khai diện tích nên sẽ chia đều. Khai diện tích ở Sửa vụ để chia theo diện tích."
+msgstr "Some seasons have no area set, so the quantity will be split equally. Set the area in Edit season to split by area."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Có vụ khác cùng ô hoặc cùng loại. Việc làm chung (tưới, phun, tiêm vaccine, dọn…) thì tích các vụ cùng làm: app ghi một nhật ký cho mỗi vụ."
+msgstr "There are other seasons in the same plot or of the same type. For shared work (watering, spraying, vaccinating, cleaning…), tick the seasons involved: the app creates one log for each."
+
+#: src/screens/AuthScreen.tsx
+msgid "Đã đổi mật khẩu."
+msgstr "Password changed."
+
+#: src/lib/labels.ts
+msgid "Đã đồng bộ"
+msgstr "Synced"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Đã ghi"
+msgstr "Logged"
+
+#: src/screens/AuthScreen.tsx
+msgid "Đã gửi thư xác nhận. Hãy mở email, bấm liên kết xác nhận, rồi quay lại đăng nhập."
+msgstr "Confirmation email sent. Open the email, click the confirmation link, then come back to sign in."
+
+#: src/lib/labels.ts
+msgid "Đã hủy"
+msgstr "Cancelled"
+
+#: src/lib/labels.ts
+msgid "Đã kết thúc"
+msgstr "Ended"
+
+#: src/lib/labels.ts
+msgid "Đã lưu trên thiết bị — chưa đồng bộ"
+msgstr "Saved on this device — not synced yet"
+
+#: src/lib/labels.ts
+msgid "Đang đồng bộ"
+msgstr "Syncing"
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Đang gửi…"
+msgstr "Sending…"
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Đăng ký cần có mạng."
+msgstr "You need to be online to sign up."
+
+#: src/screens/AuthScreen.tsx
+#: src/screens/AuthScreen.tsx
+msgid "Đăng nhập"
+msgstr "Sign in"
+
+#: src/App.tsx
+#: src/App.tsx
+msgid "Đang offline (mất mạng)"
+msgstr "Offline (no connection)"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Đang offline. Bản ghi sẽ được lưu trên điện thoại và gửi sau."
+msgstr "You are offline. The record will be saved on your phone and sent later."
+
+#: src/lib/labels.ts
+msgid "Đang sản xuất"
+msgstr "Active"
+
+#: src/screens/AuthScreen.tsx
+msgid "Đang xử lý…"
+msgstr "Processing…"
+
+#: src/components/Drawer.tsx
+msgid "Đăng xuất"
+msgstr "Sign out"
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Dành cho chủ Hộ / Hợp tác xã <0>không có email</0>. Chúng tôi sẽ liên hệ qua Zalo số điện thoại bạn nhập để xác nhận rồi mở cơ sở cho bạn (miễn phí)."
+msgstr "For household and cooperative owners <0>without email</0>. We will contact you on Zalo at the number you enter to verify it, then open your farm account (free)."
+
+#: src/screens/AuthScreen.tsx
+msgid "Dành cho chủ Hộ / Hợp tác xã. Nhân viên dùng tài khoản do chủ cơ sở cấp."
+msgstr "For household and cooperative owners. Staff use the account given by the farm owner."
+
+#: src/screens/HomeTab.tsx
+#: src/screens/HomeTab.tsx
+msgid "Đánh dấu xong"
+msgstr "Mark as done"
+
+#: src/screens/AuthScreen.tsx
+msgid "Đặt mật khẩu mới"
+msgstr "Set a new password"
+
+#: src/components/ContactCard.tsx
+msgid "Địa chỉ"
+msgstr "Address"
+
+#: src/components/ContactCard.tsx
+msgid "Điện thoại"
+msgstr "Phone"
+
+#: src/components/InstallGuide.tsx
+msgid "Điện thoại Android (Chrome)"
+msgstr "Android phone (Chrome)"
+
+#: src/App.tsx
+msgid "Điều hướng chính"
+msgstr "Main navigation"
+
+#: src/components/LogWorkPicker.tsx
+msgid "Đổi"
+msgstr "Change"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Đổi nơi ghi"
+msgstr "Change target"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Đổi việc"
+msgstr "Change work"
+
+#: src/components/PhoneSignupForm.tsx
+#: src/screens/AuthScreen.tsx
+msgid "Đồng ý với <0>điều khoản dịch vụ và chính sách bảo mật</0> của hệ thống"
+msgstr "I agree to the system's <0>terms of service and privacy policy</0>"
+
+#: src/screens/AuthScreen.tsx
+msgid "Dữ liệu của bạn riêng tư và được bảo vệ"
+msgstr "Your data is private and protected"
+
+#: src/screens/AuthScreen.tsx
+msgid "Dùng điện thoại"
+msgstr "Use phone"
+
+#: src/screens/AuthScreen.tsx
+msgid "Dùng email"
+msgstr "Use email"
+
+#: src/screens/AuthScreen.tsx
+#: src/screens/AuthScreen.tsx
+msgid "Email hoặc số điện thoại"
+msgstr "Email or phone number"
+
+#: src/components/LogWorkPicker.tsx
+msgid "Ghi cho: <0>{targetLabel}</0>"
+msgstr "Logging for: <0>{targetLabel}</0>"
+
+#: src/screens/HomeTab.tsx
+msgid "Ghi chú cần nhớ"
+msgstr "Notes to remember"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Ghi thêm thì vật tư bạn vừa chọn sẽ bị trừ kho thêm một lần nữa."
+msgstr "If you save again, the supplies you selected will be deducted from stock a second time."
+
+#: src/App.tsx
+#: src/App.tsx
+msgid "Ghi việc"
+msgstr "Log work"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Ghi việc khác"
+msgstr "Log more work"
+
+#: src/App.tsx
+#: src/App.tsx
+#: src/App.tsx
+#: src/components/Drawer.tsx
+#: src/components/Drawer.tsx
+#: src/screens/LogActivityScreen.tsx
+msgid "Ghi việc vừa làm"
+msgstr "Log work just done"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Ghi việc:"
+msgstr "Log work:"
+
+#: src/components/Drawer.tsx
+msgid "Giới thiệu, hướng dẫn trồng cây, vật nuôi, HTX"
+msgstr "Introduction and guides for crops, livestock and cooperatives"
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Gửi đăng ký"
+msgstr "Send registration"
+
+#: src/screens/AuthScreen.tsx
+msgid "Gửi thư đặt lại mật khẩu"
+msgstr "Send password reset email"
+
+#: src/components/InstallGuide.tsx
+msgid "Hai cách cài dùng cùng một tài khoản và cùng dữ liệu: đăng nhập ở đâu cũng thấy như nhau."
+msgstr "Both options use the same account and data: you see the same things wherever you sign in."
+
+#: src/screens/HomeTab.tsx
+msgid "Hạn:"
+msgstr "Expires:"
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Hãy chờ khung \"xác nhận bạn là người thật\" hiện xong rồi thử lại."
+msgstr "Wait for the \"verify you are human\" box to finish loading, then try again."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Hãy chọn vật tư cho dòng \"Vật tư đã dùng\", hoặc xóa dòng đó."
+msgstr "Select a supply for the \"Supplies used\" row, or delete the row."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Hãy nhập \"Nội dung việc\": gõ chữ hoặc bấm Nói để đọc nội dung đã làm."
+msgstr "Enter the \"Work description\": describe what was done."
+
+#: src/screens/AuthScreen.tsx
+msgid "Hãy nhập email hoặc số điện thoại."
+msgstr "Enter your email or phone number."
+
+#: src/screens/AuthScreen.tsx
+msgid "Hãy nhập họ tên người đại diện (ít nhất 2 ký tự)."
+msgstr "Enter the representative's full name (at least 2 characters)."
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Hãy nhập họ tên người đại diện."
+msgstr "Enter the representative's full name."
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Hãy nhập số điện thoại có dùng Zalo."
+msgstr "Enter a phone number that uses Zalo."
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Hãy nhập tên cơ sở (ví dụ \"Vườn nhà Lan\")."
+msgstr "Enter the farm name (for example \"Lan's Garden\")."
+
+#: src/screens/HomeTab.tsx
+msgid "Hãy nhờ chủ cơ sở hoặc quản lý bắt đầu sản xuất."
+msgstr "Ask the farm owner or a manager to start production."
+
+#: src/screens/HomeTab.tsx
+msgid "Hãy nhờ chủ cơ sở hoặc quản lý tạo vụ nuôi trồng."
+msgstr "Ask the farm owner or a manager to create a season or batch."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Hãy tạo vụ ở màn hình Sản xuất."
+msgstr "Create a season on the Production screen."
+
+#: src/components/PhoneSignupForm.tsx
+#: src/screens/AuthScreen.tsx
+msgid "Hãy tích chọn đồng ý với điều khoản dịch vụ và chính sách bảo mật."
+msgstr "Please agree to the terms of service and privacy policy."
+
+#: src/components/PhoneSignupForm.tsx
+#: src/screens/AuthScreen.tsx
+msgid "Hiện mật khẩu"
+msgstr "Show password"
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Hộ nông dân / trang trại"
+msgstr "Household farmer / farm"
+
+#: src/components/HomeLinks.tsx
+msgid "Hồ sơ web"
+msgstr "Web profile"
+
+#: src/components/PhoneSignupForm.tsx
+#: src/screens/AuthScreen.tsx
+msgid "Họ tên người đại diện"
+msgstr "Representative's full name"
+
+#: src/lib/labels.ts
+msgid "Hỗ trợ & Chia sẻ"
+msgstr "Support & Share"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Hôm kia"
+msgstr "2 days ago"
+
+#: src/screens/HomeTab.tsx
+#: src/screens/LogActivityScreen.tsx
+msgid "Hôm nay"
+msgstr "Today"
+
+#: src/screens/HomeTab.tsx
+msgid "Hôm nay chưa ghi việc nào."
+msgstr "No work logged today."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Hôm qua"
+msgstr "Yesterday"
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Hợp tác xã"
+msgstr "Cooperative"
+
+#: src/lib/labels.ts
+msgid "Hướng dẫn sử dụng"
+msgstr "User guide"
+
+#: src/components/LogTargetPicker.tsx
+#: src/components/LogWorkPicker.tsx
+#: src/screens/LogActivityScreen.tsx
+msgid "Hủy"
+msgstr "Cancel"
+
+#: src/components/InstallGuide.tsx
+msgid "iPhone / iPad (Safari)"
+msgstr "iPhone / iPad (Safari)"
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Ít nhất 8 ký tự. Hãy nhớ mật khẩu này."
+msgstr "At least 8 characters. Remember this password."
+
+#: src/components/InstallGuide.tsx
+msgid "Kéo xuống, chọn \"Thêm vào MH chính\" (Add to Home Screen), rồi bấm \"Thêm\"."
+msgstr "Scroll down, choose \"Add to Home Screen\", then tap \"Add\"."
+
+#: src/screens/AuthScreen.tsx
+msgid "Kết nối nông nghiệp số Việt Nam"
+msgstr "Connecting Vietnam's digital agriculture"
+
+#: src/lib/labels.ts
+msgid "Khác"
+msgstr "Other"
+
+#: src/screens/HomeTab.tsx
+msgid "Khắc phục sự cố:"
+msgstr "Incident follow-up:"
+
+#: src/components/HomeLinks.tsx
+#: src/lib/labels.ts
+msgid "Khai báo"
+msgstr "Setup"
+
+#: src/screens/AuthScreen.tsx
+msgid "Không có thì để trống."
+msgstr "Leave blank if you have none."
+
+#: src/components/LogWorkPicker.tsx
+msgid "Không có việc nào khớp."
+msgstr "No matching work."
+
+#: src/components/LogTargetPicker.tsx
+msgid "Không có vụ nào khớp."
+msgstr "No matching season."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "khu này"
+msgstr "this area"
+
+#: src/screens/LogActivityScreen.tsx
+#: src/screens/LogActivityScreen.tsx
+msgid "Khu vực"
+msgstr "Area"
+
+#: src/components/LogTargetPicker.tsx
+msgid "Khu vực, cổng, kho, biogas… (không gắn vụ)"
+msgstr "Areas, gate, warehouse, biogas… (not tied to a season)"
+
+#: src/components/LogTargetPicker.tsx
+msgid "lần ghi trước"
+msgstr "last logged"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Lấy từ kho"
+msgstr "Take from warehouse"
+
+#: src/components/Drawer.tsx
+msgid "Liên hệ hỗ trợ và gửi giới thiệu app cho người khác"
+msgstr "Contact support and share the app with others"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Lô đã chọn đã hết hạn: hãy ghi lý do dùng, hoặc chọn lô khác."
+msgstr "The selected lot has expired: give a reason for using it, or choose another lot."
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Loại cơ sở"
+msgstr "Farm type"
+
+#: src/components/HomeLinks.tsx
+msgid "Luồng công việc"
+msgstr "Workflow"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Lưu"
+msgstr "Save"
+
+#: src/components/PhoneSignupForm.tsx
+#: src/screens/AuthScreen.tsx
+msgid "Mã giới thiệu (nếu có)"
+msgstr "Referral code (if any)"
+
+#: src/components/PhoneSignupForm.tsx
+#: src/screens/AuthScreen.tsx
+msgid "Mật khẩu"
+msgstr "Password"
+
+#: src/screens/AuthScreen.tsx
+msgid "Mật khẩu (ít nhất 8 ký tự)"
+msgstr "Password (at least 8 characters)"
+
+#: src/components/PhoneSignupForm.tsx
+#: src/screens/AuthScreen.tsx
+msgid "Mật khẩu cần ít nhất 8 ký tự."
+msgstr "The password needs at least 8 characters."
+
+#: src/screens/AuthScreen.tsx
+msgid "Mật khẩu mới"
+msgstr "New password"
+
+#: src/components/VoiceNote.tsx
+msgid "Máy này chưa hỗ trợ nói vào ứng dụng. Hãy bấm biểu tượng micro trên bàn phím điện thoại rồi nói vào ô trên."
+msgstr "This device does not support voice input in the app. Tap the microphone on your phone keyboard and speak into the box above."
+
+#: src/components/InstallGuide.tsx
+msgid "Máy tính (Chrome / Edge)"
+msgstr "Computer (Chrome / Edge)"
+
+#: src/App.tsx
+msgid "Mở menu"
+msgstr "Open menu"
+
+#: src/components/InstallGuide.tsx
+msgid "Mở trang web này bằng Chrome hoặc Edge."
+msgstr "Open this website in Chrome or Edge."
+
+#: src/components/InstallGuide.tsx
+msgid "Mở trang web này bằng Chrome."
+msgstr "Open this website in Chrome."
+
+#: src/components/InstallGuide.tsx
+msgid "Mở trang web này bằng Safari (bắt buộc: Chrome trên iPhone không cài được)."
+msgstr "Open this website in Safari (required: Chrome on iPhone cannot install it)."
+
+#: src/components/Drawer.tsx
+msgid "Mở website"
+msgstr "Open website"
+
+#: src/components/InstallGuide.tsx
+msgid "Muốn cài cho điện thoại, hãy mở trang này bằng điện thoại rồi làm theo các bước dưới đây."
+msgstr "To install on a phone, open this page on a phone and follow the steps below."
+
+#: src/components/InstallGuide.tsx
+msgid "Muốn cài cho máy tính, hãy mở trang này bằng máy tính rồi làm theo các bước dưới đây."
+msgstr "To install on a computer, open this page on a computer and follow the steps below."
+
+#: src/screens/AuthScreen.tsx
+msgid "Nếu email này có tài khoản, bạn sẽ nhận được thư hướng dẫn đặt lại mật khẩu."
+msgstr "If this email has an account, you will receive instructions to reset the password."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Nếu là cùng một việc đã ghi rồi thì không cần ghi lại. Bạn vẫn muốn ghi thêm?"
+msgstr "If this is the same work already logged, there is no need to log it again. Do you still want to add it?"
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Nếu người quen hoặc đại lý vật tư đưa mã cho bạn thì nhập vào đây, không có thì để trống."
+msgstr "If an acquaintance or supply dealer gave you a code, enter it here; otherwise leave it blank."
+
+#: src/screens/HomeTab.tsx
+msgid "Ngày mai"
+msgstr "Tomorrow"
+
+#: src/screens/AuthScreen.tsx
+msgid "Nhân viên dùng số điện thoại do chủ cơ sở cấp."
+msgstr "Staff use the phone number given by the farm owner."
+
+#: src/screens/AuthScreen.tsx
+msgid "Nhớ tài khoản"
+msgstr "Remember account"
+
+#: src/components/Drawer.tsx
+msgid "Nhóm loại sản phẩm và các cấu hình mặc định"
+msgstr "Product groups and default settings"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Nội dung việc (bắt buộc)"
+msgstr "Work description (required)"
+
+#: src/components/Drawer.tsx
+msgid "nông sản, giao thương, tin và giá"
+msgstr "produce, trade, news and prices"
+
+#: src/components/InstallGuide.tsx
+msgid "Ở cuối thanh địa chỉ, bấm vào biểu tượng \"Cài đặt\" (hình máy tính có mũi tên)."
+msgstr "At the end of the address bar, click the \"Install\" icon (a computer with an arrow)."
+
+#: src/components/LogTargetPicker.tsx
+#: src/screens/LogActivityScreen.tsx
+msgid "Phân khu"
+msgstr "Zone"
+
+#: src/components/Drawer.tsx
+msgid "Phân khu, sản phẩm, vật tư, nhân sự, tổ"
+msgstr "Zones, products, supplies, staff, teams"
+
+#: src/components/HomeLinks.tsx
+msgid "Quản lý và kết nối cơ sở theo luồng công việc:"
+msgstr "Manage and connect your farm step by step:"
+
+#: src/components/Drawer.tsx
+msgid "Quản trị nền tảng"
+msgstr "Platform admin"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Quay lại"
+msgstr "Back"
+
+#: src/screens/AuthScreen.tsx
+msgid "Quay lại đăng nhập"
+msgstr "Back to sign in"
+
+#: src/screens/AuthScreen.tsx
+msgid "Quên mật khẩu"
+msgstr "Forgot password"
+
+#: src/screens/AuthScreen.tsx
+msgid "Quên mật khẩu (chủ Hộ / HTX)"
+msgstr "Forgot password (household / cooperative owner)"
+
+#: src/components/HomeLinks.tsx
+#: src/lib/labels.ts
+msgid "Sản xuất"
+msgstr "Production"
+
+#: src/components/Drawer.tsx
+msgid "Số bản ghi chưa gửi lên máy chủ: {waiting}. Đăng xuất bây giờ có thể làm mất chúng."
+msgstr "Records not yet sent to the server: {waiting}. Signing out now may lose them."
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Số điện thoại (có dùng Zalo)"
+msgstr "Phone number (with Zalo)"
+
+#: src/screens/AuthScreen.tsx
+msgid "Số điện thoại: nhân viên hãy nhờ chủ cơ sở đặt lại mật khẩu; chủ hộ đăng ký bằng số điện thoại hãy liên hệ Acovin qua Zalo để được đặt lại."
+msgstr "Phone number accounts: staff, ask your farm owner to reset the password; owners who signed up by phone, contact Acovin on Zalo to have it reset."
+
+#: src/screens/LogActivityScreen.tsx
+#: src/screens/LogActivityScreen.tsx
+msgid "Số lượng"
+msgstr "Quantity"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Số lượng vật tư đã dùng phải là số lớn hơn 0."
+msgstr "The quantity of supplies used must be a number greater than 0."
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Số này dùng để đăng nhập và để chúng tôi xác nhận qua Zalo."
+msgstr "This number is used to sign in and for us to verify you on Zalo."
+
+#: src/lib/labels.ts
+msgid "Sức khỏe & phòng bệnh"
+msgstr "Health & disease prevention"
+
+#: src/components/Drawer.tsx
+#: src/components/Drawer.tsx
+#: src/lib/labels.ts
+msgid "Tài khoản"
+msgstr "Account"
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Tài khoản đã tạo thành công, mã giới thiệu chưa đúng trong hệ thống."
+msgstr "Your account was created, but the referral code was not found in the system."
+
+#: src/lib/labels.ts
+msgid "Tạm dừng"
+msgstr "Paused"
+
+#: src/screens/AuthScreen.tsx
+#: src/screens/AuthScreen.tsx
+msgid "Tạo tài khoản"
+msgstr "Create account"
+
+#: src/screens/HomeTab.tsx
+msgid "Tạo vụ đầu tiên"
+msgstr "Create your first season"
+
+#: src/components/LogTargetPicker.tsx
+msgid "Tất cả phân khu"
+msgstr "All zones"
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Tên cơ sở"
+msgstr "Farm name"
+
+#: src/screens/HomeTab.tsx
+msgid "Thêm phân khu đầu tiên"
+msgstr "Add your first zone"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Theo diện tích của từng vụ"
+msgstr "By area of each season"
+
+#: src/lib/labels.ts
+msgid "Theo dõi & đo đạc"
+msgstr "Monitoring & measurement"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Thời điểm bắt đầu làm"
+msgstr "Start time"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Thời điểm kết thúc"
+msgstr "End time"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Thời điểm kết thúc không được trước thời điểm bắt đầu."
+msgstr "The end time cannot be before the start time."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Thời điểm làm không được ở tương lai. Chọn hôm nay hoặc ngày đã làm (ghi bù được cho những ngày trước)."
+msgstr "The work time cannot be in the future. Choose today or the day it was done (you can log earlier days)."
+
+#: src/components/Drawer.tsx
+msgid "Thông tin cá nhân, mã QR, giấy phép"
+msgstr "Personal details, QR code, licences"
+
+#: src/components/ContactCard.tsx
+msgid "Thông tin liên hệ"
+msgstr "Contact information"
+
+#: src/screens/HomeTab.tsx
+msgid "Thử gửi lại"
+msgstr "Try sending again"
+
+#: src/lib/labels.ts
+msgid "Thu hoạch / xuất bán"
+msgstr "Harvest / sale"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Thuộc công đoạn"
+msgstr "Stage"
+
+#. placeholder {0}: remembered.title
+#: src/components/LogTargetPicker.tsx
+msgid "Tiếp tục: {0}"
+msgstr "Continue: {0}"
+
+#: src/components/LogWorkPicker.tsx
+msgid "Tìm việc"
+msgstr "Search work"
+
+#: src/components/LogWorkPicker.tsx
+msgid "Tìm việc…"
+msgstr "Search work…"
+
+#: src/components/LogTargetPicker.tsx
+msgid "Tìm vụ"
+msgstr "Search seasons"
+
+#: src/components/LogTargetPicker.tsx
+msgid "Tìm vụ theo tên hoặc nơi…"
+msgstr "Search seasons by name or location…"
+
+#: src/lib/labels.ts
+msgid "Trang chủ"
+msgstr "Home"
+
+#: src/screens/LogActivityScreen.tsx
+#: src/screens/LogActivityScreen.tsx
+msgid "Vật tư"
+msgstr "Supply"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Vật tư đã dùng (không bắt buộc)"
+msgstr "Supplies used (optional)"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Vật tư đã dùng:"
+msgstr "Supplies used:"
+
+#: src/lib/labels.ts
+msgid "Vệ sinh & môi trường"
+msgstr "Hygiene & environment"
+
+#: src/components/VoiceNote.tsx
+msgid "Ví dụ: Bón 20 ký NPK cho vụ dưa lưới"
+msgstr "Example: Applied 20 kg of NPK to the melon crop"
+
+#: src/components/PhoneSignupForm.tsx
+#: src/screens/AuthScreen.tsx
+msgid "Ví dụ: DL-HUNG"
+msgstr "Example: DL-HUNG"
+
+#: src/components/PhoneSignupForm.tsx
+msgid "Ví dụ: Vườn nhà Lan"
+msgstr "Example: Lan's Garden"
+
+#: src/screens/HomeTab.tsx
+msgid "Việc"
+msgstr "Work"
+
+#: src/lib/labels.ts
+msgid "Việc của cơ sở"
+msgstr "Farm's own work"
+
+#: src/screens/HomeTab.tsx
+msgid "Việc đã ghi hôm nay"
+msgstr "Work logged today"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Việc này làm chung cho vụ khác trong ô?"
+msgstr "Is this work shared with other seasons in the plot?"
+
+#: src/screens/HomeTab.tsx
+#: src/screens/HomeTab.tsx
+msgid "Vụ"
+msgstr "Season"
+
+#: src/screens/HomeTab.tsx
+#: src/screens/LogActivityScreen.tsx
+msgid "Vụ đang chuẩn bị hoặc tạm dừng chỉ ghi việc được sau khi bấm \"Bắt đầu sản xuất\" hoặc \"Tiếp tục\" ở màn Sản xuất."
+msgstr "Seasons that are preparing or paused accept logs only after you press \"Start production\" or \"Resume\" on the Production screen."
+
+#: src/screens/LogActivityScreen.tsx
+msgid "vụ này"
+msgstr "this season"
+
+#: src/components/CycleWord.tsx
+msgid "vụ nuôi"
+msgstr "batch"
+
+#: src/components/CycleWord.tsx
+msgid "vụ nuôi trồng"
+msgstr "season / batch"
+
+#: src/components/CycleWord.tsx
+msgid "vụ trồng"
+msgstr "season"
+
+#: src/screens/HomeTab.tsx
+msgid "Xin chào"
+msgstr "Hello"
+
+#: src/screens/HomeTab.tsx
+msgid "Xin chào, {myName}"
+msgstr "Hello, {myName}"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Xóa"
+msgstr "Delete"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Xóa dòng vật tư"
+msgstr "Delete supply row"
+
+#: src/screens/LogActivityScreen.tsx
+msgid "Xong"
+msgstr "Done"

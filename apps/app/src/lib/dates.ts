@@ -1,3 +1,5 @@
+import { fmtDay } from './format';
+
 /** Ngày dạng "YYYY-MM-DD" (giờ địa phương, không dính múi giờ) */
 
 export const parseDay = (s: string): Date => {
@@ -30,4 +32,4 @@ export const diffDays = (a: string, b: string): number =>
   Math.round((parseDay(b).getTime() - parseDay(a).getTime()) / 86_400_000);
 
 /** "05/11/2026" */
-export const fmtDate = (s: string | null | undefined): string => (s ? parseDay(s).toLocaleDateString('vi-VN') : '—');
+export const fmtDate = (s: string | null | undefined): string => (s ? fmtDay(parseDay(s)) : '—');

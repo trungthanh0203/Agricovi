@@ -1,3 +1,4 @@
+import { normalizeDecimal, numberToInput } from './format';
 import type { FieldDef } from './db';
 
 /**
@@ -12,7 +13,7 @@ const fmt = (n: number) => String(n).replace('.', ',');
 export function alertOf(def: FieldDef, raw: unknown): string | null {
   if (def.type !== 'number' || (def.alert_low === undefined && def.alert_high === undefined)) return null;
   if (raw === undefined || raw === null || raw === '') return null;
-  const n = typeof raw === 'number' ? raw : Number(String(raw).trim().replace(',', '.'));
+  const n = typeof raw === 'number' ? raw : Number(normalizeDecimal(String(raw)));
   if (Number.isNaN(n)) return null;
   const unit = def.unit ? ` ${def.unit}` : '';
   if (def.alert_low !== undefined && n < def.alert_low) return `thấp hơn ngưỡng ${fmt(def.alert_low)}${unit}`;
@@ -36,7 +37,7 @@ export function prefillValues(schema: FieldDef[], lastData: Record<string, unkno
   if (!lastData) return out;
   for (const f of schema) {
     const v = lastData[f.key];
-    if (f.prefill && v !== undefined && v !== null && v !== '' && typeof v !== 'object') out[f.key] = String(v).replace('.', ',');
+    if (f.prefill && v !== undefined && v !== null && v !== '' && typeof v !== 'object') out[f.key] = numberToInput(String(v));
   }
   return out;
 }

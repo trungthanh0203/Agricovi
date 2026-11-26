@@ -7,6 +7,7 @@ import { OrgDetailsSection } from '../components/OrgDetailsSection';
 import { PushSettings } from '../components/PushSettings';
 import { PlanCard } from '../components/PlanCard';
 import { QrCard } from '../components/QrCard';
+import { LangSwitch } from '../components/LangSwitch';
 import { useAuth } from '../lib/auth';
 import { ADMIN_URL } from "../lib/platformAdmin";
 import { fmtDate } from '../lib/dates';
@@ -127,6 +128,7 @@ export function ProfileTab({ onAddOrg, isPlatformAdmin }: { onAddOrg: () => void
       {!isPlatformAdmin && <DeleteAccountSection />}
 
       <div className="card">
+        <LangSwitch />
         <div className="verline">
           <p className="muted">Phiên bản app: {__APP_VERSION__} · <a href="/chinh-sach" target="_blank" rel="noopener noreferrer">Chính sách bảo mật</a></p>
           {isPlatformAdmin && <a className="adminlock" href={ADMIN_URL} aria-label="Quản trị nền tảng" title="Quản trị nền tảng">🔒</a>}

@@ -1,34 +1,37 @@
 import { useEffect, useState } from 'react';
+import type { MessageDescriptor } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 type Platform = 'desktop' | 'android' | 'ios';
 
-const PLATFORMS: { id: Platform; icon: string; title: string; steps: string[]; result: string }[] = [
+const PLATFORMS: { id: Platform; icon: string; title: MessageDescriptor; steps: MessageDescriptor[]; result: MessageDescriptor }[] = [
   {
-    id: 'desktop', icon: '💻', title: 'Máy tính (Chrome / Edge)',
+    id: 'desktop', icon: '💻', title: msg`Máy tính (Chrome / Edge)`,
     steps: [
-      'Mở trang web này bằng Chrome hoặc Edge.',
-      'Ở cuối thanh địa chỉ, bấm vào biểu tượng "Cài đặt" (hình máy tính có mũi tên).',
-      'Bấm "Cài đặt" trong hộp thoại hiện ra.',
+      msg`Mở trang web này bằng Chrome hoặc Edge.`,
+      msg`Ở cuối thanh địa chỉ, bấm vào biểu tượng "Cài đặt" (hình máy tính có mũi tên).`,
+      msg`Bấm "Cài đặt" trong hộp thoại hiện ra.`,
     ],
-    result: 'App sẽ có biểu tượng riêng trên màn hình/Dock, mở lên không cần trình duyệt.',
+    result: msg`App sẽ có biểu tượng riêng trên màn hình/Dock, mở lên không cần trình duyệt.`,
   },
   {
-    id: 'android', icon: '🤖', title: 'Điện thoại Android (Chrome)',
+    id: 'android', icon: '🤖', title: msg`Điện thoại Android (Chrome)`,
     steps: [
-      'Mở trang web này bằng Chrome.',
-      'Chờ vài giây, bảng "Thêm vào Màn hình chính" sẽ tự hiện, bấm vào đó. Nếu không thấy, bấm menu 3 chấm ở góc trên rồi chọn "Cài đặt ứng dụng".',
-      'Bấm "Cài đặt" hoặc "Thêm".',
+      msg`Mở trang web này bằng Chrome.`,
+      msg`Chờ vài giây, bảng "Thêm vào Màn hình chính" sẽ tự hiện, bấm vào đó. Nếu không thấy, bấm menu 3 chấm ở góc trên rồi chọn "Cài đặt ứng dụng".`,
+      msg`Bấm "Cài đặt" hoặc "Thêm".`,
     ],
-    result: 'Biểu tượng app xuất hiện ngay ở màn hình chính điện thoại.',
+    result: msg`Biểu tượng app xuất hiện ngay ở màn hình chính điện thoại.`,
   },
   {
-    id: 'ios', icon: '🍎', title: 'iPhone / iPad (Safari)',
+    id: 'ios', icon: '🍎', title: msg`iPhone / iPad (Safari)`,
     steps: [
-      'Mở trang web này bằng Safari (bắt buộc: Chrome trên iPhone không cài được).',
-      'Bấm nút Chia sẻ (hình vuông có mũi tên đi lên) ở thanh dưới cùng.',
-      'Kéo xuống, chọn "Thêm vào MH chính" (Add to Home Screen), rồi bấm "Thêm".',
+      msg`Mở trang web này bằng Safari (bắt buộc: Chrome trên iPhone không cài được).`,
+      msg`Bấm nút Chia sẻ (hình vuông có mũi tên đi lên) ở thanh dưới cùng.`,
+      msg`Kéo xuống, chọn "Thêm vào MH chính" (Add to Home Screen), rồi bấm "Thêm".`,
     ],
-    result: 'Biểu tượng app xuất hiện ở màn hình chính, mở lên như một app bình thường.',
+    result: msg`Biểu tượng app xuất hiện ở màn hình chính, mở lên như một app bình thường.`,
   },
 ];
 
@@ -50,7 +53,7 @@ interface InstallEvent extends Event { prompt(): Promise<void>; userChoice: Prom
 
 type Kind = 'phone' | 'desktop';
 const kindOf = (p: Platform): Kind => (p === 'desktop' ? 'desktop' : 'phone');
-const KIND_LABEL: Record<Kind, string> = { phone: '📱 Cài cho điện thoại', desktop: '💻 Cài cho máy tính' };
+const KIND_LABEL: Record<Kind, MessageDescriptor> = { phone: msg`📱 Cài cho điện thoại`, desktop: msg`💻 Cài cho máy tính` };
 
 /**
  * Hướng dẫn cài app về máy (trang đăng nhập/đăng ký). Có HAI lựa chọn: cài cho điện thoại hoặc cho máy tính (D222); mở sẵn lựa chọn đúng với
@@ -58,6 +61,7 @@ const KIND_LABEL: Record<Kind, string> = { phone: '📱 Cài cho điện thoại
  * "Cài app ngay" (chỉ hiện khi lựa chọn trùng với thiết bị đang dùng). Không hiện khi app đã được cài.
  */
 export function InstallGuide() {
+  const { t, i18n } = useLingui();
   const [platform] = useState<Platform>(detectPlatform);
   const [kind, setKind] = useState<Kind>(() => kindOf(detectPlatform()));
   const [evt, setEvt] = useState<InstallEvent | null>(null);
@@ -75,24 +79,24 @@ export function InstallGuide() {
   const here = kind === kindOf(platform);
   return (
     <section className="install" aria-labelledby="install-title">
-      <h2 id="install-title">📲 Cài app về máy để dùng tiện hơn</h2>
-      <div className="seg" role="group" aria-label="Chọn nơi cài">
+      <h2 id="install-title"><Trans>📲 Cài app về máy để dùng tiện hơn</Trans></h2>
+      <div className="seg" role="group" aria-label={t`Chọn nơi cài`}>
         {(['phone', 'desktop'] as Kind[]).map((k) => (
-          <button key={k} type="button" className={k === kind ? 'primary' : 'secondary'} aria-pressed={k === kind} onClick={() => setKind(k)}>{KIND_LABEL[k]}</button>
+          <button key={k} type="button" className={k === kind ? 'primary' : 'secondary'} aria-pressed={k === kind} onClick={() => setKind(k)}>{i18n._(KIND_LABEL[k])}</button>
         ))}
       </div>
-      <p className="muted">Hai cách cài dùng cùng một tài khoản và cùng dữ liệu: đăng nhập ở đâu cũng thấy như nhau.</p>
+      <p className="muted"><Trans>Hai cách cài dùng cùng một tài khoản và cùng dữ liệu: đăng nhập ở đâu cũng thấy như nhau.</Trans></p>
       {here && evt && (
         <button className="primary" onClick={() => { void evt.prompt().then(() => evt.userChoice).then((c) => { if (c.outcome === 'accepted') setEvt(null); }); }}>
-          Cài app ngay
+          <Trans>Cài app ngay</Trans>
         </button>
       )}
-      {!here && <p className="msg warn">Muốn cài {kind === 'desktop' ? 'cho máy tính' : 'cho điện thoại'}, hãy mở trang này bằng {kind === 'desktop' ? 'máy tính' : 'điện thoại'} rồi làm theo các bước dưới đây.</p>}
+      {!here && <p className="msg warn">{kind === 'desktop' ? t`Muốn cài cho máy tính, hãy mở trang này bằng máy tính rồi làm theo các bước dưới đây.` : t`Muốn cài cho điện thoại, hãy mở trang này bằng điện thoại rồi làm theo các bước dưới đây.`}</p>}
       {PLATFORMS.filter((p) => kindOf(p.id) === kind).map((p) => (
         <details key={p.id} className="install-card" open>
-          <summary><span className="install-ico" aria-hidden>{p.icon}</span><span className="install-name">{p.title}</span></summary>
-          <ol>{p.steps.map((s) => <li key={s}>{s}</li>)}</ol>
-          <p className="install-result">→ {p.result}</p>
+          <summary><span className="install-ico" aria-hidden>{p.icon}</span><span className="install-name">{i18n._(p.title)}</span></summary>
+          <ol>{p.steps.map((s) => <li key={s.id}>{i18n._(s)}</li>)}</ol>
+          <p className="install-result">→ {i18n._(p.result)}</p>
         </details>
       ))}
     </section>

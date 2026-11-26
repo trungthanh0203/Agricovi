@@ -1,8 +1,9 @@
 import type { FieldDef } from './db';
+import { normalizeDecimal } from './format';
 
 /**
  * Form động (D96): các trường của một loại việc (field_schema) là dữ liệu, không phải mã. Phần thuần: nhãn kiểu trường,
- * giá trị ban đầu, kiểm tra nhập, đổi sang `data` của nhật ký và tóm tắt dạng chữ. Không import gì ngoài kiểu để kiểm thử được.
+ * giá trị ban đầu, kiểm tra nhập, đổi sang `data` của nhật ký và tóm tắt dạng chữ. Chỉ import kiểu và phần thuần để kiểm thử được.
  * Giá trị đang nhập luôn là chuỗi: ô chọn nhiều nối bằng "|", ô Có/Không là "yes" | "no".
  */
 
@@ -28,7 +29,7 @@ export function initialValues(schema: FieldDef[], data?: Record<string, unknown>
 }
 
 /** Số có thể nhập bằng dấu phẩy (0,5) */
-const num = (s: string) => Number(s.trim().replace(',', '.'));
+const num = (s: string) => Number(normalizeDecimal(s));
 
 /** Lỗi nhập đầu tiên (bằng chữ dễ hiểu) hoặc null nếu hợp lệ */
 export function validateFields(schema: FieldDef[], values: Record<string, string>): string | null {

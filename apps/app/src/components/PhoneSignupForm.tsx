@@ -1,5 +1,6 @@
 import { useCallback, useState, type FormEvent } from 'react';
 import { Turnstile, turnstileEnabled } from './Turnstile';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { useAuth } from '../lib/auth';
 import { friendlyError } from '../lib/errors';
 import { registerByPhone } from '../lib/phoneSignup';
@@ -10,6 +11,7 @@ import { clearStoredRef, storedRef } from '../lib/referral';
  * CHỜ DUYỆT: quản trị Acovin liên hệ qua Zalo số này để xác nhận rồi duyệt thì cơ sở mới được tạo.
  */
 export function PhoneSignupForm() {
+  const { t } = useLingui();
   const { signIn } = useAuth();
   const [fullName, setFullName] = useState('');
   const [orgName, setOrgName] = useState('');
@@ -27,18 +29,18 @@ export function PhoneSignupForm() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (fullName.trim().length < 2) return setError('Hãy nhập họ tên người đại diện.');
-    if (orgName.trim().length < 2) return setError('Hãy nhập tên cơ sở (ví dụ "Vườn nhà Lan").');
-    if (!phone.trim()) return setError('Hãy nhập số điện thoại có dùng Zalo.');
-    if (password.length < 8) return setError('Mật khẩu cần ít nhất 8 ký tự.');
-    if (!agree) return setError('Hãy tích chọn đồng ý với điều khoản dịch vụ và chính sách bảo mật.');
-    if (turnstileEnabled && !token) return setError('Hãy chờ khung "xác nhận bạn là người thật" hiện xong rồi thử lại.');
-    if (!navigator.onLine) return setError('Đăng ký cần có mạng.');
+    if (fullName.trim().length < 2) return setError(t`Hãy nhập họ tên người đại diện.`);
+    if (orgName.trim().length < 2) return setError(t`Hãy nhập tên cơ sở (ví dụ "Vườn nhà Lan").`);
+    if (!phone.trim()) return setError(t`Hãy nhập số điện thoại có dùng Zalo.`);
+    if (password.length < 8) return setError(t`Mật khẩu cần ít nhất 8 ký tự.`);
+    if (!agree) return setError(t`Hãy tích chọn đồng ý với điều khoản dịch vụ và chính sách bảo mật.`);
+    if (turnstileEnabled && !token) return setError(t`Hãy chờ khung "xác nhận bạn là người thật" hiện xong rồi thử lại.`);
+    if (!navigator.onLine) return setError(t`Đăng ký cần có mạng.`);
     setBusy(true);
     try {
       const res = await registerByPhone({ phone, password, full_name: fullName, org_name: orgName, org_type: orgType, turnstile_token: token || undefined, ref_code: ref.trim() || undefined });
       clearStoredRef();
-      if (res.ref_invalid) window.alert('Tài khoản đã tạo thành công, mã giới thiệu chưa đúng trong hệ thống.');
+      if (res.ref_invalid) window.alert(t`Tài khoản đã tạo thành công, mã giới thiệu chưa đúng trong hệ thống.`);
       await signIn(res.phone, password); // đăng nhập ngay; app hiện màn "đang chờ duyệt"
     } catch (err) {
       setError(friendlyError(err));
@@ -48,44 +50,44 @@ export function PhoneSignupForm() {
 
   return (
     <form onSubmit={onSubmit} noValidate>
-      <p className="muted auth-hint">Dành cho chủ Hộ / Hợp tác xã <strong>không có email</strong>. Chúng tôi sẽ liên hệ qua Zalo số điện thoại bạn nhập để xác nhận rồi mở cơ sở cho bạn (miễn phí).</p>
+      <p className="muted auth-hint"><Trans>Dành cho chủ Hộ / Hợp tác xã <strong>không có email</strong>. Chúng tôi sẽ liên hệ qua Zalo số điện thoại bạn nhập để xác nhận rồi mở cơ sở cho bạn (miễn phí).</Trans></p>
       <label>
-        Số điện thoại (có dùng Zalo)
+        <Trans>Số điện thoại (có dùng Zalo)</Trans>
         <input type="tel" inputMode="tel" autoComplete="tel" placeholder="0912345678" value={phone} onChange={(e) => setPhone(e.target.value)} />
-        <small>Số này dùng để đăng nhập và để chúng tôi xác nhận qua Zalo.</small>
+        <small><Trans>Số này dùng để đăng nhập và để chúng tôi xác nhận qua Zalo.</Trans></small>
       </label>
       <label>
-        Mật khẩu
+        <Trans>Mật khẩu</Trans>
         <span className="pwfield">
           <input type={showPw ? 'text' : 'password'} value={password} autoComplete="new-password" onChange={(e) => setPassword(e.target.value)} />
-          <button type="button" className="pwtoggle" onClick={() => setShowPw((v) => !v)} aria-label={showPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>{showPw ? '🙈' : '👁'}</button>
+          <button type="button" className="pwtoggle" onClick={() => setShowPw((v) => !v)} aria-label={showPw ? t`Ẩn mật khẩu` : t`Hiện mật khẩu`}>{showPw ? '🙈' : '👁'}</button>
         </span>
-        <small>Ít nhất 8 ký tự. Hãy nhớ mật khẩu này.</small>
+        <small><Trans>Ít nhất 8 ký tự. Hãy nhớ mật khẩu này.</Trans></small>
       </label>
       <label>
-        Họ tên người đại diện
+        <Trans>Họ tên người đại diện</Trans>
         <input value={fullName} maxLength={80} autoComplete="name" onChange={(e) => setFullName(e.target.value)} />
       </label>
       <label>
-        Tên cơ sở
-        <input value={orgName} maxLength={80} placeholder="Ví dụ: Vườn nhà Lan" onChange={(e) => setOrgName(e.target.value)} />
+        <Trans>Tên cơ sở</Trans>
+        <input value={orgName} maxLength={80} placeholder={t`Ví dụ: Vườn nhà Lan`} onChange={(e) => setOrgName(e.target.value)} />
       </label>
       <label>
-        Loại cơ sở
+        <Trans>Loại cơ sở</Trans>
         <select value={orgType} onChange={(e) => setOrgType(e.target.value as 'household' | 'cooperative')}>
-          <option value="household">Hộ nông dân / trang trại</option>
-          <option value="cooperative">Hợp tác xã</option>
+          <option value="household">{t`Hộ nông dân / trang trại`}</option>
+          <option value="cooperative">{t`Hợp tác xã`}</option>
         </select>
       </label>
       <label>
-        Mã giới thiệu (nếu có)
-        <input value={ref} maxLength={20} autoCapitalize="characters" placeholder="Ví dụ: DL-HUNG" onChange={(e) => setRef(e.target.value.toUpperCase())} />
-        <small>Nếu người quen hoặc đại lý vật tư đưa mã cho bạn thì nhập vào đây, không có thì để trống.</small>
+        <Trans>Mã giới thiệu (nếu có)</Trans>
+        <input value={ref} maxLength={20} autoCapitalize="characters" placeholder={t`Ví dụ: DL-HUNG`} onChange={(e) => setRef(e.target.value.toUpperCase())} />
+        <small><Trans>Nếu người quen hoặc đại lý vật tư đưa mã cho bạn thì nhập vào đây, không có thì để trống.</Trans></small>
       </label>
-      <label className="check"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> <span>Đồng ý với <a href="/chinh-sach" target="_blank" rel="noopener noreferrer">điều khoản dịch vụ và chính sách bảo mật</a> của hệ thống</span></label>
+      <label className="check"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> <span><Trans>Đồng ý với <a href="/chinh-sach" target="_blank" rel="noopener noreferrer">điều khoản dịch vụ và chính sách bảo mật</a> của hệ thống</Trans></span></label>
       <Turnstile onToken={onToken} />
       {error && <p className="msg error" role="alert">{error}</p>}
-      <button type="submit" className="primary" disabled={busy}>{busy ? 'Đang gửi…' : 'Gửi đăng ký'}</button>
+      <button type="submit" className="primary" disabled={busy}>{busy ? t`Đang gửi…` : t`Gửi đăng ký`}</button>
     </form>
   );
 }

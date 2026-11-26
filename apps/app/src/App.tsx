@@ -4,7 +4,9 @@ import { useAutoScrollToForm } from './lib/autoScrollToForm';
 import { Fragment, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { lazyRetry } from './lib/lazyRetry';
-import { SYNC_STATE_LABEL_VI, type SyncState } from '@agriconnect/shared';
+import type { SyncState } from '@agriconnect/shared';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
+import { SYNC_STATE_LABEL, TAB_NAME } from './lib/labels';
 import { AuthProvider, useAuth } from './lib/auth';
 import { useMyName } from './lib/profile';
 import { useIsPlatformAdmin } from './lib/platformAdmin';
@@ -12,7 +14,7 @@ import { purgeCachesIfUserChanged } from './lib/localData';
 import { countByState, flushOutbox } from './lib/outbox';
 import { OrgProvider, useOrgs } from './lib/orgs';
 import { supabase } from './lib/supabase';
-import { TAB_LABEL, visibleTabs, type TabId } from './lib/tabs';
+import { visibleTabs, type TabId } from './lib/tabs';
 import { Drawer } from './components/Drawer';
 import { useTable } from './lib/tables';
 import { AuthScreen } from './screens/AuthScreen';
@@ -117,6 +119,7 @@ function Gate() {
 }
 
 function Shell() {
+  const { t: tx, i18n } = useLingui();
   const { orgs, active, setActive } = useOrgs();
   const { session: me, signOut } = useAuth();
   const myName = useMyName(me?.user.id, me?.user.email ?? undefined);
@@ -239,21 +242,21 @@ function Shell() {
   return (
     <div className="shell">
       <header className="topbar">
-        <button className="menu-btn" onClick={() => setMenuOpen(true)} aria-label="Mở menu" aria-haspopup="dialog">
+        <button className="menu-btn" onClick={() => setMenuOpen(true)} aria-label={tx`Mở menu`} aria-haspopup="dialog">
           <span aria-hidden>☰</span>
           {attention > 0 && <i className="menu-dot" aria-hidden />}
         </button>
         <div className="top-title">
           <strong className="orgname">{active?.name}</strong>
-          <small>{tab === 'home' ? 'Trang chủ' : TAB_LABEL[tab]}</small>
+          <small>{i18n._(TAB_NAME[tab])}</small>
         </div>
-        <span className={online ? 'net ok' : 'net off'} role="img" aria-label={online ? 'Có mạng' : 'Đang offline (mất mạng)'} title={online ? 'Có mạng' : 'Đang offline (mất mạng)'}>{online ? '🟢' : '🔴'}</span>
+        <span className={online ? 'net ok' : 'net off'} role="img" aria-label={online ? tx`Có mạng` : tx`Đang offline (mất mạng)`} title={online ? tx`Có mạng` : tx`Đang offline (mất mạng)`}>{online ? '🟢' : '🔴'}</span>
       </header>
 
       {(waiting > 0 || attention > 0) && (
         <div className="notice" role="status">
-          {waiting > 0 && <div>{SYNC_STATE_LABEL_VI.local_only}: {waiting} bản ghi</div>}
-          {attention > 0 && <div>{SYNC_STATE_LABEL_VI.needs_attention}: {attention} bản ghi</div>}
+          {waiting > 0 && <div>{i18n._(SYNC_STATE_LABEL.local_only)}: <Plural value={waiting} one="# bản ghi" other="# bản ghi" /></div>}
+          {attention > 0 && <div>{i18n._(SYNC_STATE_LABEL.needs_attention)}: <Plural value={attention} one="# bản ghi" other="# bản ghi" /></div>}
         </div>
       )}
 
@@ -293,12 +296,12 @@ function Shell() {
         </ErrorBoundary>
       </main>
 
-      <nav className="bnav" aria-label="Điều hướng chính">
+      <nav className="bnav" aria-label={tx`Điều hướng chính`}>
         {mainTabs.map((t, i) => (
           <Fragment key={t}>
             {i === fabAt && (
-              <button className="fab" onClick={() => { setLogPreset(null); setOverlay('log'); }} disabled={!canLog} aria-label="Ghi việc vừa làm" title={canLog ? 'Ghi việc vừa làm' : 'Chưa có vụ đang sản xuất để ghi việc'}>
-                <span aria-hidden>＋</span><small>Ghi việc</small>
+              <button className="fab" onClick={() => { setLogPreset(null); setOverlay('log'); }} disabled={!canLog} aria-label={tx`Ghi việc vừa làm`} title={canLog ? tx`Ghi việc vừa làm` : tx`Chưa có vụ đang sản xuất để ghi việc`}>
+                <span aria-hidden>＋</span><small><Trans>Ghi việc</Trans></small>
               </button>
             )}
             <button
@@ -307,13 +310,13 @@ function Shell() {
               onClick={() => { closeOverlay(); setTab(t); setSubs((cur) => ({ ...cur, [t]: '' })); }} // chạm tab = về menu của tab
             >
               <span className="btab-ico" aria-hidden>{TAB_ICON[t]}</span>
-              {TAB_LABEL[t]}
+              {i18n._(TAB_NAME[t])}
             </button>
           </Fragment>
         ))}
         {fabAt >= mainTabs.length && (
-          <button className="fab" onClick={() => { setLogPreset(null); setOverlay('log'); }} disabled={!canLog} aria-label="Ghi việc vừa làm">
-            <span aria-hidden>＋</span><small>Ghi việc</small>
+          <button className="fab" onClick={() => { setLogPreset(null); setOverlay('log'); }} disabled={!canLog} aria-label={tx`Ghi việc vừa làm`}>
+            <span aria-hidden>＋</span><small><Trans>Ghi việc</Trans></small>
           </button>
         )}
       </nav>
