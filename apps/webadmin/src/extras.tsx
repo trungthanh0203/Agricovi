@@ -120,38 +120,109 @@ export function SiteAuditPage() {
 }
 
 // ============================================================ Người dùng website
-interface WebUser { user_id: string; full_name: string; buyer_kind: string; company: string | null; phone: string | null; login_kind: string; status: string; blocked_reason: string | null; created_at: string; email: string | null; favorites: number }
+interface WebUser { user_id: string; full_name: string; buyer_kind: string; company: string | null; tax_code?: string | null; phone: string | null; login_kind: string; status: string; blocked_reason: string | null; created_at: string; email: string | null; favorites: number; posts?: number; posts_pending?: number }
 const KIND_LABEL: Record<string, string> = { individual: 'Cá nhân', restaurant: 'Nhà hàng, bếp ăn', trader: 'Thương lái, đại lý', business: 'Doanh nghiệp', farm: 'Nhà vườn mua vật tư' };
 export function SiteUsersPage() {
   const [q, setQ] = useState('');
   const [applied, setApplied] = useState('');
   const { data, error, reload } = useLoad(() => rpc<WebUser[]>('site_list_users', { p_search: applied || null, p_limit: 200 }), [applied]);
   const [err, setErr] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [postersOnly, setPostersOnly] = useState(false);
   async function setStatus(u: WebUser, status: 'active' | 'blocked') {
     setErr(null);
     const reason = status === 'blocked' ? window.prompt('Lý do khóa tài khoản (ít nhất 5 ký tự)?') : '';
     if (status === 'blocked' && !reason) return;
     try { await rpc('site_set_user_status', { p_user: u.user_id, p_status: status, p_reason: reason }); reload(); } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
   }
+  const opened = (data ?? []).find((u) => u.user_id === openId);
+  if (opened) {
+    return (
+      <>
+        <Err e={error ?? err} />
+        <SiteUserDetail u={opened} back={() => setOpenId(null)} setStatus={setStatus} reloadList={reload} />
+      </>
+    );
+  }
+  const rows = (data ?? []).filter((u) => !postersOnly || (u.posts ?? 0) > 0);
   return (
     <>
       <p className="muted">Người mua đã đăng ký trên website (email hoặc số điện thoại). Chủ cơ sở dùng tài khoản app không nằm ở đây cho tới khi họ đăng nhập website lần đầu. Tài khoản nhân viên không dùng website. Số điện thoại chưa xác minh OTP, không coi là bằng chứng danh tính.</p>
       <form className="toolbar" onSubmit={(e) => { e.preventDefault(); setApplied(q.trim()); }}>
         <input placeholder="Tìm theo tên, email hoặc số điện thoại" value={q} onChange={(e) => setQ(e.target.value)} /><button className="primary">Tìm</button>
+        <label style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}><input type="checkbox" style={{ width: 'auto' }} checked={postersOnly} onChange={(e) => setPostersOnly(e.target.checked)} /> Chỉ người có tin giao thương</label>
       </form>
       <Err e={error ?? err} />
-      <table className="list"><thead><tr><th>Người dùng</th><th>Liên hệ</th><th>Loại</th><th>Đăng ký</th><th>Trạng thái</th><th></th></tr></thead>
+      <table className="list"><thead><tr><th>Người dùng</th><th>Liên hệ</th><th>Loại</th><th>Đăng ký</th><th>Tin giao thương</th><th>Trạng thái</th><th></th></tr></thead>
         <tbody>
-          {(data ?? []).map((u) => (
+          {rows.map((u) => (
             <tr key={u.user_id} className={u.status === 'blocked' ? 'off' : ''}>
               <td><strong>{u.full_name}</strong>{u.company && <small>{u.company}</small>}</td>
               <td>{u.email ?? u.phone ?? ''}<small>{u.login_kind === 'phone' ? 'Đăng nhập bằng số điện thoại' : 'Đăng nhập bằng email'} · {u.favorites} mục yêu thích</small></td>
               <td>{KIND_LABEL[u.buyer_kind] ?? u.buyer_kind}</td><td>{fmtDateTime(u.created_at)}</td>
+              <td>{u.posts ?? 0} tin{(u.posts_pending ?? 0) > 0 && <small><span className="badge warn">{u.posts_pending} chờ duyệt</span></small>}</td>
               <td>{u.status === 'blocked' ? <span className="badge bad">Đã khóa</span> : <span className="badge ok">Đang dùng</span>}{u.blocked_reason && <small>{u.blocked_reason}</small>}</td>
-              <td>{u.status === 'blocked' ? <button onClick={() => void setStatus(u, 'active')}>Mở khóa</button> : <button className="danger" onClick={() => void setStatus(u, 'blocked')}>Khóa</button>}</td>
+              <td className="acts"><button className="primary" onClick={() => setOpenId(u.user_id)}>Xem</button>{u.status === 'blocked' ? <button onClick={() => void setStatus(u, 'active')}>Mở khóa</button> : <button className="danger" onClick={() => void setStatus(u, 'blocked')}>Khóa</button>}</td>
             </tr>))}
-          {(data ?? []).length === 0 && <tr><td colSpan={6} className="muted">Chưa có người dùng nào.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={7} className="muted">{postersOnly ? 'Chưa có người dùng nào đăng tin.' : 'Chưa có người dùng nào.'}</td></tr>}
         </tbody></table>
+    </>
+  );
+}
+
+interface UserPost {
+  id: string; kind: string; title: string; status: string; review_note: string | null; quantity: number | null; unit: string; price_min: number | null; price_max: number | null;
+  province: string; district: string | null; when_date: string | null; quality: string[]; description: string | null; images: string[]; expires_at: string; created_at: string; expired: boolean;
+  category_name: string | null; org_name: string | null; responses: number; open_reports: number;
+}
+interface UserDetail { email_verified: boolean; orgs: string[]; addresses: { label: string; recipient: string; phone: string; address: string }[]; reports_open: number; responses_sent: number; posts: UserPost[] }
+const POST_ST: Record<string, string> = { pending: 'Chờ duyệt', published: 'Đang hiển thị', rejected: 'Từ chối', hidden: 'Đã ẩn', closed: 'Đã đóng' };
+
+function SiteUserDetail({ u, back, setStatus, reloadList }: { u: WebUser; back: () => void; setStatus: (u: WebUser, s: 'active' | 'blocked') => Promise<void>; reloadList: () => void }) {
+  const { data, error, reload } = useLoad(() => rpc<UserDetail>('site_user_detail', { p_user: u.user_id }), [u.user_id]);
+  const [err, setErr] = useState<string | null>(null);
+  async function decide(p: UserPost, decision: 'approve' | 'reject' | 'hide') {
+    setErr(null);
+    let reason = '';
+    if (decision !== 'approve') {
+      const r = window.prompt(decision === 'reject' ? 'Lý do từ chối (người đăng sẽ thấy, ít nhất 5 ký tự)?' : 'Lý do ẩn tin (ít nhất 5 ký tự)?');
+      if (!r) return;
+      reason = r;
+    }
+    try { await rpc('site_review_trade_post', { p_id: p.id, p_decision: decision, p_reason: reason }); reload(); reloadList(); } catch (x) { setErr(clean(x instanceof Error ? x.message : String(x))); }
+  }
+  return (
+    <>
+      <div className="toolbar"><button onClick={back}>← Danh sách người dùng</button></div>
+      <section className="card">
+        <h2>{u.full_name} {u.status === 'blocked' ? <span className="badge bad">Đã khóa</span> : <span className="badge ok">Đang dùng</span>}</h2>
+        <p>{KIND_LABEL[u.buyer_kind] ?? u.buyer_kind}{u.company ? ` · ${u.company}` : ''}{u.tax_code ? ` · mã số thuế ${u.tax_code}` : ''}</p>
+        <p>{u.email ? `Email: ${u.email}${data ? (data.email_verified ? ' (đã xác nhận)' : ' (chưa xác nhận)') : ''}` : 'Đăng nhập bằng số điện thoại'}{u.phone ? ` · Điện thoại: ${u.phone}` : ''}</p>
+        <p className="muted">Đăng ký {fmtDateTime(u.created_at)}{data ? ` · đã gửi ${data.responses_sent} báo giá/quan tâm · ${data.reports_open} báo cáo chưa xử lý` : ''}</p>
+        {data && data.orgs.length > 0 && <p className="muted">Cơ sở tham gia: {data.orgs.join(', ')}</p>}
+        {data?.addresses.map((a, i) => <p key={i} className="muted">{a.label}: {a.recipient} · {a.phone} · {a.address}</p>)}
+        {u.blocked_reason && <p className="muted">Lý do khóa: {u.blocked_reason}</p>}
+        <div className="acts">{u.status === 'blocked' ? <button onClick={() => void setStatus(u, 'active')}>Mở khóa</button> : <button className="danger" onClick={() => void setStatus(u, 'blocked')}>Khóa tài khoản</button>}</div>
+      </section>
+      <h2>Tin giao thương đã đăng{data ? ` (${data.posts.length})` : ''}</h2>
+      <Err e={error ?? err} />
+      {!data && !error && <p className="muted">Đang tải…</p>}
+      {data && data.posts.length === 0 && <p className="muted">Người này chưa đăng tin nào.</p>}
+      {data?.posts.map((p) => (
+        <section className="card" key={p.id}>
+          <h2>{p.title} <span className="badge">{POST_ST[p.status] ?? p.status}</span>{p.expired && p.status === 'published' && <span className="badge warn">Hết hạn</span>}{p.open_reports > 0 && <span className="badge bad">{p.open_reports} báo cáo</span>}</h2>
+          <p className="muted">{p.kind === 'sell' ? 'Cần bán' : 'Cần mua'}{p.org_name ? ` · cơ sở ${p.org_name}` : ''} · đăng {fmtDateTime(p.created_at)} · hết hạn {fmtDateTime(p.expires_at)} · {p.responses} phản hồi</p>
+          <p>{p.category_name} · {p.quantity} {p.unit} · {[p.district, p.province].filter(Boolean).join(', ')}{(p.price_min != null || p.price_max != null) && ` · giá ${p.price_min ?? ''}–${p.price_max ?? ''}`}{p.when_date && ` · ngày ${p.when_date}`}{p.quality.length > 0 && ` · ${p.quality.join(', ')}`}</p>
+          {p.description && <p style={{ whiteSpace: 'pre-line' }}>{p.description}</p>}
+          {p.images.map((s, i) => <img key={i} src={s} alt="" style={{ height: 90, borderRadius: 6, marginRight: 6 }} />)}
+          {p.review_note && <p className="muted">Ghi chú kiểm duyệt: {p.review_note}</p>}
+          <div className="acts">
+            {(p.status === 'pending' || p.status === 'rejected' || p.status === 'hidden') && <button className="primary" onClick={() => void decide(p, 'approve')}>Duyệt và hiển thị</button>}
+            {p.status === 'pending' && <button onClick={() => void decide(p, 'reject')}>Từ chối</button>}
+            {p.status === 'published' && <button className="danger" onClick={() => void decide(p, 'hide')}>Ẩn tin</button>}
+          </div>
+        </section>
+      ))}
     </>
   );
 }
